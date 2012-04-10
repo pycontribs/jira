@@ -3,6 +3,12 @@ __author__ = 'bspeakmon@atlassian.com'
 import requests
 import simplejson as json
 
+class JIRAError(Exception):
+    def __init__(self, url, status_code, msg):
+        self.url = url
+        self.status_code = status_code
+        self.msg = msg
+
 class Resource(object):
 
     def __init__(self, options):
@@ -18,6 +24,9 @@ class Resource(object):
             headers = {}
 
         r = requests.get(self._url(resource, id), headers=self._default_headers(headers))
+        if r.status_code >= 400:
+            raise JIRAError(self._url, r.status_code, 'GET failed')
+
         self.raw = json.loads(r.text)
         self.self = self.raw['self']
 
