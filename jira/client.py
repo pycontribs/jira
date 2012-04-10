@@ -36,7 +36,7 @@ def main(argv=None):
 
      # manual issue lookup
      issue = client.issue()
-     issue.find(id='TST-1')
+     issue.find('TST-1')
      pp.pprint(issue.self)
 
 if __name__ == '__main__':
