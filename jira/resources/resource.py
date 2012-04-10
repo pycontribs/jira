@@ -11,19 +11,17 @@ class JIRAError(Exception):
 
 class Resource(object):
 
-    def __init__(self, options):
+    def __init__(self, resource, options):
         self.options = options
+        self.resource = resource
         self.raw = None
         self.self = None
 
-    def find(self, id, resource=None, headers=None):
-        if resource is None:
-            resource = self.__class__.__name__.lower()
-
+    def find(self, id, headers=None):
         if headers is None:
             headers = {}
 
-        r = requests.get(self._url(resource, id), headers=self._default_headers(headers))
+        r = requests.get(self._url(id), headers=self._default_headers(headers))
         if r.status_code >= 400:
             raise JIRAError(self._url, r.status_code, 'GET failed')
 
@@ -45,8 +43,8 @@ class Resource(object):
         """
         pass
 
-    def _url(self, resource, id):
-        return self.options['server'] + self.options['rest_path'] + '/' + resource + '/' + id
+    def _url(self, id):
+        return self.options['server'] + self.options['rest_path'] + '/' + self.options['rest_api_version'] + '/' + self.resource + '/' + id
 
     def _default_headers(self, user_headers):
         return dict(user_headers.items() + {'accept': 'application/json'}.items())
