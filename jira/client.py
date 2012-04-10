@@ -1,7 +1,7 @@
 
 import pprint as pp
 from jira.resources.issue import Issue
-from jira.resources.resource import Resource
+from jira.resources.project import Project
 
 __author__ = 'bspeakmon@atlassian.com'
 
@@ -26,6 +26,14 @@ class JIRA(object):
 
         return issue
 
+    def project(self, id=None):
+        project = Project(self.options)
+
+        if not id is None:
+            project.find(id)
+
+        return project
+
 
 def main(argv=None):
      client = JIRA()
@@ -38,6 +46,13 @@ def main(argv=None):
      issue = client.issue()
      issue.find('TST-1')
      pp.pprint(issue.self)
+
+     project = client.project('TST')
+     pp.pprint(project.self)
+
+     project = client.project()
+     project.find('TST')
+     pp.pprint(project.self)
 
 if __name__ == '__main__':
     import sys

@@ -21,6 +21,21 @@ class Resource(object):
         self.raw = json.loads(r.text)
         self.self = self.raw['self']
 
+    def save(self):
+        """Saves this resource to the server, using POST/PUT/whatever combination
+        is required for this resource (subclasses will handle details). Raises Error
+        if saving isn't implemented.
+
+        """
+        pass
+
+    def delete(self):
+        """Deletes this resource from the server using a DELETE call. Raises Error
+        if deletion isn't implemented.
+
+        """
+        pass
+
     def _url(self, resource, id):
         return self.options['server'] + self.options['rest_path'] + '/' + resource + '/' + id
 
