@@ -17,16 +17,19 @@ class Resource(object):
         self.raw = None
         self.self = None
 
-    def find(self, id, headers=None):
+    def find(self, id=None, headers=None, params=None):
         if headers is None:
             headers = {}
 
-        r = requests.get(self._url(id), headers=self._default_headers(headers))
+        if params is None:
+            params = {}
+
+        r = requests.get(self._url(id), headers=self._default_headers(headers), params=params)
         if r.status_code >= 400:
             raise JIRAError(self._url, r.status_code, 'GET failed')
 
         self.raw = json.loads(r.text)
-        self.self = self.raw['self']
+        self.self = self.raw.get('self')
 
     def save(self):
         """Saves this resource to the server, using POST/PUT/whatever combination
@@ -43,8 +46,12 @@ class Resource(object):
         """
         pass
 
-    def _url(self, id):
-        return self.options['server'] + self.options['rest_path'] + '/' + self.options['rest_api_version'] + '/' + self.resource + '/' + id
+    def _url(self, id=None):
+        url = self.options['server'] + self.options['rest_path'] + '/' + self.options['rest_api_version'] + '/' + self.resource
+        if not id is None:
+            url += '/' + id
+
+        return url
 
     def _default_headers(self, user_headers):
         return dict(user_headers.items() + {'accept': 'application/json'}.items())

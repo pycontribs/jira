@@ -3,6 +3,7 @@ import pprint as pp
 from jira.resources.issue import Issue
 from jira.resources.project import Project
 from jira.resources.resource import Resource
+from jira.resources.search import Search
 
 __author__ = 'bspeakmon@atlassian.com'
 
@@ -33,6 +34,25 @@ class JIRA(object):
             issue.find(id)
 
         return issue
+
+    def issues(self, jql_str):
+        return self.search(jql_str)
+
+    def search(self, jql_str, start=0, max=50, fields=None, expand=None):
+        if fields is None:
+            fields = []
+
+        search_params = {
+            "jql": jql_str,
+            "startAt": start,
+            "maxResults": max,
+            "fields": fields,
+            "expand": expand
+        }
+
+        resource = Search(self.options)
+        resource.find(params=search_params)
+        return resource
 
     def project(self, id=None):
         project = Project(self.options)
@@ -69,6 +89,10 @@ def main(argv=None):
      # even more generic resource lookup
      resource = client.find('TST', 'project', server='http://localhost:2990/jira/rest', rest_path='/api', rest_api_version='2')
      pp.pprint(resource.self)
+
+     # jql search
+     resource = client.search('project=TST')
+     pp.pprint(resource.raw)
 
 if __name__ == '__main__':
     import sys
