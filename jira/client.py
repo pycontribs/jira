@@ -27,18 +27,12 @@ class JIRA(object):
         resource.find(id)
         return resource
 
-    def issue(self, id=None):
+    def get_issue(self, id):
         issue = Issue(self.options)
-
-        if not id is None:
-            issue.find(id)
-
+        issue.find(id)
         return issue
 
-    def issues(self, jql_str):
-        return self.search(jql_str)
-
-    def search(self, jql_str, start=0, max=50, fields=None, expand=None):
+    def search_issues(self, jql_str, start=0, max=50, fields=None, expand=None):
         if fields is None:
             fields = []
 
@@ -54,12 +48,9 @@ class JIRA(object):
         resource.find(params=search_params)
         return resource
 
-    def project(self, id=None):
+    def get_project(self, id):
         project = Project(self.options)
-
-        if not id is None:
-            project.find(id)
-
+        project.find(id)
         return project
 
 
@@ -67,19 +58,11 @@ def main(argv=None):
      client = JIRA()
 
      # auto issue lookup
-     issue = client.issue('TST-1')
+     issue = client.get_issue('TST-1')
      pp.pprint(issue.self)
 
-     # manual issue lookup
-     issue = client.issue()
-     issue.find('TST-1')
-     pp.pprint(issue.self)
-
-     project = client.project('TST')
-     pp.pprint(project.self)
-
-     project = client.project()
-     project.find('TST')
+     # auto project lookup
+     project = client.get_project('TST')
      pp.pprint(project.self)
 
      # generic resource lookup
@@ -91,7 +74,7 @@ def main(argv=None):
      pp.pprint(resource.self)
 
      # jql search
-     resource = client.search('project=TST')
+     resource = client.search_issues('project=TST')
      pp.pprint(resource.raw)
 
 if __name__ == '__main__':
