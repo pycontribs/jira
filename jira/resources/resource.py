@@ -31,9 +31,9 @@ class Resource(object):
         self.raw = json.loads(r.text)
         self.self = self.raw.get('self')
 
-    def save(self):
-        """Saves this resource to the server, using POST/PUT/whatever combination
-        is required for this resource (subclasses will handle details). Raises Error
+    def update(self, **kwargs):
+        """Updates this resource on the server, marshaling the given keyword parameters
+        into a JSON object sent via PUT/POST (depending on the implementation). Raises Error
         if saving isn't implemented.
 
         """
