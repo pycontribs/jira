@@ -21,8 +21,11 @@ class JIRA(object):
 
         self.options = dict(JIRA.DEFAULT_OPTIONS.items() + options.items())
 
-    def find(self, id, resource_name, **kwargs):
-        resource_options = dict(self.options.items() + kwargs.items())
+    def find(self, id, resource_name, options=None):
+        if options is None:
+            options = {}
+
+        resource_options = dict(self.options.items() + options.items())
         resource = Resource(resource_name, resource_options)
         resource.find(id)
         return resource
@@ -46,7 +49,9 @@ class JIRA(object):
 
         resource = Search(self.options)
         resource.find(params=search_params)
-        return resource
+
+        issues = [Issue(self.options, issue) for issue in resource.raw['issues']]
+        return issues
 
     def get_project(self, id):
         project = Project(self.options)
@@ -55,27 +60,33 @@ class JIRA(object):
 
 
 def main(argv=None):
-     client = JIRA()
+    jira = JIRA()
 
-     # auto issue lookup
-     issue = client.get_issue('TST-1')
-     pp.pprint(issue.self)
+    # auto issue lookup
+    issue = jira.get_issue('TST-1')
+    #pp.pprint(issue.raw)
 
-     # auto project lookup
-     project = client.get_project('TST')
-     pp.pprint(project.self)
+    # auto project lookup
+    project = jira.get_project('TST')
+    pp.pprint(project.self)
 
-     # generic resource lookup
-     resource = client.find('TST-1', 'issue')
-     pp.pprint(resource.self)
+    # generic resource lookup
+    resource = jira.find('TST-1', 'issue')
+    pp.pprint(resource.self)
 
-     # even more generic resource lookup
-     resource = client.find('TST', 'project', server='http://localhost:2990/jira/rest', rest_path='/api', rest_api_version='2')
-     pp.pprint(resource.self)
+    # even more generic resource lookup
+    generic_options = {
+        'server': 'http://localhost:2990/jira/rest',
+        'rest_path': '/api',
+        'rest_api_version': '2'
+    }
+    resource = jira.find('TST', 'project', generic_options)
+    pp.pprint(resource.self)
 
-     # jql search
-     resource = client.search_issues('project=TST')
-     pp.pprint(resource.raw)
+    # jql search
+    issues = jira.search_issues('project=TST')
+    for issue in issues:
+        pp.pprint(issue.self)
 
 if __name__ == '__main__':
     import sys
