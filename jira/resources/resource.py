@@ -17,16 +17,25 @@ class Resource(object):
         self.raw = None
         self.self = None
 
-    def find(self, id=None, headers=None, params=None):
+    def find(self, ids=None, headers=None, params=None):
+        if ids is None:
+            ids = ()
+
+        if not isinstance(ids, tuple):
+            ids = (ids,)
+
         if headers is None:
             headers = {}
 
         if params is None:
             params = {}
 
-        r = requests.get(self._url(id), headers=self._default_headers(headers), params=params)
+        url = self.url(ids)
+        headers = self.default_headers(headers)
+
+        r = requests.get(url, headers=headers, params=params)
         if r.status_code >= 400:
-            raise JIRAError(self._url, r.status_code, 'GET failed')
+            raise JIRAError(url, r.status_code, 'GET failed')
 
         self.raw = json.loads(r.text)
         self.self = self.raw.get('self')
@@ -46,12 +55,10 @@ class Resource(object):
         """
         pass
 
-    def _url(self, id=None):
-        url = self.options['server'] + self.options['rest_path'] + '/' + self.options['rest_api_version'] + '/' + self.resource
-        if not id is None:
-            url += '/' + id
-
+    def url(self, ids):
+        url = '%s/rest/%s/%s/' % (self.options['server'], self.options['rest_path'], self.options['rest_api_version'])
+        url += self.resource.format(*ids)
         return url
 
-    def _default_headers(self, user_headers):
+    def default_headers(self, user_headers):
         return dict(user_headers.items() + {'accept': 'application/json'}.items())
