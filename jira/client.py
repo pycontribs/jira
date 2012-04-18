@@ -128,12 +128,16 @@ def main(argv=None):
     jira = JIRA()
 
     # auto issue lookup
-    issue = jira.get_issue('TST-1')
-    pp.pprint(issue.raw)
+    issue = jira.get_issue('TST-3')
+    print 'Issue {} reported by {} has {} comments.'.format(
+        issue.key, issue.fields.assignee.name, issue.fields.comment.total
+    )
 
     # auto project lookup
     project = jira.get_project('TST')
-    pp.pprint(project.self)
+    print 'Project {} has key {} and {} components.'.format(
+        project.name, project.key, len(project.components)
+    )
 
     # generic resource lookup; create a Resource subclass for this
     #resource = jira.find('TST-1', 'issue')
@@ -158,8 +162,11 @@ def main(argv=None):
     for comment in comments:
         pp.pprint(comment.self)
 
-    comment = jira.get_comment('TST-1', '10002')
+    comment = jira.get_comment('TST-1', '10001')
     pp.pprint(comment.raw)
+    print 'Comment ID: {}'.format(comment.id)
+    print '  Author: {}'.format(comment.author.name)
+    print '  Text: {}'.format(comment.body)
 
 if __name__ == '__main__':
     import sys
