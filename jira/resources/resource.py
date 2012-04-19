@@ -50,7 +50,7 @@ class Resource(object):
         """
         pass
 
-    def delete(self):
+    def delete(self, **kw):
         """Deletes this resource from the server using a DELETE call. Raises Error
         if deletion isn't implemented.
 
@@ -58,7 +58,7 @@ class Resource(object):
         pass
 
     def url(self, ids):
-        url = '%s/rest/%s/%s/' % (self.options['server'], self.options['rest_path'], self.options['rest_api_version'])
+        url = '{}/rest/{}/{}/'.format(self.options['server'], self.options['rest_path'], self.options['rest_api_version'])
         url += self.resource.format(*ids)
         return url
 
