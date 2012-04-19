@@ -1,5 +1,7 @@
 
 import pprint as pp
+import requests
+import simplejson as json
 from jira.resources import resource
 from jira.resources.issue import Issue, Comments, Comment
 from jira.resources.project import Project
@@ -334,7 +336,12 @@ class JIRA(object):
         pass
 
     def create_http_basic_session(self, username, password):
-        pass
+        url = self.options['server'] + '/rest/auth/1/session'
+        payload = {
+            'username': username,
+            'password': password
+        }
+        r = requests.post(url, data=json.dumps(payload), headers={'content-type': 'application/json'})
 
     def kill_session(self):
         pass
@@ -345,7 +352,7 @@ class JIRA(object):
         pass
 
 def main(argv=None):
-    jira = JIRA()
+    jira = JIRA(username='admin', password='admin')
 
     # auto issue lookup
     issue = jira.issue('TST-3')
