@@ -11,11 +11,16 @@ class JIRAError(Exception):
 
 class Resource(object):
 
-    def __init__(self, resource, options):
+    def __init__(self, resource, options, cookies=None):
         self.options = options
         self.resource = resource
         self.raw = None
         self.self = None
+
+        if cookies is not None:
+            self.cookies = cookies
+        else:
+            self.cookies = {}
 
     def find(self, ids=None, headers=None, params=None):
         if ids is None:
@@ -33,7 +38,7 @@ class Resource(object):
         url = self.url(ids)
         headers = self.default_headers(headers)
 
-        r = requests.get(url, headers=headers, params=params)
+        r = requests.get(url, headers=headers, params=params, cookies=self.cookies)
         if r.status_code >= 400:
             raise JIRAError(url, r.status_code, 'GET failed')
 

@@ -27,6 +27,8 @@ class JIRA(object):
 
         if username is not None and password is not None:
             self.create_http_basic_session(username, password)
+        else:
+            self.cookies = {}
 
 ### Universal resource loading
 
@@ -105,7 +107,7 @@ class JIRA(object):
 ### Issues
 
     def issue(self, id):
-        issue = Issue(self.options)
+        issue = Issue(self.options, cookies=self.cookies)
         issue.find(id)
         return issue
 
@@ -120,14 +122,14 @@ class JIRA(object):
         pass
 
     def comments(self, issue):
-        resource = Comments(self.options)
+        resource = Comments(self.options, cookies=self.cookies)
         resource.find(issue)
 
-        comments = [Comment(self.options, raw_comment_json) for raw_comment_json in resource.raw['comments']]
+        comments = [Comment(self.options, raw_comment_json, self.cookies) for raw_comment_json in resource.raw['comments']]
         return comments
 
     def comment(self, issue, comment):
-        resource = Comment(self.options)
+        resource = Comment(self.options, cookies=self.cookies)
         resource.find((issue, comment))
         return resource
 
@@ -212,7 +214,7 @@ class JIRA(object):
         pass
 
     def project(self, id):
-        project = Project(self.options)
+        project = Project(self.options, self.cookies)
         project.find(id)
         return project
 
@@ -264,10 +266,10 @@ class JIRA(object):
             "expand": expand
         }
 
-        resource = Search(self.options)
+        resource = Search(self.options, self.cookies)
         resource.find(params=search_params)
 
-        issues = [Issue(self.options, raw_issue_json) for raw_issue_json in resource.raw['issues']]
+        issues = [Issue(self.options, raw_issue_json, cookies=self.cookies) for raw_issue_json in resource.raw['issues']]
         return issues
 
 ### Security levels
@@ -342,6 +344,8 @@ class JIRA(object):
             'password': password
         }
         r = requests.post(url, data=json.dumps(payload), headers={'content-type': 'application/json'})
+        r.raise_for_status()
+        self.cookies = r.cookies
 
     def kill_session(self):
         pass
