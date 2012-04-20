@@ -19,14 +19,14 @@ class JIRA(object):
     }
 
     # TODO: add oauth options to constructor
-    def __init__(self, username=None, password=None, options=None):
+    def __init__(self, options=None, basic_auth=None, oauth=None):
         if options is None:
             options = {}
 
         self.options = dict(JIRA.DEFAULT_OPTIONS.items() + options.items())
 
-        if username is not None and password is not None:
-            self.create_http_basic_session(username, password)
+        if basic_auth:
+            self.cookies = self.create_http_basic_session(*basic_auth)
 
 ### Universal resource loading
 
@@ -43,10 +43,20 @@ class JIRA(object):
 
     # non-resource
     def application_properties(self, key=None):
-        pass
+        url = self.options['server'] + '/rest/api/2/application-properties'
+        r = requests.get(url, params={'key': key}, cookies=self.cookies)
+        r.raise_for_status()
+
+        return json.loads(r.text)
 
     def set_application_property(self, key, value):
-        pass
+        url = self.options['server'] + '/rest/api/2/application-properties/' + key
+        payload = {
+            'id': key,
+            'value': value
+        }
+        r = requests.put(url, headers={'content-type': 'application/json'}, data=json.dumps(payload), cookies=self.cookies)
+        r.raise_for_status()
 
 ### Attachments
 
@@ -55,7 +65,12 @@ class JIRA(object):
 
     # non-resource
     def attachment_meta(self):
-        pass
+        url = self.options['server'] + '/rest/api/2/attachment/meta'
+        r = requests.get(url, cookies=self.cookies)
+        r.raise_for_status()
+
+        meta = type('AttachmentMeta', (object,), json.loads(r.text))
+        return meta
 
 ### Components
 
@@ -342,6 +357,9 @@ class JIRA(object):
             'password': password
         }
         r = requests.post(url, data=json.dumps(payload), headers={'content-type': 'application/json'})
+        r.raise_for_status()
+
+        return r.cookies
 
     def kill_session(self):
         pass
@@ -352,7 +370,12 @@ class JIRA(object):
         pass
 
 def main(argv=None):
-    jira = JIRA(username='admin', password='admin')
+    jira = JIRA(basic_auth=('admin', 'admin'))
+
+    props = jira.application_properties()
+    jira.set_application_property('jira.clone.prefix', 'horseflesh')
+
+    meta = jira.attachment_meta()
 
     # auto issue lookup
     issue = jira.issue('TST-3')
