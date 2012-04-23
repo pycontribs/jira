@@ -43,4 +43,5 @@ jira = JIRA(options=options, basic_auth=basic_auth)
 from IPython.frontend.terminal.embed import InteractiveShellEmbed
 
 ipshell = InteractiveShellEmbed(banner1='<JIRA Shell>')
-ipshell()
+ipshell("*** JIRA shell active; client is in 'jira'."
+        'Press Ctrl-D to exit.')
