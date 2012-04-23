@@ -26,7 +26,7 @@ class Resource(object):
         if ids is None:
             ids = ()
 
-        if not isinstance(ids, tuple):
+        if isinstance(ids, basestring):
             ids = (ids,)
 
         if headers is None:
