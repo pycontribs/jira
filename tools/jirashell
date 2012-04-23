@@ -1,0 +1,35 @@
+#!/usr/bin/env python
+
+import argparse
+import jira
+from jira.client import JIRA
+
+parser = argparse.ArgumentParser(description='Start an interactive JIRA shell with the REST API.')
+jira_group = parser.add_argument_group('JIRA server connection options')
+jira_group.add_argument('-s', '--server',
+                        help='The JIRA instance to connect to, including context path.')
+jira_group.add_argument('-r', '--rest-path',
+                        help='The root path of the REST API to use.')
+jira_group.add_argument('-v', '--rest-version',
+                        help='The version of the API under the specified name.')
+
+basic_auth_group = parser.add_argument_group('BASIC auth options')
+basic_auth_group.add_argument('-u', '--username',
+                              help='The username to connect to this JIRA instance with.')
+basic_auth_group.add_argument('-p', '--password',
+                              help='The password associated with this user.')
+
+args = parser.parse_args()
+
+print args
+
+local_ns = {'jira': jira, 'client': JIRA(basic_auth=(args.username, args.password))}
+shellbanner = '<JIRA shell: {}/{}/{}>'.format(args.server, args.rest_path, args.rest_version)
+
+try:
+    import IPython
+    ipshell = IPython.Shell.IPShell([''], user_ns=local_ns)
+    ipshell.mainloop(sys_exit=1, banner=shellbanner)
+except ImportError:
+    import code
+    code.interact(shellbanner, local=local_ns)

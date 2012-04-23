@@ -4,5 +4,5 @@ __author__ = 'bspeakmon@atlassian.com'
 
 class Search(Resource):
 
-    def __init__(self, options):
-        Resource.__init__(self, "search", options)
+    def __init__(self, options, cookies=None):
+        Resource.__init__(self, "search", options, cookies)

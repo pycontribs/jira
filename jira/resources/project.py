@@ -4,10 +4,10 @@ __author__ = 'bspeakmon@atlassian.com'
 
 class Projects(Resource):
 
-    def __init__(self, options):
-        Resource.__init__(self, 'project', options)
+    def __init__(self, options, cookies=None):
+        Resource.__init__(self, 'project', options, cookies)
 
 class Project(Resource):
 
-    def __init__(self, options):
-        Resource.__init__(self, 'project/{0}', options)
+    def __init__(self, options, cookies=None):
+        Resource.__init__(self, 'project/{0}', options, cookies)
