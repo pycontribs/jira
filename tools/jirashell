@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
-import jira
+from sys import exit
 from jira.client import JIRA
 
 parser = argparse.ArgumentParser(description='Start an interactive JIRA shell with the REST API.')
@@ -10,7 +10,7 @@ jira_group.add_argument('-s', '--server',
                         help='The JIRA instance to connect to, including context path.')
 jira_group.add_argument('-r', '--rest-path',
                         help='The root path of the REST API to use.')
-jira_group.add_argument('-v', '--rest-version',
+jira_group.add_argument('-v', '--rest-api-version',
                         help='The version of the API under the specified name.')
 
 basic_auth_group = parser.add_argument_group('BASIC auth options')
@@ -19,17 +19,28 @@ basic_auth_group.add_argument('-u', '--username',
 basic_auth_group.add_argument('-p', '--password',
                               help='The password associated with this user.')
 
+try:
+    get_ipython
+except NameError:
+    pass
+else:
+    exit("Running ipython inside ipython isn't supported. :(")
+
 args = parser.parse_args()
 
-print args
+options = {}
+if args.server:
+    options['server'] = args.server
+if args.rest_path:
+    options['rest_path'] = args.rest_path
+if args.rest_api_version:
+    options['rest_api_version'] = args.rest_api_version
 
-local_ns = {'jira': jira, 'client': JIRA(basic_auth=(args.username, args.password))}
-shellbanner = '<JIRA shell: {}/{}/{}>'.format(args.server, args.rest_path, args.rest_version)
+basic_auth = (args.username, args.password) if args.username and args.password else ()
 
-try:
-    import IPython
-    ipshell = IPython.Shell.IPShell([''], user_ns=local_ns)
-    ipshell.mainloop(sys_exit=1, banner=shellbanner)
-except ImportError:
-    import code
-    code.interact(shellbanner, local=local_ns)
+jira = JIRA(options=options, basic_auth=basic_auth)
+
+from IPython.frontend.terminal.embed import InteractiveShellEmbed
+
+ipshell = InteractiveShellEmbed(banner1='<JIRA Shell>')
+ipshell()
