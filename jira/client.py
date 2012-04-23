@@ -43,11 +43,7 @@ class JIRA(object):
 
     # non-resource
     def application_properties(self, key=None):
-        url = self.options['server'] + '/rest/api/2/application-properties'
-        r = requests.get(url, params={'key': key}, cookies=self.cookies)
-        r.raise_for_status()
-
-        return json.loads(r.text)
+        return self.__get_json('application-properties', 'ApplicationProperties', params={'key': key})
 
     def set_application_property(self, key, value):
         url = self.options['server'] + '/rest/api/2/application-properties/' + key
@@ -65,12 +61,7 @@ class JIRA(object):
 
     # non-resource
     def attachment_meta(self):
-        url = self.options['server'] + '/rest/api/2/attachment/meta'
-        r = requests.get(url, cookies=self.cookies)
-        r.raise_for_status()
-
-        meta = type('AttachmentMeta', (object,), json.loads(r.text))
-        return meta
+        return self.__get_json('attachment/meta', 'AttachmentMeta')
 
 ### Components
 
@@ -294,7 +285,11 @@ class JIRA(object):
 
     # non-resource
     def server_info(self):
-        pass
+        url = self.options['server'] + '/rest/api/2/serverInfo'
+        r = requests.get(url, cookies=self.cookies)
+        r.raise_for_status()
+
+        return json.loads(r.text)
 
 ### Status
 
@@ -368,6 +363,18 @@ class JIRA(object):
 
     def kill_websudo(self):
         pass
+
+### Utilities
+    def __get_json(self, path, return_cls, params=None):
+        url = '{}/rest/api/2/{}'.format(self.options['server'], path)
+        r = requests.get(url, cookies=self.cookies, params=params)
+        r.raise_for_status()
+
+        r_json = json.loads(r.text)
+        obj = type(return_cls, (object,), type(r_json))
+        obj.__dict__.update(r_json.__dict__)
+        return obj
+
 
 def main(argv=None):
     jira = JIRA(basic_auth=('admin', 'admin'))
