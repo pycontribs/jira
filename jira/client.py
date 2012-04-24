@@ -22,6 +22,8 @@ class JIRA(object):
 
         if basic_auth:
             self.cookies = self.create_http_basic_session(*basic_auth)
+        else:
+            self.cookies = {}
 
 ### Information about this client
 
