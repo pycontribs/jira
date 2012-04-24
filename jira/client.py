@@ -1,11 +1,7 @@
 
 import requests
 import simplejson as json
-from jira.resources import resource
-from jira.resources.issue import Issue, Comments, Comment
-from jira.resources.project import Project
-from jira.resources.resource import Resource
-from jira.resources.search import Search
+from jira.resources import Resource, Issue, Comments, Comment, Project, Search
 
 __author__ = 'bspeakmon@atlassian.com'
 

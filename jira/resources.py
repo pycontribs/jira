@@ -1,13 +1,6 @@
-__author__ = 'bspeakmon@atlassian.com'
-
 import requests
+from jira.exceptions import JIRAError
 import simplejson as json
-
-class JIRAError(Exception):
-    def __init__(self, url, status_code, msg):
-        self.url = url
-        self.status_code = status_code
-        self.msg = msg
 
 class Resource(object):
 
@@ -82,3 +75,44 @@ def dict2obj(d):
         else:
             setattr(top, i, j)
     return top
+
+class Issue(Resource):
+
+    def __init__(self, options, raw=None, cookies=None):
+        Resource.__init__(self, 'issue/{0}', options, cookies)
+        if raw:
+            self.raw = raw
+            self.self = raw['self']
+
+class CreateMeta(Resource):
+
+    def __init__(self, options, cookies=None):
+        Resource.__init__(self, 'issue/createmeta', options, cookies)
+
+class Comments(Resource):
+
+    def __init__(self, options, cookies=None):
+        Resource.__init__(self, 'issue/{0}/comment', options, cookies)
+
+class Comment(Resource):
+
+    def __init__(self, options, raw=None, cookies=None):
+        Resource.__init__(self, 'issue/{0}/comment/{1}', options, cookies)
+        if raw:
+            self.raw = raw
+            self.self = raw['self']
+
+class Projects(Resource):
+
+    def __init__(self, options, cookies=None):
+        Resource.__init__(self, 'project', options, cookies)
+
+class Project(Resource):
+
+    def __init__(self, options, cookies=None):
+        Resource.__init__(self, 'project/{0}', options, cookies)
+
+class Search(Resource):
+
+    def __init__(self, options, cookies=None):
+        Resource.__init__(self, "search", options, cookies)
