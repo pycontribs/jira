@@ -1,7 +1,7 @@
 
 import requests
 import simplejson as json
-from jira.resources import Resource, Issue, Comments, Comment, Project, Search
+from jira.resources import Resource, Issue, Comments, Comment, Project
 
 __author__ = 'bspeakmon@atlassian.com'
 
@@ -264,10 +264,8 @@ class JIRA(object):
             "expand": expand
         }
 
-        resource = Search(self.options, self.cookies)
-        resource.find(params=search_params)
-
-        issues = [Issue(self.options, raw_issue_json, cookies=self.cookies) for raw_issue_json in resource.raw['issues']]
+        resource = self.__get_json('search', 'Search', params=search_params)
+        issues = [Issue(self.options, raw_issue_json, cookies=self.cookies) for raw_issue_json in resource['issues']]
         return issues
 
 ### Security levels

@@ -111,8 +111,3 @@ class Project(Resource):
 
     def __init__(self, options, cookies=None):
         Resource.__init__(self, 'project/{0}', options, cookies)
-
-class Search(Resource):
-
-    def __init__(self, options, cookies=None):
-        Resource.__init__(self, "search", options, cookies)
