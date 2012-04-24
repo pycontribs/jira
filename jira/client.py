@@ -1,5 +1,4 @@
 
-import pprint as pp
 import requests
 import simplejson as json
 from jira.resources import resource
@@ -71,7 +70,6 @@ class JIRA(object):
     def create_component(self, **kw):
         pass
 
-    # non-resource
     def component_count_related_issues(self, id):
         pass
 
@@ -92,7 +90,7 @@ class JIRA(object):
 
     # non-resource
     def fields(self):
-        pass
+        return self.__get_json('field', 'Fields')
 
 ### Filters
 
@@ -106,7 +104,7 @@ class JIRA(object):
 
     # non-resource
     def groups(self, query, exclude=None):
-        pass
+        return self.__get_json('groups/picker', 'Groups', params={'query': query, 'exclude': exclude})
 
 ### Issues
 
@@ -123,7 +121,10 @@ class JIRA(object):
 
     # non-resource
     def assign_issue(self, issue, assignee):
-        pass
+        url = self.options['server'] + '/rest/api/2/issue/' + issue + '/assignee'
+        payload = {'name': assignee}
+        r = requests.put(url, cookies=self.cookies, data=json.dumps(payload), headers={'content-type': 'application/json'})
+        r.raise_for_status()
 
     def comments(self, issue):
         resource = Comments(self.options, cookies=self.cookies)
@@ -139,7 +140,7 @@ class JIRA(object):
 
     # non-resource
     def editmeta(self, issue):
-        pass
+        return self.__get_json('issue/' + issue + '/editmeta', 'EditMeta')
 
     def remote_links(self, issue):
         pass
@@ -148,8 +149,8 @@ class JIRA(object):
         pass
 
     # non-resource
-    def transitions(self, issue, id=None):
-        pass
+    def transitions(self, issue):
+        return self.__get_json('issue/' + issue + '/transitions', 'IssueTransitions')
 
     def votes(self, issue):
         pass
@@ -202,7 +203,7 @@ class JIRA(object):
 
     # non-resource
     def my_permissions(self, project=None, issue=None):
-        pass
+        return self.__get_json('mypermissions', 'MyPermissions', params={'projectKey': project, 'issueKey': issue})
 
 ### Priorities
 
@@ -223,8 +224,8 @@ class JIRA(object):
         return project
 
     # non-resource
-    def avatars(self, project):
-        pass
+    def project_avatars(self, project):
+        return self.__get_json('project/' + project + '/avatars', 'ProjectAvatars')
 
     def create_temp_project_avatar(self, project, name, size, avatar_img):
         pass
@@ -240,12 +241,9 @@ class JIRA(object):
 
     # non-resource
     def roles(self, project):
-        pass
+        return self.__get_json('project/' + project + '/role', 'ProjectRoles')
 
     def role(self, project, id):
-        pass
-
-    def create_role(self, project, id):
         pass
 
 ### Resolutions
@@ -285,11 +283,7 @@ class JIRA(object):
 
     # non-resource
     def server_info(self):
-        url = self.options['server'] + '/rest/api/2/serverInfo'
-        r = requests.get(url, cookies=self.cookies)
-        r.raise_for_status()
-
-        return json.loads(r.text)
+        return self.__get_json('serverInfo', 'ServerInfo')
 
 ### Status
 
@@ -309,7 +303,7 @@ class JIRA(object):
 
     # non-resource
     def user_avatars(self, user):
-        pass
+        return self.__get_json('user/avatars', 'UserAvatars', params={'username': user})
 
     def create_temp_user_avatar(self, user, filename, size, avatar_img):
         pass
@@ -371,60 +365,6 @@ class JIRA(object):
         r.raise_for_status()
 
         r_json = json.loads(r.text)
-        obj = type(return_cls, (object,), type(r_json))
-        obj.__dict__.update(r_json.__dict__)
-        return obj
-
-
-def main(argv=None):
-    jira = JIRA(basic_auth=('admin', 'admin'))
-
-    props = jira.application_properties()
-    jira.set_application_property('jira.clone.prefix', 'horseflesh')
-
-    meta = jira.attachment_meta()
-
-    # auto issue lookup
-    issue = jira.issue('TST-3')
-    print 'Issue {} reported by {} has {} comments.'.format(
-        issue.key, issue.fields.assignee.name, issue.fields.comment.total
-    )
-
-    # auto project lookup
-    project = jira.project('TST')
-    print 'Project {} has key {} and {} components.'.format(
-        project.name, project.key, len(project.components)
-    )
-
-    # generic resource lookup; create a Resource subclass for this
-    #resource = jira.find('TST-1', 'issue')
-    #pp.pprint(resource.self)
-
-    # even more generic resource lookup
-    generic_options = {
-        'server': 'http://localhost:2990/jira',
-        'rest_path': 'api',
-        'rest_api_version': '2'
-    }
-    #resource = jira.find('TST', 'project', generic_options)
-    #pp.pprint(resource.self)
-
-    # jql search
-    issues = jira.search_issues('project=TST')
-    for issue in issues:
-        pp.pprint(issue.self)
-
-    # comments
-    comments = jira.comments('TST-1')
-    for comment in comments:
-        pp.pprint(comment.self)
-
-    comment = jira.comment('TST-1', '10001')
-    pp.pprint(comment.raw)
-    print 'Comment ID: {}'.format(comment.id)
-    print '  Author: {}'.format(comment.author.name)
-    print '  Text: {}'.format(comment.body)
-
-if __name__ == '__main__':
-    import sys
-    main(sys.argv)
+#        obj = type(return_cls, (object,), type(r_json))
+#        obj.__dict__.update(r_json.__dict__)
+        return r_json
