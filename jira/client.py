@@ -23,6 +23,11 @@ class JIRA(object):
         if basic_auth:
             self.cookies = self.create_http_basic_session(*basic_auth)
 
+### Information about this client
+
+    def client_info(self):
+        return self.options['server']
+
 ### Universal resource loading
 
     def find(self, id, resource_name, options=None):
