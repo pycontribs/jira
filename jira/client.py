@@ -2,6 +2,7 @@
 import requests
 import simplejson as json
 from jira.resources import Resource, Issue, Comments, Comment, Project, Attachment, Component, Dashboards, Dashboard, Filter, Votes, Watchers, Worklog, IssueLink, IssueLinkType, IssueType, Priority, Version, Role, Resolution, SecurityLevel, Status, User
+from jira.utils import dict2obj
 
 __author__ = 'bspeakmon@atlassian.com'
 
@@ -45,7 +46,7 @@ class JIRA(object):
 
     # non-resource
     def application_properties(self, key=None):
-        return self.__get_json('application-properties', 'ApplicationProperties', params={'key': key})
+        return self._get_json('application-properties', 'ApplicationProperties', params={'key': key})
 
     def set_application_property(self, key, value):
         url = self.options['server'] + '/rest/api/2/application-properties/' + key
@@ -59,18 +60,18 @@ class JIRA(object):
 ### Attachments
 
     def attachment(self, id):
-        attachment = Attachment(self.options, cookies=self.cookies)
+        attachment = Attachment(self.options, self.cookies)
         attachment.find(id)
         return attachment
 
     # non-resource
     def attachment_meta(self):
-        return self.__get_json('attachment/meta', 'AttachmentMeta')
+        return self._get_json('attachment/meta', 'AttachmentMeta')
 
 ### Components
 
     def component(self, id):
-        component = Component(self.options, cookies=self.cookies)
+        component = Component(self.options, self.cookies)
         component.find(id)
         return component
 
@@ -78,17 +79,17 @@ class JIRA(object):
         pass
 
     def component_count_related_issues(self, id):
-        return self.__get_json('component/' + id + '/relatedIssueCounts', 'ComponentRelatedIssues')['issueCount']
+        return self._get_json('component/' + id + '/relatedIssueCounts', 'ComponentRelatedIssues')['issueCount']
 
 ### Custom field options
 
     def custom_field_option(self, id):
-        return self.__get_json('customFieldOption/' + id, 'CustomFieldOption')['value']
+        return self._get_json('customFieldOption/' + id, 'CustomFieldOption')['value']
 
 ### Dashboards
 
     def dashboards(self, filter=None, startAt=0, maxResults=20):
-        dashboards = Dashboards(self.options, cookies=self.cookies)
+        dashboards = Dashboards(self.options, self.cookies)
         params = {}
         if filter is not None:
             params['filter'] = filter
@@ -98,7 +99,7 @@ class JIRA(object):
         return dashboards
 
     def dashboard(self, id):
-        dashboard = Dashboard(self.options, cookies=self.cookies)
+        dashboard = Dashboard(self.options, self.cookies)
         dashboard.find(id)
         return dashboard
 
@@ -106,30 +107,30 @@ class JIRA(object):
 
     # non-resource
     def fields(self):
-        return self.__get_json('field', 'Fields')
+        return self._get_json('field', 'Fields')
 
 ### Filters
 
     def filter(self, id):
-        filter = Filter(self.options, cookies=self.cookies)
+        filter = Filter(self.options, self.cookies)
         filter.find(id)
         return filter
 
     def favourite_filters(self):
-        r_json = self.__get_json('filter/favourite', 'FavouriteFilters')
-        filters = [Filter(self.options, raw_filter_json, cookies=self.cookies) for raw_filter_json in r_json]
+        r_json = self._get_json('filter/favourite', 'FavouriteFilters')
+        filters = [Filter(self.options, self.cookies, raw_filter_json) for raw_filter_json in r_json]
         return filters
 
 ### Groups
 
     # non-resource
     def groups(self, query, exclude=None):
-        return self.__get_json('groups/picker', 'Groups', params={'query': query, 'exclude': exclude})
+        return self._get_json('groups/picker', 'Groups', params={'query': query, 'exclude': exclude})
 
 ### Issues
 
     def issue(self, id):
-        issue = Issue(self.options, cookies=self.cookies)
+        issue = Issue(self.options, self.cookies)
         issue.find(id)
         return issue
 
@@ -146,7 +147,7 @@ class JIRA(object):
             params['issuetypeIds'] = issuetypeIds
         if issuetypeNames is not None:
             params['issuetypeNames'] = issuetypeNames
-        return self.__get_json('issue/createmeta', 'CreateMeta', params=params)
+        return self._get_json('issue/createmeta', 'CreateMeta', params=params)
 
     # non-resource
     def assign_issue(self, issue, assignee):
@@ -156,20 +157,20 @@ class JIRA(object):
         r.raise_for_status()
 
     def comments(self, issue):
-        resource = Comments(self.options, cookies=self.cookies)
+        resource = Comments(self.options, self.cookies)
         resource.find(issue)
 
-        comments = [Comment(self.options, raw_comment_json, self.cookies) for raw_comment_json in resource.raw['comments']]
+        comments = [Comment(self.options, self.cookies, raw_comment_json) for raw_comment_json in resource.raw['comments']]
         return comments
 
     def comment(self, issue, comment):
-        resource = Comment(self.options, cookies=self.cookies)
+        resource = Comment(self.options, self.cookies)
         resource.find((issue, comment))
         return resource
 
     # non-resource
     def editmeta(self, issue):
-        return self.__get_json('issue/' + issue + '/editmeta', 'EditMeta')
+        return self._get_json('issue/' + issue + '/editmeta', 'EditMeta')
 
     def remote_links(self, issue):
         pass
@@ -184,15 +185,15 @@ class JIRA(object):
             params['transitionId'] = id
         if expand is not None:
             params['expand'] = expand
-        return self.__get_json('issue/' + issue + '/transitions', 'IssueTransition', params=params)['transitions']
+        return self._get_json('issue/' + issue + '/transitions', 'IssueTransition', params=params)['transitions']
 
     def votes(self, issue):
-        votes = Votes(self.options, cookies=self.cookies)
+        votes = Votes(self.options, self.cookies)
         votes.find(issue)
         return votes
 
     def watchers(self, issue):
-        watchers = Watchers(self.options, cookies=self.cookies)
+        watchers = Watchers(self.options, self.cookies)
         watchers.find(issue)
         return votes
 
@@ -202,12 +203,12 @@ class JIRA(object):
     # also have delete_watcher?
 
     def worklogs(self, issue):
-        r_json = self.__get_json('issue/' + issue + '/worklog', 'Worklogs')
-        worklogs = [Worklog(self.options, raw_worklog_json, self.cookies) for raw_worklog_json in r_json['worklogs']]
+        r_json = self._get_json('issue/' + issue + '/worklog', 'Worklogs')
+        worklogs = [Worklog(self.options, self.cookies, raw_worklog_json) for raw_worklog_json in r_json['worklogs']]
         return worklogs
 
     def worklog(self, issue, id):
-        worklog = Worklog(self.options, cookies=self.cookies)
+        worklog = Worklog(self.options, self.cookies)
         worklog.find((issue, id))
         return worklog
 
@@ -223,31 +224,31 @@ class JIRA(object):
         pass
 
     def issue_link(self, id):
-        link = IssueLink(self.options, cookies=self.cookies)
+        link = IssueLink(self.options, self.cookies)
         link.find(id)
         return link
 
 ### Issue link types
 
     def issue_link_types(self):
-        r_json = self.__get_json('issueLinkType', 'IssueLinkTypes')
-        link_types = [IssueLinkType(self.options, raw_link_json, self.cookies) for raw_link_json in r_json['issueLinkTypes']]
+        r_json = self._get_json('issueLinkType', 'IssueLinkTypes')
+        link_types = [IssueLinkType(self.options, self.cookies, raw_link_json) for raw_link_json in r_json['issueLinkTypes']]
         return link_types
 
     def issue_link_type(self, id):
-        link_type = IssueLinkType(self.options, cookies=self.cookies)
+        link_type = IssueLinkType(self.options, self.cookies)
         link_type.find(id)
         return link_type
 
 ### Issue types
 
     def issue_types(self):
-        r_json = self.__get_json('issuetype', 'IssueTypes')
-        issue_types = [IssueType(self.options, raw_type_json, self.cookies) for raw_type_json in r_json]
+        r_json = self._get_json('issuetype', 'IssueTypes')
+        issue_types = [IssueType(self.options, self.cookies, raw_type_json) for raw_type_json in r_json]
         return issue_types
 
     def issue_type(self, id):
-        issue_type = IssueType(self.options, cookies=self.cookies)
+        issue_type = IssueType(self.options, self.cookies)
         issue_type.find(id)
         return issue_type
 
@@ -255,25 +256,25 @@ class JIRA(object):
 
     # non-resource
     def my_permissions(self, project=None, issue=None):
-        return self.__get_json('mypermissions', 'MyPermissions', params={'projectKey': project, 'issueKey': issue})
+        return self._get_json('mypermissions', 'MyPermissions', params={'projectKey': project, 'issueKey': issue})
 
 ### Priorities
 
     def priorities(self):
-        r_json = self.__get_json('priority', 'Priorities')
-        priorities = [Priority(self.options, raw_priority_json, self.cookies) for raw_priority_json in r_json]
+        r_json = self._get_json('priority', 'Priorities')
+        priorities = [Priority(self.options, self.cookies, raw_priority_json) for raw_priority_json in r_json]
         return priorities
 
     def priority(self, id):
-        priority = Priority(self.options, cookies=self.cookies)
+        priority = Priority(self.options, self.cookies)
         priority.find(id)
         return priority
 
 ### Projects
 
     def projects(self):
-        r_json = self.__get_json('project', 'Projects')
-        projects = [Project(self.options, raw_project_json, self.cookies) for raw_project_json in r_json]
+        r_json = self._get_json('project', 'Projects')
+        projects = [Project(self.options, self.cookies, raw_project_json) for raw_project_json in r_json]
         return projects
 
     def project(self, id):
@@ -283,7 +284,7 @@ class JIRA(object):
 
     # non-resource
     def project_avatars(self, project):
-        return self.__get_json('project/' + project + '/avatars', 'ProjectAvatars')
+        return self._get_json('project/' + project + '/avatars', 'ProjectAvatars')
 
     def create_temp_project_avatar(self, project, name, size, avatar_img):
         pass
@@ -292,33 +293,33 @@ class JIRA(object):
         pass
 
     def project_components(self, project):
-        r_json = self.__get_json('project/' + project + '/components', 'ProjectComponents')
-        components = [Component(self.options, raw_comp_json, self.cookies) for raw_comp_json in r_json]
+        r_json = self._get_json('project/' + project + '/components', 'ProjectComponents')
+        components = [Component(self.options, self.cookies, raw_comp_json) for raw_comp_json in r_json]
         return components
 
     def project_versions(self, project):
-        r_json = self.__get_json('project/' + project + '/versions', 'ProjectVersions')
-        versions = [Version(self.options, raw_ver_json, self.cookies) for raw_ver_json in r_json]
+        r_json = self._get_json('project/' + project + '/versions', 'ProjectVersions')
+        versions = [Version(self.options, self.cookies, raw_ver_json) for raw_ver_json in r_json]
         return versions
 
     # non-resource
     def roles(self, project):
-        return self.__get_json('project/' + project + '/role', 'ProjectRoles')
+        return self._get_json('project/' + project + '/role', 'ProjectRoles')
 
     def role(self, project, id):
-        role = Role(self.options, cookies=self.cookies)
+        role = Role(self.options, self.cookies)
         role.find((project, id))
         return role
 
 ### Resolutions
 
     def resolutions(self):
-        r_json = self.__get_json('resolution', 'Resolutions')
-        resolutions = [Resolution(self.options, raw_res_json, self.cookies) for raw_res_json in r_json]
+        r_json = self._get_json('resolution', 'Resolutions')
+        resolutions = [Resolution(self.options, self.cookies, raw_res_json) for raw_res_json in r_json]
         return resolutions
 
     def resolution(self, id):
-        resolution = Resolution(self.options, cookies=self.cookies)
+        resolution = Resolution(self.options, self.cookies)
         resolution.find(id)
         return resolution
 
@@ -336,14 +337,14 @@ class JIRA(object):
             "expand": expand
         }
 
-        resource = self.__get_json('search', 'Search', params=search_params)
-        issues = [Issue(self.options, raw_issue_json, cookies=self.cookies) for raw_issue_json in resource['issues']]
+        resource = self._get_json('search', 'Search', params=search_params)
+        issues = [Issue(self.options, self.cookies, raw_issue_json) for raw_issue_json in resource['issues']]
         return issues
 
 ### Security levels
 
     def security_level(self, id):
-        sec_level = SecurityLevel(self.options, cookies=self.cookies)
+        sec_level = SecurityLevel(self.options, self.cookies)
         sec_level.find(id)
         return sec_level
 
@@ -351,24 +352,24 @@ class JIRA(object):
 
     # non-resource
     def server_info(self):
-        return self.__get_json('serverInfo', 'ServerInfo')
+        return self._get_json('serverInfo', 'ServerInfo')
 
 ### Status
 
     def statuses(self):
-        r_json = self.__get_json('status', 'Statuses')
-        statuses = [Status(self.options, raw_stat_json, self.cookies) for raw_stat_json in r_json]
+        r_json = self._get_json('status', 'Statuses')
+        statuses = [Status(self.options, self.cookies, raw_stat_json) for raw_stat_json in r_json]
         return statuses
 
     def status(self, id):
-        status = Status(self.options, cookies=self.cookies)
+        status = Status(self.options, self.cookies)
         status.find(id)
         return status
 
 ### Users
 
     def user(self, id):
-        user = User(self.options, cookies=self.cookies)
+        user = User(self.options, self.cookies)
         user.find(id)
         return user
 
@@ -379,8 +380,8 @@ class JIRA(object):
             'startAt': startAt,
             'maxResults': maxResults
         }
-        r_json = self.__get_json('user/assignable/multiProjectSearch', 'UserResults', params=params)
-        users = [User(self.options, raw_user_json, self.cookies) for raw_user_json in r_json]
+        r_json = self._get_json('user/assignable/multiProjectSearch', 'UserResults', params=params)
+        users = [User(self.options, self.cookies, raw_user_json) for raw_user_json in r_json]
         return users
 
     def search_assignable_users_for_issues(self, user, project, issue, startAt=0, maxResults=50):
@@ -391,13 +392,13 @@ class JIRA(object):
             'startAt': startAt,
             'maxResults': maxResults,
         }
-        r_json = self.__get_json('user/assignable/search', 'UserResults', params=params)
-        users = [User(self.options, raw_user_json, self.cookies) for raw_user_json in r_json]
+        r_json = self._get_json('user/assignable/search', 'UserResults', params=params)
+        users = [User(self.options, self.cookies, raw_user_json) for raw_user_json in r_json]
         return users
 
     # non-resource
     def user_avatars(self, user):
-        return self.__get_json('user/avatars', 'UserAvatars', params={'username': user})
+        return self._get_json('user/avatars', 'UserAvatars', params={'username': user})
 
     def create_temp_user_avatar(self, user, filename, size, avatar_img):
         pass
@@ -411,8 +412,8 @@ class JIRA(object):
             'startAt': startAt,
             'maxResults': maxResults
         }
-        r_json = self.__get_json('user/search', 'UserResults', params=params)
-        users = [User(self.options, raw_user_json, self.cookies) for raw_user_json in r_json]
+        r_json = self._get_json('user/search', 'UserResults', params=params)
+        users = [User(self.options, self.cookies, raw_user_json) for raw_user_json in r_json]
         return users
 
     def search_allowed_users_for_issue(self, user, issue, project=None, startAt=0, maxResults=50):
@@ -424,8 +425,8 @@ class JIRA(object):
         }
         if project is not None:
             params['projectKey'] = project
-        r_json = self.__get_json('user/viewissue/search', 'UserResults', params=params)
-        users = [User(self.options, raw_user_json, self.cookies) for raw_user_json in r_json]
+        r_json = self._get_json('user/viewissue/search', 'UserResults', params=params)
+        users = [User(self.options, self.cookies, raw_user_json) for raw_user_json in r_json]
         return users
 
 ### Versions
@@ -437,17 +438,17 @@ class JIRA(object):
         pass
 
     def version(self, id):
-        version = Version(self.options, cookies=self.cookies)
+        version = Version(self.options, self.cookies)
         version.find(id)
         return version
 
     def version_count_related_issues(self, id):
-        r_json = self.__get_json('version/' + id + '/relatedIssueCounts', '')
+        r_json = self._get_json('version/' + id + '/relatedIssueCounts', '')
         del r_json['self']   # this isn't really an addressable resource
         return r_json
 
     def version_count_unresolved_issues(self, id):
-        return self.__get_json('version/' + id + '/unresolvedIssueCount', '')['issuesUnresolvedCount']
+        return self._get_json('version/' + id + '/unresolvedIssueCount', '')['issuesUnresolvedCount']
 
 ### Session authentication
 
@@ -483,7 +484,7 @@ class JIRA(object):
         r.raise_for_status()
 
 ### Utilities
-    def __get_json(self, path, return_cls, params=None):
+    def _get_json(self, path, return_cls, params=None):
         url = '{}/rest/api/2/{}'.format(self.options['server'], path)
         r = requests.get(url, cookies=self.cookies, params=params)
         r.raise_for_status()
