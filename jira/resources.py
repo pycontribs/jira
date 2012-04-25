@@ -76,6 +76,47 @@ def dict2obj(d):
             setattr(top, i, j)
     return top
 
+class Attachment(Resource):
+
+    def __init__(self, options, raw=None, cookies=None):
+        Resource.__init__(self, 'attachment/{0}', options, cookies)
+        if raw:
+            self.raw = raw
+            self.self = raw['self']
+
+class Component(Resource):
+
+    def __init__(self, options, raw=None, cookies=None):
+        Resource.__init__(self, 'component/{0}', options, cookies)
+        if raw:
+            self.raw = raw
+            self.self = raw['self']
+
+class Dashboards(Resource):
+
+    def __init__(self, options, raw=None, cookies=None):
+        Resource.__init__(self, 'dashboard', options, cookies)
+        if raw:
+            self.raw = raw
+            self.self = raw['self']
+
+class Dashboard(Resource):
+
+    def __init__(self, options, raw=None, cookies=None):
+        Resource.__init__(self, 'dashboard/{0}', options, cookies)
+        if raw:
+            self.raw = raw
+            self.self = raw['self']
+
+class Filter(Resource):
+
+    def __init__(self, options, raw=None, cookies=None):
+        Resource.__init__(self, 'filter/{0}', options, cookies)
+        if raw:
+            self.raw = raw
+            self.self = raw['self']
+
+
 class Issue(Resource):
 
     def __init__(self, options, raw=None, cookies=None):
@@ -83,11 +124,6 @@ class Issue(Resource):
         if raw:
             self.raw = raw
             self.self = raw['self']
-
-class CreateMeta(Resource):
-
-    def __init__(self, options, cookies=None):
-        Resource.__init__(self, 'issue/createmeta', options, cookies)
 
 class Comments(Resource):
 
@@ -102,12 +138,114 @@ class Comment(Resource):
             self.raw = raw
             self.self = raw['self']
 
-class Projects(Resource):
+class Votes(Resource):
 
-    def __init__(self, options, cookies=None):
-        Resource.__init__(self, 'project', options, cookies)
+    def __init__(self, options, raw=None, cookies=None):
+        Resource.__init__(self, 'issue/{0}/votes', options, cookies)
+        if raw:
+            self.raw = raw
+            self.self = raw['self']
+
+class Watchers(Resource):
+
+    def __init__(self, options, raw=None, cookies=None):
+        Resource.__init__(self, 'issue/{0}/watchers', options, cookies)
+        if raw:
+            self.raw = raw
+            self.self = raw['self']
+
+class Worklog(Resource):
+
+    def __init__(self, options, raw=None, cookies=None):
+        Resource.__init__(self, 'issue/{0}/worklog', options, cookies)
+        if raw:
+            self.raw = raw
+            self.self = raw['self']
+
+class IssueLink(Resource):
+
+    def __init__(self, options, raw=None, cookies=None):
+        Resource.__init__(self, 'issueLink/{0}', options, cookies)
+        if raw:
+            self.raw = raw
+            self.self = raw['self']
+
+class IssueLinkType(Resource):
+
+    def __init__(self, options, raw=None, cookies=None):
+        Resource.__init__(self, 'issueLinkType/{0}', options, cookies)
+        if raw:
+            self.raw = raw
+            self.self = raw['self']
+
+class IssueType(Resource):
+
+    def __init__(self, options, raw=None, cookies=None):
+        Resource.__init__(self, 'issuetype/{0}', options, cookies)
+        if raw:
+            self.raw = raw
+            self.self = raw['self']
+
+class Priority(Resource):
+
+    def __init__(self, options, raw=None, cookies=None):
+        Resource.__init__(self, 'priority/{0}', options, cookies)
+        if raw:
+            self.raw = raw
+            self.self = raw['self']
 
 class Project(Resource):
 
-    def __init__(self, options, cookies=None):
+    def __init__(self, options, raw=None, cookies=None):
         Resource.__init__(self, 'project/{0}', options, cookies)
+        if raw:
+            self.raw = raw
+            self.self = raw['self']
+
+class Role(Resource):
+
+    def __init__(self, options, raw=None, cookies=None):
+        Resource.__init__(self, 'project/{0}/role/{1}', options, cookies)
+        if raw:
+            self.raw = raw
+            self.self = raw['self']
+
+class Resolution(Resource):
+
+    def __init__(self, options, raw=None, cookies=None):
+        Resource.__init__(self, 'resolution/{0}', options, cookies)
+        if raw:
+            self.raw = raw
+            self.self = raw['self']
+
+class SecurityLevel(Resource):
+
+    def __init__(self, options, raw=None, cookies=None):
+        Resource.__init__(self, 'securitylevel/{0}', options, cookies)
+        if raw:
+            self.raw = raw
+            self.self = raw['self']
+
+class Status(Resource):
+
+    def __init__(self, options, raw=None, cookies=None):
+        Resource.__init__(self, 'status/{0}', options, cookies)
+        if raw:
+            self.raw = raw
+            self.self = raw['self']
+
+class User(Resource):
+
+    def __init__(self, options, raw=None, cookies=None):
+        Resource.__init__(self, 'user?username={0}', options, cookies)
+        if raw:
+            self.raw = raw
+            self.self = raw['self']
+
+class Version(Resource):
+
+    def __init__(self, options, raw=None, cookies=None):
+        Resource.__init__(self, 'version/{0}', options, cookies)
+        if raw:
+            self.raw = raw
+            self.self = raw['self']

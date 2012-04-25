@@ -1,7 +1,7 @@
 
 import requests
 import simplejson as json
-from jira.resources import Resource, Issue, Comments, Comment, Project
+from jira.resources import Resource, Issue, Comments, Comment, Project, Attachment, Component, Dashboards, Dashboard, Filter, Votes, Watchers, Worklog, IssueLink, IssueLinkType, IssueType, Priority, Version, Role, Resolution, SecurityLevel, Status, User
 
 __author__ = 'bspeakmon@atlassian.com'
 
@@ -59,7 +59,9 @@ class JIRA(object):
 ### Attachments
 
     def attachment(self, id):
-        pass
+        attachment = Attachment(self.options, cookies=self.cookies)
+        attachment.find(id)
+        return attachment
 
     # non-resource
     def attachment_meta(self):
@@ -68,26 +70,37 @@ class JIRA(object):
 ### Components
 
     def component(self, id):
-        pass
+        component = Component(self.options, cookies=self.cookies)
+        component.find(id)
+        return component
 
     def create_component(self, **kw):
         pass
 
     def component_count_related_issues(self, id):
-        pass
+        return self.__get_json('component/' + id + '/relatedIssueCounts', 'ComponentRelatedIssues')['issueCount']
 
 ### Custom field options
 
     def custom_field_option(self, id):
-        pass
+        return self.__get_json('customFieldOption/' + id, 'CustomFieldOption')['value']
 
 ### Dashboards
 
     def dashboards(self, filter=None, startAt=0, maxResults=20):
-        pass
+        dashboards = Dashboards(self.options, cookies=self.cookies)
+        params = {}
+        if filter is not None:
+            params['filter'] = filter
+        params['startAt'] = startAt
+        params['maxResults'] = maxResults
+        dashboards.find(params=params)
+        return dashboards
 
     def dashboard(self, id):
-        pass
+        dashboard = Dashboard(self.options, cookies=self.cookies)
+        dashboard.find(id)
+        return dashboard
 
 ### Fields
 
@@ -98,10 +111,14 @@ class JIRA(object):
 ### Filters
 
     def filter(self, id):
-        pass
+        filter = Filter(self.options, cookies=self.cookies)
+        filter.find(id)
+        return filter
 
     def favourite_filters(self):
-        pass
+        r_json = self.__get_json('filter/favourite', 'FavouriteFilters')
+        filters = [Filter(self.options, raw_filter_json, cookies=self.cookies) for raw_filter_json in r_json]
+        return filters
 
 ### Groups
 
@@ -119,8 +136,17 @@ class JIRA(object):
     def create_issue(self, **kw):
         pass
 
-    def createmeta(self):
-        pass
+    def createmeta(self, projectKeys=None, projectIds=None, issuetypeIds=None, issuetypeNames=None):
+        params = {}
+        if projectKeys is not None:
+            params['projectKeys'] = projectKeys
+        if projectIds is not None:
+            params['projectIds'] = projectIds
+        if issuetypeIds is not None:
+            params['issuetypeIds'] = issuetypeIds
+        if issuetypeNames is not None:
+            params['issuetypeNames'] = issuetypeNames
+        return self.__get_json('issue/createmeta', 'CreateMeta', params=params)
 
     # non-resource
     def assign_issue(self, issue, assignee):
@@ -152,14 +178,23 @@ class JIRA(object):
         pass
 
     # non-resource
-    def transitions(self, issue):
-        return self.__get_json('issue/' + issue + '/transitions', 'IssueTransitions')
+    def transitions(self, issue, id=None, expand=None):
+        params = {}
+        if id is not None:
+            params['transitionId'] = id
+        if expand is not None:
+            params['expand'] = expand
+        return self.__get_json('issue/' + issue + '/transitions', 'IssueTransition', params=params)['transitions']
 
     def votes(self, issue):
-        pass
+        votes = Votes(self.options, cookies=self.cookies)
+        votes.find(issue)
+        return votes
 
     def watchers(self, issue):
-        pass
+        watchers = Watchers(self.options, cookies=self.cookies)
+        watchers.find(issue)
+        return votes
 
     def add_watcher(self, watcher):
         pass
@@ -167,10 +202,14 @@ class JIRA(object):
     # also have delete_watcher?
 
     def worklogs(self, issue):
-        pass
+        r_json = self.__get_json('issue/' + issue + '/worklog', 'Worklogs')
+        worklogs = [Worklog(self.options, raw_worklog_json, self.cookies) for raw_worklog_json in r_json['worklogs']]
+        return worklogs
 
     def worklog(self, issue, id):
-        pass
+        worklog = Worklog(self.options, cookies=self.cookies)
+        worklog.find((issue, id))
+        return worklog
 
     def add_worklog(self, issue, **kw):
         pass
@@ -184,23 +223,33 @@ class JIRA(object):
         pass
 
     def issue_link(self, id):
-        pass
+        link = IssueLink(self.options, cookies=self.cookies)
+        link.find(id)
+        return link
 
 ### Issue link types
 
     def issue_link_types(self):
-        pass
+        r_json = self.__get_json('issueLinkType', 'IssueLinkTypes')
+        link_types = [IssueLinkType(self.options, raw_link_json, self.cookies) for raw_link_json in r_json['issueLinkTypes']]
+        return link_types
 
     def issue_link_type(self, id):
-        pass
+        link_type = IssueLinkType(self.options, cookies=self.cookies)
+        link_type.find(id)
+        return link_type
 
 ### Issue types
 
     def issue_types(self):
-        pass
+        r_json = self.__get_json('issuetype', 'IssueTypes')
+        issue_types = [IssueType(self.options, raw_type_json, self.cookies) for raw_type_json in r_json]
+        return issue_types
 
     def issue_type(self, id):
-        pass
+        issue_type = IssueType(self.options, cookies=self.cookies)
+        issue_type.find(id)
+        return issue_type
 
 ### User permissions
 
@@ -211,15 +260,21 @@ class JIRA(object):
 ### Priorities
 
     def priorities(self):
-        pass
+        r_json = self.__get_json('priority', 'Priorities')
+        priorities = [Priority(self.options, raw_priority_json, self.cookies) for raw_priority_json in r_json]
+        return priorities
 
     def priority(self, id):
-        pass
+        priority = Priority(self.options, cookies=self.cookies)
+        priority.find(id)
+        return priority
 
 ### Projects
 
     def projects(self):
-        pass
+        r_json = self.__get_json('project', 'Projects')
+        projects = [Project(self.options, raw_project_json, self.cookies) for raw_project_json in r_json]
+        return projects
 
     def project(self, id):
         project = Project(self.options, self.cookies)
@@ -237,25 +292,35 @@ class JIRA(object):
         pass
 
     def project_components(self, project):
-        pass
+        r_json = self.__get_json('project/' + project + '/components', 'ProjectComponents')
+        components = [Component(self.options, raw_comp_json, self.cookies) for raw_comp_json in r_json]
+        return components
 
     def project_versions(self, project):
-        pass
+        r_json = self.__get_json('project/' + project + '/versions', 'ProjectVersions')
+        versions = [Version(self.options, raw_ver_json, self.cookies) for raw_ver_json in r_json]
+        return versions
 
     # non-resource
     def roles(self, project):
         return self.__get_json('project/' + project + '/role', 'ProjectRoles')
 
     def role(self, project, id):
-        pass
+        role = Role(self.options, cookies=self.cookies)
+        role.find((project, id))
+        return role
 
 ### Resolutions
 
     def resolutions(self):
-        pass
+        r_json = self.__get_json('resolution', 'Resolutions')
+        resolutions = [Resolution(self.options, raw_res_json, self.cookies) for raw_res_json in r_json]
+        return resolutions
 
     def resolution(self, id):
-        pass
+        resolution = Resolution(self.options, cookies=self.cookies)
+        resolution.find(id)
+        return resolution
 
 ### Search
 
@@ -278,7 +343,9 @@ class JIRA(object):
 ### Security levels
 
     def security_level(self, id):
-        pass
+        sec_level = SecurityLevel(self.options, cookies=self.cookies)
+        sec_level.find(id)
+        return sec_level
 
 ### Server info
 
@@ -289,18 +356,25 @@ class JIRA(object):
 ### Status
 
     def statuses(self):
-        pass
+        r_json = self.__get_json('status', 'Statuses')
+        statuses = [Status(self.options, raw_stat_json, self.cookies) for raw_stat_json in r_json]
+        return statuses
 
     def status(self, id):
-        pass
+        status = Status(self.options, cookies=self.cookies)
+        status.find(id)
+        return status
 
 ### Users
 
     def user(self, id):
-        pass
+        user = User(self.options, cookies=self.cookies)
+        user.find(id)
+        return user
 
-    def search_assignable_users(self, user, project, issue=None, startAt=0, maxResults=50, **kw):
-        pass
+    def search_assignable_users(self, user, projectKeys, issue=None, startAt=0, maxResults=50, **kw):
+        params = {}
+
 
     # non-resource
     def user_avatars(self, user):
@@ -313,7 +387,14 @@ class JIRA(object):
         pass
 
     def search_users(self, user, startAt=0, maxResults=50):
-        pass
+        params = {
+            'username', user,
+            'startAt', startAt,
+            'maxResults', maxResults
+        }
+        r_json = self.__get_json('user/search', 'Users', params=params)
+        users = [User(self.options, raw_user_json, self.cookies) for raw_user_json in r_json]
+        return users
 
     def search_allowed_users(self, user, issueKey, projectKey, startAt=0, maxResults=50):
         pass
@@ -327,13 +408,17 @@ class JIRA(object):
         pass
 
     def version(self, id):
-        pass
+        version = Version(self.options, cookies=self.cookies)
+        version.find(id)
+        return version
 
     def version_count_related_issues(self, id):
-        pass
+        r_json = self.__get_json('version/' + id + '/relatedIssueCounts', '')
+        del r_json['self']   # this isn't really an addressable resource
+        return r_json
 
     def version_count_unresolved_issues(self, id):
-        pass
+        return self.__get_json('version/' + id + '/unresolvedIssueCount', '')['issuesUnresolvedCount']
 
 ### Session authentication
 
