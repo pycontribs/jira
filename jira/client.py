@@ -372,9 +372,28 @@ class JIRA(object):
         user.find(id)
         return user
 
-    def search_assignable_users(self, user, projectKeys, issue=None, startAt=0, maxResults=50, **kw):
-        params = {}
+    def search_assignable_users_for_projects(self, user, projectKeys, issue=None, startAt=0, maxResults=50, **kw):
+        params = {
+            'username': user,
+            'projectKeys': projectKeys,
+            'startAt': startAt,
+            'maxResults': maxResults
+        }
+        r_json = self.__get_json('user/assignable/multiProjectSearch', 'UserResults', params=params)
+        users = [User(self.options, raw_user_json, self.cookies) for raw_user_json in r_json]
+        return users
 
+    def search_assignable_users_for_issues(self, user, project, issue, startAt=0, maxResults=50):
+        params = {
+            'username': user,
+            'project': project,
+            'issueKey': issue,
+            'startAt': startAt,
+            'maxResults': maxResults,
+        }
+        r_json = self.__get_json('user/assignable/search', 'UserResults', params=params)
+        users = [User(self.options, raw_user_json, self.cookies) for raw_user_json in r_json]
+        return users
 
     # non-resource
     def user_avatars(self, user):
@@ -396,8 +415,18 @@ class JIRA(object):
         users = [User(self.options, raw_user_json, self.cookies) for raw_user_json in r_json]
         return users
 
-    def search_allowed_users(self, user, issueKey, projectKey, startAt=0, maxResults=50):
-        pass
+    def search_allowed_users_for_issue(self, user, issue, project=None, startAt=0, maxResults=50):
+        params = {
+            'username': user,
+            'issueKey': issue,
+            'startAt': startAt,
+            'maxResults': maxResults,
+        }
+        if project is not None:
+            params['projectKey'] = project
+        r_json = self.__get_json('user/viewissue/search', 'UserResults', params=params)
+        users = [User(self.options, raw_user_json, self.cookies) for raw_user_json in r_json]
+        return users
 
 ### Versions
 
@@ -423,7 +452,12 @@ class JIRA(object):
 ### Session authentication
 
     def session(self):
-        pass
+        url = '{}/rest/auth/1/session'.format(self.options['server'])
+        r = requests.get(url, cookies=self.cookies)
+        r.raise_for_status()
+
+        user = User(self.options, json.loads(r.text), self.cookies)
+        return user
 
     def create_http_basic_session(self, username, password):
         url = self.options['server'] + '/rest/auth/1/session'
@@ -437,12 +471,16 @@ class JIRA(object):
         return r.cookies
 
     def kill_session(self):
-        pass
+        url = self.options['server'] + '/rest/auth/1/session'
+        r = requests.delete(url, cookies=self.cookies)
+        r.raise_for_status()
 
 ### Websudo
 
     def kill_websudo(self):
-        pass
+        url = self.options['server'] + '/rest/auth/1/websudo'
+        r = requests.delete(url, cookies=self.cookies)
+        r.raise_for_status()
 
 ### Utilities
     def __get_json(self, path, return_cls, params=None):
