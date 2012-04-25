@@ -388,11 +388,11 @@ class JIRA(object):
 
     def search_users(self, user, startAt=0, maxResults=50):
         params = {
-            'username', user,
-            'startAt', startAt,
-            'maxResults', maxResults
+            'username': user,
+            'startAt': startAt,
+            'maxResults': maxResults
         }
-        r_json = self.__get_json('user/search', 'Users', params=params)
+        r_json = self.__get_json('user/search', 'UserResults', params=params)
         users = [User(self.options, raw_user_json, self.cookies) for raw_user_json in r_json]
         return users
 
