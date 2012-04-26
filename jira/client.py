@@ -46,7 +46,7 @@ class JIRA(object):
 
     # non-resource
     def application_properties(self, key=None):
-        return self._get_json('application-properties', 'ApplicationProperties', params={'key': key})
+        return self._get_json('application-properties', params={'key': key})
 
     def set_application_property(self, key, value):
         url = self.options['server'] + '/rest/api/2/application-properties/' + key
@@ -125,7 +125,7 @@ class JIRA(object):
 
     # non-resource
     def groups(self, query, exclude=None):
-        return self._get_json('groups/picker', 'Groups', params={'query': query, 'exclude': exclude})
+        return self._get_json('groups/picker', params={'query': query, 'exclude': exclude})
 
 ### Issues
 
@@ -147,7 +147,7 @@ class JIRA(object):
             params['issuetypeIds'] = issuetypeIds
         if issuetypeNames is not None:
             params['issuetypeNames'] = issuetypeNames
-        return self._get_json('issue/createmeta', 'CreateMeta', params=params)
+        return self._get_json('issue/createmeta', params)
 
     # non-resource
     def assign_issue(self, issue, assignee):
@@ -185,7 +185,7 @@ class JIRA(object):
             params['transitionId'] = id
         if expand is not None:
             params['expand'] = expand
-        return self._get_json('issue/' + issue + '/transitions', 'IssueTransition', params=params)['transitions']
+        return self._get_json('issue/' + issue + '/transitions', params)['transitions']
 
     def votes(self, issue):
         votes = Votes(self.options, self.cookies)
@@ -256,7 +256,7 @@ class JIRA(object):
 
     # non-resource
     def my_permissions(self, project=None, issue=None):
-        return self._get_json('mypermissions', 'MyPermissions', params={'projectKey': project, 'issueKey': issue})
+        return self._get_json('mypermissions', params={'projectKey': project, 'issueKey': issue})
 
 ### Priorities
 
@@ -337,7 +337,7 @@ class JIRA(object):
             "expand": expand
         }
 
-        resource = self._get_json('search', 'Search', params=search_params)
+        resource = self._get_json('search', search_params)
         issues = [Issue(self.options, self.cookies, raw_issue_json) for raw_issue_json in resource['issues']]
         return issues
 
@@ -380,7 +380,7 @@ class JIRA(object):
             'startAt': startAt,
             'maxResults': maxResults
         }
-        r_json = self._get_json('user/assignable/multiProjectSearch', 'UserResults', params=params)
+        r_json = self._get_json('user/assignable/multiProjectSearch', params)
         users = [User(self.options, self.cookies, raw_user_json) for raw_user_json in r_json]
         return users
 
@@ -392,13 +392,13 @@ class JIRA(object):
             'startAt': startAt,
             'maxResults': maxResults,
         }
-        r_json = self._get_json('user/assignable/search', 'UserResults', params=params)
+        r_json = self._get_json('user/assignable/search', params)
         users = [User(self.options, self.cookies, raw_user_json) for raw_user_json in r_json]
         return users
 
     # non-resource
     def user_avatars(self, user):
-        return self._get_json('user/avatars', 'UserAvatars', params={'username': user})
+        return self._get_json('user/avatars', params={'username': user})
 
     def create_temp_user_avatar(self, user, filename, size, avatar_img):
         pass
@@ -412,7 +412,7 @@ class JIRA(object):
             'startAt': startAt,
             'maxResults': maxResults
         }
-        r_json = self._get_json('user/search', 'UserResults', params=params)
+        r_json = self._get_json('user/search', params)
         users = [User(self.options, self.cookies, raw_user_json) for raw_user_json in r_json]
         return users
 
@@ -425,7 +425,7 @@ class JIRA(object):
         }
         if project is not None:
             params['projectKey'] = project
-        r_json = self._get_json('user/viewissue/search', 'UserResults', params=params)
+        r_json = self._get_json('user/viewissue/search', params)
         users = [User(self.options, self.cookies, raw_user_json) for raw_user_json in r_json]
         return users
 
@@ -453,7 +453,7 @@ class JIRA(object):
 ### Session authentication
 
     def session(self):
-        url = '{}/rest/auth/1/session'.format(self.options['server'])
+        url = '{server}/rest/auth/1/session'.format(self.options)
         r = requests.get(url, cookies=self.cookies)
         r.raise_for_status()
 
@@ -484,7 +484,7 @@ class JIRA(object):
         r.raise_for_status()
 
 ### Utilities
-    def _get_json(self, path, return_cls, params=None):
+    def _get_json(self, path, params=None):
         url = '{}/rest/api/2/{}'.format(self.options['server'], path)
         r = requests.get(url, cookies=self.cookies, params=params)
         r.raise_for_status()
