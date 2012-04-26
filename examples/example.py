@@ -3,6 +3,7 @@ import pprint as pp
 
 jira = JIRA(basic_auth=('admin', 'admin'))
 
+i = jira.project('BULK')
 props = jira.application_properties()
 #jira.set_application_property('jira.clone.prefix', 'horseflesh')
 

@@ -88,6 +88,7 @@ class JIRA(object):
 
 ### Dashboards
 
+    # TODO: Should this be _get_json instead of resource?
     def dashboards(self, filter=None, startAt=0, maxResults=20):
         dashboards = Dashboards(self.options, self.cookies)
         params = {}
@@ -156,6 +157,7 @@ class JIRA(object):
         r = requests.put(url, cookies=self.cookies, data=json.dumps(payload), headers={'content-type': 'application/json'})
         r.raise_for_status()
 
+    # TODO: Should this be _get_json instead of resource?
     def comments(self, issue):
         resource = Comments(self.options, self.cookies)
         resource.find(issue)

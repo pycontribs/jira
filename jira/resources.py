@@ -1,3 +1,4 @@
+import re
 import requests
 from jira.exceptions import JIRAError
 import simplejson as json
@@ -55,8 +56,9 @@ class Resource(object):
 
     def _parse_raw(self, raw):
         self.raw = raw
-        json_obj = dict2obj(raw)
-        self.__dict__.update(json_obj.__dict__)
+#        json_obj = dict2obj(raw)
+#        self.__dict__.update(json_obj.__dict__)
+        dict2resource(raw, self, self.options, self.cookies)
 
     def _url(self, ids):
         url = '{server}/rest/{rest_path}/{rest_api_version}/'.format(**self.options)
@@ -66,6 +68,36 @@ class Resource(object):
     def _default_headers(self, user_headers):
         return dict(user_headers.items() + {'accept': 'application/json'}.items())
 
+
+def dict2resource(raw, top=None, options=None, cookies=None):
+    if top is None:
+        top = type('PropertyHolder', (object,), raw)
+
+    seqs = tuple, list, set, frozenset
+    for i, j in raw.iteritems():
+        if isinstance(j, dict):
+            if 'self' in j:
+                resource = cls_for_resource(j['self'])(options, cookies, j)
+                setattr(top, i, resource)
+            else:
+                setattr(top, i, dict2resource(j, options=options, cookies=cookies))
+        elif isinstance(j, seqs):
+            seq_list = []
+            for seq_elem in j:
+                if isinstance(seq_elem, dict):
+                    if 'self' in seq_elem:
+                        resource = cls_for_resource(seq_elem['self'])(options, cookies, seq_elem)
+                        seq_list.append(resource)
+                    else:
+                        seq_list.append(dict2resource(seq_elem, options=options, cookies=cookies))
+                else:
+                    seq_list.append(seq_elem)
+            setattr(top, i, seq_list)
+            #setattr(top, i,
+            #    type(j) (dict2resource(sj, options=options, cookies=cookies) if isinstance(sj, dict) else sj for sj in j))
+        else:
+            setattr(top, i, j)
+    return top
 
 
 class Attachment(Resource):
@@ -140,7 +172,7 @@ class Watchers(Resource):
 class Worklog(Resource):
 
     def __init__(self, options, cookies=None, raw=None):
-        Resource.__init__(self, 'issue/{0}/worklog', options, cookies)
+        Resource.__init__(self, 'issue/{0}/worklog/{1}', options, cookies)
         if raw:
             self._parse_raw(raw)
 
@@ -220,3 +252,35 @@ class Version(Resource):
         Resource.__init__(self, 'version/{0}', options, cookies)
         if raw:
             self._parse_raw(raw)
+
+
+resource_class_map = {
+    r'attachment/[^/]+$': Attachment,
+    r'component/[^/]+$': Component,
+    r'dashboard/[^/]+$': Dashboard,
+    r'dashboard$': Dashboards,
+    r'filter/[^/]$': Filter,
+    r'issue/[^/]+$': Issue,
+    r'issue/[^/]+/comment$': Comments,
+    r'issue/[^/]+/comment/[^/]+$': Comment,
+    r'issue/[^/]+/votes': Votes,
+    r'issue/[^/]+/watchers': Watchers,
+    r'issue/[^/]+/worklog/[^/]+$': Worklog,
+    r'issueLink/[^/]+$': IssueLink,
+    r'issueLinkType/[^/]+$': IssueLinkType,
+    r'issuetype/[^/]+$': IssueType,
+    r'priority/[^/]+$': Priority,
+    r'project/[^/]+$': Project,
+    r'project/[^/]+/role/[^/]+$': Role,
+    r'resolution/[^/]+$': Resolution,
+    r'securitylevel/[^/]+$': SecurityLevel,
+    r'status/[^/]+$': Status,
+    r'user\?username[^/]+$': User,
+    r'version/[^/]+$': Version,
+}
+
+def cls_for_resource(resource_literal):
+    for resource in resource_class_map:
+        if re.search(resource, resource_literal):
+            return resource_class_map[resource]
+
