@@ -443,17 +443,17 @@ class JIRA(object):
         return version
 
     def version_count_related_issues(self, id):
-        r_json = self._get_json('version/' + id + '/relatedIssueCounts', '')
+        r_json = self._get_json('version/' + id + '/relatedIssueCounts')
         del r_json['self']   # this isn't really an addressable resource
         return r_json
 
     def version_count_unresolved_issues(self, id):
-        return self._get_json('version/' + id + '/unresolvedIssueCount', '')['issuesUnresolvedCount']
+        return self._get_json('version/' + id + '/unresolvedIssueCount')['issuesUnresolvedCount']
 
 ### Session authentication
 
     def session(self):
-        url = '{server}/rest/auth/1/session'.format(self.options)
+        url = '{server}/rest/auth/1/session'.format(**self.options)
         r = requests.get(url, cookies=self.cookies)
         r.raise_for_status()
 

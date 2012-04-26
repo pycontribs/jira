@@ -59,7 +59,7 @@ class Resource(object):
         self.__dict__.update(json_obj.__dict__)
 
     def _url(self, ids):
-        url = '{server}/rest/{rest_path}/{rest_api_version}/'.format(self.options)
+        url = '{server}/rest/{rest_path}/{rest_api_version}/'.format(**self.options)
         url += self.resource.format(*ids)
         return url
 
