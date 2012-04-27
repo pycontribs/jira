@@ -63,7 +63,7 @@ class JIRA(object):
 
     # non-resource
     def attachment_meta(self):
-        return self._get_json('attachment/meta', 'AttachmentMeta')
+        return self._get_json('attachment/meta')
 
 ### Components
 
@@ -76,12 +76,12 @@ class JIRA(object):
         pass
 
     def component_count_related_issues(self, id):
-        return self._get_json('component/' + id + '/relatedIssueCounts', 'ComponentRelatedIssues')['issueCount']
+        return self._get_json('component/' + id + '/relatedIssueCounts')['issueCount']
 
 ### Custom field options
 
     def custom_field_option(self, id):
-        return self._get_json('customFieldOption/' + id, 'CustomFieldOption')['value']
+        return self._get_json('customFieldOption/' + id)['value']
 
 ### Dashboards
 
@@ -105,7 +105,7 @@ class JIRA(object):
 
     # non-resource
     def fields(self):
-        return self._get_json('field', 'Fields')
+        return self._get_json('field')
 
 ### Filters
 
@@ -115,7 +115,7 @@ class JIRA(object):
         return filter
 
     def favourite_filters(self):
-        r_json = self._get_json('filter/favourite', 'FavouriteFilters')
+        r_json = self._get_json('filter/favourite')
         filters = [Filter(self.options, self.cookies, raw_filter_json) for raw_filter_json in r_json]
         return filters
 
@@ -127,15 +127,21 @@ class JIRA(object):
 
 ### Issues
 
-    def issue(self, id):
+    def issue(self, id, fields=None, expand=None):
         issue = Issue(self.options, self.cookies)
-        issue.find(id)
+
+        params = {}
+        if fields is not None:
+            params['fields'] = fields
+        if expand is not None:
+            params['expand'] = expand
+        issue.find(id, params=params)
         return issue
 
     def create_issue(self, **kw):
         pass
 
-    def createmeta(self, projectKeys=None, projectIds=None, issuetypeIds=None, issuetypeNames=None):
+    def createmeta(self, projectKeys=None, projectIds=None, issuetypeIds=None, issuetypeNames=None, expand=None):
         params = {}
         if projectKeys is not None:
             params['projectKeys'] = projectKeys
@@ -145,6 +151,8 @@ class JIRA(object):
             params['issuetypeIds'] = issuetypeIds
         if issuetypeNames is not None:
             params['issuetypeNames'] = issuetypeNames
+        if expand is not None:
+            params['expand'] = expand
         return self._get_json('issue/createmeta', params)
 
     # non-resource
@@ -169,7 +177,7 @@ class JIRA(object):
 
     # non-resource
     def editmeta(self, issue):
-        return self._get_json('issue/' + issue + '/editmeta', 'EditMeta')
+        return self._get_json('issue/' + issue + '/editmeta')
 
     def remote_links(self, issue):
         pass
@@ -202,7 +210,7 @@ class JIRA(object):
     # also have delete_watcher?
 
     def worklogs(self, issue):
-        r_json = self._get_json('issue/' + issue + '/worklog', 'Worklogs')
+        r_json = self._get_json('issue/' + issue + '/worklog')
         worklogs = [Worklog(self.options, self.cookies, raw_worklog_json) for raw_worklog_json in r_json['worklogs']]
         return worklogs
 
@@ -230,7 +238,7 @@ class JIRA(object):
 ### Issue link types
 
     def issue_link_types(self):
-        r_json = self._get_json('issueLinkType', 'IssueLinkTypes')
+        r_json = self._get_json('issueLinkType')
         link_types = [IssueLinkType(self.options, self.cookies, raw_link_json) for raw_link_json in r_json['issueLinkTypes']]
         return link_types
 
@@ -242,7 +250,7 @@ class JIRA(object):
 ### Issue types
 
     def issue_types(self):
-        r_json = self._get_json('issuetype', 'IssueTypes')
+        r_json = self._get_json('issuetype')
         issue_types = [IssueType(self.options, self.cookies, raw_type_json) for raw_type_json in r_json]
         return issue_types
 
@@ -260,7 +268,7 @@ class JIRA(object):
 ### Priorities
 
     def priorities(self):
-        r_json = self._get_json('priority', 'Priorities')
+        r_json = self._get_json('priority')
         priorities = [Priority(self.options, self.cookies, raw_priority_json) for raw_priority_json in r_json]
         return priorities
 
@@ -272,7 +280,7 @@ class JIRA(object):
 ### Projects
 
     def projects(self):
-        r_json = self._get_json('project', 'Projects')
+        r_json = self._get_json('project')
         projects = [Project(self.options, self.cookies, raw_project_json) for raw_project_json in r_json]
         return projects
 
@@ -283,7 +291,7 @@ class JIRA(object):
 
     # non-resource
     def project_avatars(self, project):
-        return self._get_json('project/' + project + '/avatars', 'ProjectAvatars')
+        return self._get_json('project/' + project + '/avatars')
 
     def create_temp_project_avatar(self, project, name, size, avatar_img):
         pass
@@ -292,18 +300,18 @@ class JIRA(object):
         pass
 
     def project_components(self, project):
-        r_json = self._get_json('project/' + project + '/components', 'ProjectComponents')
+        r_json = self._get_json('project/' + project + '/components')
         components = [Component(self.options, self.cookies, raw_comp_json) for raw_comp_json in r_json]
         return components
 
-    def project_versions(self, project):
-        r_json = self._get_json('project/' + project + '/versions', 'ProjectVersions')
+    def project_versions(self, project, expand=None):
+        r_json = self._get_json('project/' + project + '/versions', params=expand)
         versions = [Version(self.options, self.cookies, raw_ver_json) for raw_ver_json in r_json]
         return versions
 
     # non-resource
     def roles(self, project):
-        return self._get_json('project/' + project + '/role', 'ProjectRoles')
+        return self._get_json('project/' + project + '/role')
 
     def role(self, project, id):
         role = Role(self.options, self.cookies)
@@ -313,7 +321,7 @@ class JIRA(object):
 ### Resolutions
 
     def resolutions(self):
-        r_json = self._get_json('resolution', 'Resolutions')
+        r_json = self._get_json('resolution')
         resolutions = [Resolution(self.options, self.cookies, raw_res_json) for raw_res_json in r_json]
         return resolutions
 
@@ -351,12 +359,12 @@ class JIRA(object):
 
     # non-resource
     def server_info(self):
-        return self._get_json('serverInfo', 'ServerInfo')
+        return self._get_json('serverInfo')
 
 ### Status
 
     def statuses(self):
-        r_json = self._get_json('status', 'Statuses')
+        r_json = self._get_json('status')
         statuses = [Status(self.options, self.cookies, raw_stat_json) for raw_stat_json in r_json]
         return statuses
 
@@ -367,9 +375,12 @@ class JIRA(object):
 
 ### Users
 
-    def user(self, id):
+    def user(self, id, expand=None):
         user = User(self.options, self.cookies)
-        user.find(id)
+        params = {}
+        if expand is not None:
+            params['expand'] = expand
+        user.find(id, params=params)
         return user
 
     def search_assignable_users_for_projects(self, user, projectKeys, issue=None, startAt=0, maxResults=50, **kw):
@@ -383,13 +394,14 @@ class JIRA(object):
         users = [User(self.options, self.cookies, raw_user_json) for raw_user_json in r_json]
         return users
 
-    def search_assignable_users_for_issues(self, user, project, issue, startAt=0, maxResults=50):
+    def search_assignable_users_for_issues(self, user, project, issue, startAt=0, maxResults=50, expand=None):
         params = {
             'username': user,
             'project': project,
             'issueKey': issue,
             'startAt': startAt,
             'maxResults': maxResults,
+            'expand': expand
         }
         r_json = self._get_json('user/assignable/search', params)
         users = [User(self.options, self.cookies, raw_user_json) for raw_user_json in r_json]
@@ -436,9 +448,12 @@ class JIRA(object):
     def move_version(self, id, **kw):
         pass
 
-    def version(self, id):
+    def version(self, id, expand=None):
         version = Version(self.options, self.cookies)
-        version.find(id)
+        params = {}
+        if expand is not None:
+            params['expand'] = expand
+        version.find(id, params=params)
         return version
 
     def version_count_related_issues(self, id):
