@@ -2,9 +2,6 @@
 import requests
 import simplejson as json
 from jira.resources import Resource, Issue, Comments, Comment, Project, Attachment, Component, Dashboards, Dashboard, Filter, Votes, Watchers, Worklog, IssueLink, IssueLinkType, IssueType, Priority, Version, Role, Resolution, SecurityLevel, Status, User
-from jira.utils import dict2obj
-
-__author__ = 'bspeakmon@atlassian.com'
 
 class JIRA(object):
 
@@ -492,6 +489,4 @@ class JIRA(object):
         r.raise_for_status()
 
         r_json = json.loads(r.text)
-#        obj = type(return_cls, (object,), type(r_json))
-#        obj.__dict__.update(r_json.__dict__)
         return r_json

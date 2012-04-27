@@ -2,20 +2,19 @@ import re
 import requests
 from jira.exceptions import JIRAError
 import simplejson as json
-from jira.utils import dict2obj
 
 class Resource(object):
 
     def __init__(self, resource, options, cookies=None):
-        self.options = options
-        self.resource = resource
+        self._resource = resource
+        self._options = options
         self.raw = None
         self.self = None
 
         if cookies is not None:
-            self.cookies = cookies
+            self._cookies = cookies
         else:
-            self.cookies = {}
+            self._cookies = {}
 
     def find(self, ids=None, headers=None, params=None):
         if ids is None:
@@ -33,7 +32,7 @@ class Resource(object):
         url = self._url(ids)
         headers = self._default_headers(headers)
 
-        r = requests.get(url, headers=headers, params=params, cookies=self.cookies)
+        r = requests.get(url, headers=headers, params=params, cookies=self._cookies)
         if r.status_code >= 400:
             raise JIRAError(url, r.status_code, 'GET failed')
 
@@ -56,13 +55,11 @@ class Resource(object):
 
     def _parse_raw(self, raw):
         self.raw = raw
-#        json_obj = dict2obj(raw)
-#        self.__dict__.update(json_obj.__dict__)
-        dict2resource(raw, self, self.options, self.cookies)
+        dict2resource(raw, self, self._options, self._cookies)
 
     def _url(self, ids):
-        url = '{server}/rest/{rest_path}/{rest_api_version}/'.format(**self.options)
-        url += self.resource.format(*ids)
+        url = '{server}/rest/{rest_path}/{rest_api_version}/'.format(**self._options)
+        url += self._resource.format(*ids)
         return url
 
     def _default_headers(self, user_headers):
@@ -93,8 +90,6 @@ def dict2resource(raw, top=None, options=None, cookies=None):
                 else:
                     seq_list.append(seq_elem)
             setattr(top, i, seq_list)
-            #setattr(top, i,
-            #    type(j) (dict2resource(sj, options=options, cookies=cookies) if isinstance(sj, dict) else sj for sj in j))
         else:
             setattr(top, i, j)
     return top
