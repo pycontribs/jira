@@ -2,7 +2,70 @@ import unittest
 
 from jira.client import JIRA
 
-class JIRAIssueTests(unittest.TestCase):
+class UniversalResourceTests(unittest.TestCase):
+    pass
+
+class ApplicationPropertiesTests(unittest.TestCase):
+
+    def setUp(self):
+        # this user has jira-system-administrators membership
+        self.jira = JIRA(basic_auth=('eviladmin', 'eviladmin'))
+
+    def test_application_properties(self):
+        props = self.jira.application_properties()
+        self.assertEqual(len(props), 12)
+
+    def test_application_property(self):
+        clone_prefix = self.jira.application_properties(key='jira.clone.prefix')
+        self.assertEqual(clone_prefix['value'], 'CLONE -')
+
+    def test_set_application_property(self):
+        prop = 'jira.clone.prefix'
+        self.jira.set_application_property(prop, 'TCLONE -')
+        self.assertEqual(self.jira.application_properties(key=prop)['value'], 'TCLONE -')
+        self.jira.set_application_property(prop, 'CLONE -')
+        self.assertEqual(self.jira.application_properties(key=prop)['value'], 'CLONE -')
+
+class AttachmentTests(unittest.TestCase):
+
+    def setUp(self):
+        self.jira = JIRA(basic_auth=('admin', 'admin'))
+
+    def test_attachment(self):
+        attachment = self.jira.attachment('10030')
+        self.assertEqual(attachment.filename, 'AdditionalPylons.jpg')
+        self.assertEqual(attachment.size, 110787)
+
+    def test_attachment_meta(self):
+        meta = self.jira.attachment_meta()
+        self.assertTrue(meta['enabled'])
+        self.assertEqual(meta['uploadLimit'], 10485760)
+
+
+class ComponentTests(unittest.TestCase):
+
+    def setUp(self):
+        self.jira = JIRA(basic_auth=('admin', 'admin'))
+
+    def test_component(self):
+        component = self.jira.component('10003')
+        self.assertEqual(component.name, 'Bacon')
+
+    def test_component_count_related_issues(self):
+        issue_count = self.jira.component_count_related_issues('10002')
+        self.assertEqual(issue_count, 9)
+
+
+class CustomFieldOptionTests(unittest.TestCase):
+
+    def setUp(self):
+        self.jira = JIRA(basic_auth=('admin', 'admin'))
+
+    def test_custom_field_option(self):
+        option = self.jira.custom_field_option('10010')
+        self.assertEqual(option.value, 'Mehemet')
+
+class IssueTests(unittest.TestCase):
 
     def setUp(self):
         self.jira = JIRA(basic_auth=('admin', 'admin'))
@@ -70,6 +133,46 @@ class JIRAIssueTests(unittest.TestCase):
         self.assertTrue('customfield_10642' in meta['fields'])
         self.assertTrue('customfield_10240' in meta['fields'])
 
+    def test_remote_links(self):
+        pass
+
+    def test_remote_link(self):
+        pass
+
+    def test_transitions(self):
+        transitions = self.jira.transitions('BULK-2')
+        self.assertEqual(len(transitions), 2)
+
+    def test_transition(self):
+        transition = self.jira.transitions('BULK-2', '701')
+        self.assertEqual(transition[0]['name'], 'Close Issue')
+
+    def test_transition_expand(self):
+        transition = self.jira.transitions('BULK-2', '701', expand=('transitions.fields'))
+        self.assertTrue('fields' in transition[0])
+
+    @unittest.skip('test data doesn\'t support voting')
+    def test_votes(self):
+        votes = self.jira.votes('BULK-1')
+        self.assertEqual(votes.votes, 5)
+
+    @unittest.skip('test data doesn\'t support watching')
+    def test_watchers(self):
+        watchers = self.jira.watchers('BULK-1')
+        self.assertEqual(watchers.watchCount, 18)
+
+    def test_worklogs(self):
+        worklogs = self.jira.worklogs('BULK-1')
+        self.assertEqual(len(worklogs), 6)
+
+    def test_worklog(self):
+        worklog = self.jira.worklog('BULK-1', '10045')
+        self.assertEqual(worklog.author.name, 'admin')
+        self.assertEqual(worklog.timeSpent, '4d')
+
+
+class IssueLinkTests(unittest.TestCase):
+    pass
 
 def find_by_key(seq, key):
     for seq_item in seq:
