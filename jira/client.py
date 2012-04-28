@@ -127,8 +127,13 @@ class JIRA(object):
 ### Groups
 
     # non-resource
-    def groups(self, query, exclude=None):
-        return self._get_json('groups/picker', params={'query': query, 'exclude': exclude})
+    def groups(self, query=None, exclude=None):
+        params = {}
+        if query is not None:
+            params['query'] = query
+        if exclude is not None:
+            params['exclude'] = exclude
+        return self._get_json('groups/picker', params=params)
 
 ### Issues
 
