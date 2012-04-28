@@ -43,7 +43,10 @@ class JIRA(object):
 
     # non-resource
     def application_properties(self, key=None):
-        return self._get_json('application-properties', params={'key': key})
+        params = {}
+        if key is not None:
+            params['key'] = key
+        return self._get_json('application-properties', params=params)
 
     def set_application_property(self, key, value):
         url = self.options['server'] + '/rest/api/2/application-properties/' + key
