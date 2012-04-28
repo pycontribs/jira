@@ -204,7 +204,7 @@ class JIRA(object):
     def watchers(self, issue):
         watchers = Watchers(self.options, self.cookies)
         watchers.find(issue)
-        return votes
+        return watchers
 
     def add_watcher(self, watcher):
         pass
