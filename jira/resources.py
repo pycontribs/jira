@@ -112,7 +112,7 @@ class Component(Resource):
 class CustomFieldOption(Resource):
 
     def __init__(self, options, cookies=None, raw=None):
-        Resource.__init__(self, 'customFieldOption{0}', options, cookies)
+        Resource.__init__(self, 'customFieldOption/{0}', options, cookies)
         if raw:
             self._parse_raw(raw)
 
