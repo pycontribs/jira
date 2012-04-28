@@ -65,6 +65,77 @@ class CustomFieldOptionTests(unittest.TestCase):
         option = self.jira.custom_field_option('10010')
         self.assertEqual(option.value, 'Mehemet')
 
+
+class DashboardTests(unittest.TestCase):
+
+    def setUp(self):
+        self.jira = JIRA(basic_auth=('eviladmin', 'eviladmin'))
+
+    def test_dashboards(self):
+        dashboards = self.jira.dashboards()
+        self.assertEqual(len(dashboards.dashboards), 3)
+
+    def test_dashboards_filter(self):
+        dashboards = self.jira.dashboards(filter='my')
+        self.assertEqual(len(dashboards.dashboards), 1)
+        self.assertEqual(dashboards.dashboards[0].id, '10031')
+
+    def test_dashboards_startAt(self):
+        dashboards = self.jira.dashboards(startAt=2, maxResults=2)
+        self.assertEqual(len(dashboards.dashboards), 1)
+
+    def test_dashboards_maxResults(self):
+        dashboards = self.jira.dashboards(maxResults=1)
+        self.assertEqual(len(dashboards.dashboards), 1)
+
+    def test_dashboard(self):
+        dashboard = self.jira.dashboard('10031')
+        self.assertEqual(dashboard.id, '10031')
+        self.assertEqual(dashboard.name, 'Evil\'O\'Administrator\'s "Funny DB"')
+
+
+class FieldsTests(unittest.TestCase):
+
+    def setUp(self):
+        self.jira = JIRA(basic_auth=('admin', 'admin'))
+
+    def test_fields(self):
+        fields = self.jira.fields()
+        self.assertEqual(len(fields), 65)
+
+
+class FilterTests(unittest.TestCase):
+
+    def setUp(self):
+        self.jira = JIRA(basic_auth=('admin', 'admin'))
+
+    def test_filter(self):
+        filter = self.jira.filter('10016')
+        self.assertEqual(filter.name, 'Bugs')
+        self.assertEqual(filter.owner.name, 'admin')
+
+    def test_favourite_filters(self):
+        filters = self.jira.favourite_filters()
+        self.assertEqual(len(filters), 1)
+
+
+class GroupsTest(unittest.TestCase):
+
+    def setUp(self):
+        self.jira = JIRA(basic_auth=('admin', 'admin'))
+
+    def test_groups(self):
+        groups = self.jira.groups()
+        self.assertEqual(groups['total'], 7)
+
+    def test_groups_with_query(self):
+        groups = self.jira.groups('jira-')
+        self.assertEqual(groups['total'], 4)
+
+    def test_groups_with_exclude(self):
+        groups = self.jira.groups('jira-', exclude='jira-system-administrators')
+        self.assertEqual(groups['total'], 3)
+
 class IssueTests(unittest.TestCase):
 
     def setUp(self):
