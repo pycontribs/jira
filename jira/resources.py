@@ -266,8 +266,8 @@ resource_class_map = {
     r'issue/[^/]+$': Issue,
     r'issue/[^/]+/comment$': Comments,
     r'issue/[^/]+/comment/[^/]+$': Comment,
-    r'issue/[^/]+/votes': Votes,
-    r'issue/[^/]+/watchers': Watchers,
+    r'issue/[^/]+/votes$': Votes,
+    r'issue/[^/]+/watchers$': Watchers,
     r'issue/[^/]+/worklog/[^/]+$': Worklog,
     r'issueLink/[^/]+$': IssueLink,
     r'issueLinkType/[^/]+$': IssueLinkType,
@@ -278,7 +278,7 @@ resource_class_map = {
     r'resolution/[^/]+$': Resolution,
     r'securitylevel/[^/]+$': SecurityLevel,
     r'status/[^/]+$': Status,
-    r'user\?username[^/]+$': User,
+    r'user\?username.+$': User,
     r'version/[^/]+$': Version,
 }
 
