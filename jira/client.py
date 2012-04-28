@@ -1,7 +1,7 @@
 
 import requests
 import simplejson as json
-from jira.resources import Resource, Issue, Comments, Comment, Project, Attachment, Component, Dashboards, Dashboard, Filter, Votes, Watchers, Worklog, IssueLink, IssueLinkType, IssueType, Priority, Version, Role, Resolution, SecurityLevel, Status, User
+from jira.resources import Resource, Issue, Comments, Comment, Project, Attachment, Component, Dashboards, Dashboard, Filter, Votes, Watchers, Worklog, IssueLink, IssueLinkType, IssueType, Priority, Version, Role, Resolution, SecurityLevel, Status, User, CustomFieldOption
 
 class JIRA(object):
 
@@ -81,7 +81,9 @@ class JIRA(object):
 ### Custom field options
 
     def custom_field_option(self, id):
-        return self._get_json('customFieldOption/' + id)['value']
+        custom_field_option = CustomFieldOption(self.options, self.cookies)
+        custom_field_option.find(id)
+        return custom_field_option
 
 ### Dashboards
 

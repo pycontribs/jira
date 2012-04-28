@@ -109,6 +109,13 @@ class Component(Resource):
         if raw:
             self._parse_raw(raw)
 
+class CustomFieldOption(Resource):
+
+    def __init__(self, options, cookies=None, raw=None):
+        Resource.__init__(self, 'customFieldOption{0}', options, cookies)
+        if raw:
+            self._parse_raw(raw)
+
 class Dashboards(Resource):
 
     def __init__(self, options, cookies=None, raw=None):
@@ -252,6 +259,7 @@ class Version(Resource):
 resource_class_map = {
     r'attachment/[^/]+$': Attachment,
     r'component/[^/]+$': Component,
+    r'customFieldOption/[^/]+$': CustomFieldOption,
     r'dashboard/[^/]+$': Dashboard,
     r'dashboard$': Dashboards,
     r'filter/[^/]$': Filter,
