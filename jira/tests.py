@@ -243,9 +243,341 @@ class IssueTests(unittest.TestCase):
 
 
 class IssueLinkTests(unittest.TestCase):
-    pass
+
+    def setUp(self):
+        self.jira = JIRA(basic_auth=('admin', 'admin'))
+
+    def test_issue_link(self):
+        link = self.jira.issue_link('10220')
+        self.assertEqual(link.id, '10220')
+        self.assertEqual(link.inwardIssue.id, '10924')
+
+
+class IssueLinkTypeTests(unittest.TestCase):
+
+    def setUp(self):
+        self.jira = JIRA(basic_auth=('admin', 'admin'))
+
+    def test_issue_link_types(self):
+        link_types = self.jira.issue_link_types()
+        self.assertEqual(len(link_types), 4)
+        duplicate = find_by_id(link_types, '10001')
+        self.assertEqual(duplicate.name, 'Duplicate')
+
+    def test_issue_link_type(self):
+        link_type = self.jira.issue_link_type('10002')
+        self.assertEqual(link_type.id, '10002')
+        self.assertEqual(link_type.name, 'Very long one')
+
+
+class IssueTypesTests(unittest.TestCase):
+
+    def setUp(self):
+        self.jira = JIRA(basic_auth=('admin', 'admin'))
+
+    def test_issue_types(self):
+        types = self.jira.issue_types()
+        self.assertEqual(len(types), 12)
+        unq_issues = find_by_id(types, '6')
+        self.assertEqual(unq_issues.name, 'UNQ-ISSUES')
+
+    def test_issue_type(self):
+        type = self.jira.issue_type('4')
+        self.assertEqual(type.id, '4')
+        self.assertEqual(type.name, 'Improvement')
+
+
+class MyPermissionsTests(unittest.TestCase):
+
+    def setUp(self):
+        self.jira = JIRA(basic_auth=('fred', 'fred'))
+
+    def test_my_permissions(self):
+        perms = self.jira.my_permissions()
+        self.assertEqual(len(perms['permissions']), 38)
+
+    def test_my_permissions_by_project(self):
+        perms = self.jira.my_permissions(projectKey='BULK')
+        self.assertEqual(len(perms['permissions']), 38)
+        perms = self.jira.my_permissions(projectId='10031')
+        self.assertEqual(len(perms['permissions']), 38)
+
+    def test_my_permissions_by_issue(self):
+        perms = self.jira.my_permissions(issueKey='BLUK-7')
+        self.assertEqual(len(perms['permissions']), 38)
+        perms = self.jira.my_permissions(issueId='11021')
+        self.assertEqual(len(perms['permissions']), 38)
+
+
+class PrioritiesTests(unittest.TestCase):
+
+    def setUp(self):
+        self.jira = JIRA(basic_auth=('admin', 'admin'))
+
+    def test_priorities(self):
+        priorities = self.jira.priorities()
+        self.assertEqual(len(priorities), 5)
+
+    def test_priority(self):
+        priority = self.jira.priority('2')
+        self.assertEqual(priority.id, '2')
+        self.assertEqual(priority.name, 'Critical')
+
+
+class ProjectTests(unittest.TestCase):
+
+    def setUp(self):
+        self.jira = JIRA(basic_auth=('admin', 'admin'))
+
+    def test_projects(self):
+        projects = self.jira.projects()
+        self.assertEqual(len(projects), 12)
+
+    def test_project(self):
+        project = self.jira.project('BOOK')
+        self.assertEqual(project.id, '10540')
+        self.assertEqual(project.name, 'Book Request')
+
+    def test_project_avatars(self):
+        avatars = self.jira.project_avatars('BULK')
+        self.assertEqual(len(avatars['custom']), 1)
+        self.assertEqual(len(avatars['system']), 12)
+
+    def test_project_components(self):
+        components = self.jira.project_components('BULK')
+        self.assertEqual(len(components), 2)
+        bacon = find_by_id(components, '10003')
+        self.assertEqual(bacon.id, '10003')
+        self.assertEqual(bacon.name, 'Bacon')
+
+    def test_project_versions(self):
+        versions = self.jira.project_versions('BULK')
+        self.assertEqual(len(versions), 6)
+        love = find_by_id(versions, '10012')
+        self.assertEqual(love.id, '10012')
+        self.assertEqual(love.name, 'I love versions')
+
+    def test_project_roles(self):
+        roles = self.jira.project_roles('XSS')
+        self.assertEqual(len(roles), 4)
+        self.assertIn('Users', roles)
+
+    def test_project_role(self):
+        role = self.jira.project_role('XSS', '10010')
+        self.assertEqual(role.id, 10010)
+        self.assertEqual(role.name, 'Doco Team')
+
+
+class ResolutionTests(unittest.TestCase):
+
+    def setUp(self):
+        self.jira = JIRA(basic_auth=('admin', 'admin'))
+
+    def test_resolutions(self):
+        resolutions = self.jira.resolutions()
+        self.assertEqual(len(resolutions), 5)
+
+    def test_resolution(self):
+        resolution = self.jira.resolution('2')
+        self.assertEqual(resolution.id, '2')
+        self.assertEqual(resolution.name, 'Won\'t Fix')
+
+
+class SearchTests(unittest.TestCase):
+
+    def setUp(self):
+        self.jira = JIRA(basic_auth=('admin', 'admin'))
+
+    def test_search_issues(self):
+        issues = self.jira.search_issues('project=BULK')
+        self.assertEqual(len(issues), 50) # default maxResults
+        for issue in issues:
+            self.assertTrue(issue.key.startswith('BULK'))
+
+    def test_search_issues_maxResults(self):
+        issues = self.jira.search_issues('project=XSS', maxResults=10)
+        self.assertEqual(len(issues), 10)
+
+    def test_search_issues_startAt(self):
+        issues = self.jira.search_issues('project=BULK', startAt=90, maxResults=500)
+        self.assertEqual(len(issues), 12)  # all but 12 issues in BULK
+
+    def test_search_issues_field_limiting(self):
+        issues = self.jira.search_issues('key=BULK-1', fields='summary,comment')
+        self.assertTrue(hasattr(issues[0].fields, 'summary'))
+        self.assertTrue(hasattr(issues[0].fields, 'comment'))
+        self.assertFalse(hasattr(issues[0].fields, 'reporter'))
+        self.assertFalse(hasattr(issues[0].fields, 'progress'))
+
+    @unittest.skip('Skipping until I know how to handle the expandos')
+    def test_search_issues_expandos(self):
+        issues = self.jira.search_issues('key=BULK-1', expand=('names'))
+        self.assertTrue(hasattr(issues[0], 'names'))
+        self.assertFalse(hasattr(issues[0], 'schema'))
+
+
+class SecurityLevelTests(unittest.TestCase):
+
+    def setUp(self):
+        self.jira = JIRA(basic_auth=('admin', 'admin'))
+
+    def test_security_level(self):
+        sec_level = self.jira.security_level('10001')
+        self.assertEqual(sec_level.id, '10001')
+        self.assertEqual(sec_level.name, 'eee')
+
+
+class ServerInfoTests(unittest.TestCase):
+
+    def setUp(self):
+        self.jira = JIRA(basic_auth=('admin', 'admin'))
+
+    def test_server_info(self):
+        server_info = self.jira.server_info()
+        self.assertIn('baseUrl', server_info)
+        self.assertIn('version', server_info)
+
+
+class StatusTests(unittest.TestCase):
+
+    def setUp(self):
+        self.jira = JIRA(basic_auth=('admin', 'admin'))
+
+    def test_statuses(self):
+        stati = self.jira.statuses()
+        self.assertEqual(len(stati), 20)
+
+    def test_status(self):
+        status = self.jira.status('10004')
+        self.assertEqual(status.id, '10004')
+        self.assertEqual(status.name, '5555')
+
+
+class UserTests(unittest.TestCase):
+
+    def setUp(self):
+        self.jira = JIRA(basic_auth=('admin', 'admin'))
+
+    def test_user(self):
+        user = self.jira.user('fred')
+        self.assertEqual(user.name, 'fred')
+        self.assertEqual(user.emailAddress, 'fred@example.com')
+
+    def test_search_assignable_users_for_projects(self):
+        users = self.jira.search_assignable_users_for_projects('fred', 'BULK,XSS')
+        self.assertEqual(len(users), 3)
+        usernames = map(lambda user: user.name, users)
+        self.assertIn('fred', usernames)
+        self.assertIn('fred2', usernames)
+        self.assertIn('fred&george', usernames)
+
+    def test_search_assignable_users_for_projects_maxResults(self):
+        users = self.jira.search_assignable_users_for_projects('fred', 'BULK,XSS', maxResults=1)
+        self.assertEqual(len(users), 1)
+
+    def test_search_assignable_users_for_projects_startAt(self):
+        users = self.jira.search_assignable_users_for_projects('fred', 'BULK,XSS', startAt=1)
+        self.assertEqual(len(users), 2)
+
+    def test_search_assignable_users_for_issues_by_project(self):
+        users = self.jira.search_assignable_users_for_issues('b', project='DMN')
+        self.assertEqual(len(users), 2)
+        usernames = map(lambda user: user.name, users)
+        self.assertIn('admin', usernames)
+        self.assertIn('aaa', usernames)
+
+    def test_search_assignable_users_for_issues_by_project_maxResults(self):
+        users = self.jira.search_assignable_users_for_issues('b', project='DMN', maxResults=1)
+        self.assertEqual(len(users), 1)
+
+    def test_search_assignable_users_for_issues_by_project_startAt(self):
+        users = self.jira.search_assignable_users_for_issues('b', project='DMN', startAt=1)
+        self.assertEqual(len(users), 1)
+
+    def test_search_assignable_users_for_issues_by_issue(self):
+        users = self.jira.search_assignable_users_for_issues('b', issueKey='BULK-1')
+        self.assertEqual(len(users), 4)
+        usernames = map(lambda user: user.name, users)
+        self.assertIn('admin', usernames)
+        self.assertIn('aaa', usernames)
+        self.assertIn('hamish', usernames)
+        self.assertIn('veenu', usernames)
+
+    def test_search_assignable_users_for_issues_by_issue_maxResults(self):
+        users = self.jira.search_assignable_users_for_issues('b', issueKey='BULK-1', maxResults=2)
+        self.assertEqual(len(users), 2)
+
+    def test_search_assignable_users_for_issues_by_issue_startAt(self):
+        users = self.jira.search_assignable_users_for_issues('b', issueKey='BULK-1', startAt=2)
+        self.assertEqual(len(users), 2)
+
+    def test_user_avatars(self):
+        avatars = self.jira.user_avatars('fred')
+        self.assertEqual(len(avatars['system']), 24)
+        self.assertEqual(len(avatars['custom']), 0)
+
+    def test_search_users(self):
+        users = self.jira.search_users('f')
+        self.assertEqual(len(users), 3)
+        usernames = map(lambda user: user.name, users)
+        self.assertIn('fred&george', usernames)
+        self.assertIn('fred', usernames)
+        self.assertIn('fred2', usernames)
+
+    def test_search_users_maxResults(self):
+        users = self.jira.search_users('f', maxResults=2)
+        self.assertEqual(len(users), 2)
+
+    def test_search_users_startAt(self):
+        users = self.jira.search_users('f', startAt=2)
+        self.assertEqual(len(users), 1)
+
+    def test_search_allowed_users_for_issue_by_project(self):
+        users = self.jira.search_allowed_users_for_issue('w', projectKey='EVL')
+        self.assertEqual(len(users), 5)
+
+    def test_search_allowed_users_for_issue_by_issue(self):
+        users = self.jira.search_allowed_users_for_issue('b', issueKey='BULK-1')
+        self.assertEqual(len(users), 4)
+
+    def test_search_allowed_users_for_issue_maxResults(self):
+        users = self.jira.search_allowed_users_for_issue('w', projectKey='EVL', maxResults=2)
+        self.assertEqual(len(users), 2)
+
+    def test_search_allowed_users_for_issue_startAt(self):
+        users = self.jira.search_allowed_users_for_issue('w', projectKey='EVL', startAt=4)
+        self.assertEqual(len(users), 1)
+
+
+class VersionTests(unittest.TestCase):
+
+    def setUp(self):
+        self.jira = JIRA(basic_auth=('admin', 'admin'))
+
+    def test_version(self):
+        version = self.jira.version('10003')
+        self.assertEqual(version.id, '10003')
+        self.assertEqual(version.name, '2.0')
+
+    @unittest.skip('Versions don\'t seem to need expandos')
+    def test_version_expandos(self):
+        pass
+
+    def test_version_count_related_issues(self):
+        counts = self.jira.version_count_related_issues('10003')
+        self.assertEqual(counts['issuesFixedCount'], 1)
+        self.assertEqual(counts['issuesAffectedCount'], 1)
+
+    def test_version_count_unresolved_issues(self):
+        self.assertEqual(self.jira.version_count_unresolved_issues('10004'), 4)
+
 
 def find_by_key(seq, key):
     for seq_item in seq:
         if seq_item['key'] == key:
+            return seq_item
+
+def find_by_id(seq, id):
+    for seq_item in seq:
+        if seq_item.id == id:
             return seq_item
