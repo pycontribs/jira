@@ -495,7 +495,7 @@ class JIRA(object):
         r = requests.get(url, cookies=self.cookies)
         r.raise_for_status()
 
-        user = User(self.options, json.loads(r.text), self.cookies)
+        user = User(self.options, self.cookies, json.loads(r.text))
         return user
 
     def create_http_basic_session(self, username, password):
