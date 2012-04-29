@@ -272,10 +272,19 @@ class JIRA(object):
 ### User permissions
 
     # non-resource
-    def my_permissions(self, project=None, issue=None):
-        return self._get_json('mypermissions', params={'projectKey': project, 'issueKey': issue})
+    def my_permissions(self, projectKey=None, projectId=None, issueKey=None, issueId=None):
+        params = {}
+        if projectKey is not None:
+            params['projectKey'] = projectKey
+        if projectId is not None:
+            params['projectId'] = projectId
+        if issueKey is not None:
+            params['issueKey'] = issueKey
+        if issueId is not None:
+            params['issueId'] = issueId
+        return self._get_json('mypermissions', params=params)
 
-### Priorities
+### PrioritiesK
 
     def priorities(self):
         r_json = self._get_json('priority')
