@@ -323,16 +323,16 @@ class JIRA(object):
         components = [Component(self.options, self.cookies, raw_comp_json) for raw_comp_json in r_json]
         return components
 
-    def project_versions(self, project, expand=None):
-        r_json = self._get_json('project/' + project + '/versions', params=expand)
+    def project_versions(self, project):
+        r_json = self._get_json('project/' + project + '/versions')
         versions = [Version(self.options, self.cookies, raw_ver_json) for raw_ver_json in r_json]
         return versions
 
     # non-resource
-    def roles(self, project):
+    def project_roles(self, project):
         return self._get_json('project/' + project + '/role')
 
-    def role(self, project, id):
+    def project_role(self, project, id):
         role = Role(self.options, self.cookies)
         role.find((project, id))
         return role
