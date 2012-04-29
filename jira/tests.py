@@ -572,6 +572,30 @@ class VersionTests(unittest.TestCase):
         self.assertEqual(self.jira.version_count_unresolved_issues('10004'), 4)
 
 
+class SessionTests(unittest.TestCase):
+
+    def setUp(self):
+        self.jira = JIRA(basic_auth=('admin', 'admin'))
+
+    def test_session(self):
+        user = self.jira.session()
+        self.assertEqual(user.name, 'admin')
+
+    @unittest.expectedFailure
+    def test_kill_session(self):
+        self.jira.kill_session()
+        user = self.jira.session()
+
+
+class WebsudoTests(unittest.TestCase):
+
+    def setUp(self):
+        self.jira = JIRA(basic_auth=('admin', 'admin'))
+
+    def test_kill_websudo(self):
+        self.jira.kill_websudo()
+
+
 def find_by_key(seq, key):
     for seq_item in seq:
         if seq_item['key'] == key:
