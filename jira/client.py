@@ -351,14 +351,15 @@ class JIRA(object):
 
 ### Search
 
-    def search_issues(self, jql_str, start=0, max=50, fields=None, expand=None):
+    def search_issues(self, jql_str, startAt=0, maxResults=50, fields=None, expand=None):
+        # TODO what to do about the expand, which isn't related to the issues?
         if fields is None:
             fields = []
 
         search_params = {
             "jql": jql_str,
-            "startAt": start,
-            "maxResults": max,
+            "startAt": startAt,
+            "maxResults": maxResults,
             "fields": fields,
             "expand": expand
         }
@@ -402,9 +403,9 @@ class JIRA(object):
         user.find(id, params=params)
         return user
 
-    def search_assignable_users_for_projects(self, user, projectKeys, issue=None, startAt=0, maxResults=50, **kw):
+    def search_assignable_users_for_projects(self, username, projectKeys, startAt=0, maxResults=50):
         params = {
-            'username': user,
+            'username': username,
             'projectKeys': projectKeys,
             'startAt': startAt,
             'maxResults': maxResults
@@ -413,22 +414,25 @@ class JIRA(object):
         users = [User(self.options, self.cookies, raw_user_json) for raw_user_json in r_json]
         return users
 
-    def search_assignable_users_for_issues(self, user, project, issue, startAt=0, maxResults=50, expand=None):
+    def search_assignable_users_for_issues(self, username, project=None, issueKey=None, expand=None, startAt=0, maxResults=50):
         params = {
-            'username': user,
-            'project': project,
-            'issueKey': issue,
+            'username': username,
             'startAt': startAt,
             'maxResults': maxResults,
-            'expand': expand
         }
+        if project is not None:
+            params['project'] = project
+        if issueKey is not None:
+            params['issueKey'] = issueKey
+        if expand is not None:
+            params['expand'] = expand
         r_json = self._get_json('user/assignable/search', params)
         users = [User(self.options, self.cookies, raw_user_json) for raw_user_json in r_json]
         return users
 
     # non-resource
-    def user_avatars(self, user):
-        return self._get_json('user/avatars', params={'username': user})
+    def user_avatars(self, username):
+        return self._get_json('user/avatars', params={'username': username})
 
     def create_temp_user_avatar(self, user, filename, size, avatar_img):
         pass
@@ -446,15 +450,16 @@ class JIRA(object):
         users = [User(self.options, self.cookies, raw_user_json) for raw_user_json in r_json]
         return users
 
-    def search_allowed_users_for_issue(self, user, issue, project=None, startAt=0, maxResults=50):
+    def search_allowed_users_for_issue(self, user, issueKey=None, projectKey=None, startAt=0, maxResults=50):
         params = {
             'username': user,
-            'issueKey': issue,
             'startAt': startAt,
             'maxResults': maxResults,
         }
-        if project is not None:
-            params['projectKey'] = project
+        if issueKey is not None:
+            params['issueKey'] = issueKey
+        if projectKey is not None:
+            params['projectKey'] = projectKey
         r_json = self._get_json('user/viewissue/search', params)
         users = [User(self.options, self.cookies, raw_user_json) for raw_user_json in r_json]
         return users
