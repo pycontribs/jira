@@ -30,13 +30,13 @@ class JIRA(object):
 
 ### Universal resource loading
 
-    def find(self, id, resource_name, options=None):
+    def find(self, resource_format, ids=None, options=None):
         if options is None:
             options = {}
 
         resource_options = dict(self._options.items() + options.items())
-        resource = Resource(resource_name, resource_options)
-        resource.find(id)
+        resource = Resource(resource_format, resource_options, self._cookies)
+        resource.find(ids)
         return resource
 
 ### Application properties

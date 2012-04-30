@@ -1,9 +1,29 @@
 import unittest
 
 from jira.client import JIRA
+from jira.exceptions import JIRAError
+from jira.resources import Resource
 
 class UniversalResourceTests(unittest.TestCase):
-    pass
+
+    def setUp(self):
+        self.jira = JIRA(basic_auth=('admin', 'admin'))
+
+    def test_universal_find_existing_resource(self):
+        resource = self.jira.find('issue/{0}', 'BULK-1')
+        issue = self.jira.issue('BULK-1')
+        self.assertEqual(resource.self, issue.self)
+        self.assertEqual(resource.key, issue.key)
+
+    def test_universal_find_custom_resource(self):
+        options = {
+            'server': 'http://not-a-machine.net:2442/notjira',
+            'rest_path': 'notrest',
+            'rest_api_version': '666'
+        }
+        resource = Resource('nope/{0}', options)
+        self.assertEqual('http://not-a-machine.net:2442/notjira/rest/notrest/666/nope/666', resource._url(('666',)))
+
 
 class ApplicationPropertiesTests(unittest.TestCase):
 
