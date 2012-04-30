@@ -131,7 +131,7 @@ class FieldsTests(unittest.TestCase):
 
     def test_fields(self):
         fields = self.jira.fields()
-        self.assertEqual(len(fields), 65)
+        self.assertEqual(len(fields), 63)
 
 
 class FilterTests(unittest.TestCase):
