@@ -1,7 +1,6 @@
 import unittest
 
 from jira.client import JIRA
-from jira.exceptions import JIRAError
 from jira.resources import Resource
 
 class UniversalResourceTests(unittest.TestCase):
