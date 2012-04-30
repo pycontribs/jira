@@ -16,17 +16,17 @@ class JIRA(object):
         if options is None:
             options = {}
 
-        self.options = dict(JIRA.DEFAULT_OPTIONS.items() + options.items())
+        self._options = dict(JIRA.DEFAULT_OPTIONS.items() + options.items())
 
         if basic_auth:
-            self.cookies = self.create_http_basic_session(*basic_auth)
+            self._cookies = self._create_http_basic_session(*basic_auth)
         else:
-            self.cookies = {}
+            self._cookies = {}
 
 ### Information about this client
 
     def client_info(self):
-        return self.options['server']
+        return self._options['server']
 
 ### Universal resource loading
 
@@ -34,7 +34,7 @@ class JIRA(object):
         if options is None:
             options = {}
 
-        resource_options = dict(self.options.items() + options.items())
+        resource_options = dict(self._options.items() + options.items())
         resource = Resource(resource_name, resource_options)
         resource.find(id)
         return resource
@@ -49,18 +49,18 @@ class JIRA(object):
         return self._get_json('application-properties', params=params)
 
     def set_application_property(self, key, value):
-        url = self.options['server'] + '/rest/api/2/application-properties/' + key
+        url = self._options['server'] + '/rest/api/2/application-properties/' + key
         payload = {
             'id': key,
             'value': value
         }
-        r = requests.put(url, headers={'content-type': 'application/json'}, data=json.dumps(payload), cookies=self.cookies)
+        r = requests.put(url, headers={'content-type': 'application/json'}, data=json.dumps(payload), cookies=self._cookies)
         r.raise_for_status()
 
 ### Attachments
 
     def attachment(self, id):
-        attachment = Attachment(self.options, self.cookies)
+        attachment = Attachment(self._options, self._cookies)
         attachment.find(id)
         return attachment
 
@@ -71,7 +71,7 @@ class JIRA(object):
 ### Components
 
     def component(self, id):
-        component = Component(self.options, self.cookies)
+        component = Component(self._options, self._cookies)
         component.find(id)
         return component
 
@@ -84,7 +84,7 @@ class JIRA(object):
 ### Custom field options
 
     def custom_field_option(self, id):
-        custom_field_option = CustomFieldOption(self.options, self.cookies)
+        custom_field_option = CustomFieldOption(self._options, self._cookies)
         custom_field_option.find(id)
         return custom_field_option
 
@@ -92,7 +92,7 @@ class JIRA(object):
 
     # TODO: Should this be _get_json instead of resource?
     def dashboards(self, filter=None, startAt=0, maxResults=20):
-        dashboards = Dashboards(self.options, self.cookies)
+        dashboards = Dashboards(self._options, self._cookies)
         params = {}
         if filter is not None:
             params['filter'] = filter
@@ -102,7 +102,7 @@ class JIRA(object):
         return dashboards
 
     def dashboard(self, id):
-        dashboard = Dashboard(self.options, self.cookies)
+        dashboard = Dashboard(self._options, self._cookies)
         dashboard.find(id)
         return dashboard
 
@@ -115,13 +115,13 @@ class JIRA(object):
 ### Filters
 
     def filter(self, id):
-        filter = Filter(self.options, self.cookies)
+        filter = Filter(self._options, self._cookies)
         filter.find(id)
         return filter
 
     def favourite_filters(self):
         r_json = self._get_json('filter/favourite')
-        filters = [Filter(self.options, self.cookies, raw_filter_json) for raw_filter_json in r_json]
+        filters = [Filter(self._options, self._cookies, raw_filter_json) for raw_filter_json in r_json]
         return filters
 
 ### Groups
@@ -138,7 +138,7 @@ class JIRA(object):
 ### Issues
 
     def issue(self, id, fields=None, expand=None):
-        issue = Issue(self.options, self.cookies)
+        issue = Issue(self._options, self._cookies)
 
         params = {}
         if fields is not None:
@@ -167,21 +167,21 @@ class JIRA(object):
 
     # non-resource
     def assign_issue(self, issue, assignee):
-        url = self.options['server'] + '/rest/api/2/issue/' + issue + '/assignee'
+        url = self._options['server'] + '/rest/api/2/issue/' + issue + '/assignee'
         payload = {'name': assignee}
-        r = requests.put(url, cookies=self.cookies, data=json.dumps(payload), headers={'content-type': 'application/json'})
+        r = requests.put(url, cookies=self._cookies, data=json.dumps(payload), headers={'content-type': 'application/json'})
         r.raise_for_status()
 
     # TODO: Should this be _get_json instead of resource?
     def comments(self, issue):
-        resource = Comments(self.options, self.cookies)
+        resource = Comments(self._options, self._cookies)
         resource.find(issue)
 
-        comments = [Comment(self.options, self.cookies, raw_comment_json) for raw_comment_json in resource.raw['comments']]
+        comments = [Comment(self._options, self._cookies, raw_comment_json) for raw_comment_json in resource.raw['comments']]
         return comments
 
     def comment(self, issue, comment):
-        resource = Comment(self.options, self.cookies)
+        resource = Comment(self._options, self._cookies)
         resource.find((issue, comment))
         return resource
 
@@ -205,12 +205,12 @@ class JIRA(object):
         return self._get_json('issue/' + issue + '/transitions', params)['transitions']
 
     def votes(self, issue):
-        votes = Votes(self.options, self.cookies)
+        votes = Votes(self._options, self._cookies)
         votes.find(issue)
         return votes
 
     def watchers(self, issue):
-        watchers = Watchers(self.options, self.cookies)
+        watchers = Watchers(self._options, self._cookies)
         watchers.find(issue)
         return watchers
 
@@ -221,11 +221,11 @@ class JIRA(object):
 
     def worklogs(self, issue):
         r_json = self._get_json('issue/' + issue + '/worklog')
-        worklogs = [Worklog(self.options, self.cookies, raw_worklog_json) for raw_worklog_json in r_json['worklogs']]
+        worklogs = [Worklog(self._options, self._cookies, raw_worklog_json) for raw_worklog_json in r_json['worklogs']]
         return worklogs
 
     def worklog(self, issue, id):
-        worklog = Worklog(self.options, self.cookies)
+        worklog = Worklog(self._options, self._cookies)
         worklog.find((issue, id))
         return worklog
 
@@ -241,7 +241,7 @@ class JIRA(object):
         pass
 
     def issue_link(self, id):
-        link = IssueLink(self.options, self.cookies)
+        link = IssueLink(self._options, self._cookies)
         link.find(id)
         return link
 
@@ -249,11 +249,11 @@ class JIRA(object):
 
     def issue_link_types(self):
         r_json = self._get_json('issueLinkType')
-        link_types = [IssueLinkType(self.options, self.cookies, raw_link_json) for raw_link_json in r_json['issueLinkTypes']]
+        link_types = [IssueLinkType(self._options, self._cookies, raw_link_json) for raw_link_json in r_json['issueLinkTypes']]
         return link_types
 
     def issue_link_type(self, id):
-        link_type = IssueLinkType(self.options, self.cookies)
+        link_type = IssueLinkType(self._options, self._cookies)
         link_type.find(id)
         return link_type
 
@@ -261,11 +261,11 @@ class JIRA(object):
 
     def issue_types(self):
         r_json = self._get_json('issuetype')
-        issue_types = [IssueType(self.options, self.cookies, raw_type_json) for raw_type_json in r_json]
+        issue_types = [IssueType(self._options, self._cookies, raw_type_json) for raw_type_json in r_json]
         return issue_types
 
     def issue_type(self, id):
-        issue_type = IssueType(self.options, self.cookies)
+        issue_type = IssueType(self._options, self._cookies)
         issue_type.find(id)
         return issue_type
 
@@ -288,11 +288,11 @@ class JIRA(object):
 
     def priorities(self):
         r_json = self._get_json('priority')
-        priorities = [Priority(self.options, self.cookies, raw_priority_json) for raw_priority_json in r_json]
+        priorities = [Priority(self._options, self._cookies, raw_priority_json) for raw_priority_json in r_json]
         return priorities
 
     def priority(self, id):
-        priority = Priority(self.options, self.cookies)
+        priority = Priority(self._options, self._cookies)
         priority.find(id)
         return priority
 
@@ -300,11 +300,11 @@ class JIRA(object):
 
     def projects(self):
         r_json = self._get_json('project')
-        projects = [Project(self.options, self.cookies, raw_project_json) for raw_project_json in r_json]
+        projects = [Project(self._options, self._cookies, raw_project_json) for raw_project_json in r_json]
         return projects
 
     def project(self, id):
-        project = Project(self.options, self.cookies)
+        project = Project(self._options, self._cookies)
         project.find(id)
         return project
 
@@ -320,12 +320,12 @@ class JIRA(object):
 
     def project_components(self, project):
         r_json = self._get_json('project/' + project + '/components')
-        components = [Component(self.options, self.cookies, raw_comp_json) for raw_comp_json in r_json]
+        components = [Component(self._options, self._cookies, raw_comp_json) for raw_comp_json in r_json]
         return components
 
     def project_versions(self, project):
         r_json = self._get_json('project/' + project + '/versions')
-        versions = [Version(self.options, self.cookies, raw_ver_json) for raw_ver_json in r_json]
+        versions = [Version(self._options, self._cookies, raw_ver_json) for raw_ver_json in r_json]
         return versions
 
     # non-resource
@@ -333,7 +333,7 @@ class JIRA(object):
         return self._get_json('project/' + project + '/role')
 
     def project_role(self, project, id):
-        role = Role(self.options, self.cookies)
+        role = Role(self._options, self._cookies)
         role.find((project, id))
         return role
 
@@ -341,11 +341,11 @@ class JIRA(object):
 
     def resolutions(self):
         r_json = self._get_json('resolution')
-        resolutions = [Resolution(self.options, self.cookies, raw_res_json) for raw_res_json in r_json]
+        resolutions = [Resolution(self._options, self._cookies, raw_res_json) for raw_res_json in r_json]
         return resolutions
 
     def resolution(self, id):
-        resolution = Resolution(self.options, self.cookies)
+        resolution = Resolution(self._options, self._cookies)
         resolution.find(id)
         return resolution
 
@@ -365,13 +365,13 @@ class JIRA(object):
         }
 
         resource = self._get_json('search', search_params)
-        issues = [Issue(self.options, self.cookies, raw_issue_json) for raw_issue_json in resource['issues']]
+        issues = [Issue(self._options, self._cookies, raw_issue_json) for raw_issue_json in resource['issues']]
         return issues
 
 ### Security levels
 
     def security_level(self, id):
-        sec_level = SecurityLevel(self.options, self.cookies)
+        sec_level = SecurityLevel(self._options, self._cookies)
         sec_level.find(id)
         return sec_level
 
@@ -385,18 +385,18 @@ class JIRA(object):
 
     def statuses(self):
         r_json = self._get_json('status')
-        statuses = [Status(self.options, self.cookies, raw_stat_json) for raw_stat_json in r_json]
+        statuses = [Status(self._options, self._cookies, raw_stat_json) for raw_stat_json in r_json]
         return statuses
 
     def status(self, id):
-        status = Status(self.options, self.cookies)
+        status = Status(self._options, self._cookies)
         status.find(id)
         return status
 
 ### Users
 
     def user(self, id, expand=None):
-        user = User(self.options, self.cookies)
+        user = User(self._options, self._cookies)
         params = {}
         if expand is not None:
             params['expand'] = expand
@@ -411,7 +411,7 @@ class JIRA(object):
             'maxResults': maxResults
         }
         r_json = self._get_json('user/assignable/multiProjectSearch', params)
-        users = [User(self.options, self.cookies, raw_user_json) for raw_user_json in r_json]
+        users = [User(self._options, self._cookies, raw_user_json) for raw_user_json in r_json]
         return users
 
     def search_assignable_users_for_issues(self, username, project=None, issueKey=None, expand=None, startAt=0, maxResults=50):
@@ -427,7 +427,7 @@ class JIRA(object):
         if expand is not None:
             params['expand'] = expand
         r_json = self._get_json('user/assignable/search', params)
-        users = [User(self.options, self.cookies, raw_user_json) for raw_user_json in r_json]
+        users = [User(self._options, self._cookies, raw_user_json) for raw_user_json in r_json]
         return users
 
     # non-resource
@@ -447,7 +447,7 @@ class JIRA(object):
             'maxResults': maxResults
         }
         r_json = self._get_json('user/search', params)
-        users = [User(self.options, self.cookies, raw_user_json) for raw_user_json in r_json]
+        users = [User(self._options, self._cookies, raw_user_json) for raw_user_json in r_json]
         return users
 
     def search_allowed_users_for_issue(self, user, issueKey=None, projectKey=None, startAt=0, maxResults=50):
@@ -461,7 +461,7 @@ class JIRA(object):
         if projectKey is not None:
             params['projectKey'] = projectKey
         r_json = self._get_json('user/viewissue/search', params)
-        users = [User(self.options, self.cookies, raw_user_json) for raw_user_json in r_json]
+        users = [User(self._options, self._cookies, raw_user_json) for raw_user_json in r_json]
         return users
 
 ### Versions
@@ -473,7 +473,7 @@ class JIRA(object):
         pass
 
     def version(self, id, expand=None):
-        version = Version(self.options, self.cookies)
+        version = Version(self._options, self._cookies)
         params = {}
         if expand is not None:
             params['expand'] = expand
@@ -491,15 +491,29 @@ class JIRA(object):
 ### Session authentication
 
     def session(self):
-        url = '{server}/rest/auth/1/session'.format(**self.options)
-        r = requests.get(url, cookies=self.cookies)
+        url = '{server}/rest/auth/1/session'.format(**self._options)
+        r = requests.get(url, cookies=self._cookies)
         r.raise_for_status()
 
-        user = User(self.options, self.cookies, json.loads(r.text))
+        user = User(self._options, self._cookies, json.loads(r.text))
         return user
 
-    def create_http_basic_session(self, username, password):
-        url = self.options['server'] + '/rest/auth/1/session'
+    def kill_session(self):
+        url = self._options['server'] + '/rest/auth/1/session'
+        r = requests.delete(url, cookies=self._cookies)
+        r.raise_for_status()
+
+### Websudo
+
+    def kill_websudo(self):
+        url = self._options['server'] + '/rest/auth/1/websudo'
+        r = requests.delete(url, cookies=self._cookies)
+        r.raise_for_status()
+
+### Utilities
+
+    def _create_http_basic_session(self, username, password):
+        url = self._options['server'] + '/rest/auth/1/session'
         payload = {
             'username': username,
             'password': password
@@ -509,22 +523,9 @@ class JIRA(object):
 
         return r.cookies
 
-    def kill_session(self):
-        url = self.options['server'] + '/rest/auth/1/session'
-        r = requests.delete(url, cookies=self.cookies)
-        r.raise_for_status()
-
-### Websudo
-
-    def kill_websudo(self):
-        url = self.options['server'] + '/rest/auth/1/websudo'
-        r = requests.delete(url, cookies=self.cookies)
-        r.raise_for_status()
-
-### Utilities
     def _get_json(self, path, params=None):
-        url = '{}/rest/api/2/{}'.format(self.options['server'], path)
-        r = requests.get(url, cookies=self.cookies, params=params)
+        url = '{}/rest/api/2/{}'.format(self._options['server'], path)
+        r = requests.get(url, cookies=self._cookies, params=params)
         r.raise_for_status()
 
         r_json = json.loads(r.text)
