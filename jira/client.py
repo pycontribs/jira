@@ -19,9 +19,11 @@ class JIRA(object):
         self._options = dict(JIRA.DEFAULT_OPTIONS.items() + options.items())
 
         if basic_auth:
-            self._cookies = self._create_http_basic_session(*basic_auth)
+            self._create_http_basic_session(*basic_auth)
+        elif oauth:
+            self._create_oauth_session(oauth)
         else:
-            self._cookies = {}
+            self._session = requests.session(headers={'content-type': 'application/json'})
 
 ### Information about this client
 
@@ -54,7 +56,7 @@ class JIRA(object):
             'id': key,
             'value': value
         }
-        r = requests.put(url, headers={'content-type': 'application/json'}, data=json.dumps(payload), cookies=self._cookies)
+        r = self._session.put(url, headers={'content-type': 'application/json'}, data=json.dumps(payload))
         r.raise_for_status()
 
 ### Attachments
@@ -169,7 +171,7 @@ class JIRA(object):
     def assign_issue(self, issue, assignee):
         url = self._options['server'] + '/rest/api/2/issue/' + issue + '/assignee'
         payload = {'name': assignee}
-        r = requests.put(url, cookies=self._cookies, data=json.dumps(payload), headers={'content-type': 'application/json'})
+        r = self._session.put(url, data=json.dumps(payload))
         r.raise_for_status()
 
     # TODO: Should this be _get_json instead of resource?
@@ -496,7 +498,7 @@ class JIRA(object):
 
     def session(self):
         url = '{server}/rest/auth/1/session'.format(**self._options)
-        r = requests.get(url, cookies=self._cookies)
+        r = self._session.get(url)
         r.raise_for_status()
 
         user = User(self._options, self._cookies, json.loads(r.text))
@@ -504,14 +506,14 @@ class JIRA(object):
 
     def kill_session(self):
         url = self._options['server'] + '/rest/auth/1/session'
-        r = requests.delete(url, cookies=self._cookies)
+        r = self._session.delete(url)
         r.raise_for_status()
 
 ### Websudo
 
     def kill_websudo(self):
         url = self._options['server'] + '/rest/auth/1/websudo'
-        r = requests.delete(url, cookies=self._cookies)
+        r = self._session.delete(url)
         r.raise_for_status()
 
 ### Utilities
@@ -522,14 +524,18 @@ class JIRA(object):
             'username': username,
             'password': password
         }
-        r = requests.post(url, data=json.dumps(payload), headers={'content-type': 'application/json'})
+
+        self._session = requests.session(headers={'content-type': 'application/json'})
+        r = self._session.post(url, data=json.dumps(payload))
+        self._cookies = r.cookies  # shim to support resources pending refactor
         r.raise_for_status()
 
-        return r.cookies
+    def _create_oauth_session(self, oauth):
+        raise NotImplementedError("oauth support isn't implemented yet")
 
     def _get_json(self, path, params=None):
         url = '{}/rest/api/2/{}'.format(self._options['server'], path)
-        r = requests.get(url, cookies=self._cookies, params=params)
+        r = self._session.get(url, params=params)
         r.raise_for_status()
 
         r_json = json.loads(r.text)
