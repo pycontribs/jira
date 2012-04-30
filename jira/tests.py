@@ -205,10 +205,16 @@ class IssueTests(unittest.TestCase):
         self.assertTrue('customfield_10240' in meta['fields'])
 
     def test_remote_links(self):
-        pass
+        links = self.jira.remote_links('QA-44')
+        self.assertEqual(len(links), 1)
+        links = self.jira.remote_links('BULK-1')
+        self.assertEqual(len(links), 0)
 
     def test_remote_link(self):
-        pass
+        link = self.jira.remote_link('QA-44', '10000')
+        self.assertEqual(link.id, 10000)
+        self.assertTrue(hasattr(link, 'globalId'))
+        self.assertTrue(hasattr(link, 'relationship'))
 
     def test_transitions(self):
         transitions = self.jira.transitions('BULK-2')

@@ -157,6 +157,15 @@ class Comment(Resource):
         if raw:
             self._parse_raw(raw)
 
+
+class RemoteLink(Resource):
+
+    def __init__(self, options, cookies=None, raw=None):
+        Resource.__init__(self, 'issue/{0}/remotelink/{1}', options, cookies)
+        if raw:
+            self._parse_raw(raw)
+
+
 class Votes(Resource):
 
     def __init__(self, options, cookies=None, raw=None):

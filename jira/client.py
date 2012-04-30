@@ -1,7 +1,7 @@
 
 import requests
 import simplejson as json
-from jira.resources import Resource, Issue, Comments, Comment, Project, Attachment, Component, Dashboards, Dashboard, Filter, Votes, Watchers, Worklog, IssueLink, IssueLinkType, IssueType, Priority, Version, Role, Resolution, SecurityLevel, Status, User, CustomFieldOption
+from jira.resources import Resource, Issue, Comments, Comment, Project, Attachment, Component, Dashboards, Dashboard, Filter, Votes, Watchers, Worklog, IssueLink, IssueLinkType, IssueType, Priority, Version, Role, Resolution, SecurityLevel, Status, User, CustomFieldOption, RemoteLink
 
 class JIRA(object):
 
@@ -190,10 +190,14 @@ class JIRA(object):
         return self._get_json('issue/' + issue + '/editmeta')
 
     def remote_links(self, issue):
-        pass
+        r_json = self._get_json('issue/' + issue + '/remotelink')
+        remote_links = [RemoteLink(self._options, self._cookies, raw_remotelink_json) for raw_remotelink_json in r_json]
+        return remote_links
 
     def remote_link(self, issue, id):
-        pass
+        resource = RemoteLink(self._options, self._cookies)
+        resource.find((issue, id))
+        return resource
 
     # non-resource
     def transitions(self, issue, id=None, expand=None):
