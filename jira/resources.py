@@ -295,4 +295,6 @@ def cls_for_resource(resource_literal):
     for resource in resource_class_map:
         if re.search(resource, resource_literal):
             return resource_class_map[resource]
-
+    else:
+        # generic Resource without specialized update/delete behavior
+        return Resource

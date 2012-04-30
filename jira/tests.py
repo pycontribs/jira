@@ -1,7 +1,7 @@
 import unittest
 
 from jira.client import JIRA
-from jira.resources import Resource
+from jira.resources import Resource, cls_for_resource, Issue, Project, Role
 
 class UniversalResourceTests(unittest.TestCase):
 
@@ -23,6 +23,17 @@ class UniversalResourceTests(unittest.TestCase):
         resource = Resource('nope/{0}', options)
         self.assertEqual('http://not-a-machine.net:2442/notjira/rest/notrest/666/nope/666', resource._url(('666',)))
 
+
+class ResourceTests(unittest.TestCase):
+
+    def setUp(self):
+        pass
+
+    def test_cls_for_resource(self):
+        self.assertEqual(cls_for_resource('https://jira.atlassian.com/rest/api/2/issue/JRA-1330'), Issue)
+        self.assertEqual(cls_for_resource('http://localhost:2990/jira/rest/api/2/project/BULK'), Project)
+        self.assertEqual(cls_for_resource('http://imaginary-jira.com/rest/api/2/project/IMG/role/10002'), Role)
+        self.assertEqual(cls_for_resource('http://customized-jira.com/rest/plugin-resource/4.5/json/getMyObject'), Resource)
 
 class ApplicationPropertiesTests(unittest.TestCase):
 
