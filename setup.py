@@ -3,7 +3,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='jira-rest-client',
+    name='jira-python',
     version='0.5.0',
     packages=find_packages(),
     scripts=['tools/jirashell'],
