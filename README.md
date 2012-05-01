@@ -28,10 +28,13 @@ pieces of the Python library. See `setup.py` for name and version details.
 
 Download and install using pip:
 
-    not yet! coming soon.
+    pip install jira-python
+
+You ARE using a [virtualenv][2], right?
 
 # Usage
 
 See the documentation for full details.
 
 [1]: http://docs.python-requests.org/
+[2]: http://www.virtualenv.org/en/latest/index.html
