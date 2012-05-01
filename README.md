@@ -28,7 +28,7 @@ pieces of the Python library. See `setup.py` for name and version details.
 
 Download and install using pip:
 
-    pip install jira-python
+    not yet! coming soon.
 
 # Usage
 
