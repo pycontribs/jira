@@ -13,7 +13,7 @@ setup(
         'jirashell': ['ipython==0.12.1']
     },
 
-    url='http://bitbucket.org/bspeakmon_atlassian/jira5-python',
+    url='http://bitbucket.org/bspeakmon_atlassian/jira-python',
     license='BSD',
     description='A library to ease use of the JIRA 5 REST APIs.',
     author='Ben Speakmon',
