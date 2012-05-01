@@ -20,7 +20,7 @@ class UniversalResourceTests(unittest.TestCase):
             'rest_path': 'notrest',
             'rest_api_version': '666'
         }
-        resource = Resource('nope/{0}', options)
+        resource = Resource('nope/{0}', options, None)  # don't need an actual session
         self.assertEqual('http://not-a-machine.net:2442/notjira/rest/notrest/666/nope/666', resource._url(('666',)))
 
 
@@ -620,7 +620,7 @@ class SessionTests(unittest.TestCase):
     @unittest.expectedFailure
     def test_kill_session(self):
         self.jira.kill_session()
-        user = self.jira.session()
+        self.jira.session()
 
 
 class WebsudoTests(unittest.TestCase):
