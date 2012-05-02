@@ -1,6 +1,7 @@
 
 import requests
 import simplejson as json
+from jira.exceptions import JIRAError
 from jira.resources import Resource, Issue, Comments, Comment, Project, Attachment, Component, Dashboards, Dashboard, Filter, Votes, Watchers, Worklog, IssueLink, IssueLinkType, IssueType, Priority, Version, Role, Resolution, SecurityLevel, Status, User, CustomFieldOption, RemoteLink
 
 class JIRA(object):
@@ -57,7 +58,7 @@ class JIRA(object):
             'value': value
         }
         r = self._session.put(url, headers={'content-type': 'application/json'}, data=json.dumps(payload))
-        r.raise_for_status()
+        self._raise_on_error(r)
 
 ### Attachments
 
@@ -162,7 +163,7 @@ class JIRA(object):
         url = self._options['server'] + '/rest/api/2/issue/' + issue + '/assignee'
         payload = {'name': assignee}
         r = self._session.put(url, data=json.dumps(payload))
-        r.raise_for_status()
+        self._raise_on_error(r)
 
     # TODO: Should this be _get_json instead of resource?
     def comments(self, issue):
@@ -461,7 +462,7 @@ class JIRA(object):
     def session(self):
         url = '{server}/rest/auth/1/session'.format(**self._options)
         r = self._session.get(url)
-        r.raise_for_status()
+        self._raise_on_error(r)
 
         user = User(self._options, self._session, json.loads(r.text))
         return user
@@ -469,14 +470,14 @@ class JIRA(object):
     def kill_session(self):
         url = self._options['server'] + '/rest/auth/1/session'
         r = self._session.delete(url)
-        r.raise_for_status()
+        self._raise_on_error(r)
 
 ### Websudo
 
     def kill_websudo(self):
         url = self._options['server'] + '/rest/auth/1/websudo'
         r = self._session.delete(url)
-        r.raise_for_status()
+        self._raise_on_error(r)
 
 ### Utilities
 
@@ -489,7 +490,7 @@ class JIRA(object):
 
         self._session = requests.session(headers={'content-type': 'application/json'})
         r = self._session.post(url, data=json.dumps(payload))
-        r.raise_for_status()
+        self._raise_on_error(r)
 
     def _create_oauth_session(self, oauth):
         raise NotImplementedError("oauth support isn't implemented yet")
@@ -497,7 +498,7 @@ class JIRA(object):
     def _get_json(self, path, params=None):
         url = '{}/rest/api/2/{}'.format(self._options['server'], path)
         r = self._session.get(url, params=params)
-        r.raise_for_status()
+        self._raise_on_error(r)
 
         r_json = json.loads(r.text)
         return r_json
@@ -510,4 +511,6 @@ class JIRA(object):
         resource.find(ids, params)
         return resource
 
-
+    def _raise_on_error(self, r):
+        if r.status_code >= 400:
+            raise JIRAError("Couldn't complete server call", r.status_code, r.url)

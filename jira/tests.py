@@ -45,6 +45,7 @@ class ResourceTests(unittest.TestCase):
         self.assertEqual(cls_for_resource('http://imaginary-jira.com/rest/api/2/project/IMG/role/10002'), Role)
         self.assertEqual(cls_for_resource('http://customized-jira.com/rest/plugin-resource/4.5/json/getMyObject'), Resource)
 
+
 class ApplicationPropertiesTests(unittest.TestCase):
 
     def setUp(self):
@@ -65,6 +66,11 @@ class ApplicationPropertiesTests(unittest.TestCase):
         self.assertEqual(self.jira.application_properties(key=prop)['value'], 'TCLONE -')
         self.jira.set_application_property(prop, 'CLONE -')
         self.assertEqual(self.jira.application_properties(key=prop)['value'], 'CLONE -')
+
+    def test_setting_bad_property_raises(self):
+        prop = 'random.nonexistent.property'
+        self.assertRaises(JIRAError, self.jira.set_application_property, prop, '666')
+
 
 class AttachmentTests(unittest.TestCase):
 
@@ -176,6 +182,7 @@ class GroupsTest(unittest.TestCase):
         groups = self.jira.groups('jira-', exclude='jira-system-administrators')
         self.assertEqual(groups['total'], 3)
 
+
 class IssueTests(unittest.TestCase):
 
     def setUp(self):
@@ -227,6 +234,9 @@ class IssueTests(unittest.TestCase):
         self.assertEqual(self.jira.issue('BULK-1').fields.assignee.name, 'eviladmin')
         self.assertIsNone(self.jira.assign_issue('BULK-1', 'admin'))
         self.assertEqual(self.jira.issue('BULK-1').fields.assignee.name, 'admin')
+
+    def test_assign_to_bad_issue_raises(self):
+        self.assertRaises(JIRAError, self.jira.assign_issue, 'NOPE-1', 'notauser')
 
     def test_comments(self):
         comments = self.jira.comments('BULK-1')
@@ -627,6 +637,10 @@ class SessionTests(unittest.TestCase):
         user = self.jira.session()
         self.assertEqual(user.name, 'admin')
 
+    def test_session_with_no_logged_in_user_raises(self):
+        anon_jira = JIRA()
+        self.assertRaises(JIRAError, anon_jira.session)
+
     @unittest.expectedFailure
     def test_kill_session(self):
         self.jira.kill_session()
@@ -640,6 +654,10 @@ class WebsudoTests(unittest.TestCase):
 
     def test_kill_websudo(self):
         self.jira.kill_websudo()
+
+    def test_kill_websudo_without_login_raises(self):
+        anon_jira = JIRA()
+        self.assertRaises(JIRAError, anon_jira.kill_websudo)
 
 
 def find_by_key(seq, key):
