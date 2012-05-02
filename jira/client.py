@@ -62,9 +62,7 @@ class JIRA(object):
 ### Attachments
 
     def attachment(self, id):
-        attachment = Attachment(self._options, self._session)
-        attachment.find(id)
-        return attachment
+        return self._find_for_resource(Attachment, id)
 
     # non-resource
     def attachment_meta(self):
@@ -73,9 +71,7 @@ class JIRA(object):
 ### Components
 
     def component(self, id):
-        component = Component(self._options, self._session)
-        component.find(id)
-        return component
+        return self._find_for_resource(Component, id)
 
     def create_component(self, **kw):
         pass
@@ -86,9 +82,7 @@ class JIRA(object):
 ### Custom field options
 
     def custom_field_option(self, id):
-        custom_field_option = CustomFieldOption(self._options, self._session)
-        custom_field_option.find(id)
-        return custom_field_option
+        return self._find_for_resource(CustomFieldOption, id)
 
 ### Dashboards
 
@@ -104,9 +98,7 @@ class JIRA(object):
         return dashboards
 
     def dashboard(self, id):
-        dashboard = Dashboard(self._options, self._session)
-        dashboard.find(id)
-        return dashboard
+        return self._find_for_resource(Dashboard, id)
 
 ### Fields
 
@@ -117,9 +109,7 @@ class JIRA(object):
 ### Filters
 
     def filter(self, id):
-        filter = Filter(self._options, self._session)
-        filter.find(id)
-        return filter
+        return self._find_for_resource(Filter, id)
 
     def favourite_filters(self):
         r_json = self._get_json('filter/favourite')
@@ -183,9 +173,7 @@ class JIRA(object):
         return comments
 
     def comment(self, issue, comment):
-        resource = Comment(self._options, self._session)
-        resource.find((issue, comment))
-        return resource
+        return self._find_for_resource(Comment, (issue, comment))
 
     # non-resource
     def editmeta(self, issue):
@@ -197,9 +185,7 @@ class JIRA(object):
         return remote_links
 
     def remote_link(self, issue, id):
-        resource = RemoteLink(self._options, self._session)
-        resource.find((issue, id))
-        return resource
+        return self._find_for_resource(RemoteLink, (issue, id))
 
     # non-resource
     def transitions(self, issue, id=None, expand=None):
@@ -211,14 +197,10 @@ class JIRA(object):
         return self._get_json('issue/' + issue + '/transitions', params)['transitions']
 
     def votes(self, issue):
-        votes = Votes(self._options, self._session)
-        votes.find(issue)
-        return votes
+        return self._find_for_resource(Votes, issue)
 
     def watchers(self, issue):
-        watchers = Watchers(self._options, self._session)
-        watchers.find(issue)
-        return watchers
+        return self._find_for_resource(Watchers, issue)
 
     def add_watcher(self, watcher):
         pass
@@ -231,9 +213,7 @@ class JIRA(object):
         return worklogs
 
     def worklog(self, issue, id):
-        worklog = Worklog(self._options, self._session)
-        worklog.find((issue, id))
-        return worklog
+        return self._find_for_resource(Worklog, (issue, id))
 
     def add_worklog(self, issue, **kw):
         pass
@@ -247,9 +227,7 @@ class JIRA(object):
         pass
 
     def issue_link(self, id):
-        link = IssueLink(self._options, self._session)
-        link.find(id)
-        return link
+        return self._find_for_resource(IssueLink, id)
 
 ### Issue link types
 
@@ -259,9 +237,7 @@ class JIRA(object):
         return link_types
 
     def issue_link_type(self, id):
-        link_type = IssueLinkType(self._options, self._session)
-        link_type.find(id)
-        return link_type
+        return self._find_for_resource(IssueLinkType, id)
 
 ### Issue types
 
@@ -271,9 +247,7 @@ class JIRA(object):
         return issue_types
 
     def issue_type(self, id):
-        issue_type = IssueType(self._options, self._session)
-        issue_type.find(id)
-        return issue_type
+        return self._find_for_resource(IssueType, id)
 
 ### User permissions
 
@@ -298,9 +272,7 @@ class JIRA(object):
         return priorities
 
     def priority(self, id):
-        priority = Priority(self._options, self._session)
-        priority.find(id)
-        return priority
+        return self._find_for_resource(Priority, id)
 
 ### Projects
 
@@ -310,9 +282,7 @@ class JIRA(object):
         return projects
 
     def project(self, id):
-        project = Project(self._options, self._session)
-        project.find(id)
-        return project
+        return self._find_for_resource(Project, id)
 
     # non-resource
     def project_avatars(self, project):
@@ -339,9 +309,7 @@ class JIRA(object):
         return self._get_json('project/' + project + '/role')
 
     def project_role(self, project, id):
-        role = Role(self._options, self._session)
-        role.find((project, id))
-        return role
+        return self._find_for_resource(Role, (project, id))
 
 ### Resolutions
 
@@ -351,9 +319,7 @@ class JIRA(object):
         return resolutions
 
     def resolution(self, id):
-        resolution = Resolution(self._options, self._session)
-        resolution.find(id)
-        return resolution
+        return self._find_for_resource(Resolution, id)
 
 ### Search
 
@@ -377,9 +343,7 @@ class JIRA(object):
 ### Security levels
 
     def security_level(self, id):
-        sec_level = SecurityLevel(self._options, self._session)
-        sec_level.find(id)
-        return sec_level
+        return self._find_for_resource(SecurityLevel, id)
 
 ### Server info
 
@@ -395,9 +359,7 @@ class JIRA(object):
         return statuses
 
     def status(self, id):
-        status = Status(self._options, self._session)
-        status.find(id)
-        return status
+        return self._find_for_resource(Status, id)
 
 ### Users
 
@@ -539,3 +501,13 @@ class JIRA(object):
 
         r_json = json.loads(r.text)
         return r_json
+
+    def _find_for_resource(self, resource_cls, ids, expand=None):
+        resource = resource_cls(self._options, self._session)
+        params = {}
+        if expand is not None:
+            params['expand'] = expand
+        resource.find(ids, params)
+        return resource
+
+
