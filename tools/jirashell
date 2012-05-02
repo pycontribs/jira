@@ -48,7 +48,7 @@ def process_command_line():
     return options, basic_auth
 
 def main():
-    options, basic_auth = process_command_line(argv)
+    options, basic_auth = process_command_line()
 
     jira = JIRA(options=options, basic_auth=basic_auth)
 
