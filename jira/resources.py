@@ -29,7 +29,8 @@ class Resource(object):
 
         r = self._session.get(url, headers=headers, params=params)
         if r.status_code >= 400:
-            raise JIRAError(url, r.status_code, 'GET failed')
+            msg = "Couldn't find resource: '" + self.__class__.__name__ + "' with ids " + ids.__str__()
+            raise JIRAError(msg, r.status_code, url)
 
         self._parse_raw(json.loads(r.text))
 

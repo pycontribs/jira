@@ -1,6 +1,7 @@
 import unittest
 
 from jira.client import JIRA
+from jira.exceptions import JIRAError
 from jira.resources import Resource, cls_for_resource, Issue, Project, Role
 
 class UniversalResourceTests(unittest.TestCase):
@@ -22,6 +23,15 @@ class UniversalResourceTests(unittest.TestCase):
         }
         resource = Resource('nope/{0}', options, None)  # don't need an actual session
         self.assertEqual('http://not-a-machine.net:2442/notjira/rest/notrest/666/nope/666', resource._url(('666',)))
+
+    def test_find_invalid_resource_raises_exception(self):
+        with self.assertRaises(JIRAError) as cm:
+            self.jira.find('woopsydoodle/{0}', '666')
+
+        ex = cm.exception
+        self.assertEqual(ex.status_code, 404)
+        self.assertRegexpMatches(ex.reason, r'Resource')
+        self.assertEqual(ex.url, 'http://localhost:2990/jira/rest/api/2/woopsydoodle/666')
 
 
 class ResourceTests(unittest.TestCase):

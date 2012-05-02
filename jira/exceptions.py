@@ -1,5 +1,8 @@
 class JIRAError(Exception):
-    def __init__(self, url, status_code, msg):
-        self.url = url
+    def __init__(self, reason, status_code=None, url=None):
+        self.reason = reason
         self.status_code = status_code
-        self.msg = msg
+        self.url = url
+
+    def __str__(self):
+        return self.reason
