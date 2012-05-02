@@ -1,6 +1,6 @@
 import re
 from jira.exceptions import JIRAError
-import simplejson as json
+import json
 
 class Resource(object):
 

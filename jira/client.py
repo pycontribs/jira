@@ -1,6 +1,6 @@
 
 import requests
-import simplejson as json
+import json
 from jira.exceptions import JIRAError
 from jira.resources import Resource, Issue, Comments, Comment, Project, Attachment, Component, Dashboards, Dashboard, Filter, Votes, Watchers, Worklog, IssueLink, IssueLinkType, IssueType, Priority, Version, Role, Resolution, SecurityLevel, Status, User, CustomFieldOption, RemoteLink
 
