@@ -1,3 +1,8 @@
+"""
+This module implements a friendly (well, friendlier) interface between the raw JSON
+responses from JIRA and the Resource/dict abstractions provided by this library. Users
+will construct a JIRA object as described below.
+"""
 
 import requests
 import json
@@ -5,6 +10,16 @@ from jira.exceptions import JIRAError
 from jira.resources import Resource, Issue, Comments, Comment, Project, Attachment, Component, Dashboards, Dashboard, Filter, Votes, Watchers, Worklog, IssueLink, IssueLinkType, IssueType, Priority, Version, Role, Resolution, SecurityLevel, Status, User, CustomFieldOption, RemoteLink
 
 class JIRA(object):
+    """
+    User interface to JIRA.
+
+    Clients interact with JIRA by constructing an instance of this object and calling its methods. For addressable
+    resources in JIRA -- those with "self" links -- an appropriate subclass of Resource will be returned with
+    customized update() and delete() methods, along with attribute access to fields. This means that calls of the
+    form 'issue.fields.summary' will be resolved into the proper lookups to return the JSON value at that mapping.
+    Methods that do not return resources will return a dict constructed from the JSON response or a scalar value;
+    see each method's documentation for details on what that method returns.
+    """
 
     DEFAULT_OPTIONS = {
         "server": "http://localhost:2990/jira",
@@ -12,8 +27,29 @@ class JIRA(object):
         "rest_api_version": "2"
     }
 
-    # TODO: add oauth options to constructor
     def __init__(self, options=None, basic_auth=None, oauth=None):
+        """
+        Construct a JIRA client instance.
+
+        Without any arguments, this client will connect anonymously to the JIRA instance
+        started by the Atlassian Plugin SDK from one of the 'atlas-run', 'atlas-debug',
+        or 'atlas-run-standalone' commands. By default, this instance runs at
+        http://localhost:2990/jira. The 'options' argument can be used to set the JIRA instance to use.
+
+        Authentication is handled with the 'basic_auth' argument. If authentication is supplied (and is
+        accepted by JIRA), the client will remember it for subsequent requests.
+
+        For quick command line access to a server, see the 'jirashell' script included with this distribution.
+
+        Keyword arguments:
+        options -- Specify the server and properties this client will use. Use a dict with any
+        of the following properties:
+        * server -- the server address and context path to use. Defaults to 'http://localhost:2990/jira'.
+        * rest_path -- the root REST path to use. Defaults to 'api', where the JIRA REST resources live.
+        * rest_api_version -- the version of the REST resources under rest_path to use. Defaults to '2'.
+        basic_auth -- A tuple of username and password to use when establishing a session via HTTP BASIC
+        authentication.
+        """
         if options is None:
             options = {}
 
@@ -29,16 +65,30 @@ class JIRA(object):
 ### Information about this client
 
     def client_info(self):
+        """Get the server this client is connected to."""
         return self._options['server']
 
 ### Universal resource loading
 
-    def find(self, resource_format, ids=None, options=None):
-        if options is None:
-            options = {}
+    def find(self, resource_format, ids=None):
+        """
+        Get a Resource object for any addressable resource on the server.
 
-        resource_options = dict(self._options.items() + options.items())
-        resource = Resource(resource_format, resource_options, self._session)
+        This method is a universal resource locator for any RESTful resource in JIRA. The
+        argument 'resource_format' is a string of the form 'resource', 'resource/{0}',
+        'resource/{0}/sub', 'resource/{0}/sub/{1}', etc. The format placeholders will be
+        populated from the 'ids' argument if present. The existing authentication session
+        will be used.
+
+        The return value is an untyped Resource object, which will not support specialized
+        update() or delete() behavior. Moreover, it will not know to return an issue Resource
+        if the client uses the resource issue path. For this reason, it is intended to support
+        resources that are not included in the standard Atlassian REST API.
+
+        Keyword arguments:
+        ids -- a tuple of values to substitute in the 'resource_format' string
+        """
+        resource = Resource(resource_format, self._options, self._session)
         resource.find(ids)
         return resource
 
@@ -248,6 +298,13 @@ class JIRA(object):
 
     # non-resource
     def transitions(self, issue, id=None, expand=None):
+        """
+        Get a list of the transitions available on the specified issue to the current user.
+
+        Keyword arguments:
+        id -- get only the transition matching this ID
+        expand -- extra information to fetch inside each transition
+        """
         params = {}
         if id is not None:
             params['transitionId'] = id
@@ -256,9 +313,11 @@ class JIRA(object):
         return self._get_json('issue/' + issue + '/transitions', params)['transitions']
 
     def votes(self, issue):
+        """Get a votes Resource from the server for the specified issue."""
         return self._find_for_resource(Votes, issue)
 
     def watchers(self, issue):
+        """Get a watchers Resource from the server for the specified issue."""
         return self._find_for_resource(Watchers, issue)
 
     def add_watcher(self, watcher):
@@ -267,11 +326,13 @@ class JIRA(object):
     # also have delete_watcher?
 
     def worklogs(self, issue):
+        """Get a list of worklog Resources from the server for the specified issue."""
         r_json = self._get_json('issue/' + issue + '/worklog')
         worklogs = [Worklog(self._options, self._session, raw_worklog_json) for raw_worklog_json in r_json['worklogs']]
         return worklogs
 
     def worklog(self, issue, id):
+        """Get a worklog Resource from the server for the specified issue and worklog ID."""
         return self._find_for_resource(Worklog, (issue, id))
 
     def add_worklog(self, issue, **kw):
@@ -286,32 +347,46 @@ class JIRA(object):
         pass
 
     def issue_link(self, id):
+        """Get an issue link Resource from the server for the specified ID."""
         return self._find_for_resource(IssueLink, id)
 
 ### Issue link types
 
     def issue_link_types(self):
+        """Get a list of issue link type Resources from the server."""
         r_json = self._get_json('issueLinkType')
         link_types = [IssueLinkType(self._options, self._session, raw_link_json) for raw_link_json in r_json['issueLinkTypes']]
         return link_types
 
     def issue_link_type(self, id):
+        """Get an issue link Resource from the server for the specified ID."""
         return self._find_for_resource(IssueLinkType, id)
 
 ### Issue types
 
     def issue_types(self):
+        """Get a list of issue type Resources from the server."""
         r_json = self._get_json('issuetype')
         issue_types = [IssueType(self._options, self._session, raw_type_json) for raw_type_json in r_json]
         return issue_types
 
     def issue_type(self, id):
+        """Get an issue type Resource from the server for the specified ID."""
         return self._find_for_resource(IssueType, id)
 
 ### User permissions
 
     # non-resource
     def my_permissions(self, projectKey=None, projectId=None, issueKey=None, issueId=None):
+        """
+        Get a dict of all available permissions on the server.
+
+        Keyword arguments:
+        projectKey -- limit returned permissions to the specified project
+        projectId -- limit returned permissions to the specified project
+        issueKey -- limit returned permissions to the specified issue
+        issueId -- limit returned permissions to the specified issue
+        """
         params = {}
         if projectKey is not None:
             params['projectKey'] = projectKey
@@ -326,25 +401,30 @@ class JIRA(object):
 ### PrioritiesK
 
     def priorities(self):
+        """Get a list of priority Resources from the server."""
         r_json = self._get_json('priority')
         priorities = [Priority(self._options, self._session, raw_priority_json) for raw_priority_json in r_json]
         return priorities
 
     def priority(self, id):
+        """Get a priority Resource from the server for the specified ID."""
         return self._find_for_resource(Priority, id)
 
 ### Projects
 
     def projects(self):
+        """Get a list of project Resources from the server visible to the current authenticated user."""
         r_json = self._get_json('project')
         projects = [Project(self._options, self._session, raw_project_json) for raw_project_json in r_json]
         return projects
 
     def project(self, id):
+        """Get a project Resource from the server for the specified ID."""
         return self._find_for_resource(Project, id)
 
     # non-resource
     def project_avatars(self, project):
+        """Get a dict of all avatars for the specified project visible to the current authenticated user."""
         return self._get_json('project/' + project + '/avatars')
 
     def create_temp_project_avatar(self, project, name, size, avatar_img):
@@ -354,35 +434,50 @@ class JIRA(object):
         pass
 
     def project_components(self, project):
+        """Get a list of component Resources present on the specified project."""
         r_json = self._get_json('project/' + project + '/components')
         components = [Component(self._options, self._session, raw_comp_json) for raw_comp_json in r_json]
         return components
 
     def project_versions(self, project):
+        """Get a list of version Resources present on the specified project."""
         r_json = self._get_json('project/' + project + '/versions')
         versions = [Version(self._options, self._session, raw_ver_json) for raw_ver_json in r_json]
         return versions
 
     # non-resource
     def project_roles(self, project):
+        """Get a dict of role names to resource locations for the specified project."""
         return self._get_json('project/' + project + '/role')
 
     def project_role(self, project, id):
+        """Get a role Resource for the specified project and ID."""
         return self._find_for_resource(Role, (project, id))
 
 ### Resolutions
 
     def resolutions(self):
+        """Get a list of resolution Resources from the server."""
         r_json = self._get_json('resolution')
         resolutions = [Resolution(self._options, self._session, raw_res_json) for raw_res_json in r_json]
         return resolutions
 
     def resolution(self, id):
+        """Get a resolution Resource from the server for the specified ID."""
         return self._find_for_resource(Resolution, id)
 
 ### Search
 
     def search_issues(self, jql_str, startAt=0, maxResults=50, fields=None, expand=None):
+        """
+        Get a list of issue Resources matching the specified JQL search string.
+
+        Keyword arguments:
+        startAt -- index of the first issue to return
+        maxResults -- maximum number of issues to return
+        fields -- comma-separated string of issue fields to include in the results
+        expand -- extra information to fetch inside each resource
+        """
         # TODO what to do about the expand, which isn't related to the issues?
         if fields is None:
             fields = []
@@ -402,27 +497,37 @@ class JIRA(object):
 ### Security levels
 
     def security_level(self, id):
+        """Get a security level Resource for the specified ID."""
         return self._find_for_resource(SecurityLevel, id)
 
 ### Server info
 
     # non-resource
     def server_info(self):
+        """Get a dict of server information for this JIRA instance."""
         return self._get_json('serverInfo')
 
 ### Status
 
     def statuses(self):
+        """Get a list of status Resources from the server."""
         r_json = self._get_json('status')
         statuses = [Status(self._options, self._session, raw_stat_json) for raw_stat_json in r_json]
         return statuses
 
     def status(self, id):
+        """Get a status Resource from the server for the specified ID."""
         return self._find_for_resource(Status, id)
 
 ### Users
 
     def user(self, id, expand=None):
+        """
+        Get a user Resource from the server with the specified username.
+
+        Keyword arguments:
+        expand -- extra information to fetch inside each resource
+        """
         user = User(self._options, self._session)
         params = {}
         if expand is not None:
@@ -431,6 +536,14 @@ class JIRA(object):
         return user
 
     def search_assignable_users_for_projects(self, username, projectKeys, startAt=0, maxResults=50):
+        """
+        Get a list of user Resources that match the search string and can be assigned issues for the
+        specified projects.
+
+        Keyword arguments:
+        startAt -- index of the first user to return
+        maxResults -- maximum number of users to return
+        """
         params = {
             'username': username,
             'projectKeys': projectKeys,
@@ -442,6 +555,21 @@ class JIRA(object):
         return users
 
     def search_assignable_users_for_issues(self, username, project=None, issueKey=None, expand=None, startAt=0, maxResults=50):
+        """
+        Get a list of user Resources that match the search string for assigning or creating issues.
+
+        This method is intended to find users that are eligible to create issues in a project or be assigned
+        to an existing issue. When searching for eligible creators, specify a project. When searching for eligible
+        assignees, specify an issue key.
+
+        Keyword arguments:
+        project -- filter returned users by permission in this project (expected if a result will be used to create
+        an issue)
+        issueKey -- filter returned users by this issue (expected if a result will be used to edit this issue)
+        expand -- extra information to fetch inside each resource
+        startAt -- index of the first user to return
+        maxResults -- maximum number of users to return
+        """
         params = {
             'username': username,
             'startAt': startAt,
@@ -459,6 +587,7 @@ class JIRA(object):
 
     # non-resource
     def user_avatars(self, username):
+        """Get a dict of avatars for the specified user."""
         return self._get_json('user/avatars', params={'username': username})
 
     def create_temp_user_avatar(self, user, filename, size, avatar_img):
@@ -468,6 +597,13 @@ class JIRA(object):
         pass
 
     def search_users(self, user, startAt=0, maxResults=50):
+        """
+        Get a list of user Resources that match the specified search string.
+
+        Keyword arguments:
+        startAt -- index of the first user to return
+        maxResults -- maximum number of users to return
+        """
         params = {
             'username': user,
             'startAt': startAt,
@@ -500,6 +636,12 @@ class JIRA(object):
         pass
 
     def version(self, id, expand=None):
+        """
+        Get a version Resource that matches the specified ID.
+
+        Keyword arguments:
+        expand -- extra information to fetch inside each resource
+        """
         version = Version(self._options, self._session)
         params = {}
         if expand is not None:
@@ -508,16 +650,19 @@ class JIRA(object):
         return version
 
     def version_count_related_issues(self, id):
+        """Get a dict of the counts of issues fixed and affected by the version with the specified ID."""
         r_json = self._get_json('version/' + id + '/relatedIssueCounts')
         del r_json['self']   # this isn't really an addressable resource
         return r_json
 
     def version_count_unresolved_issues(self, id):
+        """Get the number of unresolved issues for the version with the specified ID."""
         return self._get_json('version/' + id + '/unresolvedIssueCount')['issuesUnresolvedCount']
 
 ### Session authentication
 
     def session(self):
+        """Get a dict of the current authenticated user's session information."""
         url = '{server}/rest/auth/1/session'.format(**self._options)
         r = self._session.get(url)
         self._raise_on_error(r)
@@ -526,6 +671,7 @@ class JIRA(object):
         return user
 
     def kill_session(self):
+        """Destroy the session of the current authenticated user."""
         url = self._options['server'] + '/rest/auth/1/session'
         r = self._session.delete(url)
         self._raise_on_error(r)
@@ -533,6 +679,7 @@ class JIRA(object):
 ### Websudo
 
     def kill_websudo(self):
+        """Destroy the user's current WebSudo session."""
         url = self._options['server'] + '/rest/auth/1/websudo'
         r = self._session.delete(url)
         self._raise_on_error(r)

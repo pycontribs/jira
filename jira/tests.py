@@ -16,13 +16,8 @@ class UniversalResourceTests(unittest.TestCase):
         self.assertEqual(resource.key, issue.key)
 
     def test_universal_find_custom_resource(self):
-        options = {
-            'server': 'http://not-a-machine.net:2442/notjira',
-            'rest_path': 'notrest',
-            'rest_api_version': '666'
-        }
-        resource = Resource('nope/{0}', options, None)  # don't need an actual session
-        self.assertEqual('http://not-a-machine.net:2442/notjira/rest/notrest/666/nope/666', resource._url(('666',)))
+        resource = Resource('nope/{0}', self.jira._options, None)  # don't need an actual session
+        self.assertEqual('http://localhost:2990/jira/rest/api/2/nope/666', resource._url(('666',)))
 
     def test_find_invalid_resource_raises_exception(self):
         with self.assertRaises(JIRAError) as cm:
