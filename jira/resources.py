@@ -90,40 +90,6 @@ class Resource(object):
         return dict(user_headers.items() + {'accept': 'application/json'}.items())
 
 
-def dict2resource(raw, top=None, options=None, session=None):
-    """
-    Recursively walks a dict structure, transforming the properties into attributes
-    on a new Resource object of the appropriate type (if a 'self' link is present)
-    or a PropertyHolder object (if no 'self' link is present).
-    """
-    if top is None:
-        top = type('PropertyHolder', (object,), raw)
-
-    seqs = tuple, list, set, frozenset
-    for i, j in raw.iteritems():
-        if isinstance(j, dict):
-            if 'self' in j:
-                resource = cls_for_resource(j['self'])(options, session, j)
-                setattr(top, i, resource)
-            else:
-                setattr(top, i, dict2resource(j, options=options, session=session))
-        elif isinstance(j, seqs):
-            seq_list = []
-            for seq_elem in j:
-                if isinstance(seq_elem, dict):
-                    if 'self' in seq_elem:
-                        resource = cls_for_resource(seq_elem['self'])(options, session, seq_elem)
-                        seq_list.append(resource)
-                    else:
-                        seq_list.append(dict2resource(seq_elem, options=options, session=session))
-                else:
-                    seq_list.append(seq_elem)
-            setattr(top, i, seq_list)
-        else:
-            setattr(top, i, j)
-    return top
-
-
 class Attachment(Resource):
     """An issue attachment."""
 
@@ -337,6 +303,39 @@ class Version(Resource):
         if raw:
             self._parse_raw(raw)
 
+
+def dict2resource(raw, top=None, options=None, session=None):
+    """
+    Recursively walks a dict structure, transforming the properties into attributes
+    on a new Resource object of the appropriate type (if a 'self' link is present)
+    or a PropertyHolder object (if no 'self' link is present).
+    """
+    if top is None:
+        top = type('PropertyHolder', (object,), raw)
+
+    seqs = tuple, list, set, frozenset
+    for i, j in raw.iteritems():
+        if isinstance(j, dict):
+            if 'self' in j:
+                resource = cls_for_resource(j['self'])(options, session, j)
+                setattr(top, i, resource)
+            else:
+                setattr(top, i, dict2resource(j, options=options, session=session))
+        elif isinstance(j, seqs):
+            seq_list = []
+            for seq_elem in j:
+                if isinstance(seq_elem, dict):
+                    if 'self' in seq_elem:
+                        resource = cls_for_resource(seq_elem['self'])(options, session, seq_elem)
+                        seq_list.append(resource)
+                    else:
+                        seq_list.append(dict2resource(seq_elem, options=options, session=session))
+                else:
+                    seq_list.append(seq_elem)
+            setattr(top, i, seq_list)
+        else:
+            setattr(top, i, j)
+    return top
 
 resource_class_map = {
     r'attachment/[^/]+$': Attachment,
