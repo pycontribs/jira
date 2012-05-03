@@ -1,15 +1,45 @@
+"""
+This module implements the Resource classes that translate JSON from JIRA REST resources
+into usable objects.
+"""
+
 import re
 from jira.exceptions import JIRAError
 import json
 
 class Resource(object):
+    """
+    Models a URL-addressable resource in the JIRA REST API.
+
+    All Resource objects provide the following:
+    find() -- get a resource from the server and load it into the current object
+        (though clients should use the methods in the JIRA class instead of this method directly)
+    update() -- changes the value of this resource on the server and returns a new resource object for it
+    delete() -- deletes this resource from the server
+    self -- the URL of this resource on the server
+    raw -- dict of properties parsed out of the JSON response from the server
+
+    Subclasses will implement update() and delete() as appropriate for the specific resource.
+
+    All Resources have a resource path of the form:
+
+    * 'issue'
+    * 'project/{0}'
+    * 'issue/{0}/votes'
+    * 'issue/{0}/comment/{1}
+
+    where the bracketed numerals are placeholders for ID values that are filled in from the
+    'ids' parameter to find().
+    """
 
     def __init__(self, resource, options, session):
         self._resource = resource
         self._options = options
+        self._session = session
+
+        # explicitly define as None so we know when a resource has actually been loaded
         self.raw = None
         self.self = None
-        self._session = session
 
     def find(self, ids=None, headers=None, params=None):
         if ids is None:
@@ -35,17 +65,15 @@ class Resource(object):
         self._parse_raw(json.loads(r.text))
 
     def update(self, **kwargs):
-        """Updates this resource on the server, marshaling the given keyword parameters
-        into a JSON object sent via PUT/POST (depending on the implementation). Raises Error
-        if saving isn't implemented.
-
+        """
+        Updates this resource on the server, marshaling the given keyword parameters
+        into the necessary format for this resource.
         """
         pass
 
     def delete(self, **kw):
-        """Deletes this resource from the server using a DELETE call. Raises Error
-        if deletion isn't implemented.
-
+        """
+        Deletes this resource from the server.
         """
         pass
 
@@ -63,6 +91,11 @@ class Resource(object):
 
 
 def dict2resource(raw, top=None, options=None, session=None):
+    """
+    Recursively walks a dict structure, transforming the properties into attributes
+    on a new Resource object of the appropriate type (if a 'self' link is present)
+    or a PropertyHolder object (if no 'self' link is present).
+    """
     if top is None:
         top = type('PropertyHolder', (object,), raw)
 
@@ -92,41 +125,52 @@ def dict2resource(raw, top=None, options=None, session=None):
 
 
 class Attachment(Resource):
+    """An issue attachment."""
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(self, 'attachment/{0}', options, session)
         if raw:
             self._parse_raw(raw)
 
+
 class Component(Resource):
+    """A project component."""
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(self, 'component/{0}', options, session)
         if raw:
             self._parse_raw(raw)
 
+
 class CustomFieldOption(Resource):
+    """An existing option for a custom issue field."""
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(self, 'customFieldOption/{0}', options, session)
         if raw:
             self._parse_raw(raw)
 
+
 class Dashboards(Resource):
+    """A collection of dashboards."""
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(self, 'dashboard', options, session)
         if raw:
             self._parse_raw(raw)
 
+
 class Dashboard(Resource):
+    """A JIRA dashboard."""
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(self, 'dashboard/{0}', options, session)
         if raw:
             self._parse_raw(raw)
 
+
 class Filter(Resource):
+    """An issue navigator filter."""
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(self, 'filter/{0}', options, session)
@@ -135,18 +179,23 @@ class Filter(Resource):
 
 
 class Issue(Resource):
+    """A JIRA issue."""
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(self, 'issue/{0}', options, session)
         if raw:
             self._parse_raw(raw)
 
+
 class Comments(Resource):
+    """A collection of issue comments."""
 
     def __init__(self, options, session):
         Resource.__init__(self, 'issue/{0}/comment', options, session)
 
+
 class Comment(Resource):
+    """An issue comment."""
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(self, 'issue/{0}/comment/{1}', options, session)
@@ -155,6 +204,7 @@ class Comment(Resource):
 
 
 class RemoteLink(Resource):
+    """A link to a remote application from an issue."""
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(self, 'issue/{0}/remotelink/{1}', options, session)
@@ -163,97 +213,124 @@ class RemoteLink(Resource):
 
 
 class Votes(Resource):
+    """Vote information on an issue."""
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(self, 'issue/{0}/votes', options, session)
         if raw:
             self._parse_raw(raw)
 
+
 class Watchers(Resource):
+    """Watcher information on an issue."""
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(self, 'issue/{0}/watchers', options, session)
         if raw:
             self._parse_raw(raw)
 
+
 class Worklog(Resource):
+    """Worklog on an issue."""
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(self, 'issue/{0}/worklog/{1}', options, session)
         if raw:
             self._parse_raw(raw)
 
+
 class IssueLink(Resource):
+    """Link between two issues."""
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(self, 'issueLink/{0}', options, session)
         if raw:
             self._parse_raw(raw)
 
+
 class IssueLinkType(Resource):
+    """Type of link between two issues."""
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(self, 'issueLinkType/{0}', options, session)
         if raw:
             self._parse_raw(raw)
 
+
 class IssueType(Resource):
+    """Type of an issue."""
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(self, 'issuetype/{0}', options, session)
         if raw:
             self._parse_raw(raw)
 
+
 class Priority(Resource):
+    """Priority that can be set on an issue."""
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(self, 'priority/{0}', options, session)
         if raw:
             self._parse_raw(raw)
 
+
 class Project(Resource):
+    """A JIRA project."""
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(self, 'project/{0}', options, session)
         if raw:
             self._parse_raw(raw)
 
+
 class Role(Resource):
+    """A role inside a project."""
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(self, 'project/{0}/role/{1}', options, session)
         if raw:
             self._parse_raw(raw)
 
+
 class Resolution(Resource):
+    """A resolution for an issue."""
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(self, 'resolution/{0}', options, session)
         if raw:
             self._parse_raw(raw)
 
+
 class SecurityLevel(Resource):
+    """A security level for an issue or project."""
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(self, 'securitylevel/{0}', options, session)
         if raw:
             self._parse_raw(raw)
 
+
 class Status(Resource):
+    """Status for an issue."""
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(self, 'status/{0}', options, session)
         if raw:
             self._parse_raw(raw)
 
+
 class User(Resource):
+    """A JIRA user."""
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(self, 'user?username={0}', options, session)
         if raw:
             self._parse_raw(raw)
 
+
 class Version(Resource):
+    """A version of a project."""
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(self, 'version/{0}', options, session)
