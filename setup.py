@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='jira-python',
-    version='0.6.0',
+    version='0.7.0',
     packages=find_packages(),
 
     install_requires=['requests==0.11.2', 'ipython==0.12.1', 'argparse==1.2.1'],
