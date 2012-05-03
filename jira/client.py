@@ -46,12 +46,19 @@ class JIRA(object):
 
     # non-resource
     def application_properties(self, key=None):
+        """
+        Return the mutable server application properties.
+
+        Keyword arguments:
+        key -- the single property to return a value for
+        """
         params = {}
         if key is not None:
             params['key'] = key
         return self._get_json('application-properties', params=params)
 
     def set_application_property(self, key, value):
+        """Set the application property to the specified value."""
         url = self._options['server'] + '/rest/api/2/application-properties/' + key
         payload = {
             'id': key,
@@ -63,32 +70,45 @@ class JIRA(object):
 ### Attachments
 
     def attachment(self, id):
+        """Get an attachment Resource from the server for the specified ID."""
         return self._find_for_resource(Attachment, id)
 
     # non-resource
     def attachment_meta(self):
+        """Get the attachment metadata."""
         return self._get_json('attachment/meta')
 
 ### Components
 
     def component(self, id):
+        """Get a component Resource from the server for the specified ID."""
         return self._find_for_resource(Component, id)
 
     def create_component(self, **kw):
         pass
 
     def component_count_related_issues(self, id):
+        """Get the count of related issues for the specified component ID."""
         return self._get_json('component/' + id + '/relatedIssueCounts')['issueCount']
 
 ### Custom field options
 
     def custom_field_option(self, id):
+        """Get a custom field option Resource from the server for the specified ID."""
         return self._find_for_resource(CustomFieldOption, id)
 
 ### Dashboards
 
     # TODO: Should this be _get_json instead of resource?
     def dashboards(self, filter=None, startAt=0, maxResults=20):
+        """
+        Return a list of Dashboard resources matching the specified parameters.
+
+        Keyword arguments
+        filter -- either "favourite" or "my"
+        startAt -- index of the first dashboard to return
+        maxResults -- maximum number of dashboards to return:
+        """
         dashboards = Dashboards(self._options, self._session)
         params = {}
         if filter is not None:
@@ -99,20 +119,24 @@ class JIRA(object):
         return dashboards
 
     def dashboard(self, id):
+        """Get a dashboard Resource from the server for the specified ID."""
         return self._find_for_resource(Dashboard, id)
 
 ### Fields
 
     # non-resource
     def fields(self):
+        """Return a list of all issue fields."""
         return self._get_json('field')
 
 ### Filters
 
     def filter(self, id):
+        """Get a filter Resource from the server for the specified ID."""
         return self._find_for_resource(Filter, id)
 
     def favourite_filters(self):
+        """Get a list of filter Resources which are the favourites of the currently authenticated user."""
         r_json = self._get_json('filter/favourite')
         filters = [Filter(self._options, self._session, raw_filter_json) for raw_filter_json in r_json]
         return filters
@@ -121,6 +145,13 @@ class JIRA(object):
 
     # non-resource
     def groups(self, query=None, exclude=None):
+        """
+        Return a list of groups matching the specified criteria.
+
+        Keyword arguments:
+        query -- filter groups by name with this string
+        exclude -- filter out groups by name with this string
+        """
         params = {}
         if query is not None:
             params['query'] = query
@@ -131,6 +162,13 @@ class JIRA(object):
 ### Issues
 
     def issue(self, id, fields=None, expand=None):
+        """
+        Get an issue Resource from the server for the specified ID.
+
+        Keyword arguments:
+        fields -- comma-separated string of issue fields to include in the results
+        expand -- extra information to fetch inside each resource
+        """
         issue = Issue(self._options, self._session)
 
         params = {}
@@ -145,6 +183,20 @@ class JIRA(object):
         pass
 
     def createmeta(self, projectKeys=None, projectIds=None, issuetypeIds=None, issuetypeNames=None, expand=None):
+        """
+        Gets the metadata required to create issues, filtered by the specified projects and issue types.
+
+        Keyword arguments:
+        projectKeys -- keys of the projects to filter the results with. Can be a single value or a comma-delimited string.
+        May be combined with projectIds.
+        projectIds -- IDs of the projects to filter the results with. Can be a single value or a comma-delimited string.
+        May be combined with projectKeys.
+        issuetypeIds -- IDs of the issue types to filter the results with. Can be a single value or a comma-delimited string.
+        May be combined with issuetypeNames.
+        iisuetypeNames -- Names of the issue types to filter the results with. Can be a single value or a comma-delimited string.
+        May be combined with issuetypeIds.
+        expand -- extra information to fetch inside each resource.
+        """
         params = {}
         if projectKeys is not None:
             params['projectKeys'] = projectKeys
@@ -160,6 +212,7 @@ class JIRA(object):
 
     # non-resource
     def assign_issue(self, issue, assignee):
+        """Assign the issue to the specified user."""
         url = self._options['server'] + '/rest/api/2/issue/' + issue + '/assignee'
         payload = {'name': assignee}
         r = self._session.put(url, data=json.dumps(payload))
@@ -167,6 +220,7 @@ class JIRA(object):
 
     # TODO: Should this be _get_json instead of resource?
     def comments(self, issue):
+        """Get a list of comment Resources from the specified issue."""
         resource = Comments(self._options, self._session)
         resource.find(issue)
 
@@ -174,18 +228,22 @@ class JIRA(object):
         return comments
 
     def comment(self, issue, comment):
+        """Get a comment Resource from the server for the specified ID."""
         return self._find_for_resource(Comment, (issue, comment))
 
     # non-resource
     def editmeta(self, issue):
+        """Get the edit metadata for the specified issue."""
         return self._get_json('issue/' + issue + '/editmeta')
 
     def remote_links(self, issue):
+        """Get a list of remote link Resources from the specified issue."""
         r_json = self._get_json('issue/' + issue + '/remotelink')
         remote_links = [RemoteLink(self._options, self._session, raw_remotelink_json) for raw_remotelink_json in r_json]
         return remote_links
 
     def remote_link(self, issue, id):
+        """Get a remote link Resource from the server for the specified ID."""
         return self._find_for_resource(RemoteLink, (issue, id))
 
     # non-resource
