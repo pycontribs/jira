@@ -335,8 +335,33 @@ class JIRA(object):
         """Get a worklog Resource from the server for the specified issue and worklog ID."""
         return self._find_for_resource(Worklog, (issue, id))
 
-    def add_worklog(self, issue, **kw):
-        pass
+    def add_worklog(self, issue, timeSpent=None, adjustEstimate=None,
+        newEstimate=None, reduceBy=None):
+        """Create a new worklog.
+
+        Keyword arguments:
+        timeSpent -- Add a worklog entry with this amount of time spent, e.g. "2d"
+        adjustEstimate -- (optional) allows you to provide specific instructions to update the remaining time estimate of the issue. The value can either be new, leave, manual or auto (default).
+        newEstimate -- the new value for the remaining estimate field. e.g. "2d"
+        reduceBy -- the amount to reduce the remaining estimate by e.g. "2d"
+        """
+        params = {}
+        if adjustEstimate is not None:
+            params['adjustEstimate'] = adjustEstimate
+        if newEstimate is not None:
+            params['newEstimate'] = newEstimate
+        if reduceBy is not None:
+            params['reduceBy'] = reduceBy
+
+        data = {}
+        if timeSpent is not None:
+            data['timeSpent'] = timeSpent
+
+        url = self._get_url('issue/{}/worklog'.format(issue))
+        r = self._session.post(url, params=params, data=json.dumps(data))
+        self._raise_on_error(r)
+
+### Attachments
 
     def add_attachment(self, issue, attachment):
         pass
@@ -700,8 +725,11 @@ class JIRA(object):
     def _create_oauth_session(self, oauth):
         raise NotImplementedError("oauth support isn't implemented yet")
 
+    def _get_url(self, path):
+        return '{}/rest/api/2/{}'.format(self._options['server'], path)
+
     def _get_json(self, path, params=None):
-        url = '{}/rest/api/2/{}'.format(self._options['server'], path)
+        url = self._get_url(path)
         r = self._session.get(url, params=params)
         self._raise_on_error(r)
 
