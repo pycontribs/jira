@@ -17,14 +17,7 @@ Feeling impatient? I like your style.
         print issue.fields.issuetype.name          # 'New Feature'
         print issue.fields.reporter.displayName    # 'Mike Cannon-Brookes [Atlassian]'
 
-# Getting Started
-
-## Requirements
-
-The library works off of Kenneth Reitz's indispensable [requests][1] library in addition to standard
-pieces of the Python library. See `setup.py` for name and version details.
-
-## Installation
+# Installation
 
 Download and install using pip:
 
@@ -34,7 +27,7 @@ You ARE using a [virtualenv][2], right?
 
 # Usage
 
-See the documentation for full details.
+See the documentation (http://readthedocs.org/docs/jira-python/) for full details.
 
 [1]: http://docs.python-requests.org/
 [2]: http://www.virtualenv.org/en/latest/index.html
