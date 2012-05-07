@@ -13,7 +13,7 @@ class Resource(object):
 
     All Resource objects provide the following:
     find() -- get a resource from the server and load it into the current object
-        (though clients should use the methods in the JIRA class instead of this method directly)
+    (though clients should use the methods in the JIRA class instead of this method directly)
     update() -- changes the value of this resource on the server and returns a new resource object for it
     delete() -- deletes this resource from the server
     self -- the URL of this resource on the server
