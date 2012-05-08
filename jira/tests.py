@@ -28,6 +28,14 @@ class UniversalResourceTests(unittest.TestCase):
         self.assertRegexpMatches(ex.reason, r'Resource')
         self.assertEqual(ex.url, 'http://localhost:2990/jira/rest/api/2/woopsydoodle/666')
 
+    def test_verify_works_with_https(self):
+        self.jira = JIRA(options={'server': 'https://jira.atlassian.com'})
+
+    def test_verify_fails_without_https(self):
+        # we need a server that doesn't do https
+        self.jira = JIRA(options={'server': 'https://www.yahoo.com'})
+        self.assertRaises(JIRAError, self.jira.issue, 'BULK-1')
+
 
 class ResourceTests(unittest.TestCase):
 

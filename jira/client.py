@@ -60,7 +60,8 @@ class JIRA(object):
         elif oauth:
             self._create_oauth_session(oauth)
         else:
-            self._session = requests.session(headers={'content-type': 'application/json'})
+            verify = self._options['server'].startswith('https')
+            self._session = requests.session(headers={'content-type': 'application/json'}, verify=verify)
 
 ### Information about this client
 
@@ -693,7 +694,8 @@ class JIRA(object):
             'password': password
         }
 
-        self._session = requests.session(headers={'content-type': 'application/json'})
+        verify = self._options['server'].startswith('https')
+        self._session = requests.session(headers={'content-type': 'application/json'}, verify=verify)
         r = self._session.post(url, data=json.dumps(payload))
         self._raise_on_error(r)
 
