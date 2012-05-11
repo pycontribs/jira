@@ -332,6 +332,10 @@ class IssueLinkTests(unittest.TestCase):
         self.assertEqual(link.id, '10220')
         self.assertEqual(link.inwardIssue.id, '10924')
 
+    def test_create_issue_link(self):
+        self.jira.create_issue_link('Duplicate', 'BULK-1', 'BULK-2',
+                comment={'body': 'Link comment!', 'visibility': {'type': 'role', 'value': 'Administrators'}})
+
 
 class IssueLinkTypeTests(unittest.TestCase):
 

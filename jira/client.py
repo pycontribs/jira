@@ -349,6 +349,9 @@ class JIRA(object):
         """Get a remote link Resource from the server for the specified ID."""
         return self._find_for_resource(RemoteLink, (issue, id))
 
+    def add_remote_link(self, issue, application=None, relationship=None, object=None):
+        pass
+
     # non-resource
     def transitions(self, issue, id=None, expand=None):
         """
@@ -365,18 +368,28 @@ class JIRA(object):
             params['expand'] = expand
         return self._get_json('issue/' + issue + '/transitions', params)['transitions']
 
+    def transition_issue(self, issue, transitionId, update=None, fields=None):
+        pass
+
     def votes(self, issue):
         """Get a votes Resource from the server for the specified issue."""
         return self._find_for_resource(Votes, issue)
+
+    def add_vote(self, issue):
+        pass
+
+    def remove_vote(self, issue):
+        pass
 
     def watchers(self, issue):
         """Get a watchers Resource from the server for the specified issue."""
         return self._find_for_resource(Watchers, issue)
 
-    def add_watcher(self, watcher):
+    def add_watcher(self, issue, watcher):
         pass
 
-    # also have delete_watcher?
+    def remove_watcher(self, issue, watcher):
+        pass
 
     def worklogs(self, issue):
         """Get a list of worklog Resources from the server for the specified issue."""
@@ -422,8 +435,32 @@ class JIRA(object):
 
 ### Issue links
 
-    def create_issue_link(self, **kw):
-        pass
+    def create_issue_link(self, type, inwardIssue, outwardIssue, comment=None):
+        """
+        Create a link between two issues.
+
+        Keyword arguments:
+        comment -- a comment to add to the issues with the link. Should be a dict containing 'body'
+        and 'visibility' fields: 'body being the text of the comment and 'visibility' being a dict containing two
+        entries: "type" and "value". "type" is 'role' (or 'group' if the JIRA server has configured comment
+        visibility for groups) and 'value' is the name of the role (or group) to which viewing of this comment will
+        be restricted.
+        """
+        data = {
+            'type': {
+                'name': type
+            },
+            'inwardIssue': {
+                'key': inwardIssue
+            },
+            'outwardIssue': {
+                'key': outwardIssue
+            },
+            'comment': comment
+        }
+        url = self._get_url('issueLink')
+        r = self._session.post(url, data=json.dumps(data))
+        self._raise_on_error(r)
 
     def issue_link(self, id):
         """Get an issue link Resource from the server for the specified ID."""
