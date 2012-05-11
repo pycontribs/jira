@@ -300,6 +300,11 @@ class IssueTests(unittest.TestCase):
         self.assertEqual(worklog.author.name, 'admin')
         self.assertEqual(worklog.timeSpent, '4d')
 
+    def test_add_worklog(self):
+        self.assertEqual(len(self.jira.worklogs('BULK-2')), 0)
+        self.jira.add_worklog('BULK-2', '2h')
+        self.assertEqual(len(self.jira.worklogs('BULK-2')), 1)
+
 
 class IssueLinkTests(unittest.TestCase):
 

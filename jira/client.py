@@ -340,12 +340,13 @@ class JIRA(object):
         return self._find_for_resource(Worklog, (issue, id))
 
     def add_worklog(self, issue, timeSpent=None, adjustEstimate=None,
-        newEstimate=None, reduceBy=None):
-        """Create a new worklog.
+                    newEstimate=None, reduceBy=None):
+        """Create a new worklog entry on the specified issue.
 
         Keyword arguments:
         timeSpent -- Add a worklog entry with this amount of time spent, e.g. "2d"
-        adjustEstimate -- (optional) allows you to provide specific instructions to update the remaining time estimate of the issue. The value can either be new, leave, manual or auto (default).
+        adjustEstimate -- (optional) allows you to provide specific instructions to update the remaining time estimate
+        of the issue. The value can either be new, leave, manual or auto (default).
         newEstimate -- the new value for the remaining estimate field. e.g. "2d"
         reduceBy -- the amount to reduce the remaining estimate by e.g. "2d"
         """
