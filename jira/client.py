@@ -135,8 +135,37 @@ class JIRA(object):
         """Get a component Resource from the server for the specified ID."""
         return self._find_for_resource(Component, id)
 
-    def create_component(self, **kw):
-        pass
+    def create_component(self, name, project, description=None, leadUserName=None, assigneeType=None,
+                         isAssigneeTypeValid=False):
+        """
+        Create an issue component inside the specified project and return a Resource for it.
+        The component name and project name are required.
+
+        Keyword arguments:
+        description -- a description of the component
+        leadUserName -- the username of the user responsible for this component
+        assigneeType -- see the ComponentBean.AssigneeType class for valid values
+        isAssigneeTypeValid -- boolean specifying whether the assignee type is acceptable
+        """
+        data = {
+            'name': name,
+            'project': project,
+            'isAssigneeTypeValid': isAssigneeTypeValid
+        }
+        if description is not None:
+            data['description'] = description
+        if leadUserName is not None:
+            data['leadUserName'] = leadUserName
+        if assigneeType is not None:
+            data['assigneeType'] = assigneeType
+
+        url = self._get_url('component')
+        r = self._session.post(url, data=json.dumps(data))
+        self._raise_on_error(r)
+
+        component = Component(self._options, self._session, raw=json.loads(r.text))
+        return component
+
 
     def component_count_related_issues(self, id):
         """Get the count of related issues for the specified component ID."""

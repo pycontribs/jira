@@ -100,6 +100,15 @@ class ComponentTests(unittest.TestCase):
         component = self.jira.component('10003')
         self.assertEqual(component.name, 'Bacon')
 
+    def test_create_component(self):
+        component = self.jira.create_component('Test Component', 'BULK', description='testing!!', leadUserName='fred',
+                assigneeType='PROJECT_LEAD', isAssigneeTypeValid=False)
+        self.assertEqual(component.name, 'Test Component')
+        self.assertEqual(component.description, 'testing!!')
+        self.assertEqual(component.lead.name, 'fred')
+        self.assertEqual(component.assigneeType, 'PROJECT_LEAD')
+        self.assertTrue(component.isAssigneeTypeValid)
+
     def test_component_count_related_issues(self):
         issue_count = self.jira.component_count_related_issues('10002')
         self.assertEqual(issue_count, 9)
