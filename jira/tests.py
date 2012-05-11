@@ -666,6 +666,13 @@ class VersionTests(unittest.TestCase):
     def setUp(self):
         self.jira = JIRA(basic_auth=('admin', 'admin'))
 
+    def test_create_version(self):
+        version = self.jira.create_version('new version 1', 'BULK', releaseDate='2013-03-11',
+                description='test version!')
+        self.assertEqual(version.name, 'new version 1')
+        self.assertEqual(version.description, 'test version!')
+        self.assertEqual(version.releaseDate, '2013-03-11')
+
     def test_version(self):
         version = self.jira.version('10003')
         self.assertEqual(version.id, '10003')

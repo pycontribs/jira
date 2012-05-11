@@ -755,8 +755,29 @@ class JIRA(object):
 
 ### Versions
 
-    def create_version(self, **kw):
-        pass
+    def create_version(self, name, project, description=None, releaseDate=None):
+        """
+        Create a version with the specified name in the specified project and return a Resource for it.
+
+        Keyword arguments:
+        description -- a description of the version
+        releaseDate -- the release date assigned to the version
+        """
+        data = {
+            'name': name,
+            'project': project,
+        }
+        if description is not None:
+            data['description'] = description
+        if releaseDate is not None:
+            data['releaseDate'] = releaseDate
+
+        url = self._get_url('version')
+        r = self._session.post(url, data=json.dumps(data))
+        self._raise_on_error(r)
+
+        version = Version(self._session, self._options, raw=json.loads(r.text))
+        return version
 
     def move_version(self, id, **kw):
         pass
