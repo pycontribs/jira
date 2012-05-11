@@ -282,6 +282,9 @@ class JIRA(object):
         """Get a comment Resource from the server for the specified ID."""
         return self._find_for_resource(Comment, (issue, comment))
 
+    def add_comment(self, issue, body, role=None):
+        pass
+
     # non-resource
     def editmeta(self, issue):
         """Get the edit metadata for the specified issue."""
