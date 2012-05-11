@@ -302,10 +302,38 @@ class IssueTests(unittest.TestCase):
         votes = self.jira.votes('BULK-1')
         self.assertEqual(votes.votes, 5)
 
+    @unittest.skip('test data doesn\'t support voting')
+    def test_add_vote(self):
+        votes = self.jira.votes('QA-44')
+        self.assertEqual(votes.votes, 0)
+        self.jira.add_vote('QA-44')
+        votes = self.jira.votes('QA-44')
+        self.assertEqual(votes.votes, 1)
+
+    @unittest.skip('test data doesn\'t support voting')
+    def test_remove_vote(self):
+        votes = self.jira.votes('QA-44')
+        self.assertEqual(votes.votes, 1)
+        self.jira.remove_vote('QA-44')
+        votes = self.jira.votes('QA-44')
+        self.assertEqual(votes.votes, 0)
+
     @unittest.skip('test data doesn\'t support watching')
     def test_watchers(self):
         watchers = self.jira.watchers('BULK-1')
         self.assertEqual(watchers.watchCount, 18)
+
+    @unittest.skip('test data doesn\'t support watching')
+    def test_add_watcher(self):
+        self.assertEqual(self.jira.watchers('QA-44').watchCount, 0)
+        self.jira.add_watcher('QA-44', 'fred')
+        self.assertEqual(self.jira.watchers('QA-44').watchCount, 1)
+
+    @unittest.skip('test data doesn\'t support watching')
+    def test_remove_watcher(self):
+        self.assertEqual(self.jira.watchers('QA-44').watchCount, 1)
+        self.jira.remove_watcher('QA-44', 'fred')
+        self.assertEqual(self.jira.watchers('QA-44').watchCount, 0)
 
     def test_worklogs(self):
         worklogs = self.jira.worklogs('BULK-1')

@@ -376,20 +376,30 @@ class JIRA(object):
         return self._find_for_resource(Votes, issue)
 
     def add_vote(self, issue):
-        pass
+        """Register a vote for the current authenticated user on the specified issue."""
+        url = self._get_url('issue/' + issue + '/votes')
+        self._session.post(url)
 
     def remove_vote(self, issue):
-        pass
+        """Remove the current authenticated user's vote from the specified issue."""
+        url = self._get_url('issue/' + issue + '/votes')
+        self._session.delete(url)
 
     def watchers(self, issue):
         """Get a watchers Resource from the server for the specified issue."""
         return self._find_for_resource(Watchers, issue)
 
     def add_watcher(self, issue, watcher):
+        """Add the specified user to the specified issue's watch list."""
+        url = self._get_url('issue/' + issue + '/watchers')
+        r = self._session.post(url, data=json.dumps(watcher))
         pass
 
     def remove_watcher(self, issue, watcher):
-        pass
+        """Remove the specified user from the specified issue's watch list."""
+        url = self._get_url('issue/' + issue + '/watchers')
+        params = {'username': watcher}
+        self._session.delete(url, params=params)
 
     def worklogs(self, issue):
         """Get a list of worklog Resources from the server for the specified issue."""
