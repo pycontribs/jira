@@ -260,6 +260,13 @@ class IssueTests(unittest.TestCase):
         comment = self.jira.comment('BULK-1', '10072')
         self.assertTrue(comment.body.startswith('Mr. Bennet was so odd a mixture of quick parts'))
 
+    def test_add_comment(self):
+        comment = self.jira.add_comment('BULK-3', 'a test comment!',
+                visibility={'type': 'role', 'value': 'Administrators'})
+        self.assertEqual(comment.body, 'a test comment!')
+        self.assertEqual(comment.visibility.type, 'role')
+        self.assertEqual(comment.visibility.value, 'Administrators')
+
     def test_editmeta(self):
         meta = self.jira.editmeta('BULK-1')
         self.assertEqual(len(meta['fields']), 38)

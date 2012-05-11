@@ -311,8 +311,28 @@ class JIRA(object):
         """Get a comment Resource from the server for the specified ID."""
         return self._find_for_resource(Comment, (issue, comment))
 
-    def add_comment(self, issue, body, role=None):
-        pass
+    def add_comment(self, issue, body, visibility=None):
+        """
+        Add a comment from the current authenticated user on the specified issue and return a Resource for it.
+        The issue identifier and comment body are required.
+
+        Keyword arguments:
+        visibility -- a dict containing two entries: "type" and "value". "type" is 'role' (or 'group' if the JIRA
+        server has configured comment visibility for groups) and 'value' is the name of the role (or group) to which
+        viewing of this comment will be restricted.
+        """
+        data = {
+            'body': body
+        }
+        if visibility is not None:
+            data['visibility'] = visibility
+
+        url = self._get_url('issue/' + issue + '/comment')
+        r = self._session.post(url, data=json.dumps(data))
+        self._raise_on_error(r)
+
+        comment = Comment(self._session, self._options, raw=json.loads(r.text))
+        return comment
 
     # non-resource
     def editmeta(self, issue):
