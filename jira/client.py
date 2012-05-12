@@ -779,8 +779,28 @@ class JIRA(object):
         version = Version(self._session, self._options, raw=json.loads(r.text))
         return version
 
-    def move_version(self, id, **kw):
-        pass
+    def move_version(self, id, after=None, position=None):
+        """
+        Move the specified version within JIRA's ordered version list and return a new version Resource for it. One,
+        but not both, of 'after' and 'position' must be specified.
+
+        Keyword arguments:
+        after -- the self attribute of a version to place the specified version after (that is, higher in the list)
+        position -- the absolute position to move this version to: must be one of 'First', 'Last', 'Earlier', or
+        'Later'
+        """
+        data = {}
+        if after is not None:
+            data['after'] = after
+        elif position is not None:
+            data['position'] = position
+
+        url = self._get_url('version/' + id + '/move')
+        r = self._session.post(url, data=json.dumps(data))
+        self._raise_on_error(r)
+
+        version = Version(self._session, self._options, raw=json.loads(r.text))
+        return version
 
     def version(self, id, expand=None):
         """

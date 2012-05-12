@@ -673,6 +673,13 @@ class VersionTests(unittest.TestCase):
         self.assertEqual(version.description, 'test version!')
         self.assertEqual(version.releaseDate, '2013-03-11')
 
+    def test_move_version(self):
+        self.jira.move_version('10004', after=self.jira._get_url('version/10011'))
+        self.jira.move_version('10004', position='Later')
+
+        # trying to move a version in a different project should fail
+        self.assertRaises(JIRAError, self.jira.move_version, '10003', self.jira._get_url('version/10011'))
+
     def test_version(self):
         version = self.jira.version('10003')
         self.assertEqual(version.id, '10003')
