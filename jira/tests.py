@@ -285,6 +285,19 @@ class IssueTests(unittest.TestCase):
         self.assertTrue(hasattr(link, 'globalId'))
         self.assertTrue(hasattr(link, 'relationship'))
 
+    def test_add_remote_link(self):
+        link = self.jira.add_remote_link('BULK-3', globalId='python-test:story.of.horse.riding',
+                object={'url': 'http://google.com', 'title': 'googlicious!'},
+                application={'name': 'far too silly', 'type': 'sketch'}, relationship='mousebending')
+        # creation response doesn't include full remote link info, so we fetch it again using the new internal ID
+        link = self.jira.remote_link('BULK-3', link.id)
+        self.assertEqual(link.application.name, 'far too silly')
+        self.assertEqual(link.application.type, 'sketch')
+        self.assertEqual(link.object.url, 'http://google.com')
+        self.assertEqual(link.object.title, 'googlicious!')
+        self.assertEqual(link.relationship, 'mousebending')
+        self.assertEqual(link.globalId, 'python-test:story.of.horse.riding')
+
     def test_transitions(self):
         transitions = self.jira.transitions('BULK-2')
         self.assertEqual(len(transitions), 2)

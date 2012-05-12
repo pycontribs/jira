@@ -349,8 +349,31 @@ class JIRA(object):
         """Get a remote link Resource from the server for the specified ID."""
         return self._find_for_resource(RemoteLink, (issue, id))
 
-    def add_remote_link(self, issue, application=None, relationship=None, object=None):
-        pass
+    def add_remote_link(self, issue, object, globalId=None, application=None, relationship=None):
+        """
+        Create a remote link from the specified issue to an external application and returns a remote link Resource
+        for it. 'object' is required and should be a dict containing 'url' to the linked external URL and 'title'
+        to display for the link inside JIRA.
+
+        For definitions of the allowable fields for the keyword arguments 'globalId', 'application' and 'relationship',
+        see https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+for+Remote+Issue+Links.
+        """
+        data = {
+            'object': object
+        }
+        if globalId is not None:
+            data['globalId'] = globalId
+        if application is not None:
+            data['application'] = application
+        if relationship is not None:
+            data['relationship'] = relationship
+
+        url = self._get_url('issue/' + issue + '/remotelink')
+        r = self._session.post(url, data=json.dumps(data))
+        self._raise_on_error(r)
+
+        remote_link = RemoteLink(self._options, self._session, raw=json.loads(r.text))
+        return remote_link
 
     # non-resource
     def transitions(self, issue, id=None, expand=None):
