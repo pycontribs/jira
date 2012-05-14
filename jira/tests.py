@@ -218,6 +218,46 @@ class IssueTests(unittest.TestCase):
         self.assertTrue(hasattr(issue, 'schema'))
         self.assertFalse(hasattr(issue, 'changelog'))
 
+    def test_create_issue_with_fieldargs(self):
+        issue = self.jira.create_issue(project={'key': 'BULK'}, summary='Test issue created',
+                description='blahery', issuetype={'name': 'Bug'}, customfield_10540={'key': 'XSS'})
+        self.assertEqual(issue.fields.summary, 'Test issue created')
+        self.assertEqual(issue.fields.description, 'blahery')
+        self.assertEqual(issue.fields.issuetype.name, 'Bug')
+        self.assertEqual(issue.fields.project.key, 'BULK')
+        self.assertEqual(issue.fields.customfield_10540.key, 'XSS')
+
+    def test_create_issue_with_fielddict(self):
+        fields = {
+            'project': {
+                'key': 'BULK'
+            },
+            'summary': 'Issue created from field dict',
+            'description': "Microphone #1, is not this a lot of fun",
+            'issuetype': {
+                'name': 'Task'
+            },
+            'customfield_10540': {
+                'key': 'DOC'
+            },
+            'priority': {
+                'name': 'Critical'
+            }
+        }
+        issue = self.jira.create_issue(fields=fields)
+        self.assertEqual(issue.fields.summary, 'Issue created from field dict')
+        self.assertEqual(issue.fields.description, "Microphone #1, is not this a lot of fun")
+        self.assertEqual(issue.fields.issuetype.name, 'Task')
+        self.assertEqual(issue.fields.project.key, 'BULK')
+        self.assertEqual(issue.fields.customfield_10540.key, 'DOC')
+        self.assertEqual(issue.fields.priority.name, 'Critical')
+
+    def test_create_issue_without_prefetch(self):
+        issue = self.jira.create_issue(prefetch=False, project={'key': 'BULK'}, summary='Test issue created',
+            description='blahery', issuetype={'name': 'Bug'}, customfield_10540={'key': 'XSS'})
+        self.assertTrue(hasattr(issue, 'self'))
+        self.assertFalse(hasattr(issue, 'fields'))
+
     def test_createmeta(self):
         meta = self.jira.createmeta()
         self.assertEqual(len(meta['projects']), 12)

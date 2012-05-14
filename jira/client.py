@@ -259,8 +259,46 @@ class JIRA(object):
         issue.find(id, params=params)
         return issue
 
-    def create_issue(self, **kw):
-        pass
+    def create_issue(self, fields=None, prefetch=True, **fieldargs):
+        """
+        Create a new issue and return an issue Resource for it.
+
+        Each keyword argument (other than the predefined ones) is treated as a field name and the argument's value
+        is treated as the intended value for that field -- if the fields argument is used, all other keyword arguments
+        will be ignored and
+
+        By default, the client will immediately reload the issue Resource created by this method in order to return
+        a complete Issue object to the caller; this behavior can be controlled through the 'prefetch' argument.
+
+        JIRA projects may contain many different issue types. Some issue screens have different requirements for
+        fields in a new issue. This information is available through the 'createmeta' method. Further examples are
+        available here: https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Create+Issue
+
+        Keyword arguments:
+        fields -- a dict containing field names and the values to use. If present, all other keyword arguments
+        will be ignored
+        prefetch -- whether to reload the created issue Resource so that all of its data is present in the value
+        returned from this method
+        """
+        data = {}
+        if fields is not None:
+            data['fields'] = fields
+        else:
+            fields_dict = {}
+            for field in fieldargs:
+                fields_dict[field] = fieldargs[field]
+            data['fields'] = fields_dict
+
+        url = self._get_url('issue')
+        r = self._session.post(url, data=json.dumps(data))
+        self._raise_on_error(r)
+
+        raw_issue_json = json.loads(r.text)
+        if prefetch:
+            return self.issue(raw_issue_json['key'])
+        else:
+            return Issue(self._options, self._session, raw=raw_issue_json)
+
 
     def createmeta(self, projectKeys=None, projectIds=None, issuetypeIds=None, issuetypeNames=None, expand=None):
         """
