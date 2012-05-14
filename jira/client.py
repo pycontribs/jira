@@ -299,7 +299,6 @@ class JIRA(object):
         else:
             return Issue(self._options, self._session, raw=raw_issue_json)
 
-
     def createmeta(self, projectKeys=None, projectIds=None, issuetypeIds=None, issuetypeNames=None, expand=None):
         """
         Gets the metadata required to create issues, filtered by the specified projects and issue types.
@@ -454,7 +453,6 @@ class JIRA(object):
         """Add the specified user to the specified issue's watch list."""
         url = self._get_url('issue/' + issue + '/watchers')
         r = self._session.post(url, data=json.dumps(watcher))
-        pass
 
     def remove_watcher(self, issue, watcher):
         """Remove the specified user from the specified issue's watch list."""
