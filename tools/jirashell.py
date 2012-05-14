@@ -8,6 +8,7 @@ support changing the server and a persistent authentication over HTTP BASIC.
 import argparse
 from sys import exit
 from jira.client import JIRA
+from jira import __version__
 
 def process_command_line():
 
@@ -54,7 +55,7 @@ def main():
 
     from IPython.frontend.terminal.embed import InteractiveShellEmbed
 
-    ipshell = InteractiveShellEmbed(banner1='<JIRA Shell (' + jira.client_info() + ')>')
+    ipshell = InteractiveShellEmbed(banner1='<JIRA Shell ' + __version__ + ' (' + jira.client_info() + ')>')
     ipshell("*** JIRA shell active; client is in 'jira'."
             ' Press Ctrl-D to exit.')
 
