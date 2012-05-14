@@ -350,6 +350,27 @@ class IssueTests(unittest.TestCase):
         transition = self.jira.transitions('BULK-2', '701', expand=('transitions.fields'))
         self.assertTrue('fields' in transition[0])
 
+    def test_transition_issue_with_fieldargs(self):
+        issue = self.jira.create_issue(project={'key': 'BULK'}, summary='Test issue for transition created',
+            description='blahery', issuetype={'name': 'Bug'}, customfield_10540={'key': 'XSS'})
+        self.jira.transition_issue(issue.key, '2', assignee={'name': 'fred'})
+        issue = self.jira.issue(issue.key)
+        self.assertEqual(issue.fields.assignee.name, 'fred')
+        self.assertEqual(issue.fields.status.id, '6')    # issue now 'Closed'
+
+    def test_transition_issue_with_fielddict(self):
+        issue = self.jira.create_issue(project={'key': 'BULK'}, summary='Test issue for transition created',
+            description='blahery', issuetype={'name': 'Bug'}, customfield_10540={'key': 'XSS'})
+        fields = {
+            'assignee': {
+                'name': 'fred'
+            }
+        }
+        self.jira.transition_issue(issue.key, '5', fields=fields)
+        issue = self.jira.issue(issue.key)
+        self.assertEqual(issue.fields.assignee.name, 'fred')
+        self.assertEqual(issue.fields.status.id, '5')    # issue now 'Resolved'
+
     @unittest.skip('test data doesn\'t support voting')
     def test_votes(self):
         votes = self.jira.votes('BULK-1')

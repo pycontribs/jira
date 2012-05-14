@@ -265,7 +265,7 @@ class JIRA(object):
 
         Each keyword argument (other than the predefined ones) is treated as a field name and the argument's value
         is treated as the intended value for that field -- if the fields argument is used, all other keyword arguments
-        will be ignored and
+        will be ignored.
 
         By default, the client will immediately reload the issue Resource created by this method in order to return
         a complete Issue object to the caller; this behavior can be controlled through the 'prefetch' argument.
@@ -428,8 +428,35 @@ class JIRA(object):
             params['expand'] = expand
         return self._get_json('issue/' + issue + '/transitions', params)['transitions']
 
-    def transition_issue(self, issue, transitionId, update=None, fields=None):
-        pass
+    def transition_issue(self, issue, transitionId, fields=None, **fieldargs):
+        # TODO: Support update verbs (same as issue.update())
+        """
+        Perform the specified transition on the specified issue.
+
+        Each keyword argument (other than the predefined ones) is treated as a field name and the argument's value
+        is treated as the intended value for that field -- if the fields argument is used, all other keyword arguments
+        will be ignored. Field values will be set on the issue as part of the transition process.
+
+        Keyword arguments:
+        fields -- a dict containing field names and the values to use. If present, all other keyword arguments
+        will be ignored
+        """
+        data = {
+            'transition': {
+                'id': transitionId
+            }
+        }
+        if fields is not None:
+            data['fields'] = fields
+        else:
+            fields_dict = {}
+            for field in fieldargs:
+                fields_dict[field] = fieldargs[field]
+            data['fields'] = fields_dict
+
+        url = self._get_url('issue/' + issue + '/transitions')
+        r = self._session.post(url, data=json.dumps(data))
+        self._raise_on_error(r)
 
     def votes(self, issue):
         """Get a votes Resource from the server for the specified issue."""
