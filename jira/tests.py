@@ -423,6 +423,11 @@ class IssueTests(unittest.TestCase):
         self.jira.add_worklog('BULK-2', '2h')
         self.assertEqual(len(self.jira.worklogs('BULK-2')), 1)
 
+    def test_add_attachment(self):
+        attach_count = len(self.jira.issue('BULK-3').fields.attachment)
+        attachments = self.jira.add_attachment('BULK-3', open('__init__.py'))
+        self.assertEqual(len(self.jira.issue('BULK-3').fields.attachment), attach_count + 1)
+
 
 class IssueLinkTests(unittest.TestCase):
 

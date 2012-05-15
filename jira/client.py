@@ -527,7 +527,22 @@ class JIRA(object):
 ### Attachments
 
     def add_attachment(self, issue, attachment):
-        pass
+        """
+        Attach the specified file to the specified issue and return an attachment Resource for it.
+
+        The client will *not* attempt to open or validate the attachment; it expects a file-like object to be ready
+        for its use. The user is still responsible for tidying up (e.g., closing the file, killing the socket, etc.)
+        """
+        # TODO: Support attaching multiple files at once?
+        url = self._get_url('issue/' + issue + '/attachments')
+        files = {
+            'file': attachment
+        }
+        r = self._session.post(url, files=files, headers={'X-Atlassian-Token': 'nocheck', 'content-type': None})
+        self._raise_on_error(r)
+        attachments = [Attachment(self._options, self._session, raw_attach_json)
+                       for raw_attach_json in json.loads(r.text)]
+        return attachments
 
 ### Issue links
 
