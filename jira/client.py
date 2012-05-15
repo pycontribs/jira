@@ -841,6 +841,16 @@ class JIRA(object):
         return users
 
     def search_allowed_users_for_issue(self, user, issueKey=None, projectKey=None, startAt=0, maxResults=50):
+        """
+        Get a list of user Resources that match the specified string and have browse permission for the issue or
+        project.
+
+        Keyword arguments:
+        issueKey -- find users with browse permission for this issue
+        projectKey -- find users with browse permission for this project
+        startAt -- index of the first user to return
+        maxResults -- maximum number of users to return
+        """
         params = {
             'username': user,
             'startAt': startAt,
