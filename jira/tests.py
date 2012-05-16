@@ -1,5 +1,4 @@
 import unittest
-import re
 import os
 
 from jira.client import JIRA
