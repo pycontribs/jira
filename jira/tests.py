@@ -6,6 +6,8 @@ from jira.client import JIRA
 from jira.exceptions import JIRAError
 from jira.resources import Resource, cls_for_resource, Issue, Project, Role
 
+TEST_ICON_PATH = '../resources/test/icon.png'
+
 class UniversalResourceTests(unittest.TestCase):
 
     def setUp(self):
@@ -539,12 +541,10 @@ class ProjectTests(unittest.TestCase):
     def test_create_project_avatar(self):
         # Tests the end-to-end project avatar creation process: upload as temporary, confirm after cropping,
         # and selection.
-
-        icon = '/home/bspeakmon/icon.png'
-        size = os.path.getsize(icon)
-        filename = os.path.basename(icon)
-        data = open(icon, "rb").read()
-        props = self.jira.create_temp_project_avatar('XSS', filename, size, data)
+        size = os.path.getsize(TEST_ICON_PATH)
+        filename = os.path.basename(TEST_ICON_PATH)
+        with open(TEST_ICON_PATH, "rb") as icon:
+            props = self.jira.create_temp_project_avatar('XSS', filename, size, icon.read())
         self.assertIn('cropperOffsetX', props)
         self.assertIn('cropperOffsetY', props)
         self.assertIn('cropperWidth', props)
@@ -748,12 +748,10 @@ class UserTests(unittest.TestCase):
     def test_create_user_avatar(self):
         # Tests the end-to-end user avatar creation process: upload as temporary, confirm after cropping,
         # and selection.
-
-        icon = '/home/bspeakmon/icon.png'
-        size = os.path.getsize(icon)
-        filename = os.path.basename(icon)
-        data = open(icon, "rb").read()
-        props = self.jira.create_temp_user_avatar('admin', filename, size, data)
+        size = os.path.getsize(TEST_ICON_PATH)
+        filename = os.path.basename(TEST_ICON_PATH)
+        with open(TEST_ICON_PATH, "rb") as icon:
+            props = self.jira.create_temp_user_avatar('admin', filename, size, icon.read())
         self.assertIn('cropperOffsetX', props)
         self.assertIn('cropperOffsetY', props)
         self.assertIn('cropperWidth', props)
