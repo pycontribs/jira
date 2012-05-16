@@ -1,4 +1,6 @@
 import unittest
+import re
+import os
 
 from jira.client import JIRA
 from jira.exceptions import JIRAError
@@ -706,6 +708,44 @@ class UserTests(unittest.TestCase):
         avatars = self.jira.user_avatars('fred')
         self.assertEqual(len(avatars['system']), 24)
         self.assertEqual(len(avatars['custom']), 0)
+
+    def test_create_user_avatar(self):
+        # Tests the end-to-end user avatar creation process: upload as temporary, confirm after cropping,
+        # and selection.
+
+        icon = '/home/bspeakmon/icon.png'
+        size = os.path.getsize(icon)
+        filename = os.path.basename(icon)
+        data = open(icon, "rb").read()
+        props = self.jira.create_temp_user_avatar('admin', filename, size, data)
+        self.assertIn('cropperOffsetX', props)
+        self.assertIn('cropperOffsetY', props)
+        self.assertIn('cropperWidth', props)
+        self.assertTrue(props['needsCropping'])
+
+        props['needsCropping'] = False
+        avatar_props = self.jira.confirm_user_avatar('admin', props)
+        self.assertIn('id', avatar_props)
+        self.assertEqual(avatar_props['owner'], 'admin')
+
+        self.jira.set_user_avatar('admin', avatar_props['id'])
+
+    def test_set_user_avatar(self):
+        def find_selected_avatar(avatars):
+            for avatar in avatars['system']:
+                if avatar['isSelected']:
+                    return avatar
+            else:
+                raise
+
+        self.jira.set_user_avatar('fred', '10070')
+        avatars = self.jira.user_avatars('fred')
+        self.assertEqual(find_selected_avatar(avatars)['id'], '10070')
+
+        self.jira.set_user_avatar('fred', '10071')
+        avatars = self.jira.user_avatars('fred')
+        self.assertEqual(find_selected_avatar(avatars)['id'], '10071')
+
 
     def test_search_users(self):
         users = self.jira.search_users('f')

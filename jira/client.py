@@ -55,6 +55,8 @@ class JIRA(object):
 
         self._options = dict(JIRA.DEFAULT_OPTIONS.items() + options.items())
 
+        self._ensure_magic()
+
         if basic_auth:
             self._create_http_basic_session(*basic_auth)
         elif oauth:
@@ -817,11 +819,72 @@ class JIRA(object):
         """Get a dict of avatars for the specified user."""
         return self._get_json('user/avatars', params={'username': username})
 
-    def create_temp_user_avatar(self, user, filename, size, avatar_img):
-        pass
+    def create_temp_user_avatar(self, user, filename, size, avatar_img, contentType=None, auto_confirm=False):
+        """
+        Register an image file as a user avatar. The avatar created is temporary and must be confirmed before it can
+        be used.
 
-    def confirm_user_avatar(self, user, **kw):
-        pass
+        Avatar images are specified by a filename, size, and file object. By default, the client will attempt to
+        autodetect the picture's content type: this mechanism relies on libmagic and will not work out of the box
+        on Windows systems (see https://github.com/ahupp/python-magic/blob/master/README for details on how to install
+        support). The 'contentType' argument can be used to explicitly set the value (note that JIRA will reject any
+        type other than the well-known ones for images, e.g. image/jpg, image/png, etc.)
+
+        This method returns a dict of properties that can be used to crop a subarea of a larger image for use. This
+        dict should be saved and passed to confirm_user_avatar() to finish the avatar creation process. If you want
+        to cut out the middleman and confirm the avatar with JIRA's default cropping, pass the 'auto_confirm' argument
+        with a truthy value and confirm_user_avatar() will be called for you before this method returns.
+
+        Keyword arguments:
+        contentType -- explicit specification for the avatar image's content-type
+        auto_confirm -- whether to automatically confirm the temporary avatar by calling confirm_user_avatar
+        with the return value of this method.
+        """
+        # TODO: autodetect size from passed-in file object?
+        params = {
+            'username': user,
+            'filename': filename,
+            'size': size
+        }
+        if contentType is None and self._magic:
+            contentType = self._magic.from_buffer(avatar_img)
+        url = self._get_url('user/avatar/temporary')
+        r = self._session.post(url, params=params,
+                headers={'content-type': contentType, 'X-Atlassian-Token': 'no-check'}, data=avatar_img)
+        self._raise_on_error(r)
+
+        cropping_properties = json.loads(r.text)
+        if auto_confirm:
+            self.confirm_user_avatar(user, cropping_properties)
+        else:
+            return cropping_properties
+
+    def confirm_user_avatar(self, user, cropping_properties):
+        """
+        Confirm the temporary avatar image previously uploaded with the specified cropping.
+
+        After a successful registry with create_temp_user_avatar(), use this method to confirm the avatar for use.
+        The final avatar can be a subarea of the uploaded image, which is customized with the cropping_properties:
+        the return value of create_temp_user_avatar() should be used for this argument.
+        """
+        data = cropping_properties
+        url = self._get_url('user/avatar')
+        r = self._session.post(url, params={'username': user}, data=json.dumps(data))
+        self._raise_on_error(r)
+
+        return json.loads(r.text)
+
+    def set_user_avatar(self, username, avatar):
+        """Set the specified user's avatar to the specified avatar ID."""
+        params = {
+            'username': username
+        }
+        data = {
+            'id': avatar
+        }
+        url = self._get_url('user/avatar')
+        r = self._session.put(url, params=params, data=json.dumps(data))
+        self._raise_on_error(r)
 
     def search_users(self, user, startAt=0, maxResults=50):
         """
@@ -1001,3 +1064,13 @@ class JIRA(object):
     def _raise_on_error(self, r):
         if r.status_code >= 400:
             raise JIRAError("Couldn't complete server call", r.status_code, r.url)
+
+    def _ensure_magic(self):
+        try:
+            import magic
+            self._magic = magic.Magic(mime=True)
+        except ImportError:
+            print "WARNING: Couldn't import magic library (is libmagic present?) Autodetection of avatar image" \
+                  " content types will not work; for create_avatar methods, specify the 'contentType' parameter" \
+                  " explicitly."
+

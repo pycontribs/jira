@@ -8,7 +8,7 @@ setup(
     version=__version__,
     packages=find_packages(),
 
-    install_requires=['requests==0.11.2', 'ipython==0.12.1', 'argparse==1.2.1'],
+    install_requires=['requests==0.11.2', 'ipython==0.12.1', 'argparse==1.2.1', 'python-magic==0.4.2'],
 #   can't get this working for the moment.
 #    extras_require = {
 #        'interactive-shell': ['ipython==0.12.1', 'argparse==1.2.1']
