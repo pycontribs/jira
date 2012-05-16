@@ -712,12 +712,7 @@ class JIRA(object):
 
     def set_project_avatar(self, project, avatar):
         """Set the specified project's avatar to the specified avatar ID."""
-        data = {
-            'id': avatar
-        }
-        url = self._get_url('project/' + project + '/avatar')
-        r = self._session.put(url, data=json.dumps(data))
-        self._raise_on_error(r)
+        self._set_avatar(None, self._get_url('project/' + project + '/avatar'), avatar)
 
     def project_components(self, project):
         """Get a list of component Resources present on the specified project."""
@@ -933,15 +928,7 @@ class JIRA(object):
 
     def set_user_avatar(self, username, avatar):
         """Set the specified user's avatar to the specified avatar ID."""
-        params = {
-            'username': username
-        }
-        data = {
-            'id': avatar
-        }
-        url = self._get_url('user/avatar')
-        r = self._session.put(url, params=params, data=json.dumps(data))
-        self._raise_on_error(r)
+        self._set_avatar({'username': username}, self._get_url('user/avatar'), avatar)
 
     def search_users(self, user, startAt=0, maxResults=50):
         """
@@ -1098,6 +1085,13 @@ class JIRA(object):
 
     def _create_oauth_session(self, oauth):
         raise NotImplementedError("oauth support isn't implemented yet")
+
+    def _set_avatar(self, params, url, avatar):
+        data = {
+            'id': avatar
+        }
+        r = self._session.put(url, params=params, data=json.dumps(data))
+        self._raise_on_error(r)
 
     def _get_url(self, path):
         return '{}/rest/api/2/{}'.format(self._options['server'], path)
