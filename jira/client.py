@@ -656,11 +656,68 @@ class JIRA(object):
         """Get a dict of all avatars for the specified project visible to the current authenticated user."""
         return self._get_json('project/' + project + '/avatars')
 
-    def create_temp_project_avatar(self, project, name, size, avatar_img):
-        pass
+    def create_temp_project_avatar(self, project, filename, size, avatar_img, contentType=None, auto_confirm=False):
+        """
+        Register an image file as a project avatar. The avatar created is temporary and must be confirmed before it can
+        be used.
 
-    def confirm_project_avatar(self, project, **kw):
-        pass
+        Avatar images are specified by a filename, size, and file object. By default, the client will attempt to
+        autodetect the picture's content type: this mechanism relies on libmagic and will not work out of the box
+        on Windows systems (see https://github.com/ahupp/python-magic/blob/master/README for details on how to install
+        support). The 'contentType' argument can be used to explicitly set the value (note that JIRA will reject any
+        type other than the well-known ones for images, e.g. image/jpg, image/png, etc.)
+
+        This method returns a dict of properties that can be used to crop a subarea of a larger image for use. This
+        dict should be saved and passed to confirm_project_avatar() to finish the avatar creation process. If you want
+        to cut out the middleman and confirm the avatar with JIRA's default cropping, pass the 'auto_confirm' argument
+        with a truthy value and confirm_project_avatar() will be called for you before this method returns.
+
+        Keyword arguments:
+        contentType -- explicit specification for the avatar image's content-type
+        auto_confirm -- whether to automatically confirm the temporary avatar by calling confirm_project_avatar()
+        with the return value of this method.
+        """
+        # TODO: autodetect size from passed-in file object?
+        params = {
+            'filename': filename,
+            'size': size
+        }
+        if contentType is None and self._magic:
+            contentType = self._magic.from_buffer(avatar_img)
+        url = self._get_url('project/' + project + '/avatar/temporary')
+        r = self._session.post(url, params=params,
+            headers={'content-type': contentType, 'X-Atlassian-Token': 'no-check'}, data=avatar_img)
+        self._raise_on_error(r)
+
+        cropping_properties = json.loads(r.text)
+        if auto_confirm:
+            self.confirm_project_avatar(user, cropping_properties)
+        else:
+            return cropping_properties
+
+    def confirm_project_avatar(self, project, cropping_properties):
+        """
+        Confirm the temporary avatar image previously uploaded with the specified cropping.
+
+        After a successful registry with create_temp_project_avatar(), use this method to confirm the avatar for use.
+        The final avatar can be a subarea of the uploaded image, which is customized with the cropping_properties:
+        the return value of create_temp_project_avatar() should be used for this argument.
+        """
+        data = cropping_properties
+        url = self._get_url('project/' + project + '/avatar')
+        r = self._session.post(url, data=json.dumps(data))
+        self._raise_on_error(r)
+
+        return json.loads(r.text)
+
+    def set_project_avatar(self, project, avatar):
+        """Set the specified project's avatar to the specified avatar ID."""
+        data = {
+            'id': avatar
+        }
+        url = self._get_url('project/' + project + '/avatar')
+        r = self._session.put(url, data=json.dumps(data))
+        self._raise_on_error(r)
 
     def project_components(self, project):
         """Get a list of component Resources present on the specified project."""

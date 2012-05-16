@@ -536,6 +536,42 @@ class ProjectTests(unittest.TestCase):
         self.assertEqual(len(avatars['custom']), 1)
         self.assertEqual(len(avatars['system']), 12)
 
+    def test_create_project_avatar(self):
+        # Tests the end-to-end project avatar creation process: upload as temporary, confirm after cropping,
+        # and selection.
+
+        icon = '/home/bspeakmon/icon.png'
+        size = os.path.getsize(icon)
+        filename = os.path.basename(icon)
+        data = open(icon, "rb").read()
+        props = self.jira.create_temp_project_avatar('XSS', filename, size, data)
+        self.assertIn('cropperOffsetX', props)
+        self.assertIn('cropperOffsetY', props)
+        self.assertIn('cropperWidth', props)
+        self.assertTrue(props['needsCropping'])
+
+        props['needsCropping'] = False
+        avatar_props = self.jira.confirm_project_avatar('XSS', props)
+        self.assertIn('id', avatar_props)
+
+        self.jira.set_project_avatar('XSS', avatar_props['id'])
+
+    def test_set_project_avatar(self):
+        def find_selected_avatar(avatars):
+            for avatar in avatars['system']:
+                if avatar['isSelected']:
+                    return avatar
+            else:
+                raise
+
+        self.jira.set_project_avatar('XSS', '10000')
+        avatars = self.jira.project_avatars('XSS')
+        self.assertEqual(find_selected_avatar(avatars)['id'], '10000')
+
+        self.jira.set_project_avatar('XSS', '10001')
+        avatars = self.jira.project_avatars('XSS')
+        self.assertEqual(find_selected_avatar(avatars)['id'], '10001')
+
     def test_project_components(self):
         components = self.jira.project_components('BULK')
         self.assertEqual(len(components), 2)
@@ -745,7 +781,6 @@ class UserTests(unittest.TestCase):
         self.jira.set_user_avatar('fred', '10071')
         avatars = self.jira.user_avatars('fred')
         self.assertEqual(find_selected_avatar(avatars)['id'], '10071')
-
 
     def test_search_users(self):
         users = self.jira.search_users('f')
