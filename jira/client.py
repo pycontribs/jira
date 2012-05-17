@@ -1108,7 +1108,9 @@ class JIRA(object):
         self._raise_on_error(r)
 
     def _get_url(self, path):
-        return '{}/rest/api/2/{}'.format(self._options['server'], path)
+        options = self._options
+        options.update({'path':path})
+        return '{server}/rest/api/{rest_api_version}/{path}'.format(**options)
 
     def _get_json(self, path, params=None):
         url = self._get_url(path)
