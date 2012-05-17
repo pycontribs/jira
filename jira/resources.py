@@ -56,27 +56,37 @@ class Resource(object):
 
         url = self._url(ids)
         headers = self._default_headers(headers)
-
-        r = self._session.get(url, headers=headers, params=params)
-        self._raise_on_error(r)
-
-        self._parse_raw(json.loads(r.text))
+        self._load(url, headers, params)
 
     def update(self, **kwargs):
         """
-        Updates this resource on the server, marshaling the given keyword parameters
-        into the necessary format for this resource.
+        Update this resource on the server. Keyword arguments are marshalled into a dict before being sent. If this
+        resource doesn't support PUT, a JIRAError will be raised; subclasses that specialize this method will only
+        raise errors in case of user error.
         """
-        pass
+        data = {}
+        for arg in kwargs:
+            data[arg] = kwargs[arg]
+
+        r = self._session.put(self.self, data=json.dumps(data))
+        self._raise_on_error(r)
+
+        self._load(self.self)
 
     def delete(self, params=None):
         """
-        Deletes this resource from the server, passing the specified query parameters. If this resource doesn't support
+        Delete this resource from the server, passing the specified query parameters. If this resource doesn't support
         DELETE, a JIRAError will be raised; subclasses that specialize this method will only raise errors in case of
         user error.
         """
         r = self._session.delete(self.self, params=params)
         self._raise_on_error(r)
+
+    def _load(self, url, headers=None, params=None):
+        r = self._session.get(url, headers=headers, params=params)
+        self._raise_on_error(r)
+
+        self._parse_raw(json.loads(r.text))
 
     def _parse_raw(self, raw):
         self.raw = raw

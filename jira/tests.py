@@ -129,6 +129,13 @@ class ComponentTests(unittest.TestCase):
         issue_count = self.jira.component_count_related_issues('10002')
         self.assertEqual(issue_count, 9)
 
+    def test_update(self):
+        component = self.jira.create_component('To be updated', 'BULK', description='stand by!', leadUserName='admin')
+        component.update(name='Updated!', description='It is done.', leadUserName='fred')
+        self.assertEqual(component.name, 'Updated!')
+        self.assertEqual(component.description, 'It is done.')
+        self.assertEqual(component.lead.name, 'fred')
+
     def test_delete(self):
         component = self.jira.create_component('To be deleted', 'BULK', description='not long for this world')
         id = component.id
