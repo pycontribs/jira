@@ -343,6 +343,13 @@ class IssueTests(unittest.TestCase):
         self.assertEqual(comment.visibility.type, 'role')
         self.assertEqual(comment.visibility.value, 'Administrators')
 
+    def test_update_comment(self):
+        comment = self.jira.add_comment('BULK-3', 'updating soon!')
+        comment.update(body='updated now!', visibility={'type': 'role', 'value': 'Administrators'})
+        self.assertEqual(comment.body, 'updated now!')
+        self.assertEqual(comment.visibility.type, 'role')
+        self.assertEqual(comment.visibility.value, 'Administrators')
+
     def test_delete_comment(self):
         comment = self.jira.add_comment('BULK-3', 'To be deleted!')
         id = comment.id
