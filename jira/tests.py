@@ -683,6 +683,11 @@ class ProjectTests(unittest.TestCase):
         self.assertEqual(role.id, 10010)
         self.assertEqual(role.name, 'Doco Team')
 
+    def test_update_project_role(self):
+        role = self.jira.project_role('XSS', '10010')
+        role.update(users='fred', groups=['jira-developers', 'jira-users'])
+        self.assertEqual(role.actors[0].name, 'fred')
+
 
 class ResolutionTests(unittest.TestCase):
 

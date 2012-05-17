@@ -336,6 +336,25 @@ class Role(Resource):
         if raw:
             self._parse_raw(raw)
 
+    def update(self, users=None, groups=None):
+        """
+        Add the specified users or groups to this project role. One of 'users' or 'groups' must be specified.
+        """
+        if users is not None and isinstance(users, basestring):
+            users = (users,)
+        if groups is not None and isinstance(groups, basestring):
+            groups = (groups,)
+
+        data = {
+            'id': self.id,
+            'categorisedActors': {
+                'atlassian-user-role-actor': users,
+                'atlassian-group-role-actor': groups
+            }
+        }
+
+        super(Role, self).update(**data)
+
 
 class Resolution(Resource):
     """A resolution for an issue."""
