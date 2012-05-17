@@ -494,6 +494,12 @@ class IssueTests(unittest.TestCase):
         self.assertIsNotNone(worklog)
         self.assertEqual(len(self.jira.worklogs('BULK-2')), worklog_count + 1)
 
+    def test_update_worklog(self):
+        worklog = self.jira.add_worklog('BULK-2', '3h')
+        worklog.update(comment='Updated comment!', timeSpent='1h')
+        self.assertEqual(worklog.comment, 'Updated comment!')
+        self.assertEqual(worklog.timeSpent, '1h')
+
     def test_delete_worklog(self):
         issue = self.jira.issue('BULK-2', fields='worklog,timetracking')
         rem_estimate = issue.fields.timetracking.remainingEstimate
