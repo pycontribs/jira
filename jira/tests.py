@@ -93,6 +93,19 @@ class AttachmentTests(unittest.TestCase):
         self.assertTrue(meta['enabled'])
         self.assertEqual(meta['uploadLimit'], 10485760)
 
+    def test_add_attachment(self):
+        attach_count = len(self.jira.issue('BULK-3').fields.attachment)
+        attachment = self.jira.add_attachment('BULK-3', open('__init__.py'))
+        self.assertIsNotNone(attachment)
+        self.assertEqual(len(self.jira.issue('BULK-3').fields.attachment), attach_count + 1)
+
+    def test_delete(self):
+        attach_count = len(self.jira.issue('BULK-3').fields.attachment)
+        attachment = self.jira.add_attachment('BULK-3', open('__init__.py'))
+        self.assertEqual(len(self.jira.issue('BULK-3').fields.attachment), attach_count + 1)
+        attachment.delete()
+        self.assertEqual(len(self.jira.issue('BULK-3').fields.attachment), attach_count)
+
 
 class ComponentTests(unittest.TestCase):
 
@@ -115,6 +128,12 @@ class ComponentTests(unittest.TestCase):
     def test_component_count_related_issues(self):
         issue_count = self.jira.component_count_related_issues('10002')
         self.assertEqual(issue_count, 9)
+
+    def test_delete(self):
+        component = self.jira.create_component('To be deleted', 'BULK', description='not long for this world')
+        id = component.id
+        component.delete()
+        self.assertRaises(JIRAError, self.jira.component, id)
 
 
 class CustomFieldOptionTests(unittest.TestCase):
@@ -230,6 +249,13 @@ class IssueTests(unittest.TestCase):
         self.assertEqual(issue.fields.project.key, 'BULK')
         self.assertEqual(issue.fields.customfield_10540.key, 'XSS')
 
+    def test_delete(self):
+        issue = self.jira.create_issue(project={'key': 'BULK'}, summary='Test issue created',
+            description='Not long for this world', issuetype={'name': 'Bug'}, customfield_10540={'key': 'XSS'})
+        key = issue.key
+        issue.delete()
+        self.assertRaises(JIRAError, self.jira.issue, key)
+
     def test_create_issue_with_fielddict(self):
         fields = {
             'project': {
@@ -310,6 +336,12 @@ class IssueTests(unittest.TestCase):
         self.assertEqual(comment.visibility.type, 'role')
         self.assertEqual(comment.visibility.value, 'Administrators')
 
+    def test_delete_comment(self):
+        comment = self.jira.add_comment('BULK-3', 'To be deleted!')
+        id = comment.id
+        comment.delete()
+        self.assertRaises(JIRAError, self.jira.comment, id, '')
+
     def test_editmeta(self):
         meta = self.jira.editmeta('BULK-1')
         self.assertEqual(len(meta['fields']), 38)
@@ -340,6 +372,14 @@ class IssueTests(unittest.TestCase):
         self.assertEqual(link.object.title, 'googlicious!')
         self.assertEqual(link.relationship, 'mousebending')
         self.assertEqual(link.globalId, 'python-test:story.of.horse.riding')
+
+    def test_delete_remove_link(self):
+        link = self.jira.add_remote_link('BULK-3', globalId='python-test:story.of.horse.riding',
+            object={'url': 'http://google.com', 'title': 'googlicious!'},
+            application={'name': 'far too silly', 'type': 'sketch'}, relationship='mousebending')
+        id = link.id
+        link.delete()
+        self.assertRaises(JIRAError, self.jira.remote_link, 'BULK-3', id)
 
     def test_transitions(self):
         transitions = self.jira.transitions('BULK-2')
@@ -422,14 +462,18 @@ class IssueTests(unittest.TestCase):
         self.assertEqual(worklog.timeSpent, '4d')
 
     def test_add_worklog(self):
-        self.assertEqual(len(self.jira.worklogs('BULK-2')), 0)
-        self.jira.add_worklog('BULK-2', '2h')
-        self.assertEqual(len(self.jira.worklogs('BULK-2')), 1)
+        worklog_count = len(self.jira.worklogs('BULK-2'))
+        worklog = self.jira.add_worklog('BULK-2', '2h')
+        self.assertIsNotNone(worklog)
+        self.assertEqual(len(self.jira.worklogs('BULK-2')), worklog_count + 1)
 
-    def test_add_attachment(self):
-        attach_count = len(self.jira.issue('BULK-3').fields.attachment)
-        attachments = self.jira.add_attachment('BULK-3', open('__init__.py'))
-        self.assertEqual(len(self.jira.issue('BULK-3').fields.attachment), attach_count + 1)
+    def test_delete_worklog(self):
+        issue = self.jira.issue('BULK-2', fields='worklog,timetracking')
+        rem_estimate = issue.fields.timetracking.remainingEstimate
+        worklog = self.jira.add_worklog('BULK-2', '4h')
+        worklog.delete()
+        issue = self.jira.issue('BULK-2', fields='worklog,timetracking')
+        self.assertEqual(issue.fields.timetracking.remainingEstimate, rem_estimate)
 
 
 class IssueLinkTests(unittest.TestCase):
@@ -445,6 +489,10 @@ class IssueLinkTests(unittest.TestCase):
     def test_create_issue_link(self):
         self.jira.create_issue_link('Duplicate', 'BULK-1', 'BULK-2',
                 comment={'body': 'Link comment!', 'visibility': {'type': 'role', 'value': 'Administrators'}})
+
+    @unittest.skip("Creating an issue link doesn't return its ID, so can't easily test delete")
+    def test_delete_issue_link(self):
+        pass
 
 
 class IssueLinkTypeTests(unittest.TestCase):
@@ -554,6 +602,13 @@ class ProjectTests(unittest.TestCase):
         self.assertIn('id', avatar_props)
 
         self.jira.set_project_avatar('XSS', avatar_props['id'])
+
+    def test_delete_project_avatar(self):
+        size = os.path.getsize(TEST_ICON_PATH)
+        filename = os.path.basename(TEST_ICON_PATH)
+        with open(TEST_ICON_PATH, "rb") as icon:
+            props = self.jira.create_temp_project_avatar('XSS', filename, size, icon.read(), auto_confirm=True)
+        self.jira.delete_project_avatar('XSS', props['id'])
 
     def test_set_project_avatar(self):
         def find_selected_avatar(avatars):
@@ -779,6 +834,13 @@ class UserTests(unittest.TestCase):
         avatars = self.jira.user_avatars('fred')
         self.assertEqual(find_selected_avatar(avatars)['id'], '10071')
 
+    def test_delete_user_avatar(self):
+        size = os.path.getsize(TEST_ICON_PATH)
+        filename = os.path.basename(TEST_ICON_PATH)
+        with open(TEST_ICON_PATH, "rb") as icon:
+            props = self.jira.create_temp_user_avatar('admin', filename, size, icon.read(), auto_confirm=True)
+        self.jira.delete_user_avatar('admin', props['id'])
+
     def test_search_users(self):
         users = self.jira.search_users('f')
         self.assertEqual(len(users), 3)
@@ -823,6 +885,13 @@ class VersionTests(unittest.TestCase):
         self.assertEqual(version.name, 'new version 1')
         self.assertEqual(version.description, 'test version!')
         self.assertEqual(version.releaseDate, '2013-03-11')
+
+    def test_delete(self):
+        version = self.jira.create_version('To be deleted', 'BULK', releaseDate='2013-03-11',
+                description='not long for this world')
+        id = version.id
+        version.delete()
+        self.assertRaises(JIRAError, self.jira.version, id)
 
     def test_move_version(self):
         self.jira.move_version('10004', after=self.jira._get_url('version/10011'))

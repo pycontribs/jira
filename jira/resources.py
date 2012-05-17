@@ -58,9 +58,7 @@ class Resource(object):
         headers = self._default_headers(headers)
 
         r = self._session.get(url, headers=headers, params=params)
-        if r.status_code >= 400:
-            msg = "Couldn't find resource: '" + self.__class__.__name__ + "' with ids " + ids.__str__()
-            raise JIRAError(msg, r.status_code, url)
+        self._raise_on_error(r)
 
         self._parse_raw(json.loads(r.text))
 
@@ -71,11 +69,14 @@ class Resource(object):
         """
         pass
 
-    def delete(self, **kw):
+    def delete(self, params=None):
         """
-        Deletes this resource from the server.
+        Deletes this resource from the server, passing the specified query parameters. If this resource doesn't support
+        DELETE, a JIRAError will be raised; subclasses that specialize this method will only raise errors in case of
+        user error.
         """
-        pass
+        r = self._session.delete(self.self, params=params)
+        self._raise_on_error(r)
 
     def _parse_raw(self, raw):
         self.raw = raw
@@ -85,6 +86,10 @@ class Resource(object):
         url = '{server}/rest/{rest_path}/{rest_api_version}/'.format(**self._options)
         url += self._resource.format(*ids)
         return url
+
+    def _raise_on_error(self, r):
+        if r.status_code >= 400:
+            raise JIRAError("Couldn't complete server call", r.status_code, r.url)
 
     def _default_headers(self, user_headers):
         return dict(user_headers.items() + {'accept': 'application/json'}.items())
@@ -106,6 +111,19 @@ class Component(Resource):
         Resource.__init__(self, 'component/{0}', options, session)
         if raw:
             self._parse_raw(raw)
+
+    def delete(self, moveIssuesTo=None):
+        """
+        Delete this component from the server.
+
+        Keyword arguments:
+        moveIssuesTo -- the name of the component to which to move any issues this component is applied
+        """
+        params = {}
+        if moveIssuesTo is not None:
+            params['moveIssuesTo'] = moveIssuesTo
+
+        super(Component, self).delete(params)
 
 
 class CustomFieldOption(Resource):
@@ -152,6 +170,12 @@ class Issue(Resource):
         if raw:
             self._parse_raw(raw)
 
+    def delete(self, deleteSubtasks=False):
+        """
+        Delete this issue from the server. If the issue has subtasks, the 'deleteSubtasks' argument must be set to
+        true for the call to succeed.
+        """
+        super(Issue, self).delete(params={'deleteSubtasks': deleteSubtasks})
 
 class Comments(Resource):
     """A collection of issue comments."""
@@ -195,6 +219,11 @@ class Watchers(Resource):
         if raw:
             self._parse_raw(raw)
 
+    def delete(self, username):
+        """
+        Remove the specified user from the watchers list.
+        """
+        super(Watchers, self).delete(params={'username': username})
 
 class Worklog(Resource):
     """Worklog on an issue."""
@@ -204,6 +233,25 @@ class Worklog(Resource):
         if raw:
             self._parse_raw(raw)
 
+    def delete(self, adjustEstimate=None, newEstimate=None, increaseBy=None):
+        """
+        Delete this worklog entry from the associated issue.
+
+        Keyword arguments:
+        adjustEstimate -- one of 'new', 'leave', 'manual' or 'auto'. 'auto' is the default and adjusts the estimate
+        automatically. 'leave' leaves the estimate unchanged by this deletion.
+        newEstimate -- combined with 'adjustEstimate=new', set the estimate to this value
+        increaseBy -- combined with 'adjustEstimate=manual', increase the remaining estimate by this amount
+        """
+        params = {}
+        if adjustEstimate is not None:
+            params['adjustEstimate'] = adjustEstimate
+        if newEstimate is not None:
+            params['newEstimate'] = newEstimate
+        if increaseBy is not None:
+            params['increaseBy'] = increaseBy
+
+        super(Worklog, self).delete(params)
 
 class IssueLink(Resource):
     """Link between two issues."""
@@ -302,6 +350,25 @@ class Version(Resource):
         Resource.__init__(self, 'version/{0}', options, session)
         if raw:
             self._parse_raw(raw)
+
+    def delete(self, moveFixIssuesTo=None, moveAffectedIssuesTo=None):
+        """
+        Delete this project version from the server. If neither of the arguments are specified, the version is
+        removed from all issues it is attached to.
+
+        Keyword arguments:
+        moveFixIssuesTo -- in issues for which this version is a fix version, add this argument version to the fix
+        version list
+        moveAffectedIssuesTo -- in issues for which this version is an affected version, add this argument version to
+        the affected version list
+        """
+        params = {}
+        if moveFixIssuesTo is not None:
+            params['moveFixIssuesTo'] = moveFixIssuesTo
+        if moveAffectedIssuesTo is not None:
+            params['moveAffectedIssuesTo'] = moveAffectedIssuesTo
+
+        super(Version, self).delete(params)
 
 
 def dict2resource(raw, top=None, options=None, session=None):

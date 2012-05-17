@@ -131,6 +131,24 @@ class JIRA(object):
         """Get the attachment metadata."""
         return self._get_json('attachment/meta')
 
+    def add_attachment(self, issue, attachment):
+        """
+        Attach the specified file to the specified issue and return an attachment Resource for it.
+
+        The client will *not* attempt to open or validate the attachment; it expects a file-like object to be ready
+        for its use. The user is still responsible for tidying up (e.g., closing the file, killing the socket, etc.)
+        """
+        # TODO: Support attaching multiple files at once?
+        url = self._get_url('issue/' + issue + '/attachments')
+        files = {
+            'file': attachment
+        }
+        r = self._session.post(url, files=files, headers={'X-Atlassian-Token': 'nocheck', 'content-type': None})
+        self._raise_on_error(r)
+
+        attachment = Attachment(self._options, self._session, json.loads(r.text)[0])
+        return attachment
+
 ### Components
 
     def component(self, id):
@@ -370,7 +388,7 @@ class JIRA(object):
         r = self._session.post(url, data=json.dumps(data))
         self._raise_on_error(r)
 
-        comment = Comment(self._session, self._options, raw=json.loads(r.text))
+        comment = Comment(self._options, self._session, raw=json.loads(r.text))
         return comment
 
     # non-resource
@@ -501,7 +519,7 @@ class JIRA(object):
 
     def add_worklog(self, issue, timeSpent=None, adjustEstimate=None,
                     newEstimate=None, reduceBy=None):
-        """Create a new worklog entry on the specified issue.
+        """Create a new worklog entry on the specified issue and return a Resource for it.
 
         Keyword arguments:
         timeSpent -- Add a worklog entry with this amount of time spent, e.g. "2d"
@@ -526,25 +544,8 @@ class JIRA(object):
         r = self._session.post(url, params=params, data=json.dumps(data))
         self._raise_on_error(r)
 
-### Attachments
+        return Worklog(self._options, self._session, json.loads(r.text))
 
-    def add_attachment(self, issue, attachment):
-        """
-        Attach the specified file to the specified issue and return an attachment Resource for it.
-
-        The client will *not* attempt to open or validate the attachment; it expects a file-like object to be ready
-        for its use. The user is still responsible for tidying up (e.g., closing the file, killing the socket, etc.)
-        """
-        # TODO: Support attaching multiple files at once?
-        url = self._get_url('issue/' + issue + '/attachments')
-        files = {
-            'file': attachment
-        }
-        r = self._session.post(url, files=files, headers={'X-Atlassian-Token': 'nocheck', 'content-type': None})
-        self._raise_on_error(r)
-        attachments = [Attachment(self._options, self._session, raw_attach_json)
-                       for raw_attach_json in json.loads(r.text)]
-        return attachments
 
 ### Issue links
 
@@ -691,7 +692,7 @@ class JIRA(object):
 
         cropping_properties = json.loads(r.text)
         if auto_confirm:
-            self.confirm_project_avatar(user, cropping_properties)
+            return self.confirm_project_avatar(project, cropping_properties)
         else:
             return cropping_properties
 
@@ -713,6 +714,12 @@ class JIRA(object):
     def set_project_avatar(self, project, avatar):
         """Set the specified project's avatar to the specified avatar ID."""
         self._set_avatar(None, self._get_url('project/' + project + '/avatar'), avatar)
+
+    def delete_project_avatar(self, project, avatar):
+        """Delete the specified project's avatar with the specified ID."""
+        url = self._get_url('project/' + project + '/avatar/' + avatar)
+        r = self._session.delete(url)
+        self._raise_on_error(r)
 
     def project_components(self, project):
         """Get a list of component Resources present on the specified project."""
@@ -907,7 +914,7 @@ class JIRA(object):
 
         cropping_properties = json.loads(r.text)
         if auto_confirm:
-            self.confirm_user_avatar(user, cropping_properties)
+            return self.confirm_user_avatar(user, cropping_properties)
         else:
             return cropping_properties
 
@@ -929,6 +936,13 @@ class JIRA(object):
     def set_user_avatar(self, username, avatar):
         """Set the specified user's avatar to the specified avatar ID."""
         self._set_avatar({'username': username}, self._get_url('user/avatar'), avatar)
+
+    def delete_user_avatar(self, username, avatar):
+        """Delete the specified avatar from the specified user."""
+        params = {'username': username}
+        url = self._get_url('user/avatar/' + avatar)
+        r = self._session.delete(url, params=params)
+        self._raise_on_error(r)
 
     def search_users(self, user, startAt=0, maxResults=50):
         """
@@ -994,7 +1008,7 @@ class JIRA(object):
         r = self._session.post(url, data=json.dumps(data))
         self._raise_on_error(r)
 
-        version = Version(self._session, self._options, raw=json.loads(r.text))
+        version = Version(self._options, self._session, raw=json.loads(r.text))
         return version
 
     def move_version(self, id, after=None, position=None):
@@ -1017,7 +1031,7 @@ class JIRA(object):
         r = self._session.post(url, data=json.dumps(data))
         self._raise_on_error(r)
 
-        version = Version(self._session, self._options, raw=json.loads(r.text))
+        version = Version(self._options, self._session, raw=json.loads(r.text))
         return version
 
     def version(self, id, expand=None):
