@@ -387,6 +387,19 @@ class IssueTests(unittest.TestCase):
         self.assertEqual(link.relationship, 'mousebending')
         self.assertEqual(link.globalId, 'python-test:story.of.horse.riding')
 
+    def test_update_remote_link(self):
+        link = self.jira.add_remote_link('BULK-3', globalId='python-test:story.of.horse.riding',
+            object={'url': 'http://google.com', 'title': 'googlicious!'},
+            application={'name': 'far too silly', 'type': 'sketch'}, relationship='mousebending')
+        # creation response doesn't include full remote link info, so we fetch it again using the new internal ID
+        link = self.jira.remote_link('BULK-3', link.id)
+        link.update(object={'url': 'http://yahoo.com', 'title': 'yahooery'}, globalId='python-test:updated.id',
+                relationship='cheesing')
+        self.assertEqual(link.globalId, 'python-test:updated.id')
+        self.assertEqual(link.relationship, 'cheesing')
+        self.assertEqual(link.object.url, 'http://yahoo.com')
+        self.assertEqual(link.object.title, 'yahooery')
+
     def test_delete_remove_link(self):
         link = self.jira.add_remote_link('BULK-3', globalId='python-test:story.of.horse.riding',
             object={'url': 'http://google.com', 'title': 'googlicious!'},

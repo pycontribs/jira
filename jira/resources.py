@@ -211,6 +211,26 @@ class RemoteLink(Resource):
         if raw:
             self._parse_raw(raw)
 
+    def update(self, object, globalId=None, application=None, relationship=None):
+        """
+        Update a RemoteLink. 'object' is required and should be a dict containing at least 'url' to the linked external
+        URL and 'title' to display for the link inside JIRA.
+
+        For definitions of the allowable fields for 'object' and the keyword arguments 'globalId', 'application' and
+        'relationship', see https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+for+Remote+Issue+Links.
+        """
+        data = {
+            'object': object
+        }
+        if globalId is not None:
+            data['globalId'] = globalId
+        if application is not None:
+            data['application'] = application
+        if relationship is not None:
+            data['relationship'] = relationship
+
+        super(RemoteLink, self).update(**data)
+
 
 class Votes(Resource):
     """Vote information on an issue."""

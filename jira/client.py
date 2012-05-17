@@ -409,11 +409,11 @@ class JIRA(object):
     def add_remote_link(self, issue, object, globalId=None, application=None, relationship=None):
         """
         Create a remote link from the specified issue to an external application and returns a remote link Resource
-        for it. 'object' is required and should be a dict containing 'url' to the linked external URL and 'title'
-        to display for the link inside JIRA.
+        for it. 'object' is required and should be a dict containing at least 'url' to the linked external URL and
+        'title' to display for the link inside JIRA.
 
-        For definitions of the allowable fields for the keyword arguments 'globalId', 'application' and 'relationship',
-        see https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+for+Remote+Issue+Links.
+        For definitions of the allowable fields for 'object' and the keyword arguments 'globalId', 'application' and
+        'relationship', see https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+for+Remote+Issue+Links.
         """
         data = {
             'object': object
