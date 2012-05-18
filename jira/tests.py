@@ -256,13 +256,6 @@ class IssueTests(unittest.TestCase):
         self.assertEqual(issue.fields.project.key, 'BULK')
         self.assertEqual(issue.fields.customfield_10540.key, 'XSS')
 
-    def test_delete(self):
-        issue = self.jira.create_issue(project={'key': 'BULK'}, summary='Test issue created',
-            description='Not long for this world', issuetype={'name': 'Bug'}, customfield_10540={'key': 'XSS'})
-        key = issue.key
-        issue.delete()
-        self.assertRaises(JIRAError, self.jira.issue, key)
-
     def test_create_issue_with_fielddict(self):
         fields = {
             'project': {
@@ -293,6 +286,46 @@ class IssueTests(unittest.TestCase):
             description='blahery', issuetype={'name': 'Bug'}, customfield_10540={'key': 'XSS'})
         self.assertTrue(hasattr(issue, 'self'))
         self.assertFalse(hasattr(issue, 'fields'))
+
+    def test_update_with_fieldargs(self):
+        issue = self.jira.create_issue(project={'key': 'BULK'}, summary='Test issue for updating',
+            description='Will be updated shortly', issuetype={'name': 'Bug'}, customfield_10540={'key': 'XSS'})
+        issue.update(summary='Updated summary', description='Now updated', issuetype={'name': 'Improvement'})
+        self.assertEqual(issue.fields.summary, 'Updated summary')
+        self.assertEqual(issue.fields.description, 'Now updated')
+        self.assertEqual(issue.fields.issuetype.name, 'Improvement')
+        self.assertEqual(issue.fields.customfield_10540.key, 'XSS')
+        self.assertEqual(issue.fields.project.key, 'BULK')
+
+    def test_update_with_fielddict(self):
+        issue = self.jira.create_issue(project={'key': 'BULK'}, summary='Test issue for updating',
+            description='Will be updated shortly', issuetype={'name': 'Bug'}, customfield_10540={'key': 'XSS'})
+        fields = {
+            'summary': 'Issue is updated',
+            'description': "it sure is",
+            'issuetype': {
+                'name': 'Task'
+            },
+            'customfield_10540': {
+                'key': 'DOC'
+            },
+            'priority': {
+                'name': 'Critical'
+            }
+        }
+        issue.update(fields=fields)
+        self.assertEqual(issue.fields.summary, 'Issue is updated')
+        self.assertEqual(issue.fields.description, 'it sure is')
+        self.assertEqual(issue.fields.issuetype.name, 'Task')
+        self.assertEqual(issue.fields.customfield_10540.key, 'DOC')
+        self.assertEqual(issue.fields.priority.name, 'Critical')
+
+    def test_delete(self):
+        issue = self.jira.create_issue(project={'key': 'BULK'}, summary='Test issue created',
+            description='Not long for this world', issuetype={'name': 'Bug'}, customfield_10540={'key': 'XSS'})
+        key = issue.key
+        issue.delete()
+        self.assertRaises(JIRAError, self.jira.issue, key)
 
     def test_createmeta(self):
         meta = self.jira.createmeta()

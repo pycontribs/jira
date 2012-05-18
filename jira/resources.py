@@ -180,6 +180,33 @@ class Issue(Resource):
         if raw:
             self._parse_raw(raw)
 
+    def update(self, fields=None, **fieldargs):
+        """
+        Update this issue on the server.
+
+        Each keyword argument (other than the predefined ones) is treated as a field name and the argument's value
+        is treated as the intended value for that field -- if the fields argument is used, all other keyword arguments
+        will be ignored.
+
+        JIRA projects may contain many different issue types. Some issue screens have different requirements for
+        fields in an issue. This information is available through the 'editmeta' method. Further examples are
+        available here: https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Edit+issues
+
+        Keyword arguments:
+        fields -- a dict containing field names and the values to use. If present, all other keyword arguments
+        will be ignored
+        """
+        data = {}
+        if fields is not None:
+            data['fields'] = fields
+        else:
+            fields_dict = {}
+            for field in fieldargs:
+                fields_dict[field] = fieldargs[field]
+            data['fields'] = fields_dict
+
+        super(Issue, self).update(**data)
+
     def delete(self, deleteSubtasks=False):
         """
         Delete this issue from the server. If the issue has subtasks, the 'deleteSubtasks' argument must be set to
