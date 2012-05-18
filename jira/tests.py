@@ -924,6 +924,13 @@ class VersionTests(unittest.TestCase):
         self.assertEqual(version.description, 'test version!')
         self.assertEqual(version.releaseDate, '2013-03-11')
 
+    def test_update(self):
+        version = self.jira.create_version('update version 1', 'BULK', releaseDate='2013-03-11',
+            description='to be updated!')
+        version.update(name='updated version name', description='updated!')
+        self.assertEqual(version.name, 'updated version name')
+        self.assertEqual(version.description, 'updated!')
+
     def test_delete(self):
         version = self.jira.create_version('To be deleted', 'BULK', releaseDate='2013-03-11',
                 description='not long for this world')
