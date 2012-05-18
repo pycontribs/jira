@@ -111,7 +111,12 @@ class JIRA(object):
         return self._get_json('application-properties', params=params)
 
     def set_application_property(self, key, value):
-        """Set the application property to the specified value."""
+        """
+        Set the application property.
+
+        :param key: key of the property to set
+        :param value: value to assign to the property
+        """
         url = self._options['server'] + '/rest/api/2/application-properties/' + key
         payload = {
             'id': key,
