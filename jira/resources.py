@@ -12,24 +12,24 @@ class Resource(object):
     Models a URL-addressable resource in the JIRA REST API.
 
     All Resource objects provide the following:
-    find() -- get a resource from the server and load it into the current object
+    ``find()`` -- get a resource from the server and load it into the current object
     (though clients should use the methods in the JIRA class instead of this method directly)
-    update() -- changes the value of this resource on the server and returns a new resource object for it
-    delete() -- deletes this resource from the server
-    self -- the URL of this resource on the server
-    raw -- dict of properties parsed out of the JSON response from the server
+    ``update()`` -- changes the value of this resource on the server and returns a new resource object for it
+    ``delete()`` -- deletes this resource from the server
+    ``self`` -- the URL of this resource on the server
+    ``raw`` -- dict of properties parsed out of the JSON response from the server
 
-    Subclasses will implement update() and delete() as appropriate for the specific resource.
+    Subclasses will implement ``update()`` and ``delete()`` as appropriate for the specific resource.
 
     All Resources have a resource path of the form:
 
-    * 'issue'
-    * 'project/{0}'
-    * 'issue/{0}/votes'
-    * 'issue/{0}/comment/{1}
+    * ``issue``
+    * ``project/{0}``
+    * ``issue/{0}/votes``
+    * ``issue/{0}/comment/{1}``
 
     where the bracketed numerals are placeholders for ID values that are filled in from the
-    'ids' parameter to find().
+    ``ids`` parameter to ``find()``.
     """
 
     def __init__(self, resource, options, session):
@@ -61,8 +61,8 @@ class Resource(object):
     def update(self, **kwargs):
         """
         Update this resource on the server. Keyword arguments are marshalled into a dict before being sent. If this
-        resource doesn't support PUT, a JIRAError will be raised; subclasses that specialize this method will only
-        raise errors in case of user error.
+        resource doesn't support ``PUT``, a :py:exc:`.JIRAError` will be raised; subclasses that specialize this method
+        will only raise errors in case of user error.
         """
         data = {}
         for arg in kwargs:
@@ -76,8 +76,8 @@ class Resource(object):
     def delete(self, params=None):
         """
         Delete this resource from the server, passing the specified query parameters. If this resource doesn't support
-        DELETE, a JIRAError will be raised; subclasses that specialize this method will only raise errors in case of
-        user error.
+        ``DELETE``, a :py:exc:`.JIRAError` will be raised; subclasses that specialize this method will only raise errors
+        in case of user error.
         """
         r = self._session.delete(self.self, params=params)
         self._raise_on_error(r)
@@ -126,8 +126,7 @@ class Component(Resource):
         """
         Delete this component from the server.
 
-        Keyword arguments:
-        moveIssuesTo -- the name of the component to which to move any issues this component is applied
+        :param moveIssuesTo: the name of the component to which to move any issues this component is applied
         """
         params = {}
         if moveIssuesTo is not None:
@@ -189,11 +188,10 @@ class Issue(Resource):
         will be ignored.
 
         JIRA projects may contain many different issue types. Some issue screens have different requirements for
-        fields in an issue. This information is available through the 'editmeta' method. Further examples are
-        available here: https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Edit+issues
+        fields in an issue. This information is available through the :py:meth:`.JIRA.editmeta` method. Further examples
+        are available here: https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Edit+issues
 
-        Keyword arguments:
-        fields -- a dict containing field names and the values to use. If present, all other keyword arguments
+        :param fields: a dict containing field names and the values to use; if present, all other keyword arguments\
         will be ignored
         """
         data = {}
@@ -209,8 +207,9 @@ class Issue(Resource):
 
     def delete(self, deleteSubtasks=False):
         """
-        Delete this issue from the server. If the issue has subtasks, the 'deleteSubtasks' argument must be set to
-        true for the call to succeed.
+        Delete this issue from the server.
+
+        :param deleteSubtasks: if the issue has subtasks, this argument must be set to true for the call to succeed.
         """
         super(Issue, self).delete(params={'deleteSubtasks': deleteSubtasks})
 
@@ -240,11 +239,15 @@ class RemoteLink(Resource):
 
     def update(self, object, globalId=None, application=None, relationship=None):
         """
-        Update a RemoteLink. 'object' is required and should be a dict containing at least 'url' to the linked external
-        URL and 'title' to display for the link inside JIRA.
+        Update a RemoteLink. 'object' is required and should be
 
         For definitions of the allowable fields for 'object' and the keyword arguments 'globalId', 'application' and
         'relationship', see https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+for+Remote+Issue+Links.
+
+        :param object: the link details to add (see the above link for details)
+        :param globalId: unique ID for the link (see the above link for details)
+        :param application: application information for the link (see the above link for details)
+        :param relationship: relationship description for the link (see the above link for details)
         """
         data = {
             'object': object
@@ -292,13 +295,12 @@ class Worklog(Resource):
 
     def delete(self, adjustEstimate=None, newEstimate=None, increaseBy=None):
         """
-        Delete this worklog entry from the associated issue.
+        Delete this worklog entry from its associated issue.
 
-        Keyword arguments:
-        adjustEstimate -- one of 'new', 'leave', 'manual' or 'auto'. 'auto' is the default and adjusts the estimate
-        automatically. 'leave' leaves the estimate unchanged by this deletion.
-        newEstimate -- combined with 'adjustEstimate=new', set the estimate to this value
-        increaseBy -- combined with 'adjustEstimate=manual', increase the remaining estimate by this amount
+        :param adjustEstimate: one of ``new``, ``leave``, ``manual`` or ``auto``. ``auto`` is the default and adjusts\
+        the estimate automatically. ``leave`` leaves the estimate unchanged by this deletion.
+        :param newEstimate: combined with ``adjustEstimate=new``, set the estimate to this value
+        :param increaseBy: combined with ``adjustEstimate=manual``, increase the remaining estimate by this amount
         """
         params = {}
         if adjustEstimate is not None:
@@ -365,7 +367,12 @@ class Role(Resource):
 
     def update(self, users=None, groups=None):
         """
-        Add the specified users or groups to this project role. One of 'users' or 'groups' must be specified.
+        Add the specified users or groups to this project role. One of ``users`` or ``groups`` must be specified.
+
+        :param users: a user or users to add to the role
+        :type users: string, list or tuple
+        :param groups: a group or groups to add to the role
+        :type groups: string, list or tuple
         """
         if users is not None and isinstance(users, basestring):
             users = (users,)
@@ -432,11 +439,10 @@ class Version(Resource):
         Delete this project version from the server. If neither of the arguments are specified, the version is
         removed from all issues it is attached to.
 
-        Keyword arguments:
-        moveFixIssuesTo -- in issues for which this version is a fix version, add this argument version to the fix
+        :param moveFixIssuesTo: in issues for which this version is a fix version, add this argument version to the fix\
         version list
-        moveAffectedIssuesTo -- in issues for which this version is an affected version, add this argument version to
-        the affected version list
+        :param moveAffectedIssuesTo: in issues for which this version is an affected version, add this argument version\
+        to the affected version list
         """
         params = {}
         if moveFixIssuesTo is not None:
@@ -450,8 +456,8 @@ class Version(Resource):
 def dict2resource(raw, top=None, options=None, session=None):
     """
     Recursively walks a dict structure, transforming the properties into attributes
-    on a new Resource object of the appropriate type (if a 'self' link is present)
-    or a PropertyHolder object (if no 'self' link is present).
+    on a new ``Resource`` object of the appropriate type (if a ``self`` link is present)
+    or a ``PropertyHolder`` object (if no ``self`` link is present).
     """
     if top is None:
         top = type('PropertyHolder', (object,), raw)

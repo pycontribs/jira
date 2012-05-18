@@ -14,11 +14,11 @@ class JIRA(object):
     User interface to JIRA.
 
     Clients interact with JIRA by constructing an instance of this object and calling its methods. For addressable
-    resources in JIRA -- those with "self" links -- an appropriate subclass of Resource will be returned with
-    customized update() and delete() methods, along with attribute access to fields. This means that calls of the
-    form 'issue.fields.summary' will be resolved into the proper lookups to return the JSON value at that mapping.
-    Methods that do not return resources will return a dict constructed from the JSON response or a scalar value;
-    see each method's documentation for details on what that method returns.
+    resources in JIRA -- those with "self" links -- an appropriate subclass of :py:class:`Resource` will be returned
+    with customized ``update()`` and ``delete()`` methods, along with attribute access to fields. This means that calls
+    of the form ``issue.fields.summary`` will be resolved into the proper lookups to return the JSON value at that
+    mapping. Methods that do not return resources will return a dict constructed from the JSON response or a scalar
+    value; see each method's documentation for details on what that method returns.
     """
 
     DEFAULT_OPTIONS = {
@@ -32,22 +32,21 @@ class JIRA(object):
         Construct a JIRA client instance.
 
         Without any arguments, this client will connect anonymously to the JIRA instance
-        started by the Atlassian Plugin SDK from one of the 'atlas-run', 'atlas-debug',
-        or 'atlas-run-standalone' commands. By default, this instance runs at
-        http://localhost:2990/jira. The 'options' argument can be used to set the JIRA instance to use.
+        started by the Atlassian Plugin SDK from one of the 'atlas-run', ``atlas-debug``,
+        or ``atlas-run-standalone`` commands. By default, this instance runs at
+        ``http://localhost:2990/jira``. The ``options`` argument can be used to set the JIRA instance to use.
 
-        Authentication is handled with the 'basic_auth' argument. If authentication is supplied (and is
+        Authentication is handled with the ``basic_auth`` argument. If authentication is supplied (and is
         accepted by JIRA), the client will remember it for subsequent requests.
 
-        For quick command line access to a server, see the 'jirashell' script included with this distribution.
+        For quick command line access to a server, see the ``jirashell`` script included with this distribution.
 
-        Keyword arguments:
-        options -- Specify the server and properties this client will use. Use a dict with any
+        :param options: Specify the server and properties this client will use. Use a dict with any
             of the following properties:
-            * server -- the server address and context path to use. Defaults to 'http://localhost:2990/jira'.
-            * rest_path -- the root REST path to use. Defaults to 'api', where the JIRA REST resources live.
-            * rest_api_version -- the version of the REST resources under rest_path to use. Defaults to '2'.
-        basic_auth -- A tuple of username and password to use when establishing a session via HTTP BASIC
+            * server -- the server address and context path to use. Defaults to ``http://localhost:2990/jira``.
+            * rest_path -- the root REST path to use. Defaults to ``api``, where the JIRA REST resources live.
+            * rest_api_version -- the version of the REST resources under rest_path to use. Defaults to ``2``.
+        :param basic_auth: A tuple of username and password to use when establishing a session via HTTP BASIC
         authentication.
         """
         if options is None:
@@ -78,18 +77,20 @@ class JIRA(object):
         Get a Resource object for any addressable resource on the server.
 
         This method is a universal resource locator for any RESTful resource in JIRA. The
-        argument 'resource_format' is a string of the form 'resource', 'resource/{0}',
-        'resource/{0}/sub', 'resource/{0}/sub/{1}', etc. The format placeholders will be
-        populated from the 'ids' argument if present. The existing authentication session
+        argument ``resource_format`` is a string of the form ``resource``, ``resource/{0}``,
+        ``resource/{0}/sub``, ``resource/{0}/sub/{1}``, etc. The format placeholders will be
+        populated from the ``ids`` argument if present. The existing authentication session
         will be used.
 
         The return value is an untyped Resource object, which will not support specialized
-        update() or delete() behavior. Moreover, it will not know to return an issue Resource
-        if the client uses the resource issue path. For this reason, it is intended to support
-        resources that are not included in the standard Atlassian REST API.
+        :py:meth:`.Resource.update` or :py:meth:`.Resource.delete` behavior. Moreover, it will
+        not know to return an issue Resource if the client uses the resource issue path. For this
+        reason, it is intended to support resources that are not included in the standard
+        Atlassian REST API.
 
-        Keyword arguments:
-        ids -- a tuple of values to substitute in the 'resource_format' string
+        :param resource_format: the subpath to the resource string
+        :param ids: values to substitute in the ``resource_format`` string
+        :type ids: tuple or None
         """
         resource = Resource(resource_format, self._options, self._session)
         resource.find(ids)
@@ -102,8 +103,7 @@ class JIRA(object):
         """
         Return the mutable server application properties.
 
-        Keyword arguments:
-        key -- the single property to return a value for
+        :param key: the single property to return a value for
         """
         params = {}
         if key is not None:
@@ -133,10 +133,14 @@ class JIRA(object):
 
     def add_attachment(self, issue, attachment):
         """
-        Attach the specified file to the specified issue and return an attachment Resource for it.
+        Attach an attachment to an issue and returns a Resource for it.
 
         The client will *not* attempt to open or validate the attachment; it expects a file-like object to be ready
         for its use. The user is still responsible for tidying up (e.g., closing the file, killing the socket, etc.)
+
+        :param issue: the issue to attach the attachment to
+        :param attachment: file-like object to attach to the issue
+        :rtype: an Attachment Resource
         """
         # TODO: Support attaching multiple files at once?
         url = self._get_url('issue/' + issue + '/attachments')
@@ -152,20 +156,24 @@ class JIRA(object):
 ### Components
 
     def component(self, id):
-        """Get a component Resource from the server for the specified ID."""
+        """
+        Get a component Resource from the server.
+
+        :param id: ID of the component to get
+        """
         return self._find_for_resource(Component, id)
 
     def create_component(self, name, project, description=None, leadUserName=None, assigneeType=None,
                          isAssigneeTypeValid=False):
         """
-        Create an issue component inside the specified project and return a Resource for it.
-        The component name and project name are required.
+        Create an issue component inside a project and return a Resource for it.
 
-        Keyword arguments:
-        description -- a description of the component
-        leadUserName -- the username of the user responsible for this component
-        assigneeType -- see the ComponentBean.AssigneeType class for valid values
-        isAssigneeTypeValid -- boolean specifying whether the assignee type is acceptable
+        :param name: name of the component
+        :param project: key of the project to create the component in
+        :param description: a description of the component
+        :param leadUserName: the username of the user responsible for this component
+        :param assigneeType: see the ComponentBean.AssigneeType class for valid values
+        :param isAssigneeTypeValid: boolean specifying whether the assignee type is acceptable
         """
         data = {
             'name': name,
@@ -186,15 +194,22 @@ class JIRA(object):
         component = Component(self._options, self._session, raw=json.loads(r.text))
         return component
 
-
     def component_count_related_issues(self, id):
-        """Get the count of related issues for the specified component ID."""
+        """
+        Get the count of related issues for a component.
+
+        :param id: ID of the component to use
+        """
         return self._get_json('component/' + id + '/relatedIssueCounts')['issueCount']
 
 ### Custom field options
 
     def custom_field_option(self, id):
-        """Get a custom field option Resource from the server for the specified ID."""
+        """
+        Get a custom field option Resource from the server.
+
+        :param id: ID of the custom field to use
+        """
         return self._find_for_resource(CustomFieldOption, id)
 
 ### Dashboards
@@ -202,12 +217,11 @@ class JIRA(object):
     # TODO: Should this be _get_json instead of resource?
     def dashboards(self, filter=None, startAt=0, maxResults=20):
         """
-        Return a list of Dashboard resources matching the specified parameters.
+        Return a list of Dashboard resources.
 
-        Keyword arguments
-        filter -- either "favourite" or "my"
-        startAt -- index of the first dashboard to return
-        maxResults -- maximum number of dashboards to return:
+        :param filter: either "favourite" or "my", the type of dashboards to return
+        :param startAt: index of the first dashboard to return
+        :param maxResults: maximum number of dashboards to return
         """
         dashboards = Dashboards(self._options, self._session)
         params = {}
@@ -219,7 +233,11 @@ class JIRA(object):
         return dashboards
 
     def dashboard(self, id):
-        """Get a dashboard Resource from the server for the specified ID."""
+        """
+        Get a dashboard Resource from the server.
+
+        :param id: ID of the dashboard to get.
+        """
         return self._find_for_resource(Dashboard, id)
 
 ### Fields
@@ -232,7 +250,11 @@ class JIRA(object):
 ### Filters
 
     def filter(self, id):
-        """Get a filter Resource from the server for the specified ID."""
+        """
+        Get a filter Resource from the server.
+
+        :param id: ID of the filter to get.
+        """
         return self._find_for_resource(Filter, id)
 
     def favourite_filters(self):
@@ -263,11 +285,11 @@ class JIRA(object):
 
     def issue(self, id, fields=None, expand=None):
         """
-        Get an issue Resource from the server for the specified ID.
+        Get an issue Resource from the server.
 
-        Keyword arguments:
-        fields -- comma-separated string of issue fields to include in the results
-        expand -- extra information to fetch inside each resource
+        :param id: ID or key of the issue to get
+        :param fields: comma-separated string of issue fields to include in the results
+        :param expand: extra information to fetch inside each resource
         """
         issue = Issue(self._options, self._session)
 
@@ -294,10 +316,9 @@ class JIRA(object):
         fields in a new issue. This information is available through the 'createmeta' method. Further examples are
         available here: https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Create+Issue
 
-        Keyword arguments:
-        fields -- a dict containing field names and the values to use. If present, all other keyword arguments
+        :param fields: a dict containing field names and the values to use. If present, all other keyword arguments\
         will be ignored
-        prefetch -- whether to reload the created issue Resource so that all of its data is present in the value
+        :param prefetch: whether to reload the created issue Resource so that all of its data is present in the value\
         returned from this method
         """
         data = {}
@@ -321,18 +342,17 @@ class JIRA(object):
 
     def createmeta(self, projectKeys=None, projectIds=None, issuetypeIds=None, issuetypeNames=None, expand=None):
         """
-        Gets the metadata required to create issues, filtered by the specified projects and issue types.
+        Gets the metadata required to create issues, optionally filtered by projects and issue types.
 
-        Keyword arguments:
-        projectKeys -- keys of the projects to filter the results with. Can be a single value or a comma-delimited string.
-        May be combined with projectIds.
-        projectIds -- IDs of the projects to filter the results with. Can be a single value or a comma-delimited string.
-        May be combined with projectKeys.
-        issuetypeIds -- IDs of the issue types to filter the results with. Can be a single value or a comma-delimited string.
-        May be combined with issuetypeNames.
-        iisuetypeNames -- Names of the issue types to filter the results with. Can be a single value or a comma-delimited string.
-        May be combined with issuetypeIds.
-        expand -- extra information to fetch inside each resource.
+        :param projectKeys: keys of the projects to filter the results with. Can be a single value or a comma-delimited\
+        string. May be combined with projectIds.
+        :param projectIds: IDs of the projects to filter the results with. Can be a single value or a comma-delimited\
+        string. May be combined with projectKeys.
+        :param issuetypeIds: IDs of the issue types to filter the results with. Can be a single value or a\
+        comma-delimited string. May be combined with issuetypeNames.
+        :param issuetypeNames: Names of the issue types to filter the results with. Can be a single value or a\
+        comma-delimited string. May be combined with issuetypeIds.
+        :param expand: extra information to fetch inside each resource.
         """
         params = {}
         if projectKeys is not None:
@@ -349,7 +369,12 @@ class JIRA(object):
 
     # non-resource
     def assign_issue(self, issue, assignee):
-        """Assign the issue to the specified user."""
+        """
+        Assign an issue to a user.
+
+        :param issue: the issue to assign
+        :param assignee: the user to assign the issue to
+        """
         url = self._options['server'] + '/rest/api/2/issue/' + issue + '/assignee'
         payload = {'name': assignee}
         r = self._session.put(url, data=json.dumps(payload))
@@ -357,7 +382,11 @@ class JIRA(object):
 
     # TODO: Should this be _get_json instead of resource?
     def comments(self, issue):
-        """Get a list of comment Resources from the specified issue."""
+        """
+        Get a list of comment Resources.
+
+        :param issue: the issue to get comments from
+        """
         resource = Comments(self._options, self._session)
         resource.find(issue)
 
@@ -365,7 +394,12 @@ class JIRA(object):
         return comments
 
     def comment(self, issue, comment):
-        """Get a comment Resource from the server for the specified ID."""
+        """
+        Get a comment Resource from the server for the specified ID.
+
+        :param issue: ID or key of the issue to get the comment from
+        :param comment: ID of the comment to get
+        """
         return self._find_for_resource(Comment, (issue, comment))
 
     def add_comment(self, issue, body, visibility=None):
@@ -373,9 +407,10 @@ class JIRA(object):
         Add a comment from the current authenticated user on the specified issue and return a Resource for it.
         The issue identifier and comment body are required.
 
-        Keyword arguments:
-        visibility -- a dict containing two entries: "type" and "value". "type" is 'role' (or 'group' if the JIRA
-        server has configured comment visibility for groups) and 'value' is the name of the role (or group) to which
+        :param issue: ID or key of the issue to add the comment to
+        :param body: Text of the comment to add
+        :param visibility: a dict containing two entries: "type" and "value". "type" is 'role' (or 'group' if the JIRA\
+        server has configured comment visibility for groups) and 'value' is the name of the role (or group) to which\
         viewing of this comment will be restricted.
         """
         data = {
@@ -393,27 +428,46 @@ class JIRA(object):
 
     # non-resource
     def editmeta(self, issue):
-        """Get the edit metadata for the specified issue."""
+        """
+        Get the edit metadata for an issue.
+
+        :param issue: the issue to get metadata for
+        """
         return self._get_json('issue/' + issue + '/editmeta')
 
     def remote_links(self, issue):
-        """Get a list of remote link Resources from the specified issue."""
+        """
+        Get a list of remote link Resources from an issue.
+
+        :param issue: the issue to get remote links from
+        """
         r_json = self._get_json('issue/' + issue + '/remotelink')
         remote_links = [RemoteLink(self._options, self._session, raw_remotelink_json) for raw_remotelink_json in r_json]
         return remote_links
 
     def remote_link(self, issue, id):
-        """Get a remote link Resource from the server for the specified ID."""
+        """
+        Get a remote link Resource from the server.
+
+        :param issue: the issue holding the remote link
+        :param id: ID of the remote link
+        """
         return self._find_for_resource(RemoteLink, (issue, id))
 
     def add_remote_link(self, issue, object, globalId=None, application=None, relationship=None):
         """
-        Create a remote link from the specified issue to an external application and returns a remote link Resource
-        for it. 'object' is required and should be a dict containing at least 'url' to the linked external URL and
-        'title' to display for the link inside JIRA.
+        Create a remote link from an issue to an external application and returns a remote link Resource
+        for it. ``object`` should be a dict containing at least ``url`` to the linked external URL and
+        ``title`` to display for the link inside JIRA.
 
-        For definitions of the allowable fields for 'object' and the keyword arguments 'globalId', 'application' and
-        'relationship', see https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+for+Remote+Issue+Links.
+        For definitions of the allowable fields for ``object`` and the keyword arguments ``globalId``, ``application``
+        and ``relationship``, see https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+for+Remote+Issue+Links.
+
+        :param issue: the issue to add the remote link to
+        :param object: the link details to add (see the above link for details)
+        :param globalId: unique ID for the link (see the above link for details)
+        :param application: application information for the link (see the above link for details)
+        :param relationship: relationship description for the link (see the above link for details)
         """
         data = {
             'object': object
@@ -437,9 +491,9 @@ class JIRA(object):
         """
         Get a list of the transitions available on the specified issue to the current user.
 
-        Keyword arguments:
-        id -- get only the transition matching this ID
-        expand -- extra information to fetch inside each transition
+        :param issue: ID or key of the issue to get the transitions from
+        :param id: if present, get only the transition matching this ID
+        :param expand: extra information to fetch inside each transition
         """
         params = {}
         if id is not None:
@@ -451,14 +505,15 @@ class JIRA(object):
     def transition_issue(self, issue, transitionId, fields=None, **fieldargs):
         # TODO: Support update verbs (same as issue.update())
         """
-        Perform the specified transition on the specified issue.
+        Perform a transition on an issue.
 
         Each keyword argument (other than the predefined ones) is treated as a field name and the argument's value
         is treated as the intended value for that field -- if the fields argument is used, all other keyword arguments
         will be ignored. Field values will be set on the issue as part of the transition process.
 
-        Keyword arguments:
-        fields -- a dict containing field names and the values to use. If present, all other keyword arguments
+        :param issue: ID or key of the issue to perform the transition on
+        :param transitionId: ID of the transition to perform
+        :param fields: a dict containing field names and the values to use. If present, all other keyword arguments\
         will be ignored
         """
         data = {
@@ -479,54 +534,90 @@ class JIRA(object):
         self._raise_on_error(r)
 
     def votes(self, issue):
-        """Get a votes Resource from the server for the specified issue."""
+        """
+        Get a votes Resource from the server.
+
+        :param issue: ID or key of the issue to get the votes for
+        """
         return self._find_for_resource(Votes, issue)
 
     def add_vote(self, issue):
-        """Register a vote for the current authenticated user on the specified issue."""
+        """
+        Register a vote for the current authenticated user on an issue.
+
+        :param issue: ID or key of the issue to vote on
+        """
         url = self._get_url('issue/' + issue + '/votes')
         self._session.post(url)
 
     def remove_vote(self, issue):
-        """Remove the current authenticated user's vote from the specified issue."""
+        """
+        Remove the current authenticated user's vote from an issue.
+
+        :param issue: ID or key of the issue to unvote on
+        """
         url = self._get_url('issue/' + issue + '/votes')
         self._session.delete(url)
 
     def watchers(self, issue):
-        """Get a watchers Resource from the server for the specified issue."""
+        """
+        Get a watchers Resource from the server for an issue.
+
+        :param issue: ID or key of the issue to get the watchers for
+        """
         return self._find_for_resource(Watchers, issue)
 
     def add_watcher(self, issue, watcher):
-        """Add the specified user to the specified issue's watch list."""
+        """
+        Add a user to an issue's watchers list.
+
+        :param issue: ID or key of the issue affected
+        :param watcher: username of the user to add to the watchers list
+        """
         url = self._get_url('issue/' + issue + '/watchers')
         r = self._session.post(url, data=json.dumps(watcher))
 
     def remove_watcher(self, issue, watcher):
-        """Remove the specified user from the specified issue's watch list."""
+        """
+        Remove a user from an issue's watch list.
+
+        :param issue: ID or key of the issue affected
+        :param watcher: username of the user to remove from the watchers list
+        """
         url = self._get_url('issue/' + issue + '/watchers')
         params = {'username': watcher}
         self._session.delete(url, params=params)
 
     def worklogs(self, issue):
-        """Get a list of worklog Resources from the server for the specified issue."""
+        """
+        Get a list of worklog Resources from the server for an issue.
+
+        :param issue: ID or key of the issue to get worklogs from
+        """
         r_json = self._get_json('issue/' + issue + '/worklog')
         worklogs = [Worklog(self._options, self._session, raw_worklog_json) for raw_worklog_json in r_json['worklogs']]
         return worklogs
 
     def worklog(self, issue, id):
-        """Get a worklog Resource from the server for the specified issue and worklog ID."""
+        """
+        Get a specific worklog Resource from the server.
+
+        :param issue: ID or key of the issue to get the worklog from
+        :param id: ID of the worklog to get
+        """
         return self._find_for_resource(Worklog, (issue, id))
 
     def add_worklog(self, issue, timeSpent=None, adjustEstimate=None,
                     newEstimate=None, reduceBy=None):
-        """Create a new worklog entry on the specified issue and return a Resource for it.
+        """
+        Create a new worklog entry on an issue and return a Resource for it.
 
-        Keyword arguments:
-        timeSpent -- Add a worklog entry with this amount of time spent, e.g. "2d"
-        adjustEstimate -- (optional) allows you to provide specific instructions to update the remaining time estimate
-        of the issue. The value can either be new, leave, manual or auto (default).
-        newEstimate -- the new value for the remaining estimate field. e.g. "2d"
-        reduceBy -- the amount to reduce the remaining estimate by e.g. "2d"
+        :param issue: the issue to create the worklog on
+        :param timeSpent: a worklog entry with this amount of time spent, e.g. "2d"
+        :param adjustEstimate: (optional) allows the user to provide specific instructions to update the remaining\
+        time estimate of the issue. The value can either be ``new``, ``leave``, ``manual`` or ``auto`` (default).
+        :param newEstimate: the new value for the remaining estimate field. e.g. "2d"
+        :param reduceBy: the amount to reduce the remaining estimate by e.g. "2d"
         """
         params = {}
         if adjustEstimate is not None:
@@ -553,12 +644,14 @@ class JIRA(object):
         """
         Create a link between two issues.
 
-        Keyword arguments:
-        comment -- a comment to add to the issues with the link. Should be a dict containing 'body'
-        and 'visibility' fields: 'body being the text of the comment and 'visibility' being a dict containing two
-        entries: "type" and "value". "type" is 'role' (or 'group' if the JIRA server has configured comment
-        visibility for groups) and 'value' is the name of the role (or group) to which viewing of this comment will
-        be restricted.
+        :param type: the type of link to create
+        :param inwardIssue: the issue to link from
+        :param outwardIssue: the issue to link to
+        :param comment:  a comment to add to the issues with the link. Should be a dict containing ``body``\
+        and ``visibility`` fields: ``body`` being the text of the comment and ``visibility`` being a dict containing\
+        two entries: ``type`` and ``value``. ``type`` is ``role`` (or ``group`` if the JIRA server has configured\
+        comment visibility for groups) and ``value`` is the name of the role (or group) to which viewing of this\
+        comment will be restricted.
         """
         data = {
             'type': {
@@ -577,7 +670,11 @@ class JIRA(object):
         self._raise_on_error(r)
 
     def issue_link(self, id):
-        """Get an issue link Resource from the server for the specified ID."""
+        """
+        Get an issue link Resource from the server.
+
+        :param id: ID of the issue link to get
+        """
         return self._find_for_resource(IssueLink, id)
 
 ### Issue link types
@@ -589,7 +686,11 @@ class JIRA(object):
         return link_types
 
     def issue_link_type(self, id):
-        """Get an issue link Resource from the server for the specified ID."""
+        """
+        Get an issue link type Resource from the server.
+
+        :param id: ID of the issue link type to get
+        """
         return self._find_for_resource(IssueLinkType, id)
 
 ### Issue types
@@ -601,7 +702,11 @@ class JIRA(object):
         return issue_types
 
     def issue_type(self, id):
-        """Get an issue type Resource from the server for the specified ID."""
+        """
+        Get an issue type Resource from the server.
+
+        :param id: ID of the issue type to get
+        """
         return self._find_for_resource(IssueType, id)
 
 ### User permissions
@@ -611,11 +716,10 @@ class JIRA(object):
         """
         Get a dict of all available permissions on the server.
 
-        Keyword arguments:
-        projectKey -- limit returned permissions to the specified project
-        projectId -- limit returned permissions to the specified project
-        issueKey -- limit returned permissions to the specified issue
-        issueId -- limit returned permissions to the specified issue
+        :param projectKey: limit returned permissions to the specified project
+        :param projectId: limit returned permissions to the specified project
+        :param issueKey: limit returned permissions to the specified issue
+        :param issueId: limit returned permissions to the specified issue
         """
         params = {}
         if projectKey is not None:
@@ -637,7 +741,11 @@ class JIRA(object):
         return priorities
 
     def priority(self, id):
-        """Get a priority Resource from the server for the specified ID."""
+        """
+        Get a priority Resource from the server.
+
+        :param id: ID of the priority to get
+        """
         return self._find_for_resource(Priority, id)
 
 ### Projects
@@ -649,12 +757,20 @@ class JIRA(object):
         return projects
 
     def project(self, id):
-        """Get a project Resource from the server for the specified ID."""
+        """
+        Get a project Resource from the server.
+
+        :param id: ID or key of the project to get
+        """
         return self._find_for_resource(Project, id)
 
     # non-resource
     def project_avatars(self, project):
-        """Get a dict of all avatars for the specified project visible to the current authenticated user."""
+        """
+        Get a dict of all avatars for a project visible to the current authenticated user.
+
+        :param project: ID or key of the project to get avatars for
+        """
         return self._get_json('project/' + project + '/avatars')
 
     def create_temp_project_avatar(self, project, filename, size, avatar_img, contentType=None, auto_confirm=False):
@@ -665,18 +781,22 @@ class JIRA(object):
         Avatar images are specified by a filename, size, and file object. By default, the client will attempt to
         autodetect the picture's content type: this mechanism relies on libmagic and will not work out of the box
         on Windows systems (see https://github.com/ahupp/python-magic/blob/master/README for details on how to install
-        support). The 'contentType' argument can be used to explicitly set the value (note that JIRA will reject any
-        type other than the well-known ones for images, e.g. image/jpg, image/png, etc.)
+        support). The ``contentType`` argument can be used to explicitly set the value (note that JIRA will reject any
+        type other than the well-known ones for images, e.g. ``image/jpg``, ``image/png``, etc.)
 
         This method returns a dict of properties that can be used to crop a subarea of a larger image for use. This
-        dict should be saved and passed to confirm_project_avatar() to finish the avatar creation process. If you want
-        to cut out the middleman and confirm the avatar with JIRA's default cropping, pass the 'auto_confirm' argument
-        with a truthy value and confirm_project_avatar() will be called for you before this method returns.
+        dict should be saved and passed to :py:meth:`confirm_project_avatar` to finish the avatar creation process. If\
+        you want to cut out the middleman and confirm the avatar with JIRA's default cropping, pass the 'auto_confirm'\
+        argument with a truthy value and :py:meth:`confirm_project_avatar` will be called for you before this method\
+        returns.
 
-        Keyword arguments:
-        contentType -- explicit specification for the avatar image's content-type
-        auto_confirm -- whether to automatically confirm the temporary avatar by calling confirm_project_avatar()
-        with the return value of this method.
+        :param project: ID or key of the project to create the avatar in
+        :param filename: name of the avatar file
+        :param size: size of the avatar file
+        :param avatar_img: file-like object holding the avatar
+        :param contentType: explicit specification for the avatar image's content-type
+        :param boolean auto_confirm: whether to automatically confirm the temporary avatar by calling\
+        :py:meth:`confirm_project_avatar` with the return value of this method.
         """
         # TODO: autodetect size from passed-in file object?
         params = {
@@ -700,9 +820,13 @@ class JIRA(object):
         """
         Confirm the temporary avatar image previously uploaded with the specified cropping.
 
-        After a successful registry with create_temp_project_avatar(), use this method to confirm the avatar for use.
-        The final avatar can be a subarea of the uploaded image, which is customized with the cropping_properties:
-        the return value of create_temp_project_avatar() should be used for this argument.
+        After a successful registry with :py:meth:`create_temp_project_avatar`, use this method to confirm the avatar
+        for use. The final avatar can be a subarea of the uploaded image, which is customized with the
+        ``cropping_properties``: the return value of :py:meth:`create_temp_project_avatar` should be used for this
+        argument.
+
+        :param project: ID or key of the project to confirm the avatar in
+        :param cropping_properties: a dict of cropping properties from :py:meth:`create_temp_project_avatar`
         """
         data = cropping_properties
         url = self._get_url('project/' + project + '/avatar')
@@ -712,34 +836,61 @@ class JIRA(object):
         return json.loads(r.text)
 
     def set_project_avatar(self, project, avatar):
-        """Set the specified project's avatar to the specified avatar ID."""
+        """
+        Set a project's avatar.
+
+        :param project: ID or key of the project to set the avatar on
+        :param avatar: ID of the avatar to set
+        """
         self._set_avatar(None, self._get_url('project/' + project + '/avatar'), avatar)
 
     def delete_project_avatar(self, project, avatar):
-        """Delete the specified project's avatar with the specified ID."""
+        """
+        Delete a project's avatar.
+
+        :param project: ID or key of the project to delete the avatar from
+        :param avatar: ID of the avater to delete
+        """
         url = self._get_url('project/' + project + '/avatar/' + avatar)
         r = self._session.delete(url)
         self._raise_on_error(r)
 
     def project_components(self, project):
-        """Get a list of component Resources present on the specified project."""
+        """
+        Get a list of component Resources present on a project.
+
+        :param project: ID or key of the project to get components from
+        """
         r_json = self._get_json('project/' + project + '/components')
         components = [Component(self._options, self._session, raw_comp_json) for raw_comp_json in r_json]
         return components
 
     def project_versions(self, project):
-        """Get a list of version Resources present on the specified project."""
+        """
+        Get a list of version Resources present on a project.
+
+        :param project: ID or key of the project to get versions from
+        """
         r_json = self._get_json('project/' + project + '/versions')
         versions = [Version(self._options, self._session, raw_ver_json) for raw_ver_json in r_json]
         return versions
 
     # non-resource
     def project_roles(self, project):
-        """Get a dict of role names to resource locations for the specified project."""
+        """
+        Get a dict of role names to resource locations for a project.
+
+        :param project: ID or key of the project to get roles from
+        """
         return self._get_json('project/' + project + '/role')
 
     def project_role(self, project, id):
-        """Get a role Resource for the specified project and ID."""
+        """
+        Get a role Resource.
+
+        :param project: ID or key of the project to get the role from
+        :param id: ID of the role to get
+        """
         return self._find_for_resource(Role, (project, id))
 
 ### Resolutions
@@ -751,20 +902,24 @@ class JIRA(object):
         return resolutions
 
     def resolution(self, id):
-        """Get a resolution Resource from the server for the specified ID."""
+        """
+        Get a resolution Resource from the server.
+
+        :param id: ID of the resolution to get
+        """
         return self._find_for_resource(Resolution, id)
 
 ### Search
 
     def search_issues(self, jql_str, startAt=0, maxResults=50, fields=None, expand=None):
         """
-        Get a list of issue Resources matching the specified JQL search string.
+        Get a list of issue Resources matching a JQL search string.
 
-        Keyword arguments:
-        startAt -- index of the first issue to return
-        maxResults -- maximum number of issues to return
-        fields -- comma-separated string of issue fields to include in the results
-        expand -- extra information to fetch inside each resource
+        :param jql_str: the JQL search string to use
+        :param startAt: index of the first issue to return
+        :param maxResults: maximum number of issues to return
+        :param fields: comma-separated string of issue fields to include in the results
+        :param expand: extra information to fetch inside each resource
         """
         # TODO what to do about the expand, which isn't related to the issues?
         if fields is None:
@@ -785,7 +940,11 @@ class JIRA(object):
 ### Security levels
 
     def security_level(self, id):
-        """Get a security level Resource for the specified ID."""
+        """
+        Get a security level Resource.
+
+        :param id: ID of the security level to get
+        """
         return self._find_for_resource(SecurityLevel, id)
 
 ### Server info
@@ -804,17 +963,21 @@ class JIRA(object):
         return statuses
 
     def status(self, id):
-        """Get a status Resource from the server for the specified ID."""
+        """
+        Get a status Resource from the server.
+
+        :param id: ID of the status resource to get
+        """
         return self._find_for_resource(Status, id)
 
 ### Users
 
     def user(self, id, expand=None):
         """
-        Get a user Resource from the server with the specified username.
+        Get a user Resource from the server.
 
-        Keyword arguments:
-        expand -- extra information to fetch inside each resource
+        :param id: ID of the user to get
+        :param expand: extra information to fetch inside each resource
         """
         user = User(self._options, self._session)
         params = {}
@@ -825,12 +988,12 @@ class JIRA(object):
 
     def search_assignable_users_for_projects(self, username, projectKeys, startAt=0, maxResults=50):
         """
-        Get a list of user Resources that match the search string and can be assigned issues for the
-        specified projects.
+        Get a list of user Resources that match the search string and can be assigned issues for projects.
 
-        Keyword arguments:
-        startAt -- index of the first user to return
-        maxResults -- maximum number of users to return
+        :param username: a string to match usernames against
+        :param projectKeys: comma-separated list of project keys to check for issue assignment permissions
+        :param startAt: index of the first user to return
+        :param maxResults: maximum number of users to return
         """
         params = {
             'username': username,
@@ -842,7 +1005,8 @@ class JIRA(object):
         users = [User(self._options, self._session, raw_user_json) for raw_user_json in r_json]
         return users
 
-    def search_assignable_users_for_issues(self, username, project=None, issueKey=None, expand=None, startAt=0, maxResults=50):
+    def search_assignable_users_for_issues(self, username, project=None, issueKey=None, expand=None, startAt=0,
+                                           maxResults=50):
         """
         Get a list of user Resources that match the search string for assigning or creating issues.
 
@@ -850,13 +1014,13 @@ class JIRA(object):
         to an existing issue. When searching for eligible creators, specify a project. When searching for eligible
         assignees, specify an issue key.
 
-        Keyword arguments:
-        project -- filter returned users by permission in this project (expected if a result will be used to create
-        an issue)
-        issueKey -- filter returned users by this issue (expected if a result will be used to edit this issue)
-        expand -- extra information to fetch inside each resource
-        startAt -- index of the first user to return
-        maxResults -- maximum number of users to return
+        :param username: a string to match usernames against
+        :param project: filter returned users by permission in this project (expected if a result will be used to\
+        create an issue)
+        :param issueKey: filter returned users by this issue (expected if a result will be used to edit this issue)
+        :param expand: extra information to fetch inside each resource
+        :param startAt: index of the first user to return
+        :param maxResults: maximum number of users to return
         """
         params = {
             'username': username,
@@ -875,7 +1039,11 @@ class JIRA(object):
 
     # non-resource
     def user_avatars(self, username):
-        """Get a dict of avatars for the specified user."""
+        """
+        Get a dict of avatars for the specified user.
+
+        :param username: the username to get avatars for
+        """
         return self._get_json('user/avatars', params={'username': username})
 
     def create_temp_user_avatar(self, user, filename, size, avatar_img, contentType=None, auto_confirm=False):
@@ -884,20 +1052,24 @@ class JIRA(object):
         be used.
 
         Avatar images are specified by a filename, size, and file object. By default, the client will attempt to
-        autodetect the picture's content type: this mechanism relies on libmagic and will not work out of the box
+        autodetect the picture's content type: this mechanism relies on ``libmagic`` and will not work out of the box
         on Windows systems (see https://github.com/ahupp/python-magic/blob/master/README for details on how to install
-        support). The 'contentType' argument can be used to explicitly set the value (note that JIRA will reject any
-        type other than the well-known ones for images, e.g. image/jpg, image/png, etc.)
+        support). The ``contentType`` argument can be used to explicitly set the value (note that JIRA will reject any
+        type other than the well-known ones for images, e.g. ``image/jpg``, ``image/png``, etc.)
 
         This method returns a dict of properties that can be used to crop a subarea of a larger image for use. This
-        dict should be saved and passed to confirm_user_avatar() to finish the avatar creation process. If you want
-        to cut out the middleman and confirm the avatar with JIRA's default cropping, pass the 'auto_confirm' argument
-        with a truthy value and confirm_user_avatar() will be called for you before this method returns.
+        dict should be saved and passed to :py:meth:`confirm_user_avatar` to finish the avatar creation process. If you
+        want to cut out the middleman and confirm the avatar with JIRA's default cropping, pass the ``auto_confirm``
+        argument with a truthy value and :py:meth:`confirm_user_avatar` will be called for you before this method
+        returns.
 
-        Keyword arguments:
-        contentType -- explicit specification for the avatar image's content-type
-        auto_confirm -- whether to automatically confirm the temporary avatar by calling confirm_user_avatar
-        with the return value of this method.
+        :param user: user to register the avatar for
+        :param filename: name of the avatar file
+        :param size: size of the avatar file
+        :param avatar_img: file-like object containing the avatar
+        :param contentType: explicit specification for the avatar image's content-type
+        :param auto_confirm: whether to automatically confirm the temporary avatar by calling\
+        :py:meth:`confirm_user_avatar` with the return value of this method.
         """
         # TODO: autodetect size from passed-in file object?
         params = {
@@ -922,9 +1094,13 @@ class JIRA(object):
         """
         Confirm the temporary avatar image previously uploaded with the specified cropping.
 
-        After a successful registry with create_temp_user_avatar(), use this method to confirm the avatar for use.
-        The final avatar can be a subarea of the uploaded image, which is customized with the cropping_properties:
-        the return value of create_temp_user_avatar() should be used for this argument.
+        After a successful registry with :py:meth:`create_temp_user_avatar`, use this method to confirm the avatar for
+        use. The final avatar can be a subarea of the uploaded image, which is customized with the
+        ``cropping_properties``: the return value of :py:meth:`create_temp_user_avatar` should be used for this
+        argument.
+
+        :param user: the user to confirm the avatar for
+        :param cropping_properties: a dict of cropping properties from :py:meth:`create_temp_user_avatar`
         """
         data = cropping_properties
         url = self._get_url('user/avatar')
@@ -934,11 +1110,21 @@ class JIRA(object):
         return json.loads(r.text)
 
     def set_user_avatar(self, username, avatar):
-        """Set the specified user's avatar to the specified avatar ID."""
+        """
+        Set a user's avatar.
+
+        :param username: the user to set the avatar for
+        :param avatar: ID of the avatar to set
+        """
         self._set_avatar({'username': username}, self._get_url('user/avatar'), avatar)
 
     def delete_user_avatar(self, username, avatar):
-        """Delete the specified avatar from the specified user."""
+        """
+        Delete a user's avatar.
+
+        :param username: the user to delete the avatar from
+        :param avatar: ID of the avatar to remove
+        """
         params = {'username': username}
         url = self._get_url('user/avatar/' + avatar)
         r = self._session.delete(url, params=params)
@@ -948,9 +1134,9 @@ class JIRA(object):
         """
         Get a list of user Resources that match the specified search string.
 
-        Keyword arguments:
-        startAt -- index of the first user to return
-        maxResults -- maximum number of users to return
+        :param user: a string to match usernames against
+        :param startAt: index of the first user to return
+        :param maxResults: maximum number of users to return
         """
         params = {
             'username': user,
@@ -963,14 +1149,14 @@ class JIRA(object):
 
     def search_allowed_users_for_issue(self, user, issueKey=None, projectKey=None, startAt=0, maxResults=50):
         """
-        Get a list of user Resources that match the specified string and have browse permission for the issue or
+        Get a list of user Resources that match a username string and have browse permission for the issue or
         project.
 
-        Keyword arguments:
-        issueKey -- find users with browse permission for this issue
-        projectKey -- find users with browse permission for this project
-        startAt -- index of the first user to return
-        maxResults -- maximum number of users to return
+        :param user: a string to match usernames against
+        :param issueKey: find users with browse permission for this issue
+        :param projectKey: find users with browse permission for this project
+        :param startAt: index of the first user to return
+        :param maxResults: maximum number of users to return
         """
         params = {
             'username': user,
@@ -989,11 +1175,12 @@ class JIRA(object):
 
     def create_version(self, name, project, description=None, releaseDate=None):
         """
-        Create a version with the specified name in the specified project and return a Resource for it.
+        Create a version in a project and return a Resource for it.
 
-        Keyword arguments:
-        description -- a description of the version
-        releaseDate -- the release date assigned to the version
+        :param name: name of the version to create
+        :param project: key of the project to create the version in
+        :param description: a description of the version
+        :param releaseDate: the release date assigned to the version
         """
         data = {
             'name': name,
@@ -1013,13 +1200,13 @@ class JIRA(object):
 
     def move_version(self, id, after=None, position=None):
         """
-        Move the specified version within JIRA's ordered version list and return a new version Resource for it. One,
-        but not both, of 'after' and 'position' must be specified.
+        Move a version within a project's ordered version list and return a new version Resource for it. One,
+        but not both, of ``after`` and ``position`` must be specified.
 
-        Keyword arguments:
-        after -- the self attribute of a version to place the specified version after (that is, higher in the list)
-        position -- the absolute position to move this version to: must be one of 'First', 'Last', 'Earlier', or
-        'Later'
+        :param id: ID of the version to move
+        :param after: the self attribute of a version to place the specified version after (that is, higher in the list)
+        :param position: the absolute position to move this version to: must be one of ``First``, ``Last``,\
+        ``Earlier``, or ``Later``
         """
         data = {}
         if after is not None:
@@ -1036,10 +1223,10 @@ class JIRA(object):
 
     def version(self, id, expand=None):
         """
-        Get a version Resource that matches the specified ID.
+        Get a version Resource.
 
-        Keyword arguments:
-        expand -- extra information to fetch inside each resource
+        :param id: ID of the version to get
+        :param expand: extra information to fetch inside each resource
         """
         version = Version(self._options, self._session)
         params = {}
@@ -1049,13 +1236,21 @@ class JIRA(object):
         return version
 
     def version_count_related_issues(self, id):
-        """Get a dict of the counts of issues fixed and affected by the version with the specified ID."""
+        """
+        Get a dict of the counts of issues fixed and affected by a version.
+
+        :param id: the version to count issues for
+        """
         r_json = self._get_json('version/' + id + '/relatedIssueCounts')
         del r_json['self']   # this isn't really an addressable resource
         return r_json
 
     def version_count_unresolved_issues(self, id):
-        """Get the number of unresolved issues for the version with the specified ID."""
+        """
+        Get the number of unresolved issues for a version.
+
+        :param id: ID of the version to count issues for
+        """
         return self._get_json('version/' + id + '/unresolvedIssueCount')['issuesUnresolvedCount']
 
 ### Session authentication
