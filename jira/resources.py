@@ -144,15 +144,6 @@ class CustomFieldOption(Resource):
             self._parse_raw(raw)
 
 
-class Dashboards(Resource):
-    """A collection of dashboards."""
-
-    def __init__(self, options, session, raw=None):
-        Resource.__init__(self, 'dashboard', options, session)
-        if raw:
-            self._parse_raw(raw)
-
-
 class Dashboard(Resource):
     """A JIRA dashboard."""
 
@@ -212,12 +203,6 @@ class Issue(Resource):
         :param deleteSubtasks: if the issue has subtasks, this argument must be set to true for the call to succeed.
         """
         super(Issue, self).delete(params={'deleteSubtasks': deleteSubtasks})
-
-class Comments(Resource):
-    """A collection of issue comments."""
-
-    def __init__(self, options, session):
-        Resource.__init__(self, 'issue/{0}/comment', options, session)
 
 
 class Comment(Resource):
@@ -491,10 +476,8 @@ resource_class_map = {
     r'component/[^/]+$': Component,
     r'customFieldOption/[^/]+$': CustomFieldOption,
     r'dashboard/[^/]+$': Dashboard,
-    r'dashboard$': Dashboards,
     r'filter/[^/]$': Filter,
     r'issue/[^/]+$': Issue,
-    r'issue/[^/]+/comment$': Comments,
     r'issue/[^/]+/comment/[^/]+$': Comment,
     r'issue/[^/]+/votes$': Votes,
     r'issue/[^/]+/watchers$': Watchers,

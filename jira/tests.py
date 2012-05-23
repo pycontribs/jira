@@ -160,20 +160,20 @@ class DashboardTests(unittest.TestCase):
 
     def test_dashboards(self):
         dashboards = self.jira.dashboards()
-        self.assertEqual(len(dashboards.dashboards), 3)
+        self.assertEqual(len(dashboards), 3)
 
     def test_dashboards_filter(self):
         dashboards = self.jira.dashboards(filter='my')
-        self.assertEqual(len(dashboards.dashboards), 1)
-        self.assertEqual(dashboards.dashboards[0].id, '10031')
+        self.assertEqual(len(dashboards), 1)
+        self.assertEqual(dashboards[0].id, '10031')
 
     def test_dashboards_startAt(self):
         dashboards = self.jira.dashboards(startAt=2, maxResults=2)
-        self.assertEqual(len(dashboards.dashboards), 1)
+        self.assertEqual(len(dashboards), 1)
 
     def test_dashboards_maxResults(self):
         dashboards = self.jira.dashboards(maxResults=1)
-        self.assertEqual(len(dashboards.dashboards), 1)
+        self.assertEqual(len(dashboards), 1)
 
     def test_dashboard(self):
         dashboard = self.jira.dashboard('10031')
@@ -333,17 +333,22 @@ class IssueTests(unittest.TestCase):
         xss_proj = find_by_key(meta['projects'], 'XSS')
         self.assertEqual(len(xss_proj['issuetypes']), 12)
 
-    def test_createmeta_filter_by_name(self):
+    def test_createmeta_filter_by_projectkey_and_name(self):
+        meta = self.jira.createmeta(projectKeys='BULK', issuetypeNames='Bug')
+        self.assertEqual(len(meta['projects']), 1)
+        self.assertEqual(len(meta['projects'][0]['issuetypes']), 1)
+
+    def test_createmeta_filter_by_projectkeys_and_name(self):
         meta = self.jira.createmeta(projectKeys=('BULK', 'XSS'), issuetypeNames='Improvement')
         self.assertEqual(len(meta['projects']), 2)
         for project in meta['projects']:
-            self.assertTrue(len(project['issuetypes']), 1)
+            self.assertEqual(len(project['issuetypes']), 1)
 
     def test_createmeta_filter_by_id(self):
         meta = self.jira.createmeta(projectIds=('10001', '10040'), issuetypeIds=('3', '4', '5'))
         self.assertEqual(len(meta['projects']), 2)
         for project in meta['projects']:
-            self.assertTrue(len(project['issuetypes']), 3)
+            self.assertEqual(len(project['issuetypes']), 3)
 
     def test_createmeta_expando(self):
         # limit to SCR project so the call returns promptly

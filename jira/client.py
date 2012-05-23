@@ -7,7 +7,7 @@ will construct a JIRA object as described below.
 import requests
 import json
 from jira.exceptions import JIRAError
-from jira.resources import Resource, Issue, Comments, Comment, Project, Attachment, Component, Dashboards, Dashboard, Filter, Votes, Watchers, Worklog, IssueLink, IssueLinkType, IssueType, Priority, Version, Role, Resolution, SecurityLevel, Status, User, CustomFieldOption, RemoteLink
+from jira.resources import Resource, Issue, Comment, Project, Attachment, Component, Dashboard, Filter, Votes, Watchers, Worklog, IssueLink, IssueLinkType, IssueType, Priority, Version, Role, Resolution, SecurityLevel, Status, User, CustomFieldOption, RemoteLink
 
 class JIRA(object):
     """
@@ -219,7 +219,6 @@ class JIRA(object):
 
 ### Dashboards
 
-    # TODO: Should this be _get_json instead of resource?
     def dashboards(self, filter=None, startAt=0, maxResults=20):
         """
         Return a list of Dashboard resources.
@@ -228,13 +227,14 @@ class JIRA(object):
         :param startAt: index of the first dashboard to return
         :param maxResults: maximum number of dashboards to return
         """
-        dashboards = Dashboards(self._options, self._session)
         params = {}
         if filter is not None:
             params['filter'] = filter
         params['startAt'] = startAt
         params['maxResults'] = maxResults
-        dashboards.find(params=params)
+
+        r_json = self._get_json('dashboard', params=params)
+        dashboards = [Dashboard(self._options, self._session, raw_dash_json) for raw_dash_json in r_json['dashboards']]
         return dashboards
 
     def dashboard(self, id):
@@ -385,17 +385,15 @@ class JIRA(object):
         r = self._session.put(url, data=json.dumps(payload))
         self._raise_on_error(r)
 
-    # TODO: Should this be _get_json instead of resource?
     def comments(self, issue):
         """
         Get a list of comment Resources.
 
         :param issue: the issue to get comments from
         """
-        resource = Comments(self._options, self._session)
-        resource.find(issue)
+        r_json = self._get_json('issue/' + issue + '/comment')
 
-        comments = [Comment(self._options, self._session, raw_comment_json) for raw_comment_json in resource.raw['comments']]
+        comments = [Comment(self._options, self._session, raw_comment_json) for raw_comment_json in r_json['comments']]
         return comments
 
     def comment(self, issue, comment):
