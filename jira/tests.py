@@ -94,8 +94,9 @@ class AttachmentTests(unittest.TestCase):
         self.assertEqual(meta['uploadLimit'], 10485760)
 
     def test_add_attachment(self):
-        attach_count = len(self.jira.issue('BULK-3').fields.attachment)
-        attachment = self.jira.add_attachment('BULK-3', open('__init__.py'))
+        issue = self.jira.issue('BULK-3')
+        attach_count = len(issue.fields.attachment)
+        attachment = self.jira.add_attachment(issue, open('__init__.py'))
         self.assertIsNotNone(attachment)
         self.assertEqual(len(self.jira.issue('BULK-3').fields.attachment), attach_count + 1)
 
@@ -117,7 +118,8 @@ class ComponentTests(unittest.TestCase):
         self.assertEqual(component.name, 'Bacon')
 
     def test_create_component(self):
-        component = self.jira.create_component('Test Component', 'BULK', description='testing!!', leadUserName='fred',
+        bulk_proj = self.jira.project('BULK')
+        component = self.jira.create_component('Test Component', bulk_proj, description='testing!!', leadUserName='fred',
                 assigneeType='PROJECT_LEAD', isAssigneeTypeValid=False)
         self.assertEqual(component.name, 'Test Component')
         self.assertEqual(component.description, 'testing!!')
@@ -361,6 +363,13 @@ class IssueTests(unittest.TestCase):
         self.assertIsNone(self.jira.assign_issue('BULK-1', 'admin'))
         self.assertEqual(self.jira.issue('BULK-1').fields.assignee.name, 'admin')
 
+    def test_assign_issue_with_issue_obj(self):
+        issue = self.jira.issue('BULK-1')
+        self.assertIsNone(self.jira.assign_issue(issue, 'eviladmin'))
+        self.assertEqual(self.jira.issue('BULK-1').fields.assignee.name, 'eviladmin')
+        self.assertIsNone(self.jira.assign_issue(issue, 'admin'))
+        self.assertEqual(self.jira.issue('BULK-1').fields.assignee.name, 'admin')
+
     def test_assign_to_bad_issue_raises(self):
         self.assertRaises(JIRAError, self.jira.assign_issue, 'NOPE-1', 'notauser')
 
@@ -370,13 +379,32 @@ class IssueTests(unittest.TestCase):
         comments = self.jira.comments('BULK-2')
         self.assertEqual(len(comments), 4)
 
+    def test_comments_with_issue_obj(self):
+        issue = self.jira.issue('BULK-1')
+        self.assertEqual(len(self.jira.comments(issue)), 29)
+        issue = self.jira.issue('BULK-2')
+        self.assertEqual(len(self.jira.comments(issue)), 4)
+
     def test_comment(self):
         comment = self.jira.comment('BULK-1', '10072')
+        self.assertTrue(comment.body.startswith('Mr. Bennet was so odd a mixture of quick parts'))
+
+    def test_comment_with_issue_obj(self):
+        issue = self.jira.issue('BULK-1')
+        comment = self.jira.comment(issue, '10072')
         self.assertTrue(comment.body.startswith('Mr. Bennet was so odd a mixture of quick parts'))
 
     def test_add_comment(self):
         comment = self.jira.add_comment('BULK-3', 'a test comment!',
                 visibility={'type': 'role', 'value': 'Administrators'})
+        self.assertEqual(comment.body, 'a test comment!')
+        self.assertEqual(comment.visibility.type, 'role')
+        self.assertEqual(comment.visibility.value, 'Administrators')
+
+    def test_add_comment_with_issue_obj(self):
+        issue = self.jira.issue('BULK-3')
+        comment = self.jira.add_comment(issue, 'a test comment!',
+            visibility={'type': 'role', 'value': 'Administrators'})
         self.assertEqual(comment.body, 'a test comment!')
         self.assertEqual(comment.visibility.type, 'role')
         self.assertEqual(comment.visibility.value, 'Administrators')
@@ -400,14 +428,36 @@ class IssueTests(unittest.TestCase):
         self.assertTrue('customfield_10642' in meta['fields'])
         self.assertTrue('customfield_10240' in meta['fields'])
 
+    def test_editmeta_with_issue_obj(self):
+        issue = self.jira.issue('BULK-1')
+        meta = self.jira.editmeta(issue)
+        self.assertEqual(len(meta['fields']), 38)
+        self.assertTrue('customfield_10642' in meta['fields'])
+        self.assertTrue('customfield_10240' in meta['fields'])
+
     def test_remote_links(self):
         links = self.jira.remote_links('QA-44')
         self.assertEqual(len(links), 1)
         links = self.jira.remote_links('BULK-1')
         self.assertEqual(len(links), 0)
 
+    def test_remote_links_with_issue_obj(self):
+        issue = self.jira.issue('QA-44')
+        links = self.jira.remote_links(issue)
+        self.assertEqual(len(links), 1)
+        issue = self.jira.issue('BULK-1')
+        links = self.jira.remote_links(issue)
+        self.assertEqual(len(links), 0)
+
     def test_remote_link(self):
         link = self.jira.remote_link('QA-44', '10000')
+        self.assertEqual(link.id, 10000)
+        self.assertTrue(hasattr(link, 'globalId'))
+        self.assertTrue(hasattr(link, 'relationship'))
+
+    def test_remote_link_with_issue_obj(self):
+        issue = self.jira.issue('QA-44')
+        link = self.jira.remote_link(issue, '10000')
         self.assertEqual(link.id, 10000)
         self.assertTrue(hasattr(link, 'globalId'))
         self.assertTrue(hasattr(link, 'relationship'))
@@ -418,6 +468,20 @@ class IssueTests(unittest.TestCase):
                 application={'name': 'far too silly', 'type': 'sketch'}, relationship='mousebending')
         # creation response doesn't include full remote link info, so we fetch it again using the new internal ID
         link = self.jira.remote_link('BULK-3', link.id)
+        self.assertEqual(link.application.name, 'far too silly')
+        self.assertEqual(link.application.type, 'sketch')
+        self.assertEqual(link.object.url, 'http://google.com')
+        self.assertEqual(link.object.title, 'googlicious!')
+        self.assertEqual(link.relationship, 'mousebending')
+        self.assertEqual(link.globalId, 'python-test:story.of.horse.riding')
+
+    def test_add_remote_link_with_issue_obj(self):
+        issue = self.jira.issue('BULK-3')
+        link = self.jira.add_remote_link(issue, globalId='python-test:story.of.horse.riding',
+            object={'url': 'http://google.com', 'title': 'googlicious!'},
+            application={'name': 'far too silly', 'type': 'sketch'}, relationship='mousebending')
+        # creation response doesn't include full remote link info, so we fetch it again using the new internal ID
+        link = self.jira.remote_link(issue, link.id)
         self.assertEqual(link.application.name, 'far too silly')
         self.assertEqual(link.application.type, 'sketch')
         self.assertEqual(link.object.url, 'http://google.com')
@@ -450,6 +514,11 @@ class IssueTests(unittest.TestCase):
         transitions = self.jira.transitions('BULK-2')
         self.assertEqual(len(transitions), 2)
 
+    def test_transitions_with_issue_obj(self):
+        issue = self.jira.issue('BULK-2')
+        transitions = self.jira.transitions(issue)
+        self.assertEqual(len(transitions), 2)
+
     def test_transition(self):
         transition = self.jira.transitions('BULK-2', '701')
         self.assertEqual(transition[0]['name'], 'Close Issue')
@@ -462,6 +531,14 @@ class IssueTests(unittest.TestCase):
         issue = self.jira.create_issue(project={'key': 'BULK'}, summary='Test issue for transition created',
             description='blahery', issuetype={'name': 'Bug'}, customfield_10540={'key': 'XSS'})
         self.jira.transition_issue(issue.key, '2', assignee={'name': 'fred'})
+        issue = self.jira.issue(issue.key)
+        self.assertEqual(issue.fields.assignee.name, 'fred')
+        self.assertEqual(issue.fields.status.id, '6')    # issue now 'Closed'
+
+    def test_transition_issue_obj_with_fieldargs(self):
+        issue = self.jira.create_issue(project={'key': 'BULK'}, summary='Test issue for transition created',
+            description='blahery', issuetype={'name': 'Bug'}, customfield_10540={'key': 'XSS'})
+        self.jira.transition_issue(issue, '2', assignee={'name': 'fred'})
         issue = self.jira.issue(issue.key)
         self.assertEqual(issue.fields.assignee.name, 'fred')
         self.assertEqual(issue.fields.status.id, '6')    # issue now 'Closed'
@@ -485,11 +562,26 @@ class IssueTests(unittest.TestCase):
         self.assertEqual(votes.votes, 5)
 
     @unittest.skip('test data doesn\'t support voting')
+    def test_votes_with_issue_obj(self):
+        issue = self.jira.issue('BULK-1')
+        votes = self.jira.votes(issue)
+        self.assertEqual(votes.votes, 5)
+
+    @unittest.skip('test data doesn\'t support voting')
     def test_add_vote(self):
         votes = self.jira.votes('QA-44')
         self.assertEqual(votes.votes, 0)
         self.jira.add_vote('QA-44')
         votes = self.jira.votes('QA-44')
+        self.assertEqual(votes.votes, 1)
+
+    @unittest.skip('test data doesn\'t support voting')
+    def test_add_vote_with_issue_obj(self):
+        issue = self.jira.issue('QA-44')
+        votes = self.jira.votes(issue)
+        self.assertEqual(votes.votes, 0)
+        self.jira.add_vote(issue)
+        votes = self.jira.votes(issue)
         self.assertEqual(votes.votes, 1)
 
     @unittest.skip('test data doesn\'t support voting')
@@ -500,9 +592,24 @@ class IssueTests(unittest.TestCase):
         votes = self.jira.votes('QA-44')
         self.assertEqual(votes.votes, 0)
 
+    @unittest.skip('test data doesn\'t support voting')
+    def test_remove_vote(self):
+        issue = self.jira.issue('QA-44')
+        votes = self.jira.votes(issue)
+        self.assertEqual(votes.votes, 1)
+        self.jira.remove_vote(issue)
+        votes = self.jira.votes(issue)
+        self.assertEqual(votes.votes, 0)
+
     @unittest.skip('test data doesn\'t support watching')
     def test_watchers(self):
         watchers = self.jira.watchers('BULK-1')
+        self.assertEqual(watchers.watchCount, 18)
+
+    @unittest.skip('test data doesn\'t support watching')
+    def test_watchers_with_issue_obj(self):
+        issue = self.jira.issue('BULK-1')
+        watchers = self.jira.watchers(issue)
         self.assertEqual(watchers.watchCount, 18)
 
     @unittest.skip('test data doesn\'t support watching')
@@ -517,12 +624,37 @@ class IssueTests(unittest.TestCase):
         self.jira.remove_watcher('QA-44', 'fred')
         self.assertEqual(self.jira.watchers('QA-44').watchCount, 0)
 
+    @unittest.skip('test data doesn\'t support watching')
+    def test_add_watcher_with_issue_obj(self):
+        issue = self.jira.issue('QA-44')
+        self.assertEqual(self.jira.watchers(issue).watchCount, 0)
+        self.jira.add_watcher(issue, 'fred')
+        self.assertEqual(self.jira.watchers(issue).watchCount, 1)
+
+    @unittest.skip('test data doesn\'t support watching')
+    def test_remove_watcher_with_issue_obj(self):
+        issue = self.jira.issue('QA-44')
+        self.assertEqual(self.jira.watchers(issue).watchCount, 1)
+        self.jira.remove_watcher(issue, 'fred')
+        self.assertEqual(self.jira.watchers(issue).watchCount, 0)
+
     def test_worklogs(self):
         worklogs = self.jira.worklogs('BULK-1')
         self.assertEqual(len(worklogs), 6)
 
+    def test_worklogs_with_issue_obj(self):
+        issue = self.jira.issue('BULK-1')
+        worklogs = self.jira.worklogs(issue)
+        self.assertEqual(len(worklogs), 6)
+
     def test_worklog(self):
         worklog = self.jira.worklog('BULK-1', '10045')
+        self.assertEqual(worklog.author.name, 'admin')
+        self.assertEqual(worklog.timeSpent, '4d')
+
+    def test_worklog_with_issue_obj(self):
+        issue = self.jira.issue('BULK-1')
+        worklog = self.jira.worklog(issue, '10045')
         self.assertEqual(worklog.author.name, 'admin')
         self.assertEqual(worklog.timeSpent, '4d')
 
@@ -531,6 +663,13 @@ class IssueTests(unittest.TestCase):
         worklog = self.jira.add_worklog('BULK-2', '2h')
         self.assertIsNotNone(worklog)
         self.assertEqual(len(self.jira.worklogs('BULK-2')), worklog_count + 1)
+
+    def test_add_worklog_with_issue_obj(self):
+        issue = self.jira.issue('BULK-2')
+        worklog_count = len(self.jira.worklogs(issue))
+        worklog = self.jira.add_worklog(issue, '2h')
+        self.assertIsNotNone(worklog)
+        self.assertEqual(len(self.jira.worklogs(issue)), worklog_count + 1)
 
     def test_update_worklog(self):
         worklog = self.jira.add_worklog('BULK-2', '3h')
@@ -560,6 +699,12 @@ class IssueLinkTests(unittest.TestCase):
     def test_create_issue_link(self):
         self.jira.create_issue_link('Duplicate', 'BULK-1', 'BULK-2',
                 comment={'body': 'Link comment!', 'visibility': {'type': 'role', 'value': 'Administrators'}})
+
+    def test_create_issue_link_with_issue_objs(self):
+        inwardIssue = self.jira.issue('BULK-1')
+        outwardIssue = self.jira.issue('BULK-2')
+        self.jira.create_issue_link('Duplicate', inwardIssue, outwardIssue,
+            comment={'body': 'Link comment!', 'visibility': {'type': 'role', 'value': 'Administrators'}})
 
     @unittest.skip("Creating an issue link doesn't return its ID, so can't easily test delete")
     def test_delete_issue_link(self):
@@ -656,20 +801,27 @@ class ProjectTests(unittest.TestCase):
         self.assertEqual(len(avatars['custom']), 1)
         self.assertEqual(len(avatars['system']), 12)
 
+    def test_project_avatars_with_project_obj(self):
+        project = self.jira.project('BULK')
+        avatars = self.jira.project_avatars(project)
+        self.assertEqual(len(avatars['custom']), 1)
+        self.assertEqual(len(avatars['system']), 12)
+
     def test_create_project_avatar(self):
         # Tests the end-to-end project avatar creation process: upload as temporary, confirm after cropping,
         # and selection.
+        project = self.jira.project('XSS')
         size = os.path.getsize(TEST_ICON_PATH)
         filename = os.path.basename(TEST_ICON_PATH)
         with open(TEST_ICON_PATH, "rb") as icon:
-            props = self.jira.create_temp_project_avatar('XSS', filename, size, icon.read())
+            props = self.jira.create_temp_project_avatar(project, filename, size, icon.read())
         self.assertIn('cropperOffsetX', props)
         self.assertIn('cropperOffsetY', props)
         self.assertIn('cropperWidth', props)
         self.assertTrue(props['needsCropping'])
 
         props['needsCropping'] = False
-        avatar_props = self.jira.confirm_project_avatar('XSS', props)
+        avatar_props = self.jira.confirm_project_avatar(project, props)
         self.assertIn('id', avatar_props)
 
         self.jira.set_project_avatar('XSS', avatar_props['id'])
@@ -680,6 +832,14 @@ class ProjectTests(unittest.TestCase):
         with open(TEST_ICON_PATH, "rb") as icon:
             props = self.jira.create_temp_project_avatar('XSS', filename, size, icon.read(), auto_confirm=True)
         self.jira.delete_project_avatar('XSS', props['id'])
+
+    def test_delete_project_avatar_with_project_obj(self):
+        project = self.jira.project('XSS')
+        size = os.path.getsize(TEST_ICON_PATH)
+        filename = os.path.basename(TEST_ICON_PATH)
+        with open(TEST_ICON_PATH, "rb") as icon:
+            props = self.jira.create_temp_project_avatar(project, filename, size, icon.read(), auto_confirm=True)
+        self.jira.delete_project_avatar(project, props['id'])
 
     def test_set_project_avatar(self):
         def find_selected_avatar(avatars):
@@ -693,12 +853,21 @@ class ProjectTests(unittest.TestCase):
         avatars = self.jira.project_avatars('XSS')
         self.assertEqual(find_selected_avatar(avatars)['id'], '10000')
 
-        self.jira.set_project_avatar('XSS', '10001')
-        avatars = self.jira.project_avatars('XSS')
+        project = self.jira.project('XSS')
+        self.jira.set_project_avatar(project, '10001')
+        avatars = self.jira.project_avatars(project)
         self.assertEqual(find_selected_avatar(avatars)['id'], '10001')
 
     def test_project_components(self):
         components = self.jira.project_components('BULK')
+        self.assertEqual(len(components), 2)
+        bacon = find_by_id(components, '10003')
+        self.assertEqual(bacon.id, '10003')
+        self.assertEqual(bacon.name, 'Bacon')
+
+    def test_project_components_with_project_obj(self):
+        project = self.jira.project('BULK')
+        components = self.jira.project_components(project)
         self.assertEqual(len(components), 2)
         bacon = find_by_id(components, '10003')
         self.assertEqual(bacon.id, '10003')
@@ -711,13 +880,33 @@ class ProjectTests(unittest.TestCase):
         self.assertEqual(love.id, '10012')
         self.assertEqual(love.name, 'I love versions')
 
+    def test_project_versions_with_project_obj(self):
+        project = self.jira.project('BULK')
+        versions = self.jira.project_versions(project)
+        self.assertEqual(len(versions), 6)
+        love = find_by_id(versions, '10012')
+        self.assertEqual(love.id, '10012')
+        self.assertEqual(love.name, 'I love versions')
+
     def test_project_roles(self):
         roles = self.jira.project_roles('XSS')
         self.assertEqual(len(roles), 4)
         self.assertIn('Users', roles)
 
+    def test_project_roles_with_project_obj(self):
+        project = self.jira.project('XSS')
+        roles = self.jira.project_roles(project)
+        self.assertEqual(len(roles), 4)
+        self.assertIn('Users', roles)
+
     def test_project_role(self):
         role = self.jira.project_role('XSS', '10010')
+        self.assertEqual(role.id, 10010)
+        self.assertEqual(role.name, 'Doco Team')
+
+    def test_project_role_with_project_obj(self):
+        project = self.jira.project('XSS')
+        role = self.jira.project_role(project, '10010')
         self.assertEqual(role.id, 10010)
         self.assertEqual(role.name, 'Doco Team')
 
@@ -958,6 +1147,14 @@ class VersionTests(unittest.TestCase):
     def test_create_version(self):
         version = self.jira.create_version('new version 1', 'BULK', releaseDate='2013-03-11',
                 description='test version!')
+        self.assertEqual(version.name, 'new version 1')
+        self.assertEqual(version.description, 'test version!')
+        self.assertEqual(version.releaseDate, '2013-03-11')
+
+    def test_create_version_with_project_obj(self):
+        project = self.jira.project('BULK')
+        version = self.jira.create_version('new version 1', project, releaseDate='2013-03-11',
+            description='test version!')
         self.assertEqual(version.name, 'new version 1')
         self.assertEqual(version.description, 'test version!')
         self.assertEqual(version.releaseDate, '2013-03-11')

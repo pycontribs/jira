@@ -33,6 +33,10 @@ which pip can also set up for you::
 Doing this creates a private Python "installation" that you can freely upgrade, degrade or break without putting
 the critical components of your system at risk.
 
+Source packages are also available at PyPI:
+
+    http://pypi.python.org/pypi/jira-python/
+
 Dependencies
 ------------
 

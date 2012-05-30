@@ -3,11 +3,28 @@ This module implements a friendly (well, friendlier) interface between the raw J
 responses from JIRA and the Resource/dict abstractions provided by this library. Users
 will construct a JIRA object as described below.
 """
+from functools import wraps
 
 import requests
 import json
 from jira.exceptions import JIRAError
 from jira.resources import Resource, Issue, Comment, Project, Attachment, Component, Dashboard, Filter, Votes, Watchers, Worklog, IssueLink, IssueLinkType, IssueType, Priority, Version, Role, Resolution, SecurityLevel, Status, User, CustomFieldOption, RemoteLink
+
+def translate_resource_args(func):
+    """
+    Decorator that converts Issue and Project resources to their keys when used as arguments.
+    """
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        arg_list = []
+        for arg in args:
+            if isinstance(arg, (Issue, Project)):
+                arg_list.append(arg.key)
+            else:
+                arg_list.append(arg)
+        result = func(*arg_list, **kwargs)
+        return result
+    return wrapper
 
 class JIRA(object):
     """
@@ -136,6 +153,7 @@ class JIRA(object):
         """Get the attachment metadata."""
         return self._get_json('attachment/meta')
 
+    @translate_resource_args
     def add_attachment(self, issue, attachment):
         """
         Attach an attachment to an issue and returns a Resource for it.
@@ -168,6 +186,7 @@ class JIRA(object):
         """
         return self._find_for_resource(Component, id)
 
+    @translate_resource_args
     def create_component(self, name, project, description=None, leadUserName=None, assigneeType=None,
                          isAssigneeTypeValid=False):
         """
@@ -373,6 +392,7 @@ class JIRA(object):
         return self._get_json('issue/createmeta', params)
 
     # non-resource
+    @translate_resource_args
     def assign_issue(self, issue, assignee):
         """
         Assign an issue to a user.
@@ -385,6 +405,7 @@ class JIRA(object):
         r = self._session.put(url, data=json.dumps(payload))
         self._raise_on_error(r)
 
+    @translate_resource_args
     def comments(self, issue):
         """
         Get a list of comment Resources.
@@ -396,6 +417,7 @@ class JIRA(object):
         comments = [Comment(self._options, self._session, raw_comment_json) for raw_comment_json in r_json['comments']]
         return comments
 
+    @translate_resource_args
     def comment(self, issue, comment):
         """
         Get a comment Resource from the server for the specified ID.
@@ -405,6 +427,7 @@ class JIRA(object):
         """
         return self._find_for_resource(Comment, (issue, comment))
 
+    @translate_resource_args
     def add_comment(self, issue, body, visibility=None):
         """
         Add a comment from the current authenticated user on the specified issue and return a Resource for it.
@@ -430,6 +453,7 @@ class JIRA(object):
         return comment
 
     # non-resource
+    @translate_resource_args
     def editmeta(self, issue):
         """
         Get the edit metadata for an issue.
@@ -438,6 +462,7 @@ class JIRA(object):
         """
         return self._get_json('issue/' + issue + '/editmeta')
 
+    @translate_resource_args
     def remote_links(self, issue):
         """
         Get a list of remote link Resources from an issue.
@@ -448,6 +473,7 @@ class JIRA(object):
         remote_links = [RemoteLink(self._options, self._session, raw_remotelink_json) for raw_remotelink_json in r_json]
         return remote_links
 
+    @translate_resource_args
     def remote_link(self, issue, id):
         """
         Get a remote link Resource from the server.
@@ -457,6 +483,7 @@ class JIRA(object):
         """
         return self._find_for_resource(RemoteLink, (issue, id))
 
+    @translate_resource_args
     def add_remote_link(self, issue, object, globalId=None, application=None, relationship=None):
         """
         Create a remote link from an issue to an external application and returns a remote link Resource
@@ -490,6 +517,7 @@ class JIRA(object):
         return remote_link
 
     # non-resource
+    @translate_resource_args
     def transitions(self, issue, id=None, expand=None):
         """
         Get a list of the transitions available on the specified issue to the current user.
@@ -505,6 +533,7 @@ class JIRA(object):
             params['expand'] = expand
         return self._get_json('issue/' + issue + '/transitions', params)['transitions']
 
+    @translate_resource_args
     def transition_issue(self, issue, transitionId, fields=None, **fieldargs):
         # TODO: Support update verbs (same as issue.update())
         """
@@ -536,6 +565,7 @@ class JIRA(object):
         r = self._session.post(url, data=json.dumps(data))
         self._raise_on_error(r)
 
+    @translate_resource_args
     def votes(self, issue):
         """
         Get a votes Resource from the server.
@@ -544,6 +574,7 @@ class JIRA(object):
         """
         return self._find_for_resource(Votes, issue)
 
+    @translate_resource_args
     def add_vote(self, issue):
         """
         Register a vote for the current authenticated user on an issue.
@@ -553,6 +584,7 @@ class JIRA(object):
         url = self._get_url('issue/' + issue + '/votes')
         self._session.post(url)
 
+    @translate_resource_args
     def remove_vote(self, issue):
         """
         Remove the current authenticated user's vote from an issue.
@@ -562,6 +594,7 @@ class JIRA(object):
         url = self._get_url('issue/' + issue + '/votes')
         self._session.delete(url)
 
+    @translate_resource_args
     def watchers(self, issue):
         """
         Get a watchers Resource from the server for an issue.
@@ -570,6 +603,7 @@ class JIRA(object):
         """
         return self._find_for_resource(Watchers, issue)
 
+    @translate_resource_args
     def add_watcher(self, issue, watcher):
         """
         Add a user to an issue's watchers list.
@@ -580,6 +614,7 @@ class JIRA(object):
         url = self._get_url('issue/' + issue + '/watchers')
         r = self._session.post(url, data=json.dumps(watcher))
 
+    @translate_resource_args
     def remove_watcher(self, issue, watcher):
         """
         Remove a user from an issue's watch list.
@@ -591,6 +626,7 @@ class JIRA(object):
         params = {'username': watcher}
         self._session.delete(url, params=params)
 
+    @translate_resource_args
     def worklogs(self, issue):
         """
         Get a list of worklog Resources from the server for an issue.
@@ -601,6 +637,7 @@ class JIRA(object):
         worklogs = [Worklog(self._options, self._session, raw_worklog_json) for raw_worklog_json in r_json['worklogs']]
         return worklogs
 
+    @translate_resource_args
     def worklog(self, issue, id):
         """
         Get a specific worklog Resource from the server.
@@ -610,6 +647,7 @@ class JIRA(object):
         """
         return self._find_for_resource(Worklog, (issue, id))
 
+    @translate_resource_args
     def add_worklog(self, issue, timeSpent=None, adjustEstimate=None,
                     newEstimate=None, reduceBy=None):
         """
@@ -643,6 +681,7 @@ class JIRA(object):
 
 ### Issue links
 
+    @translate_resource_args
     def create_issue_link(self, type, inwardIssue, outwardIssue, comment=None):
         """
         Create a link between two issues.
@@ -768,6 +807,7 @@ class JIRA(object):
         return self._find_for_resource(Project, id)
 
     # non-resource
+    @translate_resource_args
     def project_avatars(self, project):
         """
         Get a dict of all avatars for a project visible to the current authenticated user.
@@ -776,6 +816,7 @@ class JIRA(object):
         """
         return self._get_json('project/' + project + '/avatars')
 
+    @translate_resource_args
     def create_temp_project_avatar(self, project, filename, size, avatar_img, contentType=None, auto_confirm=False):
         """
         Register an image file as a project avatar. The avatar created is temporary and must be confirmed before it can
@@ -819,6 +860,7 @@ class JIRA(object):
         else:
             return cropping_properties
 
+    @translate_resource_args
     def confirm_project_avatar(self, project, cropping_properties):
         """
         Confirm the temporary avatar image previously uploaded with the specified cropping.
@@ -838,6 +880,7 @@ class JIRA(object):
 
         return json.loads(r.text)
 
+    @translate_resource_args
     def set_project_avatar(self, project, avatar):
         """
         Set a project's avatar.
@@ -847,6 +890,7 @@ class JIRA(object):
         """
         self._set_avatar(None, self._get_url('project/' + project + '/avatar'), avatar)
 
+    @translate_resource_args
     def delete_project_avatar(self, project, avatar):
         """
         Delete a project's avatar.
@@ -858,6 +902,7 @@ class JIRA(object):
         r = self._session.delete(url)
         self._raise_on_error(r)
 
+    @translate_resource_args
     def project_components(self, project):
         """
         Get a list of component Resources present on a project.
@@ -868,6 +913,7 @@ class JIRA(object):
         components = [Component(self._options, self._session, raw_comp_json) for raw_comp_json in r_json]
         return components
 
+    @translate_resource_args
     def project_versions(self, project):
         """
         Get a list of version Resources present on a project.
@@ -879,6 +925,7 @@ class JIRA(object):
         return versions
 
     # non-resource
+    @translate_resource_args
     def project_roles(self, project):
         """
         Get a dict of role names to resource locations for a project.
@@ -887,6 +934,7 @@ class JIRA(object):
         """
         return self._get_json('project/' + project + '/role')
 
+    @translate_resource_args
     def project_role(self, project, id):
         """
         Get a role Resource.
@@ -1176,6 +1224,7 @@ class JIRA(object):
 
 ### Versions
 
+    @translate_resource_args
     def create_version(self, name, project, description=None, releaseDate=None):
         """
         Create a version in a project and return a Resource for it.
