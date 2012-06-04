@@ -7,7 +7,7 @@ from functools import wraps
 
 import requests
 import json
-from jira.exceptions import JIRAError
+from jira.exceptions import raise_on_error
 from jira.resources import Resource, Issue, Comment, Project, Attachment, Component, Dashboard, Filter, Votes, Watchers, Worklog, IssueLink, IssueLinkType, IssueType, Priority, Version, Role, Resolution, SecurityLevel, Status, User, CustomFieldOption, RemoteLink
 
 def translate_resource_args(func):
@@ -140,7 +140,7 @@ class JIRA(object):
             'value': value
         }
         r = self._session.put(url, headers={'content-type': 'application/json'}, data=json.dumps(payload))
-        self._raise_on_error(r)
+        raise_on_error(r)
 
 ### Attachments
 
@@ -171,7 +171,7 @@ class JIRA(object):
             'file': attachment
         }
         r = self._session.post(url, files=files, headers={'X-Atlassian-Token': 'nocheck', 'content-type': None})
-        self._raise_on_error(r)
+        raise_on_error(r)
 
         attachment = Attachment(self._options, self._session, json.loads(r.text)[0])
         return attachment
@@ -213,7 +213,7 @@ class JIRA(object):
 
         url = self._get_url('component')
         r = self._session.post(url, data=json.dumps(data))
-        self._raise_on_error(r)
+        raise_on_error(r)
 
         component = Component(self._options, self._session, raw=json.loads(r.text))
         return component
@@ -356,7 +356,7 @@ class JIRA(object):
 
         url = self._get_url('issue')
         r = self._session.post(url, data=json.dumps(data))
-        self._raise_on_error(r)
+        raise_on_error(r)
 
         raw_issue_json = json.loads(r.text)
         if prefetch:
@@ -403,7 +403,7 @@ class JIRA(object):
         url = self._options['server'] + '/rest/api/2/issue/' + issue + '/assignee'
         payload = {'name': assignee}
         r = self._session.put(url, data=json.dumps(payload))
-        self._raise_on_error(r)
+        raise_on_error(r)
 
     @translate_resource_args
     def comments(self, issue):
@@ -447,7 +447,7 @@ class JIRA(object):
 
         url = self._get_url('issue/' + issue + '/comment')
         r = self._session.post(url, data=json.dumps(data))
-        self._raise_on_error(r)
+        raise_on_error(r)
 
         comment = Comment(self._options, self._session, raw=json.loads(r.text))
         return comment
@@ -511,7 +511,7 @@ class JIRA(object):
 
         url = self._get_url('issue/' + issue + '/remotelink')
         r = self._session.post(url, data=json.dumps(data))
-        self._raise_on_error(r)
+        raise_on_error(r)
 
         remote_link = RemoteLink(self._options, self._session, raw=json.loads(r.text))
         return remote_link
@@ -563,7 +563,7 @@ class JIRA(object):
 
         url = self._get_url('issue/' + issue + '/transitions')
         r = self._session.post(url, data=json.dumps(data))
-        self._raise_on_error(r)
+        raise_on_error(r)
 
     @translate_resource_args
     def votes(self, issue):
@@ -674,7 +674,7 @@ class JIRA(object):
 
         url = self._get_url('issue/{}/worklog'.format(issue))
         r = self._session.post(url, params=params, data=json.dumps(data))
-        self._raise_on_error(r)
+        raise_on_error(r)
 
         return Worklog(self._options, self._session, json.loads(r.text))
 
@@ -709,7 +709,7 @@ class JIRA(object):
         }
         url = self._get_url('issueLink')
         r = self._session.post(url, data=json.dumps(data))
-        self._raise_on_error(r)
+        raise_on_error(r)
 
     def issue_link(self, id):
         """
@@ -852,7 +852,7 @@ class JIRA(object):
         url = self._get_url('project/' + project + '/avatar/temporary')
         r = self._session.post(url, params=params,
             headers={'content-type': contentType, 'X-Atlassian-Token': 'no-check'}, data=avatar_img)
-        self._raise_on_error(r)
+        raise_on_error(r)
 
         cropping_properties = json.loads(r.text)
         if auto_confirm:
@@ -876,7 +876,7 @@ class JIRA(object):
         data = cropping_properties
         url = self._get_url('project/' + project + '/avatar')
         r = self._session.post(url, data=json.dumps(data))
-        self._raise_on_error(r)
+        raise_on_error(r)
 
         return json.loads(r.text)
 
@@ -900,7 +900,7 @@ class JIRA(object):
         """
         url = self._get_url('project/' + project + '/avatar/' + avatar)
         r = self._session.delete(url)
-        self._raise_on_error(r)
+        raise_on_error(r)
 
     @translate_resource_args
     def project_components(self, project):
@@ -1133,7 +1133,7 @@ class JIRA(object):
         url = self._get_url('user/avatar/temporary')
         r = self._session.post(url, params=params,
                 headers={'content-type': contentType, 'X-Atlassian-Token': 'no-check'}, data=avatar_img)
-        self._raise_on_error(r)
+        raise_on_error(r)
 
         cropping_properties = json.loads(r.text)
         if auto_confirm:
@@ -1156,7 +1156,7 @@ class JIRA(object):
         data = cropping_properties
         url = self._get_url('user/avatar')
         r = self._session.post(url, params={'username': user}, data=json.dumps(data))
-        self._raise_on_error(r)
+        raise_on_error(r)
 
         return json.loads(r.text)
 
@@ -1179,7 +1179,7 @@ class JIRA(object):
         params = {'username': username}
         url = self._get_url('user/avatar/' + avatar)
         r = self._session.delete(url, params=params)
-        self._raise_on_error(r)
+        raise_on_error(r)
 
     def search_users(self, user, startAt=0, maxResults=50):
         """
@@ -1245,7 +1245,7 @@ class JIRA(object):
 
         url = self._get_url('version')
         r = self._session.post(url, data=json.dumps(data))
-        self._raise_on_error(r)
+        raise_on_error(r)
 
         version = Version(self._options, self._session, raw=json.loads(r.text))
         return version
@@ -1268,7 +1268,7 @@ class JIRA(object):
 
         url = self._get_url('version/' + id + '/move')
         r = self._session.post(url, data=json.dumps(data))
-        self._raise_on_error(r)
+        raise_on_error(r)
 
         version = Version(self._options, self._session, raw=json.loads(r.text))
         return version
@@ -1311,7 +1311,7 @@ class JIRA(object):
         """Get a dict of the current authenticated user's session information."""
         url = '{server}/rest/auth/1/session'.format(**self._options)
         r = self._session.get(url)
-        self._raise_on_error(r)
+        raise_on_error(r)
 
         user = User(self._options, self._session, json.loads(r.text))
         return user
@@ -1320,7 +1320,7 @@ class JIRA(object):
         """Destroy the session of the current authenticated user."""
         url = self._options['server'] + '/rest/auth/1/session'
         r = self._session.delete(url)
-        self._raise_on_error(r)
+        raise_on_error(r)
 
 ### Websudo
 
@@ -1328,7 +1328,7 @@ class JIRA(object):
         """Destroy the user's current WebSudo session."""
         url = self._options['server'] + '/rest/auth/1/websudo'
         r = self._session.delete(url)
-        self._raise_on_error(r)
+        raise_on_error(r)
 
 ### Utilities
 
@@ -1342,7 +1342,7 @@ class JIRA(object):
         verify = self._options['server'].startswith('https')
         self._session = requests.session(headers={'content-type': 'application/json'}, verify=verify)
         r = self._session.post(url, data=json.dumps(payload))
-        self._raise_on_error(r)
+        raise_on_error(r)
 
     def _create_oauth_session(self, oauth):
         raise NotImplementedError("oauth support isn't implemented yet")
@@ -1352,7 +1352,7 @@ class JIRA(object):
             'id': avatar
         }
         r = self._session.put(url, params=params, data=json.dumps(data))
-        self._raise_on_error(r)
+        raise_on_error(r)
 
     def _get_url(self, path):
         options = self._options
@@ -1362,7 +1362,7 @@ class JIRA(object):
     def _get_json(self, path, params=None):
         url = self._get_url(path)
         r = self._session.get(url, params=params)
-        self._raise_on_error(r)
+        raise_on_error(r)
 
         r_json = json.loads(r.text)
         return r_json
@@ -1374,10 +1374,6 @@ class JIRA(object):
             params['expand'] = expand
         resource.find(ids, params)
         return resource
-
-    def _raise_on_error(self, r):
-        if r.status_code >= 400:
-            raise JIRAError("Couldn't complete server call", r.status_code, r.url)
 
     def _ensure_magic(self):
         try:

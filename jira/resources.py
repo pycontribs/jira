@@ -4,7 +4,7 @@ into usable objects.
 """
 
 import re
-from jira.exceptions import JIRAError
+from jira.exceptions import raise_on_error
 import json
 
 class Resource(object):
@@ -69,7 +69,7 @@ class Resource(object):
             data[arg] = kwargs[arg]
 
         r = self._session.put(self.self, data=json.dumps(data))
-        self._raise_on_error(r)
+        raise_on_error(r)
 
         self._load(self.self)
 
@@ -80,11 +80,11 @@ class Resource(object):
         in case of user error.
         """
         r = self._session.delete(self.self, params=params)
-        self._raise_on_error(r)
+        raise_on_error(r)
 
     def _load(self, url, headers=None, params=None):
         r = self._session.get(url, headers=headers, params=params)
-        self._raise_on_error(r)
+        raise_on_error(r)
 
         self._parse_raw(json.loads(r.text))
 
@@ -96,10 +96,6 @@ class Resource(object):
         url = '{server}/rest/{rest_path}/{rest_api_version}/'.format(**self._options)
         url += self._resource.format(*ids)
         return url
-
-    def _raise_on_error(self, r):
-        if r.status_code >= 400:
-            raise JIRAError("Couldn't complete server call", r.status_code, r.url)
 
     def _default_headers(self, user_headers):
         return dict(user_headers.items() + {'accept': 'application/json'}.items())
