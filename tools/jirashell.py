@@ -6,6 +6,7 @@ support changing the server and a persistent authentication over HTTP BASIC.
 """
 
 import argparse
+from getpass import getpass
 from sys import exit
 from jira.client import JIRA
 from jira import __version__
@@ -26,6 +27,8 @@ def process_command_line():
                                   help='The username to connect to this JIRA instance with.')
     basic_auth_group.add_argument('-p', '--password',
                                   help='The password associated with this user.')
+    basic_auth_group.add_argument('-P', '--prompt-for-password', action='store_true',
+                                  help='Prompt for the password at the command line.')
 
     try:
         get_ipython
@@ -43,6 +46,9 @@ def process_command_line():
         options['rest_path'] = args.rest_path
     if args.rest_api_version:
         options['rest_api_version'] = args.rest_api_version
+
+    if args.prompt_for_password:
+        args.password = getpass()
 
     basic_auth = (args.username, args.password) if args.username and args.password else ()
 
