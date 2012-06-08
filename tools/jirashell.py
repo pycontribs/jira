@@ -30,6 +30,17 @@ def process_command_line():
     basic_auth_group.add_argument('-P', '--prompt-for-password', action='store_true',
                                   help='Prompt for the password at the command line.')
 
+    oauth_group = parser.add_argument_group('OAuth options (for already-authenticated tokens)')
+    oauth_group.add_argument('-at', '--access-token',
+                             help='OAuth access token for the user.')
+    oauth_group.add_argument('-ats', '--access-token-secret',
+                             help='Secret for the OAuth access token')
+    oauth_group.add_argument('-ck', '--consumer-key',
+                             help='OAuth consumer key.')
+    oauth_group.add_argument('-k', '--key-cert',
+                             help='Private key to sign OAuth requests with (should be the pair of the public key\
+                                   configured in the JIRA application link)')
+
     try:
         get_ipython
     except NameError:
@@ -52,12 +63,23 @@ def process_command_line():
 
     basic_auth = (args.username, args.password) if args.username and args.password else ()
 
-    return options, basic_auth
+    oauth = {}
+    if args.access_token:
+        with open(args.key_cert, 'r') as key_cert_file:
+            key_cert_data = key_cert_file.read()
+        oauth = {
+            'access_token': args.access_token,
+            'access_token_secret': args.access_token_secret,
+            'consumer_key': args.consumer_key,
+            'key_cert': key_cert_data,
+        }
+
+    return options, basic_auth, oauth
 
 def main():
-    options, basic_auth = process_command_line()
+    options, basic_auth, oauth = process_command_line()
 
-    jira = JIRA(options=options, basic_auth=basic_auth)
+    jira = JIRA(options=options, basic_auth=basic_auth, oauth=oauth)
 
     from IPython.frontend.terminal.embed import InteractiveShellEmbed
 

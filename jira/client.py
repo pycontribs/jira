@@ -6,6 +6,7 @@ will construct a JIRA object as described below.
 from functools import wraps
 
 import requests
+from .packages.requests_oauth.hook import OAuthHook
 import json
 from jira.exceptions import raise_on_error
 from jira.resources import Resource, Issue, Comment, Project, Attachment, Component, Dashboard, Filter, Votes, Watchers, Worklog, IssueLink, IssueLinkType, IssueType, Priority, Version, Role, Resolution, SecurityLevel, Status, User, CustomFieldOption, RemoteLink
@@ -65,6 +66,12 @@ class JIRA(object):
             * rest_api_version -- the version of the REST resources under rest_path to use. Defaults to ``2``.
         :param basic_auth: A tuple of username and password to use when establishing a session via HTTP BASIC
         authentication.
+        :param oauth: A dict of properties for OAuth authentication. The following properties are required:
+            * access_token -- OAuth access token for the user
+            * access_token_secret -- OAuth access token secret to sign with the key
+            * consumer_key -- key of the OAuth application link defined in JIRA
+            * key_cert -- private key file to sign requests with (should be the pair of the public key supplied to
+            JIRA in the OAuth application link)
         """
         if options is None:
             options = {}
@@ -1345,7 +1352,12 @@ class JIRA(object):
         raise_on_error(r)
 
     def _create_oauth_session(self, oauth):
-        raise NotImplementedError("oauth support isn't implemented yet")
+        verify = self._options['server'].startswith('https')
+        oauth_hook = OAuthHook(access_token=oauth['access_token'], access_token_secret=oauth['access_token_secret'],
+                               consumer_key=oauth['consumer_key'], key_cert=oauth['key_cert'],
+                               consumer_secret='', header_auth=True)
+        self._session = requests.session(headers={'content-type': 'application/json'}, verify=verify,
+                                         hooks={'pre_request': oauth_hook})
 
     def _set_avatar(self, params, url, avatar):
         data = {
