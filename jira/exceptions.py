@@ -15,5 +15,10 @@ class JIRAError(Exception):
 
 def raise_on_error(r):
     if r.status_code >= 400:
-        error = json.loads(r.text)['errorMessages'][0]
+        error = ''
+        if r.text:
+            try:
+                error = json.loads(r.text)['errorMessages'][0]
+            except:
+                error = r.text[:60]
         raise JIRAError(r.status_code, error, r.url)
