@@ -11,6 +11,7 @@ from sys import exit
 import requests
 from jira.packages.requests_oauth.hook import OAuthHook
 from urlparse import parse_qsl
+import webbrowser
 from jira.client import JIRA
 from jira import __version__
 
@@ -28,7 +29,8 @@ def oauth_dance(server, consumer_key, key_cert_data):
 
     # step 2: prompt user to validate
     auth_url = '{}/plugins/servlet/oauth/authorize?oauth_token={}'.format(server, request_token)
-    print "Open the following link: {}".format(auth_url)
+    webbrowser.open_new(auth_url)
+    print "Your browser is opening the OAuth authorization for this client session."
     approved = raw_input('Have you authorized this program to connect on your behalf to {}? (y/n)'.format(server))
 
     if approved.lower() != 'y':
