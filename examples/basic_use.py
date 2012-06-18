@@ -24,3 +24,12 @@ issue = jira.issue('JRA-1330')
 import re
 atl_comments = [comment for comment in issue.fields.comment.comments
                 if re.search(r'@atlassian.com$', comment.author.emailAddress)]
+
+# Add a comment to the issue.
+jira.add_comment(issue, 'Comment text')
+
+# Change the issue's summary and description.
+issue.update(summary="I'm different!", description='Changed the summary to be different.')
+
+# Send the issue away for good.
+issue.delete()
