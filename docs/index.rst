@@ -12,11 +12,8 @@ Welcome to jira-python's documentation!
 This documents the ``jira-python`` package (version |release|), a Python library designed to ease the use of the
 JIRA REST API.
 
-Quickstart
-==========
-
 Installation
-------------
+============
 
 The easiest (and best) way to install jira-python is through `pip <http://www.pip-installer.org/>`_::
 
@@ -68,39 +65,150 @@ Another example shows how to authenticate with your JIRA username and password:
 
 .. literalinclude:: ../examples/basic_auth.py
 
-Resource Objects and Properties
-===============================
 
-The library distinguishes between two kinds of data in the JIRA REST API: *resources* and *properties*.
+Quickstart
+==========
 
-A *resource* is a REST entity that represents the current state of something that the server owns; for example,
-the issue called "ABC-123" is a concept managed by JIRA which can be viewed as a resource obtainable at the URL
-*http://jira-server/rest/api/2/issue/ABC-123*. All resources have a *self link*: a root-level property called *self*
-which contains the URL the resource originated from. In jira-python, resources are instances of the *Resource* object
-(or one of its subclasses) and can only be obtained from the server using the ``find()`` method. Resources may be
-connected to other resources: the issue *Resource* is connected to a user *Resource* through the ``assignee`` and
-``reporter`` fields, while the project *Resource* is connected to a project lead through another user *Resource*.
+Initialization
+--------------
 
-.. important::
-    A resource is connected to other resources, and the client preserves this connection. In the above example,
-    the object inside the ``issue`` object at ``issue.fields.assignee`` is not just a dict -- it is a full-fledged
-    user *Resource* object. Whenever a resource contains other resources, the client will attempt to convert them
-    to the proper subclass of *Resource*.
+Everything goes through the JIRA object, so make one::
 
-A *properties object* is a collection of values returned by JIRA in response to some query from the REST API. Their
-structure is freeform and modeled as a Python dict. Client methods return this structure for calls that do not
-produce resources. For example, the properties returned from the URL *http://jira-server/rest/api/2/issue/createmeta*
-are designed to inform users what fields (and what values for those fields) are required to successfully create
-issues in the server's projects. Since these properties are determined by JIRA's configuration, they are not resources.
+    from jira.client import JIRA
 
-The JIRA client's methods document whether they will return a *Resource* or a properties object.
+    jira = JIRA()
+
+This connects to a JIRA started on your local machine at http://localhost:2990/jira, which not coincidentally is the
+default address for a JIRA instance started from the Atlassian Plugin SDK.
+
+You can manually set the JIRA server to use::
+
+    jac = JIRA(options={'server': 'https://jira.atlassian.com'})
 
 Authentication
-==============
+--------------
 
-Currently, only HTTP BASIC authentication is supported. OAuth support is coming.
+At initialization time, jira-python can optionally create an HTTP BASIC or use OAuth 1.0a access tokens for user
+authentication. These sessions will apply to all subsequent calls to the JIRA object.
+
+HTTP BASIC
+^^^^^^^^^^
+
+Pass a tuple of (username, password) to the ``basic_auth`` constructor argument::
+
+    authed_jira = JIRA(basic_auth=('username', 'password))
+
+OAuth
+^^^^^
+
+Pass a dict of OAuth properties to the ``oauth`` constructor argument::
+
+    # all values are samples and won't work in your code!
+    key_cert_data = None
+    with open(key_cert, 'r') as key_cert_file:
+        key_cert_data = key_cert_file.read()
+
+    oauth_dict = {
+        'access_token': 'd87f3hajglkjh89a97f8',
+        'access_token_secret': 'a9f8ag0ehaljkhgeds90',
+        'consumer_key': 'jira-oauth-consumer',
+        'key_cert': key_cert_data
+    }
+    authed_jira = JIRA(oauth=oauth_dict)
+
+.. note ::
+    The OAuth access tokens must be obtained and authorized ahead of time through the standard OAuth dance. For
+    interactive use, ``jirashell`` can perform the dance with you if you don't already have valid tokens.
+
+* The access token and token secret uniquely identify the user.
+* The consumer key must match the OAuth provider configured on the JIRA server.
+* The key cert data must be the private key that matches the public key configured on the JIRA server's OAuth provider.
+
+See https://confluence.atlassian.com/display/JIRA/Configuring+OAuth+Authentication+for+an+Application+Link for details
+on configuring an OAuth provider for JIRA.
 
 .. _jirashell-label:
+
+Issues
+------
+
+Issues are objects. You get hold of them through the JIRA object::
+
+    issue = jira.issue('JRA-1330')
+
+Issue JSON is marshaled automatically and used to augment the returned Issue object, so you can get direct access to
+fields::
+
+    summary = issue.fields.summary         # 'Field level security permissions'
+    votes = issue.fields.votes.votes       # 440 (at least)
+
+If you only want a few specific fields, save time by asking for them explicitly::
+
+    issue = jira.issue('JRA-1330', fields='summary,comment')
+
+Creating issues is easy::
+
+    new_issue = jira.create_issue(project={'key': 'PROJ'}, summary='New issue from jira-python',
+                                  description='Look into this one', issuetype={'name': 'Bug'})
+
+Or you can use a dict::
+
+    issue_dict = {
+        'project': {'key': 'PROJ'},
+        'summary': 'New issue from jira-python',
+        'description': 'Look into this one',
+        'issuetype': {'name': 'Bug'},
+    }
+    new_issue = jira.create_issue(fields=issue_dict)
+
+.. note::
+    Project, summary, description and issue type are always required when creating issues. Your JIRA may require
+    additional fields for creating issues; see the ``jira.createmeta`` method for getting access to that information.
+
+You can also update an issue's fields with keyword arguments::
+
+    issue.update(summary='new summary', description='A new summary was added')
+
+or with a dict of new field values::
+
+    issue.update(fields={'summary': 'new summary', 'description': 'A new summary was added'})
+
+and when you're done with an issue, you can send it to the great hard drive in the sky::
+
+    issue.delete()
+
+Comments
+^^^^^^^^
+
+Comments, like issues, are objects. Get at issue comments through the parent Issue object or the JIRA object's
+dedicated method::
+
+    comments_a = issue.fields.comments.comments
+    comments_b = jira.comments(issue) # comments_b == comments_a
+
+Get an individual comment if you know its ID::
+
+    comment = jira.comment('JRA-1330', '10234')
+
+Adding, editing and deleting comments is similarly straightforward::
+
+    comment = jira.add_comment('JRA-1330', 'new comment')    # no Issue object required
+    comment = jira.add_comment(issue, 'new comment', visibility={'type': 'role', 'value': 'Administrators'})  # for admins only
+
+    comment.update('updated comment body')
+    comment.delete()
+
+Transitions
+^^^^^^^^^^^
+
+Learn what transitions are available on an issue::
+
+    transitions = jira.transitions('JRA-1330')
+
+.. note::
+    Only the transitions available to the currently authenticated user will be returned!
+
+
 
 jirashell
 =========
@@ -166,13 +274,35 @@ key::
 Since the *Resource* class maps the server's JSON response directly into a Python object with attribute access, you can
 see exactly what's in your resources.
 
-Missing pieces
-==============
+Advanced
+========
 
-The following things are planned but not yet implemented:
+Resource Objects and Properties
+-------------------------------
 
-* OAuth support
-* Creating resources
+The library distinguishes between two kinds of data in the JIRA REST API: *resources* and *properties*.
+
+A *resource* is a REST entity that represents the current state of something that the server owns; for example,
+the issue called "ABC-123" is a concept managed by JIRA which can be viewed as a resource obtainable at the URL
+*http://jira-server/rest/api/2/issue/ABC-123*. All resources have a *self link*: a root-level property called *self*
+which contains the URL the resource originated from. In jira-python, resources are instances of the *Resource* object
+(or one of its subclasses) and can only be obtained from the server using the ``find()`` method. Resources may be
+connected to other resources: the issue *Resource* is connected to a user *Resource* through the ``assignee`` and
+``reporter`` fields, while the project *Resource* is connected to a project lead through another user *Resource*.
+
+.. important::
+    A resource is connected to other resources, and the client preserves this connection. In the above example,
+    the object inside the ``issue`` object at ``issue.fields.assignee`` is not just a dict -- it is a full-fledged
+    user *Resource* object. Whenever a resource contains other resources, the client will attempt to convert them
+    to the proper subclass of *Resource*.
+
+A *properties object* is a collection of values returned by JIRA in response to some query from the REST API. Their
+structure is freeform and modeled as a Python dict. Client methods return this structure for calls that do not
+produce resources. For example, the properties returned from the URL *http://jira-server/rest/api/2/issue/createmeta*
+are designed to inform users what fields (and what values for those fields) are required to successfully create
+issues in the server's projects. Since these properties are determined by JIRA's configuration, they are not resources.
+
+The JIRA client's methods document whether they will return a *Resource* or a properties object.
 
 Contributing
 ============
