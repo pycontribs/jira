@@ -112,9 +112,10 @@ def process_command_line():
         with open(args.key_cert, 'r') as key_cert_file:
             key_cert_data = key_cert_file.read()
 
+    oauth = None
     if args.oauth_dance:
         oauth = oauth_dance(args.server, args.consumer_key, key_cert_data)
-    else:
+    elif args.access_token and args.access_token_secret and args.consumer_key and args.key_cert:
         oauth = {
             'access_token': args.access_token,
             'access_token_secret': args.access_token_secret,
