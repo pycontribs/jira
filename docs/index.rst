@@ -146,6 +146,11 @@ If you only want a few specific fields, save time by asking for them explicitly:
 
     issue = jira.issue('JRA-1330', fields='summary,comment')
 
+Reassign an issue::
+
+    # requires issue assign permission, which is different from issue editing permission!
+    jira.assign_issue(issue, 'newassignee')
+
 Creating issues is easy::
 
     new_issue = jira.create_issue(project={'key': 'PROJ'}, summary='New issue from jira-python',
@@ -168,6 +173,7 @@ Or you can use a dict::
 You can also update an issue's fields with keyword arguments::
 
     issue.update(summary='new summary', description='A new summary was added')
+    issue.update(assignee={'name': 'new_user'})    # reassigning in update requires issue edit permission
 
 or with a dict of new field values::
 
@@ -176,6 +182,21 @@ or with a dict of new field values::
 and when you're done with an issue, you can send it to the great hard drive in the sky::
 
     issue.delete()
+
+Searching
+^^^^^^^^^
+
+Leverage the power of `JQL <https://confluence.atlassian.com/display/JIRA/Advanced+Searching>`_
+to quickly find the issues you want::
+
+    issues_in_proj = jira.search_issues('project=PROJ')
+    all_proj_issues_but_mine = jira.search_issues('project=PROJ and assignee != currentUser()')
+
+    # my top 5 issues due by the end of the week, ordered by priority
+    oh_crap = jira.search_issues('assignee = currentUser() and due < endOfWeek() order by priority desc', maxResults=5)
+
+    # Summaries of my last 3 reported issues
+    print [issue.fields.summary for issue in jira.search_issues('reporter = currentUser() order by created desc', maxResults=3)]
 
 Comments
 ^^^^^^^^
@@ -203,12 +224,40 @@ Transitions
 
 Learn what transitions are available on an issue::
 
-    transitions = jira.transitions('JRA-1330')
+    issue = jira.issue('PROJ-1')
+    transitions = jira.transitions(issue)
+    [(t['id'], t['name']) for t in transitions]    # [(u'5', u'Resolve Issue'), (u'2', u'Close Issue')]
 
 .. note::
     Only the transitions available to the currently authenticated user will be returned!
 
+Then perform a transition on an issue::
 
+    # Resolve the issue and assign it to 'pm_user' in one step
+    jira.transition_issue(issue, '5', assignee={'name': 'pm_user'})
+
+Projects
+--------
+
+Projects are objects, just like issues::
+
+    projects = jira.projects()
+
+Also, just like issue objects, project objects are augmented with their fields::
+
+    jra = jira.project('JRA')
+    print jra.name                 # 'JIRA'
+    print jira.lead.displayName    # 'Paul Slade [Atlassian]'
+
+It's no trouble to get the components, versions or roles either (assuming you have permission)::
+
+    components = jira.project_components(jra)
+    [c.name for c in components]                # 'Accessibility', 'Activity Stream', 'Administration', etc.
+
+    jira.project_roles(jra)                     # 'Administrators', 'Developers', etc.
+
+    versions = jira.project_versions(jra)
+    [v.name for v in reversed(versions)]        # '5.1.1', '5.1', '5.0.7', '5.0.6', etc.
 
 jirashell
 =========
