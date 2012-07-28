@@ -86,7 +86,7 @@ class JIRA(object):
             self._create_oauth_session(oauth)
         else:
             verify = self._options['server'].startswith('https')
-            self._session = requests.session(headers={'content-type': 'application/json'}, verify=verify)
+            self._session = requests.session(verify=verify, hooks={'args': self._add_content_type})
 
 ### Information about this client
 
@@ -146,7 +146,7 @@ class JIRA(object):
             'id': key,
             'value': value
         }
-        r = self._session.put(url, headers={'content-type': 'application/json'}, data=json.dumps(payload))
+        r = self._session.put(url, data=json.dumps(payload))
         raise_on_error(r)
 
 ### Attachments
@@ -177,7 +177,7 @@ class JIRA(object):
         files = {
             'file': attachment
         }
-        r = self._session.post(url, files=files, headers={'X-Atlassian-Token': 'nocheck', 'content-type': None})
+        r = self._session.post(url, files=files, headers={'X-Atlassian-Token': 'nocheck'})
         raise_on_error(r)
 
         attachment = Attachment(self._options, self._session, json.loads(r.text)[0])
@@ -1339,6 +1339,10 @@ class JIRA(object):
 
 ### Utilities
 
+    def _add_content_type(self, args):
+        if args['method'] in ('PUT', 'POST'):
+            args['headers']['content-type'] = 'application/json'
+
     def _create_http_basic_session(self, username, password):
         url = self._options['server'] + '/rest/auth/1/session'
         payload = {
@@ -1347,7 +1351,8 @@ class JIRA(object):
         }
 
         verify = self._options['server'].startswith('https')
-        self._session = requests.session(headers={'content-type': 'application/json'}, verify=verify)
+        self._session = requests.session(verify=verify,
+                                         hooks={'args': self._add_content_type})
         r = self._session.post(url, data=json.dumps(payload))
         raise_on_error(r)
 
@@ -1356,8 +1361,9 @@ class JIRA(object):
         oauth_hook = OAuthHook(access_token=oauth['access_token'], access_token_secret=oauth['access_token_secret'],
                                consumer_key=oauth['consumer_key'], key_cert=oauth['key_cert'],
                                consumer_secret='', header_auth=True)
-        self._session = requests.session(headers={'content-type': 'application/json'}, verify=verify,
-                                         hooks={'pre_request': oauth_hook})
+        self._session = requests.session(verify=verify,
+                                         hooks={'pre_request': oauth_hook,
+                                                'args': self._add_content_type})
 
     def _set_avatar(self, params, url, avatar):
         data = {
