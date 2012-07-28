@@ -177,7 +177,7 @@ class JIRA(object):
         files = {
             'file': attachment
         }
-        r = self._session.post(url, files=files, headers={'X-Atlassian-Token': 'nocheck'})
+        r = self._session.post(url, files=files, headers={'X-Atlassian-Token': 'nocheck', 'content-type': 'no_autodetect'})
         raise_on_error(r)
 
         attachment = Attachment(self._options, self._session, json.loads(r.text)[0])
@@ -1341,7 +1341,11 @@ class JIRA(object):
 
     def _add_content_type(self, args):
         if args['method'] in ('PUT', 'POST'):
-            args['headers']['content-type'] = 'application/json'
+            if 'content-type' in args['headers']:
+                if args['headers']['content-type'] == 'no_autodetect':
+                    del args['headers']['content-type']
+            else:
+                args['headers']['content-type'] = 'application/json'
 
     def _create_http_basic_session(self, username, password):
         url = self._options['server'] + '/rest/auth/1/session'
