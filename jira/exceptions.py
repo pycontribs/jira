@@ -18,7 +18,19 @@ def raise_on_error(r):
         error = ''
         if r.text:
             try:
-                error = json.loads(r.text)['errorMessages'][0]
-            except:
-                error = r.text[:60]
+                response = json.loads(r.text)
+                if 'message' in response:
+                    # JIRA 5.1 errors
+                    error = response['message']
+                elif 'errorMessages' in response:
+                    # JIRA 5.0.x error messages sometimes come wrapped in this array
+                    errorMessages = response['errorMessages']
+                    if isinstance(errorMessages, (list, tuple)):
+                        error = errorMessages[0]
+                    else:
+                        error = errorMessages
+                else:
+                    error = r.text
+            except ValueError:
+                error = r.text
         raise JIRAError(r.status_code, error, r.url)
