@@ -45,6 +45,8 @@ class JIRA(object):
         "rest_api_version": "2"
     }
 
+    SUPPRESS_CONTENT_TYPE_AUTODETECT = 'no_autodetect'
+
     def __init__(self, options=None, basic_auth=None, oauth=None):
         """
         Construct a JIRA client instance.
@@ -177,7 +179,8 @@ class JIRA(object):
         files = {
             'file': attachment
         }
-        r = self._session.post(url, files=files, headers={'X-Atlassian-Token': 'nocheck', 'content-type': 'no_autodetect'})
+        r = self._session.post(url, files=files, headers={'X-Atlassian-Token': 'nocheck',
+                                                          'content-type': JIRA.SUPPRESS_CONTENT_TYPE_AUTODETECT})
         raise_on_error(r)
 
         attachment = Attachment(self._options, self._session, json.loads(r.text)[0])
@@ -854,8 +857,11 @@ class JIRA(object):
             'filename': filename,
             'size': size
         }
-        if contentType is None and self._magic:
-            contentType = self._magic.from_buffer(avatar_img)
+        if contentType is None:
+            if self._magic:
+                contentType = self._magic.from_buffer(avatar_img)
+            else:
+                contentType = JIRA.SUPPRESS_CONTENT_TYPE_AUTODETECT
         url = self._get_url('project/' + project + '/avatar/temporary')
         r = self._session.post(url, params=params,
             headers={'content-type': contentType, 'X-Atlassian-Token': 'no-check'}, data=avatar_img)
@@ -1135,8 +1141,11 @@ class JIRA(object):
             'filename': filename,
             'size': size
         }
-        if contentType is None and self._magic:
-            contentType = self._magic.from_buffer(avatar_img)
+        if contentType is None:
+            if self._magic:
+                contentType = self._magic.from_buffer(avatar_img)
+            else:
+                contentType = JIRA.SUPPRESS_CONTENT_TYPE_AUTODETECT
         url = self._get_url('user/avatar/temporary')
         r = self._session.post(url, params=params,
                 headers={'content-type': contentType, 'X-Atlassian-Token': 'no-check'}, data=avatar_img)
@@ -1342,7 +1351,7 @@ class JIRA(object):
     def _add_content_type(self, args):
         if args['method'] in ('PUT', 'POST'):
             if 'content-type' in args['headers']:
-                if args['headers']['content-type'] == 'no_autodetect':
+                if args['headers']['content-type'] == JIRA.SUPPRESS_CONTENT_TYPE_AUTODETECT:
                     del args['headers']['content-type']
             else:
                 args['headers']['content-type'] = 'application/json'
