@@ -5,12 +5,34 @@ from jira.client import JIRA
 from jira.exceptions import JIRAError
 from jira.resources import Resource, cls_for_resource, Issue, Project, Role
 
-TEST_ICON_PATH = '../resources/test/icon.png'
+TEST_ROOT = os.path.dirname(__file__)
+TEST_ICON_PATH = os.path.join(TEST_ROOT, '../resources/test/icon.png')
+TEST_ATTACH_PATH = os.path.join(TEST_ROOT, '__init__.py')
+
+def get_jira_admin_auth():
+    return JIRA(basic_auth=('admin', 'admin'))
+
+def get_jira_sysadmin_auth():
+    return JIRA(basic_auth=('eviladmin', 'eviladmin'))
+
+def get_jira_schlub_auth():
+    return JIRA(basic_auth=('fred', 'fred'))
+
+def find_by_key(seq, key):
+    for seq_item in seq:
+        if seq_item['key'] == key:
+            return seq_item
+
+def find_by_id(seq, id):
+    for seq_item in seq:
+        if seq_item.id == id:
+            return seq_item
+
 
 class UniversalResourceTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = JIRA(basic_auth=('admin', 'admin'))
+        self.jira = get_jira_admin_auth()
 
     def test_universal_find_existing_resource(self):
         resource = self.jira.find('issue/{0}', 'BULK-1')
@@ -56,7 +78,7 @@ class ApplicationPropertiesTests(unittest.TestCase):
 
     def setUp(self):
         # this user has jira-system-administrators membership
-        self.jira = JIRA(basic_auth=('eviladmin', 'eviladmin'))
+        self.jira = get_jira_sysadmin_auth()
 
     def test_application_properties(self):
         props = self.jira.application_properties()
@@ -81,7 +103,7 @@ class ApplicationPropertiesTests(unittest.TestCase):
 class AttachmentTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = JIRA(basic_auth=('admin', 'admin'))
+        self.jira = get_jira_admin_auth()
 
     def test_attachment(self):
         attachment = self.jira.attachment('10030')
@@ -96,13 +118,13 @@ class AttachmentTests(unittest.TestCase):
     def test_add_attachment(self):
         issue = self.jira.issue('BULK-3')
         attach_count = len(issue.fields.attachment)
-        attachment = self.jira.add_attachment(issue, open('__init__.py'))
+        attachment = self.jira.add_attachment(issue, open(TEST_ATTACH_PATH))
         self.assertIsNotNone(attachment)
         self.assertEqual(len(self.jira.issue('BULK-3').fields.attachment), attach_count + 1)
 
     def test_delete(self):
         attach_count = len(self.jira.issue('BULK-3').fields.attachment)
-        attachment = self.jira.add_attachment('BULK-3', open('__init__.py'))
+        attachment = self.jira.add_attachment('BULK-3', open(TEST_ATTACH_PATH))
         self.assertEqual(len(self.jira.issue('BULK-3').fields.attachment), attach_count + 1)
         attachment.delete()
         self.assertEqual(len(self.jira.issue('BULK-3').fields.attachment), attach_count)
@@ -111,7 +133,7 @@ class AttachmentTests(unittest.TestCase):
 class ComponentTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = JIRA(basic_auth=('admin', 'admin'))
+        self.jira = get_jira_admin_auth()
 
     def test_component(self):
         component = self.jira.component('10003')
@@ -150,7 +172,7 @@ class ComponentTests(unittest.TestCase):
 class CustomFieldOptionTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = JIRA(basic_auth=('admin', 'admin'))
+        self.jira = get_jira_admin_auth()
 
     def test_custom_field_option(self):
         option = self.jira.custom_field_option('10010')
@@ -160,7 +182,7 @@ class CustomFieldOptionTests(unittest.TestCase):
 class DashboardTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = JIRA(basic_auth=('eviladmin', 'eviladmin'))
+        self.jira = get_jira_sysadmin_auth()
 
     def test_dashboards(self):
         dashboards = self.jira.dashboards()
@@ -188,7 +210,7 @@ class DashboardTests(unittest.TestCase):
 class FieldsTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = JIRA(basic_auth=('admin', 'admin'))
+        self.jira = get_jira_admin_auth()
 
     def test_fields(self):
         fields = self.jira.fields()
@@ -198,7 +220,7 @@ class FieldsTests(unittest.TestCase):
 class FilterTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = JIRA(basic_auth=('admin', 'admin'))
+        self.jira = get_jira_admin_auth()
 
     def test_filter(self):
         filter = self.jira.filter('10016')
@@ -213,7 +235,7 @@ class FilterTests(unittest.TestCase):
 class GroupsTest(unittest.TestCase):
 
     def setUp(self):
-        self.jira = JIRA(basic_auth=('admin', 'admin'))
+        self.jira = get_jira_admin_auth()
 
     def test_groups(self):
         groups = self.jira.groups()
@@ -231,7 +253,7 @@ class GroupsTest(unittest.TestCase):
 class IssueTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = JIRA(basic_auth=('admin', 'admin'))
+        self.jira = get_jira_admin_auth()
 
     def test_issue(self):
         issue = self.jira.issue('BULK-1')
@@ -695,7 +717,7 @@ class IssueTests(unittest.TestCase):
 class IssueLinkTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = JIRA(basic_auth=('admin', 'admin'))
+        self.jira = get_jira_admin_auth()
 
     def test_issue_link(self):
         link = self.jira.issue_link('10220')
@@ -720,7 +742,7 @@ class IssueLinkTests(unittest.TestCase):
 class IssueLinkTypeTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = JIRA(basic_auth=('admin', 'admin'))
+        self.jira = get_jira_admin_auth()
 
     def test_issue_link_types(self):
         link_types = self.jira.issue_link_types()
@@ -737,7 +759,7 @@ class IssueLinkTypeTests(unittest.TestCase):
 class IssueTypesTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = JIRA(basic_auth=('admin', 'admin'))
+        self.jira = get_jira_admin_auth()
 
     def test_issue_types(self):
         types = self.jira.issue_types()
@@ -754,7 +776,7 @@ class IssueTypesTests(unittest.TestCase):
 class MyPermissionsTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = JIRA(basic_auth=('fred', 'fred'))
+        self.jira = get_jira_schlub_auth()
 
     def test_my_permissions(self):
         perms = self.jira.my_permissions()
@@ -776,7 +798,7 @@ class MyPermissionsTests(unittest.TestCase):
 class PrioritiesTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = JIRA(basic_auth=('admin', 'admin'))
+        self.jira = get_jira_admin_auth()
 
     def test_priorities(self):
         priorities = self.jira.priorities()
@@ -791,7 +813,7 @@ class PrioritiesTests(unittest.TestCase):
 class ProjectTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = JIRA(basic_auth=('admin', 'admin'))
+        self.jira = get_jira_admin_auth()
 
     def test_projects(self):
         projects = self.jira.projects()
@@ -925,7 +947,7 @@ class ProjectTests(unittest.TestCase):
 class ResolutionTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = JIRA(basic_auth=('admin', 'admin'))
+        self.jira = get_jira_admin_auth()
 
     def test_resolutions(self):
         resolutions = self.jira.resolutions()
@@ -940,7 +962,7 @@ class ResolutionTests(unittest.TestCase):
 class SearchTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = JIRA(basic_auth=('admin', 'admin'))
+        self.jira = get_jira_admin_auth()
 
     def test_search_issues(self):
         issues = self.jira.search_issues('project=BULK')
@@ -973,7 +995,7 @@ class SearchTests(unittest.TestCase):
 class SecurityLevelTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = JIRA(basic_auth=('admin', 'admin'))
+        self.jira = get_jira_admin_auth()
 
     def test_security_level(self):
         sec_level = self.jira.security_level('10001')
@@ -984,7 +1006,7 @@ class SecurityLevelTests(unittest.TestCase):
 class ServerInfoTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = JIRA(basic_auth=('admin', 'admin'))
+        self.jira = get_jira_admin_auth()
 
     def test_server_info(self):
         server_info = self.jira.server_info()
@@ -995,7 +1017,7 @@ class ServerInfoTests(unittest.TestCase):
 class StatusTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = JIRA(basic_auth=('admin', 'admin'))
+        self.jira = get_jira_admin_auth()
 
     def test_statuses(self):
         stati = self.jira.statuses()
@@ -1010,7 +1032,7 @@ class StatusTests(unittest.TestCase):
 class UserTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = JIRA(basic_auth=('admin', 'admin'))
+        self.jira = get_jira_admin_auth()
 
     def test_user(self):
         user = self.jira.user('fred')
@@ -1148,7 +1170,7 @@ class UserTests(unittest.TestCase):
 class VersionTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = JIRA(basic_auth=('admin', 'admin'))
+        self.jira = get_jira_admin_auth()
 
     def test_create_version(self):
         version = self.jira.create_version('new version 1', 'BULK', releaseDate='2013-03-11',
@@ -1210,7 +1232,7 @@ class VersionTests(unittest.TestCase):
 class SessionTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = JIRA(basic_auth=('admin', 'admin'))
+        self.jira = get_jira_admin_auth()
 
     def test_session(self):
         user = self.jira.session()
@@ -1229,7 +1251,7 @@ class SessionTests(unittest.TestCase):
 class WebsudoTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = JIRA(basic_auth=('admin', 'admin'))
+        self.jira = get_jira_admin_auth()
 
     def test_kill_websudo(self):
         self.jira.kill_websudo()
@@ -1237,14 +1259,3 @@ class WebsudoTests(unittest.TestCase):
     def test_kill_websudo_without_login_raises(self):
         anon_jira = JIRA()
         self.assertRaises(JIRAError, anon_jira.kill_websudo)
-
-
-def find_by_key(seq, key):
-    for seq_item in seq:
-        if seq_item['key'] == key:
-            return seq_item
-
-def find_by_id(seq, id):
-    for seq_item in seq:
-        if seq_item.id == id:
-            return seq_item
