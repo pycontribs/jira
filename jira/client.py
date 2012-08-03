@@ -82,10 +82,10 @@ class JIRA(object):
 
         self._ensure_magic()
 
-        if basic_auth:
-            self._create_http_basic_session(*basic_auth)
-        elif oauth:
+        if oauth:
             self._create_oauth_session(oauth)
+        elif basic_auth:
+            self._create_http_basic_session(*basic_auth)
         else:
             verify = self._options['server'].startswith('https')
             self._session = requests.session(verify=verify, hooks={'args': self._add_content_type})
