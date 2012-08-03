@@ -6,7 +6,7 @@ from jira.exceptions import JIRAError
 from jira.resources import Resource, cls_for_resource, Issue, Project, Role
 
 TEST_ROOT = os.path.dirname(__file__)
-TEST_ICON_PATH = os.path.join(TEST_ROOT, '../resources/test/icon.png')
+TEST_ICON_PATH = os.path.join(TEST_ROOT, 'icon.png')
 TEST_ATTACH_PATH = os.path.join(TEST_ROOT, '__init__.py')
 
 def get_jira_admin_auth():
