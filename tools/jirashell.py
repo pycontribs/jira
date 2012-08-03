@@ -4,16 +4,20 @@
 Starts an interactive JIRA session in an ipython terminal. Script arguments
 support changing the server and a persistent authentication over HTTP BASIC.
 """
+import ConfigParser
 
 import argparse
 from getpass import getpass
 from sys import exit
+import os
 import requests
 from jira.packages.requests_oauth.hook import OAuthHook
 from urlparse import parse_qsl
 import webbrowser
 from jira.client import JIRA
 from jira import __version__
+
+CONFIG_PATH = os.path.join(os.path.expanduser('~'), '.jira-python', 'jirashell.ini')
 
 def oauth_dance(server, consumer_key, key_cert_data):
     verify = server.startswith('https')
@@ -51,8 +55,30 @@ def oauth_dance(server, consumer_key, key_cert_data):
         'key_cert': key_cert_data,
     }
 
-def process_command_line():
+def process_config():
+    parser = ConfigParser.SafeConfigParser()
+    try:
+        parser.read(CONFIG_PATH)
+    except ConfigParser.ParsingError, err:
+        print "Couldn't read config file at path: " + CONFIG_PATH + "; reverting to command line"
+        return process_command_line()
 
+    if parser.has_section('options'):
+        options = dict(parser.items('options'))
+    else:
+        options = {}
+    if parser.has_section('basic_auth'):
+        basic_auth = dict(parser.items('basic_auth'))
+    else:
+        basic_auth = {}
+    if parser.has_section('oauth'):
+        oauth = dict(parser.items('oauth'))
+    else:
+        oauth = {}
+
+    return options, basic_auth, oauth
+
+def process_command_line():
     parser = argparse.ArgumentParser(description='Start an interactive JIRA shell with the REST API.')
     jira_group = parser.add_argument_group('JIRA server connection options')
     jira_group.add_argument('-s', '--server',
@@ -84,13 +110,6 @@ def process_command_line():
                              help='OAuth access token for the user.')
     oauth_already_group.add_argument('-ats', '--access-token-secret',
                              help='Secret for the OAuth access token.')
-
-    try:
-        get_ipython
-    except NameError:
-        pass
-    else:
-        exit("Running ipython inside ipython isn't supported. :(")
 
     args = parser.parse_args()
 
@@ -125,8 +144,27 @@ def process_command_line():
 
     return options, basic_auth, oauth
 
+def get_config():
+    if os.path.exists(CONFIG_PATH):
+        options, basic_auth, oauth = process_config()
+
+    cmd_options, cmd_basic_auth, cmd_oauth = process_command_line()
+
+    options.update(cmd_options)
+    basic_auth.update(cmd_basic_auth)
+    oauth.update(cmd_oauth)
+
+    return options, basic_auth, oauth
+
 def main():
-    options, basic_auth, oauth = process_command_line()
+    try:
+        get_ipython
+    except NameError:
+        pass
+    else:
+        exit("Running ipython inside ipython isn't supported. :(")
+
+    options, basic_auth, oauth = get_config()
 
     jira = JIRA(options=options, basic_auth=basic_auth, oauth=oauth)
 
