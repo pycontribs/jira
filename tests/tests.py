@@ -9,14 +9,45 @@ TEST_ROOT = os.path.dirname(__file__)
 TEST_ICON_PATH = os.path.join(TEST_ROOT, 'icon.png')
 TEST_ATTACH_PATH = os.path.join(TEST_ROOT, '__init__.py')
 
+OAUTH = True
+CONSUMER_KEY = 'oauth-consumer'
+KEY_CERT_FILE = '/home/bspeakmon/src/atlassian-oauth-examples/rsa.pem'
+KEY_CERT_DATA = None
+with open(KEY_CERT_FILE, 'r') as cert:
+    KEY_CERT_DATA = cert.read()
+
 def get_jira_admin_auth():
-    return JIRA(basic_auth=('admin', 'admin'))
+    if OAUTH:
+        return JIRA(oauth={
+            'access_token': 'hTxcwsbUQiFuFALf7KZHDaeAJIo3tLUK',
+            'access_token_secret': 'aNCLQFP3ORNU6WY7HQISbqbhf0UudDAf',
+            'consumer_key': CONSUMER_KEY,
+            'key_cert': KEY_CERT_DATA,
+        })
+    else:
+        return JIRA(basic_auth=('admin', 'admin'))
 
 def get_jira_sysadmin_auth():
-    return JIRA(basic_auth=('eviladmin', 'eviladmin'))
+    if OAUTH:
+        return JIRA(oauth={
+            'access_token': '4ul1ETSFo7ybbIxAxzyRal39cTrwEGFv',
+            'access_token_secret': 'K83jBZnjnuVRcfjBflrKyThJa0KSjSs2',
+            'consumer_key': CONSUMER_KEY,
+            'key_cert': KEY_CERT_DATA,
+        })
+    else:
+        return JIRA(basic_auth=('eviladmin', 'eviladmin'))
 
 def get_jira_schlub_auth():
-    return JIRA(basic_auth=('fred', 'fred'))
+    if OAUTH:
+        return JIRA(oauth={
+            'access_token': 'ZVDgYDyIQqJY8IFlQ446jZaURIz5ECiB',
+            'access_token_secret': '5WbLBybPDg1lqqyFjyXSCsCtAWTwz1eD',
+            'consumer_key': CONSUMER_KEY,
+            'key_cert': KEY_CERT_DATA,
+        })
+    else:
+        return JIRA(basic_auth=('fred', 'fred'))
 
 def find_by_key(seq, key):
     for seq_item in seq:
