@@ -19,7 +19,7 @@ from jira import __version__
 
 CONFIG_PATH = os.path.join(os.path.expanduser('~'), '.jira-python', 'jirashell.ini')
 
-def oauth_dance(server, consumer_key, key_cert_data):
+def oauth_dance(server, consumer_key, key_cert_data, print_tokens=False):
     verify = server.startswith('https')
 
     # step 1: get request tokens
@@ -30,6 +30,10 @@ def oauth_dance(server, consumer_key, key_cert_data):
     request = dict(parse_qsl(r.text))
     request_token = request['oauth_token']
     request_token_secret = request['oauth_token_secret']
+    if print_tokens:
+        print "Request tokens received."
+        print "    Request token:        {}".format(request_token)
+        print "    Request token secret: {}".format(request_token_secret)
 
     # step 2: prompt user to validate
     auth_url = '{}/plugins/servlet/oauth/authorize?oauth_token={}'.format(server, request_token)
@@ -47,6 +51,11 @@ def oauth_dance(server, consumer_key, key_cert_data):
     r = requests.post(server + '/plugins/servlet/oauth/access-token', verify=verify,
                       hooks={'pre_request': access_oauth_hook})
     access = dict(parse_qsl(r.text))
+
+    if print_tokens:
+        print "Access tokens received."
+        print "    Access token:        {}".format(access['oauth_token'])
+        print "    Access token secret: {}".format(access['oauth_token_secret'])
 
     return {
         'access_token': access['oauth_token'],
@@ -104,6 +113,8 @@ def process_command_line():
     oauth_group.add_argument('-k', '--key-cert',
                              help='Private key to sign OAuth requests with (should be the pair of the public key\
                                    configured in the JIRA application link)')
+    oauth_group.add_argument('-pt', '--print-tokens', action='store_true',
+                             help='Print the negotiated OAuth tokens as they are retrieved.')
 
     oauth_already_group = parser.add_argument_group('OAuth options for already-authenticated access tokens')
     oauth_already_group.add_argument('-at', '--access-token',
@@ -133,7 +144,7 @@ def process_command_line():
 
     oauth = None
     if args.oauth_dance:
-        oauth = oauth_dance(args.server, args.consumer_key, key_cert_data)
+        oauth = oauth_dance(args.server, args.consumer_key, key_cert_data, args.print_tokens)
     elif args.access_token and args.access_token_secret and args.consumer_key and args.key_cert:
         oauth = {
             'access_token': args.access_token,
