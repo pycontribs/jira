@@ -78,7 +78,8 @@ class JIRA(object):
         if options is None:
             options = {}
 
-        self._options = dict(JIRA.DEFAULT_OPTIONS.items() + options.items())
+        self._options = JIRA.DEFAULT_OPTIONS
+        self._options.update(options)
 
         self._ensure_magic()
 
