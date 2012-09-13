@@ -81,6 +81,10 @@ class JIRA(object):
         self._options = JIRA.DEFAULT_OPTIONS
         self._options.update(options)
 
+        # rip off trailing slash since all urls depend on that
+        if self._options['server'].endswith('/'):
+            self._options['server'] = self._options['server'][:-1]
+
         self._ensure_magic()
 
         if oauth:
@@ -1366,7 +1370,8 @@ class JIRA(object):
 
         verify = self._options['server'].startswith('https')
         self._session = requests.session(verify=verify,
-                                         hooks={'args': self._add_content_type})
+                                         hooks={'args': self._add_content_type},
+                                         auth=(username, password))
         r = self._session.post(url, data=json.dumps(payload))
         raise_on_error(r)
 
