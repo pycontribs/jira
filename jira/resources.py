@@ -7,6 +7,7 @@ import re
 from jira.exceptions import raise_on_error
 import json
 
+
 class Resource(object):
     """
     Models a URL-addressable resource in the JIRA REST API.
@@ -266,6 +267,7 @@ class Watchers(Resource):
         """
         super(Watchers, self).delete(params={'username': username})
 
+
 class Worklog(Resource):
     """Worklog on an issue."""
 
@@ -292,6 +294,7 @@ class Worklog(Resource):
             params['increaseBy'] = increaseBy
 
         super(Worklog, self).delete(params)
+
 
 class IssueLink(Resource):
     """Link between two issues."""
@@ -490,6 +493,7 @@ resource_class_map = {
     r'user\?username.+$': User,
     r'version/[^/]+$': Version,
 }
+
 
 def cls_for_resource(resource_literal):
     for resource in resource_class_map:
