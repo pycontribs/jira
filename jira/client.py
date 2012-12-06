@@ -11,6 +11,7 @@ import json
 from jira.exceptions import raise_on_error
 from jira.resources import Resource, Issue, Comment, Project, Attachment, Component, Dashboard, Filter, Votes, Watchers, Worklog, IssueLink, IssueLinkType, IssueType, Priority, Version, Role, Resolution, SecurityLevel, Status, User, CustomFieldOption, RemoteLink
 
+
 def translate_resource_args(func):
     """
     Decorator that converts Issue and Project resources to their keys when used as arguments.
@@ -26,6 +27,7 @@ def translate_resource_args(func):
         result = func(*arg_list, **kwargs)
         return result
     return wrapper
+
 
 class JIRA(object):
     """
@@ -78,7 +80,12 @@ class JIRA(object):
         if options is None:
             options = {}
 
-        self._options = dict(JIRA.DEFAULT_OPTIONS.items() + options.items())
+        self._options = JIRA.DEFAULT_OPTIONS
+        self._options.update(options)
+
+        # rip off trailing slash since all urls depend on that
+        if self._options['server'].endswith('/'):
+            self._options['server'] = self._options['server'][:-1]
 
         self._ensure_magic()
 
@@ -622,7 +629,7 @@ class JIRA(object):
         :param watcher: username of the user to add to the watchers list
         """
         url = self._get_url('issue/' + issue + '/watchers')
-        r = self._session.post(url, data=json.dumps(watcher))
+        self._session.post(url, data=json.dumps(watcher))
 
     @translate_resource_args
     def remove_watcher(self, issue, watcher):
@@ -687,7 +694,6 @@ class JIRA(object):
         raise_on_error(r)
 
         return Worklog(self._options, self._session, json.loads(r.text))
-
 
 ### Issue links
 
@@ -1365,7 +1371,8 @@ class JIRA(object):
 
         verify = self._options['server'].startswith('https')
         self._session = requests.session(verify=verify,
-                                         hooks={'args': self._add_content_type})
+                                         hooks={'args': self._add_content_type},
+                                         auth=(username, password))
         r = self._session.post(url, data=json.dumps(payload))
         raise_on_error(r)
 
@@ -1387,7 +1394,7 @@ class JIRA(object):
 
     def _get_url(self, path):
         options = self._options
-        options.update({'path':path})
+        options.update({'path': path})
         return '{server}/rest/api/{rest_api_version}/{path}'.format(**options)
 
     def _get_json(self, path, params=None):
@@ -1414,4 +1421,3 @@ class JIRA(object):
             print "WARNING: Couldn't import magic library (is libmagic present?) Autodetection of avatar image" \
                   " content types will not work; for create_avatar methods, specify the 'contentType' parameter" \
                   " explicitly."
-

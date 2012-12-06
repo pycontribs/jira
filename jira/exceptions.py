@@ -1,5 +1,6 @@
 import json
 
+
 class JIRAError(Exception):
     """General error raised for all problems in operation of the client."""
     def __init__(self, status_code=None, text=None, url=None):
@@ -12,6 +13,7 @@ class JIRAError(Exception):
             return 'HTTP {0}: "{1}"\n{2}'.format(self.status_code, self.text, self.url)
         else:
             return 'HTTP {0}: {1}'.format(self.status_code, self.url)
+
 
 def raise_on_error(r):
     if r.status_code >= 400:
