@@ -18,11 +18,11 @@ setup(
             ['jirashell = tools.jirashell:main'],
     },
 
-    url='http://bitbucket.org/bspeakmon_atlassian/jira-python',
+    url='http://bitbucket.org/bspeakmon/jira-python',
     license='BSD',
     description='A library to ease use of the JIRA 5 REST APIs.',
     author='Ben Speakmon',
-    author_email='bspeakmon@atlassian.com',
+    author_email='ben.speakmon@gmail.com',
     provides=['jira'],
     keywords='jira',
     classifiers=[
