@@ -383,7 +383,7 @@ Contributing
 
 The client is an open source project under the BSD license. Contributions of any kind are welcome!
 
-http://bitbucket.org/bspeakmon_atlassian/jira-python
+http://bitbucket.org/bspeakmon/jira-python
 
 If you find a bug or have an idea for a useful feature, file it at that bitbucket project. Extra points for source
 code patches -- fork and send a pull request.
