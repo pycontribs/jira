@@ -69,7 +69,7 @@ class Resource(object):
         for arg in kwargs:
             data[arg] = kwargs[arg]
 
-        r = self._session.put(self.self, data=json.dumps(data))
+        r = self._session.put(self.self, headers={'content-type':'application/json'}, data=json.dumps(data))
         raise_on_error(r)
 
         self._load(self.self)
