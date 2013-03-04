@@ -135,14 +135,18 @@ def process_command_line():
     if args.prompt_for_password:
         args.password = getpass()
 
-    basic_auth = (args.username, args.password) if args.username and args.password else ()
+    basic_auth = {}
+    if args.username:
+        basic_auth['username'] = args.username
+    if args.password:
+        basic_auth['password'] = args.password
 
     key_cert_data = None
     if args.key_cert:
         with open(args.key_cert, 'r') as key_cert_file:
             key_cert_data = key_cert_file.read()
 
-    oauth = None
+    oauth = {}
     if args.oauth_dance:
         oauth = oauth_dance(args.server, args.consumer_key, key_cert_data, args.print_tokens)
     elif args.access_token and args.access_token_secret and args.consumer_key and args.key_cert:
@@ -158,6 +162,10 @@ def process_command_line():
 def get_config():
     if os.path.exists(CONFIG_PATH):
         options, basic_auth, oauth = process_config()
+    else:
+        options = {}
+        basic_auth = {}
+        oauth = {}
 
     cmd_options, cmd_basic_auth, cmd_oauth = process_command_line()
 
@@ -176,6 +184,9 @@ def main():
         exit("Running ipython inside ipython isn't supported. :(")
 
     options, basic_auth, oauth = get_config()
+
+    if basic_auth:
+        basic_auth = (basic_auth['username'], basic_auth['password'])
 
     jira = JIRA(options=options, basic_auth=basic_auth, oauth=oauth)
 
