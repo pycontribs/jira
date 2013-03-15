@@ -5,6 +5,7 @@ will construct a JIRA object as described below.
 """
 from functools import wraps
 
+import os
 import requests
 from .packages.requests_oauth.hook import OAuthHook
 import json
@@ -170,7 +171,7 @@ class JIRA(object):
         return self._get_json('attachment/meta')
 
     @translate_resource_args
-    def add_attachment(self, issue, attachment):
+    def add_attachment(self, issue, attachment, filename=None):
         """
         Attach an attachment to an issue and returns a Resource for it.
 
@@ -179,12 +180,17 @@ class JIRA(object):
 
         :param issue: the issue to attach the attachment to
         :param attachment: file-like object to attach to the issue
+        :param filename: optional name for the attached file
         :rtype: an Attachment Resource
         """
         # TODO: Support attaching multiple files at once?
         url = self._get_url('issue/' + issue + '/attachments')
+
+        fname = filename
+        if not fname:
+            fname = os.path.basename(attachment.name)
         files = {
-            'file': attachment
+            'file': (fname, attachment)
         }
         r = self._session.post(url, files=files, headers={'X-Atlassian-Token': 'nocheck',
                                                           'content-type': JIRA.SUPPRESS_CONTENT_TYPE_AUTODETECT})
