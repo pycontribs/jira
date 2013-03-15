@@ -180,6 +180,7 @@ class JIRA(object):
 
         :param issue: the issue to attach the attachment to
         :param attachment: file-like object to attach to the issue
+        :param filename: optional name for the attached file
         :rtype: an Attachment Resource
         """
         # TODO: Support attaching multiple files at once?
