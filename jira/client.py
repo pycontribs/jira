@@ -48,8 +48,6 @@ class JIRA(object):
         "rest_api_version": "2"
     }
 
-    SUPPRESS_CONTENT_TYPE_AUTODETECT = 'no_autodetect'
-
     def __init__(self, options=None, basic_auth=None, oauth=None):
         """
         Construct a JIRA client instance.
@@ -96,7 +94,8 @@ class JIRA(object):
             self._create_http_basic_session(*basic_auth)
         else:
             verify = self._options['server'].startswith('https')
-            self._session = requests.session(verify=verify, hooks={'args': self._add_content_type})
+            self._session = requests.Session()
+            self._session.verify = verify
 
 ### Information about this client
 
@@ -156,7 +155,7 @@ class JIRA(object):
             'id': key,
             'value': value
         }
-        r = self._session.put(url, data=json.dumps(payload))
+        r = self._session.put(url, headers={'content-type':'application/json'}, data=json.dumps(payload))
         raise_on_error(r)
 
 ### Attachments
@@ -192,8 +191,7 @@ class JIRA(object):
         files = {
             'file': (fname, attachment)
         }
-        r = self._session.post(url, files=files, headers={'X-Atlassian-Token': 'nocheck',
-                                                          'content-type': JIRA.SUPPRESS_CONTENT_TYPE_AUTODETECT})
+        r = self._session.post(url, files=files, headers={'X-Atlassian-Token': 'nocheck'})
         raise_on_error(r)
 
         attachment = Attachment(self._options, self._session, json.loads(r.text)[0])
@@ -235,7 +233,7 @@ class JIRA(object):
             data['assigneeType'] = assigneeType
 
         url = self._get_url('component')
-        r = self._session.post(url, data=json.dumps(data))
+        r = self._session.post(url, headers={'content-type':'application/json'}, data=json.dumps(data))
         raise_on_error(r)
 
         component = Component(self._options, self._session, raw=json.loads(r.text))
@@ -378,7 +376,7 @@ class JIRA(object):
             data['fields'] = fields_dict
 
         url = self._get_url('issue')
-        r = self._session.post(url, data=json.dumps(data))
+        r = self._session.post(url, headers={'content-type':'application/json'}, data=json.dumps(data))
         raise_on_error(r)
 
         raw_issue_json = json.loads(r.text)
@@ -425,7 +423,7 @@ class JIRA(object):
         """
         url = self._options['server'] + '/rest/api/2/issue/' + issue + '/assignee'
         payload = {'name': assignee}
-        r = self._session.put(url, data=json.dumps(payload))
+        r = self._session.put(url, headers={'content-type':'application/json'}, data=json.dumps(payload))
         raise_on_error(r)
 
     @translate_resource_args
@@ -469,7 +467,7 @@ class JIRA(object):
             data['visibility'] = visibility
 
         url = self._get_url('issue/' + issue + '/comment')
-        r = self._session.post(url, data=json.dumps(data))
+        r = self._session.post(url, headers={'content-type':'application/json'}, data=json.dumps(data))
         raise_on_error(r)
 
         comment = Comment(self._options, self._session, raw=json.loads(r.text))
@@ -533,7 +531,7 @@ class JIRA(object):
             data['relationship'] = relationship
 
         url = self._get_url('issue/' + issue + '/remotelink')
-        r = self._session.post(url, data=json.dumps(data))
+        r = self._session.post(url, headers={'content-type':'application/json'}, data=json.dumps(data))
         raise_on_error(r)
 
         remote_link = RemoteLink(self._options, self._session, raw=json.loads(r.text))
@@ -585,7 +583,7 @@ class JIRA(object):
             data['fields'] = fields_dict
 
         url = self._get_url('issue/' + issue + '/transitions')
-        r = self._session.post(url, data=json.dumps(data))
+        r = self._session.post(url, headers={'content-type':'application/json'}, data=json.dumps(data))
         raise_on_error(r)
 
     @translate_resource_args
@@ -635,7 +633,7 @@ class JIRA(object):
         :param watcher: username of the user to add to the watchers list
         """
         url = self._get_url('issue/' + issue + '/watchers')
-        self._session.post(url, data=json.dumps(watcher))
+        self._session.post(url, headers={'content-type':'application/json'}, data=json.dumps(watcher))
 
     @translate_resource_args
     def remove_watcher(self, issue, watcher):
@@ -696,7 +694,7 @@ class JIRA(object):
             data['timeSpent'] = timeSpent
 
         url = self._get_url('issue/{}/worklog'.format(issue))
-        r = self._session.post(url, params=params, data=json.dumps(data))
+        r = self._session.post(url, params=params, headers={'content-type':'application/json'}, data=json.dumps(data))
         raise_on_error(r)
 
         return Worklog(self._options, self._session, json.loads(r.text))
@@ -730,7 +728,7 @@ class JIRA(object):
             'comment': comment
         }
         url = self._get_url('issueLink')
-        r = self._session.post(url, data=json.dumps(data))
+        r = self._session.post(url, headers={'content-type':'application/json'}, data=json.dumps(data))
         raise_on_error(r)
 
     def issue_link(self, id):
@@ -869,14 +867,16 @@ class JIRA(object):
             'filename': filename,
             'size': size
         }
-        if contentType is None:
-            if self._magic:
-                contentType = self._magic.from_buffer(avatar_img)
-            else:
-                contentType = JIRA.SUPPRESS_CONTENT_TYPE_AUTODETECT
+
+        headers = {'X-Atlassian-Token': 'no-check'}
+        if contentType is not None:
+            headers['content-type'] = contentType
+        elif self._magic:
+            headers['content-type'] = self._magic.from_buffer(avatar_img)
+        # If no contentType, and no self._magic, don't even try to detect content type
+
         url = self._get_url('project/' + project + '/avatar/temporary')
-        r = self._session.post(url, params=params,
-            headers={'content-type': contentType, 'X-Atlassian-Token': 'no-check'}, data=avatar_img)
+        r = self._session.post(url, params=params, headers=headers, data=avatar_img)
         raise_on_error(r)
 
         cropping_properties = json.loads(r.text)
@@ -900,7 +900,7 @@ class JIRA(object):
         """
         data = cropping_properties
         url = self._get_url('project/' + project + '/avatar')
-        r = self._session.post(url, data=json.dumps(data))
+        r = self._session.post(url, headers={'content-type':'application/json'}, data=json.dumps(data))
         raise_on_error(r)
 
         return json.loads(r.text)
@@ -1153,14 +1153,16 @@ class JIRA(object):
             'filename': filename,
             'size': size
         }
-        if contentType is None:
-            if self._magic:
-                contentType = self._magic.from_buffer(avatar_img)
-            else:
-                contentType = JIRA.SUPPRESS_CONTENT_TYPE_AUTODETECT
+
+        headers = {'X-Atlassian-Token': 'no-check'}
+        if contentType is not None:
+            headers['content-type'] = contentType
+        elif self._magic:
+            headers['content-type'] = self._magic.from_buffer(avatar_img)
+        # If no contentType, and no self._magic, don't even try to detect content type
+
         url = self._get_url('user/avatar/temporary')
-        r = self._session.post(url, params=params,
-                headers={'content-type': contentType, 'X-Atlassian-Token': 'no-check'}, data=avatar_img)
+        r = self._session.post(url, params=params, headers=headers, data=avatar_img)
         raise_on_error(r)
 
         cropping_properties = json.loads(r.text)
@@ -1183,7 +1185,7 @@ class JIRA(object):
         """
         data = cropping_properties
         url = self._get_url('user/avatar')
-        r = self._session.post(url, params={'username': user}, data=json.dumps(data))
+        r = self._session.post(url, params={'username': user}, headers={'content-type':'application/json'}, data=json.dumps(data))
         raise_on_error(r)
 
         return json.loads(r.text)
@@ -1272,7 +1274,7 @@ class JIRA(object):
             data['releaseDate'] = releaseDate
 
         url = self._get_url('version')
-        r = self._session.post(url, data=json.dumps(data))
+        r = self._session.post(url, headers={'content-type':'application/json'}, data=json.dumps(data))
         raise_on_error(r)
 
         version = Version(self._options, self._session, raw=json.loads(r.text))
@@ -1295,7 +1297,7 @@ class JIRA(object):
             data['position'] = position
 
         url = self._get_url('version/' + id + '/move')
-        r = self._session.post(url, data=json.dumps(data))
+        r = self._session.post(url, headers={'content-type':'application/json'}, data=json.dumps(data))
         raise_on_error(r)
 
         version = Version(self._options, self._session, raw=json.loads(r.text))
@@ -1322,7 +1324,7 @@ class JIRA(object):
         :param id: the version to count issues for
         """
         r_json = self._get_json('version/' + id + '/relatedIssueCounts')
-        del r_json['self']   # this isn't really an addressable resource
+        del r_json['self']  # this isn't really an addressable resource
         return r_json
 
     def version_count_unresolved_issues(self, id):
@@ -1360,14 +1362,6 @@ class JIRA(object):
 
 ### Utilities
 
-    def _add_content_type(self, args):
-        if args['method'] in ('PUT', 'POST'):
-            if 'content-type' in args['headers']:
-                if args['headers']['content-type'] == JIRA.SUPPRESS_CONTENT_TYPE_AUTODETECT:
-                    del args['headers']['content-type']
-            else:
-                args['headers']['content-type'] = 'application/json'
-
     def _create_http_basic_session(self, username, password):
         url = self._options['server'] + '/rest/auth/1/session'
         payload = {
@@ -1376,10 +1370,11 @@ class JIRA(object):
         }
 
         verify = self._options['server'].startswith('https')
-        self._session = requests.session(verify=verify,
-                                         hooks={'args': self._add_content_type},
-                                         auth=(username, password))
-        r = self._session.post(url, data=json.dumps(payload))
+        self._session = requests.Session()
+        self._session.verify = verify
+        self._session.auth = (username, password)
+
+        r = self._session.post(url, headers={'content-type':'application/json'}, data=json.dumps(payload))
         raise_on_error(r)
 
     def _create_oauth_session(self, oauth):
@@ -1387,15 +1382,15 @@ class JIRA(object):
         oauth_hook = OAuthHook(access_token=oauth['access_token'], access_token_secret=oauth['access_token_secret'],
                                consumer_key=oauth['consumer_key'], key_cert=oauth['key_cert'],
                                consumer_secret='', header_auth=True)
-        self._session = requests.session(verify=verify,
-                                         hooks={'pre_request': oauth_hook,
-                                                'args': self._add_content_type})
+        self._session = requests.Session()
+        self._session.verify = verify
+        self._session.auth = oauth_hook
 
     def _set_avatar(self, params, url, avatar):
         data = {
             'id': avatar
         }
-        r = self._session.put(url, params=params, data=json.dumps(data))
+        r = self._session.put(url, params=params, headers={'content-type':'application/json'}, data=json.dumps(data))
         raise_on_error(r)
 
     def _get_url(self, path):
