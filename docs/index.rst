@@ -58,7 +58,7 @@ Requests
 ^^^^^^^^
 Kenneth Reitz's indispensable `python-requests <http://docs.python-requests.org>`_ library handles the HTTP
 business. Usually, the latest version available at time of release is the minimum version required; at this writing,
-that version is 0.13.6.
+that version is 1.1.0.
 
 IPython
 ^^^^^^^
