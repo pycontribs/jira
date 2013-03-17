@@ -24,13 +24,17 @@ def raise_on_error(r):
                 if 'message' in response:
                     # JIRA 5.1 errors
                     error = response['message']
-                elif 'errorMessages' in response:
+                elif 'errorMessages' in response and len(response['errorMessages']) > 0:
                     # JIRA 5.0.x error messages sometimes come wrapped in this array
+                    # Sometimes this is present but empty
                     errorMessages = response['errorMessages']
-                    if isinstance(errorMessages, (list, tuple)) and len(errorMessages) > 0:
+                    if isinstance(errorMessages, (list, tuple)):
                         error = errorMessages[0]
                     else:
                         error = errorMessages
+                elif 'errors' in response and len(response['errors']) > 0:
+                    # JIRA 6.x error messages are found in this array.
+                    error = response['errors']
                 else:
                     error = r.text
             except ValueError:
