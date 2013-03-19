@@ -7,7 +7,8 @@ from functools import wraps
 
 import os
 import requests
-from .packages.requests_oauth.hook import OAuthHook
+from requests_oauthlib import OAuth1
+from oauthlib.oauth1 import SIGNATURE_RSA
 import json
 from jira.exceptions import raise_on_error
 from jira.resources import Resource, Issue, Comment, Project, Attachment, Component, Dashboard, Filter, Votes, Watchers, Worklog, IssueLink, IssueLinkType, IssueType, Priority, Version, Role, Resolution, SecurityLevel, Status, User, CustomFieldOption, RemoteLink
@@ -1379,12 +1380,16 @@ class JIRA(object):
 
     def _create_oauth_session(self, oauth):
         verify = self._options['server'].startswith('https')
-        oauth_hook = OAuthHook(access_token=oauth['access_token'], access_token_secret=oauth['access_token_secret'],
-                               consumer_key=oauth['consumer_key'], key_cert=oauth['key_cert'],
-                               consumer_secret='', header_auth=True)
+        oauth = OAuth1(
+                       oauth['consumer_key'], 
+                       rsa_key=oauth['key_cert'],
+                       signature_method=SIGNATURE_RSA,
+                       resource_owner_key=oauth['access_token'],
+                       resource_owner_secret=oauth['access_token_secret']
+                       )
         self._session = requests.Session()
         self._session.verify = verify
-        self._session.auth = oauth_hook
+        self._session.auth = oauth
 
     def _set_avatar(self, params, url, avatar):
         data = {
