@@ -11,7 +11,8 @@ from getpass import getpass
 from sys import exit
 import os
 import requests
-from jira.packages.requests_oauth.hook import OAuthHook
+from oauthlib.oauth1 import SIGNATURE_RSA
+from requests_oauthlib import OAuth1
 from urlparse import parse_qsl
 import webbrowser
 from jira.client import JIRA
@@ -23,10 +24,8 @@ def oauth_dance(server, consumer_key, key_cert_data, print_tokens=False):
     verify = server.startswith('https')
 
     # step 1: get request tokens
-    request_oauth_hook = OAuthHook(consumer_key=consumer_key, consumer_secret='',
-                                   key_cert=key_cert_data, header_auth=True)
-    r = requests.post(server + '/plugins/servlet/oauth/request-token', verify=verify,
-                      hooks={'pre_request': request_oauth_hook})
+    oauth = OAuth1(consumer_key, signature_method=SIGNATURE_RSA, rsa_key=key_cert_data)
+    r = requests.post(server + '/plugins/servlet/oauth/request-token', verify=verify, auth=oauth)
     request = dict(parse_qsl(r.text))
     request_token = request['oauth_token']
     request_token_secret = request['oauth_token_secret']
@@ -45,11 +44,14 @@ def oauth_dance(server, consumer_key, key_cert_data, print_tokens=False):
         exit('Abandoning OAuth dance. Your partner faceplants. The audience boos. You feel shame.')
 
     # step 3: get access tokens for validated user
-    access_oauth_hook = OAuthHook(access_token=request_token, access_token_secret=request_token_secret,
-                                  consumer_key=consumer_key, consumer_secret='',
-                                  key_cert=key_cert_data, header_auth=True)
-    r = requests.post(server + '/plugins/servlet/oauth/access-token', verify=verify,
-                      hooks={'pre_request': access_oauth_hook})
+    oauth = OAuth1(
+                consumer_key, 
+                signature_method=SIGNATURE_RSA,
+                rsa_key=key_cert_data,
+                resource_owner_key=request_token,
+                resource_owner_secret=request_token_secret
+            )
+    r = requests.post(server + '/plugins/servlet/oauth/access-token', verify=verify, auth=oauth)
     access = dict(parse_qsl(r.text))
 
     if print_tokens:
