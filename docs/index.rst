@@ -121,7 +121,7 @@ HTTP BASIC
 
 Pass a tuple of (username, password) to the ``basic_auth`` constructor argument::
 
-    authed_jira = JIRA(basic_auth=('username', 'password))
+    authed_jira = JIRA(basic_auth=('username', 'password'))
 
 OAuth
 ^^^^^
