@@ -180,7 +180,9 @@ class JIRA(object):
 
         :param issue: the issue to attach the attachment to
         :param attachment: file-like object to attach to the issue
-        :param filename: optional name for the attached file
+        :param filename: optional name for the attached file. If omitted, the file object's ``name`` attribute
+            is used. If you aquired the file-like object by any other method than ``open()``, make sure 
+            that a name is specified in one way or the other.
         :rtype: an Attachment Resource
         """
         # TODO: Support attaching multiple files at once?
