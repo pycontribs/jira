@@ -58,7 +58,7 @@ Requests
 ^^^^^^^^
 Kenneth Reitz's indispensable `python-requests <http://docs.python-requests.org>`_ library handles the HTTP
 business. Usually, the latest version available at time of release is the minimum version required; at this writing,
-that version is 0.13.6.
+that version is 1.1.0.
 
 IPython
 ^^^^^^^
@@ -121,7 +121,7 @@ HTTP BASIC
 
 Pass a tuple of (username, password) to the ``basic_auth`` constructor argument::
 
-    authed_jira = JIRA(basic_auth=('username', 'password))
+    authed_jira = JIRA(basic_auth=('username', 'password'))
 
 OAuth
 ^^^^^
@@ -383,7 +383,7 @@ Contributing
 
 The client is an open source project under the BSD license. Contributions of any kind are welcome!
 
-http://bitbucket.org/bspeakmon_atlassian/jira-python
+http://bitbucket.org/bspeakmon/jira-python
 
 If you find a bug or have an idea for a useful feature, file it at that bitbucket project. Extra points for source
 code patches -- fork and send a pull request.
