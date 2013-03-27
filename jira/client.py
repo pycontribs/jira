@@ -273,11 +273,12 @@ class JIRA(object):
 
     def dashboards(self, filter=None, startAt=0, maxResults=20):
         """
-        Return a list of Dashboard resources.
+        Return a ResultList of Dashboard resources and a ``total`` count.
 
         :param filter: either "favourite" or "my", the type of dashboards to return
         :param startAt: index of the first dashboard to return
-        :param maxResults: maximum number of dashboards to return
+        :param maxResults: maximum number of dashboards to return. The total number of
+            results is always available in the ``total`` attribute of the returned ResultList.
         """
         params = {}
         if filter is not None:
@@ -1001,11 +1002,12 @@ class JIRA(object):
 
     def search_issues(self, jql_str, startAt=0, maxResults=50, fields=None, expand=None):
         """
-        Get a list of issue Resources matching a JQL search string.
+        Get a ResultList of issue Resources matching a JQL search string.
 
         :param jql_str: the JQL search string to use
         :param startAt: index of the first issue to return
-        :param maxResults: maximum number of issues to return
+        :param maxResults: maximum number of issues to return. Total number of results 
+            is available in the ``total`` attribute of the returned ResultList.
         :param fields: comma-separated string of issue fields to include in the results
         :param expand: extra information to fetch inside each resource
         """
