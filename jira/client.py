@@ -31,6 +31,15 @@ def translate_resource_args(func):
     return wrapper
 
 
+class ResultList(list):
+    def __init__(self, iterable=None, _total=None):
+        if iterable is not None:
+            list.__init__(self, iterable)
+        else:
+            list.__init__(self)
+        self.total = _total if _total is not None else len(self)
+
+
 class JIRA(object):
     """
     User interface to JIRA.
@@ -278,7 +287,7 @@ class JIRA(object):
 
         r_json = self._get_json('dashboard', params=params)
         dashboards = [Dashboard(self._options, self._session, raw_dash_json) for raw_dash_json in r_json['dashboards']]
-        return dashboards
+        return ResultList(dashboards, r_json['total'])
 
     def dashboard(self, id):
         """
@@ -1014,7 +1023,7 @@ class JIRA(object):
 
         resource = self._get_json('search', search_params)
         issues = [Issue(self._options, self._session, raw_issue_json) for raw_issue_json in resource['issues']]
-        return issues
+        return ResultList(issues, resource['total'])
 
 ### Security levels
 
