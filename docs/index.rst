@@ -46,6 +46,8 @@ Source packages are also available at PyPI:
 
     http://pypi.python.org/pypi/jira-python/
 
+.. _Dependencies:
+
 Dependencies
 ------------
 
@@ -78,6 +80,11 @@ tlslite
 This is a TLS implementation that handles key signing. It's used to help implement the OAuth handshaking.
 
 Installing through pip takes care of these dependencies for you.
+
+PyCrypto
+^^^^^^^^
+This is required for the RSA-SHA1 used by OAuth. Please note that it's **not** installed automatically, since it's
+a fairly cumbersome process in Windows. On Linux and OS X, a ``pip install pycrypto`` should do it. 
 
 Examples
 ========
@@ -144,6 +151,10 @@ Pass a dict of OAuth properties to the ``oauth`` constructor argument::
 .. note ::
     The OAuth access tokens must be obtained and authorized ahead of time through the standard OAuth dance. For
     interactive use, ``jirashell`` can perform the dance with you if you don't already have valid tokens.
+
+.. note ::
+    OAuth in Jira uses RSA-SHA1 which requires the PyCrypto library. PyCrypto is **not** installed automatically
+    when installing jira-python. See also the Dependencies_. section above.
 
 * The access token and token secret uniquely identify the user.
 * The consumer key must match the OAuth provider configured on the JIRA server.
