@@ -55,7 +55,8 @@ class JIRA(object):
     DEFAULT_OPTIONS = {
         "server": "http://localhost:2990/jira",
         "rest_path": "api",
-        "rest_api_version": "2"
+        "rest_api_version": "2",
+        "verify": True
     }
 
     def __init__(self, options=None, basic_auth=None, oauth=None):
@@ -103,7 +104,7 @@ class JIRA(object):
         elif basic_auth:
             self._create_http_basic_session(*basic_auth)
         else:
-            verify = self._options['server'].startswith('https')
+            verify = self._options['verify']
             self._session = requests.Session()
             self._session.verify = verify
 
@@ -1383,7 +1384,7 @@ class JIRA(object):
             'password': password
         }
 
-        verify = self._options['server'].startswith('https')
+        verify = self._options['verify']
         self._session = requests.Session()
         self._session.verify = verify
         self._session.auth = (username, password)
@@ -1392,7 +1393,7 @@ class JIRA(object):
         raise_on_error(r)
 
     def _create_oauth_session(self, oauth):
-        verify = self._options['server'].startswith('https')
+        verify = self._options['verify']
         oauth = OAuth1(
                        oauth['consumer_key'], 
                        rsa_key=oauth['key_cert'],
