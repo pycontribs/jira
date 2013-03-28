@@ -1379,19 +1379,10 @@ class JIRA(object):
 ### Utilities
 
     def _create_http_basic_session(self, username, password):
-        url = self._options['server'] + '/rest/auth/1/session'
-        payload = {
-            'username': username,
-            'password': password
-        }
-
         verify = self._options['verify']
         self._session = requests.Session()
         self._session.verify = verify
         self._session.auth = (username, password)
-
-        r = self._session.post(url, headers={'content-type':'application/json'}, data=json.dumps(payload))
-        raise_on_error(r)
 
     def _create_oauth_session(self, oauth):
         verify = self._options['verify']
