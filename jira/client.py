@@ -78,6 +78,7 @@ class JIRA(object):
             * server -- the server address and context path to use. Defaults to ``http://localhost:2990/jira``.
             * rest_path -- the root REST path to use. Defaults to ``api``, where the JIRA REST resources live.
             * rest_api_version -- the version of the REST resources under rest_path to use. Defaults to ``2``.
+            * verify -- Verify SSL certs. Defaults to ``True``. 
         :param basic_auth: A tuple of username and password to use when establishing a session via HTTP BASIC
         authentication.
         :param oauth: A dict of properties for OAuth authentication. The following properties are required:
