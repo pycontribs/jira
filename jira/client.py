@@ -12,6 +12,7 @@ from oauthlib.oauth1 import SIGNATURE_RSA
 import json
 from jira.exceptions import raise_on_error
 from jira.resources import Resource, Issue, Comment, Project, Attachment, Component, Dashboard, Filter, Votes, Watchers, Worklog, IssueLink, IssueLinkType, IssueType, Priority, Version, Role, Resolution, SecurityLevel, Status, User, CustomFieldOption, RemoteLink
+from jira.resources import Board, Sprint
 
 
 def translate_resource_args(func):
@@ -1374,6 +1375,170 @@ class JIRA(object):
         """Destroy the user's current WebSudo session."""
         url = self._options['server'] + '/rest/auth/1/websudo'
         r = self._session.delete(url)
+        raise_on_error(r)
+
+### GreenHopper
+
+class GreenHopper(JIRA):
+    '''
+    Define a class to hold functions for accessing GreenHopper resources.
+    Extend the python-jira JIRA class.
+    '''
+
+    def __init__(self, options=None, basic_auth=None, oauth=None):
+        JIRA.__init__(self, options, basic_auth, oauth)
+
+    def _gh_get_url(self, path):
+        ''' Use the given path for GH REST resources '''
+        options = self._options
+        options.update({'path':path})
+        return '{server}/rest/greenhopper/1.0/{path}'.format(**options)
+
+    def _gh_get_json(self, path, params=None):
+        ''' Return the GH data '''
+        url = self._gh_get_url(path)
+        r = self._session.get(url, params=params)
+        raise_on_error(r)
+
+        r_json = json.loads(r.text)
+        return r_json
+
+    '''
+    Define the functions that interact with GreenHopper
+    '''
+
+    def boards(self):
+        '''
+        Return a list of all the boards
+        Example: rest/greenhopper/1.0/rapidviews/list
+        '''
+        r_json = self._gh_get_json('rapidviews/list')
+        boards = [Board(self._options, self._session, raw_res_json) for raw_res_json in r_json['views']]
+        return boards
+
+    def sprints(self, id):
+        '''
+        Return the Sprints that appear with the given board id
+
+        Example: rest/greenhopper/1.0/sprints/2
+        '''
+        r_json = self._gh_get_json('sprints/%s' % id)
+        sprints = [Sprint(self._options, self._session, raw_res_json) for raw_res_json in r_json['sprints']]
+        return sprints
+
+    def completed_issues(self, board_id, sprint_id):
+        '''
+        Return the completed issues for the given board id and sprint id
+
+        TODO need a better way to provide all the info from the sprintreport
+        incompletedIssues went to backlog but not it not completed
+        issueKeysAddedDuringSprint used to mark some with a * ?
+        puntedIssues are for scope change?
+        '''
+        r_json = self._gh_get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id))
+        issues = [Issue(self._options, self._session, raw_res_json) for raw_res_json in r_json['contents']['completedIssues']]
+        return issues
+
+    def incompleted_issues(self, board_id, sprint_id):
+        '''
+        Return the completed issues for the given board id and sprint id
+        '''
+        r_json = self._gh_get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id))
+        issues = [Issue(self._options, self._session, raw_res_json) for raw_res_json in r_json['contents']['incompletedIssues']]
+        return issues
+
+    def sprint_info(self, board_id, sprint_id):
+        '''
+        Return the information about a sprint.
+        This uses the same method as completed issues
+        '''
+        r_json = self._gh_get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id))
+        return r_json['sprint']
+
+    def create_board(self, name, project_ids, preset="scrum"):
+        '''
+        Create a new board for the given projects
+        Preset can be kanban, scrum or diy
+        '''
+        payload = {}
+        payload['name'] = name
+        payload['projectIds'] = project_ids
+        payload['preset'] = preset
+        url = self._gh_get_url('rapidview/create/presets')
+        r = self._session.post(url, data=json.dumps(payload))
+        raise_on_error(r)
+        # This isn't really a Board object, just a subset for the id
+        result = r.json
+        return result
+
+    def create_sprint(self, name, board_id):
+        '''
+        Create a new sprint for the given board
+
+        createSprintWithIssues in CreateSprintResource
+
+        Long rapidViewId;
+        Long sprintMarkerId;
+        List<String> issuesForSprint;
+        String name;
+        String startDate;
+        String endDate;
+
+        This is before the sprint is started:
+        http://localhost:8080/rest/greenhopper/1.0/backlog/markers/add
+        {"rapidViewId":4}
+        which returns
+        {"afterMarkerId":10,"name":"Our First Sprint 4","id":11}
+
+        When an sprint is started:
+        {"rapidViewId":4,"sprintMarkerId":11,"issuesForSprint":["SRC-1"],"name":"Our First Sprint 5","startDate":"22/Mar/13 8:51 PM","endDate":"05/Apr/13 8:51 PM"}
+
+        Responds:
+        {"id":5,"name":"Our First Sprint 5","closed":false}
+
+        And create/model comes before create, and expects issues to add
+        {"rapidViewId":2,"sprintMarkerId":0} fails. 
+
+        When a sprint is in backlog it is just a marker
+
+        {"rapidViewId":2,"sprintMarkerId":0,"issuesForSprint":[],"name":"SPR 1","startDate":"26/Mar/13 11:36 AM","endDate":"26/Mar/13 12:36 PM"}
+
+        '''
+        payload = {}
+        payload['name'] = name
+        payload['rapidViewId'] = board_id
+        payload['sprintMarkerId'] = 0
+        url = self._gh_get_url('sprint/create')
+        r = self._session.post(url, data=json.dumps(payload))
+        raise_on_error(r)
+        # This isn't really a Sprint object, just a subset for the id
+        result = r.json
+        return result
+
+    def add_issues_to_sprint(self, sprint_id, issue_keys):
+        '''
+        Add the issues in the array of issue keys to the given started
+        but not completed sprint. Idempotent.
+
+        If a sprint was completed then have to also edit the issues' history 
+        so that it was added to the sprint before it was completed,
+        preferably before it started. A completed sprint's issues also
+        all have a resolution set before the completion date.
+
+        If a sprint was not started then have to edit the marker
+        and copy the rank of each issue too.
+
+        /sprint/{sprintId}/issues/add
+        SprintIssuesResource.java 
+        @Path("add")
+        public Response addIssueToSprint(@PathParam("sprintId") final Long sprintId, final IssuesKeysModel model)
+        {"issueKeys":["TS-3"]}   (paste this into textarea, not as a custom parameter)
+        When this is working in the rest browser must check in Chrome to see if put or post. Post gave 405 Method Not Allowed
+        '''
+        data = {}
+        data['issueKeys'] = issue_keys
+        url = self._gh_get_url('sprint/%s/issues/add' % (sprint_id))
+        r = self._session.put(url, data=json.dumps(data))
         raise_on_error(r)
 
 ### Utilities
