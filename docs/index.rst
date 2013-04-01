@@ -15,6 +15,14 @@ JIRA REST API.
 Changelog
 =========
 
+Version 0.13
+
+* Update to work with Requests 1.0+
+* Added optional ``filename`` parameter to ``add_attachement``
+* Added ability to pass a ``verify`` parameter to the requests session. 
+* ``search_issues`` and ``dashboards`` now return a ``ResultList`` which includes some search metadata.
+* Various bugfixes (issues #5, #7, #8 and #11)
+
 Version 0.12 -- August 6, 2012
 
 * Reworked content-type usage to play nice with OAuth in JIRA 5.1.
