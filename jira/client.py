@@ -570,7 +570,7 @@ class JIRA(object):
         return self._get_json('issue/' + issue + '/transitions', params)['transitions']
 
     @translate_resource_args
-    def transition_issue(self, issue, transitionId, fields=None, **fieldargs):
+    def transition_issue(self, issue, transitionId, comment=None, fields=None, **fieldargs):
         # TODO: Support update verbs (same as issue.update())
         """
         Perform a transition on an issue.
@@ -581,6 +581,7 @@ class JIRA(object):
 
         :param issue: ID or key of the issue to perform the transition on
         :param transitionId: ID of the transition to perform
+        :param comment: *Optional* String to add as comment to the issue when performing the transition. 
         :param fields: a dict containing field names and the values to use. If present, all other keyword arguments\
         will be ignored
         """
@@ -589,6 +590,8 @@ class JIRA(object):
                 'id': transitionId
             }
         }
+        if comment:
+            data['update'] = { 'comment': [ { 'add': { 'body': comment } } ] }
         if fields is not None:
             data['fields'] = fields
         else:
