@@ -10,7 +10,7 @@ Welcome to jira-python's documentation!
    :maxdepth: 2
 
 This documents the ``jira-python`` package (version |release|), a Python library designed to ease the use of the
-JIRA REST API.
+JIRA REST API. Some basic support for the GreenHopper REST API also exists. The source is stored at https://bitbucket.org/bspeakmon/jira-python
 
 Changelog
 =========
@@ -96,6 +96,10 @@ Here's a quick usage example:
 Another example shows how to authenticate with your JIRA username and password:
 
 .. literalinclude:: ../examples/basic_auth.py
+
+This example shows how to work with GreenHopper:
+
+.. literalinclude:: ../examples/greenhopper.py
 
 
 Quickstart
@@ -402,7 +406,7 @@ code patches -- fork and send a pull request.
 Discussion
 ----------
 
-We encourage all who wish to discuss the client to find the widest possible audience at http://answers.atlassian.com.
+We encourage all who wish to discuss the client to find the widest possible audience at http://answers.atlassian.com using the tag "python".
 
 API Documentation
 =================
@@ -411,7 +415,7 @@ API Documentation
 --------------------
 
 .. automodule:: jira.client
-    :members:
+    :members: JIRA,GreenHopper
     :undoc-members:
     :show-inheritance:
 

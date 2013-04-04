@@ -1429,12 +1429,12 @@ class GreenHopper(JIRA):
     def completed_issues(self, board_id, sprint_id):
         '''
         Return the completed issues for the given board id and sprint id
-
-        TODO need a better way to provide all the info from the sprintreport
-        incompletedIssues went to backlog but not it not completed
-        issueKeysAddedDuringSprint used to mark some with a * ?
-        puntedIssues are for scope change?
         '''
+        # TODO need a better way to provide all the info from the sprintreport
+        # incompletedIssues went to backlog but not it not completed
+        # issueKeysAddedDuringSprint used to mark some with a * ?
+        # puntedIssues are for scope change?
+
         r_json = self._gh_get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id))
         issues = [Issue(self._options, self._session, raw_res_json) for raw_res_json in r_json['contents']['completedIssues']]
         return issues
