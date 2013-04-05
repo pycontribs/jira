@@ -570,7 +570,7 @@ class JIRA(object):
         return self._get_json('issue/' + issue + '/transitions', params)['transitions']
 
     @translate_resource_args
-    def transition_issue(self, issue, transitionId, comment=None, fields=None, **fieldargs):
+    def transition_issue(self, issue, transitionId, fields=None, comment=None, **fieldargs):
         # TODO: Support update verbs (same as issue.update())
         """
         Perform a transition on an issue.
