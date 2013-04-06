@@ -15,8 +15,8 @@ gh = GreenHopper(options)
 # Get all boards viewable by anonymous users.
 boards = gh.boards()
 
-# Get the sprints in the first board
-board_id = 441 # boards[0].id
+# Get the sprints in a specific board
+board_id = 441
 print "GreenHopper board: %s (%s)" % (boards[0].name, board_id)
 sprints = gh.sprints(board_id)
 
