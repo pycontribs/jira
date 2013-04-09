@@ -436,6 +436,38 @@ class Version(Resource):
 
         super(Version, self).delete(params)
 
+# GreenHopper
+
+class GreenHopperResource(Resource):
+    """A generic GreenHopper resource."""
+
+    def __init__(self, path, options, session, raw):
+        Resource.__init__(self, path, options, session)
+        if raw:
+            self._parse_raw(raw)
+
+    def _url(self, ids):
+        url = '{server}/rest/greenhopper/1.0/'.format(**self._options)
+        url += self._resource.format(*ids)
+        return url
+
+class Sprint(GreenHopperResource):
+    """A GreenHopper sprint."""
+
+    def __init__(self, options, session, raw):
+        GreenHopperResource.__init__(self, 'sprints/{0}', options, session, raw)
+        if raw:
+            self._parse_raw(raw)
+
+class Board(GreenHopperResource):
+    """A GreenHopper board."""
+
+    def __init__(self, options, session, raw):
+        GreenHopperResource.__init__(self, 'views/{0}', options, session, raw)
+        if raw:
+            self._parse_raw(raw)
+
+# Utilities
 
 def dict2resource(raw, top=None, options=None, session=None):
     """
