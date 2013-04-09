@@ -4,6 +4,8 @@ responses from JIRA and the Resource/dict abstractions provided by this library.
 will construct a JIRA object as described below.
 """
 from functools import wraps
+import imghdr
+import mimetypes
 
 import os
 import requests
@@ -99,7 +101,7 @@ class JIRA(object):
         if self._options['server'].endswith('/'):
             self._options['server'] = self._options['server'][:-1]
 
-        self._ensure_magic()
+        self._try_magic()
 
         if oauth:
             self._create_oauth_session(oauth)
@@ -890,9 +892,9 @@ class JIRA(object):
         headers = {'X-Atlassian-Token': 'no-check'}
         if contentType is not None:
             headers['content-type'] = contentType
-        elif self._magic:
-            headers['content-type'] = self._magic.from_buffer(avatar_img)
-        # If no contentType, and no self._magic, don't even try to detect content type
+        else:
+            # try to detect content-type, this may return None
+            headers['content-type'] = self._get_mime_type(avatar_img)
 
         url = self._get_url('project/' + project + '/avatar/temporary')
         r = self._session.post(url, params=params, headers=headers, data=avatar_img)
@@ -1177,9 +1179,9 @@ class JIRA(object):
         headers = {'X-Atlassian-Token': 'no-check'}
         if contentType is not None:
             headers['content-type'] = contentType
-        elif self._magic:
-            headers['content-type'] = self._magic.from_buffer(avatar_img)
-        # If no contentType, and no self._magic, don't even try to detect content type
+        else:
+            # try to detect content-type, this may return None
+            headers['content-type'] = self._get_mime_type(avatar_img)
 
         url = self._get_url('user/avatar/temporary')
         r = self._session.post(url, params=params, headers=headers, data=avatar_img)
@@ -1593,11 +1595,20 @@ class GreenHopper(JIRA):
         resource.find(ids, params)
         return resource
 
-    def _ensure_magic(self):
+    def _try_magic(self):
         try:
             import magic
             self._magic = magic.Magic(mime=True)
         except ImportError:
-            print "WARNING: Couldn't import magic library (is libmagic present?) Autodetection of avatar image" \
-                  " content types will not work; for create_avatar methods, specify the 'contentType' parameter" \
-                  " explicitly."
+            self._magic = None
+
+    def _get_mime_type(self, buff):
+        if self._magic is not None:
+            return self._magic.from_buffer(buff)
+        else:
+            try:
+                return mimetypes.guess_type("f." + imghdr.what(0, buff))[0]
+            except (IOError, TypeError):
+                print "WARNING: Couldn't detect content type of avatar image" \
+                      ". Specify the 'contentType' parameter explicitly."
+                return None
