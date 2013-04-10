@@ -12,6 +12,7 @@ setup(
                       'requests_oauthlib>=0.3.0',
                       'ipython>=0.13',
                       'tlslite==0.4.1'],
+    setup_requires=['sphinx','requests_oauthlib'],
     extras_require={
         'magic': ['python-magic>=0.4.2'],
     },
