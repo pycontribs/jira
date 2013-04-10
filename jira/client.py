@@ -81,7 +81,7 @@ class JIRA(object):
             * server -- the server address and context path to use. Defaults to ``http://localhost:2990/jira``.
             * rest_path -- the root REST path to use. Defaults to ``api``, where the JIRA REST resources live.
             * rest_api_version -- the version of the REST resources under rest_path to use. Defaults to ``2``.
-            * verify -- Verify SSL certs. Defaults to ``True``. 
+            * verify -- Verify SSL certs. Defaults to ``True``.
         :param basic_auth: A tuple of username and password to use when establishing a session via HTTP BASIC
         authentication.
         :param oauth: A dict of properties for OAuth authentication. The following properties are required:
@@ -195,7 +195,7 @@ class JIRA(object):
         :param issue: the issue to attach the attachment to
         :param attachment: file-like object to attach to the issue
         :param filename: optional name for the attached file. If omitted, the file object's ``name`` attribute
-            is used. If you aquired the file-like object by any other method than ``open()``, make sure 
+            is used. If you aquired the file-like object by any other method than ``open()``, make sure
             that a name is specified in one way or the other.
         :rtype: an Attachment Resource
         """
@@ -584,7 +584,7 @@ class JIRA(object):
 
         :param issue: ID or key of the issue to perform the transition on
         :param transitionId: ID of the transition to perform
-        :param comment: *Optional* String to add as comment to the issue when performing the transition. 
+        :param comment: *Optional* String to add as comment to the issue when performing the transition.
         :param fields: a dict containing field names and the values to use. If present, all other keyword arguments\
         will be ignored
         """
@@ -1014,7 +1014,7 @@ class JIRA(object):
 
         :param jql_str: the JQL search string to use
         :param startAt: index of the first issue to return
-        :param maxResults: maximum number of issues to return. Total number of results 
+        :param maxResults: maximum number of issues to return. Total number of results
             is available in the ``total`` attribute of the returned ResultList.
         :param fields: comma-separated string of issue fields to include in the results
         :param expand: extra information to fetch inside each resource
@@ -1382,7 +1382,75 @@ class JIRA(object):
         r = self._session.delete(url)
         raise_on_error(r)
 
+### Utilities
+
+    def _create_http_basic_session(self, username, password):
+        verify = self._options['verify']
+        self._session = requests.Session()
+        self._session.verify = verify
+        self._session.auth = (username, password)
+
+    def _create_oauth_session(self, oauth):
+        verify = self._options['verify']
+        oauth = OAuth1(
+                       oauth['consumer_key'],
+                       rsa_key=oauth['key_cert'],
+                       signature_method=SIGNATURE_RSA,
+                       resource_owner_key=oauth['access_token'],
+                       resource_owner_secret=oauth['access_token_secret']
+                       )
+        self._session = requests.Session()
+        self._session.verify = verify
+        self._session.auth = oauth
+
+    def _set_avatar(self, params, url, avatar):
+        data = {
+            'id': avatar
+        }
+        r = self._session.put(url, params=params, headers={'content-type':'application/json'}, data=json.dumps(data))
+        raise_on_error(r)
+
+    def _get_url(self, path):
+        options = self._options
+        options.update({'path': path})
+        return '{server}/rest/api/{rest_api_version}/{path}'.format(**options)
+
+    def _get_json(self, path, params=None):
+        url = self._get_url(path)
+        r = self._session.get(url, params=params)
+        raise_on_error(r)
+
+        r_json = json.loads(r.text)
+        return r_json
+
+    def _find_for_resource(self, resource_cls, ids, expand=None):
+        resource = resource_cls(self._options, self._session)
+        params = {}
+        if expand is not None:
+            params['expand'] = expand
+        resource.find(ids, params)
+        return resource
+
+    def _try_magic(self):
+        try:
+            import magic
+            self._magic = magic.Magic(mime=True)
+        except ImportError:
+            self._magic = None
+
+    def _get_mime_type(self, buff):
+        if self._magic is not None:
+            return self._magic.from_buffer(buff)
+        else:
+            try:
+                return mimetypes.guess_type("f." + imghdr.what(0, buff))[0]
+            except (IOError, TypeError):
+                print "WARNING: Couldn't detect content type of avatar image" \
+                      ". Specify the 'contentType' parameter explicitly."
+                return None
+
 ### GreenHopper
+
 
 class GreenHopper(JIRA):
     '''
@@ -1502,7 +1570,7 @@ class GreenHopper(JIRA):
         {"id":5,"name":"Our First Sprint 5","closed":false}
 
         And create/model comes before create, and expects issues to add
-        {"rapidViewId":2,"sprintMarkerId":0} fails. 
+        {"rapidViewId":2,"sprintMarkerId":0} fails.
 
         When a sprint is in backlog it is just a marker
 
@@ -1525,7 +1593,7 @@ class GreenHopper(JIRA):
         Add the issues in the array of issue keys to the given started
         but not completed sprint. Idempotent.
 
-        If a sprint was completed then have to also edit the issues' history 
+        If a sprint was completed then have to also edit the issues' history
         so that it was added to the sprint before it was completed,
         preferably before it started. A completed sprint's issues also
         all have a resolution set before the completion date.
@@ -1534,7 +1602,7 @@ class GreenHopper(JIRA):
         and copy the rank of each issue too.
 
         /sprint/{sprintId}/issues/add
-        SprintIssuesResource.java 
+        SprintIssuesResource.java
         @Path("add")
         public Response addIssueToSprint(@PathParam("sprintId") final Long sprintId, final IssuesKeysModel model)
         {"issueKeys":["TS-3"]}   (paste this into textarea, not as a custom parameter)
@@ -1545,70 +1613,3 @@ class GreenHopper(JIRA):
         url = self._gh_get_url('sprint/%s/issues/add' % (sprint_id))
         r = self._session.put(url, data=json.dumps(data))
         raise_on_error(r)
-
-### Utilities
-
-    def _create_http_basic_session(self, username, password):
-        verify = self._options['verify']
-        self._session = requests.Session()
-        self._session.verify = verify
-        self._session.auth = (username, password)
-
-    def _create_oauth_session(self, oauth):
-        verify = self._options['verify']
-        oauth = OAuth1(
-                       oauth['consumer_key'], 
-                       rsa_key=oauth['key_cert'],
-                       signature_method=SIGNATURE_RSA,
-                       resource_owner_key=oauth['access_token'],
-                       resource_owner_secret=oauth['access_token_secret']
-                       )
-        self._session = requests.Session()
-        self._session.verify = verify
-        self._session.auth = oauth
-
-    def _set_avatar(self, params, url, avatar):
-        data = {
-            'id': avatar
-        }
-        r = self._session.put(url, params=params, headers={'content-type':'application/json'}, data=json.dumps(data))
-        raise_on_error(r)
-
-    def _get_url(self, path):
-        options = self._options
-        options.update({'path': path})
-        return '{server}/rest/api/{rest_api_version}/{path}'.format(**options)
-
-    def _get_json(self, path, params=None):
-        url = self._get_url(path)
-        r = self._session.get(url, params=params)
-        raise_on_error(r)
-
-        r_json = json.loads(r.text)
-        return r_json
-
-    def _find_for_resource(self, resource_cls, ids, expand=None):
-        resource = resource_cls(self._options, self._session)
-        params = {}
-        if expand is not None:
-            params['expand'] = expand
-        resource.find(ids, params)
-        return resource
-
-    def _try_magic(self):
-        try:
-            import magic
-            self._magic = magic.Magic(mime=True)
-        except ImportError:
-            self._magic = None
-
-    def _get_mime_type(self, buff):
-        if self._magic is not None:
-            return self._magic.from_buffer(buff)
-        else:
-            try:
-                return mimetypes.guess_type("f." + imghdr.what(0, buff))[0]
-            except (IOError, TypeError):
-                print "WARNING: Couldn't detect content type of avatar image" \
-                      ". Specify the 'contentType' parameter explicitly."
-                return None
