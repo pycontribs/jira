@@ -299,7 +299,10 @@ Learn what transitions are available on an issue::
 Then perform a transition on an issue::
 
     # Resolve the issue and assign it to 'pm_user' in one step
-    jira.transition_issue(issue, '5', assignee={'name': 'pm_user'})
+    jira.transition_issue(issue, '5', assignee={'name': 'pm_user'}, resolution={'id': '3'})
+
+    # The above line is equivalent to:
+    jira.transition_issue(issue, '5', fields: {'assignee':{'name': 'pm_user'}, 'resolution':{'id': '3'}})
 
 Projects
 --------
