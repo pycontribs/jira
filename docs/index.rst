@@ -20,7 +20,7 @@ Changelog
 Version 0.13 -- April 10, 2013
 
 This is the first release driven by the community and fueled by its contributions.
-Many thanks to Markus Wilk, Sorin Sbarnea, Matt Doar, Doug Johnston, Greg Warner,
+Many thanks to Markus Wiik, Sorin Sbarnea, Matt Doar, Doug Johnston, Greg Warner,
 Mark Egan-Fuller, Diogo Campos, and Randall Hunt for the feature work and
 bug-squishing that made such a terrific release possible!
 
