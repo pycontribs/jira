@@ -104,6 +104,11 @@ tlslite
 ^^^^^^^
 This is a TLS implementation that handles key signing. It's used to help implement the OAuth handshaking.
 
+PyCrypto
+^^^^^^^^
+This is required for the RSA-SHA1 used by OAuth. Please note that it's **not** installed automatically, since it's
+a fairly cumbersome process in Windows. On Linux and OS X, a ``pip install pycrypto`` should do it.
+
 Installing through pip takes care of these dependencies for you.
 
 Examples
