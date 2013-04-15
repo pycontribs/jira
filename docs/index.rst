@@ -463,6 +463,14 @@ API Documentation
     :undoc-members:
     :show-inheritance:
 
+:mod:`config` Module
+-----------------------
+
+.. automodule:: jira.config
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 Changelog
 =========
 
