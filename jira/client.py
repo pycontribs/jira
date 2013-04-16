@@ -1449,6 +1449,38 @@ class JIRA(object):
                       ". Specify the 'contentType' parameter explicitly."
                 return None
 
+    def reindex(self, force=False, background=True):
+        """
+        Start jira re-indexing. Returns True if reindexing is in progress or not needed, or False.
+
+        :param force: reindex even if Jira doesn'tt say this is needed, False by default.
+        :param background: reindex inde background, slower but does not impact the users, defaults to True.
+        """
+        # /secure/admin/IndexAdmin.jspa
+        # /secure/admin/jira/IndexProgress.jspa?taskId=1
+        if background:
+            indexingStrategy = 'background'
+        else:
+            indexingStrategy = 'stoptheworld'
+
+        url = self._options['server'] + '/secure/admin/jira/IndexReIndex.jspa'
+
+        r = self._session.get(url, headers={'X-Atlassian-Token': 'nocheck'})
+        raise_on_error(r)
+
+        if r.content.find('All issues are being re-indexed'):
+            logging.warning("Jira re-indexing is already running.")
+            return True # still reindexing is considered still a success
+
+        if r.content.find('To perform the re-index now, please go to the') or force:
+            r = self._session.post(url, headers={'X-Atlassian-Token': 'nocheck'}, params={"indexingStrategy":indexingStrategy,"reindex":"Re-Index"})
+            raise_on_error(r)
+            if r.content.find('All issues are being re-indexed') != -1:
+                return True
+            else:
+                logging.error("Failed to reindex jira, probably a bug.")
+                return False
+
 ### GreenHopper
 
 
@@ -1613,3 +1645,4 @@ class GreenHopper(JIRA):
         url = self._gh_get_url('sprint/%s/issues/add' % (sprint_id))
         r = self._session.put(url, data=json.dumps(data))
         raise_on_error(r)
+
