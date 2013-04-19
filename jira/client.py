@@ -8,6 +8,7 @@ import imghdr
 import mimetypes
 
 import os
+import logging
 import requests
 from requests_oauthlib import OAuth1
 from oauthlib.oauth1 import SIGNATURE_RSA
@@ -1453,6 +1454,8 @@ class JIRA(object):
         """
         Start jira re-indexing. Returns True if reindexing is in progress or not needed, or False.
 
+        If you call reindex() without any parameters it will perform a backfround reindex only if Jira thinks it should do it.
+
         :param force: reindex even if Jira doesn'tt say this is needed, False by default.
         :param background: reindex inde background, slower but does not impact the users, defaults to True.
         """
@@ -1466,7 +1469,13 @@ class JIRA(object):
         url = self._options['server'] + '/secure/admin/jira/IndexReIndex.jspa'
 
         r = self._session.get(url, headers={'X-Atlassian-Token': 'nocheck'})
-        raise_on_error(r)
+        if r.status_code == 503:
+            # logging.warning("Jira returned 503, this could mean that a full reindex is in progress.")
+            return 503
+        #raise_on_error(r)
+
+        if not r.content.find("To perform the re-index now, please go to the") and force==False:
+            return True
 
         if r.content.find('All issues are being re-indexed'):
             logging.warning("Jira re-indexing is already running.")
@@ -1474,7 +1483,7 @@ class JIRA(object):
 
         if r.content.find('To perform the re-index now, please go to the') or force:
             r = self._session.post(url, headers={'X-Atlassian-Token': 'nocheck'}, params={"indexingStrategy":indexingStrategy,"reindex":"Re-Index"})
-            raise_on_error(r)
+            #raise_on_error(r)
             if r.content.find('All issues are being re-indexed') != -1:
                 return True
             else:
