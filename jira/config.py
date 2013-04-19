@@ -57,8 +57,6 @@ def get_jira(profile=None, url="http://localhost:2990", username="admin", passwo
 
         config_file = findfile('config.ini')
 
-        print config_file
-
         if not profile:
             if config_file:
                 config.read(config_file)
