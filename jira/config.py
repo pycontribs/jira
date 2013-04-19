@@ -55,8 +55,19 @@ def get_jira(profile=None, url="http://localhost:2990", username="admin", passwo
             return None
         config = ConfigParser.SafeConfigParser(defaults={'user':None,'pass':None,'appid':None})
 
+        config_file = findfile('config.ini')
+
+        print config_file
+
+        if not profile:
+            if config_file:
+                config.read(config_file)
+                try:
+                    profile = config.get('general','default-jira-profile')
+                except ConfigParser.NoOptionError:
+                    pass
+
         if profile:
-            config_file = findfile('config.ini')
             if config_file:
                 config.read(config_file)
                 url = config.get(profile, 'url')
