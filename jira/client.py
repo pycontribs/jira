@@ -1714,3 +1714,10 @@ class GreenHopper(JIRA):
         r = self._session.put(url, data=json.dumps(data))
         raise_on_error(r)
 
+    def add_issues_to_epic(self, epic_id, issue_keys, ignore_epics=True):
+        data = {}
+        data['issueKeys'] = issue_keys
+        data['ignoreEpics'] = ignore_epics
+        url = self._gh_get_url('epics/%s/add' % epic_id)
+        r = self._session.put(url, data=json.dumps(data), headers={'Content-Type': 'application/json'})
+        raise_on_error(r)
