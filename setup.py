@@ -9,14 +9,13 @@ setup(
     packages=find_packages(),
 
     install_requires=['requests>=1.0.0', 
-                      'requests_oauthlib>=0.3.0', 
-                      'ipython>=0.13', 
-                      'python-magic==0.4.2', 
+                      'requests_oauthlib>=0.3.0',
+                      'ipython>=0.13',
                       'tlslite==0.4.1'],
-#   can't get this working for the moment.
-#    extras_require = {
-#        'interactive-shell': ['ipython==0.12.1',]
-#    },
+    setup_requires=['sphinx','requests_oauthlib'],
+    extras_require={
+        'magic': ['python-magic>=0.4.2'],
+    },
     entry_points = {
         'console_scripts':
             ['jirashell = tools.jirashell:main'],

@@ -10,10 +10,27 @@ Welcome to jira-python's documentation!
    :maxdepth: 2
 
 This documents the ``jira-python`` package (version |release|), a Python library designed to ease the use of the
-JIRA REST API.
+JIRA REST API. Some basic support for the GreenHopper REST API also exists.
+
+The source is stored at https://bitbucket.org/bspeakmon/jira-python.
 
 Changelog
 =========
+
+Version 0.13 -- April 10, 2013
+
+This is the first release driven by the community and fueled by its contributions.
+Many thanks to Markus Wiik, Sorin Sbarnea, Matt Doar, Doug Johnston, Greg Warner,
+Mark Egan-Fuller, Diogo Campos, and Randall Hunt for the feature work and
+bug-squishing that made such a terrific release possible!
+
+* Update to work with Requests 1.0+, including better OAuth support.
+* Basic support for the GreenHopper REST API.
+* Deprecate python-magic in favor of standard libraries imghdr and mimetypes.
+* Added optional ``filename`` parameter to ``add_attachment``
+* Added ability to pass a ``verify`` parameter to the requests session.
+* ``search_issues`` and ``dashboards`` now return a ``ResultList`` which includes some search metadata.
+* Various bugfixes (issues #5, #7, #8 and #11)
 
 Version 0.12 -- August 6, 2012
 
@@ -46,6 +63,8 @@ Source packages are also available at PyPI:
 
     http://pypi.python.org/pypi/jira-python/
 
+.. _Dependencies:
+
 Dependencies
 ------------
 
@@ -58,7 +77,11 @@ Requests
 ^^^^^^^^
 Kenneth Reitz's indispensable `python-requests <http://docs.python-requests.org>`_ library handles the HTTP
 business. Usually, the latest version available at time of release is the minimum version required; at this writing,
-that version is 1.1.0.
+that version is 1.2.0, but any version >= 1.0.0 should work.
+
+requests-oauthlib
+^^^^^^^^^^^^^^^^^
+Used to implement OAuth. The latest version as of this writing is 0.3.0.
 
 IPython
 ^^^^^^^
@@ -73,9 +96,18 @@ provides libmagic; Mac and Unix will almost always have it preinstalled, but Win
 or compile it natively. If your system doesn't have libmagic, you'll have to manually specify the ``contentType``
 parameter on methods that take an image object, such as project and user avater creation.
 
+*NOTE*: python-magic is deprecated, as we can achieve the same goal with the
+standard library. It's still present for backward compatibility, but will be
+removed in a future release.
+
 tlslite
 ^^^^^^^
 This is a TLS implementation that handles key signing. It's used to help implement the OAuth handshaking.
+
+PyCrypto
+^^^^^^^^
+This is required for the RSA-SHA1 used by OAuth. Please note that it's **not** installed automatically, since it's
+a fairly cumbersome process in Windows. On Linux and OS X, a ``pip install pycrypto`` should do it.
 
 Installing through pip takes care of these dependencies for you.
 
@@ -89,6 +121,10 @@ Here's a quick usage example:
 Another example shows how to authenticate with your JIRA username and password:
 
 .. literalinclude:: ../examples/basic_auth.py
+
+This example shows how to work with GreenHopper:
+
+.. literalinclude:: ../examples/greenhopper.py
 
 
 Quickstart
@@ -144,6 +180,10 @@ Pass a dict of OAuth properties to the ``oauth`` constructor argument::
 .. note ::
     The OAuth access tokens must be obtained and authorized ahead of time through the standard OAuth dance. For
     interactive use, ``jirashell`` can perform the dance with you if you don't already have valid tokens.
+
+.. note ::
+    OAuth in Jira uses RSA-SHA1 which requires the PyCrypto library. PyCrypto is **not** installed automatically
+    when installing jira-python. See also the Dependencies_. section above.
 
 * The access token and token secret uniquely identify the user.
 * The consumer key must match the OAuth provider configured on the JIRA server.
@@ -259,7 +299,10 @@ Learn what transitions are available on an issue::
 Then perform a transition on an issue::
 
     # Resolve the issue and assign it to 'pm_user' in one step
-    jira.transition_issue(issue, '5', assignee={'name': 'pm_user'})
+    jira.transition_issue(issue, '5', assignee={'name': 'pm_user'}, resolution={'id': '3'})
+
+    # The above line is equivalent to:
+    jira.transition_issue(issue, '5', fields: {'assignee':{'name': 'pm_user'}, 'resolution':{'id': '3'}})
 
 Projects
 --------
@@ -391,7 +434,7 @@ code patches -- fork and send a pull request.
 Discussion
 ----------
 
-We encourage all who wish to discuss the client to find the widest possible audience at http://answers.atlassian.com.
+We encourage all who wish to discuss the client to find the widest possible audience at http://answers.atlassian.com using the tag "python".
 
 API Documentation
 =================
@@ -400,7 +443,7 @@ API Documentation
 --------------------
 
 .. automodule:: jira.client
-    :members:
+    :members: JIRA,GreenHopper
     :undoc-members:
     :show-inheritance:
 
@@ -416,6 +459,14 @@ API Documentation
 -----------------------
 
 .. automodule:: jira.resources
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`config` Module
+-----------------------
+
+.. automodule:: jira.config
     :members:
     :undoc-members:
     :show-inheritance:

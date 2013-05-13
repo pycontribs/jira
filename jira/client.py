@@ -4,14 +4,20 @@ responses from JIRA and the Resource/dict abstractions provided by this library.
 will construct a JIRA object as described below.
 """
 from functools import wraps
+import imghdr
+import mimetypes
 
 import os
+import re
+import logging
 import requests
+import HTMLParser
 from requests_oauthlib import OAuth1
 from oauthlib.oauth1 import SIGNATURE_RSA
 import json
 from jira.exceptions import raise_on_error
 from jira.resources import Resource, Issue, Comment, Project, Attachment, Component, Dashboard, Filter, Votes, Watchers, Worklog, IssueLink, IssueLinkType, IssueType, Priority, Version, Role, Resolution, SecurityLevel, Status, User, CustomFieldOption, RemoteLink
+from jira.resources import Board, Sprint
 
 
 def translate_resource_args(func):
@@ -31,6 +37,15 @@ def translate_resource_args(func):
     return wrapper
 
 
+class ResultList(list):
+    def __init__(self, iterable=None, _total=None):
+        if iterable is not None:
+            list.__init__(self, iterable)
+        else:
+            list.__init__(self)
+        self.total = _total if _total is not None else len(self)
+
+
 class JIRA(object):
     """
     User interface to JIRA.
@@ -46,7 +61,8 @@ class JIRA(object):
     DEFAULT_OPTIONS = {
         "server": "http://localhost:2990/jira",
         "rest_path": "api",
-        "rest_api_version": "2"
+        "rest_api_version": "2",
+        "verify": True
     }
 
     def __init__(self, options=None, basic_auth=None, oauth=None):
@@ -68,6 +84,7 @@ class JIRA(object):
             * server -- the server address and context path to use. Defaults to ``http://localhost:2990/jira``.
             * rest_path -- the root REST path to use. Defaults to ``api``, where the JIRA REST resources live.
             * rest_api_version -- the version of the REST resources under rest_path to use. Defaults to ``2``.
+            * verify -- Verify SSL certs. Defaults to ``True``.
         :param basic_auth: A tuple of username and password to use when establishing a session via HTTP BASIC
         authentication.
         :param oauth: A dict of properties for OAuth authentication. The following properties are required:
@@ -87,14 +104,14 @@ class JIRA(object):
         if self._options['server'].endswith('/'):
             self._options['server'] = self._options['server'][:-1]
 
-        self._ensure_magic()
+        self._try_magic()
 
         if oauth:
             self._create_oauth_session(oauth)
         elif basic_auth:
             self._create_http_basic_session(*basic_auth)
         else:
-            verify = self._options['server'].startswith('https')
+            verify = self._options['verify']
             self._session = requests.Session()
             self._session.verify = verify
 
@@ -181,7 +198,7 @@ class JIRA(object):
         :param issue: the issue to attach the attachment to
         :param attachment: file-like object to attach to the issue
         :param filename: optional name for the attached file. If omitted, the file object's ``name`` attribute
-            is used. If you aquired the file-like object by any other method than ``open()``, make sure 
+            is used. If you aquired the file-like object by any other method than ``open()``, make sure
             that a name is specified in one way or the other.
         :rtype: an Attachment Resource
         """
@@ -264,11 +281,12 @@ class JIRA(object):
 
     def dashboards(self, filter=None, startAt=0, maxResults=20):
         """
-        Return a list of Dashboard resources.
+        Return a ResultList of Dashboard resources and a ``total`` count.
 
         :param filter: either "favourite" or "my", the type of dashboards to return
         :param startAt: index of the first dashboard to return
-        :param maxResults: maximum number of dashboards to return
+        :param maxResults: maximum number of dashboards to return. The total number of
+            results is always available in the ``total`` attribute of the returned ResultList.
         """
         params = {}
         if filter is not None:
@@ -278,7 +296,7 @@ class JIRA(object):
 
         r_json = self._get_json('dashboard', params=params)
         dashboards = [Dashboard(self._options, self._session, raw_dash_json) for raw_dash_json in r_json['dashboards']]
-        return dashboards
+        return ResultList(dashboards, r_json['total'])
 
     def dashboard(self, id):
         """
@@ -558,7 +576,7 @@ class JIRA(object):
         return self._get_json('issue/' + issue + '/transitions', params)['transitions']
 
     @translate_resource_args
-    def transition_issue(self, issue, transitionId, fields=None, **fieldargs):
+    def transition_issue(self, issue, transitionId, fields=None, comment=None, **fieldargs):
         # TODO: Support update verbs (same as issue.update())
         """
         Perform a transition on an issue.
@@ -569,6 +587,7 @@ class JIRA(object):
 
         :param issue: ID or key of the issue to perform the transition on
         :param transitionId: ID of the transition to perform
+        :param comment: *Optional* String to add as comment to the issue when performing the transition.
         :param fields: a dict containing field names and the values to use. If present, all other keyword arguments\
         will be ignored
         """
@@ -577,6 +596,8 @@ class JIRA(object):
                 'id': transitionId
             }
         }
+        if comment:
+            data['update'] = { 'comment': [ { 'add': { 'body': comment } } ] }
         if fields is not None:
             data['fields'] = fields
         else:
@@ -874,9 +895,9 @@ class JIRA(object):
         headers = {'X-Atlassian-Token': 'no-check'}
         if contentType is not None:
             headers['content-type'] = contentType
-        elif self._magic:
-            headers['content-type'] = self._magic.from_buffer(avatar_img)
-        # If no contentType, and no self._magic, don't even try to detect content type
+        else:
+            # try to detect content-type, this may return None
+            headers['content-type'] = self._get_mime_type(avatar_img)
 
         url = self._get_url('project/' + project + '/avatar/temporary')
         r = self._session.post(url, params=params, headers=headers, data=avatar_img)
@@ -992,11 +1013,12 @@ class JIRA(object):
 
     def search_issues(self, jql_str, startAt=0, maxResults=50, fields=None, expand=None):
         """
-        Get a list of issue Resources matching a JQL search string.
+        Get a ResultList of issue Resources matching a JQL search string.
 
         :param jql_str: the JQL search string to use
         :param startAt: index of the first issue to return
-        :param maxResults: maximum number of issues to return
+        :param maxResults: maximum number of issues to return. Total number of results
+            is available in the ``total`` attribute of the returned ResultList.
         :param fields: comma-separated string of issue fields to include in the results
         :param expand: extra information to fetch inside each resource
         """
@@ -1014,7 +1036,7 @@ class JIRA(object):
 
         resource = self._get_json('search', search_params)
         issues = [Issue(self._options, self._session, raw_issue_json) for raw_issue_json in resource['issues']]
-        return issues
+        return ResultList(issues, resource['total'])
 
 ### Security levels
 
@@ -1160,9 +1182,9 @@ class JIRA(object):
         headers = {'X-Atlassian-Token': 'no-check'}
         if contentType is not None:
             headers['content-type'] = contentType
-        elif self._magic:
-            headers['content-type'] = self._magic.from_buffer(avatar_img)
-        # If no contentType, and no self._magic, don't even try to detect content type
+        else:
+            # try to detect content-type, this may return None
+            headers['content-type'] = self._get_mime_type(avatar_img)
 
         url = self._get_url('user/avatar/temporary')
         r = self._session.post(url, params=params, headers=headers, data=avatar_img)
@@ -1366,24 +1388,15 @@ class JIRA(object):
 ### Utilities
 
     def _create_http_basic_session(self, username, password):
-        url = self._options['server'] + '/rest/auth/1/session'
-        payload = {
-            'username': username,
-            'password': password
-        }
-
-        verify = self._options['server'].startswith('https')
+        verify = self._options['verify']
         self._session = requests.Session()
         self._session.verify = verify
         self._session.auth = (username, password)
 
-        r = self._session.post(url, headers={'content-type':'application/json'}, data=json.dumps(payload))
-        raise_on_error(r)
-
     def _create_oauth_session(self, oauth):
-        verify = self._options['server'].startswith('https')
+        verify = self._options['verify']
         oauth = OAuth1(
-                       oauth['consumer_key'], 
+                       oauth['consumer_key'],
                        rsa_key=oauth['key_cert'],
                        signature_method=SIGNATURE_RSA,
                        resource_owner_key=oauth['access_token'],
@@ -1421,11 +1434,283 @@ class JIRA(object):
         resource.find(ids, params)
         return resource
 
-    def _ensure_magic(self):
+    def _try_magic(self):
         try:
             import magic
             self._magic = magic.Magic(mime=True)
         except ImportError:
-            print "WARNING: Couldn't import magic library (is libmagic present?) Autodetection of avatar image" \
-                  " content types will not work; for create_avatar methods, specify the 'contentType' parameter" \
-                  " explicitly."
+            self._magic = None
+
+    def _get_mime_type(self, buff):
+        if self._magic is not None:
+            return self._magic.from_buffer(buff)
+        else:
+            try:
+                return mimetypes.guess_type("f." + imghdr.what(0, buff))[0]
+            except (IOError, TypeError):
+                print "WARNING: Couldn't detect content type of avatar image" \
+                      ". Specify the 'contentType' parameter explicitly."
+                return None
+
+    def rename_user(self, old_user, new_user):
+        """
+        Rename a Jira user. Current implementation relies on third party plugin but in the future it may use embedded Jira functionality.
+
+        :param old_user: string with username login
+        :param new_user: string with username login
+        """
+
+        merge = "true"
+        try:
+            self.user(new_user)
+        except:
+            merge = "false"
+
+        url = self._options['server'] + '/secure/admin/groovy/CannedScriptRunner.jspa#result'
+        payload = {
+        "cannedScript":"com.onresolve.jira.groovy.canned.admin.RenameUser",
+        "cannedScriptArgs_FIELD_FROM_USER_ID": old_user,
+        "cannedScriptArgs_FIELD_TO_USER_ID": new_user,
+        "cannedScriptArgs_FIELD_MERGE" : merge,
+        "id":"",
+        "RunCanned":"Run",
+         }
+
+        r = self._session.post(url, headers={'X-Atlassian-Token': 'nocheck', 'Cache-Control': 'no-cache'}, data=payload)
+        if r.status_code == 404:
+            logging.error("In order to be able to use rename_user() you need to install Script Runner plugin. See https://marketplace.atlassian.com/plugins/com.onresolve.jira.groovy.groovyrunner")
+            return False
+
+        raise_on_error(r)
+        #open("debug.html","w").write(r.content)
+
+        msg = r.status_code
+        m = re.search("<span class=\"errMsg\">(.*)<\/span>",r.content)
+        if m:
+            msg = m.group(1)
+            logging.error(msg)
+            return False
+            # <span class="errMsg">Target user ID must exist already for a merge</span>
+        p = re.compile("type=\"hidden\" name=\"cannedScriptArgs_Hidden_output\" value=\"(.*?)\"\/>", re.MULTILINE|re.DOTALL)
+        m = p.search(r.content)
+        if m:
+            h = HTMLParser.HTMLParser()
+            msg = h.unescape(m.group(1))
+            logging.info(msg)
+
+        # let's check if the user still exists
+        try:
+            self.user(old_user)
+        except:
+            logging.error("User %s does not exists." % old_user)
+            return msg
+
+        logging.error(msg)
+        logging.error("User %s does still exists after rename, that's clearly a problem." % old_user)
+        return False
+
+    def reindex(self, force=False, background=True):
+        """
+        Start jira re-indexing. Returns True if reindexing is in progress or not needed, or False.
+
+        If you call reindex() without any parameters it will perform a backfround reindex only if Jira thinks it should do it.
+
+        :param force: reindex even if Jira doesn'tt say this is needed, False by default.
+        :param background: reindex inde background, slower but does not impact the users, defaults to True.
+        """
+        # /secure/admin/IndexAdmin.jspa
+        # /secure/admin/jira/IndexProgress.jspa?taskId=1
+        if background:
+            indexingStrategy = 'background'
+        else:
+            indexingStrategy = 'stoptheworld'
+
+        url = self._options['server'] + '/secure/admin/jira/IndexReIndex.jspa'
+
+        r = self._session.get(url, headers={'X-Atlassian-Token': 'nocheck'})
+        if r.status_code == 503:
+            # logging.warning("Jira returned 503, this could mean that a full reindex is in progress.")
+            return 503
+        #raise_on_error(r)
+
+        if not r.content.find("To perform the re-index now, please go to the") and force==False:
+            return True
+
+        if r.content.find('All issues are being re-indexed'):
+            logging.warning("Jira re-indexing is already running.")
+            return True # still reindexing is considered still a success
+
+        if r.content.find('To perform the re-index now, please go to the') or force:
+            r = self._session.post(url, headers={'X-Atlassian-Token': 'nocheck'}, params={"indexingStrategy":indexingStrategy,"reindex":"Re-Index"})
+            #raise_on_error(r)
+            if r.content.find('All issues are being re-indexed') != -1:
+                return True
+            else:
+                logging.error("Failed to reindex jira, probably a bug.")
+                return False
+
+### GreenHopper
+
+
+class GreenHopper(JIRA):
+    '''
+    Define a class to hold functions for accessing GreenHopper resources.
+    Extend the python-jira JIRA class.
+    '''
+
+    def __init__(self, options=None, basic_auth=None, oauth=None):
+        JIRA.__init__(self, options, basic_auth, oauth)
+
+    def _gh_get_url(self, path):
+        ''' Use the given path for GH REST resources '''
+        options = self._options
+        options.update({'path':path})
+        return '{server}/rest/greenhopper/1.0/{path}'.format(**options)
+
+    def _gh_get_json(self, path, params=None):
+        ''' Return the GH data '''
+        url = self._gh_get_url(path)
+        r = self._session.get(url, params=params)
+        raise_on_error(r)
+
+        r_json = json.loads(r.text)
+        return r_json
+
+    '''
+    Define the functions that interact with GreenHopper
+    '''
+
+    def boards(self):
+        '''
+        Return a list of all the boards
+        Example: rest/greenhopper/1.0/rapidviews/list
+        '''
+        r_json = self._gh_get_json('rapidviews/list')
+        boards = [Board(self._options, self._session, raw_res_json) for raw_res_json in r_json['views']]
+        return boards
+
+    def sprints(self, id):
+        '''
+        Return the Sprints that appear with the given board id
+
+        Example: rest/greenhopper/1.0/sprints/2
+        '''
+        r_json = self._gh_get_json('sprints/%s' % id)
+        sprints = [Sprint(self._options, self._session, raw_res_json) for raw_res_json in r_json['sprints']]
+        return sprints
+
+    def completed_issues(self, board_id, sprint_id):
+        '''
+        Return the completed issues for the given board id and sprint id
+        '''
+        # TODO need a better way to provide all the info from the sprintreport
+        # incompletedIssues went to backlog but not it not completed
+        # issueKeysAddedDuringSprint used to mark some with a * ?
+        # puntedIssues are for scope change?
+
+        r_json = self._gh_get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id))
+        issues = [Issue(self._options, self._session, raw_res_json) for raw_res_json in r_json['contents']['completedIssues']]
+        return issues
+
+    def incompleted_issues(self, board_id, sprint_id):
+        '''
+        Return the completed issues for the given board id and sprint id
+        '''
+        r_json = self._gh_get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id))
+        issues = [Issue(self._options, self._session, raw_res_json) for raw_res_json in r_json['contents']['incompletedIssues']]
+        return issues
+
+    def sprint_info(self, board_id, sprint_id):
+        '''
+        Return the information about a sprint.
+        This uses the same method as completed issues
+        '''
+        r_json = self._gh_get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id))
+        return r_json['sprint']
+
+    def create_board(self, name, project_ids, preset="scrum"):
+        '''
+        Create a new board for the given projects
+        Preset can be kanban, scrum or diy
+        '''
+        payload = {}
+        payload['name'] = name
+        payload['projectIds'] = project_ids
+        payload['preset'] = preset
+        url = self._gh_get_url('rapidview/create/presets')
+        r = self._session.post(url, data=json.dumps(payload))
+        raise_on_error(r)
+        # This isn't really a Board object, just a subset for the id
+        result = r.json
+        return result
+
+    def create_sprint(self, name, board_id):
+        '''
+        Create a new sprint for the given board
+
+        createSprintWithIssues in CreateSprintResource
+
+        Long rapidViewId;
+        Long sprintMarkerId;
+        List<String> issuesForSprint;
+        String name;
+        String startDate;
+        String endDate;
+
+        This is before the sprint is started:
+        http://localhost:8080/rest/greenhopper/1.0/backlog/markers/add
+        {"rapidViewId":4}
+        which returns
+        {"afterMarkerId":10,"name":"Our First Sprint 4","id":11}
+
+        When an sprint is started:
+        {"rapidViewId":4,"sprintMarkerId":11,"issuesForSprint":["SRC-1"],"name":"Our First Sprint 5","startDate":"22/Mar/13 8:51 PM","endDate":"05/Apr/13 8:51 PM"}
+
+        Responds:
+        {"id":5,"name":"Our First Sprint 5","closed":false}
+
+        And create/model comes before create, and expects issues to add
+        {"rapidViewId":2,"sprintMarkerId":0} fails.
+
+        When a sprint is in backlog it is just a marker
+
+        {"rapidViewId":2,"sprintMarkerId":0,"issuesForSprint":[],"name":"SPR 1","startDate":"26/Mar/13 11:36 AM","endDate":"26/Mar/13 12:36 PM"}
+
+        '''
+        payload = {}
+        payload['name'] = name
+        payload['rapidViewId'] = board_id
+        payload['sprintMarkerId'] = 0
+        url = self._gh_get_url('sprint/create')
+        r = self._session.post(url, data=json.dumps(payload))
+        raise_on_error(r)
+        # This isn't really a Sprint object, just a subset for the id
+        result = r.json
+        return result
+
+    def add_issues_to_sprint(self, sprint_id, issue_keys):
+        '''
+        Add the issues in the array of issue keys to the given started
+        but not completed sprint. Idempotent.
+
+        If a sprint was completed then have to also edit the issues' history
+        so that it was added to the sprint before it was completed,
+        preferably before it started. A completed sprint's issues also
+        all have a resolution set before the completion date.
+
+        If a sprint was not started then have to edit the marker
+        and copy the rank of each issue too.
+
+        /sprint/{sprintId}/issues/add
+        SprintIssuesResource.java
+        @Path("add")
+        public Response addIssueToSprint(@PathParam("sprintId") final Long sprintId, final IssuesKeysModel model)
+        {"issueKeys":["TS-3"]}   (paste this into textarea, not as a custom parameter)
+        When this is working in the rest browser must check in Chrome to see if put or post. Post gave 405 Method Not Allowed
+        '''
+        data = {}
+        data['issueKeys'] = issue_keys
+        url = self._gh_get_url('sprint/%s/issues/add' % (sprint_id))
+        r = self._session.put(url, data=json.dumps(data))
+        raise_on_error(r)
+
