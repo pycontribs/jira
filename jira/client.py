@@ -7,6 +7,7 @@ from functools import wraps
 import imghdr
 import mimetypes
 
+import copy
 import os
 import re
 import logging
@@ -97,7 +98,7 @@ class JIRA(object):
         if options is None:
             options = {}
 
-        self._options = JIRA.DEFAULT_OPTIONS
+        self._options = copy.copy(JIRA.DEFAULT_OPTIONS)
         self._options.update(options)
 
         # rip off trailing slash since all urls depend on that
@@ -1452,6 +1453,32 @@ class JIRA(object):
                       ". Specify the 'contentType' parameter explicitly."
                 return None
 
+    def email_user(self, user, body, title="Jira Notification"):
+        """
+        TBD:
+        """
+        url = self._options['server'] + '/secure/admin/groovy/CannedScriptRunner.jspa'
+        payload = {
+        'cannedScript':'com.onresolve.jira.groovy.canned.workflow.postfunctions.SendCustomEmail',
+        'cannedScriptArgs_FIELD_CONDITION':'',
+        'cannedScriptArgs_FIELD_EMAIL_TEMPLATE':body,
+        'cannedScriptArgs_FIELD_EMAIL_SUBJECT_TEMPLATE':title,
+        'cannedScriptArgs_FIELD_EMAIL_FORMAT':'TEXT',
+        'cannedScriptArgs_FIELD_TO_ADDRESSES': self.user(user).emailAddress,
+        'cannedScriptArgs_FIELD_TO_USER_FIELDS':'',
+        'cannedScriptArgs_FIELD_INCLUDE_ATTACHMENTS':'FIELD_INCLUDE_ATTACHMENTS_NONE',
+        'cannedScriptArgs_FIELD_FROM':'',
+        'cannedScriptArgs_FIELD_PREVIEW_ISSUE':'',
+        'cannedScript':'com.onresolve.jira.groovy.canned.workflow.postfunctions.SendCustomEmail',
+        'id':'',
+        'Preview':'Preview',
+        }
+        r = self._session.post(url, headers={'X-Atlassian-Token': 'nocheck', 'Cache-Control': 'no-cache'}, data=payload)
+        open("/tmp/jira_email_user_%s.html" % user,"w").write(r.content)
+        #return False
+
+        raise_on_error(r)
+
     def rename_user(self, old_user, new_user):
         """
         Rename a Jira user. Current implementation relies on third party plugin but in the future it may use embedded Jira functionality.
@@ -1476,13 +1503,26 @@ class JIRA(object):
         "RunCanned":"Run",
          }
 
+        print self.user(old_user).emailAddress # raw displayName
+
+        #r = self._session.get(url, headers={'X-Atlassian-Token': 'nocheck', 'Cache-Control': 'no-cache'})
+        #open("/tmp/jira_rename_user_%s_to%s_get.html" % (old_user,new_user),"w").write(r.content)
+        #return False
+
         r = self._session.post(url, headers={'X-Atlassian-Token': 'nocheck', 'Cache-Control': 'no-cache'}, data=payload)
         if r.status_code == 404:
             logging.error("In order to be able to use rename_user() you need to install Script Runner plugin. See https://marketplace.atlassian.com/plugins/com.onresolve.jira.groovy.groovyrunner")
             return False
+        if r.status_code != 200:
+            logggin.error(r.status_code)
 
         raise_on_error(r)
-        #open("debug.html","w").write(r.content)
+        
+        if re.compile("XSRF Security Token Missing").search(r.content):
+            logging.fatal("Reconfigure JIRA and disable XSRF in order to be able call this. See https://developer.atlassian.com/display/JIRADEV/Form+Token+Handling")
+            return False
+
+        open("/tmp/jira_rename_user_%s_to%s.html" % (old_user,new_user),"w").write(r.content)
 
         msg = r.status_code
         m = re.search("<span class=\"errMsg\">(.*)<\/span>",r.content)
