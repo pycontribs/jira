@@ -1438,9 +1438,13 @@ class JIRA(object):
     def _try_magic(self):
         try:
             import magic
-            self._magic = magic.Magic(mime=True)
         except ImportError:
             self._magic = None
+        else:
+            try:
+                self._magic = magic.Magic(mime=True)
+            except TypeError:
+                self._magic = None
 
     def _get_mime_type(self, buff):
         if self._magic is not None:
