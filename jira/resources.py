@@ -51,7 +51,11 @@ class Resource(object):
         # Return the first value we find that is likely to be human readable.
         for name in self._READABLE_IDS:
             if name in self.raw:
-                return str(self.raw[name])
+                pretty_name = str(self.raw[name])
+                # Include any child to support nested select fields.
+                if hasattr(self, 'child'):
+                    pretty_name += ' - ' + str(self.child)
+                return pretty_name
 
         # If all else fails, use repr to make sure we get something.
         return repr(self)
