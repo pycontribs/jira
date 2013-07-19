@@ -33,6 +33,11 @@ class Resource(object):
     ``ids`` parameter to ``find()``.
     """
 
+    # A prioritized list of the keys in self.raw most likely to contain a human
+    # readable name or identifier, or that offer other key information.
+    _READABLE_IDS = ('displayName', 'key', 'name', 'filename', 'value',
+                     'scope', 'votes', 'id', 'mimeType', 'closed')
+
     def __init__(self, resource, options, session):
         self._resource = resource
         self._options = options
@@ -41,6 +46,27 @@ class Resource(object):
         # explicitly define as None so we know when a resource has actually been loaded
         self.raw = None
         self.self = None
+
+    def __str__(self):
+        # Return the first value we find that is likely to be human readable.
+        for name in self._READABLE_IDS:
+            if name in self.raw:
+                pretty_name = unicode(self.raw[name])
+                # Include any child to support nested select fields.
+                if hasattr(self, 'child'):
+                    pretty_name += ' - ' + unicode(self.child)
+                return pretty_name
+
+        # If all else fails, use repr to make sure we get something.
+        return repr(self)
+
+    def __repr__(self):
+        # Identify the class and include any and all relevant values.
+        names = []
+        for name in self._READABLE_IDS:
+            if name in self.raw:
+                names.append(name + '=' + repr(self.raw[name]))
+        return '<JIRA %s: %s>' % (self.__class__.__name__, ', '.join(names))
 
     def find(self, ids=None, headers=None, params=None):
         if ids is None:
