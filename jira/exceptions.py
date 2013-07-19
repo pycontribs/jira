@@ -18,7 +18,9 @@ class JIRAError(Exception):
 def raise_on_error(r):
     if r.status_code >= 400:
         error = ''
-        if r.text:
+        if r.status_code == 403 and "x-authentication-denied-reason" in r.headers:
+            error = r.headers["x-authentication-denied-reason"]
+        elif r.text:
             try:
                 response = json.loads(r.text)
                 if 'message' in response:
