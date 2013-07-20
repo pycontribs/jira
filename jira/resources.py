@@ -49,13 +49,14 @@ class Resource(object):
 
     def __str__(self):
         # Return the first value we find that is likely to be human readable.
-        for name in self._READABLE_IDS:
-            if name in self.raw:
-                pretty_name = unicode(self.raw[name])
-                # Include any child to support nested select fields.
-                if hasattr(self, 'child'):
-                    pretty_name += ' - ' + unicode(self.child)
-                return pretty_name
+        if self.raw:
+            for name in self._READABLE_IDS:
+                if name in self.raw:
+                    pretty_name = unicode(self.raw[name])
+                    # Include any child to support nested select fields.
+                    if hasattr(self, 'child'):
+                        pretty_name += ' - ' + unicode(self.child)
+                    return pretty_name
 
         # If all else fails, use repr to make sure we get something.
         return repr(self)
@@ -63,9 +64,13 @@ class Resource(object):
     def __repr__(self):
         # Identify the class and include any and all relevant values.
         names = []
-        for name in self._READABLE_IDS:
-            if name in self.raw:
-                names.append(name + '=' + repr(self.raw[name]))
+        if self.raw:
+            for name in self._READABLE_IDS:
+                if name in self.raw:
+                    names.append(name + '=' + repr(self.raw[name]))
+        if not names:
+            return '<JIRA %s at %s>' % (self.__class__.__name__,
+                                        unicode(hex(id(self))))
         return '<JIRA %s: %s>' % (self.__class__.__name__, ', '.join(names))
 
     def find(self, ids=None, headers=None, params=None):
