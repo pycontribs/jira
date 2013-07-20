@@ -66,6 +66,8 @@ class Resource(object):
         for name in self._READABLE_IDS:
             if name in self.raw:
                 names.append(name + '=' + repr(self.raw[name]))
+        if not names:
+            names = unicode(hex(id(self)))
         return '<JIRA %s: %s>' % (self.__class__.__name__, ', '.join(names))
 
     def find(self, ids=None, headers=None, params=None):
