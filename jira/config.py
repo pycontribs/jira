@@ -5,6 +5,7 @@ This module allows people to keep their jira server credentials outside their sc
 Also, this simplifies the scripts by not having to write the same initialization code for each script.
 
 """
+import logging
 import os
 import sys
 import ConfigParser
@@ -56,6 +57,8 @@ def get_jira(profile=None, url="http://localhost:2990", username="admin", passwo
         config = ConfigParser.SafeConfigParser(defaults={'user':None,'pass':None,'appid':None})
 
         config_file = findfile('config.ini')
+        if config_file:
+            logging.debug("Found %s config file" % config_file)
 
         if not profile:
             if config_file:
