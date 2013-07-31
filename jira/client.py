@@ -9,6 +9,7 @@ import mimetypes
 
 import copy
 import os
+import urllib
 import re
 import logging
 import requests
@@ -99,6 +100,13 @@ class JIRA(object):
             options = {}
 
         self._options = copy.copy(JIRA.DEFAULT_OPTIONS)
+
+        try: # py3 variant
+            __import__("urllib.request", fromlist=[urllib])
+            self._options['proxies']=urllib.request.getproxies()
+        except ImportError: # py2 variant
+            self._options['proxies']=urllib.getproxies()
+
         self._options.update(options)
 
         # rip off trailing slash since all urls depend on that
@@ -114,6 +122,7 @@ class JIRA(object):
         else:
             verify = self._options['verify']
             self._session = requests.Session()
+            self._session.proxies = self._options['proxies']
             self._session.verify = verify
 
 ### Information about this client
@@ -1391,6 +1400,7 @@ class JIRA(object):
     def _create_http_basic_session(self, username, password):
         verify = self._options['verify']
         self._session = requests.Session()
+        self._session.proxies = self._options['proxies']
         self._session.verify = verify
         self._session.auth = (username, password)
 
@@ -1404,6 +1414,7 @@ class JIRA(object):
                        resource_owner_secret=oauth['access_token_secret']
                        )
         self._session = requests.Session()
+        self._session.proxies = self._options['proxies']
         self._session.verify = verify
         self._session.auth = oauth
 
