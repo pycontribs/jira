@@ -1604,6 +1604,22 @@ class JIRA(object):
                 logging.error("Failed to reindex jira, probably a bug.")
                 return False
 
+
+        def backup(self, filename='backup.zip'):
+            '''
+            Will call jira export to backup as zipped xml. Returning with success does not mean that the backup process finished.
+            '''
+            url = self._options['server'] + '/secure/admin/XmlBackup.jspa'
+            payload = { 'filename':filename}
+            r = self._session.post(url, headers={'X-Atlassian-Token': 'nocheck'}, data=payload)
+            if r.status_code == 200:
+                return True
+            else:
+                logging.warning('Got %s response from calling backup.' % r.status_code)
+                return r.status_code
+    
+
+
 ### GreenHopper
 
 
