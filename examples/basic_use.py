@@ -14,7 +14,7 @@ jira = JIRA(options)
 # Get all projects viewable by anonymous users.
 projects = jira.projects()
 
-# Sort available project keys, then return the third, fourth and fifth keys.
+# Sort available project keys, then return the second, third, and fourth keys.
 keys = sorted([project.key for project in projects])[2:5]
 
 # Get an issue.
