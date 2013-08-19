@@ -1273,18 +1273,20 @@ class JIRA(object):
         r = self._session.delete(url, params=params)
         raise_on_error(r)
 
-    def search_users(self, user, startAt=0, maxResults=50):
+    def search_users(self, user, startAt=0, maxResults=50, includeActive=True, includeInactive=False ):
         """
         Get a list of user Resources that match the specified search string.
 
-        :param user: a string to match usernames against
+        :param user: a string to match usernames, name or email against
         :param startAt: index of the first user to return
         :param maxResults: maximum number of users to return
         """
         params = {
             'username': user,
             'startAt': startAt,
-            'maxResults': maxResults
+            'maxResults': maxResults,
+ 	    'includeActive':includeActive,
+	    'includeInactive':includeInactive
         }
         r_json = self._get_json('user/search', params)
         users = [User(self._options, self._session, raw_user_json) for raw_user_json in r_json]
