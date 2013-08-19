@@ -193,6 +193,26 @@ class JIRA(object):
         r = self._session.put(url, headers={'content-type':'application/json'}, data=json.dumps(payload))
         raise_on_error(r)
 
+### ApplicationLinks
+
+    def applicationlinks(self):
+        """
+        list of application links
+        :return: json
+        """
+
+        url = self._options['server'] + '/rest/applinks/1.0/applicationlink'
+        headers = copy.deepcopy(self._options['headers'])
+        headers['content-type'] = 'application/json;charset=UTF-8'
+        r = self._session.get(url,  headers=headers)
+
+        raise_on_error(r)
+
+        r_json = json.loads(r.text)
+        return r_json
+
+
+
 ### Attachments
 
     def attachment(self, id):
