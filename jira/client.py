@@ -64,7 +64,13 @@ class JIRA(object):
         "server": "http://localhost:2990/jira",
         "rest_path": "api",
         "rest_api_version": "2",
-        "verify": True
+        "verify": True,
+        "headers": {
+            'X-Atlassian-Token': 'nocheck',
+            #'Cache-Control': 'no-cache',
+            #'Pragma': 'no-cache',
+            #'Expires': 'Thu, 01 Jan 1970 00:00:00 GMT'
+        }
     }
 
     def __init__(self, options=None, basic_auth=None, oauth=None):
@@ -124,6 +130,7 @@ class JIRA(object):
             self._session = requests.Session()
             self._session.proxies = self._options['proxies']
             self._session.verify = verify
+            self._session.headers.update(self._options['headers'])
 
 ### Information about this client
 
@@ -221,7 +228,7 @@ class JIRA(object):
         files = {
             'file': (fname, attachment)
         }
-        r = self._session.post(url, files=files, headers={'X-Atlassian-Token': 'nocheck'})
+        r = self._session.post(url, files=files, headers=self._options['headers'])
         raise_on_error(r)
 
         attachment = Attachment(self._options, self._session, json.loads(r.text)[0])
@@ -1395,6 +1402,7 @@ class JIRA(object):
         r = self._session.delete(url)
         raise_on_error(r)
 
+
 ### Utilities
 
     def _create_http_basic_session(self, username, password):
@@ -1432,7 +1440,7 @@ class JIRA(object):
 
     def _get_json(self, path, params=None):
         url = self._get_url(path)
-        r = self._session.get(url, params=params)
+        r = self._session.get(url, params=params, headers=self._options['headers'])
         raise_on_error(r)
 
         r_json = json.loads(r.text)
@@ -1582,7 +1590,7 @@ class JIRA(object):
 
         url = self._options['server'] + '/secure/admin/jira/IndexReIndex.jspa'
 
-        r = self._session.get(url, headers={'X-Atlassian-Token': 'nocheck'})
+        r = self._session.get(url, headers=self._options['headers'])
         if r.status_code == 503:
             # logging.warning("Jira returned 503, this could mean that a full reindex is in progress.")
             return 503
@@ -1596,7 +1604,7 @@ class JIRA(object):
             return True # still reindexing is considered still a success
 
         if r.content.find('To perform the re-index now, please go to the') or force:
-            r = self._session.post(url, headers={'X-Atlassian-Token': 'nocheck'}, params={"indexingStrategy":indexingStrategy,"reindex":"Re-Index"})
+            r = self._session.post(url, headers=self._options['headers'], params={"indexingStrategy":indexingStrategy,"reindex":"Re-Index"})
             #raise_on_error(r)
             if r.content.find('All issues are being re-indexed') != -1:
                 return True
@@ -1611,7 +1619,7 @@ class JIRA(object):
             '''
             url = self._options['server'] + '/secure/admin/XmlBackup.jspa'
             payload = { 'filename':filename}
-            r = self._session.post(url, headers={'X-Atlassian-Token': 'nocheck'}, data=payload)
+            r = self._session.post(url, headers=self._options['headers'], data=payload)
             if r.status_code == 200:
                 return True
             else:
@@ -1792,3 +1800,4 @@ class GreenHopper(JIRA):
         url = self._gh_get_url('epics/%s/add' % epic_id)
         r = self._session.put(url, data=json.dumps(data), headers={'Content-Type': 'application/json'})
         raise_on_error(r)
+
