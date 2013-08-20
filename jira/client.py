@@ -776,6 +776,21 @@ class JIRA(object):
         comment visibility for groups) and ``value`` is the name of the role (or group) to which viewing of this\
         comment will be restricted.
         """
+
+        # let's see if we have the right issue link 'type' and fix it if needed
+        if not hasattr(self, '_cached_issuetypes'):
+            self._cached_issue_link_types = self.issue_link_types()
+
+        if type not in self._cached_issue_link_types:
+            for lt in self._cached_issue_link_types:
+                if lt.outward == type:
+                    type = lt.name  # we are smart to figure it out what he ment
+                    break
+                elif lt.inward == type:
+                    type = lt.name  # so that's the reverse, so we fix the request
+                    inwardIssue, outwardIssue = outwardIssue, inwardIssue
+                    break
+
         data = {
             'type': {
                 'name': type
