@@ -43,3 +43,32 @@ def raise_on_error(r):
             except ValueError:
                 error = r.text
         raise JIRAError(r.status_code, error, r.url)
+
+
+def get_error_list(r):
+    error_list = []
+    if r.status_code >= 400:
+        if r.status_code == 403 and "x-authentication-denied-reason" in r.headers:
+            error_list = [r.headers["x-authentication-denied-reason"]]
+        elif r.text:
+            try:
+                response = json.loads(r.text)
+                if 'message' in response:
+                    # JIRA 5.1 errors
+                    error_list = [response['message']]
+                elif 'errorMessages' in response and len(response['errorMessages']) > 0:
+                    # JIRA 5.0.x error messages sometimes come wrapped in this array
+                    # Sometimes this is present but empty
+                    errorMessages = response['errorMessages']
+                    if isinstance(errorMessages, (list, tuple)):
+                        error_list = errorMessages
+                    else:
+                        error_list = [errorMessages]
+                elif 'errors' in response and len(response['errors']) > 0:
+                    # JIRA 6.x error messages are found in this array.
+                    error_list = response['errors'].values()
+                else:
+                    error_list = [r.text]
+            except ValueError:
+                error_list = [r.text]
+    return error_list

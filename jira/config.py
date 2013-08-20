@@ -12,7 +12,7 @@ import ConfigParser
 
 from jira.client import JIRA
 
-def get_jira(profile=None, url="http://localhost:2990", username="admin", password="admin", appid=None):
+def get_jira(profile=None, url="http://localhost:2990", username="admin", password="admin", appid=None, autofix=False):
         """
         Returns a JIRA object by loading the connection details from the `config.ini` file.
 
@@ -54,7 +54,7 @@ def get_jira(profile=None, url="http://localhost:2990", username="admin", passwo
                 if os.path.isfile(possible):
                     return possible
             return None
-        config = ConfigParser.SafeConfigParser(defaults={'user':None,'pass':None,'appid':None})
+        config = ConfigParser.SafeConfigParser(defaults={'user': None, 'pass': None, 'appid': appid, 'autofix': autofix})
 
         config_file = findfile('config.ini')
         if config_file:
@@ -75,11 +75,15 @@ def get_jira(profile=None, url="http://localhost:2990", username="admin", passwo
                 username = config.get(profile, 'user')
                 password = config.get(profile, 'pass')
                 appid = config.get(profile, 'appid')
+                autofix = config.get(profile, 'autofix')
+
             else:
                 raise EnvironmentError("%s was not able to locate the config.ini file in current directory, user home directory or PYTHONPATH." % __name__)
 
         options = JIRA.DEFAULT_OPTIONS
         options['server'] = url
+        options['autofix'] = autofix
+        options['appid'] = appid
 
-        return JIRA(options=options,basic_auth=(username,password))
+        return JIRA(options=options, basic_auth=(username, password))
         # self.jira.config.debug = debug

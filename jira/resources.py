@@ -4,7 +4,8 @@ into usable objects.
 """
 
 import re
-from jira.exceptions import raise_on_error
+import logging
+from jira.exceptions import raise_on_error, get_error_list
 import json
 
 
@@ -100,9 +101,21 @@ class Resource(object):
         for arg in kwargs:
             data[arg] = kwargs[arg]
 
-        r = self._session.put(self.self, headers={'content-type':'application/json'}, data=json.dumps(data))
+        r = self._session.put(self.self, headers={'content-type': 'application/json'}, data=json.dumps(data))
+        if self._options['autofix'] and \
+                r.status_code == 400:
+            error_list = get_error_list(r)
+            if "The reporter specified is not a user." in error_list:
+                if 'reporter' not in data['fields']:
+                    logging.warning("autofix: setting reporter to '%s' and retrying the update." % self._options['autofix'])
+                    data['fields']['reporter'] = {'name': self._options['autofix']}
+            for error in error_list:
+                if re.search("^User.* does not exist.", error):
+                    if 'assignee' not in data['fields']:
+                        logging.warning("autofix: setting assignee to '%s' and retrying the update." % self._options['autofix'])
+                        data['fields']['assignee'] = {'name': self._options['autofix']}
+            r = self._session.put(self.self, headers={'content-type': 'application/json'}, data=json.dumps(data))
         raise_on_error(r)
-
         self._load(self.self)
 
     def delete(self, params=None):
