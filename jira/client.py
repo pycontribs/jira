@@ -11,6 +11,7 @@ import copy
 import os
 import urllib
 import re
+import sys
 import logging
 import requests
 import HTMLParser
@@ -20,7 +21,11 @@ import json
 from jira.exceptions import raise_on_error
 from jira.resources import Resource, Issue, Comment, Project, Attachment, Component, Dashboard, Filter, Votes, Watchers, Worklog, IssueLink, IssueLinkType, IssueType, Priority, Version, Role, Resolution, SecurityLevel, Status, User, CustomFieldOption, RemoteLink
 from jira.resources import Board, Sprint
-
+if 'pydevd' not in sys.modules:
+    try:
+        import grequests
+    except ImportError:
+        pass
 
 def translate_resource_args(func):
     """
@@ -163,6 +168,17 @@ class JIRA(object):
         resource = Resource(resource_format, self._options, self._session)
         resource.find(ids)
         return resource
+
+
+    def async_do(self, size=10):
+        """
+        This will execute all async jobs and wait for them to finish. By default it will run on 10 threads.
+
+        size: number of threads to run on.
+        :return:
+        """
+        if hasattr(self._session, '_async_jobs'):
+            grequests.map(self._session._async_jobs, size=size)
 
 ### Application properties
 

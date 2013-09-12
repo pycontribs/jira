@@ -4,9 +4,15 @@ into usable objects.
 """
 
 import re
+import sys
 import logging
 from jira.exceptions import raise_on_error, get_error_list
 import json
+if 'pydevd' not in sys.modules:
+    try:
+        import grequests
+    except ImportError:
+        pass  # that's an optional experimental feature, so there is no need to force the dependency
 
 
 class Resource(object):
@@ -91,11 +97,13 @@ class Resource(object):
         headers = self._default_headers(headers)
         self._load(url, headers, params)
 
-    def update(self, **kwargs):
+    def update(self, async=False, **kwargs):
         """
         Update this resource on the server. Keyword arguments are marshalled into a dict before being sent. If this
         resource doesn't support ``PUT``, a :py:exc:`.JIRAError` will be raised; subclasses that specialize this method
         will only raise errors in case of user error.
+
+        :param async: if true the request will be added to the queue so it can be executed later using async_run()
         """
         data = {}
         for arg in kwargs:
@@ -109,14 +117,27 @@ class Resource(object):
                 if 'reporter' not in data['fields']:
                     logging.warning("autofix: setting reporter to '%s' and retrying the update." % self._options['autofix'])
                     data['fields']['reporter'] = {'name': self._options['autofix']}
+            if "Issue type is a sub-task but parent issue key or id not specified." in error_list:
+                logging.warning("autofix: trying to fix sub-task without parent by converting to it to bug")
+                data['fields']['issuetype'] = {"name": "Bug"}
+            if "The summary is invalid because it contains newline characters." in error_list:
+                logging.warning("autofix: trying to fix newline in summary")
+                data['fields']['summary'] = self.fields.summary.replace("/n", "")
             for error in error_list:
-                if re.search("^User.* does not exist.", error):
+                if re.search("^User.* does not exist\.", error) or re.search("^User '.*' was not found in the system\.", error):
                     if 'assignee' not in data['fields']:
                         logging.warning("autofix: setting assignee to '%s' and retrying the update." % self._options['autofix'])
                         data['fields']['assignee'] = {'name': self._options['autofix']}
-            r = self._session.put(self.self, headers={'content-type': 'application/json'}, data=json.dumps(data))
+            if async and 'grequests' in sys.modules:
+                if not hasattr(self._session, '_async_jobs'):
+                    self._session._async_jobs = set()
+                self._session._async_jobs.add(grequests.put(self.self, headers={'content-type': 'application/json'}, data=json.dumps(data)))
+            else:
+                r = self._session.put(self.self, headers={'content-type': 'application/json'}, data=json.dumps(data))
         raise_on_error(r)
         self._load(self.self)
+
+
 
     def delete(self, params=None):
         """
@@ -211,7 +232,7 @@ class Issue(Resource):
         if raw:
             self._parse_raw(raw)
 
-    def update(self, fields=None, **fieldargs):
+    def update(self, fields=None, async=False, **fieldargs):
         """
         Update this issue on the server.
 
@@ -235,7 +256,7 @@ class Issue(Resource):
                 fields_dict[field] = fieldargs[field]
             data['fields'] = fields_dict
 
-        super(Issue, self).update(**data)
+        super(Issue, self).update(async=async, **data)
 
     def delete(self, deleteSubtasks=False):
         """
