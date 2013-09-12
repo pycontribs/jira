@@ -4,7 +4,16 @@
 Starts an interactive JIRA session in an ipython terminal. Script arguments
 support changing the server and a persistent authentication over HTTP BASIC.
 """
-import ConfigParser
+
+from __future__ import print_function
+
+import sys
+
+if sys.version_info.major == 3:
+    import configparser as ConfigParser
+else:
+    import ConfigParser
+    input = raw_input
 
 import argparse
 from getpass import getpass
@@ -13,7 +22,10 @@ import os
 import requests
 from oauthlib.oauth1 import SIGNATURE_RSA
 from requests_oauthlib import OAuth1
-from urlparse import parse_qsl
+if sys.version_info.major == 3:
+    from urllib.parse import parse_qsl
+else:
+    from urlparse import parse_qsl
 import webbrowser
 from jira.client import JIRA
 from jira import __version__
@@ -30,15 +42,15 @@ def oauth_dance(server, consumer_key, key_cert_data, print_tokens=False):
     request_token = request['oauth_token']
     request_token_secret = request['oauth_token_secret']
     if print_tokens:
-        print "Request tokens received."
-        print "    Request token:        {}".format(request_token)
-        print "    Request token secret: {}".format(request_token_secret)
+        print("Request tokens received.")
+        print("    Request token:        {}".format(request_token))
+        print("    Request token secret: {}".format(request_token_secret))
 
     # step 2: prompt user to validate
     auth_url = '{}/plugins/servlet/oauth/authorize?oauth_token={}'.format(server, request_token)
     webbrowser.open_new(auth_url)
-    print "Your browser is opening the OAuth authorization for this client session."
-    approved = raw_input('Have you authorized this program to connect on your behalf to {}? (y/n)'.format(server))
+    print("Your browser is opening the OAuth authorization for this client session.")
+    approved = input('Have you authorized this program to connect on your behalf to {}? (y/n)'.format(server))
 
     if approved.lower() != 'y':
         exit('Abandoning OAuth dance. Your partner faceplants. The audience boos. You feel shame.')
@@ -55,9 +67,9 @@ def oauth_dance(server, consumer_key, key_cert_data, print_tokens=False):
     access = dict(parse_qsl(r.text))
 
     if print_tokens:
-        print "Access tokens received."
-        print "    Access token:        {}".format(access['oauth_token'])
-        print "    Access token secret: {}".format(access['oauth_token_secret'])
+        print("Access tokens received.")
+        print("    Access token:        {}".format(access['oauth_token']))
+        print("    Access token secret: {}".format(access['oauth_token_secret']))
 
     return {
         'access_token': access['oauth_token'],
@@ -70,8 +82,8 @@ def process_config():
     parser = ConfigParser.SafeConfigParser()
     try:
         parser.read(CONFIG_PATH)
-    except ConfigParser.ParsingError, err:
-        print "Couldn't read config file at path: " + CONFIG_PATH + "; reverting to command line"
+    except ConfigParser.ParsingError as err:
+        print("Couldn't read config file at path: " + CONFIG_PATH + "; reverting to command line")
         return process_command_line()
 
     if parser.has_section('options'):

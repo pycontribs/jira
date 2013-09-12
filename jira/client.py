@@ -3,6 +3,9 @@ This module implements a friendly (well, friendlier) interface between the raw J
 responses from JIRA and the Resource/dict abstractions provided by this library. Users
 will construct a JIRA object as described below.
 """
+
+from __future__ import print_function
+
 from functools import wraps
 import imghdr
 import mimetypes
@@ -15,7 +18,10 @@ import sys
 import tempfile
 import logging
 import requests
-import HTMLParser
+if sys.version_info.major == 3:
+    import html.parser as HTMLParser
+else:
+    import HTMLParser
 from requests_oauthlib import OAuth1
 from oauthlib.oauth1 import SIGNATURE_RSA
 import json
@@ -1526,8 +1532,8 @@ class JIRA(object):
             try:
                 return mimetypes.guess_type("f." + imghdr.what(0, buff))[0]
             except (IOError, TypeError):
-                print "WARNING: Couldn't detect content type of avatar image" \
-                      ". Specify the 'contentType' parameter explicitly."
+                print("WARNING: Couldn't detect content type of avatar image"
+                      ". Specify the 'contentType' parameter explicitly.")
                 return None
 
     def email_user(self, user, body, title="Jira Notification"):
@@ -1580,7 +1586,7 @@ class JIRA(object):
         "RunCanned":"Run",
          }
 
-        print self.user(old_user).emailAddress # raw displayName
+        print(self.user(old_user).emailAddress) # raw displayName
 
         #r = self._session.get(url, headers={'X-Atlassian-Token': 'nocheck', 'Cache-Control': 'no-cache'})
         #open("/tmp/jira_rename_user_%s_to%s_get.html" % (old_user,new_user),"w").write(r.content)
