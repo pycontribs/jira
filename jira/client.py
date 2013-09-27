@@ -1725,9 +1725,9 @@ class GreenHopper(JIRA):
         '''
         Return the Sprints that appear with the given board id
 
-        Example: rest/greenhopper/1.0/sprints/2
+        Example: rest/greenhopper/1.0/sprintquery/2
         '''
-        r_json = self._gh_get_json('sprints/%s' % id)
+        r_json = self._gh_get_json('sprintquery/%s' % id)
         sprints = [Sprint(self._options, self._session, raw_res_json) for raw_res_json in r_json['sprints']]
         return sprints
 
