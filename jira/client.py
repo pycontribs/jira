@@ -1590,7 +1590,7 @@ class JIRA(object):
             logging.error("In order to be able to use rename_user() you need to install Script Runner plugin. See https://marketplace.atlassian.com/plugins/com.onresolve.jira.groovy.groovyrunner")
             return False
         if r.status_code != 200:
-            logggin.error(r.status_code)
+            logging.error(r.status_code)
 
         raise_on_error(r)
         
