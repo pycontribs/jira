@@ -256,7 +256,7 @@ class JIRA(object):
         :rtype: an Attachment Resource
         """
         # TODO: Support attaching multiple files at once?
-        url = self._get_url('issue/' + issue + '/attachments')
+        url = self._get_url('issue/' + str(issue) + '/attachments')
 
         fname = filename
         if not fname:
@@ -495,7 +495,7 @@ class JIRA(object):
         :param issue: the issue to assign
         :param assignee: the user to assign the issue to
         """
-        url = self._options['server'] + '/rest/api/2/issue/' + issue + '/assignee'
+        url = self._options['server'] + '/rest/api/2/issue/' + str(issue) + '/assignee'
         payload = {'name': assignee}
         r = self._session.put(url, headers={'content-type':'application/json'}, data=json.dumps(payload))
         raise_on_error(r)
@@ -507,7 +507,7 @@ class JIRA(object):
 
         :param issue: the issue to get comments from
         """
-        r_json = self._get_json('issue/' + issue + '/comment')
+        r_json = self._get_json('issue/' + str(issue) + '/comment')
 
         comments = [Comment(self._options, self._session, raw_comment_json) for raw_comment_json in r_json['comments']]
         return comments
@@ -540,7 +540,7 @@ class JIRA(object):
         if visibility is not None:
             data['visibility'] = visibility
 
-        url = self._get_url('issue/' + issue + '/comment')
+        url = self._get_url('issue/' + str(issue) + '/comment')
         r = self._session.post(url, headers={'content-type':'application/json'}, data=json.dumps(data))
         raise_on_error(r)
 
@@ -555,7 +555,7 @@ class JIRA(object):
 
         :param issue: the issue to get metadata for
         """
-        return self._get_json('issue/' + issue + '/editmeta')
+        return self._get_json('issue/' + str(issue) + '/editmeta')
 
     @translate_resource_args
     def remote_links(self, issue):
@@ -564,7 +564,7 @@ class JIRA(object):
 
         :param issue: the issue to get remote links from
         """
-        r_json = self._get_json('issue/' + issue + '/remotelink')
+        r_json = self._get_json('issue/' + str(issue) + '/remotelink')
         remote_links = [RemoteLink(self._options, self._session, raw_remotelink_json) for raw_remotelink_json in r_json]
         return remote_links
 
@@ -604,7 +604,7 @@ class JIRA(object):
         if relationship is not None:
             data['relationship'] = relationship
 
-        url = self._get_url('issue/' + issue + '/remotelink')
+        url = self._get_url('issue/' + str(issue) + '/remotelink')
         r = self._session.post(url, headers={'content-type':'application/json'}, data=json.dumps(data))
         raise_on_error(r)
 
@@ -626,7 +626,7 @@ class JIRA(object):
             params['transitionId'] = id
         if expand is not None:
             params['expand'] = expand
-        return self._get_json('issue/' + issue + '/transitions', params)['transitions']
+        return self._get_json('issue/' + str(issue) + '/transitions', params)['transitions']
 
     @translate_resource_args
     def transition_issue(self, issue, transitionId, fields=None, comment=None, **fieldargs):
@@ -659,7 +659,7 @@ class JIRA(object):
                 fields_dict[field] = fieldargs[field]
             data['fields'] = fields_dict
 
-        url = self._get_url('issue/' + issue + '/transitions')
+        url = self._get_url('issue/' + str(issue) + '/transitions')
         r = self._session.post(url, headers={'content-type':'application/json'}, data=json.dumps(data))
         raise_on_error(r)
 
@@ -679,7 +679,7 @@ class JIRA(object):
 
         :param issue: ID or key of the issue to vote on
         """
-        url = self._get_url('issue/' + issue + '/votes')
+        url = self._get_url('issue/' + str(issue) + '/votes')
         self._session.post(url)
 
     @translate_resource_args
@@ -689,7 +689,7 @@ class JIRA(object):
 
         :param issue: ID or key of the issue to unvote on
         """
-        url = self._get_url('issue/' + issue + '/votes')
+        url = self._get_url('issue/' + str(issue) + '/votes')
         self._session.delete(url)
 
     @translate_resource_args
@@ -709,7 +709,7 @@ class JIRA(object):
         :param issue: ID or key of the issue affected
         :param watcher: username of the user to add to the watchers list
         """
-        url = self._get_url('issue/' + issue + '/watchers')
+        url = self._get_url('issue/' + str(issue) + '/watchers')
         self._session.post(url, headers={'content-type':'application/json'}, data=json.dumps(watcher))
 
     @translate_resource_args
@@ -720,7 +720,7 @@ class JIRA(object):
         :param issue: ID or key of the issue affected
         :param watcher: username of the user to remove from the watchers list
         """
-        url = self._get_url('issue/' + issue + '/watchers')
+        url = self._get_url('issue/' + str(issue) + '/watchers')
         params = {'username': watcher}
         self._session.delete(url, params=params)
 
@@ -731,7 +731,7 @@ class JIRA(object):
 
         :param issue: ID or key of the issue to get worklogs from
         """
-        r_json = self._get_json('issue/' + issue + '/worklog')
+        r_json = self._get_json('issue/' + str(issue) + '/worklog')
         worklogs = [Worklog(self._options, self._session, raw_worklog_json) for raw_worklog_json in r_json['worklogs']]
         return worklogs
 
