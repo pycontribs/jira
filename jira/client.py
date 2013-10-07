@@ -1727,7 +1727,12 @@ class GreenHopper(JIRA):
 
         Example: rest/greenhopper/1.0/sprintquery/2
         '''
-        r_json = self._gh_get_json('sprintquery/%s' % id)
+        # this fix is to handle the new API
+        try:
+            r_json = self._gh_get_json('sprintquery/%s' % id)
+        except:
+            r_json = self._gh_get_json('sprint/%s' % id)
+        
         sprints = [Sprint(self._options, self._session, raw_res_json) for raw_res_json in r_json['sprints']]
         return sprints
 
