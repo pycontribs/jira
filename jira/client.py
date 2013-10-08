@@ -1549,7 +1549,7 @@ class JIRA(object):
         'id':'',
         'Preview':'Preview',
         }
-        r = self._session.post(url, headers={'X-Atlassian-Token': 'nocheck', 'Cache-Control': 'no-cache'}, data=payload)
+        r = self._session.post(url, headers={'X-Atlassian-Token': 'nocheck', 'Cache-Control': 'no-cache, no-store, no-transform'}, data=payload)
         open("/tmp/jira_email_user_%s.html" % user,"w").write(r.content)
         #return False
 
@@ -1691,6 +1691,7 @@ class GreenHopper(JIRA):
     '''
 
     def __init__(self, options=None, basic_auth=None, oauth=None):
+        self._rank = None
         JIRA.__init__(self, options, basic_auth, oauth)
 
     def _gh_get_url(self, path):
@@ -1854,3 +1855,20 @@ class GreenHopper(JIRA):
         r = self._session.put(url, data=json.dumps(data), headers={'Content-Type': 'application/json'})
         raise_on_error(r)
 
+    def rank(self, issue, next_issue):
+        '''
+        Rank an issue before another using the default Ranking field, the one named 'Rank'.
+
+        :param issue: issue key of the issue to be ranked before the second one.
+        :param next_issue: issue key of the second issue.
+
+        '''
+        # {"issueKeys":["ANERDS-102"],"rankBeforeKey":"ANERDS-94","rankAfterKey":"ANERDS-7","customFieldId":11431}
+        if not self._rank:
+            for field in self.fields():
+                 if field['name'] == 'Rank' and field['schema']['custom']=="com.pyxis.greenhopper.jira:gh-global-rank":
+                     self._rank = field['schema']['customId']
+        data = {"issueKeys":[issue],"rankBeforeKey":next_issue,"customFieldId":self._rank}
+        url = self._gh_get_url('rank')
+        r = self._session.put(url, data=json.dumps(data), headers={'Content-Type': 'application/json'})
+        raise_on_error(r)
