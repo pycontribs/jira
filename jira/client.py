@@ -12,6 +12,7 @@ import os
 import urllib
 import re
 import sys
+import tempfile
 import logging
 import requests
 import HTMLParser
@@ -1666,20 +1667,87 @@ class JIRA(object):
                 return False
 
 
-        def backup(self, filename='backup.zip'):
-            '''
-            Will call jira export to backup as zipped xml. Returning with success does not mean that the backup process finished.
-            '''
-            url = self._options['server'] + '/secure/admin/XmlBackup.jspa'
-            payload = { 'filename':filename}
-            r = self._session.post(url, headers=self._options['headers'], data=payload)
-            if r.status_code == 200:
-                return True
-            else:
-                logging.warning('Got %s response from calling backup.' % r.status_code)
-                return r.status_code
-    
+    def backup(self, filename='backup.zip'):
+        '''
+        Will call jira export to backup as zipped xml. Returning with success does not mean that the backup process finished.
+        '''
+        url = self._options['server'] + '/secure/admin/XmlBackup.jspa'
+        payload = { 'filename':filename}
+        r = self._session.post(url, headers=self._options['headers'], data=payload)
+        if r.status_code == 200:
+            return True
+        else:
+            logging.warning('Got %s response from calling backup.' % r.status_code)
+            return r.status_code
 
+    def current_user(self):
+        if not hasattr(self, '_serverInfo') or 'username' not in self._serverInfo:
+
+            url = self._get_url('serverInfo')
+            r = self._session.get(url, headers=self._options['headers'])
+            raise_on_error(r)
+
+            r_json = json.loads(r.text)
+            if 'x-ausername' in r.headers:
+                r_json['username'] = r.headers['x-ausername']
+            else:
+                r_json['username'] = None
+            self._serverInfo = r_json
+            #del r_json['self']  # this isn't really an addressable resource
+        return self._serverInfo['username']
+
+    def delete_project(self, pid):
+        '''
+        Project can be id, project key or project name. It will return False if it fails.
+        '''
+        found = False
+        try:
+            if not str(int(pid))==pid:
+                found = True
+        except Exception as e:
+            r_json = self._get_json('project')
+            for e in r_json:
+                    if e['key'] == pid or e['name'] == pid:
+                        pid = e['id']
+                        found = True
+                        break
+            if not found:
+                logging.error("Unable to recognize project `%s`" % pid)
+                return False
+        url = self._options['server'] + '/secure/admin/DeleteProject.jspa'
+        payload = { 'pid': pid, 'Delete':'Delete', 'confirm':'true' }
+        r = self._session.post(url, headers=self._options['headers'], data=payload)
+        if r.status_code == 200:
+            return True
+        else:
+            logging.warning('Got %s response from calling delete_project.' % r.status_code)
+            return r.status_code
+
+    def create_project(self, key, name=None, assignee=None):
+        '''
+        Key is mandatory and has to match JIRA project key requirements, usually only 2-10 uppercase characters.
+        If name is not specified it will use the key value.
+        If assignee is not specified it will use current user.
+        The returned value should evaluate to False if it fails otherwise it will be the new project id.
+        '''
+        if assignee is None:
+            assignee = self.current_user()
+        if name is None:
+            name = key
+        if key.upper() != key or not key.isalpha() or len(key)<2 or len(key)>10:
+            logging.error('key parameter is not all uppercase alphanumeric of length between 2 and 10')
+            return False
+        url = self._options['server'] + '/secure/admin/AddProject.jspa'
+        payload = { 'name': name, 'key':key, 'keyEdited':'true', 'permissionScheme':'', 'lead':assignee, 'assigneeType':'2'  }
+        r = self._session.post(url, headers=self._options['headers'], data=payload)
+        if r.status_code == 200 and r.content.find('<meta name="projectKey" content="%s"/>' % key):
+            m = re.search("<meta name=\"projectId\" content=\"(\d+)\"\/>", r.content)
+            if m:
+               return m.groups()[0] # that's the projectID
+        f=tempfile.NamedTemporaryFile(suffix='.html', prefix='python-jira-error-create-project-', delete=False)
+        f.write(r.content)
+        logging.error("Unexpected result while running create project. Server response saved in %s for further investigation [HTTP response=%s]." % (f.name, r.status_code))
+        return False
 
 ### GreenHopper
 
