@@ -943,7 +943,7 @@ class JIRA(object):
 
         Avatar images are specified by a filename, size, and file object. By default, the client will attempt to
         autodetect the picture's content type: this mechanism relies on libmagic and will not work out of the box
-        on Windows systems (see https://github.com/ahupp/python-magic/blob/master/README for details on how to install
+        on Windows systems (see http://filemagic.readthedocs.org/en/latest/guide.html for details on how to install
         support). The ``contentType`` argument can be used to explicitly set the value (note that JIRA will reject any
         type other than the well-known ones for images, e.g. ``image/jpg``, ``image/png``, etc.)
 
@@ -1229,7 +1229,7 @@ class JIRA(object):
 
         Avatar images are specified by a filename, size, and file object. By default, the client will attempt to
         autodetect the picture's content type: this mechanism relies on ``libmagic`` and will not work out of the box
-        on Windows systems (see https://github.com/ahupp/python-magic/blob/master/README for details on how to install
+        on Windows systems (see http://filemagic.readthedocs.org/en/latest/guide.html for details on how to install
         support). The ``contentType`` argument can be used to explicitly set the value (note that JIRA will reject any
         type other than the well-known ones for images, e.g. ``image/jpg``, ``image/png``, etc.)
 
@@ -1521,13 +1521,13 @@ class JIRA(object):
             self._magic = None
         else:
             try:
-                self._magic = magic.Magic(mime=True)
+                self._magic = magic.Magic(flags=magic.MAGIC_MIME_TYPE)
             except TypeError:
                 self._magic = None
 
     def _get_mime_type(self, buff):
         if self._magic is not None:
-            return self._magic.from_buffer(buff)
+            return self._magic.id_buffer(buff)
         else:
             try:
                 return mimetypes.guess_type("f." + imghdr.what(0, buff))[0]
