@@ -10,8 +10,10 @@ import mimetypes
 import copy
 import os
 import urllib
+import random
 import re
 import sys
+import string
 import tempfile
 import logging
 import requests
@@ -1748,6 +1750,31 @@ class JIRA(object):
         f.write(r.content)
         logging.error("Unexpected result while running create project. Server response saved in %s for further investigation [HTTP response=%s]." % (f.name, r.status_code))
         return False
+
+
+    def add_user(self, username, email, directoryId=1, password=None, fullname=None, sendEmail=False, active=True):
+
+        if not password:
+            password = ''.join(random.choice(string.ascii_uppercase + string.digits + string.ascii_lowercase) for x in range(10))
+        if not fullname:
+            fullname = username
+        # TODO: default the directoryID to the first directory in jira instead of 1 which is the internal one.
+        url = self._options['server'] + '/secure/admin/AddUser.jspa'
+        payload = { 'username': username, 'active': 'false', 'email':email, 'directoryId':directoryId, 'password':password, 'confirm':password, 'fullname':fullname, 'sendEmail':sendEmail  }
+        r = self._session.post(url, headers=self._options['headers'], data=payload)
+        
+        if r.status_code == 200 and r.content.find('class="error">'):      # class="error"
+            m = re.search('class="error">(.*)<', r.content)
+            if m:
+               x = m.groups()[0] # that's the projectID
+               logging.error(x)
+               return x
+        if not active:
+            # active cannot be set on creation (ask Atlas why)
+            url = self._options['server'] + '/secure/admin/EditUser.jspa'
+            payload = { 'editName': username, 'active': 'false', 'email':email, 'fullName':fullname }
+            r = self._session.post(url, headers=self._options['headers'], data=payload)
+
 
 ### GreenHopper
 

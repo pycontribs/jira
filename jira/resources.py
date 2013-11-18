@@ -6,6 +6,8 @@ into usable objects.
 import re
 import sys
 import logging
+import random
+import pprint
 from jira.exceptions import raise_on_error, get_error_list
 import json
 if 'pydevd' not in sys.modules:
@@ -97,7 +99,7 @@ class Resource(object):
         headers = self._default_headers(headers)
         self._load(url, headers, params)
 
-    def update(self, async=False, **kwargs):
+    def update(self, async=False, jira=None, **kwargs):
         """
         Update this resource on the server. Keyword arguments are marshalled into a dict before being sent. If this
         resource doesn't support ``PUT``, a :py:exc:`.JIRAError` will be raised; subclasses that specialize this method
@@ -110,13 +112,16 @@ class Resource(object):
             data[arg] = kwargs[arg]
 
         r = self._session.put(self.self, headers={'content-type': 'application/json'}, data=json.dumps(data))
-        if self._options['autofix'] and \
+        if 'autofix' in self._options and \
                 r.status_code == 400:
+            user = None
             error_list = get_error_list(r)
+            logging.error(error_list)
             if "The reporter specified is not a user." in error_list:
                 if 'reporter' not in data['fields']:
                     logging.warning("autofix: setting reporter to '%s' and retrying the update." % self._options['autofix'])
                     data['fields']['reporter'] = {'name': self._options['autofix']}
+                print data
 
             if "Issues must be assigned." in error_list:
                 if 'assignee' not in data['fields']:
@@ -131,16 +136,31 @@ class Resource(object):
                 logging.warning("autofix: trying to fix newline in summary")
                 data['fields']['summary'] = self.fields.summary.replace("/n", "")
             for error in error_list:
-                if re.search("^User.* does not exist\.", error) or re.search("^User '.*' was not found in the system\.", error):
-                    if 'assignee' not in data['fields']:
-                        logging.warning("autofix: setting assignee to '%s' and retrying the update." % self._options['autofix'])
-                        data['fields']['assignee'] = {'name': self._options['autofix']}
-            if async and 'grequests' in sys.modules:
-                if not hasattr(self._session, '_async_jobs'):
-                    self._session._async_jobs = set()
-                self._session._async_jobs.add(grequests.put(self.self, headers={'content-type': 'application/json'}, data=json.dumps(data)))
-            else:
-                r = self._session.put(self.self, headers={'content-type': 'application/json'}, data=json.dumps(data))
+                if re.search(u"^User '(.*)' was not found in the system\.", error, re.U):
+                    m = re.search(u"^User '(.*)' was not found in the system\.", error, re.U)
+                    if m:
+                        user = m.groups()[0]
+                    else: raise NotImplemented()
+                if re.search("^User '(.*)' does not exist\.", error):
+                    m = re.search("^User '(.*)' does not exist\.", error)
+                    if m:
+                        user = m.groups()[0]
+                    else: raise NotImplemented()
+
+            if user:
+                logging.warning("Trying to add missing orphan user '%s' in order to complete the previous failed operation." % user)
+                #print pprint.pprint(self.__dict__)
+                jira.add_user(user, 'noreply@example.com', 10100, active=False)
+                    #if 'assignee' not in data['fields']:
+                    #    logging.warning("autofix: setting assignee to '%s' and retrying the update." % self._options['autofix'])
+                    #    data['fields']['assignee'] = {'name': self._options['autofix']}
+            #if async and 'grequests' in sys.modules:
+            #   if not hasattr(self._session, '_async_jobs'):
+            #        self._session._async_jobs = set()
+            #    self._session._async_jobs.add(grequests.put(self.self, headers={'content-type': 'application/json'}, data=json.dumps(data)))
+            #else:
+            #    print "x", data
+            r = self._session.put(self.self, headers={'content-type': 'application/json'}, data=json.dumps(data))
         raise_on_error(r)
         self._load(self.self)
 
@@ -239,7 +259,7 @@ class Issue(Resource):
         if raw:
             self._parse_raw(raw)
 
-    def update(self, fields=None, async=False, **fieldargs):
+    def update(self, fields=None, async=False, jira=None, **fieldargs):
         """
         Update this issue on the server.
 
@@ -263,7 +283,7 @@ class Issue(Resource):
                 fields_dict[field] = fieldargs[field]
             data['fields'] = fields_dict
 
-        super(Issue, self).update(async=async, **data)
+        super(Issue, self).update(async=async, jira=jira, **data)
 
     def delete(self, deleteSubtasks=False):
         """
