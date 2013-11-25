@@ -252,20 +252,27 @@ class JIRA(object):
         for its use. The user is still responsible for tidying up (e.g., closing the file, killing the socket, etc.)
 
         :param issue: the issue to attach the attachment to
-        :param attachment: file-like object to attach to the issue
+        :param attachment: file-like object to attach to the issue, also works if it is a string with the filename.
         :param filename: optional name for the attached file. If omitted, the file object's ``name`` attribute
             is used. If you aquired the file-like object by any other method than ``open()``, make sure
             that a name is specified in one way or the other.
         :rtype: an Attachment Resource
         """
+        if type(attachment) == type(''):
+            attachment = open(attachment, "rb")
         # TODO: Support attaching multiple files at once?
         url = self._get_url('issue/' + str(issue) + '/attachments')
 
         fname = filename
         if not fname:
             fname = os.path.basename(attachment.name)
+
+        content_type = mimetypes.guess_type(fname)[0]
+        if not content_type:
+            content_type = 'application/octet-stream'
+
         files = {
-            'file': (fname, attachment)
+            'file': (fname, attachment, content_type)
         }
         r = self._session.post(url, files=files, headers=self._options['headers'])
         raise_on_error(r)
@@ -1520,6 +1527,8 @@ class JIRA(object):
                 self._magic = magic.Magic(mime=True)
             except TypeError:
                 self._magic = None
+            except AttributeError:
+                self._magic = None
 
     def _get_mime_type(self, buff):
         if self._magic is not None:
@@ -1583,10 +1592,6 @@ class JIRA(object):
          }
 
         print self.user(old_user).emailAddress # raw displayName
-
-        #r = self._session.get(url, headers={'X-Atlassian-Token': 'nocheck', 'Cache-Control': 'no-cache'})
-        #open("/tmp/jira_rename_user_%s_to%s_get.html" % (old_user,new_user),"w").write(r.content)
-        #return False
 
         r = self._session.post(url, headers={'X-Atlassian-Token': 'nocheck', 'Cache-Control': 'no-cache'}, data=payload)
         if r.status_code == 404:
