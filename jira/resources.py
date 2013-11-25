@@ -10,6 +10,13 @@ import random
 import pprint
 from jira.exceptions import raise_on_error, get_error_list
 import json
+
+if sys.version_info.major == 3:
+    basestring = str
+    iteritems = dict.items
+else:
+    iteritems = dict.iteritems
+
 if 'pydevd' not in sys.modules:
     try:
         import grequests
@@ -191,7 +198,9 @@ class Resource(object):
         return url
 
     def _default_headers(self, user_headers):
-        return dict(user_headers.items() + {'accept': 'application/json'}.items())
+        result = dict(user_headers)
+        result['accept'] = 'application/json'
+        return result
 
 
 class Attachment(Resource):
@@ -571,7 +580,7 @@ def dict2resource(raw, top=None, options=None, session=None):
         top = type('PropertyHolder', (object,), raw)
 
     seqs = tuple, list, set, frozenset
-    for i, j in raw.iteritems():
+    for i, j in iteritems(raw):
         if isinstance(j, dict):
             if 'self' in j:
                 resource = cls_for_resource(j['self'])(options, session, j)

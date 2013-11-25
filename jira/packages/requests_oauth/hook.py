@@ -1,13 +1,23 @@
 # -*- coding: utf-8 -*-
+import sys
 import time
 from datetime import datetime
 import random
 import urllib
-from urlparse import urlparse, urlunparse, parse_qs, urlsplit, urlunsplit
+
+if sys.version_info.major == 3:
+    from urllib.parse import urlparse, urlunparse, parse_qs, urlsplit, urlunsplit
+else:
+    from urlparse import urlparse, urlunparse, parse_qs, urlsplit, urlunsplit
 
 from auth import Token, Consumer
 from auth import to_utf8, escape
 from auth import SignatureMethod_HMAC_SHA1, SignatureMethod_RSA_SHA1
+
+if sys.version_info.major == 3:
+    iteritems = dict.items
+else:
+    iteritems = dict.iteritems
 
 class OAuthError(Exception):
     def __init__(self, msg):
@@ -87,7 +97,7 @@ class OAuthHook(object):
         Turns a `query_string` into a Python dictionary with unquoted values
         """
         parameters = parse_qs(to_utf8(query_string), keep_blank_values=True)
-        for k, v in parameters.iteritems():
+        for k, v in iteritems(parameters):
             parameters[k] = urllib.unquote(v[0])
         return parameters
 
@@ -110,7 +120,7 @@ class OAuthHook(object):
             del request.data_and_params['oauth_signature']
 
         items = []
-        for key, value in request.data_and_params.iteritems():
+        for key, value in iteritems(request.data_and_params):
             # 1.0a/9.1.1 states that kvp must be sorted by key, then by value,
             # so we unpack sequence values into multiple items for sorting.
             if isinstance(value, basestring):
@@ -118,7 +128,7 @@ class OAuthHook(object):
             else:
                 try:
                     value = list(value)
-                except TypeError, e:
+                except TypeError as e:
                     assert 'is not iterable' in str(e)
                     items.append((key, value))
                 else:
@@ -155,7 +165,7 @@ class OAuthHook(object):
         scheme, netloc, path, query, fragment = urlsplit(to_utf8(request.url))
         query = parse_qs(query)
 
-        for key, value in request.data_and_params.iteritems():
+        for key, value in iteritems(request.data_and_params):
             query.setdefault(key, []).append(value)
 
         query = urllib.urlencode(query, True)

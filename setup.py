@@ -8,13 +8,13 @@ setup(
     version=__version__,
     packages=find_packages(),
 
-    install_requires=['requests>=1.0.0', 
-                      'requests_oauthlib>=0.3.0',
+    install_requires=['requests>=1.2.3',
+                      'requests_oauthlib>=0.3.3',
                       'ipython>=0.13',
-                      'tlslite>=0.4.1'],
+                      'tlslite>=0.4.4'],
     setup_requires=['sphinx','requests_oauthlib'],
     extras_require={
-        'magic': ['python-magic>=0.4.2'],
+        'magic': ['filemagic>=1.6'],
     },
     entry_points = {
         'console_scripts':
@@ -34,6 +34,7 @@ setup(
         'License :: OSI Approved :: BSD License',
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.3',
         'Topic :: Internet :: WWW/HTTP',
     ],
 )

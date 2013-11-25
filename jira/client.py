@@ -3,6 +3,9 @@ This module implements a friendly (well, friendlier) interface between the raw J
 responses from JIRA and the Resource/dict abstractions provided by this library. Users
 will construct a JIRA object as described below.
 """
+
+from __future__ import print_function
+
 from functools import wraps
 import imghdr
 import mimetypes
@@ -17,7 +20,10 @@ import string
 import tempfile
 import logging
 import requests
-import HTMLParser
+if sys.version_info.major == 3:
+    import html.parser as HTMLParser
+else:
+    import HTMLParser
 from requests_oauthlib import OAuth1
 from oauthlib.oauth1 import SIGNATURE_RSA
 import json
@@ -946,7 +952,7 @@ class JIRA(object):
 
         Avatar images are specified by a filename, size, and file object. By default, the client will attempt to
         autodetect the picture's content type: this mechanism relies on libmagic and will not work out of the box
-        on Windows systems (see https://github.com/ahupp/python-magic/blob/master/README for details on how to install
+        on Windows systems (see http://filemagic.readthedocs.org/en/latest/guide.html for details on how to install
         support). The ``contentType`` argument can be used to explicitly set the value (note that JIRA will reject any
         type other than the well-known ones for images, e.g. ``image/jpg``, ``image/png``, etc.)
 
@@ -1232,7 +1238,7 @@ class JIRA(object):
 
         Avatar images are specified by a filename, size, and file object. By default, the client will attempt to
         autodetect the picture's content type: this mechanism relies on ``libmagic`` and will not work out of the box
-        on Windows systems (see https://github.com/ahupp/python-magic/blob/master/README for details on how to install
+        on Windows systems (see http://filemagic.readthedocs.org/en/latest/guide.html for details on how to install
         support). The ``contentType`` argument can be used to explicitly set the value (note that JIRA will reject any
         type other than the well-known ones for images, e.g. ``image/jpg``, ``image/png``, etc.)
 
@@ -1524,7 +1530,7 @@ class JIRA(object):
             self._magic = None
         else:
             try:
-                self._magic = magic.Magic(mime=True)
+                self._magic = magic.Magic(flags=magic.MAGIC_MIME_TYPE)
             except TypeError:
                 self._magic = None
             except AttributeError:
@@ -1532,13 +1538,13 @@ class JIRA(object):
 
     def _get_mime_type(self, buff):
         if self._magic is not None:
-            return self._magic.from_buffer(buff)
+            return self._magic.id_buffer(buff)
         else:
             try:
                 return mimetypes.guess_type("f." + imghdr.what(0, buff))[0]
             except (IOError, TypeError):
-                print "WARNING: Couldn't detect content type of avatar image" \
-                      ". Specify the 'contentType' parameter explicitly."
+                print("WARNING: Couldn't detect content type of avatar image"
+                      ". Specify the 'contentType' parameter explicitly.")
                 return None
 
     def email_user(self, user, body, title="Jira Notification"):
@@ -1591,7 +1597,7 @@ class JIRA(object):
         "RunCanned":"Run",
          }
 
-        print self.user(old_user).emailAddress # raw displayName
+        print(self.user(old_user).emailAddress) # raw displayName
 
         r = self._session.post(url, headers={'X-Atlassian-Token': 'nocheck', 'Cache-Control': 'no-cache'}, data=payload)
         if r.status_code == 404:

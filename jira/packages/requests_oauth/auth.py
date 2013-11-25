@@ -1,9 +1,15 @@
+import sys
 import base64
 import binascii
 import hmac
 import random
 import urllib
-from urlparse import urlparse, urlunparse
+
+if sys.version_info.major == 3:
+    from urllib.parse import urlparse, urlunparse
+else:
+    from urlparse import urlparse, urlunparse
+
 from tlslite.utils import keyfactory
 
 try:
