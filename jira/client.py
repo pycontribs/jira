@@ -1633,6 +1633,27 @@ class JIRA(object):
         logging.error("User %s does still exists after rename, that's clearly a problem." % old_user)
         return False
 
+    def delete_user(self, username):
+
+        # name=vunguyen&returnUrl=UserBrowser.jspa
+
+        url = self._options['server'] + '/secure/admin/user/DeleteUser.jspa'
+        payload = {
+        "name":username,
+        "Delete": "Delete",
+        "returnUrl":"UserBrowser.jspa",
+        "confirm":"true",
+         }
+        r = self._session.post(url, headers={'X-Atlassian-Token': 'nocheck', 'Cache-Control': 'no-cache'}, data=payload)
+        #if r.status_code == 404:
+        #    logging.error("404")
+        #    return False
+        if r.status_code != 200:
+            logging.error(r.status_code)
+
+        #raise_on_error(r)
+        open("/tmp/jira_delete_user_%s_%s.html" % (r.status_code, username),"w").write(r.content)
+
     def reindex(self, force=False, background=True):
         """
         Start jira re-indexing. Returns True if reindexing is in progress or not needed, or False.
