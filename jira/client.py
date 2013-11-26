@@ -36,6 +36,7 @@ if 'pydevd' not in sys.modules:
     except ImportError:
         pass
 
+
 def translate_resource_args(func):
     """
     Decorator that converts Issue and Project resources to their keys when used as arguments.
@@ -54,6 +55,7 @@ def translate_resource_args(func):
 
 
 class ResultList(list):
+
     def __init__(self, iterable=None, _total=None):
         if iterable is not None:
             list.__init__(self, iterable)
@@ -63,6 +65,7 @@ class ResultList(list):
 
 
 class JIRA(object):
+
     """
     User interface to JIRA.
 
@@ -121,11 +124,11 @@ class JIRA(object):
 
         self._options = copy.copy(JIRA.DEFAULT_OPTIONS)
 
-        try: # py3 variant
+        try:  # py3 variant
             __import__("urllib.request", fromlist=[urllib])
-            self._options['proxies']=urllib.request.getproxies()
-        except ImportError: # py2 variant
-            self._options['proxies']=urllib.getproxies()
+            self._options['proxies'] = urllib.request.getproxies()
+        except ImportError:  # py2 variant
+            self._options['proxies'] = urllib.getproxies()
 
         self._options.update(options)
 
@@ -146,13 +149,13 @@ class JIRA(object):
             self._session.verify = verify
             self._session.headers.update(self._options['headers'])
 
-### Information about this client
+# Information about this client
 
     def client_info(self):
         """Get the server this client is connected to."""
         return self._options['server']
 
-### Universal resource loading
+# Universal resource loading
 
     def find(self, resource_format, ids=None):
         """
@@ -178,7 +181,6 @@ class JIRA(object):
         resource.find(ids)
         return resource
 
-
     def async_do(self, size=10):
         """
         This will execute all async jobs and wait for them to finish. By default it will run on 10 threads.
@@ -189,7 +191,7 @@ class JIRA(object):
         if hasattr(self._session, '_async_jobs'):
             grequests.map(self._session._async_jobs, size=size)
 
-### Application properties
+# Application properties
 
     # non-resource
     def application_properties(self, key=None):
@@ -215,10 +217,10 @@ class JIRA(object):
             'id': key,
             'value': value
         }
-        r = self._session.put(url, headers={'content-type':'application/json'}, data=json.dumps(payload))
+        r = self._session.put(url, headers={'content-type': 'application/json'}, data=json.dumps(payload))
         raise_on_error(r)
 
-### ApplicationLinks
+# ApplicationLinks
 
     def applicationlinks(self):
         """
@@ -229,17 +231,14 @@ class JIRA(object):
         url = self._options['server'] + '/rest/applinks/1.0/applicationlink'
         headers = copy.deepcopy(self._options['headers'])
         headers['content-type'] = 'application/json;charset=UTF-8'
-        r = self._session.get(url,  headers=headers)
+        r = self._session.get(url, headers=headers)
 
         raise_on_error(r)
 
         r_json = json.loads(r.text)
         return r_json
 
-
-
-### Attachments
-
+# Attachments
     def attachment(self, id):
         """Get an attachment Resource from the server for the specified ID."""
         return self._find_for_resource(Attachment, id)
@@ -264,7 +263,7 @@ class JIRA(object):
             that a name is specified in one way or the other.
         :rtype: an Attachment Resource
         """
-        if type(attachment) == type(''):
+        if isinstance(attachment, type('')):
             attachment = open(attachment, "rb")
         # TODO: Support attaching multiple files at once?
         url = self._get_url('issue/' + str(issue) + '/attachments')
@@ -286,7 +285,7 @@ class JIRA(object):
         attachment = Attachment(self._options, self._session, json.loads(r.text)[0])
         return attachment
 
-### Components
+# Components
 
     def component(self, id):
         """
@@ -322,7 +321,7 @@ class JIRA(object):
             data['assigneeType'] = assigneeType
 
         url = self._get_url('component')
-        r = self._session.post(url, headers={'content-type':'application/json'}, data=json.dumps(data))
+        r = self._session.post(url, headers={'content-type': 'application/json'}, data=json.dumps(data))
         raise_on_error(r)
 
         component = Component(self._options, self._session, raw=json.loads(r.text))
@@ -336,7 +335,7 @@ class JIRA(object):
         """
         return self._get_json('component/' + id + '/relatedIssueCounts')['issueCount']
 
-### Custom field options
+# Custom field options
 
     def custom_field_option(self, id):
         """
@@ -346,7 +345,7 @@ class JIRA(object):
         """
         return self._find_for_resource(CustomFieldOption, id)
 
-### Dashboards
+# Dashboards
 
     def dashboards(self, filter=None, startAt=0, maxResults=20):
         """
@@ -375,14 +374,14 @@ class JIRA(object):
         """
         return self._find_for_resource(Dashboard, id)
 
-### Fields
+# Fields
 
     # non-resource
     def fields(self):
         """Return a list of all issue fields."""
         return self._get_json('field')
 
-### Filters
+# Filters
 
     def filter(self, id):
         """
@@ -398,7 +397,7 @@ class JIRA(object):
         filters = [Filter(self._options, self._session, raw_filter_json) for raw_filter_json in r_json]
         return filters
 
-### Groups
+# Groups
 
     # non-resource
     def groups(self, query=None, exclude=None):
@@ -416,7 +415,7 @@ class JIRA(object):
             params['exclude'] = exclude
         return self._get_json('groups/picker', params=params)
 
-### Issues
+# Issues
 
     def issue(self, id, fields=None, expand=None):
         """
@@ -466,7 +465,7 @@ class JIRA(object):
             data['fields'] = fields_dict
 
         url = self._get_url('issue')
-        r = self._session.post(url, headers={'content-type':'application/json'}, data=json.dumps(data))
+        r = self._session.post(url, headers={'content-type': 'application/json'}, data=json.dumps(data))
         raise_on_error(r)
 
         raw_issue_json = json.loads(r.text)
@@ -513,7 +512,7 @@ class JIRA(object):
         """
         url = self._options['server'] + '/rest/api/2/issue/' + str(issue) + '/assignee'
         payload = {'name': assignee}
-        r = self._session.put(url, headers={'content-type':'application/json'}, data=json.dumps(payload))
+        r = self._session.put(url, headers={'content-type': 'application/json'}, data=json.dumps(payload))
         raise_on_error(r)
 
     @translate_resource_args
@@ -557,7 +556,7 @@ class JIRA(object):
             data['visibility'] = visibility
 
         url = self._get_url('issue/' + str(issue) + '/comment')
-        r = self._session.post(url, headers={'content-type':'application/json'}, data=json.dumps(data))
+        r = self._session.post(url, headers={'content-type': 'application/json'}, data=json.dumps(data))
         raise_on_error(r)
 
         comment = Comment(self._options, self._session, raw=json.loads(r.text))
@@ -621,7 +620,7 @@ class JIRA(object):
             data['relationship'] = relationship
 
         url = self._get_url('issue/' + str(issue) + '/remotelink')
-        r = self._session.post(url, headers={'content-type':'application/json'}, data=json.dumps(data))
+        r = self._session.post(url, headers={'content-type': 'application/json'}, data=json.dumps(data))
         raise_on_error(r)
 
         remote_link = RemoteLink(self._options, self._session, raw=json.loads(r.text))
@@ -666,7 +665,7 @@ class JIRA(object):
             }
         }
         if comment:
-            data['update'] = { 'comment': [ { 'add': { 'body': comment } } ] }
+            data['update'] = {'comment': [{'add': {'body': comment}}]}
         if fields is not None:
             data['fields'] = fields
         else:
@@ -676,7 +675,7 @@ class JIRA(object):
             data['fields'] = fields_dict
 
         url = self._get_url('issue/' + str(issue) + '/transitions')
-        r = self._session.post(url, headers={'content-type':'application/json'}, data=json.dumps(data))
+        r = self._session.post(url, headers={'content-type': 'application/json'}, data=json.dumps(data))
         raise_on_error(r)
 
     @translate_resource_args
@@ -726,7 +725,7 @@ class JIRA(object):
         :param watcher: username of the user to add to the watchers list
         """
         url = self._get_url('issue/' + str(issue) + '/watchers')
-        self._session.post(url, headers={'content-type':'application/json'}, data=json.dumps(watcher))
+        self._session.post(url, headers={'content-type': 'application/json'}, data=json.dumps(watcher))
 
     @translate_resource_args
     def remove_watcher(self, issue, watcher):
@@ -787,12 +786,12 @@ class JIRA(object):
             data['timeSpent'] = timeSpent
 
         url = self._get_url('issue/{}/worklog'.format(issue))
-        r = self._session.post(url, params=params, headers={'content-type':'application/json'}, data=json.dumps(data))
+        r = self._session.post(url, params=params, headers={'content-type': 'application/json'}, data=json.dumps(data))
         raise_on_error(r)
 
         return Worklog(self._options, self._session, json.loads(r.text))
 
-### Issue links
+# Issue links
 
     @translate_resource_args
     def create_issue_link(self, type, inwardIssue, outwardIssue, comment=None):
@@ -836,7 +835,7 @@ class JIRA(object):
             'comment': comment
         }
         url = self._get_url('issueLink')
-        r = self._session.post(url, headers={'content-type':'application/json'}, data=json.dumps(data))
+        r = self._session.post(url, headers={'content-type': 'application/json'}, data=json.dumps(data))
         raise_on_error(r)
 
     def issue_link(self, id):
@@ -847,7 +846,7 @@ class JIRA(object):
         """
         return self._find_for_resource(IssueLink, id)
 
-### Issue link types
+# Issue link types
 
     def issue_link_types(self):
         """Get a list of issue link type Resources from the server."""
@@ -863,7 +862,7 @@ class JIRA(object):
         """
         return self._find_for_resource(IssueLinkType, id)
 
-### Issue types
+# Issue types
 
     def issue_types(self):
         """Get a list of issue type Resources from the server."""
@@ -879,7 +878,7 @@ class JIRA(object):
         """
         return self._find_for_resource(IssueType, id)
 
-### User permissions
+# User permissions
 
     # non-resource
     def my_permissions(self, projectKey=None, projectId=None, issueKey=None, issueId=None):
@@ -902,7 +901,7 @@ class JIRA(object):
             params['issueId'] = issueId
         return self._get_json('mypermissions', params=params)
 
-### PrioritiesK
+# PrioritiesK
 
     def priorities(self):
         """Get a list of priority Resources from the server."""
@@ -918,7 +917,7 @@ class JIRA(object):
         """
         return self._find_for_resource(Priority, id)
 
-### Projects
+# Projects
 
     def projects(self):
         """Get a list of project Resources from the server visible to the current authenticated user."""
@@ -1008,7 +1007,7 @@ class JIRA(object):
         """
         data = cropping_properties
         url = self._get_url('project/' + project + '/avatar')
-        r = self._session.post(url, headers={'content-type':'application/json'}, data=json.dumps(data))
+        r = self._session.post(url, headers={'content-type': 'application/json'}, data=json.dumps(data))
         raise_on_error(r)
 
         return json.loads(r.text)
@@ -1077,7 +1076,7 @@ class JIRA(object):
         """
         return self._find_for_resource(Role, (project, id))
 
-### Resolutions
+# Resolutions
 
     def resolutions(self):
         """Get a list of resolution Resources from the server."""
@@ -1093,7 +1092,7 @@ class JIRA(object):
         """
         return self._find_for_resource(Resolution, id)
 
-### Search
+# Search
 
     def search_issues(self, jql_str, startAt=0, maxResults=50, fields=None, expand=None):
         """
@@ -1122,7 +1121,7 @@ class JIRA(object):
         issues = [Issue(self._options, self._session, raw_issue_json) for raw_issue_json in resource['issues']]
         return ResultList(issues, resource['total'])
 
-### Security levels
+# Security levels
 
     def security_level(self, id):
         """
@@ -1132,14 +1131,14 @@ class JIRA(object):
         """
         return self._find_for_resource(SecurityLevel, id)
 
-### Server info
+# Server info
 
     # non-resource
     def server_info(self):
         """Get a dict of server information for this JIRA instance."""
         return self._get_json('serverInfo')
 
-### Status
+# Status
 
     def statuses(self):
         """Get a list of status Resources from the server."""
@@ -1155,7 +1154,7 @@ class JIRA(object):
         """
         return self._find_for_resource(Status, id)
 
-### Users
+# Users
 
     def user(self, id, expand=None):
         """
@@ -1294,7 +1293,7 @@ class JIRA(object):
         """
         data = cropping_properties
         url = self._get_url('user/avatar')
-        r = self._session.post(url, params={'username': user}, headers={'content-type':'application/json'}, data=json.dumps(data))
+        r = self._session.post(url, params={'username': user}, headers={'content-type': 'application/json'}, data=json.dumps(data))
         raise_on_error(r)
 
         return json.loads(r.text)
@@ -1320,7 +1319,7 @@ class JIRA(object):
         r = self._session.delete(url, params=params)
         raise_on_error(r)
 
-    def search_users(self, user, startAt=0, maxResults=50, includeActive=True, includeInactive=False ):
+    def search_users(self, user, startAt=0, maxResults=50, includeActive=True, includeInactive=False):
         """
         Get a list of user Resources that match the specified search string.
 
@@ -1332,8 +1331,8 @@ class JIRA(object):
             'username': user,
             'startAt': startAt,
             'maxResults': maxResults,
- 	    'includeActive':includeActive,
-	    'includeInactive':includeInactive
+            'includeActive': includeActive,
+            'includeInactive': includeInactive
         }
         r_json = self._get_json('user/search', params)
         users = [User(self._options, self._session, raw_user_json) for raw_user_json in r_json]
@@ -1363,7 +1362,7 @@ class JIRA(object):
         users = [User(self._options, self._session, raw_user_json) for raw_user_json in r_json]
         return users
 
-### Versions
+# Versions
 
     @translate_resource_args
     def create_version(self, name, project, description=None, releaseDate=None):
@@ -1385,7 +1384,7 @@ class JIRA(object):
             data['releaseDate'] = releaseDate
 
         url = self._get_url('version')
-        r = self._session.post(url, headers={'content-type':'application/json'}, data=json.dumps(data))
+        r = self._session.post(url, headers={'content-type': 'application/json'}, data=json.dumps(data))
         raise_on_error(r)
 
         version = Version(self._options, self._session, raw=json.loads(r.text))
@@ -1408,7 +1407,7 @@ class JIRA(object):
             data['position'] = position
 
         url = self._get_url('version/' + id + '/move')
-        r = self._session.post(url, headers={'content-type':'application/json'}, data=json.dumps(data))
+        r = self._session.post(url, headers={'content-type': 'application/json'}, data=json.dumps(data))
         raise_on_error(r)
 
         version = Version(self._options, self._session, raw=json.loads(r.text))
@@ -1446,7 +1445,7 @@ class JIRA(object):
         """
         return self._get_json('version/' + id + '/unresolvedIssueCount')['issuesUnresolvedCount']
 
-### Session authentication
+# Session authentication
 
     def session(self):
         """Get a dict of the current authenticated user's session information."""
@@ -1463,7 +1462,7 @@ class JIRA(object):
         r = self._session.delete(url)
         raise_on_error(r)
 
-### Websudo
+# Websudo
 
     def kill_websudo(self):
         """Destroy the user's current WebSudo session."""
@@ -1471,9 +1470,7 @@ class JIRA(object):
         r = self._session.delete(url)
         raise_on_error(r)
 
-
-### Utilities
-
+# Utilities
     def _create_http_basic_session(self, username, password):
         verify = self._options['verify']
         self._session = requests.Session()
@@ -1484,12 +1481,12 @@ class JIRA(object):
     def _create_oauth_session(self, oauth):
         verify = self._options['verify']
         oauth = OAuth1(
-                       oauth['consumer_key'],
-                       rsa_key=oauth['key_cert'],
-                       signature_method=SIGNATURE_RSA,
-                       resource_owner_key=oauth['access_token'],
-                       resource_owner_secret=oauth['access_token_secret']
-                       )
+            oauth['consumer_key'],
+            rsa_key=oauth['key_cert'],
+            signature_method=SIGNATURE_RSA,
+            resource_owner_key=oauth['access_token'],
+            resource_owner_secret=oauth['access_token_secret']
+        )
         self._session = requests.Session()
         self._session.proxies = self._options['proxies']
         self._session.verify = verify
@@ -1499,7 +1496,7 @@ class JIRA(object):
         data = {
             'id': avatar
         }
-        r = self._session.put(url, params=params, headers={'content-type':'application/json'}, data=json.dumps(data))
+        r = self._session.put(url, params=params, headers={'content-type': 'application/json'}, data=json.dumps(data))
         raise_on_error(r)
 
     def _get_url(self, path):
@@ -1553,23 +1550,23 @@ class JIRA(object):
         """
         url = self._options['server'] + '/secure/admin/groovy/CannedScriptRunner.jspa'
         payload = {
-        'cannedScript':'com.onresolve.jira.groovy.canned.workflow.postfunctions.SendCustomEmail',
-        'cannedScriptArgs_FIELD_CONDITION':'',
-        'cannedScriptArgs_FIELD_EMAIL_TEMPLATE':body,
-        'cannedScriptArgs_FIELD_EMAIL_SUBJECT_TEMPLATE':title,
-        'cannedScriptArgs_FIELD_EMAIL_FORMAT':'TEXT',
-        'cannedScriptArgs_FIELD_TO_ADDRESSES': self.user(user).emailAddress,
-        'cannedScriptArgs_FIELD_TO_USER_FIELDS':'',
-        'cannedScriptArgs_FIELD_INCLUDE_ATTACHMENTS':'FIELD_INCLUDE_ATTACHMENTS_NONE',
-        'cannedScriptArgs_FIELD_FROM':'',
-        'cannedScriptArgs_FIELD_PREVIEW_ISSUE':'',
-        'cannedScript':'com.onresolve.jira.groovy.canned.workflow.postfunctions.SendCustomEmail',
-        'id':'',
-        'Preview':'Preview',
+            'cannedScript': 'com.onresolve.jira.groovy.canned.workflow.postfunctions.SendCustomEmail',
+            'cannedScriptArgs_FIELD_CONDITION': '',
+            'cannedScriptArgs_FIELD_EMAIL_TEMPLATE': body,
+            'cannedScriptArgs_FIELD_EMAIL_SUBJECT_TEMPLATE': title,
+            'cannedScriptArgs_FIELD_EMAIL_FORMAT': 'TEXT',
+            'cannedScriptArgs_FIELD_TO_ADDRESSES': self.user(user).emailAddress,
+            'cannedScriptArgs_FIELD_TO_USER_FIELDS': '',
+            'cannedScriptArgs_FIELD_INCLUDE_ATTACHMENTS': 'FIELD_INCLUDE_ATTACHMENTS_NONE',
+            'cannedScriptArgs_FIELD_FROM': '',
+            'cannedScriptArgs_FIELD_PREVIEW_ISSUE': '',
+            'cannedScript': 'com.onresolve.jira.groovy.canned.workflow.postfunctions.SendCustomEmail',
+            'id': '',
+            'Preview': 'Preview',
         }
         r = self._session.post(url, headers={'X-Atlassian-Token': 'nocheck', 'Cache-Control': 'no-cache, no-store, no-transform'}, data=payload)
-        open("/tmp/jira_email_user_%s.html" % user,"w").write(r.content)
-        #return False
+        open("/tmp/jira_email_user_%s.html" % user, "w").write(r.content)
+        # return False
 
         raise_on_error(r)
 
@@ -1589,15 +1586,15 @@ class JIRA(object):
 
         url = self._options['server'] + '/secure/admin/groovy/CannedScriptRunner.jspa#result'
         payload = {
-        "cannedScript":"com.onresolve.jira.groovy.canned.admin.RenameUser",
-        "cannedScriptArgs_FIELD_FROM_USER_ID": old_user,
-        "cannedScriptArgs_FIELD_TO_USER_ID": new_user,
-        "cannedScriptArgs_FIELD_MERGE" : merge,
-        "id":"",
-        "RunCanned":"Run",
-         }
+            "cannedScript": "com.onresolve.jira.groovy.canned.admin.RenameUser",
+            "cannedScriptArgs_FIELD_FROM_USER_ID": old_user,
+            "cannedScriptArgs_FIELD_TO_USER_ID": new_user,
+            "cannedScriptArgs_FIELD_MERGE": merge,
+            "id": "",
+            "RunCanned": "Run",
+        }
 
-        print(self.user(old_user).emailAddress) # raw displayName
+        print(self.user(old_user).emailAddress)  # raw displayName
 
         r = self._session.post(url, headers={'X-Atlassian-Token': 'nocheck', 'Cache-Control': 'no-cache'}, data=payload)
         if r.status_code == 404:
@@ -1607,21 +1604,21 @@ class JIRA(object):
             logging.error(r.status_code)
 
         raise_on_error(r)
-        
+
         if re.compile("XSRF Security Token Missing").search(r.content):
             logging.fatal("Reconfigure JIRA and disable XSRF in order to be able call this. See https://developer.atlassian.com/display/JIRADEV/Form+Token+Handling")
             return False
 
-        open("/tmp/jira_rename_user_%s_to%s.html" % (old_user,new_user),"w").write(r.content)
+        open("/tmp/jira_rename_user_%s_to%s.html" % (old_user, new_user), "w").write(r.content)
 
         msg = r.status_code
-        m = re.search("<span class=\"errMsg\">(.*)<\/span>",r.content)
+        m = re.search("<span class=\"errMsg\">(.*)<\/span>", r.content)
         if m:
             msg = m.group(1)
             logging.error(msg)
             return False
             # <span class="errMsg">Target user ID must exist already for a merge</span>
-        p = re.compile("type=\"hidden\" name=\"cannedScriptArgs_Hidden_output\" value=\"(.*?)\"\/>", re.MULTILINE|re.DOTALL)
+        p = re.compile("type=\"hidden\" name=\"cannedScriptArgs_Hidden_output\" value=\"(.*?)\"\/>", re.MULTILINE | re.DOTALL)
         m = p.search(r.content)
         if m:
             h = HTMLParser.HTMLParser()
@@ -1645,20 +1642,20 @@ class JIRA(object):
 
         url = self._options['server'] + '/secure/admin/user/DeleteUser.jspa'
         payload = {
-        "name":username,
-        "Delete": "Delete",
-        "returnUrl":"UserBrowser.jspa",
-        "confirm":"true",
-         }
+            "name": username,
+            "Delete": "Delete",
+            "returnUrl": "UserBrowser.jspa",
+            "confirm": "true",
+        }
         r = self._session.post(url, headers={'X-Atlassian-Token': 'nocheck', 'Cache-Control': 'no-cache'}, data=payload)
-        #if r.status_code == 404:
+        # if r.status_code == 404:
         #    logging.error("404")
         #    return False
         if r.status_code != 200:
             logging.error(r.status_code)
 
-        #raise_on_error(r)
-        open("/tmp/jira_delete_user_%s_%s.html" % (r.status_code, username),"w").write(r.content)
+        # raise_on_error(r)
+        open("/tmp/jira_delete_user_%s_%s.html" % (r.status_code, username), "w").write(r.content)
 
     def reindex(self, force=False, background=True):
         """
@@ -1682,31 +1679,30 @@ class JIRA(object):
         if r.status_code == 503:
             # logging.warning("Jira returned 503, this could mean that a full reindex is in progress.")
             return 503
-        #raise_on_error(r)
+        # raise_on_error(r)
 
-        if not r.content.find("To perform the re-index now, please go to the") and force==False:
+        if not r.content.find("To perform the re-index now, please go to the") and force == False:
             return True
 
         if r.content.find('All issues are being re-indexed'):
             logging.warning("Jira re-indexing is already running.")
-            return True # still reindexing is considered still a success
+            return True  # still reindexing is considered still a success
 
         if r.content.find('To perform the re-index now, please go to the') or force:
-            r = self._session.post(url, headers=self._options['headers'], params={"indexingStrategy":indexingStrategy,"reindex":"Re-Index"})
-            #raise_on_error(r)
+            r = self._session.post(url, headers=self._options['headers'], params={"indexingStrategy": indexingStrategy, "reindex": "Re-Index"})
+            # raise_on_error(r)
             if r.content.find('All issues are being re-indexed') != -1:
                 return True
             else:
                 logging.error("Failed to reindex jira, probably a bug.")
                 return False
 
-
     def backup(self, filename='backup.zip'):
         '''
         Will call jira export to backup as zipped xml. Returning with success does not mean that the backup process finished.
         '''
         url = self._options['server'] + '/secure/admin/XmlBackup.jspa'
-        payload = { 'filename':filename}
+        payload = {'filename': filename}
         r = self._session.post(url, headers=self._options['headers'], data=payload)
         if r.status_code == 200:
             return True
@@ -1727,7 +1723,7 @@ class JIRA(object):
             else:
                 r_json['username'] = None
             self._serverInfo = r_json
-            #del r_json['self']  # this isn't really an addressable resource
+            # del r_json['self']  # this isn't really an addressable resource
         return self._serverInfo['username']
 
     def delete_project(self, pid):
@@ -1736,20 +1732,20 @@ class JIRA(object):
         '''
         found = False
         try:
-            if not str(int(pid))==pid:
+            if not str(int(pid)) == pid:
                 found = True
         except Exception as e:
             r_json = self._get_json('project')
             for e in r_json:
-                    if e['key'] == pid or e['name'] == pid:
-                        pid = e['id']
-                        found = True
-                        break
+                if e['key'] == pid or e['name'] == pid:
+                    pid = e['id']
+                    found = True
+                    break
             if not found:
                 logging.error("Unable to recognize project `%s`" % pid)
                 return False
         url = self._options['server'] + '/secure/admin/DeleteProject.jspa'
-        payload = { 'pid': pid, 'Delete':'Delete', 'confirm':'true' }
+        payload = {'pid': pid, 'Delete': 'Delete', 'confirm': 'true'}
         r = self._session.post(url, headers=self._options['headers'], data=payload)
         if r.status_code == 200:
             return True
@@ -1768,21 +1764,20 @@ class JIRA(object):
             assignee = self.current_user()
         if name is None:
             name = key
-        if key.upper() != key or not key.isalpha() or len(key)<2 or len(key)>10:
+        if key.upper() != key or not key.isalpha() or len(key) < 2 or len(key) > 10:
             logging.error('key parameter is not all uppercase alphanumeric of length between 2 and 10')
             return False
         url = self._options['server'] + '/secure/admin/AddProject.jspa'
-        payload = { 'name': name, 'key':key, 'keyEdited':'true', 'permissionScheme':'', 'lead':assignee, 'assigneeType':'2'  }
+        payload = {'name': name, 'key': key, 'keyEdited': 'true', 'permissionScheme': '', 'lead': assignee, 'assigneeType': '2'}
         r = self._session.post(url, headers=self._options['headers'], data=payload)
         if r.status_code == 200 and r.content.find('<meta name="projectKey" content="%s"/>' % key):
             m = re.search("<meta name=\"projectId\" content=\"(\d+)\"\/>", r.content)
             if m:
-               return m.groups()[0] # that's the projectID
-        f=tempfile.NamedTemporaryFile(suffix='.html', prefix='python-jira-error-create-project-', delete=False)
+                return m.groups()[0]  # that's the projectID
+        f = tempfile.NamedTemporaryFile(suffix='.html', prefix='python-jira-error-create-project-', delete=False)
         f.write(r.content)
         logging.error("Unexpected result while running create project. Server response saved in %s for further investigation [HTTP response=%s]." % (f.name, r.status_code))
         return False
-
 
     def add_user(self, username, email, directoryId=1, password=None, fullname=None, sendEmail=False, active=True):
 
@@ -1792,26 +1787,27 @@ class JIRA(object):
             fullname = username
         # TODO: default the directoryID to the first directory in jira instead of 1 which is the internal one.
         url = self._options['server'] + '/secure/admin/AddUser.jspa'
-        payload = { 'username': username, 'active': 'false', 'email':email, 'directoryId':directoryId, 'password':password, 'confirm':password, 'fullname':fullname, 'sendEmail':sendEmail  }
+        payload = {'username': username, 'active': 'false', 'email': email, 'directoryId': directoryId, 'password': password, 'confirm': password, 'fullname': fullname, 'sendEmail': sendEmail}
         r = self._session.post(url, headers=self._options['headers'], data=payload)
-        
+
         if r.status_code == 200 and r.content.find('class="error">'):      # class="error"
             m = re.search('class="error">(.*)<', r.content)
             if m:
-               x = m.groups()[0] # that's the projectID
-               logging.error(x)
-               return x
+                x = m.groups()[0]  # that's the projectID
+                logging.error(x)
+                return x
         if not active:
             # active cannot be set on creation (ask Atlas why)
             url = self._options['server'] + '/secure/admin/EditUser.jspa'
-            payload = { 'editName': username, 'active': 'false', 'email':email, 'fullName':fullname }
+            payload = {'editName': username, 'active': 'false', 'email': email, 'fullName': fullname}
             r = self._session.post(url, headers=self._options['headers'], data=payload)
 
 
-### GreenHopper
+# GreenHopper
 
 
 class GreenHopper(JIRA):
+
     '''
     Define a class to hold functions for accessing GreenHopper resources.
     Extend the python-jira JIRA class.
@@ -1824,7 +1820,7 @@ class GreenHopper(JIRA):
     def _gh_get_url(self, path):
         ''' Use the given path for GH REST resources '''
         options = self._options
-        options.update({'path':path})
+        options.update({'path': path})
         return '{server}/rest/greenhopper/1.0/{path}'.format(**options)
 
     def _gh_get_json(self, path, params=None):
@@ -1993,9 +1989,9 @@ class GreenHopper(JIRA):
         # {"issueKeys":["ANERDS-102"],"rankBeforeKey":"ANERDS-94","rankAfterKey":"ANERDS-7","customFieldId":11431}
         if not self._rank:
             for field in self.fields():
-                 if field['name'] == 'Rank' and field['schema']['custom']=="com.pyxis.greenhopper.jira:gh-global-rank":
-                     self._rank = field['schema']['customId']
-        data = {"issueKeys":[issue],"rankBeforeKey":next_issue,"customFieldId":self._rank}
+                if field['name'] == 'Rank' and field['schema']['custom'] == "com.pyxis.greenhopper.jira:gh-global-rank":
+                    self._rank = field['schema']['customId']
+        data = {"issueKeys": [issue], "rankBeforeKey": next_issue, "customFieldId": self._rank}
         url = self._gh_get_url('rank')
         r = self._session.put(url, data=json.dumps(data), headers={'Content-Type': 'application/json'})
         raise_on_error(r)

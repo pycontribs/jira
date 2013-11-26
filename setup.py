@@ -12,13 +12,13 @@ setup(
                       'requests_oauthlib>=0.3.3',
                       'ipython>=0.13',
                       'tlslite>=0.4.4'],
-    setup_requires=['sphinx','requests_oauthlib'],
+    setup_requires=['sphinx', 'requests_oauthlib'],
     extras_require={
         'magic': ['filemagic>=1.6'],
     },
-    entry_points = {
+    entry_points={
         'console_scripts':
-            ['jirashell = tools.jirashell:main'],
+        ['jirashell = tools.jirashell:main'],
     },
 
     url='http://bitbucket.org/bspeakmon/jira-python',

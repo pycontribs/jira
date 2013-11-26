@@ -1,0 +1,17 @@
+[pep8]
+exclude=lib,.tox,third,*.egg,docs,packages
+;filename=
+;select
+ignore=E501 scripts
+max-line-length=1024
+count=1
+;format
+;quiet
+;show-pep8
+;show-source
+statistics=1
+;verbose=1
+
+;PEP8_OPTS="--filename=*.py  --exclude=lib --ignore=E501 scripts"
+;pep8 $PEP8_OPTS --show-source --repeat
+;pep8 --statistics -qq $PEP8_OPTS

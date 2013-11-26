@@ -16,6 +16,7 @@ else:
 
 from jira.client import JIRA
 
+
 def get_jira(profile=None, url="http://localhost:2990", username="admin", password="admin", appid=None, autofix=False):
         """
         Returns a JIRA object by loading the connection details from the `config.ini` file.
@@ -51,7 +52,7 @@ def get_jira(profile=None, url="http://localhost:2990", username="admin", passwo
             Find the file named path in the sys.path.
             Returns the full path name if found, None if not found
             """
-            paths = ['.',os.path.expanduser('~')]
+            paths = ['.', os.path.expanduser('~')]
             paths.extend(sys.path)
             for dirname in paths:
                 possible = os.path.abspath(os.path.join(dirname, path))
@@ -68,7 +69,7 @@ def get_jira(profile=None, url="http://localhost:2990", username="admin", passwo
             if config_file:
                 config.read(config_file)
                 try:
-                    profile = config.get('general','default-jira-profile')
+                    profile = config.get('general', 'default-jira-profile')
                 except ConfigParser.NoOptionError:
                     pass
 

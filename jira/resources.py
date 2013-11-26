@@ -25,6 +25,7 @@ if 'pydevd' not in sys.modules:
 
 
 class Resource(object):
+
     """
     Models a URL-addressable resource in the JIRA REST API.
 
@@ -147,31 +148,31 @@ class Resource(object):
                     m = re.search(u"^User '(.*)' was not found in the system\.", error, re.U)
                     if m:
                         user = m.groups()[0]
-                    else: raise NotImplemented()
+                    else:
+                        raise NotImplemented()
                 if re.search("^User '(.*)' does not exist\.", error):
                     m = re.search("^User '(.*)' does not exist\.", error)
                     if m:
                         user = m.groups()[0]
-                    else: raise NotImplemented()
+                    else:
+                        raise NotImplemented()
 
             if user:
                 logging.warning("Trying to add missing orphan user '%s' in order to complete the previous failed operation." % user)
-                #print pprint.pprint(self.__dict__)
+                # print pprint.pprint(self.__dict__)
                 jira.add_user(user, 'noreply@example.com', 10100, active=False)
-                    #if 'assignee' not in data['fields']:
+                    # if 'assignee' not in data['fields']:
                     #    logging.warning("autofix: setting assignee to '%s' and retrying the update." % self._options['autofix'])
                     #    data['fields']['assignee'] = {'name': self._options['autofix']}
-            #if async and 'grequests' in sys.modules:
+            # if async and 'grequests' in sys.modules:
             #   if not hasattr(self._session, '_async_jobs'):
             #        self._session._async_jobs = set()
             #    self._session._async_jobs.add(grequests.put(self.self, headers={'content-type': 'application/json'}, data=json.dumps(data)))
-            #else:
+            # else:
             #    print "x", data
             r = self._session.put(self.self, headers={'content-type': 'application/json'}, data=json.dumps(data))
         raise_on_error(r)
         self._load(self.self)
-
-
 
     def delete(self, params=None):
         """
@@ -204,6 +205,7 @@ class Resource(object):
 
 
 class Attachment(Resource):
+
     """An issue attachment."""
 
     def __init__(self, options, session, raw=None):
@@ -213,6 +215,7 @@ class Attachment(Resource):
 
 
 class Component(Resource):
+
     """A project component."""
 
     def __init__(self, options, session, raw=None):
@@ -234,6 +237,7 @@ class Component(Resource):
 
 
 class CustomFieldOption(Resource):
+
     """An existing option for a custom issue field."""
 
     def __init__(self, options, session, raw=None):
@@ -243,6 +247,7 @@ class CustomFieldOption(Resource):
 
 
 class Dashboard(Resource):
+
     """A JIRA dashboard."""
 
     def __init__(self, options, session, raw=None):
@@ -252,6 +257,7 @@ class Dashboard(Resource):
 
 
 class Filter(Resource):
+
     """An issue navigator filter."""
 
     def __init__(self, options, session, raw=None):
@@ -261,6 +267,7 @@ class Filter(Resource):
 
 
 class Issue(Resource):
+
     """A JIRA issue."""
 
     def __init__(self, options, session, raw=None):
@@ -304,6 +311,7 @@ class Issue(Resource):
 
 
 class Comment(Resource):
+
     """An issue comment."""
 
     def __init__(self, options, session, raw=None):
@@ -313,6 +321,7 @@ class Comment(Resource):
 
 
 class RemoteLink(Resource):
+
     """A link to a remote application from an issue."""
 
     def __init__(self, options, session, raw=None):
@@ -346,6 +355,7 @@ class RemoteLink(Resource):
 
 
 class Votes(Resource):
+
     """Vote information on an issue."""
 
     def __init__(self, options, session, raw=None):
@@ -355,6 +365,7 @@ class Votes(Resource):
 
 
 class Watchers(Resource):
+
     """Watcher information on an issue."""
 
     def __init__(self, options, session, raw=None):
@@ -370,6 +381,7 @@ class Watchers(Resource):
 
 
 class Worklog(Resource):
+
     """Worklog on an issue."""
 
     def __init__(self, options, session, raw=None):
@@ -398,6 +410,7 @@ class Worklog(Resource):
 
 
 class IssueLink(Resource):
+
     """Link between two issues."""
 
     def __init__(self, options, session, raw=None):
@@ -407,6 +420,7 @@ class IssueLink(Resource):
 
 
 class IssueLinkType(Resource):
+
     """Type of link between two issues."""
 
     def __init__(self, options, session, raw=None):
@@ -416,6 +430,7 @@ class IssueLinkType(Resource):
 
 
 class IssueType(Resource):
+
     """Type of an issue."""
 
     def __init__(self, options, session, raw=None):
@@ -425,6 +440,7 @@ class IssueType(Resource):
 
 
 class Priority(Resource):
+
     """Priority that can be set on an issue."""
 
     def __init__(self, options, session, raw=None):
@@ -434,6 +450,7 @@ class Priority(Resource):
 
 
 class Project(Resource):
+
     """A JIRA project."""
 
     def __init__(self, options, session, raw=None):
@@ -443,6 +460,7 @@ class Project(Resource):
 
 
 class Role(Resource):
+
     """A role inside a project."""
 
     def __init__(self, options, session, raw=None):
@@ -476,6 +494,7 @@ class Role(Resource):
 
 
 class Resolution(Resource):
+
     """A resolution for an issue."""
 
     def __init__(self, options, session, raw=None):
@@ -485,6 +504,7 @@ class Resolution(Resource):
 
 
 class SecurityLevel(Resource):
+
     """A security level for an issue or project."""
 
     def __init__(self, options, session, raw=None):
@@ -494,6 +514,7 @@ class SecurityLevel(Resource):
 
 
 class Status(Resource):
+
     """Status for an issue."""
 
     def __init__(self, options, session, raw=None):
@@ -503,6 +524,7 @@ class Status(Resource):
 
 
 class User(Resource):
+
     """A JIRA user."""
 
     def __init__(self, options, session, raw=None):
@@ -512,6 +534,7 @@ class User(Resource):
 
 
 class Version(Resource):
+
     """A version of a project."""
 
     def __init__(self, options, session, raw=None):
@@ -539,7 +562,9 @@ class Version(Resource):
 
 # GreenHopper
 
+
 class GreenHopperResource(Resource):
+
     """A generic GreenHopper resource."""
 
     def __init__(self, path, options, session, raw):
@@ -552,7 +577,9 @@ class GreenHopperResource(Resource):
         url += self._resource.format(*ids)
         return url
 
+
 class Sprint(GreenHopperResource):
+
     """A GreenHopper sprint."""
 
     def __init__(self, options, session, raw):
@@ -560,7 +587,9 @@ class Sprint(GreenHopperResource):
         if raw:
             self._parse_raw(raw)
 
+
 class Board(GreenHopperResource):
+
     """A GreenHopper board."""
 
     def __init__(self, options, session, raw):
@@ -569,6 +598,7 @@ class Board(GreenHopperResource):
             self._parse_raw(raw)
 
 # Utilities
+
 
 def dict2resource(raw, top=None, options=None, session=None):
     """

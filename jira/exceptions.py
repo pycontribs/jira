@@ -2,7 +2,9 @@ import json
 
 
 class JIRAError(Exception):
+
     """General error raised for all problems in operation of the client."""
+
     def __init__(self, status_code=None, text=None, url=None):
         self.status_code = status_code
         self.text = text
