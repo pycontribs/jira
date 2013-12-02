@@ -5,7 +5,7 @@ import hmac
 import random
 import urllib
 
-if sys.version_info.major == 3:
+if sys.version_info[0] == 3:
     from urllib.parse import urlparse, urlunparse
 else:
     from urlparse import urlparse, urlunparse

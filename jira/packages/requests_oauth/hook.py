@@ -5,7 +5,7 @@ from datetime import datetime
 import random
 import urllib
 
-if sys.version_info.major == 3:
+if sys.version_info[0] == 3:
     from urllib.parse import urlparse, urlunparse, parse_qs, urlsplit, urlunsplit
 else:
     from urlparse import urlparse, urlunparse, parse_qs, urlsplit, urlunsplit
@@ -14,7 +14,7 @@ from auth import Token, Consumer
 from auth import to_utf8, escape
 from auth import SignatureMethod_HMAC_SHA1, SignatureMethod_RSA_SHA1
 
-if sys.version_info.major == 3:
+if sys.version_info[0] == 3:
     iteritems = dict.items
 else:
     iteritems = dict.iteritems

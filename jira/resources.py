@@ -11,7 +11,7 @@ import pprint
 from jira.exceptions import raise_on_error, get_error_list
 import json
 
-if sys.version_info.major == 3:
+if sys.version_info[0] == 3:
     basestring = str
     iteritems = dict.items
 else:

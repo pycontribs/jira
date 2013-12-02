@@ -20,7 +20,7 @@ import string
 import tempfile
 import logging
 import requests
-if sys.version_info.major == 3:
+if sys.version_info[0] == 3:
     import html.parser as HTMLParser
 else:
     import HTMLParser
