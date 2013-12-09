@@ -9,7 +9,7 @@ import logging
 import os
 import sys
 
-if sys.version_info.major == 3:
+if sys.version_info[0] == 3:
     import configparser as ConfigParser
 else:
     import ConfigParser
