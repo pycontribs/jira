@@ -1681,7 +1681,7 @@ class JIRA(object):
             return 503
         # raise_on_error(r)
 
-        if not r.content.find("To perform the re-index now, please go to the") and force == False:
+        if not r.content.find("To perform the re-index now, please go to the") and force is False:
             return True
 
         if r.content.find('All issues are being re-indexed'):
@@ -1857,7 +1857,7 @@ class GreenHopper(JIRA):
             r_json = self._gh_get_json('sprintquery/%s' % id)
         except:
             r_json = self._gh_get_json('sprints/%s' % id)
-        
+
         sprints = [Sprint(self._options, self._session, raw_res_json) for raw_res_json in r_json['sprints']]
         return sprints
 

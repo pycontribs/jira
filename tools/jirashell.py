@@ -32,6 +32,7 @@ from jira import __version__
 
 CONFIG_PATH = os.path.join(os.path.expanduser('~'), '.jira-python', 'jirashell.ini')
 
+
 def oauth_dance(server, consumer_key, key_cert_data, print_tokens=False):
     verify = server.startswith('https')
 
@@ -56,13 +57,12 @@ def oauth_dance(server, consumer_key, key_cert_data, print_tokens=False):
         exit('Abandoning OAuth dance. Your partner faceplants. The audience boos. You feel shame.')
 
     # step 3: get access tokens for validated user
-    oauth = OAuth1(
-                consumer_key, 
-                signature_method=SIGNATURE_RSA,
-                rsa_key=key_cert_data,
-                resource_owner_key=request_token,
-                resource_owner_secret=request_token_secret
-            )
+    oauth = OAuth1(consumer_key,
+                   signature_method=SIGNATURE_RSA,
+                   rsa_key=key_cert_data,
+                   resource_owner_key=request_token,
+                   resource_owner_secret=request_token_secret
+                   )
     r = requests.post(server + '/plugins/servlet/oauth/access-token', verify=verify, auth=oauth)
     access = dict(parse_qsl(r.text))
 
@@ -77,6 +77,7 @@ def oauth_dance(server, consumer_key, key_cert_data, print_tokens=False):
         'consumer_key': consumer_key,
         'key_cert': key_cert_data,
     }
+
 
 def process_config():
     parser = ConfigParser.SafeConfigParser()
@@ -100,6 +101,7 @@ def process_config():
         oauth = {}
 
     return options, basic_auth, oauth
+
 
 def process_command_line():
     parser = argparse.ArgumentParser(description='Start an interactive JIRA shell with the REST API.')
@@ -132,9 +134,9 @@ def process_command_line():
 
     oauth_already_group = parser.add_argument_group('OAuth options for already-authenticated access tokens')
     oauth_already_group.add_argument('-at', '--access-token',
-                             help='OAuth access token for the user.')
+                                     help='OAuth access token for the user.')
     oauth_already_group.add_argument('-ats', '--access-token-secret',
-                             help='Secret for the OAuth access token.')
+                                     help='Secret for the OAuth access token.')
 
     args = parser.parse_args()
 
@@ -173,6 +175,7 @@ def process_command_line():
 
     return options, basic_auth, oauth
 
+
 def get_config():
     if os.path.exists(CONFIG_PATH):
         options, basic_auth, oauth = process_config()
@@ -188,6 +191,7 @@ def get_config():
     oauth.update(cmd_oauth)
 
     return options, basic_auth, oauth
+
 
 def main():
     try:

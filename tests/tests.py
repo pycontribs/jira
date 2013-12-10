@@ -16,6 +16,7 @@ KEY_CERT_DATA = None
 with open(KEY_CERT_FILE, 'r') as cert:
     KEY_CERT_DATA = cert.read()
 
+
 def get_jira_admin_auth():
     if OAUTH:
         return JIRA(oauth={
@@ -26,6 +27,7 @@ def get_jira_admin_auth():
         })
     else:
         return JIRA(basic_auth=('admin', 'admin'))
+
 
 def get_jira_sysadmin_auth():
     if OAUTH:
@@ -38,6 +40,7 @@ def get_jira_sysadmin_auth():
     else:
         return JIRA(basic_auth=('eviladmin', 'eviladmin'))
 
+
 def get_jira_schlub_auth():
     if OAUTH:
         return JIRA(oauth={
@@ -49,10 +52,12 @@ def get_jira_schlub_auth():
     else:
         return JIRA(basic_auth=('fred', 'fred'))
 
+
 def find_by_key(seq, key):
     for seq_item in seq:
         if seq_item['key'] == key:
             return seq_item
+
 
 def find_by_id(seq, id):
     for seq_item in seq:
@@ -173,7 +178,7 @@ class ComponentTests(unittest.TestCase):
     def test_create_component(self):
         bulk_proj = self.jira.project('BULK')
         component = self.jira.create_component('Test Component', bulk_proj, description='testing!!', leadUserName='fred',
-                assigneeType='PROJECT_LEAD', isAssigneeTypeValid=False)
+                                               assigneeType='PROJECT_LEAD', isAssigneeTypeValid=False)
         self.assertEqual(component.name, 'Test Component')
         self.assertEqual(component.description, 'testing!!')
         self.assertEqual(component.lead.name, 'fred')
@@ -306,7 +311,7 @@ class IssueTests(unittest.TestCase):
 
     def test_create_issue_with_fieldargs(self):
         issue = self.jira.create_issue(project={'key': 'BULK'}, summary='Test issue created',
-                description='blahery', issuetype={'name': 'Bug'}, customfield_10540={'key': 'XSS'})
+                                       description='blahery', issuetype={'name': 'Bug'}, customfield_10540={'key': 'XSS'})
         self.assertEqual(issue.fields.summary, 'Test issue created')
         self.assertEqual(issue.fields.description, 'blahery')
         self.assertEqual(issue.fields.issuetype.name, 'Bug')
@@ -340,13 +345,13 @@ class IssueTests(unittest.TestCase):
 
     def test_create_issue_without_prefetch(self):
         issue = self.jira.create_issue(prefetch=False, project={'key': 'BULK'}, summary='Test issue created',
-            description='blahery', issuetype={'name': 'Bug'}, customfield_10540={'key': 'XSS'})
+                                       description='blahery', issuetype={'name': 'Bug'}, customfield_10540={'key': 'XSS'})
         self.assertTrue(hasattr(issue, 'self'))
         self.assertFalse(hasattr(issue, 'fields'))
 
     def test_update_with_fieldargs(self):
         issue = self.jira.create_issue(project={'key': 'BULK'}, summary='Test issue for updating',
-            description='Will be updated shortly', issuetype={'name': 'Bug'}, customfield_10540={'key': 'XSS'})
+                                       description='Will be updated shortly', issuetype={'name': 'Bug'}, customfield_10540={'key': 'XSS'})
         issue.update(summary='Updated summary', description='Now updated', issuetype={'name': 'Improvement'})
         self.assertEqual(issue.fields.summary, 'Updated summary')
         self.assertEqual(issue.fields.description, 'Now updated')
@@ -356,7 +361,7 @@ class IssueTests(unittest.TestCase):
 
     def test_update_with_fielddict(self):
         issue = self.jira.create_issue(project={'key': 'BULK'}, summary='Test issue for updating',
-            description='Will be updated shortly', issuetype={'name': 'Bug'}, customfield_10540={'key': 'XSS'})
+                                       description='Will be updated shortly', issuetype={'name': 'Bug'}, customfield_10540={'key': 'XSS'})
         fields = {
             'summary': 'Issue is updated',
             'description': "it sure is",
@@ -379,7 +384,7 @@ class IssueTests(unittest.TestCase):
 
     def test_delete(self):
         issue = self.jira.create_issue(project={'key': 'BULK'}, summary='Test issue created',
-            description='Not long for this world', issuetype={'name': 'Bug'}, customfield_10540={'key': 'XSS'})
+                                       description='Not long for this world', issuetype={'name': 'Bug'}, customfield_10540={'key': 'XSS'})
         key = issue.key
         issue.delete()
         self.assertRaises(JIRAError, self.jira.issue, key)
@@ -409,7 +414,7 @@ class IssueTests(unittest.TestCase):
 
     def test_createmeta_expando(self):
         # limit to SCR project so the call returns promptly
-        meta = self.jira.createmeta(projectKeys=('SCR'), expand=('projects.issuetypes.fields'))
+        meta = self.jira.createmeta(projectKeys='SCR', expand='projects.issuetypes.fields')
         self.assertTrue('fields' in meta['projects'][0]['issuetypes'][0])
 
     def test_assign_issue(self):
@@ -451,7 +456,7 @@ class IssueTests(unittest.TestCase):
 
     def test_add_comment(self):
         comment = self.jira.add_comment('BULK-3', 'a test comment!',
-                visibility={'type': 'role', 'value': 'Administrators'})
+                                        visibility={'type': 'role', 'value': 'Administrators'})
         self.assertEqual(comment.body, 'a test comment!')
         self.assertEqual(comment.visibility.type, 'role')
         self.assertEqual(comment.visibility.value, 'Administrators')
@@ -459,7 +464,7 @@ class IssueTests(unittest.TestCase):
     def test_add_comment_with_issue_obj(self):
         issue = self.jira.issue('BULK-3')
         comment = self.jira.add_comment(issue, 'a test comment!',
-            visibility={'type': 'role', 'value': 'Administrators'})
+                                        visibility={'type': 'role', 'value': 'Administrators'})
         self.assertEqual(comment.body, 'a test comment!')
         self.assertEqual(comment.visibility.type, 'role')
         self.assertEqual(comment.visibility.value, 'Administrators')
@@ -473,9 +478,9 @@ class IssueTests(unittest.TestCase):
 
     def test_delete_comment(self):
         comment = self.jira.add_comment('BULK-3', 'To be deleted!')
-        id = comment.id
+        c_id = comment.id
         comment.delete()
-        self.assertRaises(JIRAError, self.jira.comment, id, '')
+        self.assertRaises(JIRAError, self.jira.comment, c_id, '')
 
     def test_editmeta(self):
         meta = self.jira.editmeta('BULK-1')
@@ -519,8 +524,8 @@ class IssueTests(unittest.TestCase):
 
     def test_add_remote_link(self):
         link = self.jira.add_remote_link('BULK-3', globalId='python-test:story.of.horse.riding',
-                object={'url': 'http://google.com', 'title': 'googlicious!'},
-                application={'name': 'far too silly', 'type': 'sketch'}, relationship='mousebending')
+                                         object={'url': 'http://google.com', 'title': 'googlicious!'},
+                                         application={'name': 'far too silly', 'type': 'sketch'}, relationship='mousebending')
         # creation response doesn't include full remote link info, so we fetch it again using the new internal ID
         link = self.jira.remote_link('BULK-3', link.id)
         self.assertEqual(link.application.name, 'far too silly')
@@ -533,8 +538,8 @@ class IssueTests(unittest.TestCase):
     def test_add_remote_link_with_issue_obj(self):
         issue = self.jira.issue('BULK-3')
         link = self.jira.add_remote_link(issue, globalId='python-test:story.of.horse.riding',
-            object={'url': 'http://google.com', 'title': 'googlicious!'},
-            application={'name': 'far too silly', 'type': 'sketch'}, relationship='mousebending')
+                                         object={'url': 'http://google.com', 'title': 'googlicious!'},
+                                         application={'name': 'far too silly', 'type': 'sketch'}, relationship='mousebending')
         # creation response doesn't include full remote link info, so we fetch it again using the new internal ID
         link = self.jira.remote_link(issue, link.id)
         self.assertEqual(link.application.name, 'far too silly')
@@ -546,12 +551,12 @@ class IssueTests(unittest.TestCase):
 
     def test_update_remote_link(self):
         link = self.jira.add_remote_link('BULK-3', globalId='python-test:story.of.horse.riding',
-            object={'url': 'http://google.com', 'title': 'googlicious!'},
-            application={'name': 'far too silly', 'type': 'sketch'}, relationship='mousebending')
+                                         object={'url': 'http://google.com', 'title': 'googlicious!'},
+                                         application={'name': 'far too silly', 'type': 'sketch'}, relationship='mousebending')
         # creation response doesn't include full remote link info, so we fetch it again using the new internal ID
         link = self.jira.remote_link('BULK-3', link.id)
         link.update(object={'url': 'http://yahoo.com', 'title': 'yahooery'}, globalId='python-test:updated.id',
-                relationship='cheesing')
+                    relationship='cheesing')
         self.assertEqual(link.globalId, 'python-test:updated.id')
         self.assertEqual(link.relationship, 'cheesing')
         self.assertEqual(link.object.url, 'http://yahoo.com')
@@ -560,11 +565,11 @@ class IssueTests(unittest.TestCase):
 
     def test_delete_remove_link(self):
         link = self.jira.add_remote_link('BULK-3', globalId='python-test:story.of.horse.riding',
-            object={'url': 'http://google.com', 'title': 'googlicious!'},
-            application={'name': 'far too silly', 'type': 'sketch'}, relationship='mousebending')
-        id = link.id
+                                         object={'url': 'http://google.com', 'title': 'googlicious!'},
+                                         application={'name': 'far too silly', 'type': 'sketch'}, relationship='mousebending')
+        _id = link.id
         link.delete()
-        self.assertRaises(JIRAError, self.jira.remote_link, 'BULK-3', id)
+        self.assertRaises(JIRAError, self.jira.remote_link, 'BULK-3', _id)
 
     def test_transitions(self):
         transitions = self.jira.transitions('BULK-2')
@@ -585,7 +590,7 @@ class IssueTests(unittest.TestCase):
 
     def test_transition_issue_with_fieldargs(self):
         issue = self.jira.create_issue(project={'key': 'BULK'}, summary='Test issue for transition created',
-            description='blahery', issuetype={'name': 'Bug'}, customfield_10540={'key': 'XSS'})
+                                       description='blahery', issuetype={'name': 'Bug'}, customfield_10540={'key': 'XSS'})
         self.jira.transition_issue(issue.key, '2', assignee={'name': 'fred'})
         issue = self.jira.issue(issue.key)
         self.assertEqual(issue.fields.assignee.name, 'fred')
@@ -593,7 +598,7 @@ class IssueTests(unittest.TestCase):
 
     def test_transition_issue_obj_with_fieldargs(self):
         issue = self.jira.create_issue(project={'key': 'BULK'}, summary='Test issue for transition created',
-            description='blahery', issuetype={'name': 'Bug'}, customfield_10540={'key': 'XSS'})
+                                       description='blahery', issuetype={'name': 'Bug'}, customfield_10540={'key': 'XSS'})
         self.jira.transition_issue(issue, '2', assignee={'name': 'fred'})
         issue = self.jira.issue(issue.key)
         self.assertEqual(issue.fields.assignee.name, 'fred')
@@ -601,7 +606,7 @@ class IssueTests(unittest.TestCase):
 
     def test_transition_issue_with_fielddict(self):
         issue = self.jira.create_issue(project={'key': 'BULK'}, summary='Test issue for transition created',
-            description='blahery', issuetype={'name': 'Bug'}, customfield_10540={'key': 'XSS'})
+                                       description='blahery', issuetype={'name': 'Bug'}, customfield_10540={'key': 'XSS'})
         fields = {
             'assignee': {
                 'name': 'fred'
@@ -757,13 +762,13 @@ class IssueLinkTests(unittest.TestCase):
 
     def test_create_issue_link(self):
         self.jira.create_issue_link('Duplicate', 'BULK-1', 'BULK-2',
-                comment={'body': 'Link comment!', 'visibility': {'type': 'role', 'value': 'Administrators'}})
+                                    comment={'body': 'Link comment!', 'visibility': {'type': 'role', 'value': 'Administrators'}})
 
     def test_create_issue_link_with_issue_objs(self):
         inwardIssue = self.jira.issue('BULK-1')
         outwardIssue = self.jira.issue('BULK-2')
         self.jira.create_issue_link('Duplicate', inwardIssue, outwardIssue,
-            comment={'body': 'Link comment!', 'visibility': {'type': 'role', 'value': 'Administrators'}})
+                                    comment={'body': 'Link comment!', 'visibility': {'type': 'role', 'value': 'Administrators'}})
 
     @unittest.skip("Creating an issue link doesn't return its ID, so can't easily test delete")
     def test_delete_issue_link(self):
@@ -997,7 +1002,7 @@ class SearchTests(unittest.TestCase):
 
     def test_search_issues(self):
         issues = self.jira.search_issues('project=BULK')
-        self.assertEqual(len(issues), 50) # default maxResults
+        self.assertEqual(len(issues), 50)  # default maxResults
         for issue in issues:
             self.assertTrue(issue.key.startswith('BULK'))
 
@@ -1205,7 +1210,7 @@ class VersionTests(unittest.TestCase):
 
     def test_create_version(self):
         version = self.jira.create_version('new version 1', 'BULK', releaseDate='2013-03-11',
-                description='test version!')
+                                           description='test version!')
         self.assertEqual(version.name, 'new version 1')
         self.assertEqual(version.description, 'test version!')
         self.assertEqual(version.releaseDate, '2013-03-11')
@@ -1214,7 +1219,7 @@ class VersionTests(unittest.TestCase):
     def test_create_version_with_project_obj(self):
         project = self.jira.project('BULK')
         version = self.jira.create_version('new version 1', project, releaseDate='2013-03-11',
-            description='test version!')
+                                           description='test version!')
         self.assertEqual(version.name, 'new version 1')
         self.assertEqual(version.description, 'test version!')
         self.assertEqual(version.releaseDate, '2013-03-11')
@@ -1222,7 +1227,7 @@ class VersionTests(unittest.TestCase):
 
     def test_update(self):
         version = self.jira.create_version('update version 1', 'BULK', releaseDate='2013-03-11',
-            description='to be updated!')
+                                           description='to be updated!')
         version.update(name='updated version name', description='updated!')
         self.assertEqual(version.name, 'updated version name')
         self.assertEqual(version.description, 'updated!')
@@ -1230,7 +1235,7 @@ class VersionTests(unittest.TestCase):
 
     def test_delete(self):
         version = self.jira.create_version('To be deleted', 'BULK', releaseDate='2013-03-11',
-                description='not long for this world')
+                                           description='not long for this world')
         id = version.id
         version.delete()
         self.assertRaises(JIRAError, self.jira.version, id)
