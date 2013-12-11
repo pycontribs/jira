@@ -1,5 +1,10 @@
+from __future__ import print_function
 import unittest
 import os
+import httplib
+import sys
+import time
+import subprocess
 
 from jira.client import JIRA
 from jira.exceptions import JIRAError
@@ -9,13 +14,52 @@ TEST_ROOT = os.path.dirname(__file__)
 TEST_ICON_PATH = os.path.join(TEST_ROOT, 'icon.png')
 TEST_ATTACH_PATH = os.path.join(TEST_ROOT, '__init__.py')
 
-OAUTH = True
+OAUTH = False
 CONSUMER_KEY = 'oauth-consumer'
 KEY_CERT_FILE = '/home/bspeakmon/src/atlassian-oauth-examples/rsa.pem'
 KEY_CERT_DATA = None
-with open(KEY_CERT_FILE, 'r') as cert:
-    KEY_CERT_DATA = cert.read()
+try:
+    with open(KEY_CERT_FILE, 'r') as cert:
+        KEY_CERT_DATA = cert.read()
+    OAUTH = True
+except:
+    pass
 
+
+def get_status_code(host, path="/"):
+    """ This function retreives the status code of a website by requesting
+        HEAD data from the host. This means that it only requests the headers.
+        If the host cannot be reached or something else goes wrong, it returns
+        None instead.
+    """
+    try:
+        conn = httplib.HTTPConnection(host)
+        conn.request("HEAD", path)
+        return conn.getresponse().status
+    except StandardError:
+        return None
+
+
+JIRA_INSTANCE = "http://localhost:2990"
+if get_status_code(JIRA_INSTANCE) != 200:
+    try:
+        ret = 0
+        # that would run jira in background and kill it when test are finishing, that takes too much time to run the tests again
+
+        #p = subprocess.Popen(["atlas-run-standalone","--product","jira"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, close_fds=True)
+        ret = os.system("atlas-run-standalone --product jira > /dev/null 2>&1 &")
+        if ret != 0:
+            raise Exception("Jira test instance not found at %s and we were untable to start one using atlassian sdk." % JIRA_INSTANCE)
+        seconds = 0
+        print("Waiting for the test JIRA instance to start", end='')
+        while ret != 200 and seconds < 300:
+            time.sleep(5)
+            seconds += 5
+            print(".", end='')
+            ret = get_status_code(JIRA_INSTANCE)
+        print("done")
+    except Exception, e:
+        raise(e)
 
 def get_jira_admin_auth():
     if OAUTH:
