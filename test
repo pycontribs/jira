@@ -23,7 +23,7 @@ if __name__ == "__main__":
         #os.system("python setup.py test")
 
 
-        cmds = ["pip install --user autopep8 tox",
+        cmds = ["pip install --user --upgrade setuptools virtualenv autopep8 tox",
              "autopep8 --ignore=E501 -i *.py jira/*.py examples/*.py",
              "pep8",
              "tox -e %s" % ",".join(detected_pys)]
