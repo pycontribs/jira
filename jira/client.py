@@ -1790,18 +1790,48 @@ class JIRA(object):
         payload = {'username': username, 'active': 'false', 'email': email, 'directoryId': directoryId, 'password': password, 'confirm': password, 'fullname': fullname, 'sendEmail': sendEmail}
         r = self._session.post(url, headers=self._options['headers'], data=payload)
 
-        if r.status_code == 200 and r.content.find('class="error">'):      # class="error"
-            m = re.search('class="error">(.*)<', r.content)
-            if m:
-                x = m.groups()[0]  # that's the projectID
-                logging.error(x)
-                return x
+        if r.status_code == 200:
+            if r.content.find('class="error">'):
+                m = re.search('class="error">(.*)</div>', r.content)
+                if m:
+                    msg = m.groups()[0]
+                    if msg == 'A user with that username already exists.':
+                        return True
+                    else:
+                        logging.error()
+                        return False
+            elif 'XSRF Security Token Missing' in r.content:
+                logging.error('XSRF Security Token Missing')
+                return False
         if not active:
             # active cannot be set on creation (ask Atlas why)
             url = self._options['server'] + '/secure/admin/EditUser.jspa'
             payload = {'editName': username, 'active': 'false', 'email': email, 'fullName': fullname}
             r = self._session.post(url, headers=self._options['headers'], data=payload)
 
+    def add_user_to_group(self, username, group):
+        url = self._options['server'] + '/secure/admin/user/EditUserGroups.jspa'
+        payload = {
+            'groupsToJoin': group,
+            'name': username,
+            'join': 'submit'}
+        r = self._session.post(url, headers=self._options['headers'], data=payload)
+        if r.status_code == 200:
+            if r.content.find('class="error">'):
+                m = re.search('class="error">(.*)</div>', r.content)
+                if m:
+                    msg = m.groups()[0]
+                    if msg == 'A user with that username already exists.':
+                        return True
+                    else:
+                        logging.error()
+                        return False
+            elif 'XSRF Security Token Missing' in r.content:
+                logging.error('XSRF Security Token Missing')
+                return False
+            else:
+                return True
+        return False
 
 # GreenHopper
 
