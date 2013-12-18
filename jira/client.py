@@ -1523,11 +1523,15 @@ class JIRA(object):
     def _try_magic(self):
         try:
             import magic
+            import weakref
         except ImportError:
             self._magic = None
         else:
             try:
-                self._magic = magic.Magic(flags=magic.MAGIC_MIME_TYPE)
+                _magic = magic.Magic(flags=magic.MAGIC_MIME_TYPE)
+                cleanup = lambda _: _magic.close()
+                self._magic_weakref = weakref.ref(self, cleanup)
+                self._magic = _magic
             except TypeError:
                 self._magic = None
             except AttributeError:
