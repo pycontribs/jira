@@ -27,7 +27,7 @@ setup(
     author='Ben Speakmon',
     author_email='ben.speakmon@gmail.com',
     provides=['jira'],
-    keywords='jira',
+    keywords='jira atlassian rest api',
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
@@ -37,5 +37,4 @@ setup(
         'Programming Language :: Python :: 3.3',
         'Topic :: Internet :: WWW/HTTP',
     ],
-    data_files = [("", ["LICENSE"])]
 )
