@@ -90,7 +90,7 @@ class JIRA(object):
         }
     }
 
-    def __init__(self, options=None, basic_auth=None, oauth=None):
+    def __init__(self, options=None, basic_auth=None, oauth=None, validate=None):
         """
         Construct a JIRA client instance.
 
@@ -118,6 +118,8 @@ class JIRA(object):
             * consumer_key -- key of the OAuth application link defined in JIRA
             * key_cert -- private key file to sign requests with (should be the pair of the public key supplied to
             JIRA in the OAuth application link)
+        :param validate: If true it will validate your credentials first. Remember that if you are accesing JIRA
+            as anononymous it will fail to instanciate.
         """
         if options is None:
             options = {}
@@ -148,6 +150,9 @@ class JIRA(object):
             self._session.proxies = self._options['proxies']
             self._session.verify = verify
             self._session.headers.update(self._options['headers'])
+
+        if validate:
+            self.session() # this will raise an Exception if you are not allowed to login. It's better to fail faster than later.
 
 # Information about this client
 
