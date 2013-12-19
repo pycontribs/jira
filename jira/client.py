@@ -423,7 +423,7 @@ class JIRA(object):
         r = self._get_json('group', params=params)
         result = {}
         for user in r['users']['items']:
-            result[user['name']] = { 'fullname': user['displayName'], 'email':user['emailAddressC'], 'active':user['active']  }
+            result[user['name']] = { 'fullname': user['displayName'], 'email':user['emailAddress'], 'active':user['active']  }
         return result
 
 # Issues
