@@ -37,4 +37,5 @@ setup(
         'Programming Language :: Python :: 3.3',
         'Topic :: Internet :: WWW/HTTP',
     ],
+    data_files = [("", ["LICENSE"])]
 )
