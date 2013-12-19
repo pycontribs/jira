@@ -415,6 +415,17 @@ class JIRA(object):
             params['exclude'] = exclude
         return self._get_json('groups/picker', params=params)
 
+    def group_members(self, group):
+        """
+        Return a hash or users with their information.
+        """
+        params = { 'groupname': group, 'expand': "users"}
+        r = self._get_json('group', params=params)
+        result = {}
+        for user in r['users']['items']:
+            result[user['name']] = { 'fullname': user['displayName'], 'email':user['emailAddressC'], 'active':user['active']  }
+        return result
+
 # Issues
 
     def issue(self, id, fields=None, expand=None):
@@ -695,7 +706,8 @@ class JIRA(object):
         :param issue: ID or key of the issue to vote on
         """
         url = self._get_url('issue/' + str(issue) + '/votes')
-        self._session.post(url)
+        r = self._session.post(url)
+        raise_on_error(r)
 
     @translate_resource_args
     def remove_vote(self, issue):
