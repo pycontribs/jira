@@ -129,7 +129,6 @@ class Resource(object):
                 if 'reporter' not in data['fields']:
                     logging.warning("autofix: setting reporter to '%s' and retrying the update." % self._options['autofix'])
                     data['fields']['reporter'] = {'name': self._options['autofix']}
-                print data
 
             if "Issues must be assigned." in error_list:
                 if 'assignee' not in data['fields']:

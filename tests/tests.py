@@ -1,10 +1,25 @@
 from __future__ import print_function
-import unittest
 import os
+import sys
 import time
+import pip
 
-import xmlrunner
-import requests
+if (sys.version_info < (2, 7, 0)):
+    try:
+        import unittest2 as unittest
+    except ImportError:
+        pip.main(['install', '--upgrade','--user', 'unittest2'])
+        import unittest2 as unittest
+else:
+   import unittest
+
+try:
+  import xmlrunner
+  import requests
+except ImportError:
+  pip.main(['install', '--upgrade','tlslite','requests-oauthlib','requests','unittest-xml-reporting'])
+  import xmlrunner
+  import requests
 
 from jira.client import JIRA
 from jira.exceptions import JIRAError
@@ -35,7 +50,7 @@ def get_status_code(host, path="/"):
     try:
         r = requests.get(host + path, auth=('admin', 'admin'))
         return r.status_code
-    except StandardError:
+    except Exception:
         return None
 
 
@@ -105,7 +120,7 @@ jira.index.lock.waittime=90000
         if seconds >= 300:
             raise Exception("Failed to start Jira test instance.")
         print("done")
-    except Exception, e:
+    except Exception as e:
         raise(e)
 
 j = JIRA(options={'server':'http://localhost:2990/jira'}, basic_auth=('admin', 'admin'))
@@ -1401,5 +1416,6 @@ class WebsudoTests(unittest.TestCase):
         self.assertRaises(JIRAError, anon_jira.kill_websudo)
 
 if __name__ == '__main__':
-   unittest.main(testRunner=xmlrunner.XMLTestRunner(output='test-reports'))
+   dirname = "test-reports-%s%s" % (sys.version_info[0], sys.version_info[1])
+   unittest.main(testRunner=xmlrunner.XMLTestRunner(output=dirname))
    #pass

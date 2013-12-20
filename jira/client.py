@@ -153,6 +153,8 @@ class JIRA(object):
 
         if validate:
             self.session() # this will raise an Exception if you are not allowed to login. It's better to fail faster than later.
+        # we need version in order to know what API calls are available or not
+        self.version = tuple(self.server_info()['versionNumbers'])
 
 # Information about this client
 
@@ -422,8 +424,10 @@ class JIRA(object):
 
     def group_members(self, group):
         """
-        Return a hash or users with their information.
+        Return a hash or users with their information. Requires JIRA 6.0 or will raise NotImplemented.
         """
+        if self.version < (6,0,0):
+            raise NotImplementedError("Group members is not implemented in JIRA before version 6.0, upgrade the instance, if possible.")
         params = { 'groupname': group, 'expand': "users"}
         r = self._get_json('group', params=params)
         result = {}
@@ -1791,8 +1795,9 @@ class JIRA(object):
         url = self._options['server'] + '/secure/admin/AddProject.jspa'
         payload = {'name': name, 'key': key, 'keyEdited': 'true', 'permissionScheme': '', 'lead': assignee, 'assigneeType': '2'}
         r = self._session.post(url, headers=self._options['headers'], data=payload)
-        if r.status_code == 200 and r.content.find('<meta name="projectKey" content="%s"/>' % key):
-            m = re.search("<meta name=\"projectId\" content=\"(\d+)\"\/>", r.content)
+        content = r.content.decode('utf8')
+        if r.status_code == 200 and content.find('<meta name="projectKey" content="%s"/>' % key):
+            m = re.search("<meta name=\"projectId\" content=\"(\d+)\"\/>", content)
             if m:
                 return m.groups()[0]  # that's the projectID
         f = tempfile.NamedTemporaryFile(suffix='.html', prefix='python-jira-error-create-project-', delete=False)
@@ -1812,8 +1817,9 @@ class JIRA(object):
         r = self._session.post(url, headers=self._options['headers'], data=payload)
 
         if r.status_code == 200:
-            if r.content.find('class="error">'):
-                m = re.search('class="error">(.*)</div>', r.content)
+            content = r.content.decode('utf8')
+            if content.find('class="error">'):
+                m = re.search('class="error">(.*)</div>', content)
                 if m:
                     msg = m.groups()[0]
                     if msg == 'A user with that username already exists.':
@@ -1821,7 +1827,7 @@ class JIRA(object):
                     else:
                         logging.error()
                         return False
-            elif 'XSRF Security Token Missing' in r.content:
+            elif 'XSRF Security Token Missing' in content:
                 logging.error('XSRF Security Token Missing')
                 return False
         if not active:
@@ -1838,8 +1844,9 @@ class JIRA(object):
             'join': 'submit'}
         r = self._session.post(url, headers=self._options['headers'], data=payload)
         if r.status_code == 200:
-            if r.content.find('class="error">'):
-                m = re.search('class="error">(.*)</div>', r.content)
+            content = r.content.decode('utf8')
+            if content.find('class="error">'):
+                m = re.search('class="error">(.*)</div>', content)
                 if m:
                     msg = m.groups()[0]
                     if msg == 'A user with that username already exists.':
@@ -1847,7 +1854,7 @@ class JIRA(object):
                     else:
                         logging.error()
                         return False
-            elif 'XSRF Security Token Missing' in r.content:
+            elif 'XSRF Security Token Missing' in content:
                 logging.error('XSRF Security Token Missing')
                 return False
             else:

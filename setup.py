@@ -10,11 +10,12 @@ setup(
 
     install_requires=['requests>=1.2.3',
                       'requests_oauthlib>=0.3.3',
-                      'ipython>=0.13',
                       'tlslite>=0.4.4'],
     setup_requires=['sphinx', 'requests_oauthlib'],
+    tests_require=['unittest-xml-reporting','requests>=1.2.3'],
     extras_require={
         'magic': ['filemagic>=1.6'],
+        'shell': ['ipython>=0.13'],
     },
     entry_points={
         'console_scripts':
