@@ -2,6 +2,6 @@ requests>=1.2.3
 requests_oauthlib>=0.3.3
 tlslite>=0.4.4
 sphinx
-xmlrunner
+xmlrunner>=1.7.3
 filemagic>=1.6
 ipython>=0.13
