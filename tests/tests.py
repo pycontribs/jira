@@ -56,7 +56,6 @@ def get_status_code(host, path="/"):
 
 JIRA_INSTANCE = "http://localhost:2990"
 #URL = JIRA_INSTANCE + 'secure/Dashboard.jspa'
-print("a")
 if get_status_code(JIRA_INSTANCE, '/jira/secure/Dashboard.jspa') != 200:
     try:
         ret = 0
@@ -107,7 +106,9 @@ jira.index.lock.waittime=90000
         f.write(prop)
         f.close()
 
-        ret = os.system("atlas-run-standalone --product jira --http-port 2990 --context-path /jira --server localhost </dev/zero >/tmp/jira-standalone.log 2>&1 &")
+        jvmargs = '--jvmargs "-Xmx2048m -XX:MaxPermSize=350m -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=2991 -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname=127.0.0.1"'
+
+        ret = os.system("atlas-run-standalone %s --product jira --http-port 2990 --context-path /jira --server localhost </dev/zero >/tmp/jira-standalone.log 2>&1 &" % jvmargs)
         if ret != 0:
             raise Exception("Jira test instance not found at %s and we were untable to start one using atlassian sdk." % JIRA_INSTANCE)
         seconds = 0
