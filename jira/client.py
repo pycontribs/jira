@@ -152,7 +152,7 @@ class JIRA(object):
             self._session.headers.update(self._options['headers'])
 
         if validate:
-            self.session() # this will raise an Exception if you are not allowed to login. It's better to fail faster than later.
+            self.session()  # this will raise an Exception if you are not allowed to login. It's better to fail faster than later.
         # we need version in order to know what API calls are available or not
         self.version = tuple(self.server_info()['versionNumbers'])
 
@@ -426,13 +426,26 @@ class JIRA(object):
         """
         Return a hash or users with their information. Requires JIRA 6.0 or will raise NotImplemented.
         """
-        if self.version < (6,0,0):
+        if self.version < (6, 0, 0):
             raise NotImplementedError("Group members is not implemented in JIRA before version 6.0, upgrade the instance, if possible.")
-        params = { 'groupname': group, 'expand': "users"}
+
+        params = {'groupname': group, 'expand': "users"}
         r = self._get_json('group', params=params)
+        size = r['users']['size']
+        end_index = r['users']['end-index']
+
+        while end_index < size - 1:
+            params = {'groupname': group, 'expand': "users[%s:%s]" % (end_index + 1, end_index + 50)}
+            r2 = self._get_json('group', params=params)
+            for user in r2['users']['items']:
+                r['users']['items'].append(user)
+            end_index = r2['users']['end-index']
+            size = r['users']['size']
+            #print(end_index, size)
+
         result = {}
         for user in r['users']['items']:
-            result[user['name']] = { 'fullname': user['displayName'], 'email':user['emailAddress'], 'active':user['active']  }
+            result[user['name']] = {'fullname': user['displayName'], 'email': user['emailAddress'], 'active': user['active']}
         return result
 
 # Issues
