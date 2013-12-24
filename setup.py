@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 exec(open('jira/version.py').read())
 setup(
-    name='jira-python',
+    name='jira', # was jira-python
     version=__version__,
     packages=find_packages(exclude=['tests','tools']),
     include_package_data=True,
