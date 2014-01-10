@@ -19,9 +19,9 @@ Feeling impatient? I like your style.
 
 # Installation
 
-Download and install using pip:
+Download and install using `pip install jira` or `easy_install jira`
 
-    pip install jira-python
+You can also try `pip install --user --upgrade jira` which will install or upgrade jira to user directory 
 
 You ARE using a [virtualenv][2], right?
 
