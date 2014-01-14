@@ -796,7 +796,7 @@ class JIRA(object):
 
     @translate_resource_args
     def add_worklog(self, issue, timeSpent=None, adjustEstimate=None,
-                    newEstimate=None, reduceBy=None):
+                    newEstimate=None, reduceBy=None, comment=None):
         """
         Create a new worklog entry on an issue and return a Resource for it.
 
@@ -806,6 +806,7 @@ class JIRA(object):
         time estimate of the issue. The value can either be ``new``, ``leave``, ``manual`` or ``auto`` (default).
         :param newEstimate: the new value for the remaining estimate field. e.g. "2d"
         :param reduceBy: the amount to reduce the remaining estimate by e.g. "2d"
+        :param comment: optional worklog comment
         """
         params = {}
         if adjustEstimate is not None:
@@ -818,6 +819,8 @@ class JIRA(object):
         data = {}
         if timeSpent is not None:
             data['timeSpent'] = timeSpent
+        if comment is not None:
+            data['comment'] = comment
 
         url = self._get_url('issue/{}/worklog'.format(issue))
         r = self._session.post(url, params=params, headers={'content-type': 'application/json'}, data=json.dumps(data))
