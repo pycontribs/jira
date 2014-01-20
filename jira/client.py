@@ -1861,7 +1861,7 @@ class JIRA(object):
         r = self._session.post(url, headers=self._options['headers'], data=payload)
         if r.status_code == 200:
             content = r.content.decode('utf8')
-            if content.find('class="error">'):
+            if content.find('class="error">') != -1:
                 m = re.search('class="error">(.*)</div>', content)
                 if m:
                     msg = m.groups()[0]
