@@ -1139,12 +1139,20 @@ class JIRA(object):
         :param startAt: index of the first issue to return
         :param maxResults: maximum number of issues to return. Total number of results
             is available in the ``total`` attribute of the returned ResultList.
+            If maxResults evaluates as False, it will try to get all issues in batches of 50.
         :param fields: comma-separated string of issue fields to include in the results
         :param expand: extra information to fetch inside each resource
         """
         # TODO what to do about the expand, which isn't related to the issues?
+        infinite = False
+        maxi = 50
+        idx = 0
         if fields is None:
             fields = []
+
+        if maxResults is None or not maxResults:
+            maxResults = maxi
+            infinite = True
 
         search_params = {
             "jql": jql_str,
@@ -1156,7 +1164,18 @@ class JIRA(object):
 
         resource = self._get_json('search', search_params)
         issues = [Issue(self._options, self._session, raw_issue_json) for raw_issue_json in resource['issues']]
-        return ResultList(issues, resource['total'])
+        cnt = len(issues)
+        total = resource['total']
+        if infinite:
+            while cnt == maxi:
+                idx += maxi
+                search_params["startAt"]= idx
+                resource = self._get_json('search', search_params)
+                issue_batch = [Issue(self._options, self._session, raw_issue_json) for raw_issue_json in resource['issues']]
+                issues.extend(issue_batch)
+                cnt = len(issue_batch)
+        return ResultList(issues, total)
+
 
 # Security levels
 
