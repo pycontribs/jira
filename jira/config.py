@@ -17,7 +17,7 @@ else:
 from jira.client import JIRA
 
 
-def get_jira(profile=None, url="http://localhost:2990", username="admin", password="admin", appid=None, autofix=False):
+def get_jira(profile=None, url="http://localhost:2990", username="admin", password="admin", appid=None, autofix=False, verify=True):
         """
         Returns a JIRA object by loading the connection details from the `config.ini` file.
 
@@ -25,6 +25,7 @@ def get_jira(profile=None, url="http://localhost:2990", username="admin", passwo
         :param url: URL of the Jira server
         :param username: username to use for authentication
         :param password: password to use for authentication
+        :param verify: boolean indicating whether SSL certificates should be verified
         :return: JIRA -- an instance to a JIRA object.
         :raises: EnvironmentError
 
@@ -44,6 +45,7 @@ def get_jira(profile=None, url="http://localhost:2990", username="admin", passwo
             user=...
             pass=...
             appid=...
+            verify=...
 
 
         """
@@ -59,7 +61,8 @@ def get_jira(profile=None, url="http://localhost:2990", username="admin", passwo
                 if os.path.isfile(possible):
                     return possible
             return None
-        config = ConfigParser.SafeConfigParser(defaults={'user': None, 'pass': None, 'appid': appid, 'autofix': autofix})
+        config = ConfigParser.SafeConfigParser(defaults={'user': None, 'pass': None, 'appid': appid, 'autofix': autofix, 
+                                                         'verify': 'yes' if verify else 'no'})
 
         config_file = findfile('config.ini')
         if config_file:
@@ -81,6 +84,7 @@ def get_jira(profile=None, url="http://localhost:2990", username="admin", passwo
                 password = config.get(profile, 'pass')
                 appid = config.get(profile, 'appid')
                 autofix = config.get(profile, 'autofix')
+                verify = config.getboolean(profile, 'verify')
 
             else:
                 raise EnvironmentError("%s was not able to locate the config.ini file in current directory, user home directory or PYTHONPATH." % __name__)
@@ -89,6 +93,7 @@ def get_jira(profile=None, url="http://localhost:2990", username="admin", passwo
         options['server'] = url
         options['autofix'] = autofix
         options['appid'] = appid
+        options['verify'] = verify
 
         return JIRA(options=options, basic_auth=(username, password))
         # self.jira.config.debug = debug
