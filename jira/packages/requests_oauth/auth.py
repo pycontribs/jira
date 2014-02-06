@@ -2,7 +2,6 @@ import sys
 import base64
 import binascii
 import hmac
-import random
 import urllib
 
 if sys.version_info[0] == 3:
@@ -12,6 +11,11 @@ else:
 
 from tlslite.utils import keyfactory
 
+try:
+    from random import SystemRandom
+    random = SystemRandom()
+except ImportError:
+    import random
 try:
     from hashlib import sha1
     sha = sha1
@@ -24,9 +28,9 @@ escape = lambda url: urllib.quote(to_utf8(url), safe='~')
 
 def to_utf8(x):
     """
-    Tries to utf-8 encode x when possible 
+    Tries to utf-8 encode x when possible
 
-    If x is a string returns it encoded, otherwise tries to iter x and 
+    If x is a string returns it encoded, otherwise tries to iter x and
     encode utf-8 all strings it contains, returning a list.
     """
     if isinstance(x, basestring):
@@ -55,7 +59,7 @@ class Token(OAuthObject):
 
 class SignatureMethod_HMAC_SHA1(object):
     """
-    This is a barebones implementation of a signature method only suitable for use 
+    This is a barebones implementation of a signature method only suitable for use
     for signing OAuth HTTP requests as a hook to requests library.
     """
     name = 'HMAC-SHA1'

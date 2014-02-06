@@ -13,13 +13,17 @@ import mimetypes
 import copy
 import os
 import urllib
-import random
 import re
 import sys
 import string
 import tempfile
 import logging
 import requests
+try:
+    from random import SystemRandom
+    random = SystemRandom()
+except ImportError:
+    import random
 if sys.version_info[0] == 3:
     import html.parser as HTMLParser
 else:
