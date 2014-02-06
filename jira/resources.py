@@ -212,6 +212,14 @@ class Attachment(Resource):
         if raw:
             self._parse_raw(raw)
 
+    def get(self):
+        """
+        Returns the file content as a string.
+        """
+        r = self._session.get(self.content)
+        raise_on_error(r)
+        return r.content
+        
 
 class Component(Resource):
 
