@@ -49,8 +49,11 @@ def oauth_dance(server, consumer_key, key_cert_data, print_tokens=False):
 
     # step 2: prompt user to validate
     auth_url = '{}/plugins/servlet/oauth/authorize?oauth_token={}'.format(server, request_token)
-    webbrowser.open_new(auth_url)
-    print("Your browser is opening the OAuth authorization for this client session.")
+    if print_tokens:
+        print("Please visit this URL to authorize the OAuth request:\n    %s" % auth_url)
+    else:
+        webbrowser.open_new(auth_url)
+        print("Your browser is opening the OAuth authorization for this client session.")
     approved = input('Have you authorized this program to connect on your behalf to {}? (y/n)'.format(server))
 
     if approved.lower() != 'y':
