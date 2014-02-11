@@ -408,6 +408,34 @@ class JIRA(object):
         filters = [Filter(self._options, self._session, raw_filter_json) for raw_filter_json in r_json]
         return filters
 
+    def create_filter(self, name=None, description = None,
+                            jql = None, favourite=None):
+        """
+        Create a new filter and return a filter Resource for it.
+
+        Keyword arguments:
+        name -- name of the new filter
+        description -- useful human readable description of the new filter
+        jql -- query string that defines the filter
+        favourite -- whether to add this filter to the current user's favorites
+
+        """
+        data = {}
+        if name is not None:
+            data['name']=name
+        if description is not None:
+            data['description']=description
+        if jql is not None:
+            data['jql']=jql
+        if favourite is not None:
+            data['favourite']=favourite
+        url = self._get_url('filter')
+        r = self._session.post(url, headers={'content-type': 'application/json'}, data=json.dumps(data))
+        raise_on_error(r)
+
+        raw_filter_json = json.loads(r.text)
+        return Filter(self._options, self._session, raw=raw_filter_json)
+
 # Groups
 
     # non-resource
