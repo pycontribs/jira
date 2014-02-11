@@ -18,6 +18,7 @@ setup(
     extras_require={
         'magic': ['filemagic>=1.6'],
         'shell': ['ipython>=0.13'],
+        'parallel': ['grequests'],
     },
     entry_points={
         'console_scripts':

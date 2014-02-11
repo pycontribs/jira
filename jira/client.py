@@ -35,7 +35,8 @@ if 'pydevd' not in sys.modules:
         import grequests
     except ImportError:
         pass
-
+    except NotImplementedError:
+        pass
 
 def translate_resource_args(func):
     """
