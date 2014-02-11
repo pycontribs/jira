@@ -5,3 +5,4 @@ dist/
 build/
 docs/_build
 *.egg-info/
+tests/test-reports-27/*
