@@ -51,6 +51,6 @@ python setup.py register sdist upload
 git tag -f -a $VERSION -m "Version $VERSION"
 git tag -f -a RELEASE -m "Current RELEASE"
 
-git push origin --tags
+git push --force origin --tags
 
 echo "done."
