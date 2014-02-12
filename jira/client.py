@@ -1931,6 +1931,27 @@ class JIRA(object):
             else:
                 return True
         return False
+    # experimental support for iDalko Grid, expect API to change as it's using private APIs currently
+    # https://support.idalko.com/browse/IGRID-1017
+    def get_igrid(self, issueid, customfield, schemeid):
+        url = self._options['server'] + '/rest/idalko-igrid/1.0/datagrid/data'
+        if str(customfield).isdigit():
+            customfield = "customfield_%s" % customfield
+        params = {
+            #'_mode':'view',
+            '_issueId':issueid,
+            '_fieldId':customfield,
+            '_confSchemeId':schemeid,
+            #'validate':True,
+            #'_search':False,
+            #'rows':100,
+            #'page':1,
+            #'sidx':'DEFAULT',
+            #'sord':'asc',
+            }
+        r = self._session.get(url, headers=self._options['headers'], params=params)
+        raise_on_error(r)
+        return json.loads(r.text)
 
 # GreenHopper
 
