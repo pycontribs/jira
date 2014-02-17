@@ -61,7 +61,7 @@ def get_jira(profile=None, url="http://localhost:2990", username="admin", passwo
                 if os.path.isfile(possible):
                     return possible
             return None
-        config = ConfigParser.SafeConfigParser(defaults={'user': None, 'pass': None, 'appid': appid, 'autofix': autofix, 
+        config = ConfigParser.SafeConfigParser(defaults={'user': None, 'pass': None, 'appid': appid, 'autofix': autofix,
                                                          'verify': 'yes' if verify else 'no'})
 
         config_file = findfile('config.ini')

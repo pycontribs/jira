@@ -4,17 +4,17 @@ from setuptools import setup, find_packages
 
 exec(open('jira/version.py').read())
 setup(
-    name='jira', # was jira-python
+    name='jira',  # was jira-python
     version=__version__,
-    packages=find_packages(exclude=['tests','tools']),
+    packages=find_packages(exclude=['tests', 'tools']),
     include_package_data=True,
-    #test_suite='nose.collector',
+    # test_suite='nose.collector',
 
     install_requires=['requests>=1.2.3',
                       'requests_oauthlib>=0.3.3',
                       'tlslite>=0.4.4'],
     setup_requires=['sphinx'],
-    tests_require=['tlslite>=0.4.4','xmlrunner>=1.7.3', 'requests>=1.2.3'],
+    tests_require=['tlslite>=0.4.4', 'xmlrunner>=1.7.3', 'requests>=1.2.3', 'setuptools', 'tox', 'pep8', 'autopep8', 'tendo'],
     extras_require={
         'magic': ['filemagic>=1.6'],
         'shell': ['ipython>=0.13'],

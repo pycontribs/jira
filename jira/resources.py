@@ -219,7 +219,7 @@ class Attachment(Resource):
         r = self._session.get(self.content)
         raise_on_error(r)
         return r.content
-        
+
 
 class Component(Resource):
 

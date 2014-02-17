@@ -42,6 +42,7 @@ if 'pydevd' not in sys.modules:
     except NotImplementedError:
         pass
 
+
 def translate_resource_args(func):
     """
     Decorator that converts Issue and Project resources to their keys when used as arguments.
@@ -409,8 +410,8 @@ class JIRA(object):
         filters = [Filter(self._options, self._session, raw_filter_json) for raw_filter_json in r_json]
         return filters
 
-    def create_filter(self, name=None, description = None,
-                            jql = None, favourite=None):
+    def create_filter(self, name=None, description=None,
+                      jql=None, favourite=None):
         """
         Create a new filter and return a filter Resource for it.
 
@@ -423,13 +424,13 @@ class JIRA(object):
         """
         data = {}
         if name is not None:
-            data['name']=name
+            data['name'] = name
         if description is not None:
-            data['description']=description
+            data['description'] = description
         if jql is not None:
-            data['jql']=jql
+            data['jql'] = jql
         if favourite is not None:
-            data['favourite']=favourite
+            data['favourite'] = favourite
         url = self._get_url('filter')
         r = self._session.post(url, headers={'content-type': 'application/json'}, data=json.dumps(data))
         raise_on_error(r)
@@ -1205,16 +1206,14 @@ class JIRA(object):
         if infinite:
             while cnt == maxi:
                 idx += maxi
-                search_params["startAt"]= idx
+                search_params["startAt"] = idx
                 resource = self._get_json('search', search_params)
                 issue_batch = [Issue(self._options, self._session, raw_issue_json) for raw_issue_json in resource['issues']]
                 issues.extend(issue_batch)
                 cnt = len(issue_batch)
         return ResultList(issues, total)
 
-
 # Security levels
-
     def security_level(self, id):
         """
         Get a security level Resource.
@@ -1933,22 +1932,23 @@ class JIRA(object):
         return False
     # experimental support for iDalko Grid, expect API to change as it's using private APIs currently
     # https://support.idalko.com/browse/IGRID-1017
+
     def get_igrid(self, issueid, customfield, schemeid):
         url = self._options['server'] + '/rest/idalko-igrid/1.0/datagrid/data'
         if str(customfield).isdigit():
             customfield = "customfield_%s" % customfield
         params = {
             #'_mode':'view',
-            '_issueId':issueid,
-            '_fieldId':customfield,
-            '_confSchemeId':schemeid,
+            '_issueId': issueid,
+            '_fieldId': customfield,
+            '_confSchemeId': schemeid,
             #'validate':True,
             #'_search':False,
             #'rows':100,
             #'page':1,
             #'sidx':'DEFAULT',
             #'sord':'asc',
-            }
+        }
         r = self._session.get(url, headers=self._options['headers'], params=params)
         raise_on_error(r)
         return json.loads(r.text)
