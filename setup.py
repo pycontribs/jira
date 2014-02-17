@@ -14,7 +14,7 @@ setup(
                       'requests_oauthlib>=0.3.3',
                       'tlslite>=0.4.4'],
     setup_requires=['sphinx'],
-    tests_require=['tlslite>=0.4.4', 'xmlrunner>=1.7.3', 'requests>=1.2.3', 'setuptools', 'tox', 'pep8', 'autopep8', 'tendo'],
+    tests_require=['tlslite>=0.4.4', 'xmlrunner>=1.7.3', 'requests>=1.2.3', 'setuptools', 'tox', 'pep8', 'autopep8'],
     extras_require={
         'magic': ['filemagic>=1.6'],
         'shell': ['ipython>=0.13'],
