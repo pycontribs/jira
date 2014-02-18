@@ -1168,7 +1168,7 @@ class JIRA(object):
 
 # Search
 
-    def search_issues(self, jql_str, startAt=0, maxResults=50, fields=None, expand=None):
+    def search_issues(self, jql_str, startAt=0, maxResults=50, fields=None, expand=None, json_result=None):
         """
         Get a ResultList of issue Resources matching a JQL search string.
 
@@ -1198,7 +1198,9 @@ class JIRA(object):
             "fields": fields,
             "expand": expand
         }
-
+        if json_result:
+            return self._get_json('search', search_params)
+            
         resource = self._get_json('search', search_params)
         issues = [Issue(self._options, self._session, raw_issue_json) for raw_issue_json in resource['issues']]
         cnt = len(issues)
