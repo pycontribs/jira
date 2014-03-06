@@ -5,10 +5,8 @@ from datetime import datetime
 import random
 import urllib
 
-if sys.version_info[0] == 3:
-    from urllib.parse import urlparse, urlunparse, parse_qs, urlsplit, urlunsplit
-else:
-    from urlparse import urlparse, urlunparse, parse_qs, urlsplit, urlunsplit
+from six import string_types
+from six.moves.urllib.parse import urlparse, urlunparse, parse_qs, urlsplit, urlunsplit
 
 from auth import Token, Consumer
 from auth import to_utf8, escape
@@ -19,9 +17,11 @@ if sys.version_info[0] == 3:
 else:
     iteritems = dict.iteritems
 
+
 class OAuthError(Exception):
     def __init__(self, msg):
         self.msg = msg
+
 
 class CustomSignatureMethod_HMAC_SHA1(SignatureMethod_HMAC_SHA1):
     def signing_base(self, request, consumer, token):
@@ -40,6 +40,7 @@ class CustomSignatureMethod_HMAC_SHA1(SignatureMethod_HMAC_SHA1):
         raw = '&'.join(sig)
         return key, raw
 
+
 class CustomSignatureMethod_RSA_SHA1(SignatureMethod_RSA_SHA1):
     def signing_base(self, request, consumer, token):
         """
@@ -56,6 +57,7 @@ class CustomSignatureMethod_RSA_SHA1(SignatureMethod_RSA_SHA1):
             key += escape(token.secret)
         raw = '&'.join(sig)
         return key, raw
+
 
 class OAuthHook(object):
     OAUTH_VERSION = '1.0'
@@ -110,7 +112,7 @@ class OAuthHook(object):
         # See issues #10 and #12
         if ('Content-Type' not in request.headers or\
             request.headers.get('Content-Type') == 'application/x-www-form-urlencoded')\
-        and not isinstance(request.data, basestring):
+        and not isinstance(request.data, string_types):
             data_and_params = dict(request.data.items() + request.params.items())
 
             for key,value in data_and_params.items():
@@ -123,7 +125,7 @@ class OAuthHook(object):
         for key, value in iteritems(request.data_and_params):
             # 1.0a/9.1.1 states that kvp must be sorted by key, then by value,
             # so we unpack sequence values into multiple items for sorting.
-            if isinstance(value, basestring):
+            if isinstance(value, string_types):
                 items.append((key, value))
             else:
                 try:
@@ -235,7 +237,7 @@ class OAuthHook(object):
                 # You can pass a string as data. See issues #10 and #12
                 if ('Content-Type' not in request.headers or\
                     request.headers['Content-Type'] != 'application/x-www-form-urlencoded')\
-                and not isinstance(request.data, basestring):
+                and not isinstance(request.data, string_types):
                     request.url = self.to_url(request)
                     request.data = {}
                 else:

@@ -4,8 +4,6 @@ responses from JIRA and the Resource/dict abstractions provided by this library.
 will construct a JIRA object as described below.
 """
 
-from __future__ import print_function
-
 from functools import wraps
 import imghdr
 import mimetypes
@@ -24,10 +22,11 @@ try:
     random = SystemRandom()
 except ImportError:
     import random
-if sys.version_info[0] == 3:
-    import html.parser as HTMLParser
-else:
-    import HTMLParser
+
+from six import string_types
+from six.moves.html_parser import HTMLParser
+from six import print_ as print
+
 from requests_oauthlib import OAuth1
 from oauthlib.oauth1 import SIGNATURE_RSA
 import json
@@ -276,7 +275,7 @@ class JIRA(object):
             that a name is specified in one way or the other.
         :rtype: an Attachment Resource
         """
-        if isinstance(attachment, type('')):
+        if isinstance(attachment, string_types):
             attachment = open(attachment, "rb")
         # TODO: Support attaching multiple files at once?
         url = self._get_url('issue/' + str(issue) + '/attachments')

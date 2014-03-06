@@ -10,12 +10,8 @@ import random
 import pprint
 from jira.exceptions import raise_on_error, get_error_list
 import json
-
-if sys.version_info[0] == 3:
-    basestring = str
-    iteritems = dict.items
-else:
-    iteritems = dict.iteritems
+from six import iteritems, string_types, text_type
+from six import print_ as print
 
 if 'pydevd' not in sys.modules:
     try:
@@ -69,10 +65,10 @@ class Resource(object):
         if self.raw:
             for name in self._READABLE_IDS:
                 if name in self.raw:
-                    pretty_name = unicode(self.raw[name])
+                    pretty_name = text_type(self.raw[name])
                     # Include any child to support nested select fields.
                     if hasattr(self, 'child'):
-                        pretty_name += ' - ' + unicode(self.child)
+                        pretty_name += ' - ' + text_type(self.child)
                     return pretty_name
 
         # If all else fails, use repr to make sure we get something.
@@ -87,14 +83,14 @@ class Resource(object):
                     names.append(name + '=' + repr(self.raw[name]))
         if not names:
             return '<JIRA %s at %s>' % (self.__class__.__name__,
-                                        unicode(hex(id(self))))
+                                        text_type(hex(id(self))))
         return '<JIRA %s: %s>' % (self.__class__.__name__, ', '.join(names))
 
     def find(self, ids=None, headers=None, params=None):
         if ids is None:
             ids = ()
 
-        if isinstance(ids, basestring):
+        if isinstance(ids, string_types):
             ids = (ids,)
 
         if headers is None:
@@ -484,9 +480,9 @@ class Role(Resource):
         :param groups: a group or groups to add to the role
         :type groups: string, list or tuple
         """
-        if users is not None and isinstance(users, basestring):
+        if users is not None and isinstance(users, string_types):
             users = (users,)
-        if groups is not None and isinstance(groups, basestring):
+        if groups is not None and isinstance(groups, string_types):
             groups = (groups,)
 
         data = {

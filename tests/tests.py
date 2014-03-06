@@ -1,25 +1,25 @@
-from __future__ import print_function
 import os
 import sys
 import time
 import pip
+from six import print_ as print
 
-if (sys.version_info < (2, 7, 0)):
+if sys.version_info < (2, 7, 0):
     try:
         import unittest2 as unittest
     except ImportError:
-        pip.main(['install', '--upgrade','--user', 'unittest2'])
+        pip.main(['install', '--upgrade', '--user', 'unittest2'])
         import unittest2 as unittest
 else:
-   import unittest
+    import unittest
 
 try:
-  import xmlrunner
-  import requests
+    import xmlrunner
+    import requests
 except ImportError:
-  pip.main(['install', '--upgrade','tlslite','requests-oauthlib','requests','unittest-xml-reporting'])
-  import xmlrunner
-  import requests
+    pip.main(['install', '--upgrade', 'tlslite', 'requests-oauthlib', 'requests', 'unittest-xml-reporting'])
+    import xmlrunner
+    import requests
 
 from jira.client import JIRA
 from jira.exceptions import JIRAError
@@ -117,24 +117,24 @@ jira.index.lock.waittime=90000
             time.sleep(5)
             seconds += 5
             print(".", end='')
-            ret = get_status_code(JIRA_INSTANCE,  '/jira/secure/Dashboard.jspa')
+            ret = get_status_code(JIRA_INSTANCE, '/jira/secure/Dashboard.jspa')
         if seconds >= 300:
             raise Exception("Failed to start Jira test instance.")
         print("done")
     except Exception as e:
         raise(e)
 
-j = JIRA(options={'server':'http://localhost:2990/jira'}, basic_auth=('admin', 'admin'))
-j.add_user('eviladmin', 'noreply@example.com', password='eviladmin') #, fullname=None, sendEmail=False, active=True):
-j.add_user_to_group('eviladmin','jira-administrators')
+j = JIRA(options={'server': 'http://localhost:2990/jira'}, basic_auth=('admin', 'admin'))
+j.add_user('eviladmin', 'noreply@example.com', password='eviladmin')  # , fullname=None, sendEmail=False, active=True)
+j.add_user_to_group('eviladmin', 'jira-administrators')
 j.add_user('fred', 'noreply@example.com', password='fred')
 j.delete_project("XSS")
 j.delete_project("BULK")
 j.create_project("XSS", "XSS")
 j.create_project("BULK", "BULK")
-j.create_issue(project={'key': 'BULK'}, summary='issue 1 from BULK', issuetype= {'name': 'Bug'})
-j.create_issue(project={'key': 'BULK'}, summary='issue 2 from BULK', issuetype= {'name': 'Bug'})
-j.create_issue(project={'key': 'BULK'}, summary='issue 3 from BULK', issuetype= {'name': 'Bug'})
+j.create_issue(project={'key': 'BULK'}, summary='issue 1 from BULK', issuetype={'name': 'Bug'})
+j.create_issue(project={'key': 'BULK'}, summary='issue 2 from BULK', issuetype={'name': 'Bug'})
+j.create_issue(project={'key': 'BULK'}, summary='issue 3 from BULK', issuetype={'name': 'Bug'})
 
 
 def get_jira_admin_auth():
@@ -158,7 +158,7 @@ def get_jira_sysadmin_auth():
             'key_cert': KEY_CERT_DATA,
         })
     else:
-        return JIRA(basic_auth=('eviladmin', 'eviladmin')) #eviladmin
+        return JIRA(basic_auth=('eviladmin', 'eviladmin'))  # eviladmin
 
 
 def get_jira_schlub_auth():
@@ -170,7 +170,7 @@ def get_jira_schlub_auth():
             'key_cert': KEY_CERT_DATA,
         })
     else:
-        return JIRA(basic_auth=('fred', 'fred')) # fred
+        return JIRA(basic_auth=('fred', 'fred'))  # fred
 
 
 def find_by_key(seq, key):
@@ -1031,7 +1031,7 @@ class ProjectTests(unittest.TestCase):
                 if avatar['isSelected']:
                     return avatar
             else:
-                raise
+                raise Exception
 
         self.jira.set_project_avatar('XSS', '10000')
         avatars = self.jira.project_avatars('XSS')
@@ -1273,7 +1273,7 @@ class UserTests(unittest.TestCase):
                 if avatar['isSelected']:
                     return avatar
             else:
-                raise
+                raise Exception
 
         self.jira.set_user_avatar('fred', '10070')
         avatars = self.jira.user_avatars('fred')
@@ -1417,6 +1417,6 @@ class WebsudoTests(unittest.TestCase):
         self.assertRaises(JIRAError, anon_jira.kill_websudo)
 
 if __name__ == '__main__':
-   dirname = "test-reports-%s%s" % (sys.version_info[0], sys.version_info[1])
-   unittest.main(testRunner=xmlrunner.XMLTestRunner(output=dirname))
-   #pass
+    dirname = "test-reports-%s%s" % (sys.version_info[0], sys.version_info[1])
+    unittest.main(testRunner=xmlrunner.XMLTestRunner(output=dirname))
+    #pass

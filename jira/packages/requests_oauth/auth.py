@@ -4,10 +4,9 @@ import binascii
 import hmac
 import urllib
 
-if sys.version_info[0] == 3:
-    from urllib.parse import urlparse, urlunparse
-else:
-    from urlparse import urlparse, urlunparse
+from six import string_types
+from six.moves.urllib.parse import urlparse, urlunparse
+from six.moves import range as xrange
 
 from tlslite.utils import keyfactory
 
@@ -26,6 +25,7 @@ except ImportError:
 
 escape = lambda url: urllib.quote(to_utf8(url), safe='~')
 
+
 def to_utf8(x):
     """
     Tries to utf-8 encode x when possible
@@ -33,8 +33,8 @@ def to_utf8(x):
     If x is a string returns it encoded, otherwise tries to iter x and
     encode utf-8 all strings it contains, returning a list.
     """
-    if isinstance(x, basestring):
-        return x.encode('utf-8') if isinstance(x, unicode) else x
+    if isinstance(x, string_types):
+        return x.encode('utf-8') if isinstance(x, string_types) else x
     try:
         l = iter(x)
     except TypeError:

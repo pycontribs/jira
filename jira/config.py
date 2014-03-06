@@ -8,11 +8,7 @@ Also, this simplifies the scripts by not having to write the same initialization
 import logging
 import os
 import sys
-
-if sys.version_info[0] == 3:
-    import configparser as ConfigParser
-else:
-    import ConfigParser
+from six.moves.configparser import ConfigParser
 
 from jira.client import JIRA
 
