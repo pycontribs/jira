@@ -26,6 +26,7 @@ if sys.version_info.major == 3:
     from urllib.parse import parse_qsl
 else:
     from urlparse import parse_qsl
+
 import webbrowser
 from jira.client import JIRA
 from jira import __version__
