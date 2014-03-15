@@ -5,15 +5,12 @@ Starts an interactive JIRA session in an ipython terminal. Script arguments
 support changing the server and a persistent authentication over HTTP BASIC.
 """
 
-from __future__ import print_function
-
 import sys
+from six.moves.configparser import ConfigParser
+from six.moves import input
+from six.moves.urllib.parse import parse_qsl
+from six import print_ as print
 
-if sys.version_info[0] == 3:
-    import configparser as ConfigParser
-else:
-    import ConfigParser
-    input = raw_input
 
 import argparse
 from getpass import getpass
@@ -22,10 +19,6 @@ import os
 import requests
 from oauthlib.oauth1 import SIGNATURE_RSA
 from requests_oauthlib import OAuth1
-if sys.version_info.major == 3:
-    from urllib.parse import parse_qsl
-else:
-    from urlparse import parse_qsl
 
 import webbrowser
 from jira.client import JIRA
@@ -212,7 +205,7 @@ def main():
 
     jira = JIRA(options=options, basic_auth=basic_auth, oauth=oauth)
 
-    from IPython.terminal.embed import InteractiveShellEmbed
+    from IPython.frontend.terminal.embed import InteractiveShellEmbed
 
     ipshell = InteractiveShellEmbed(banner1='<JIRA Shell ' + __version__ + ' (' + jira.client_info() + ')>')
     ipshell("*** JIRA shell active; client is in 'jira'."
