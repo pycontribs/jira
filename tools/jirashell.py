@@ -212,7 +212,7 @@ def main():
 
     jira = JIRA(options=options, basic_auth=basic_auth, oauth=oauth)
 
-    from IPython.frontend.terminal.embed import InteractiveShellEmbed
+    from IPython.terminal.embed import InteractiveShellEmbed
 
     ipshell = InteractiveShellEmbed(banner1='<JIRA Shell ' + __version__ + ' (' + jira.client_info() + ')>')
     ipshell("*** JIRA shell active; client is in 'jira'."
