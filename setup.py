@@ -12,10 +12,11 @@ setup(
 
     install_requires=['requests>=1.2.3',
                       'requests_oauthlib>=0.3.3',
-                      'tlslite>=0.4.4'],
+                      'tlslite>=0.4.4',
+                      'six>=1.5.2'],
     setup_requires=[],
     tests_require=['tlslite>=0.4.4', 'xmlrunner>=1.7.3', 'requests>=1.2.3', 'setuptools', 'tox', 'pep8', 'autopep8',
-                   'sphinx'],
+                   'sphinx','six>=1.5.2'],
     extras_require={
         'magic': ['filemagic>=1.6'],
         'shell': ['ipython>=0.13'],
