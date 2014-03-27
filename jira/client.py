@@ -237,7 +237,7 @@ class JIRA(object):
 
     def applicationlinks(self):
         """
-        list of application links
+        List of application links
         :return: json
         """
 
@@ -975,7 +975,7 @@ class JIRA(object):
             params['issueId'] = issueId
         return self._get_json('mypermissions', params=params)
 
-# PrioritiesK
+# Priorities
 
     def priorities(self):
         """Get a list of priority Resources from the server."""
@@ -1795,9 +1795,9 @@ class JIRA(object):
                 return False
 
     def backup(self, filename='backup.zip'):
-        '''
+        """
         Will call jira export to backup as zipped xml. Returning with success does not mean that the backup process finished.
-        '''
+        """
         url = self._options['server'] + '/secure/admin/XmlBackup.jspa'
         payload = {'filename': filename}
         r = self._session.post(url, headers=self._options['headers'], data=payload)
@@ -1824,9 +1824,9 @@ class JIRA(object):
         return self._serverInfo['username']
 
     def delete_project(self, pid):
-        '''
+        """
         Project can be id, project key or project name. It will return False if it fails.
-        '''
+        """
         found = False
         try:
             if not str(int(pid)) == pid:
@@ -1851,12 +1851,12 @@ class JIRA(object):
             return r.status_code
 
     def create_project(self, key, name=None, assignee=None):
-        '''
+        """
         Key is mandatory and has to match JIRA project key requirements, usually only 2-10 uppercase characters.
         If name is not specified it will use the key value.
         If assignee is not specified it will use current user.
         The returned value should evaluate to False if it fails otherwise it will be the new project id.
-        '''
+        """
         if assignee is None:
             assignee = self.current_user()
         if name is None:
@@ -1960,23 +1960,23 @@ class JIRA(object):
 
 class GreenHopper(JIRA):
 
-    '''
+    """
     Define a class to hold functions for accessing GreenHopper resources.
     Extend the python-jira JIRA class.
-    '''
+    """
 
     def __init__(self, options=None, basic_auth=None, oauth=None):
         self._rank = None
         JIRA.__init__(self, options, basic_auth, oauth)
 
     def _gh_get_url(self, path):
-        ''' Use the given path for GH REST resources '''
+        """ Use the given path for GH REST resources """
         options = self._options
         options.update({'path': path})
         return '{server}/rest/greenhopper/1.0/{path}'.format(**options)
 
     def _gh_get_json(self, path, params=None):
-        ''' Return the GH data '''
+        """ Return the GH data """
         url = self._gh_get_url(path)
         r = self._session.get(url, params=params)
         raise_on_error(r)
@@ -1984,25 +1984,25 @@ class GreenHopper(JIRA):
         r_json = json.loads(r.text)
         return r_json
 
-    '''
+    """
     Define the functions that interact with GreenHopper
-    '''
+    """
 
     def boards(self):
-        '''
+        """
         Return a list of all the boards
         Example: rest/greenhopper/1.0/rapidviews/list
-        '''
+        """
         r_json = self._gh_get_json('rapidviews/list')
         boards = [Board(self._options, self._session, raw_res_json) for raw_res_json in r_json['views']]
         return boards
 
     def sprints(self, id):
-        '''
+        """
         Return the Sprints that appear with the given board id
 
         Example: rest/greenhopper/1.0/sprintquery/2
-        '''
+        """
         # this fix is to handle the new API
         r_json = {}
         try:
@@ -2014,9 +2014,9 @@ class GreenHopper(JIRA):
         return sprints
 
     def completed_issues(self, board_id, sprint_id):
-        '''
+        """
         Return the completed issues for the given board id and sprint id
-        '''
+        """
         # TODO need a better way to provide all the info from the sprintreport
         # incompletedIssues went to backlog but not it not completed
         # issueKeysAddedDuringSprint used to mark some with a * ?
@@ -2027,26 +2027,26 @@ class GreenHopper(JIRA):
         return issues
 
     def incompleted_issues(self, board_id, sprint_id):
-        '''
+        """
         Return the completed issues for the given board id and sprint id
-        '''
+        """
         r_json = self._gh_get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id))
         issues = [Issue(self._options, self._session, raw_res_json) for raw_res_json in r_json['contents']['incompletedIssues']]
         return issues
 
     def sprint_info(self, board_id, sprint_id):
-        '''
+        """
         Return the information about a sprint.
         This uses the same method as completed issues
-        '''
+        """
         r_json = self._gh_get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id))
         return r_json['sprint']
 
     def create_board(self, name, project_ids, preset="scrum"):
-        '''
+        """
         Create a new board for the given projects
         Preset can be kanban, scrum or diy
-        '''
+        """
         payload = {}
         payload['name'] = name
         payload['projectIds'] = project_ids
@@ -2059,7 +2059,7 @@ class GreenHopper(JIRA):
         return result
 
     def create_sprint(self, name, board_id):
-        '''
+        """
         Create a new sprint for the given board
 
         createSprintWithIssues in CreateSprintResource
@@ -2090,7 +2090,7 @@ class GreenHopper(JIRA):
 
         {"rapidViewId":2,"sprintMarkerId":0,"issuesForSprint":[],"name":"SPR 1","startDate":"26/Mar/13 11:36 AM","endDate":"26/Mar/13 12:36 PM"}
 
-        '''
+        """
         payload = {}
         payload['name'] = name
         payload['rapidViewId'] = board_id
@@ -2103,7 +2103,7 @@ class GreenHopper(JIRA):
         return result
 
     def add_issues_to_sprint(self, sprint_id, issue_keys):
-        '''
+        """
         Add the issues in the array of issue keys to the given started
         but not completed sprint. Idempotent.
 
@@ -2121,7 +2121,7 @@ class GreenHopper(JIRA):
         public Response addIssueToSprint(@PathParam("sprintId") final Long sprintId, final IssuesKeysModel model)
         {"issueKeys":["TS-3"]}   (paste this into textarea, not as a custom parameter)
         When this is working in the rest browser must check in Chrome to see if put or post. Post gave 405 Method Not Allowed
-        '''
+        """
         data = {}
         data['issueKeys'] = issue_keys
         url = self._gh_get_url('sprint/%s/issues/add' % (sprint_id))
@@ -2137,13 +2137,13 @@ class GreenHopper(JIRA):
         raise_on_error(r)
 
     def rank(self, issue, next_issue):
-        '''
+        """
         Rank an issue before another using the default Ranking field, the one named 'Rank'.
 
         :param issue: issue key of the issue to be ranked before the second one.
         :param next_issue: issue key of the second issue.
 
-        '''
+        """
         # {"issueKeys":["ANERDS-102"],"rankBeforeKey":"ANERDS-94","rankAfterKey":"ANERDS-7","customFieldId":11431}
         if not self._rank:
             for field in self.fields():

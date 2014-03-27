@@ -57,7 +57,7 @@ class Resource(object):
         self._options = options
         self._session = session
 
-        # explicitly define as None so we know when a resource has actually been loaded
+        # Explicitly define as None so we know when a resource has actually been loaded
         self.raw = None
         self.self = None
 
