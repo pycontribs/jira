@@ -42,10 +42,11 @@ def oauth_dance(server, consumer_key, key_cert_data, print_tokens=False):
     # step 2: prompt user to validate
     auth_url = '{}/plugins/servlet/oauth/authorize?oauth_token={}'.format(server, request_token)
     if print_tokens:
-        print("Please visit this URL to authorize the OAuth request:\n    %s" % auth_url)
+        print("Please visit this URL to authorize the OAuth request:\n\t{}".format(auth_url))
     else:
         webbrowser.open_new(auth_url)
         print("Your browser is opening the OAuth authorization for this client session.")
+
     approved = input('Have you authorized this program to connect on your behalf to {}? (y/n)'.format(server))
 
     if approved.lower() != 'y':
@@ -79,17 +80,19 @@ def process_config():
     try:
         parser.read(CONFIG_PATH)
     except ConfigParser.ParsingError as err:
-        print("Couldn't read config file at path: " + CONFIG_PATH + "; reverting to command line")
+        print("Couldn't read config file at path: {}; reverting to command line".format(CONFIG_PATH))
         return process_command_line()
 
     if parser.has_section('options'):
         options = dict(parser.items('options'))
     else:
         options = {}
+
     if parser.has_section('basic_auth'):
         basic_auth = dict(parser.items('basic_auth'))
     else:
         basic_auth = {}
+
     if parser.has_section('oauth'):
         oauth = dict(parser.items('oauth'))
     else:
@@ -138,8 +141,10 @@ def process_command_line():
     options = {}
     if args.server:
         options['server'] = args.server
+
     if args.rest_path:
         options['rest_path'] = args.rest_path
+
     if args.rest_api_version:
         options['rest_api_version'] = args.rest_api_version
 
@@ -149,6 +154,7 @@ def process_command_line():
     basic_auth = {}
     if args.username:
         basic_auth['username'] = args.username
+
     if args.password:
         basic_auth['password'] = args.password
 
