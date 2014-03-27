@@ -9,8 +9,6 @@ import sys
 from six.moves.configparser import ConfigParser
 from six.moves import input
 from six.moves.urllib.parse import parse_qsl
-from six import print_ as print
-
 
 import argparse
 from getpass import getpass
