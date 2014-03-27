@@ -3,6 +3,7 @@ This module implements a friendly (well, friendlier) interface between the raw J
 responses from JIRA and the Resource/dict abstractions provided by this library. Users
 will construct a JIRA object as described below.
 """
+from __future__ import print_function
 
 from functools import wraps
 import imghdr
@@ -1199,7 +1200,7 @@ class JIRA(object):
         }
         if json_result:
             return self._get_json('search', search_params)
-            
+
         resource = self._get_json('search', search_params)
         issues = [Issue(self._options, self._session, raw_issue_json) for raw_issue_json in resource['issues']]
         cnt = len(issues)
