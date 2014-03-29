@@ -6,6 +6,7 @@ will construct a JIRA object as described below.
 from __future__ import print_function
 
 from functools import wraps
+
 import imghdr
 import mimetypes
 
@@ -18,11 +19,7 @@ import string
 import tempfile
 import logging
 import requests
-try:
-    from random import SystemRandom
-    random = SystemRandom()
-except ImportError:
-    import random
+import json
 
 from six import string_types
 from six.moves.html_parser import HTMLParser
@@ -30,10 +27,19 @@ from six import print_ as print
 
 from requests_oauthlib import OAuth1
 from oauthlib.oauth1 import SIGNATURE_RSA
-import json
+
 from jira.exceptions import raise_on_error
+# JIRA-specific resources
 from jira.resources import Resource, Issue, Comment, Project, Attachment, Component, Dashboard, Filter, Votes, Watchers, Worklog, IssueLink, IssueLinkType, IssueType, Priority, Version, Role, Resolution, SecurityLevel, Status, User, CustomFieldOption, RemoteLink
-from jira.resources import Board, Sprint
+# GreenHopper-specific resources
+from jira.resources import GreenHopperResource, Board, Sprint
+
+try:
+    from random import SystemRandom
+    random = SystemRandom()
+except ImportError:
+    import random
+
 if 'pydevd' not in sys.modules:
     try:
         import grequests
@@ -140,7 +146,7 @@ class JIRA(object):
 
         self._options.update(options)
 
-        # rip off trailing slash since all urls depend on that
+        # Rip off trailing slash since all urls depend on that
         if self._options['server'].endswith('/'):
             self._options['server'] = self._options['server'][:-1]
 
@@ -158,8 +164,8 @@ class JIRA(object):
             self._session.headers.update(self._options['headers'])
 
         if validate:
-            self.session()  # this will raise an Exception if you are not allowed to login. It's better to fail faster than later.
-        # we need version in order to know what API calls are available or not
+            self.session()  # This will raise an Exception if you are not allowed to login. It's better to fail faster than later.
+        # We need version in order to know what API calls are available or not
         self.version = tuple(self.server_info()['versionNumbers'])
 
 # Information about this client
@@ -312,7 +318,7 @@ class JIRA(object):
     def create_component(self, name, project, description=None, leadUserName=None, assigneeType=None,
                          isAssigneeTypeValid=False):
         """
-        Create an issue component inside a project and return a Resource for it.
+        Create a component inside a project and return a Resource for it.
 
         :param name: name of the component
         :param project: key of the project to create the component in
@@ -666,7 +672,7 @@ class JIRA(object):
     @translate_resource_args
     def add_remote_link(self, issue, object, globalId=None, application=None, relationship=None):
         """
-        Create a remote link from an issue to an external application and returns a remote link Resource
+        Add a remote link from an issue to an external application and returns a remote link Resource
         for it. ``object`` should be a dict containing at least ``url`` to the linked external URL and
         ``title`` to display for the link inside JIRA.
 
@@ -835,9 +841,9 @@ class JIRA(object):
     def add_worklog(self, issue, timeSpent=None, adjustEstimate=None,
                     newEstimate=None, reduceBy=None, comment=None):
         """
-        Create a new worklog entry on an issue and return a Resource for it.
+        Add a new worklog entry on an issue and return a Resource for it.
 
-        :param issue: the issue to create the worklog on
+        :param issue: the issue to add the worklog to
         :param timeSpent: a worklog entry with this amount of time spent, e.g. "2d"
         :param adjustEstimate: (optional) allows the user to provide specific instructions to update the remaining\
         time estimate of the issue. The value can either be ``new``, ``leave``, ``manual`` or ``auto`` (default).
@@ -1043,7 +1049,10 @@ class JIRA(object):
         :param boolean auto_confirm: whether to automatically confirm the temporary avatar by calling\
         :py:meth:`confirm_project_avatar` with the return value of this method.
         """
-        # TODO: autodetect size from passed-in file object?
+        size_from_file = os.path.getsize(filename)
+        if size != size_from_file:
+            size = size_from_file
+
         params = {
             'filename': filename,
             'size': size
@@ -1292,7 +1301,7 @@ class JIRA(object):
         assignees, specify an issue key.
 
         :param username: a string to match usernames against
-        :param project: filter returned users by permission in this project (expected if a result will be used to\
+        :param project: filter returned users by permission in this project (expected if a result will be used to \
         create an issue)
         :param issueKey: filter returned users by this issue (expected if a result will be used to edit this issue)
         :param expand: extra information to fetch inside each resource
@@ -1348,7 +1357,10 @@ class JIRA(object):
         :param auto_confirm: whether to automatically confirm the temporary avatar by calling\
         :py:meth:`confirm_user_avatar` with the return value of this method.
         """
-        # TODO: autodetect size from passed-in file object?
+        size_from_file = os.path.getsize(filename)
+        if size != size_from_file:
+            size = size_from_file
+
         params = {
             'username': user,
             'filename': filename,
@@ -1641,7 +1653,7 @@ class JIRA(object):
                       ". Specify the 'contentType' parameter explicitly.")
                 return None
 
-    def email_user(self, user, body, title="Jira Notification"):
+    def email_user(self, user, body, title="JIRA Notification"):
         """
         TBD:
         """
@@ -1669,7 +1681,7 @@ class JIRA(object):
 
     def rename_user(self, old_user, new_user):
         """
-        Rename a Jira user. Current implementation relies on third party plugin but in the future it may use embedded Jira functionality.
+        Rename a JIRA user. Current implementation relies on third party plugin but in the future it may use embedded JIRA functionality.
 
         :param old_user: string with username login
         :param new_user: string with username login
@@ -1758,9 +1770,9 @@ class JIRA(object):
         """
         Start jira re-indexing. Returns True if reindexing is in progress or not needed, or False.
 
-        If you call reindex() without any parameters it will perform a backfround reindex only if Jira thinks it should do it.
+        If you call reindex() without any parameters it will perform a backfround reindex only if JIRA thinks it should do it.
 
-        :param force: reindex even if Jira doesn'tt say this is needed, False by default.
+        :param force: reindex even if JIRA doesn'tt say this is needed, False by default.
         :param background: reindex inde background, slower but does not impact the users, defaults to True.
         """
         # /secure/admin/IndexAdmin.jspa
@@ -1774,7 +1786,7 @@ class JIRA(object):
 
         r = self._session.get(url, headers=self._options['headers'])
         if r.status_code == 503:
-            # logging.warning("Jira returned 503, this could mean that a full reindex is in progress.")
+            # logging.warning("JIRA returned 503, this could mean that a full reindex is in progress.")
             return 503
         # raise_on_error(r)
 
@@ -1782,7 +1794,7 @@ class JIRA(object):
             return True
 
         if r.content.find('All issues are being re-indexed'):
-            logging.warning("Jira re-indexing is already running.")
+            logging.warning("JIRA re-indexing is already running.")
             return True  # still reindexing is considered still a success
 
         if r.content.find('To perform the re-index now, please go to the') or force:
@@ -1969,170 +1981,165 @@ class GreenHopper(JIRA):
         self._rank = None
         JIRA.__init__(self, options, basic_auth, oauth)
 
-    def _gh_get_url(self, path):
-        """ Use the given path for GH REST resources """
-        options = self._options
-        options.update({'path': path})
-        return '{server}/rest/greenhopper/1.0/{path}'.format(**options)
+    def find(self, resource_format, ids=None):
+        """
+        Get a GreenHopperResource object for any addressable resource on the server.
 
-    def _gh_get_json(self, path, params=None):
-        """ Return the GH data """
-        url = self._gh_get_url(path)
-        r = self._session.get(url, params=params)
-        raise_on_error(r)
+        This method is a universal resource locator for any RESTful resource in GreenHopper. The
+        argument ``resource_format`` is a string of the form ``resource``, ``resource/{0}``,
+        ``resource/{0}/sub``, ``resource/{0}/sub/{1}``, etc. The format placeholders will be
+        populated from the ``ids`` argument if present. The existing authentication session
+        will be used.
 
-        r_json = json.loads(r.text)
-        return r_json
+        The return value is an untyped Resource object, which will not support specialized
+        :py:meth:`.Resource.update` or :py:meth:`.Resource.delete` behavior. Moreover, it will
+        not know to return an issue Resource if the client uses the resource issue path. For this
+        reason, it is intended to support resources that are not included in the standard
+        Atlassian REST API.
+
+        :param resource_format: the subpath to the resource string
+        :param ids: values to substitute in the ``resource_format`` string
+        :type ids: tuple or None
+        """
+        resource = GreenHopperResource(resource_format, self._options, self._session)
+        resource.find(ids)
+        return resource
 
     """
-    Define the functions that interact with GreenHopper
+    Define the functions that interact with GreenHopper.
     """
 
+    @translate_resource_args
     def boards(self):
         """
-        Return a list of all the boards
-        Example: rest/greenhopper/1.0/rapidviews/list
+        Get a list of board GreenHopperResources.
         """
-        r_json = self._gh_get_json('rapidviews/list')
-        boards = [Board(self._options, self._session, raw_res_json) for raw_res_json in r_json['views']]
+        r_json = self._get_json('rapidviews/list')
+
+        boards = [Board(self._options, self._session, raw_boards_json) for raw_boards_json in r_json['views']]
         return boards
 
+    @translate_resource_args
     def sprints(self, id):
         """
-        Return the Sprints that appear with the given board id
+        Get a list of sprint GreenHopperResources.
 
-        Example: rest/greenhopper/1.0/sprintquery/2
+        :param id: the board to get sprints from
         """
-        # this fix is to handle the new API
         r_json = {}
         try:
-            r_json = self._gh_get_json('sprintquery/%s' % id)
+            r_json = self._get_json('sprintquery/%s' % id)
         except:
-            r_json = self._gh_get_json('sprints/%s' % id)
+            r_json = self._get_json('sprints/%s' % id)
 
-        sprints = [Sprint(self._options, self._session, raw_res_json) for raw_res_json in r_json['sprints']]
+        sprints = [Sprint(self._options, self._session, raw_sprints_json) for raw_sprints_json in r_json['sprints']]
         return sprints
 
     def completed_issues(self, board_id, sprint_id):
         """
-        Return the completed issues for the given board id and sprint id
+        Return the completed issues for ``board_id`` and ``sprint_id``.
+
+        :param board_id: the board retrieving issues from
+        :param sprint_id: the sprint retieving issues from
         """
         # TODO need a better way to provide all the info from the sprintreport
         # incompletedIssues went to backlog but not it not completed
         # issueKeysAddedDuringSprint used to mark some with a * ?
         # puntedIssues are for scope change?
 
-        r_json = self._gh_get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id))
-        issues = [Issue(self._options, self._session, raw_res_json) for raw_res_json in r_json['contents']['completedIssues']]
+        r_json = self._get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id))
+        issues = [Issue(self._options, self._session, raw_issues_json) for raw_issues_json in r_json['contents']['completedIssues']]
         return issues
 
     def incompleted_issues(self, board_id, sprint_id):
         """
         Return the completed issues for the given board id and sprint id
         """
-        r_json = self._gh_get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id))
-        issues = [Issue(self._options, self._session, raw_res_json) for raw_res_json in r_json['contents']['incompletedIssues']]
+        r_json = self._get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id))
+        issues = [Issue(self._options, self._session, raw_res_json) for raw_issues_json in r_json['contents']['incompletedIssues']]
         return issues
 
     def sprint_info(self, board_id, sprint_id):
         """
         Return the information about a sprint.
-        This uses the same method as completed issues
+
+        :param board_id: the board retrieving issues from
+        :param sprint_id: the sprint retieving issues from
         """
-        r_json = self._gh_get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id))
-        return r_json['sprint']
+        return self._get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id))['sprint']
 
     def create_board(self, name, project_ids, preset="scrum"):
         """
-        Create a new board for the given projects
-        Preset can be kanban, scrum or diy
+        Create a new board for the ``project_ids``.
+
+        :param name: name of the board
+        :param project_ids: the projects to create the board in
+        :param preset: what preset to use for this board
+        :type preset: 'kanban', 'scrum', 'diy'
         """
         payload = {}
         payload['name'] = name
         payload['projectIds'] = project_ids
         payload['preset'] = preset
-        url = self._gh_get_url('rapidview/create/presets')
-        r = self._session.post(url, data=json.dumps(payload))
+        url = self._get_url('rapidview/create/presets')
+        r = self._session.post(url, headers={'content-type': 'application/json'}, data=json.dumps(payload))
         raise_on_error(r)
-        # This isn't really a Board object, just a subset for the id
-        result = r.json
-        return result
+
+        raw_issue_json = json.loads(r.text)
+        return Board(self._options, self._session, raw=raw_issue_json)
 
     def create_sprint(self, name, board_id):
         """
-        Create a new sprint for the given board
+        Create a new sprint for the ``board_id``.
 
-        createSprintWithIssues in CreateSprintResource
-
-        Long rapidViewId;
-        Long sprintMarkerId;
-        List<String> issuesForSprint;
-        String name;
-        String startDate;
-        String endDate;
-
-        This is before the sprint is started:
-        http://localhost:8080/rest/greenhopper/1.0/backlog/markers/add
-        {"rapidViewId":4}
-        which returns
-        {"afterMarkerId":10,"name":"Our First Sprint 4","id":11}
-
-        When an sprint is started:
-        {"rapidViewId":4,"sprintMarkerId":11,"issuesForSprint":["SRC-1"],"name":"Our First Sprint 5","startDate":"22/Mar/13 8:51 PM","endDate":"05/Apr/13 8:51 PM"}
-
-        Responds:
-        {"id":5,"name":"Our First Sprint 5","closed":false}
-
-        And create/model comes before create, and expects issues to add
-        {"rapidViewId":2,"sprintMarkerId":0} fails.
-
-        When a sprint is in backlog it is just a marker
-
-        {"rapidViewId":2,"sprintMarkerId":0,"issuesForSprint":[],"name":"SPR 1","startDate":"26/Mar/13 11:36 AM","endDate":"26/Mar/13 12:36 PM"}
-
+        :param name: name of the sprint
+        :param board_id: the board to add the sprint to
         """
         payload = {}
         payload['name'] = name
         payload['rapidViewId'] = board_id
         payload['sprintMarkerId'] = 0
-        url = self._gh_get_url('sprint/create')
-        r = self._session.post(url, data=json.dumps(payload))
+        url = self._get_url('sprint/create')
+        r = self._session.post(url, headers={'content-type': 'application/json'}, data=json.dumps(payload))
         raise_on_error(r)
-        # This isn't really a Sprint object, just a subset for the id
-        result = r.json
-        return result
+
+        raw_issue_json = json.loads(r.text)
+        return Sprint(self._options, self._session, raw=raw_issue_json)
 
     def add_issues_to_sprint(self, sprint_id, issue_keys):
         """
-        Add the issues in the array of issue keys to the given started
-        but not completed sprint. Idempotent.
+        Add the issues in ``issue_keys`` to the ``sprint_id``. The sprint must
+        be started but not completed.
 
-        If a sprint was completed then have to also edit the issues' history
-        so that it was added to the sprint before it was completed,
-        preferably before it started. A completed sprint's issues also
-        all have a resolution set before the completion date.
+        If a sprint was completed, then have to also edit the history of the
+        issue so that it was added to the sprint before it was completed,
+        preferably before it started. A completed sprint's issues also all have
+        a resolution set before the completion date.
 
-        If a sprint was not started then have to edit the marker
-        and copy the rank of each issue too.
+        If a sprint was not started, then have to edit the marker and copy the
+        rank of each issue too.
 
-        /sprint/{sprintId}/issues/add
-        SprintIssuesResource.java
-        @Path("add")
-        public Response addIssueToSprint(@PathParam("sprintId") final Long sprintId, final IssuesKeysModel model)
-        {"issueKeys":["TS-3"]}   (paste this into textarea, not as a custom parameter)
-        When this is working in the rest browser must check in Chrome to see if put or post. Post gave 405 Method Not Allowed
+        :param sprint_id: the sprint to add issues to
+        :param issue_keys: the issues to add to the sprint
         """
         data = {}
         data['issueKeys'] = issue_keys
-        url = self._gh_get_url('sprint/%s/issues/add' % (sprint_id))
+        url = self._get_url('sprint/%s/issues/add' % (sprint_id))
         r = self._session.put(url, data=json.dumps(data))
         raise_on_error(r)
 
     def add_issues_to_epic(self, epic_id, issue_keys, ignore_epics=True):
+        """
+        Add the issues in ``issue_keys`` to the ``epic_id``.
+
+        :param epic_id: the epic to add issues to
+        :param issue_keys: the issues to add to the epic
+        :param ignore_epics: ignore any issues listed in ``issue_keys`` that are epics
+        """
         data = {}
         data['issueKeys'] = issue_keys
         data['ignoreEpics'] = ignore_epics
-        url = self._gh_get_url('epics/%s/add' % epic_id)
+        url = self._get_url('epics/%s/add' % epic_id)
         r = self._session.put(url, data=json.dumps(data), headers={'Content-Type': 'application/json'})
         raise_on_error(r)
 
@@ -2142,7 +2149,6 @@ class GreenHopper(JIRA):
 
         :param issue: issue key of the issue to be ranked before the second one.
         :param next_issue: issue key of the second issue.
-
         """
         # {"issueKeys":["ANERDS-102"],"rankBeforeKey":"ANERDS-94","rankAfterKey":"ANERDS-7","customFieldId":11431}
         if not self._rank:
@@ -2150,6 +2156,6 @@ class GreenHopper(JIRA):
                 if field['name'] == 'Rank' and field['schema']['custom'] == "com.pyxis.greenhopper.jira:gh-global-rank":
                     self._rank = field['schema']['customId']
         data = {"issueKeys": [issue], "rankBeforeKey": next_issue, "customFieldId": self._rank}
-        url = self._gh_get_url('rank')
+        url = self._get_url('rank')
         r = self._session.put(url, data=json.dumps(data), headers={'Content-Type': 'application/json'})
         raise_on_error(r)

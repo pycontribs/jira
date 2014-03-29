@@ -9,10 +9,12 @@ import sys
 import logging
 import random
 import pprint
-from jira.exceptions import raise_on_error, get_error_list
 import json
+
 from six import iteritems, string_types, text_type
 from six import print_ as print
+
+from jira.exceptions import raise_on_error, get_error_list
 
 if 'pydevd' not in sys.modules:
     try:
