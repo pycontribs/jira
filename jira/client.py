@@ -1,7 +1,8 @@
 """
 This module implements a friendly (well, friendlier) interface between the raw JSON
 responses from JIRA and the Resource/dict abstractions provided by this library. Users
-will construct a JIRA object as described below.
+will construct a JIRA object as described below. Full API documentation can be found
+at: https://jira-python.readthedocs.org/en/latest/
 """
 from __future__ import print_function
 
@@ -29,9 +30,9 @@ from requests_oauthlib import OAuth1
 from oauthlib.oauth1 import SIGNATURE_RSA
 
 from jira.exceptions import raise_on_error
-# JIRA-specific resources
+# JIRA specific resources
 from jira.resources import Resource, Issue, Comment, Project, Attachment, Component, Dashboard, Filter, Votes, Watchers, Worklog, IssueLink, IssueLinkType, IssueType, Priority, Version, Role, Resolution, SecurityLevel, Status, User, CustomFieldOption, RemoteLink
-# GreenHopper-specific resources
+# GreenHopper specific resources
 from jira.resources import GreenHopperResource, Board, Sprint
 
 try:
@@ -1944,9 +1945,10 @@ class JIRA(object):
             else:
                 return True
         return False
-    # experimental support for iDalko Grid, expect API to change as it's using private APIs currently
-    # https://support.idalko.com/browse/IGRID-1017
 
+# Experimental
+    # Experimental support for iDalko Grid, expect API to change as it's using private APIs currently
+    # https://support.idalko.com/browse/IGRID-1017
     def get_igrid(self, issueid, customfield, schemeid):
         url = self._options['server'] + '/rest/idalko-igrid/1.0/datagrid/data'
         if str(customfield).isdigit():

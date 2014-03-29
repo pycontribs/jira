@@ -16,12 +16,6 @@ from six import print_ as print
 
 from jira.exceptions import raise_on_error, get_error_list
 
-if 'pydevd' not in sys.modules:
-    try:
-        import grequests
-    except ImportError:
-        pass  # that's an optional experimental feature, so there is no need to force the dependency
-
 
 class Resource(object):
 
@@ -157,17 +151,19 @@ class Resource(object):
 
             if user:
                 logging.warning("Trying to add missing orphan user '%s' in order to complete the previous failed operation." % user)
-                # print pprint.pprint(self.__dict__)
                 jira.add_user(user, 'noreply@example.com', 10100, active=False)
-                    # if 'assignee' not in data['fields']:
-                    #    logging.warning("autofix: setting assignee to '%s' and retrying the update." % self._options['autofix'])
-                    #    data['fields']['assignee'] = {'name': self._options['autofix']}
+                # if 'assignee' not in data['fields']:
+                #    logging.warning("autofix: setting assignee to '%s' and retrying the update." % self._options['autofix'])
+                #    data['fields']['assignee'] = {'name': self._options['autofix']}
+            # EXPERIMENTAL --->
+            # import grequests
             # if async and 'grequests' in sys.modules:
             #   if not hasattr(self._session, '_async_jobs'):
             #        self._session._async_jobs = set()
             #    self._session._async_jobs.add(grequests.put(self.self, headers={'content-type': 'application/json'}, data=json.dumps(data)))
             # else:
             #    print "x", data
+            # <--- EXPERIMENTAL
             r = self._session.put(self.self, headers={'content-type': 'application/json'}, data=json.dumps(data))
         raise_on_error(r)
         self._load(self.self)
@@ -640,6 +636,7 @@ def dict2resource(raw, top=None, options=None, session=None):
     return top
 
 resource_class_map = {
+    # JIRA specific resources
     r'attachment/[^/]+$': Attachment,
     r'component/[^/]+$': Component,
     r'customFieldOption/[^/]+$': CustomFieldOption,
@@ -661,6 +658,9 @@ resource_class_map = {
     r'status/[^/]+$': Status,
     r'user\?username.+$': User,
     r'version/[^/]+$': Version,
+    # GreenHopper specific resources
+    r'sprints/[^/]+$': Sprint,
+    r'views/[^/]+$': Board,
 }
 
 
@@ -669,5 +669,5 @@ def cls_for_resource(resource_literal):
         if re.search(resource, resource_literal):
             return resource_class_map[resource]
     else:
-        # generic Resource without specialized update/delete behavior
+        # Generic Resource without specialized update/delete behavior
         return Resource
