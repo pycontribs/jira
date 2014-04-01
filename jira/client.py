@@ -2020,7 +2020,7 @@ class GreenHopper(JIRA):
         """
         Get a list of board GreenHopperResources.
         """
-        r_json = self._get_json('rapidviews/list', base=GREENHOPPER_BASE_URL)
+        r_json = self._get_json('rapidviews/list', base=self.GREENHOPPER_BASE_URL)
 
         boards = [Board(self._options, self._session, raw_boards_json) for raw_boards_json in r_json['views']]
         return boards
@@ -2034,9 +2034,9 @@ class GreenHopper(JIRA):
         """
         r_json = {}
         try:
-            r_json = self._get_json('sprintquery/%s' % id, base=GREENHOPPER_BASE_URL)
+            r_json = self._get_json('sprintquery/%s' % id, base=self.GREENHOPPER_BASE_URL)
         except:
-            r_json = self._get_json('sprints/%s' % id, base=GREENHOPPER_BASE_URL)
+            r_json = self._get_json('sprints/%s' % id, base=self.GREENHOPPER_BASE_URL)
 
         sprints = [Sprint(self._options, self._session, raw_sprints_json) for raw_sprints_json in r_json['sprints']]
         return sprints
@@ -2053,7 +2053,7 @@ class GreenHopper(JIRA):
         # issueKeysAddedDuringSprint used to mark some with a * ?
         # puntedIssues are for scope change?
 
-        r_json = self._get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id), base=GREENHOPPER_BASE_URL)
+        r_json = self._get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id), base=self.GREENHOPPER_BASE_URL)
         issues = [Issue(self._options, self._session, raw_issues_json) for raw_issues_json in r_json['contents']['completedIssues']]
         return issues
 
@@ -2061,8 +2061,8 @@ class GreenHopper(JIRA):
         """
         Return the completed issues for the given board id and sprint id
         """
-        r_json = self._get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id))
-        issues = [Issue(self._options, self._session, raw_res_json) for raw_issues_json in r_json['contents']['incompletedIssues']]
+        r_json = self._get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id), self.GREENHOPPER_BASE_URL)
+        issues = [Issue(self._options, self._session, raw_issues_json) for raw_issues_json in r_json['contents']['incompletedIssues']]
         return issues
 
     def sprint_info(self, board_id, sprint_id):
@@ -2072,7 +2072,7 @@ class GreenHopper(JIRA):
         :param board_id: the board retrieving issues from
         :param sprint_id: the sprint retieving issues from
         """
-        return self._get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id), base=GREENHOPPER_BASE_URL)['sprint']
+        return self._get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id), base=self.GREENHOPPER_BASE_URL)['sprint']
 
     def create_board(self, name, project_ids, preset="scrum"):
         """
@@ -2087,7 +2087,7 @@ class GreenHopper(JIRA):
         payload['name'] = name
         payload['projectIds'] = project_ids
         payload['preset'] = preset
-        url = self._get_url('rapidview/create/presets', base=GREENHOPPER_BASE_URL)
+        url = self._get_url('rapidview/create/presets', base=self.GREENHOPPER_BASE_URL)
         r = self._session.post(url, headers={'content-type': 'application/json'}, data=json.dumps(payload))
         raise_on_error(r)
 
@@ -2105,7 +2105,7 @@ class GreenHopper(JIRA):
         payload['name'] = name
         payload['rapidViewId'] = board_id
         payload['sprintMarkerId'] = 0
-        url = self._get_url('sprint/create', base=GREENHOPPER_BASE_URL)
+        url = self._get_url('sprint/create', base=self.GREENHOPPER_BASE_URL)
         r = self._session.post(url, headers={'content-type': 'application/json'}, data=json.dumps(payload))
         raise_on_error(r)
 
@@ -2130,7 +2130,7 @@ class GreenHopper(JIRA):
         """
         data = {}
         data['issueKeys'] = issue_keys
-        url = self._get_url('sprint/%s/issues/add' % (sprint_id), base=GREENHOPPER_BASE_URL)
+        url = self._get_url('sprint/%s/issues/add' % (sprint_id), base=self.GREENHOPPER_BASE_URL)
         r = self._session.put(url, data=json.dumps(data))
         raise_on_error(r)
 
@@ -2145,7 +2145,7 @@ class GreenHopper(JIRA):
         data = {}
         data['issueKeys'] = issue_keys
         data['ignoreEpics'] = ignore_epics
-        url = self._get_url('epics/%s/add' % epic_id, base=GREENHOPPER_BASE_URL)
+        url = self._get_url('epics/%s/add' % epic_id, base=self.GREENHOPPER_BASE_URL)
         r = self._session.put(url, data=json.dumps(data), headers={'Content-Type': 'application/json'})
         raise_on_error(r)
 
@@ -2162,6 +2162,6 @@ class GreenHopper(JIRA):
                 if field['name'] == 'Rank' and field['schema']['custom'] == "com.pyxis.greenhopper.jira:gh-global-rank":
                     self._rank = field['schema']['customId']
         data = {"issueKeys": [issue], "rankBeforeKey": next_issue, "customFieldId": self._rank}
-        url = self._get_url('rank', base=GREENHOPPER_BASE_URL)
+        url = self._get_url('rank', base=self.GREENHOPPER_BASE_URL)
         r = self._session.put(url, data=json.dumps(data), headers={'Content-Type': 'application/json'})
         raise_on_error(r)
