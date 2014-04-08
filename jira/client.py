@@ -1535,7 +1535,18 @@ class JIRA(object):
     def session(self):
         """Get a dict of the current authenticated user's session information."""
         url = '{server}/rest/auth/1/session'.format(**self._options)
-        r = self._session.get(url)
+
+        if type(self._session.auth) is tuple:
+            authentication_data = { 'username': self._session.auth[0]
+                                  , 'password': self._session.auth[1]
+                                  }
+            r = self._session.post( url
+                                  , data=json.dumps(authentication_data)
+                                  , headers={ 'Content-type': 'application/json' }
+                                  )
+        else:
+            r = self._session.get(url)
+
         raise_on_error(r)
 
         user = User(self._options, self._session, json.loads(r.text))
