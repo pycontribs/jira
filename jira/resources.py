@@ -564,6 +564,18 @@ class Version(Resource):
 
         super(Version, self).delete(params)
 
+    def update(self, **args):
+        """
+        Update this project version from the server. It is prior used to archive
+        versions
+        """
+        data = {}
+        for field in args:
+            data[field] = args[field]
+
+        super(Version, self).update(**data)
+
+
 # GreenHopper
 
 
