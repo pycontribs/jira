@@ -1,4 +1,5 @@
 from requests import Session
+from requests.exceptions import ConnectionError
 import logging
 import time
 
@@ -11,19 +12,26 @@ class ResilientSession(Session):
     At this moment it supports: 502, 503, 504
     """
 
-    def __recoverable(self, r, url, request, counter=1):
-        if r.status_code in [502, 503, 504]:
-            DELAY = 10 * counter
-            logging.warn("Got recoverable error [%s] from %s %s, retry #%s in %ss" % (r.status_code, request, url, counter, DELAY))
-            time.sleep(DELAY)
-            return True
-        return False
+    def __recoverable(self, error, url, request, counter=1):
+        if hasattr(error,'status_code'):
+            if error.status_code in [502, 503, 504]:
+                error = "HTTP %s" % error.status_code
+            else:
+                return False
+        DELAY = 10 * counter
+        logging.warn("Got recoverable error [%s] from %s %s, retry #%s in %ss" % (error, request, url, counter, DELAY))
+        time.sleep(DELAY)
+        return True
+
 
     def get(self, url, **kwargs):
         counter = 0
         while True:
             counter += 1
-            r = super(ResilientSession, self).get(url, **kwargs)
+            try:
+                r = super(ResilientSession, self).get(url, **kwargs)
+            except ConnectionError as e:
+                r = e.message
             if self.__recoverable(r, url, 'GET', counter):
                 continue
             return r
@@ -32,7 +40,10 @@ class ResilientSession(Session):
         counter = 0
         while True:
             counter += 1
-            r = super(ResilientSession, self).post(url, **kwargs)
+            try:
+                r = super(ResilientSession, self).post(url, **kwargs)
+            except ConnectionError as e:
+                r = e.message
             if self.__recoverable(r, url, 'POST', counter):
                 continue
             return r
@@ -41,7 +52,10 @@ class ResilientSession(Session):
         counter = 0
         while True:
             counter += 1
-            r = super(ResilientSession, self).delete(url, **kwargs)
+            try:
+                r = super(ResilientSession, self).delete(url, **kwargs)
+            except ConnectionError as e:
+                r = e.message
             if self.__recoverable(r, url, 'DELETE', counter):
                 continue
             return r
@@ -50,7 +64,11 @@ class ResilientSession(Session):
         counter = 0
         while True:
             counter += 1
-            r = super(ResilientSession, self).put(url, **kwargs)
+            try:
+                r = super(ResilientSession, self).put(url, **kwargs)
+            except ConnectionError as e:
+                r = e.message
+
             if self.__recoverable(r, url, 'PUT', counter):
                 continue
             return r
@@ -59,7 +77,10 @@ class ResilientSession(Session):
         counter = 0
         while True:
             counter += 1
-            r = super(ResilientSession, self).head(url, **kwargs)
+            try:
+                r = super(ResilientSession, self).head(url, **kwargs)
+            except ConnectionError as e:
+                r = e.message
             if self.__recoverable(r, url, 'HEAD', counter):
                 continue
             return r
@@ -68,7 +89,11 @@ class ResilientSession(Session):
         counter = 0
         while True:
             counter += 1
-            r = super(ResilientSession, self).patch(url, **kwargs)
+            try:
+                r = super(ResilientSession, self).patch(url, **kwargs)
+            except ConnectionError as e:
+                r = e.message
+
             if self.__recoverable(r, url, 'PATCH', counter):
                 continue
             return r
@@ -77,7 +102,11 @@ class ResilientSession(Session):
         counter = 0
         while True:
             counter += 1
-            r = super(ResilientSession, self).options(url, **kwargs)
+            try:
+                r = super(ResilientSession, self).options(url, **kwargs)
+            except ConnectionError as e:
+                r = e.message
+
             if self.__recoverable(r, url, 'OPTIONS', counter):
                 continue
             return r
