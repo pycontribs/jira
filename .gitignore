@@ -1,6 +1,7 @@
 .idea/
 *.pyc
 *.egg
+.coverage.*
 dist/
 build/
 docs/_build

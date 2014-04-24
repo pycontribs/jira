@@ -2,7 +2,9 @@ from requests import Session
 import logging
 import time
 
+
 class ResilientSession(Session):
+
     """
     This class is supposed to retry requests that do return temporary errors.
 
@@ -22,7 +24,7 @@ class ResilientSession(Session):
         while True:
             counter += 1
             r = super(ResilientSession, self).get(url, **kwargs)
-            if self.__recoverable(r,url,'GET', counter):
+            if self.__recoverable(r, url, 'GET', counter):
                 continue
             return r
 
@@ -31,7 +33,7 @@ class ResilientSession(Session):
         while True:
             counter += 1
             r = super(ResilientSession, self).post(url, **kwargs)
-            if self.__recoverable(r,url,'POST', counter):
+            if self.__recoverable(r, url, 'POST', counter):
                 continue
             return r
 
@@ -40,7 +42,7 @@ class ResilientSession(Session):
         while True:
             counter += 1
             r = super(ResilientSession, self).delete(url, **kwargs)
-            if self.__recoverable(r,url,'DELETE', counter):
+            if self.__recoverable(r, url, 'DELETE', counter):
                 continue
             return r
 
@@ -49,7 +51,7 @@ class ResilientSession(Session):
         while True:
             counter += 1
             r = super(ResilientSession, self).put(url, **kwargs)
-            if self.__recoverable(r,url,'PUT', counter):
+            if self.__recoverable(r, url, 'PUT', counter):
                 continue
             return r
 
@@ -58,7 +60,7 @@ class ResilientSession(Session):
         while True:
             counter += 1
             r = super(ResilientSession, self).head(url, **kwargs)
-            if self.__recoverable(r,url,'HEAD', counter):
+            if self.__recoverable(r, url, 'HEAD', counter):
                 continue
             return r
 
@@ -67,7 +69,7 @@ class ResilientSession(Session):
         while True:
             counter += 1
             r = super(ResilientSession, self).patch(url, **kwargs)
-            if self.__recoverable(r,url,'PATCH', counter):
+            if self.__recoverable(r, url, 'PATCH', counter):
                 continue
             return r
 
@@ -76,6 +78,6 @@ class ResilientSession(Session):
         while True:
             counter += 1
             r = super(ResilientSession, self).options(url, **kwargs)
-            if self.__recoverable(r,url,'OPTIONS', counter):
+            if self.__recoverable(r, url, 'OPTIONS', counter):
                 continue
             return r
