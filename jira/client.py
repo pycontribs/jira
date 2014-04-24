@@ -33,6 +33,7 @@ from jira.exceptions import raise_on_error
 from jira.resources import Resource, Issue, Comment, Project, Attachment, Component, Dashboard, Filter, Votes, Watchers, Worklog, IssueLink, IssueLinkType, IssueType, Priority, Version, Role, Resolution, SecurityLevel, Status, User, CustomFieldOption, RemoteLink
 # GreenHopper specific resources
 from jira.resources import GreenHopperResource, Board, Sprint
+from jira.resilientsession import ResilientSession
 
 try:
     from random import SystemRandom
@@ -94,6 +95,7 @@ class JIRA(object):
         "rest_path": "api",
         "rest_api_version": "2",
         "verify": True,
+        "resilient": False,
         "headers": {
             'X-Atlassian-Token': 'nocheck',
             #'Cache-Control': 'no-cache',
@@ -124,6 +126,7 @@ class JIRA(object):
             * rest_path -- the root REST path to use. Defaults to ``api``, where the JIRA REST resources live.
             * rest_api_version -- the version of the REST resources under rest_path to use. Defaults to ``2``.
             * verify -- Verify SSL certs. Defaults to ``True``.
+            * resilient -- If it should just retry recoverable errors. Defaults to `False`.
         :param basic_auth: A tuple of username and password to use when establishing a session via HTTP BASIC
         authentication.
         :param oauth: A dict of properties for OAuth authentication. The following properties are required:
@@ -154,7 +157,10 @@ class JIRA(object):
             self._create_http_basic_session(*basic_auth)
         else:
             verify = self._options['verify']
-            self._session = requests.Session()
+            if self._options['resilient']:
+                self._session = ResilientSession()
+            else:
+                self._session = requests.Session()
             self._session.verify = verify
             self._session.headers.update(self._options['headers'])
 
@@ -1580,7 +1586,10 @@ class JIRA(object):
 # Utilities
     def _create_http_basic_session(self, username, password):
         verify = self._options['verify']
-        self._session = requests.Session()
+        if self._options['resilient']:
+            self._session = ResilientSession()
+        else:
+            self._session = requests.Session()
         self._session.verify = verify
         self._session.auth = (username, password)
 
@@ -1593,7 +1602,10 @@ class JIRA(object):
             resource_owner_key=oauth['access_token'],
             resource_owner_secret=oauth['access_token_secret']
         )
-        self._session = requests.Session()
+        if self._options['resilient']:
+            self._session = ResilientSession()
+        else:
+            self._session = requests.Session()
         self._session.verify = verify
         self._session.auth = oauth
 
