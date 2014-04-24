@@ -1537,13 +1537,9 @@ class JIRA(object):
         url = '{server}/rest/auth/1/session'.format(**self._options)
 
         if type(self._session.auth) is tuple:
-            authentication_data = { 'username': self._session.auth[0]
-                                  , 'password': self._session.auth[1]
-                                  }
-            r = self._session.post( url
-                                  , data=json.dumps(authentication_data)
-                                  , headers={ 'Content-type': 'application/json' }
-                                  )
+            authentication_data = {'username': self._session.auth[0], 'password': self._session.auth[1]}
+            r = self._session.post(url, data=json.dumps(authentication_data),
+                                   headers={'Content-type': 'application/json'})
         else:
             r = self._session.get(url)
 
