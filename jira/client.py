@@ -718,7 +718,7 @@ class JIRA(object):
             params['transitionId'] = id
         if expand is not None:
             params['expand'] = expand
-        return self._get_json('issue/' + str(issue) + '/transitions', params)['transitions']
+        return self._get_json('issue/' + str(issue) + '/transitions', params=params)['transitions']
 
     @translate_resource_args
     def transition_issue(self, issue, transitionId, fields=None, comment=None, **fieldargs):
@@ -1209,9 +1209,9 @@ class JIRA(object):
             "expand": expand
         }
         if json_result:
-            return self._get_json('search', search_params)
+            return self._get_json('search', params=search_params)
 
-        resource = self._get_json('search', search_params)
+        resource = self._get_json('search', params=search_params)
         issues = [Issue(self._options, self._session, raw_issue_json) for raw_issue_json in resource['issues']]
         cnt = len(issues)
         total = resource['total']
@@ -1219,7 +1219,7 @@ class JIRA(object):
             while cnt == maxi:
                 idx += maxi
                 search_params["startAt"] = idx
-                resource = self._get_json('search', search_params)
+                resource = self._get_json('search', params=search_params)
                 issue_batch = [Issue(self._options, self._session, raw_issue_json) for raw_issue_json in resource['issues']]
                 issues.extend(issue_batch)
                 cnt = len(issue_batch)
@@ -1288,7 +1288,7 @@ class JIRA(object):
             'startAt': startAt,
             'maxResults': maxResults
         }
-        r_json = self._get_json('user/assignable/multiProjectSearch', params)
+        r_json = self._get_json('user/assignable/multiProjectSearch', params=params)
         users = [User(self._options, self._session, raw_user_json) for raw_user_json in r_json]
         return users
 
@@ -1440,7 +1440,7 @@ class JIRA(object):
             'includeActive': includeActive,
             'includeInactive': includeInactive
         }
-        r_json = self._get_json('user/search', params)
+        r_json = self._get_json('user/search', params=params)
         users = [User(self._options, self._session, raw_user_json) for raw_user_json in r_json]
         return users
 
