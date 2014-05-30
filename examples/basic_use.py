@@ -40,3 +40,8 @@ issue.update(fields={"labels": issue.fields.labels})
 
 # Send the issue away for good.
 issue.delete()
+
+# Linking a remote jira issue (needs applinks to be configured to work)
+issue = jira.issue('JRA-1330')
+issue2 = jira2.issue('XX-23')
+jira.add_remote_link(issue, issue2)
