@@ -168,7 +168,7 @@ class JIRA(object):
         if validate:
             self.session()  # This will raise an Exception if you are not allowed to login. It's better to fail faster than later.
         # We need version in order to know what API calls are available or not
-        self.version = tuple(self.server_info()['versionNumbers'])
+        self._version = tuple(self.server_info()['versionNumbers'])
 
     def __del__(self):
         # that is performing the logout by killing the session
@@ -481,7 +481,7 @@ class JIRA(object):
         """
         Return a hash or users with their information. Requires JIRA 6.0 or will raise NotImplemented.
         """
-        if self.version < (6, 0, 0):
+        if self._version < (6, 0, 0):
             raise NotImplementedError("Group members is not implemented in JIRA before version 6.0, upgrade the instance, if possible.")
 
         params = {'groupname': group, 'expand': "users"}
