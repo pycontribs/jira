@@ -254,7 +254,7 @@ class JIRA(object):
         """
 
         # if cached, return the last result
-        if cached and hasattr(self,'_applicationlinks'):
+        if cached and hasattr(self, '_applicationlinks'):
             return self._applicationlinks
 
         #url = self._options['server'] + '/rest/applinks/latest/applicationlink'
@@ -262,11 +262,16 @@ class JIRA(object):
 
         headers = copy.deepcopy(self._options['headers'])
         headers['content-type'] = 'application/json;charset=UTF-8'
+        headers['accept']='application/json;charset=UTF-8'
         r = self._session.get(url, headers=headers)
 
         raise_on_error(r)
 
-        self._applicationlinks = json.loads(r.text)
+        o = json.loads(r.text)
+        if 'list' in o:
+            self._applicationlinks = o['list']
+        else:
+            self._applicationlinks = []
         return self._applicationlinks
 
 # Attachments
@@ -362,6 +367,7 @@ class JIRA(object):
         """
         Get the count of related issues for a component.
 
+        :type id: integer
         :param id: ID of the component to use
         """
         return self._get_json('component/' + id + '/relatedIssueCounts')['issueCount']
@@ -496,7 +502,6 @@ class JIRA(object):
                 r['users']['items'].append(user)
             end_index = r2['users']['end-index']
             size = r['users']['size']
-            #print(end_index, size)
 
         result = {}
         for user in r['users']['items']:
@@ -699,24 +704,33 @@ class JIRA(object):
         """
         warnings.warn("broken: see https://bitbucket.org/bspeakmon/jira-python/issue/46 and https://jira.atlassian.com/browse/JRA-38551", Warning)
 
-        data = {
-            'object': destination
-        }
-        if globalId is not None:
-            data['globalId'] = globalId
-        if application is not None:
-            data['application'] = application
+        data = {}
+        if type(destination) == Issue:
+
+            data['object'] = {
+                    'title': str(destination),
+                    'url': destination.permalink()
+                }
+
+            for x in self.applicationlinks():
+                if x['application']['displayUrl'] == destination._options['server']:
+                    data['globalId'] = "appId=%s&issueId=%s" % (x['application']['id'], destination.raw['id'])
+                    data['application'] = {'name': x['application']['name'], 'type': "com.atlassian.jira"}
+                    break
+            if 'globalId' not in data:
+                raise NotImplementedError("Unable to identify the issue to link to.")
+        else:
+
+            if globalId is not None:
+                data['globalId'] = globalId
+            if application is not None:
+                data['application'] = application
+
         if relationship is not None:
             data['relationship'] = relationship
 
-        for x in self.applicationlinks():
-            if x['displayUrl'] == self._options['server']:
-                data['globalId'] = "appId=%s&issueId=%s" % (x['id'], destination.raw['id'])
-                data['application'] = { 'name': x['name'], 'type':"com.atlassian.jira"}
-                break
-
         url = self._get_url('issue/' + str(issue) + '/remotelink')
-        r = self._session.post(url, headers={'content-type': 'application/json'}, data=json.dumps(data))
+        r = self._session.post(url, headers={'content-type': 'application/json', 'accept': 'application/json'}, data=json.dumps(data))
         raise_on_error(r)
 
         remote_link = RemoteLink(self._options, self._session, raw=json.loads(r.text))
@@ -1680,7 +1694,7 @@ class JIRA(object):
             try:
                 return mimetypes.guess_type("f." + imghdr.what(0, buff))[0]
             except (IOError, TypeError):
-                print("WARNING: Couldn't detect content type of avatar image"
+                logging.warning("Couldn't detect content type of avatar image"
                       ". Specify the 'contentType' parameter explicitly.")
                 return None
 
@@ -1734,7 +1748,7 @@ class JIRA(object):
             "RunCanned": "Run",
         }
 
-        print(self.user(old_user).emailAddress)  # raw displayName
+        logging.debug("renaming %s" % self.user(old_user).emailAddress)  # raw displayName
 
         r = self._session.post(url, headers={'X-Atlassian-Token': 'nocheck', 'Cache-Control': 'no-cache'}, data=payload)
         if r.status_code == 404:

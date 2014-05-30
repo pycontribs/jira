@@ -311,6 +311,14 @@ class Issue(Resource):
         """
         super(Issue, self).delete(params={'deleteSubtasks': deleteSubtasks})
 
+    def permalink(self):
+        """
+        Gets the URL of the issue, the browsable one not the REST one.
+
+        :return: URL of the issue
+        """
+        return "%s/browse/%s" % (self._options['server'], str(self))
+
 
 class Comment(Resource):
 

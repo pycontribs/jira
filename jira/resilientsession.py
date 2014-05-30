@@ -13,7 +13,7 @@ class ResilientSession(Session):
     """
 
     def __recoverable(self, error, url, request, counter=1):
-        if hasattr(error,'status_code'):
+        if hasattr(error, 'status_code'):
             if error.status_code in [502, 503, 504]:
                 error = "HTTP %s" % error.status_code
             else:
@@ -22,7 +22,6 @@ class ResilientSession(Session):
         logging.warn("Got recoverable error [%s] from %s %s, retry #%s in %ss" % (error, request, url, counter, DELAY))
         time.sleep(DELAY)
         return True
-
 
     def get(self, url, **kwargs):
         counter = 0
