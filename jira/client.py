@@ -170,6 +170,10 @@ class JIRA(object):
         # We need version in order to know what API calls are available or not
         self.version = tuple(self.server_info()['versionNumbers'])
 
+    def __del__(self):
+        # that is performing the logout by killing the session
+        self.kill_session()
+
 # Information about this client
 
     def client_info(self):
@@ -1586,7 +1590,7 @@ class JIRA(object):
 
     def kill_session(self):
         """Destroy the session of the current authenticated user."""
-        url = self._options['server'] + '/rest/auth/1/session'
+        url = self._options['server'] + '/rest/auth/latest/session'
         r = self._session.delete(url)
         raise_on_error(r)
 
