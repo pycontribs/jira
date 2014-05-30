@@ -733,7 +733,7 @@ class JIRA(object):
             params['transitionId'] = id
         if expand is not None:
             params['expand'] = expand
-        return self._get_json('issue/' + str(issue) + '/transitions', params)['transitions']
+        return self._get_json('issue/' + str(issue) + '/transitions', params=params)['transitions']
 
     @translate_resource_args
     def transition_issue(self, issue, transitionId, fields=None, comment=None, **fieldargs):
@@ -1303,7 +1303,7 @@ class JIRA(object):
             'startAt': startAt,
             'maxResults': maxResults
         }
-        r_json = self._get_json('user/assignable/multiProjectSearch', params)
+        r_json = self._get_json('user/assignable/multiProjectSearch', params=params)
         users = [User(self._options, self._session, raw_user_json) for raw_user_json in r_json]
         return users
 
@@ -1455,7 +1455,7 @@ class JIRA(object):
             'includeActive': includeActive,
             'includeInactive': includeInactive
         }
-        r_json = self._get_json('user/search', params)
+        r_json = self._get_json('user/search', params=params)
         users = [User(self._options, self._session, raw_user_json) for raw_user_json in r_json]
         return users
 
