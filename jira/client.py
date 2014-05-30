@@ -1209,9 +1209,9 @@ class JIRA(object):
             "expand": expand
         }
         if json_result:
-            return self._get_json('search', search_params)
+            return self._get_json('search', params=search_params)
 
-        resource = self._get_json('search', search_params)
+        resource = self._get_json('search', params=search_params)
         issues = [Issue(self._options, self._session, raw_issue_json) for raw_issue_json in resource['issues']]
         cnt = len(issues)
         total = resource['total']
@@ -1219,7 +1219,7 @@ class JIRA(object):
             while cnt == maxi:
                 idx += maxi
                 search_params["startAt"] = idx
-                resource = self._get_json('search', search_params)
+                resource = self._get_json('search', params=search_params)
                 issue_batch = [Issue(self._options, self._session, raw_issue_json) for raw_issue_json in resource['issues']]
                 issues.extend(issue_batch)
                 cnt = len(issue_batch)
@@ -1621,7 +1621,7 @@ class JIRA(object):
         options.update({'path': path})
         return base.format(**options)
 
-    def _get_json(self, path, base=JIRA_BASE_URL, params=None):
+    def _get_json(self, path, params=None, base=JIRA_BASE_URL):
         url = self._get_url(path, base)
         r = self._session.get(url, params=params, headers=self._options['headers'])
         raise_on_error(r)
