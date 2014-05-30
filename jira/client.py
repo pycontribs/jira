@@ -20,6 +20,7 @@ import tempfile
 import logging
 import requests
 import json
+import warnings
 
 from six import string_types
 from six.moves.html_parser import HTMLParser
@@ -242,21 +243,27 @@ class JIRA(object):
 
 # ApplicationLinks
 
-    def applicationlinks(self):
+    def applicationlinks(self, cached=True):
         """
         List of application links
         :return: json
         """
 
-        url = self._options['server'] + '/rest/applinks/1.0/applicationlink'
+        # if cached, return the last result
+        if cached and hasattr(self,'_applicationlinks'):
+            return self._applicationlinks
+
+        #url = self._options['server'] + '/rest/applinks/latest/applicationlink'
+        url = self._options['server'] + '/rest/applinks/latest/listApplicationlinks'
+
         headers = copy.deepcopy(self._options['headers'])
         headers['content-type'] = 'application/json;charset=UTF-8'
         r = self._session.get(url, headers=headers)
 
         raise_on_error(r)
 
-        r_json = json.loads(r.text)
-        return r_json
+        self._applicationlinks = json.loads(r.text)
+        return self._applicationlinks
 
 # Attachments
     def attachment(self, id):
@@ -670,8 +677,8 @@ class JIRA(object):
         """
         return self._find_for_resource(RemoteLink, (issue, id))
 
-    @translate_resource_args
-    def add_remote_link(self, issue, object, globalId=None, application=None, relationship=None):
+    # removed the @translate_resource_args because it prevents us from finding information for building a proper link
+    def add_remote_link(self, issue, destination, globalId=None, application=None, relationship=None):
         """
         Add a remote link from an issue to an external application and returns a remote link Resource
         for it. ``object`` should be a dict containing at least ``url`` to the linked external URL and
@@ -681,13 +688,15 @@ class JIRA(object):
         and ``relationship``, see https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+for+Remote+Issue+Links.
 
         :param issue: the issue to add the remote link to
-        :param object: the link details to add (see the above link for details)
+        :param destination: the link details to add (see the above link for details)
         :param globalId: unique ID for the link (see the above link for details)
         :param application: application information for the link (see the above link for details)
         :param relationship: relationship description for the link (see the above link for details)
         """
+        warnings.warn("broken: see https://bitbucket.org/bspeakmon/jira-python/issue/46 and https://jira.atlassian.com/browse/JRA-38551", Warning)
+
         data = {
-            'object': object
+            'object': destination
         }
         if globalId is not None:
             data['globalId'] = globalId
@@ -695,6 +704,12 @@ class JIRA(object):
             data['application'] = application
         if relationship is not None:
             data['relationship'] = relationship
+
+        for x in self.applicationlinks():
+            if x['displayUrl'] == self._options['server']:
+                data['globalId'] = "appId=%s&issueId=%s" % (x['id'], destination.raw['id'])
+                data['application'] = { 'name': x['name'], 'type':"com.atlassian.jira"}
+                break
 
         url = self._get_url('issue/' + str(issue) + '/remotelink')
         r = self._session.post(url, headers={'content-type': 'application/json'}, data=json.dumps(data))
