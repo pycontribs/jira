@@ -725,6 +725,7 @@ class JIRA(object):
                 data['globalId'] = globalId
             if application is not None:
                 data['application'] = application
+            data['object'] = destination
 
         if relationship is not None:
             data['relationship'] = relationship
