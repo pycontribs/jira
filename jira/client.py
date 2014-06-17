@@ -715,13 +715,29 @@ class JIRA(object):
         """
         warnings.warn("broken: see https://bitbucket.org/bspeakmon/jira-python/issue/46 and https://jira.atlassian.com/browse/JRA-38551", Warning)
 
-        data = {
-            'object': destination
-        }
-        if globalId is not None:
-            data['globalId'] = globalId
-        if application is not None:
-            data['application'] = application
+        data = {}
+        if type(destination) == Issue:
+
+            data['object'] = {
+                    'title': str(destination),
+                    'url': destination.permalink()
+                }
+
+            for x in self.applicationlinks():
+                if x['application']['displayUrl'] == destination._options['server']:
+                    data['globalId'] = "appId=%s&issueId=%s" % (x['application']['id'], destination.raw['id'])
+                    data['application'] = {'name': x['application']['name'], 'type': "com.atlassian.jira"}
+                    break
+            if 'globalId' not in data:
+                raise NotImplementedError("Unable to identify the issue to link to.")
+        else:
+
+            if globalId is not None:
+                data['globalId'] = globalId
+            if application is not None:
+                data['application'] = application
+            data['object'] = destination
+
         if relationship is not None:
             data['relationship'] = relationship
 
