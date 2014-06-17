@@ -97,6 +97,7 @@ class JIRA(object):
         "rest_api_version": "2",
         "verify": True,
         "resilient": False,
+        "async": False,
         "headers": {
             'X-Atlassian-Token': 'nocheck',
             #'Cache-Control': 'no-cache',
@@ -107,7 +108,7 @@ class JIRA(object):
 
     JIRA_BASE_URL = '{server}/rest/api/{rest_api_version}/{path}'
 
-    def __init__(self, options=None, basic_auth=None, oauth=None, validate=None):
+    def __init__(self, server=None, options=None, basic_auth=None, oauth=None, validate=None, async=False):
         """
         Construct a JIRA client instance.
 
@@ -120,6 +121,8 @@ class JIRA(object):
         accepted by JIRA), the client will remember it for subsequent requests.
 
         For quick command line access to a server, see the ``jirashell`` script included with this distribution.
+
+        The easiest way to instantiate is using j = JIRA("https://jira.atlasian.com")
 
         :param options: Specify the server and properties this client will use. Use a dict with any
             of the following properties:
@@ -138,9 +141,15 @@ class JIRA(object):
             JIRA in the OAuth application link)
         :param validate: If true it will validate your credentials first. Remember that if you are accesing JIRA
             as anononymous it will fail to instanciate.
+        :param async: To enable async requests for those actions where we implemented it, like issue update() or delete().
+        Obviously this means that you cannot rely on the return code when this is enabled.
         """
         if options is None:
             options = {}
+        if server:
+            options['server'] = server
+        if async:
+            options['async'] = async
 
         self._options = copy.copy(JIRA.DEFAULT_OPTIONS)
 
@@ -172,6 +181,7 @@ class JIRA(object):
 
     def __del__(self):
         # that is performing the logout by killing the session
+        self.async_do()
         self.kill_session()
 
 # Information about this client
@@ -214,6 +224,7 @@ class JIRA(object):
         :return:
         """
         if hasattr(self._session, '_async_jobs'):
+            logging.info("Executing async %s jobs found in queue by using %s threads..." % (len(self._session._async_jobs), size))
             grequests.map(self._session._async_jobs, size=size)
 
 # Application properties
@@ -518,7 +529,7 @@ class JIRA(object):
         :param fields: comma-separated string of issue fields to include in the results
         :param expand: extra information to fetch inside each resource
         """
-        issue = Issue(self._options, self._session)
+        issue = Issue(self._options, self._session, self)
 
         params = {}
         if fields is not None:
@@ -704,33 +715,24 @@ class JIRA(object):
         """
         warnings.warn("broken: see https://bitbucket.org/bspeakmon/jira-python/issue/46 and https://jira.atlassian.com/browse/JRA-38551", Warning)
 
-        data = {}
-        if type(destination) == Issue:
-
-            data['object'] = {
-                    'title': str(destination),
-                    'url': destination.permalink()
-                }
-
-            for x in self.applicationlinks():
-                if x['application']['displayUrl'] == destination._options['server']:
-                    data['globalId'] = "appId=%s&issueId=%s" % (x['application']['id'], destination.raw['id'])
-                    data['application'] = {'name': x['application']['name'], 'type': "com.atlassian.jira"}
-                    break
-            if 'globalId' not in data:
-                raise NotImplementedError("Unable to identify the issue to link to.")
-        else:
-
-            if globalId is not None:
-                data['globalId'] = globalId
-            if application is not None:
-                data['application'] = application
-
+        data = {
+            'object': destination
+        }
+        if globalId is not None:
+            data['globalId'] = globalId
+        if application is not None:
+            data['application'] = application
         if relationship is not None:
             data['relationship'] = relationship
 
+        for x in self.applicationlinks():
+            if x['displayUrl'] == self._options['server']:
+                data['globalId'] = "appId=%s&issueId=%s" % (x['id'], destination.raw['id'])
+                data['application'] = {'name': x['name'], 'type': "com.atlassian.jira"}
+                break
+
         url = self._get_url('issue/' + str(issue) + '/remotelink')
-        r = self._session.post(url, headers={'content-type': 'application/json', 'accept': 'application/json'}, data=json.dumps(data))
+        r = self._session.post(url, headers={'content-type': 'application/json'}, data=json.dumps(data))
         raise_on_error(r)
 
         remote_link = RemoteLink(self._options, self._session, raw=json.loads(r.text))
@@ -1694,7 +1696,7 @@ class JIRA(object):
             try:
                 return mimetypes.guess_type("f." + imghdr.what(0, buff))[0]
             except (IOError, TypeError):
-                logging.warning("Couldn't detect content type of avatar image"
+                print("WARNING: Couldn't detect content type of avatar image"
                       ". Specify the 'contentType' parameter explicitly.")
                 return None
 
@@ -1748,7 +1750,7 @@ class JIRA(object):
             "RunCanned": "Run",
         }
 
-        logging.debug("renaming %s" % self.user(old_user).emailAddress)  # raw displayName
+        print(self.user(old_user).emailAddress)  # raw displayName
 
         r = self._session.post(url, headers={'X-Atlassian-Token': 'nocheck', 'Cache-Control': 'no-cache'}, data=payload)
         if r.status_code == 404:
@@ -2027,7 +2029,7 @@ class GreenHopper(JIRA):
 
     def __init__(self, options=None, basic_auth=None, oauth=None):
         self._rank = None
-        JIRA.__init__(self, options, basic_auth, oauth)
+        JIRA.__init__(self, options=options, basic_auth=basic_auth, oauth=oauth)
 
     def find(self, resource_format, ids=None):
         """
@@ -2083,6 +2085,16 @@ class GreenHopper(JIRA):
         sprints = [Sprint(self._options, self._session, raw_sprints_json) for raw_sprints_json in r_json['sprints']]
         return sprints
 
+    def sprints_by_nme(self,id):
+        sprints = {}
+        for v in self.sprints(id):
+            if v['name'] not in sprints:
+                sprints[v['name']]=v
+            else:
+                raise(Exception("Fatal error, duplicate Sprint Name (%s) found on board %s." % (v['name'], id)))
+        return sprints
+
+
     def completed_issues(self, board_id, sprint_id):
         """
         Return the completed issues for ``board_id`` and ``sprint_id``.
@@ -2136,22 +2148,40 @@ class GreenHopper(JIRA):
         raw_issue_json = json.loads(r.text)
         return Board(self._options, self._session, raw=raw_issue_json)
 
-    def create_sprint(self, name, board_id):
+    def create_sprint(self, name, board_id, startDate=None, endDate=None):
         """
         Create a new sprint for the ``board_id``.
 
         :param name: name of the sprint
         :param board_id: the board to add the sprint to
         """
+        url = self._get_url('sprint/%s' % board_id, base=self.GREENHOPPER_BASE_URL)
+        r = self._session.post(url, headers={'content-type': 'application/json'})
+        raise_on_error(r)
+        raw_issue_json = json.loads(r.text)
+        """ now r contains something like:
+        {
+              "id": 742,
+              "name": "Sprint 89",
+              "state": "FUTURE",
+              "linkedPagesCount": 0,
+              "startDate": "None",
+              "endDate": "None",
+              "completeDate": "None",
+              "remoteLinks": []
+        }"""
+
         payload = {}
         payload['name'] = name
-        payload['rapidViewId'] = board_id
-        payload['sprintMarkerId'] = 0
-        url = self._get_url('sprint/create', base=self.GREENHOPPER_BASE_URL)
+        if startDate:
+            payload["startDate"] = startDate
+        if endDate:
+            payload["endDate"] = endDate
+        url = self._get_url('sprint/%s' % raw_issue_json['id'], base=self.GREENHOPPER_BASE_URL)
         r = self._session.post(url, headers={'content-type': 'application/json'}, data=json.dumps(payload))
         raise_on_error(r)
-
         raw_issue_json = json.loads(r.text)
+
         return Sprint(self._options, self._session, raw=raw_issue_json)
 
     def add_issues_to_sprint(self, sprint_id, issue_keys):

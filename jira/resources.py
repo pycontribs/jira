@@ -100,7 +100,7 @@ class Resource(object):
         headers = self._default_headers(headers)
         self._load(url, headers, params)
 
-    def update(self, async=False, jira=None, **kwargs):
+    def update(self, async=None, jira=None, **kwargs):
         """
         Update this resource on the server. Keyword arguments are marshalled into a dict before being sent. If this
         resource doesn't support ``PUT``, a :py:exc:`.JIRAError` will be raised; subclasses that specialize this method
@@ -108,6 +108,9 @@ class Resource(object):
 
         :param async: if true the request will be added to the queue so it can be executed later using async_run()
         """
+        if async is None:
+            async = self._options['async']
+
         data = {}
         for arg in kwargs:
             data[arg] = kwargs[arg]
@@ -157,15 +160,13 @@ class Resource(object):
                 #    data['fields']['assignee'] = {'name': self._options['autofix']}
             # EXPERIMENTAL --->
             # import grequests
-            # if async and 'grequests' in sys.modules:
-            #   if not hasattr(self._session, '_async_jobs'):
-            #        self._session._async_jobs = set()
-            #    self._session._async_jobs.add(grequests.put(self.self, headers={'content-type': 'application/json'}, data=json.dumps(data)))
-            # else:
-            #    print "x", data
-            # <--- EXPERIMENTAL
-            r = self._session.put(self.self, headers={'content-type': 'application/json'}, data=json.dumps(data))
-        raise_on_error(r)
+            if async and 'grequests' in sys.modules:
+                if not hasattr(self._session, '_async_jobs'):
+                    self._session._async_jobs = set()
+                self._session._async_jobs.add(grequests.put(self.self, headers={'content-type': 'application/json'}, data=json.dumps(data)))
+            else:
+                r = self._session.put(self.self, headers={'content-type': 'application/json'}, data=json.dumps(data))
+                raise_on_error(r)
         self._load(self.self)
 
     def delete(self, params=None):
@@ -277,7 +278,7 @@ class Issue(Resource):
         if raw:
             self._parse_raw(raw)
 
-    def update(self, fields=None, async=False, jira=None, **fieldargs):
+    def update(self, fields=None, async=None, jira=None, **fieldargs):
         """
         Update this issue on the server.
 
@@ -302,6 +303,15 @@ class Issue(Resource):
             data['fields'] = fields_dict
 
         super(Issue, self).update(async=async, jira=jira, **data)
+
+    def add_field_value(self, field, value):
+        """
+        Add a value to a field that supports multiple values, without resetting the existing values.
+
+        This should work with: labels, multiple checkbox lists, multiple select
+        """
+        field = self.instance.resolve_fields(field)
+        self.update( { "update": { field: [ {"add": value} ] } } )
 
     def delete(self, deleteSubtasks=False):
         """
