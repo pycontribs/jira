@@ -175,8 +175,14 @@ class Resource(object):
         ``DELETE``, a :py:exc:`.JIRAError` will be raised; subclasses that specialize this method will only raise errors
         in case of user error.
         """
-        r = self._session.delete(self.self, params=params)
-        raise_on_error(r)
+
+        if self._options['async']:
+                if not hasattr(self._session, '_async_jobs'):
+                    self._session._async_jobs = set()
+                self._session._async_jobs.add(grequests.delete(self.self, params=params))
+        else:
+                r = self._session.delete(self.self, params=params)
+                raise_on_error(r)
 
     def _load(self, url, headers=None, params=None):
         r = self._session.get(url, headers=headers, params=params)
