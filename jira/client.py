@@ -1,10 +1,12 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+from __future__ import print_function
 """
 This module implements a friendly (well, friendlier) interface between the raw JSON
 responses from JIRA and the Resource/dict abstractions provided by this library. Users
 will construct a JIRA object as described below. Full API documentation can be found
 at: https://jira-python.readthedocs.org/en/latest/
 """
-from __future__ import print_function
 
 from functools import wraps
 
@@ -16,6 +18,7 @@ import os
 import re
 import sys
 import string
+import warnings
 import tempfile
 import logging
 import requests
@@ -49,6 +52,10 @@ if 'pydevd' not in sys.modules:
         pass
     except NotImplementedError:
         pass
+
+encoding = sys.getdefaultencoding()
+if encoding != 'UTF8':
+    warnings.warn("Python default encoding is '%s' instead of 'UTF8' which means that there is a big change of having problems. Possible workaround http://stackoverflow.com/a/17628350/99834" % encoding)
 
 
 def translate_resource_args(func):
@@ -273,7 +280,7 @@ class JIRA(object):
 
         headers = copy.deepcopy(self._options['headers'])
         headers['content-type'] = 'application/json;charset=UTF-8'
-        headers['accept']='application/json;charset=UTF-8'
+        headers['accept'] = 'application/json;charset=UTF-8'
         r = self._session.get(url, headers=headers)
 
         raise_on_error(r)
@@ -719,9 +726,9 @@ class JIRA(object):
         if type(destination) == Issue:
 
             data['object'] = {
-                    'title': str(destination),
-                    'url': destination.permalink()
-                }
+                'title': str(destination),
+                'url': destination.permalink()
+            }
 
             for x in self.applicationlinks():
                 if x['application']['displayUrl'] == destination._options['server']:

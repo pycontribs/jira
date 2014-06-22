@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 __author__ = 'bspeakmon@atlassian.com'
 
 from .version import __version__

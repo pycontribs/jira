@@ -5,6 +5,10 @@ import time
 import pip
 from six import print_ as print
 
+import sys
+reload(sys)  # Reload does the trick!
+sys.setdefaultencoding('UTF8')
+
 if sys.version_info < (2, 7, 0):
     try:
         import unittest2 as unittest
@@ -21,6 +25,7 @@ except ImportError:
     pip.main(['install', '--upgrade', 'tlslite', 'requests-oauthlib', 'requests', 'unittest-xml-reporting'])
     import xmlrunner
     import requests
+
 
 from jira.client import JIRA
 from jira.exceptions import JIRAError

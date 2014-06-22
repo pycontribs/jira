@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 """
 This module implements the Resource classes that translate JSON from JIRA REST resources
 into usable objects.
@@ -177,12 +179,12 @@ class Resource(object):
         """
 
         if self._options['async']:
-                if not hasattr(self._session, '_async_jobs'):
-                    self._session._async_jobs = set()
-                self._session._async_jobs.add(grequests.delete(self.self, params=params))
+            if not hasattr(self._session, '_async_jobs'):
+                self._session._async_jobs = set()
+            self._session._async_jobs.add(grequests.delete(self.self, params=params))
         else:
-                r = self._session.delete(self.self, params=params)
-                raise_on_error(r)
+            r = self._session.delete(self.self, params=params)
+            raise_on_error(r)
 
     def _load(self, url, headers=None, params=None):
         r = self._session.get(url, headers=headers, params=params)
@@ -317,7 +319,7 @@ class Issue(Resource):
         This should work with: labels, multiple checkbox lists, multiple select
         """
         field = self.instance.resolve_fields(field)
-        self.update( { "update": { field: [ {"add": value} ] } } )
+        self.update({"update": {field: [{"add": value}]}})
 
     def delete(self, deleteSubtasks=False):
         """

@@ -6,6 +6,10 @@ import os
 import sys
 import logging
 
+import sys
+reload(sys)  # Reload does the trick!
+sys.setdefaultencoding('UTF8')
+
 if __name__ == "__main__":
         log = logging.getLogger()
 
@@ -23,10 +27,10 @@ if __name__ == "__main__":
         #os.system("python setup.py test")
 
 
-        cmds = ["pip install --user --upgrade setuptools virtualenv autopep8 tox xmlrunner",
-             "autopep8 --ignore=E501 -i *.py jira/*.py examples/*.py",
-             "pep8 || echo 'WARNING: pep8 failed'",
-             "tox -e %s" % ",".join(detected_pys)]
+        cmds = ["pip install --user --upgrade setuptools virtualenv autopep8 tox xmlrunner ipython",
+             "python -m autopep8 --ignore=E501 -i *.py jira/*.py examples/*.py",
+             "python -m pep8 || echo 'WARNING: pep8 failed'",
+             "python -m tox -e %s" % ",".join(detected_pys)]
         for cmd in cmds:
             if os.system(cmd) != 0:
                 print("ERROR:	Command `%s` failed, testing stopped here." % cmd)
