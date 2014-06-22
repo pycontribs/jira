@@ -1,5 +1,5 @@
 [pep8]
-exclude=lib,.tox,third,*.egg,docs,packages
+exclude=build,lib,.tox,third,*.egg,docs,packages
 ;filename=
 ;select
 ignore=E501 scripts

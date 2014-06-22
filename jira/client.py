@@ -2093,31 +2093,62 @@ class GreenHopper(JIRA):
         return boards
 
     @translate_resource_args
-    def sprints(self, id):
+    def sprints(self, id, extended=False):
         """
         Get a list of sprint GreenHopperResources.
 
         :param id: the board to get sprints from
-        """
-        r_json = {}
-        try:
-            r_json = self._get_json('sprintquery/%s?includeHistoricSprints=true&includeFutureSprints=true' % id, base=self.GREENHOPPER_BASE_URL)
-        except:
-            r_json = self._get_json('sprints/%s?includeHistoricSprints=true&includeFutureSprints=true' % id, base=self.GREENHOPPER_BASE_URL)
+        :param extended: fetch additional information like startDate, endDate, completeDate,
+        much slower because it requires an additional requests for each sprint
 
-        sprints = [Sprint(self._options, self._session, raw_sprints_json) for raw_sprints_json in r_json['sprints']]
+        "id": 893,
+        "name": "iteration.5",
+        "state": "FUTURE",
+        "linkedPagesCount": 0,
+        "startDate": "None",
+        "endDate": "None",
+        "completeDate": "None",
+        "remoteLinks": []
+
+        """
+        r_json = self._get_json('sprintquery/%s?includeHistoricSprints=true&includeFutureSprints=true' % id, base=self.GREENHOPPER_BASE_URL)
+
+        if extended:
+            sprints = []
+            for raw_sprints_json in r_json['sprints']:
+                r_json = self._get_json('sprint/%s/edit/model' % raw_sprints_json['id'], base=self.GREENHOPPER_BASE_URL)
+                sprints.append(Sprint(self._options, self._session, r_json['sprint']))
+        else:
+            sprints = [Sprint(self._options, self._session, raw_sprints_json) for raw_sprints_json in r_json['sprints']]
+
         return sprints
 
-    def sprints_by_name(self,id):
+    def sprints_by_name(self, id, extended=False):
         sprints = {}
-        for s in self.sprints(id):
+        for s in self.sprints(id, extended=extended):
             print(s.raw)
             if s.name not in sprints:
-                sprints[s.name]=s.raw
+                sprints[s.name] = s.raw
             else:
                 raise(Exception("Fatal error, duplicate Sprint Name (%s) found on board %s." % (s.name, id)))
         return sprints
 
+    def update_sprint(self, id, name=None, startDate=None, endDate=None):
+        payload = {}
+        if name:
+            payload['name']=name
+        if startDate:
+            payload['startDate']=startDate
+        if endDate:
+            payload['startDate']=endDate
+        #if state:
+        #    payload['state']=state
+
+        url = self._get_url('sprint/%s' % id, base=self.GREENHOPPER_BASE_URL)
+        r = self._session.put(url, headers={'content-type': 'application/json'}, data=json.dumps(payload))
+        raise_on_error(r)
+
+        return json.loads(r.text)
 
     def completed_issues(self, board_id, sprint_id):
         """
