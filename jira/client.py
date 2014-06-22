@@ -2043,9 +2043,9 @@ class GreenHopper(JIRA):
 
     GREENHOPPER_BASE_URL = '{server}/rest/greenhopper/1.0/{path}'
 
-    def __init__(self, options=None, basic_auth=None, oauth=None):
+    def __init__(self, options=None, basic_auth=None, oauth=None, async=None):
         self._rank = None
-        JIRA.__init__(self, options=options, basic_auth=basic_auth, oauth=oauth)
+        JIRA.__init__(self, options=options, basic_auth=basic_auth, oauth=oauth, async=None)
 
     def find(self, resource_format, ids=None):
         """
@@ -2094,20 +2094,21 @@ class GreenHopper(JIRA):
         """
         r_json = {}
         try:
-            r_json = self._get_json('sprintquery/%s' % id, base=self.GREENHOPPER_BASE_URL)
+            r_json = self._get_json('sprintquery/%s?includeHistoricSprints=true&includeFutureSprints=true' % id, base=self.GREENHOPPER_BASE_URL)
         except:
-            r_json = self._get_json('sprints/%s' % id, base=self.GREENHOPPER_BASE_URL)
+            r_json = self._get_json('sprints/%s?includeHistoricSprints=true&includeFutureSprints=true' % id, base=self.GREENHOPPER_BASE_URL)
 
         sprints = [Sprint(self._options, self._session, raw_sprints_json) for raw_sprints_json in r_json['sprints']]
         return sprints
 
-    def sprints_by_nme(self,id):
+    def sprints_by_name(self,id):
         sprints = {}
-        for v in self.sprints(id):
-            if v['name'] not in sprints:
-                sprints[v['name']]=v
+        for s in self.sprints(id):
+            print(s.raw)
+            if s.name not in sprints:
+                sprints[s.name]=s.raw
             else:
-                raise(Exception("Fatal error, duplicate Sprint Name (%s) found on board %s." % (v['name'], id)))
+                raise(Exception("Fatal error, duplicate Sprint Name (%s) found on board %s." % (s.name, id)))
         return sprints
 
 
@@ -2194,7 +2195,7 @@ class GreenHopper(JIRA):
         if endDate:
             payload["endDate"] = endDate
         url = self._get_url('sprint/%s' % raw_issue_json['id'], base=self.GREENHOPPER_BASE_URL)
-        r = self._session.post(url, headers={'content-type': 'application/json'}, data=json.dumps(payload))
+        r = self._session.put(url, headers={'content-type': 'application/json'}, data=json.dumps(payload))
         raise_on_error(r)
         raw_issue_json = json.loads(r.text)
 
