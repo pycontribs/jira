@@ -1,0 +1,3 @@
+tox
+autopep8
+pep8
