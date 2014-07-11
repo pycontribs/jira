@@ -1,22 +1,24 @@
 language: python
 python: 2.7
 env:
-    - TOX_ENV=py26
-    - TOX_ENV=py27
-    - TOX_ENV=py32
-    - TOX_ENV=py33
-#    - TOX_ENV=py34
-#    - TOX_ENV=pypy
-    - TOX_ENV=docs
-#    - TOX_ENV=pep8
-# command to install dependencies
+  matrix:
+  - TOX_ENV=py26
+  - TOX_ENV=py27
+  - TOX_ENV=py32
+  - TOX_ENV=py33
+  - TOX_ENV=docs
+  global:
+  - secure: EUpWmrnhHKPkz9cOGbEEwhBtUBRqtQ775ck042B8/pI9ZZZghbKl3Jm8ahpfms3JiZcHMCG06MBREs1ISK/g2OfHKsdULCg5g3UFXteVQo769kwh/x4lniSbU2eipcN0s9Q/Ak5zStwTa5aNQ4FU/3zSgTDxi/OcDKGXDbVwHD8=
+  - secure: l/xwPJ01auD8LSRb9AaMXtqZ08uELw85zjnA/C3A72TvQip/zxrtlaFgSy7qEuMJxlSR8avNIhOeXNTwyU8WuSyn8E3OgLVbmiVwPO5w9Pt80Q34jrGxRO0HTpZY4YSJENDgV+IFswo9tMZx4qgQIcTHeADSHZgfY0cCQLaQ2Vk=
+  - secure: Q+Wt1XCyIp5ykppxKWl9qi1G39w5u12wu8Sf8UxotzXHu/nOOqr9O8CHVy+moEElrwvqQGYbKzE3kRmy4OCTukMbTWfUYIQWYU7qKRURAyDYXceHRroPPdX8SmKxZyXqgSXEN46u2hWoi0EAJiWlN/J38ovQND/+hxT8dppJPXI=
+  - secure: NHvQfaPAfQyWar87FmM2SWynOE2QaqgI4neX6aERey3kVZBsOdhPdmdnUBXvNd2BrfyfUuf1GOP2MGVXOAQ1Mg7MQ5ce85EufQgPqu3a/jum1J6GwO2tDOnYXlGGXwHbuTAyEKi9w8r5JRSz4cyY/H+iLTVd/ShjYAS8hOM5M1E=
+  - secure: kCcRnV0K070zjFHwpUVM1kfKo2a8oK8eC2Xa4XEBtOdNAM/Ek+pLCM6zYgvD84ep9xv5I3XGOxHxsfqx/u25BuPvQ341p7VaGFJs2+K3OD0np/nyhfq3EBsCylthDxB/jXPqGw5X4QLcvSVucmQ9MIc/bwqV+E7eTIpccWr827Q=
 install:
-    - "pip install -r requirements.txt"
-    - "pip install -r requirements-dev.txt"
-# command to run tests
+- pip install -r requirements.txt
+- pip install -r requirements-dev.txt
 script: tox -e $TOX_ENV
 branches:
   only:
-    - master
+  - master
 notifications:
   hipchat: 7d72ba6ba0bf07248f17e0a6a1a899@DevOps

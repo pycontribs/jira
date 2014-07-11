@@ -9,7 +9,10 @@ Also, this simplifies the scripts by not having to write the same initialization
 import logging
 import os
 import sys
-from six.moves.configparser import ConfigParser
+try:
+    import configparser
+except:
+    from six.moves import configparser
 
 from jira.client import JIRA
 

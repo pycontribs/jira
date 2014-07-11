@@ -1,3 +1,5 @@
 tox
-autopep8
-pep8
+pytest
+pytest-cov
+pytest-xdist
+yanc

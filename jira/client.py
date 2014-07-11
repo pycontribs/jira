@@ -26,7 +26,7 @@ import json
 import warnings
 
 from six import string_types
-from six.moves.html_parser import HTMLParser
+from six.moves import html_parser
 from six import print_ as print
 
 from requests_oauthlib import OAuth1
@@ -1743,7 +1743,8 @@ class JIRA(object):
             'id': '',
             'Preview': 'Preview',
         }
-        r = self._session.post(url, headers={'X-Atlassian-Token': 'nocheck', 'Cache-Control': 'no-cache, no-store, no-transform'}, data=payload)
+
+        r = self._session.post(url, headers=self._options['headers'], data=payload)
         open("/tmp/jira_email_user_%s.html" % user, "w").write(r.content)
         # return False
 
@@ -2136,12 +2137,12 @@ class GreenHopper(JIRA):
     def update_sprint(self, id, name=None, startDate=None, endDate=None):
         payload = {}
         if name:
-            payload['name']=name
+            payload['name'] = name
         if startDate:
-            payload['startDate']=startDate
+            payload['startDate'] = startDate
         if endDate:
-            payload['startDate']=endDate
-        #if state:
+            payload['startDate'] = endDate
+        # if state:
         #    payload['state']=state
 
         url = self._get_url('sprint/%s' % id, base=self.GREENHOPPER_BASE_URL)

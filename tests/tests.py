@@ -1,8 +1,12 @@
+#!/usr/bin/env python
 from __future__ import print_function
 import os
 import sys
 import time
 import pip
+import inspect
+import logging
+
 from six import print_ as print
 
 import sys
@@ -22,10 +26,13 @@ try:
     import xmlrunner
     import requests
 except ImportError:
-    pip.main(['install', '--upgrade', 'tlslite', 'requests-oauthlib', 'requests', 'unittest-xml-reporting'])
+    pip.main(['install', '--user', '--upgrade', 'tlslite', 'requests-oauthlib', 'requests', 'unittest-xml-reporting'])
     import xmlrunner
     import requests
 
+cmd_folder = os.path.abspath(os.path.join(os.path.split(inspect.getfile(inspect.currentframe()))[0], ".."))
+if cmd_folder not in sys.path:
+    sys.path.insert(0, cmd_folder)
 
 from jira.client import JIRA
 from jira.exceptions import JIRAError
@@ -46,138 +53,142 @@ try:
 except:
     pass
 
-
-def get_status_code(host, path="/"):
+def get_status_code(host, path="/", auth=None):
     """ This function retreives the status code of a website by requesting
         HEAD data from the host. This means that it only requests the headers.
         If the host cannot be reached or something else goes wrong, it returns
         None instead.
     """
     try:
-        r = requests.get(host + path, auth=('admin', 'admin'))
+        if not auth:
+            r = requests.get(host + path)
+        else:
+            r = requests.get(host + path, auth=auth)
         return r.status_code
     except Exception:
         return None
 
+if 'CI_JIRA_URL' in os.environ:
+    CI_JIRA_URL = os.environ['CI_JIRA_URL']
+else:
+    CI_JIRA_URL = "http://localhost:2990"
 
-JIRA_INSTANCE = "http://localhost:2990"
-#URL = JIRA_INSTANCE + 'secure/Dashboard.jspa'
-if get_status_code(JIRA_INSTANCE, '/jira/secure/Dashboard.jspa') != 200:
-    try:
-        ret = 0
-        # that would run jira in background and kill it when test are finishing, that takes too much time to run the tests again
+if 'CI_JIRA_ADMIN_USER' in os.environ:
+    CI_JIRA_ADMIN_USER = os.environ['CI_JIRA_ADMIN_USER']
+else:
+    CI_JIRA_ADMIN_USER = None
 
-        #p = subprocess.Popen(["atlas-run-standalone","--product jira"], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, close_fds=False)
-        os.system("mkdir -p amps-standalone/target/jira/home")
-        prop = """jira.autoexport=false
-jira.attachment.number=3
-jira.autoexport=false
-jira.date.time.picker.java.format=yyyy-MM-dd HH\:mm
-jira.importid.prefix=unconfigured
-jira.lf.date.complete=yyyy-MM-dd HH\:mm
-jira.lf.date.day=EEEE HH\:mm
-jira.lf.date.time=HH\:mm
-jira.lf.logo.url=/images/jira_logo_small.png
-jira.lf.menu.dropdown.bordercolour=\#bbbbbb
-jira.lf.menu.highlightcolour=\#ffffff
-jira.lf.menu.texthighlightcolour=\#114070
-jira.lf.text.activelinkcolour=\#660000
-jira.lf.text.headingcolour=\#003366
-jira.lf.text.linkcolour=\#003366
-jira.lf.top.menuindicatorimage=../images/menu_indicator_for_dark_backgrounds.gif
-jira.lf.top.separator.bgcolor=\#003366
-jira.lf.top.textcolour=\#f0f0f0
-jira.lf.top.texthilightcolour=\#ffffff
-jira.option.bulk.send.notifications=false
-jira.bulk.edit.limit.issue.count = 10000
-jira.option.key.detection.backwards.compatible=true
-jira.releasenotes.templatenames=Text, Html
-jira.releasenotes.templates=releasenotes-text.vm, releasenotes-html.vm
-jira.search.views.max.limit = 2000
-jira.search.views.max.unlimited.group = jira-administrators
-jira.subtask.quickcreateform.template=templates/jira/issue/subtask/quickcreationform-horizontal.vm
-jira.support.email.address=norply@sbarnea.com
-jira.timetracking.days.per.week=5
-jira.timetracking.hours.per.day=8
-jira.title=jira-test-instance
-jira.trustedapps.urlmatch.default=/sr/jira.issueviews\:searchrequest\n/secure/RunPortlet
-jira.websudo.is.disabled=true
-user.issues.per.page=30
-#jira.importid.prefix=
-jira.xsrf.enabled=false
-ops.bar.group.size.opsbar-transitions = 4
-jira.index.lock.waittime=90000
+if 'CI_JIRA_ADMIN_PASSWORD' in os.environ:
+    CI_JIRA_ADMIN_PASSWORD = os.environ['CI_JIRA_ADMIN_PASSWORD']
+else:
+    CI_JIRA_ADMIN_PASSWORD = None
+
+
+if 'CI_JIRA_NORMAL_USER' in os.environ:
+    CI_JIRA_NORMAL_USER = os.environ['CI_JIRA_NORMAL_USER']
+else:
+    CI_JIRA_NORMAL_USER = None
+
+if 'CI_JIRA_NORMAL_PASSWORD' in os.environ:
+    CI_JIRA_NORMAL_PASSWORD = os.environ['CI_JIRA_NORMAL_PASSWORD']
+else:
+    CI_JIRA_NORMAL_PASSWORD = None
+
 """
-        f = open("amps-standalone/target/jira/home/jira-config.properties", "w")
-        f.write(prop)
-        f.close()
+if CI_JIRA_ADMIN_USER:
+    j = JIRA(options={'server': CI_JIRA_URL}, basic_auth=(CI_JIRA_ADMIN_USER, CI_JIRA_ADMIN_PASSWORD))
+else:
+    j = JIRA(options={'server': CI_JIRA_URL})
 
-        jvmargs = '--jvmargs "-Xmx2048m -XX:MaxPermSize=350m -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=2991 -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname=127.0.0.1"'
-
-        ret = os.system("atlas-run-standalone %s --product jira --http-port 2990 --context-path /jira --server localhost </dev/zero >/tmp/jira-standalone.log 2>&1 &" % jvmargs)
-        if ret != 0:
-            raise Exception("Jira test instance not found at %s and we were untable to start one using atlassian sdk." % JIRA_INSTANCE)
-        seconds = 0
-        print("Waiting for the test JIRA instance to start", end='')
-        while ret != 200 and seconds < 300:
-            time.sleep(5)
-            seconds += 5
-            print(".", end='')
-            ret = get_status_code(JIRA_INSTANCE, '/jira/secure/Dashboard.jspa')
-        if seconds >= 300:
-            raise Exception("Failed to start Jira test instance.")
-        print("done")
-    except Exception as e:
-        raise(e)
-
-j = JIRA(options={'server': 'http://localhost:2990/jira'}, basic_auth=('admin', 'admin'))
 j.add_user('eviladmin', 'noreply@example.com', password='eviladmin')  # , fullname=None, sendEmail=False, active=True)
 j.add_user_to_group('eviladmin', 'jira-administrators')
 j.add_user('fred', 'noreply@example.com', password='fred')
 j.delete_project("XSS")
 j.delete_project("BULK")
 j.create_project("XSS", "XSS")
-j.create_project("BULK", "BULK")
+r = j.create_project("BULK", "BULK")
+print(r)
 j.create_issue(project={'key': 'BULK'}, summary='issue 1 from BULK', issuetype={'name': 'Bug'})
 j.create_issue(project={'key': 'BULK'}, summary='issue 2 from BULK', issuetype={'name': 'Bug'})
 j.create_issue(project={'key': 'BULK'}, summary='issue 3 from BULK', issuetype={'name': 'Bug'})
 
-
-def get_jira_admin_auth():
-    if OAUTH:
-        return JIRA(oauth={
-            'access_token': 'hTxcwsbUQiFuFALf7KZHDaeAJIo3tLUK',
-            'access_token_secret': 'aNCLQFP3ORNU6WY7HQISbqbhf0UudDAf',
-            'consumer_key': CONSUMER_KEY,
-            'key_cert': KEY_CERT_DATA,
-        })
-    else:
-        return JIRA(basic_auth=('admin', 'admin'))
+"""
 
 
-def get_jira_sysadmin_auth():
-    if OAUTH:
-        return JIRA(oauth={
-            'access_token': '4ul1ETSFo7ybbIxAxzyRal39cTrwEGFv',
-            'access_token_secret': 'K83jBZnjnuVRcfjBflrKyThJa0KSjSs2',
-            'consumer_key': CONSUMER_KEY,
-            'key_cert': KEY_CERT_DATA,
-        })
-    else:
-        return JIRA(basic_auth=('eviladmin', 'eviladmin'))  # eviladmin
+class JiraTestManager():
+    """
+    Used to instantiate and populate the JIRA instance with data used by the unit tests.
+    """
+
+    _instance = None
+
+    # Singleton implementation
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            cls._instance = super(JiraTestManager, cls).__new__(
+                                cls, *args, **kwargs)
+        return cls._instance
+
+    def __init__(self):
+
+        if OAUTH:
+            self.jira_admin = JIRA(oauth={
+                'access_token': 'hTxcwsbUQiFuFALf7KZHDaeAJIo3tLUK',
+                'access_token_secret': 'aNCLQFP3ORNU6WY7HQISbqbhf0UudDAf',
+                'consumer_key': CONSUMER_KEY,
+                'key_cert': KEY_CERT_DATA,
+            })
+        else:
+            if CI_JIRA_ADMIN_USER:
+                self.jira_admin = JIRA(CI_JIRA_URL, basic_auth=(CI_JIRA_ADMIN_USER, CI_JIRA_ADMIN_PASSWORD))
+            else:
+                self.jira_admin = JIRA(CI_JIRA_URL)
+
+        if OAUTH:
+            self.jira_sysadmin =  JIRA(oauth={
+                'access_token': '4ul1ETSFo7ybbIxAxzyRal39cTrwEGFv',
+                'access_token_secret': 'K83jBZnjnuVRcfjBflrKyThJa0KSjSs2',
+                'consumer_key': CONSUMER_KEY,
+                'key_cert': KEY_CERT_DATA,
+            })
+        else:
+            if CI_JIRA_ADMIN_USER:
+                self.jira_sysadmin = JIRA(CI_JIRA_URL, basic_auth=(CI_JIRA_ADMIN_USER, CI_JIRA_ADMIN_PASSWORD))
+            else:
+                self.jira_sysadmin = JIRA(CI_JIRA_URL)
+
+        if OAUTH:
+            self.jira_normal =  JIRA(oauth={
+                'access_token': 'ZVDgYDyIQqJY8IFlQ446jZaURIz5ECiB',
+                'access_token_secret': '5WbLBybPDg1lqqyFjyXSCsCtAWTwz1eD',
+                'consumer_key': CONSUMER_KEY,
+                'key_cert': KEY_CERT_DATA,
+            })
+        else:
+            if CI_JIRA_ADMIN_USER:
+                self.jira_normal = JIRA(CI_JIRA_URL, basic_auth=(CI_JIRA_NORMAL_USER, CI_JIRA_NORMAL_PASSWORD))
+            else:
+                self.jira_normal = JIRA(CI_JIRA_URL)
+
+        # now we need some data to start with for the tests
+        self.jira_admin.delete_project("XSS")
+        self.jira_admin.delete_project("BULK")
+        assert self.jira_admin.create_project("XSS", "XSS") is True, "Failed to create XSS"
+
+        assert self.jira_admin.create_project("BULK", "BULK") is  True, "Failed to create BULK"
+        self.jira_admin.create_issue(project={'key': 'BULK'}, summary='issue 1 from BULK', issuetype={'name': 'Bug'})
+        self.jira_admin.create_issue(project={'key': 'BULK'}, summary='issue 2 from BULK', issuetype={'name': 'Bug'})
+        self.jira_admin.create_issue(project={'key': 'BULK'}, summary='issue 3 from BULK', issuetype={'name': 'Bug'})
 
 
-def get_jira_schlub_auth():
-    if OAUTH:
-        return JIRA(oauth={
-            'access_token': 'ZVDgYDyIQqJY8IFlQ446jZaURIz5ECiB',
-            'access_token_secret': '5WbLBybPDg1lqqyFjyXSCsCtAWTwz1eD',
-            'consumer_key': CONSUMER_KEY,
-            'key_cert': KEY_CERT_DATA,
-        })
-    else:
-        return JIRA(basic_auth=('fred', 'fred'))  # fred
+    def jira_admin(self):
+        return self.jira_admin
 
+    def jira_sysadmin(self):
+        return self.jira_sysadmin
+
+    def jira_user(self):
+        return self.jira_admin
 
 def find_by_key(seq, key):
     for seq_item in seq:
@@ -194,7 +205,7 @@ def find_by_id(seq, id):
 class UniversalResourceTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = get_jira_admin_auth()
+        self.jira = JiraTestManager().jira_admin()
 
     def test_universal_find_existing_resource(self):
         resource = self.jira.find('issue/{0}', 'BULK-1')
@@ -240,7 +251,8 @@ class ApplicationPropertiesTests(unittest.TestCase):
 
     def setUp(self):
         # this user has jira-system-administrators membership
-        self.jira = get_jira_sysadmin_auth()
+        self.jira = JiraTestManager().jira_admin()
+        print(self.jira)
 
     #def test_application_properties(self):
     #    props = self.jira.application_properties()
@@ -265,7 +277,7 @@ class ApplicationPropertiesTests(unittest.TestCase):
 class AttachmentTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = get_jira_admin_auth()
+        self.jira = JiraTestManager().jira_admin()
 
     def test_attachment(self):
         attachment = self.jira.attachment('10030')
@@ -295,7 +307,7 @@ class AttachmentTests(unittest.TestCase):
 class ComponentTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = get_jira_admin_auth()
+        self.jira = JiraTestManager().jira_admin()
 
     def test_component(self):
         component = self.jira.component('10003')
@@ -334,7 +346,7 @@ class ComponentTests(unittest.TestCase):
 class CustomFieldOptionTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = get_jira_admin_auth()
+        self.jira = JiraTestManager().jira_admin()
 
     def test_custom_field_option(self):
         option = self.jira.custom_field_option('10010')
@@ -344,7 +356,7 @@ class CustomFieldOptionTests(unittest.TestCase):
 class DashboardTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = get_jira_sysadmin_auth()
+        self.jira = JiraTestManager().jira_admin()
 
     def test_dashboards(self):
         dashboards = self.jira.dashboards()
@@ -372,7 +384,7 @@ class DashboardTests(unittest.TestCase):
 class FieldsTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = get_jira_admin_auth()
+        self.jira = JiraTestManager().jira_admin()
 
     def test_fields(self):
         fields = self.jira.fields()
@@ -382,7 +394,7 @@ class FieldsTests(unittest.TestCase):
 class FilterTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = get_jira_admin_auth()
+        self.jira = JiraTestManager().jira_admin()
 
     def test_filter(self):
         filter = self.jira.filter('10016')
@@ -397,7 +409,7 @@ class FilterTests(unittest.TestCase):
 class GroupsTest(unittest.TestCase):
 
     def setUp(self):
-        self.jira = get_jira_admin_auth()
+        self.jira = JiraTestManager().jira_admin()
 
     def test_groups(self):
         groups = self.jira.groups()
@@ -415,7 +427,7 @@ class GroupsTest(unittest.TestCase):
 class IssueTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = get_jira_admin_auth()
+        self.jira = JiraTestManager().jira_admin()
 
     def test_issue(self):
         issue = self.jira.issue('BULK-1')
@@ -879,7 +891,7 @@ class IssueTests(unittest.TestCase):
 class IssueLinkTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = get_jira_admin_auth()
+        self.jira = JiraTestManager().jira_admin()
 
     def test_issue_link(self):
         link = self.jira.issue_link('10220')
@@ -904,7 +916,7 @@ class IssueLinkTests(unittest.TestCase):
 class IssueLinkTypeTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = get_jira_admin_auth()
+        self.jira = JiraTestManager().jira_admin()
 
     def test_issue_link_types(self):
         link_types = self.jira.issue_link_types()
@@ -921,7 +933,7 @@ class IssueLinkTypeTests(unittest.TestCase):
 class IssueTypesTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = get_jira_admin_auth()
+        self.jira = JiraTestManager().jira_admin()
 
     def test_issue_types(self):
         types = self.jira.issue_types()
@@ -938,7 +950,7 @@ class IssueTypesTests(unittest.TestCase):
 class MyPermissionsTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = get_jira_schlub_auth()
+        self.jira = JiraTestManager().jira_user()
 
     def test_my_permissions(self):
         perms = self.jira.my_permissions()
@@ -960,7 +972,7 @@ class MyPermissionsTests(unittest.TestCase):
 class PrioritiesTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = get_jira_admin_auth()
+        self.jira = JiraTestManager().jira_admin()
 
     def test_priorities(self):
         priorities = self.jira.priorities()
@@ -975,7 +987,7 @@ class PrioritiesTests(unittest.TestCase):
 class ProjectTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = get_jira_admin_auth()
+        self.jira = JiraTestManager().jira_admin()
 
     def test_projects(self):
         projects = self.jira.projects()
@@ -1109,7 +1121,7 @@ class ProjectTests(unittest.TestCase):
 class ResolutionTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = get_jira_admin_auth()
+        self.jira = JiraTestManager().jira_admin()
 
     def test_resolutions(self):
         resolutions = self.jira.resolutions()
@@ -1124,7 +1136,7 @@ class ResolutionTests(unittest.TestCase):
 class SearchTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = get_jira_admin_auth()
+        self.jira = JiraTestManager().jira_admin()
 
     def test_search_issues(self):
         issues = self.jira.search_issues('project=BULK')
@@ -1157,7 +1169,7 @@ class SearchTests(unittest.TestCase):
 class SecurityLevelTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = get_jira_admin_auth()
+        self.jira = JiraTestManager().jira_admin()
 
     def test_security_level(self):
         sec_level = self.jira.security_level('10001')
@@ -1168,7 +1180,7 @@ class SecurityLevelTests(unittest.TestCase):
 class ServerInfoTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = get_jira_admin_auth()
+        self.jira = JiraTestManager().jira_admin()
 
     def test_server_info(self):
         server_info = self.jira.server_info()
@@ -1179,7 +1191,7 @@ class ServerInfoTests(unittest.TestCase):
 class StatusTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = get_jira_admin_auth()
+        self.jira = JiraTestManager().jira_admin()
 
     def test_statuses(self):
         stati = self.jira.statuses()
@@ -1194,7 +1206,7 @@ class StatusTests(unittest.TestCase):
 class UserTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = get_jira_admin_auth()
+        self.jira = JiraTestManager().jira_admin()
 
     def test_user(self):
         user = self.jira.user('fred')
@@ -1332,7 +1344,7 @@ class UserTests(unittest.TestCase):
 class VersionTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = get_jira_admin_auth()
+        self.jira = JiraTestManager().jira_admin()
 
     def test_create_version(self):
         version = self.jira.create_version('new version 1', 'BULK', releaseDate='2013-03-11',
@@ -1413,7 +1425,7 @@ class SessionTests(unittest.TestCase):
 class WebsudoTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = get_jira_admin_auth()
+        self.jira = JiraTestManager().jira_admin()
 
     def test_kill_websudo(self):
         self.jira.kill_websudo()
@@ -1423,6 +1435,7 @@ class WebsudoTests(unittest.TestCase):
         self.assertRaises(JIRAError, anon_jira.kill_websudo)
 
 if __name__ == '__main__':
+
     dirname = "test-reports-%s%s" % (sys.version_info[0], sys.version_info[1])
     unittest.main(testRunner=xmlrunner.XMLTestRunner(output=dirname))
     #pass

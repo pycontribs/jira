@@ -6,8 +6,12 @@ support changing the server and a persistent authentication over HTTP BASIC.
 """
 
 import sys
-from six.moves.configparser import ConfigParser
-from six.moves import input
+try:
+    import configparser
+except:
+    from six.moves import configparser
+    from six.moves import input
+
 from six.moves.urllib.parse import parse_qsl
 
 import argparse
