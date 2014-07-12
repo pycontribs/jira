@@ -31,3 +31,12 @@ See the documentation (http://readthedocs.org/docs/jira-python/) for full detail
 
 [1]: http://docs.python-requests.org/
 [2]: http://www.virtualenv.org/en/latest/index.html
+
+# Credits
+
+In additions to all the contributors we would like to thank to these companies:
+
+* [Atlassian](https://www.atlassian.com/) for developing such a powerful issue tracker and for providing a [free on-demand JIRA instance](https://pycontribs.atlassian.net) that we can use for continous integration testing.
+* [JetBrains](http://www.jetbrains.com) for providing us with free licenses of [PyCharm](http://www.jetbrains.com/pycharm/)
+* [Travis CI](https://travis-ci.org/) for hosting our continous integration
+
