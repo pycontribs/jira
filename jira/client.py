@@ -616,7 +616,7 @@ class JIRA(object):
     @translate_resource_args
     def assign_issue(self, issue, assignee):
         """
-        Assign an issue to a user.
+        Assign an issue to a user. None will set it to unassigned. -1 will set it to Automatic.
 
         :param issue: the issue to assign
         :param assignee: the user to assign the issue to
@@ -873,7 +873,8 @@ class JIRA(object):
         """
         url = self._get_url('issue/' + str(issue) + '/watchers')
         params = {'username': watcher}
-        self._session.delete(url, params=params)
+        result = self._session.delete(url, params=params)
+        return result
 
     @translate_resource_args
     def worklogs(self, issue):
@@ -898,7 +899,7 @@ class JIRA(object):
 
     @translate_resource_args
     def add_worklog(self, issue, timeSpent=None, adjustEstimate=None,
-                    newEstimate=None, reduceBy=None, comment=None):
+                    newEstimate=None, reduceBy=None, comment=None, started=None, user=None):
         """
         Add a new worklog entry on an issue and return a Resource for it.
 
@@ -908,6 +909,7 @@ class JIRA(object):
         time estimate of the issue. The value can either be ``new``, ``leave``, ``manual`` or ``auto`` (default).
         :param newEstimate: the new value for the remaining estimate field. e.g. "2d"
         :param reduceBy: the amount to reduce the remaining estimate by e.g. "2d"
+        :param started: Moment when the work is logged, if not specified will default to now
         :param comment: optional worklog comment
         """
         params = {}
@@ -923,7 +925,21 @@ class JIRA(object):
             data['timeSpent'] = timeSpent
         if comment is not None:
             data['comment'] = comment
+        elif user:
+            # we log user inside comment as it doesn't always work
+            data['comment'] = user
 
+        if started is not None:
+            # based on REST Browser it needs: "2014-06-03T08:21:01.273+0000"
+            data['started'] = started.strftime("%Y-%m-%dT%H:%M:%S.000%z")
+        if user is not None:
+            data['author'] = { "name": user,
+                               'self': self.JIRA_BASE_URL + '/rest/api/2/user?username=' + user,
+                               'displayName': user,
+                               'active': False
+                               }
+            data['updateAuthor'] = data['author']
+        # TODO: report bug to Atlassian: author and updateAuthor parameters are ignored.
         url = self._get_url('issue/{}/worklog'.format(issue))
         r = self._session.post(url, params=params, headers={'content-type': 'application/json'}, data=json.dumps(data))
         raise_on_error(r)
@@ -1719,7 +1735,7 @@ class JIRA(object):
             try:
                 return mimetypes.guess_type("f." + imghdr.what(0, buff))[0]
             except (IOError, TypeError):
-                print("WARNING: Couldn't detect content type of avatar image"
+                logging.warning("Couldn't detect content type of avatar image"
                       ". Specify the 'contentType' parameter explicitly.")
                 return None
 
@@ -1774,7 +1790,7 @@ class JIRA(object):
             "RunCanned": "Run",
         }
 
-        print(self.user(old_user).emailAddress)  # raw displayName
+        logging.debug("renaming %s" % self.user(old_user).emailAddress)  # raw displayName
 
         r = self._session.post(url, headers={'X-Atlassian-Token': 'nocheck', 'Cache-Control': 'no-cache'}, data=payload)
         if r.status_code == 404:
