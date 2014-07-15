@@ -1,0 +1,64 @@
+=========
+JIRA Python Library
+=========
+
+.. image:: https://api.travis-ci.org/pycontribs/jira.png?branch=master
+        :target: https://travis-ci.org/jira/pycontribs
+
+.. image:: https://coveralls.io/repos/jira/pycontribs/badge.png?branch=master
+        :target: https://coveralls.io/r/jira/pycontribs
+
+.. image:: https://pypip.in/d/pycontribs/badge.png
+        :target: https://pypi.python.org/pypi/pycontribs/
+
+.. image:: https://pypip.in/v/pycontribs/badge.png
+        :target: https://pypi.python.org/pypi/pycontribs/
+
+.. image:: https://pypip.in/egg/pycontribs/badge.png
+        :target: https://pypi.python.org/pypi/pycontribs/
+
+.. image:: https://pypip.in/wheel/pycontribs/badge.png
+        :target: https://pypi.python.org/pypi/pycontribs/
+
+.. image:: https://pypip.in/license/pycontribs/badge.png
+        :target: https://pypi.python.org/pypi/pycontribs/
+
+This library eases the use of the JIRA REST API from Python
+
+# Quickstart
+
+Feeling impatient? I like your style.
+
+    :::python
+        from jira.client import JIRA
+
+        options = { 'server': 'https://jira.atlassian.com'}
+        jira = JIRA(options)
+
+        issue = jira.issue('JRA-9')
+        print issue.fields.project.key             # 'JRA'
+        print issue.fields.issuetype.name          # 'New Feature'
+        print issue.fields.reporter.displayName    # 'Mike Cannon-Brookes [Atlassian]'
+
+# Installation
+
+Download and install using `pip install jira` or `easy_install jira`
+
+You can also try `pip install --user --upgrade jira` which will install or upgrade jira to user directory. Or maybe you ARE using a [virtualenv][2], right?
+
+# Usage
+
+See the documentation (http://readthedocs.org/docs/jira-python/) for full details.
+
+# Credits
+
+In additions to all the contributors we would like to thank to these companies:
+
+* [Atlassian](https://www.atlassian.com/) for developing such a powerful issue tracker and for providing a [free on-demand JIRA instance](https://pycontribs.atlassian.net) that we can use for continous integration testing.
+* [JetBrains](http://www.jetbrains.com) for providing us with free licenses of [PyCharm](http://www.jetbrains.com/pycharm/)
+* [Travis CI](https://travis-ci.org/) for hosting our continous integration
+
+[1]: http://docs.python-requests.org/
+[2]: http://www.virtualenv.org/en/latest/index.html
+
+.. image:: http://upload.wikimedia.org/wikipedia/en/6/6f/PremiumSoft_Navicat_Premium_Logo.jpg
