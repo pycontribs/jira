@@ -3,25 +3,25 @@ JIRA Python Library
 =========
 
 .. image:: https://api.travis-ci.org/pycontribs/jira.png?branch=master
-        :target: https://travis-ci.org/jira/pycontribs
+        :target: https://travis-ci.org/pycontribs/jira
 
-.. image:: https://coveralls.io/repos/jira/pycontribs/badge.png?branch=master
-        :target: https://coveralls.io/r/jira/pycontribs
+.. image:: https://coveralls.io/repos/pycontribs/jira/badge.png?branch=master
+        :target: https://coveralls.io/r/pycontribs/jira
 
-.. image:: https://pypip.in/d/pycontribs/badge.png
-        :target: https://pypi.python.org/pypi/pycontribs/
+.. image:: https://pypip.in/d/jira/badge.png
+        :target: https://pypi.python.org/pypi/jira/
 
-.. image:: https://pypip.in/v/pycontribs/badge.png
-        :target: https://pypi.python.org/pypi/pycontribs/
+.. image:: https://pypip.in/v/jira/badge.png
+        :target: https://pypi.python.org/pypi/jira/
 
-.. image:: https://pypip.in/egg/pycontribs/badge.png
-        :target: https://pypi.python.org/pypi/pycontribs/
+.. image:: https://pypip.in/egg/jira/badge.png
+        :target: https://pypi.python.org/pypi/jira/
 
-.. image:: https://pypip.in/wheel/pycontribs/badge.png
-        :target: https://pypi.python.org/pypi/pycontribs/
+.. image:: https://pypip.in/wheel/jira/badge.png
+        :target: https://pypi.python.org/pypi/jira/
 
-.. image:: https://pypip.in/license/pycontribs/badge.png
-        :target: https://pypi.python.org/pypi/pycontribs/
+.. image:: https://pypip.in/license/jira/badge.png
+        :target: https://pypi.python.org/pypi/jira/
 
 This library eases the use of the JIRA REST API from Python
 
