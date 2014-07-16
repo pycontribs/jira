@@ -31,10 +31,11 @@ flake8:
 	flake8 blackhole --ignore="F403"
 
 pypi:
+	python setup.py check --restructuredtext --strict
 	python setup.py sdist upload
-	python2.6 setup.py bdist_wheel upload
+	#python2.6 setup.py bdist_wheel upload
 	python2.7 setup.py bdist_wheel upload
-	python3.4 setup.py bdist_wheel upload
+	#python3.4 setup.py bdist_wheel upload
 
 docs:
 	pip install sphinx

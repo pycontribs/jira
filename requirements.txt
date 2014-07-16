@@ -6,3 +6,4 @@ six==1.5.2
 xmlrunner>=1.7.3
 filemagic>=1.6
 ipython>=0.13
+setuptools>=0.8.0

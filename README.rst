@@ -1,6 +1,6 @@
-=========
+===================
 JIRA Python Library
-=========
+===================
 
 .. image:: https://api.travis-ci.org/pycontribs/jira.png?branch=master
         :target: https://travis-ci.org/pycontribs/jira
@@ -25,32 +25,36 @@ JIRA Python Library
 
 This library eases the use of the JIRA REST API from Python
 
-# Quickstart
+Quickstart
+----------
 
 Feeling impatient? I like your style.
 
-    :::python
+::
+
         from jira.client import JIRA
 
-        options = { 'server': 'https://jira.atlassian.com'}
-        jira = JIRA(options)
+        jira = JIRA('https://jira.atlassian.com')
 
         issue = jira.issue('JRA-9')
         print issue.fields.project.key             # 'JRA'
         print issue.fields.issuetype.name          # 'New Feature'
         print issue.fields.reporter.displayName    # 'Mike Cannon-Brookes [Atlassian]'
 
-# Installation
+Installation
+~~~~~~~~~~~~
 
 Download and install using `pip install jira` or `easy_install jira`
 
 You can also try `pip install --user --upgrade jira` which will install or upgrade jira to user directory. Or maybe you ARE using a [virtualenv][2], right?
 
-# Usage
+Usage
+~~~~~
 
 See the documentation (http://readthedocs.org/docs/jira-python/) for full details.
 
-# Credits
+Credits
+-------
 
 In additions to all the contributors we would like to thank to these companies:
 
@@ -61,4 +65,12 @@ In additions to all the contributors we would like to thank to these companies:
 [1]: http://docs.python-requests.org/
 [2]: http://www.virtualenv.org/en/latest/index.html
 
+.. image:: http://www.atlassian.com/dms/wac/images/press/Atlassian-logos/logoAtlassianPNG.png
+    :height: 100
+
+.. image:: http://www.jetbrains.com/pycharm/docs/logo_pycharm.png
+    :height: 100
+
 .. image:: http://upload.wikimedia.org/wikipedia/en/6/6f/PremiumSoft_Navicat_Premium_Logo.jpg
+    :height: 100
+

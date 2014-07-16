@@ -4,3 +4,4 @@ pytest-cov
 pytest-xdist
 yanc
 xmlrunner
+wheel

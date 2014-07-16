@@ -30,6 +30,7 @@ setup(
     url='http://bitbucket.org/bspeakmon/jira-python',
     license='BSD',
     description='A library to ease use of the JIRA 5 REST APIs.',
+    long_description=open("README.rst").read(),
     author='Ben Speakmon',
     author_email='ben.speakmon@gmail.com',
     provides=['jira'],

@@ -53,10 +53,9 @@ if 'pydevd' not in sys.modules:
     except NotImplementedError:
         pass
 
-encoding = sys.getdefaultencoding()
-if encoding != 'UTF8':
-    warnings.warn("Python default encoding is '%s' instead of 'UTF8' which means that there is a big change of having problems. Possible workaround http://stackoverflow.com/a/17628350/99834" % encoding)
-
+#encoding = sys.getdefaultencoding()
+#if encoding != 'UTF8':
+#    warnings.warn("Python default encoding is '%s' instead of 'UTF8' which means that there is a big change of having problems. Possible workaround http://stackoverflow.com/a/17628350/99834" % encoding)
 
 def translate_resource_args(func):
     """
@@ -115,7 +114,7 @@ class JIRA(object):
 
     JIRA_BASE_URL = '{server}/rest/api/{rest_api_version}/{path}'
 
-    def __init__(self, server=None, options=None, basic_auth=None, oauth=None, validate=None, async=False):
+    def __init__(self, server=None, options=None, basic_auth=None, oauth=None, validate=None, async=False, logging=True):
         """
         Construct a JIRA client instance.
 
@@ -157,6 +156,8 @@ class JIRA(object):
             options['server'] = server
         if async:
             options['async'] = async
+
+        self.logging = logging
 
         self._options = copy.copy(JIRA.DEFAULT_OPTIONS)
 
@@ -2199,6 +2200,18 @@ class GreenHopper(JIRA):
         :param sprint_id: the sprint retieving issues from
         """
         return self._get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id), base=self.GREENHOPPER_BASE_URL)['sprint']
+
+    def delete_board(self, id):
+        """
+        Deletes an agile board.
+
+        :param id:
+        :return:
+        """
+        payload = {}
+        url = self._get_url('rapidview/%s' % id, base=self.GREENHOPPER_BASE_URL)
+        r = self._session.delete(url, headers={'content-type': 'application/json'}, data=json.dumps(payload))
+        raise_on_error(r)
 
     def create_board(self, name, project_ids, preset="scrum"):
         """
