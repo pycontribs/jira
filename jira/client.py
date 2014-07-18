@@ -587,8 +587,9 @@ class JIRA(object):
 
         url = self._get_url('issue')
         r = self._session.post(url, headers={'content-type': 'application/json'}, data=json.dumps(data))
+        logging.info("xxx: " % r)
         raise_on_error(r)
-
+        logging.info("yyy: " % r)
         raw_issue_json = json.loads(r.text)
         if prefetch:
             return self.issue(raw_issue_json['key'])
