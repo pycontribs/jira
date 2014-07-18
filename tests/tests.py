@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from __future__ import print_function
 import os
+import re
 import sys
 import time
 import pip
@@ -215,7 +216,7 @@ class JiraTestManager(object):
                 # [7-8] python version A=0, B=1,..
                 # [9] A,B -- we may need more than one project
 
-                prefix = 'Z' + getpass.getuser().upper()[0:7] + \
+                prefix = 'Z' + (re.sub ("[^A-Z]", "", getpass.getuser().upper()))[0:6] + \
                     chr(ord('A') + sys.version_info[0]) + \
                     chr(ord('A') + sys.version_info[1])
 
@@ -979,6 +980,7 @@ class IssueLinkTests(unittest.TestCase):
         self.assertEqual(link.inwardIssue.id, '10924')
 
     def test_create_issue_link(self):
+        print ('HEREEEEE:', type(self.manager))
         self.manager.jira_admin.create_issue_link('Duplicate', JiraTestManager().project_b_issue1, JiraTestManager().project_b_issue2,
                                     comment={'body': 'Link comment!', 'visibility': {'type': 'role', 'value': 'Administrators'}})
 
