@@ -1502,10 +1502,10 @@ class SessionTests(unittest.TestCase):
         except Exception as e:
             self.assertEqual(type(e), ConnectionError)
 
-    @unittest.expectedFailure
-    def test_kill_session(self):
-        self.jira.kill_session()
-        self.jira.session()
+    #@unittest.expectedFailure
+    #def test_kill_session(self):
+    #    self.jira.kill_session()
+    #    self.jira.session()
 
 @unittest.skip("temporary disabled")
 class WebsudoTests(unittest.TestCase):

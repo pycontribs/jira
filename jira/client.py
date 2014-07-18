@@ -190,7 +190,7 @@ class JIRA(object):
     def __del__(self):
         # that is performing the logout by killing the session
         self.async_do()
-        self.kill_session()
+        #self.kill_session()
 
     def _check_for_html_error(self, content):
         # TODO: Make it return errors when content is a webpage with errors
