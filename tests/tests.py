@@ -975,12 +975,12 @@ class IssueLinkTests(unittest.TestCase):
         self.manager = JiraTestManager()
 
     def test_issue_link(self):
-        link = self.manager.jira_admin.issue_link('10220')
-        self.assertEqual(link.id, '10220')
-        self.assertEqual(link.inwardIssue.id, '10924')
+
+        link = self.manager.jira_admin.issue_link('10002')
+        self.assertEqual(link.id, '10002')
+        self.assertEqual(link.inwardIssue.id, '10002')
 
     def test_create_issue_link(self):
-        print ('HEREEEEE:', type(self.manager))
         self.manager.jira_admin.create_issue_link('Duplicate', JiraTestManager().project_b_issue1, JiraTestManager().project_b_issue2,
                                     comment={'body': 'Link comment!', 'visibility': {'type': 'role', 'value': 'Administrators'}})
 
