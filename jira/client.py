@@ -105,8 +105,8 @@ class JIRA(object):
         "resilient": False,
         "async": False,
         "headers": {
-            'X-Atlassian-Token': 'nocheck',
-            #'Cache-Control': 'no-cache',
+            'X-Atlassian-Token': 'no-check',
+            'Cache-Control': 'no-cache',
             #'Pragma': 'no-cache',
             #'Expires': 'Thu, 01 Jan 1970 00:00:00 GMT'
         }
@@ -1801,7 +1801,7 @@ class JIRA(object):
 
         logging.debug("renaming %s" % self.user(old_user).emailAddress)  # raw displayName
 
-        r = self._session.post(url, headers={'X-Atlassian-Token': 'nocheck', 'Cache-Control': 'no-cache'}, data=payload)
+        r = self._session.post(url, headers=self._options['headers'], data=payload)
         if r.status_code == 404:
             logging.error("In order to be able to use rename_user() you need to install Script Runner plugin. See https://marketplace.atlassian.com/plugins/com.onresolve.jira.groovy.groovyrunner")
             return False
@@ -1852,7 +1852,7 @@ class JIRA(object):
             "returnUrl": "UserBrowser.jspa",
             "confirm": "true",
         }
-        r = self._session.post(url, headers={'X-Atlassian-Token': 'nocheck', 'Cache-Control': 'no-cache'}, data=payload)
+        r = self._session.post(url, headers=self._options['headers'], data=payload)
         # if r.status_code == 404:
         #    logging.error("404")
         #    return False
