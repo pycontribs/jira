@@ -7,5 +7,9 @@ reports/
 build/
 docs/_build
 *.egg-info/
-tests/test-reports-27/*
+tests/test-reports-*/*
 reports
+tests/settings.py
+encrypt-credentials.sh
+setenv.sh
+test-quick
