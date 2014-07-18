@@ -4,8 +4,7 @@ env:
   matrix:
   - TOX_ENV=py26
   - TOX_ENV=py27
-  - TOX_ENV=py32
-  - TOX_ENV=py33
+  - TOX_ENV=py34
   - TOX_ENV=docs
   global:
   - secure: EUpWmrnhHKPkz9cOGbEEwhBtUBRqtQ775ck042B8/pI9ZZZghbKl3Jm8ahpfms3JiZcHMCG06MBREs1ISK/g2OfHKsdULCg5g3UFXteVQo769kwh/x4lniSbU2eipcN0s9Q/Ak5zStwTa5aNQ4FU/3zSgTDxi/OcDKGXDbVwHD8=
@@ -16,7 +15,9 @@ env:
 install:
 - pip install -r requirements.txt
 - pip install -r requirements-dev.txt
-script: tox -e $TOX_ENV
+script:
+- ./pretest
+- tox -e $TOX_ENV
 branches:
   only:
   - master

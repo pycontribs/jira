@@ -972,9 +972,7 @@ class IssueLinkTests(unittest.TestCase):
 
     def setUp(self):
         self.manager = JiraTestManager()
-        print(self.manager)
 
-    @unittest.skip('needs rework')
     def test_issue_link(self):
         link = self.manager.jira_admin.issue_link('10220')
         self.assertEqual(link.id, '10220')
