@@ -3,5 +3,5 @@ pytest
 pytest-cov
 pytest-xdist
 yanc
-xmlrunner
+xmlrunner>=1.7.5
 wheel
