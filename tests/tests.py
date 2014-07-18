@@ -236,23 +236,18 @@ class JiraTestManager(object):
                 except:
                     pass
 
-
+                logging.info("ccc")
                 self.project_b_issue1 = self.jira_admin.create_issue(project={'key': self.project_b}, summary='issue 1 from %s' % self.project_b, issuetype={'name': 'Bug'}).key
+                logging.info("ccc2")
                 self.project_b_issue2 = self.jira_admin.create_issue(project={'key': self.project_b}, summary='issue 2 from %s' % self.project_b, issuetype={'name': 'Bug'}).key
+                logging.info("ccc3")
                 self.project_b_issue3 = self.jira_admin.create_issue(project={'key': self.project_b}, summary='issue 3 from %s' % self.project_b, issuetype={'name': 'Bug'}).key
+                logging.info("ccc4")
 
             except Exception as e:
                 logging.fatal("Basic test setup failed, that's FATAL!. %s" % e.message)
                 sys.exit(3)
 
-    def jira_admin(self):
-        return self.jira_admin
-
-    def jira_sysadmin(self):
-        return self.jira_sysadmin
-
-    def jira_user(self):
-        return self.jira_admin
 
 def find_by_key(seq, key):
     for seq_item in seq:
@@ -959,22 +954,25 @@ class IssueTests(unittest.TestCase):
 class IssueLinkTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = JiraTestManager().jira_admin
+        self.manager = JiraTestManager()
+        print(self.manager)
 
     @unittest.skip('needs rework')
     def test_issue_link(self):
-        link = self.jira.issue_link('10220')
+        link = self.manager.jira_admin.issue_link('10220')
         self.assertEqual(link.id, '10220')
         self.assertEqual(link.inwardIssue.id, '10924')
 
     def test_create_issue_link(self):
-        self.jira.create_issue_link('Duplicate', JiraTestManager().project_b_issue1, JiraTestManager().project_b_issue2,
+        self.manager.jira_admin.create_issue_link('Duplicate', JiraTestManager().project_b_issue1, JiraTestManager().project_b_issue2,
                                     comment={'body': 'Link comment!', 'visibility': {'type': 'role', 'value': 'Administrators'}})
 
     def test_create_issue_link_with_issue_objs(self):
-        inwardIssue = self.jira.issue(JiraTestManager().project_b_issue1)
-        outwardIssue = self.jira.issue(JiraTestManager().project_b_issue2)
-        self.jira.create_issue_link('Duplicate', inwardIssue, outwardIssue,
+        inwardIssue = self.manager.jira_admin.issue(JiraTestManager().project_b_issue1)
+        self.assertIsNotNone(inwardIssue)
+        outwardIssue = self.manager.jira_admin.issue(JiraTestManager().project_b_issue2)
+        self.assertIsNotNone(outwardIssue)
+        self.manager.jira_admin.create_issue_link('Duplicate', inwardIssue, outwardIssue,
                                     comment={'body': 'Link comment!', 'visibility': {'type': 'role', 'value': 'Administrators'}})
 
     @unittest.skip("Creating an issue link doesn't return its ID, so can't easily test delete")
