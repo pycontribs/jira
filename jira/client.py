@@ -1995,7 +1995,8 @@ class JIRA(object):
 
         f = tempfile.NamedTemporaryFile(suffix='.html', prefix='python-jira-error-create-project-', delete=False)
         f.write(r.content)
-        logging.error("Unexpected result while running create project. Server response saved in %s for further investigation [HTTP response=%s]." % (f.name, r.status_code))
+        if self.logging:
+            logging.error("Unexpected result while running create project. Server response saved in %s for further investigation [HTTP response=%s]." % (f.name, r.status_code))
         return False
 
     def add_user(self, username, email, directoryId=1, password=None, fullname=None, sendEmail=False, active=True):
@@ -2138,17 +2139,17 @@ class GreenHopper(JIRA):
 
         :param id: the board to get sprints from
         :param extended: fetch additional information like startDate, endDate, completeDate,
-        much slower because it requires an additional requests for each sprint
-
-        "id": 893,
-        "name": "iteration.5",
-        "state": "FUTURE",
-        "linkedPagesCount": 0,
-        "startDate": "None",
-        "endDate": "None",
-        "completeDate": "None",
-        "remoteLinks": []
-
+            much slower because it requires an additional requests for each sprint
+        :rtype: dict
+             >>> { "id": 893,
+             >>> "name": "iteration.5",
+             >>> "state": "FUTURE",
+             >>> "linkedPagesCount": 0,
+             >>> "startDate": "None",
+             >>> "endDate": "None",
+             >>> "completeDate": "None",
+             >>> "remoteLinks": []
+             >>> }
         """
         r_json = self._get_json('sprintquery/%s?includeHistoricSprints=true&includeFutureSprints=true' % id, base=self.GREENHOPPER_BASE_URL)
 

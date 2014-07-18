@@ -7,6 +7,8 @@ import pip
 import inspect
 import logging
 import getpass
+from time import sleep
+
 
 from six import print_ as print
 from requests.exceptions import ConnectionError
@@ -126,6 +128,7 @@ class JiraTestManager(object):
         self.__dict__ = self.__shared_state
 
         if not self.__dict__:
+            self.initialized = 0
 
             try:
                 try:
@@ -170,25 +173,26 @@ class JiraTestManager(object):
                     })
                 else:
                     if self.CI_JIRA_ADMIN:
-                        self.jira_admin = JIRA(self.CI_JIRA_URL, basic_auth=(self.CI_JIRA_ADMIN, self.CI_JIRA_ADMIN_PASSWORD), logging=True, validate=True)
+                        self.jira_admin = JIRA(self.CI_JIRA_URL, basic_auth=(self.CI_JIRA_ADMIN, self.CI_JIRA_ADMIN_PASSWORD), logging=False, validate=True)
                     else:
-                        self.jira_admin = JIRA(self.CI_JIRA_URL, logging=True, validate=True)
+                        self.jira_admin = JIRA(self.CI_JIRA_URL, validate=True, logging=False)
                 if self.jira_admin.current_user() != self.CI_JIRA_ADMIN:
                     #self.jira_admin.
+                    self.initialized = 1
                     sys.exit(3)
 
                 if OAUTH:
-                    self.jira_sysadmin =  JIRA(oauth={
+                    self.jira_sysadmin = JIRA(oauth={
                         'access_token': '4ul1ETSFo7ybbIxAxzyRal39cTrwEGFv',
                         'access_token_secret': 'K83jBZnjnuVRcfjBflrKyThJa0KSjSs2',
                         'consumer_key': CONSUMER_KEY,
                         'key_cert': KEY_CERT_DATA,
-                    })
+                    }, logging=False)
                 else:
                     if self.CI_JIRA_ADMIN:
-                        self.jira_sysadmin = JIRA(self.CI_JIRA_URL, basic_auth=(self.CI_JIRA_ADMIN, self.CI_JIRA_ADMIN_PASSWORD), validate=True)
+                        self.jira_sysadmin = JIRA(self.CI_JIRA_URL, basic_auth=(self.CI_JIRA_ADMIN, self.CI_JIRA_ADMIN_PASSWORD), logging=False, validate=True)
                     else:
-                        self.jira_sysadmin = JIRA(self.CI_JIRA_URL)
+                        self.jira_sysadmin = JIRA(self.CI_JIRA_URL, logging=False)
 
                 if OAUTH:
                     self.jira_normal = JIRA(oauth={
@@ -199,9 +203,9 @@ class JiraTestManager(object):
                     })
                 else:
                     if self.CI_JIRA_ADMIN:
-                        self.jira_normal = JIRA(self.CI_JIRA_URL, basic_auth=(self.CI_JIRA_USER, self.CI_JIRA_USER_PASSWORD), validate=True)
+                        self.jira_normal = JIRA(self.CI_JIRA_URL, basic_auth=(self.CI_JIRA_USER, self.CI_JIRA_USER_PASSWORD), validate=True, logging=False)
                     else:
-                        self.jira_normal = JIRA(self.CI_JIRA_URL, validate=True)
+                        self.jira_normal = JIRA(self.CI_JIRA_URL, validate=True, logging=False)
 
                 # now we need some data to start with for the tests
 
@@ -245,8 +249,21 @@ class JiraTestManager(object):
                 logging.info("ccc4")
 
             except Exception as e:
-                logging.fatal("Basic test setup failed, that's FATAL!. %s" % e.message)
+                logging.fatal("Basic test setup failed, that's FATAL!. %s" % e)
+                self.initialized = 1
                 sys.exit(3)
+
+            self.initialized = 1
+
+        else:
+            # already exist but we need to be sure it was initialized
+            counter = 0
+            while not self.initialized:
+                sleep(1)
+                counter += 1
+                if counter > 60:
+                    logging.fatal("Something is clearly not right with initialization, killing the tests to prevent a deadlock.")
+                    sys.exit(3)
 
 
 def find_by_key(seq, key):

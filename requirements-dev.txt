@@ -5,3 +5,4 @@ pytest-xdist
 yanc
 xmlrunner>=1.7.5
 wheel
+Sphinx
