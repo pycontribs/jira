@@ -976,9 +976,9 @@ class IssueLinkTests(unittest.TestCase):
 
     def test_issue_link(self):
 
-        link = self.manager.jira_admin.issue_link('10002')
+        link = self.manager.jira_admin.issue_link('10002')  # Duplicate outward
         self.assertEqual(link.id, '10002')
-        self.assertEqual(link.inwardIssue.id, '10002')
+        self.assertEqual(link.inwardIssue.id, '10018')  # Duplicate inward
 
     def test_create_issue_link(self):
         self.manager.jira_admin.create_issue_link('Duplicate', JiraTestManager().project_b_issue1, JiraTestManager().project_b_issue2,
@@ -992,9 +992,9 @@ class IssueLinkTests(unittest.TestCase):
         self.manager.jira_admin.create_issue_link('Duplicate', inwardIssue, outwardIssue,
                                     comment={'body': 'Link comment!', 'visibility': {'type': 'role', 'value': 'Administrators'}})
 
-    @unittest.skip("Creating an issue link doesn't return its ID, so can't easily test delete")
-    def test_delete_issue_link(self):
-        pass
+    #@unittest.skip("Creating an issue link doesn't return its ID, so can't easily test delete")
+    #def test_delete_issue_link(self):
+    #    pass
 
 
 class IssueLinkTypeTests(unittest.TestCase):
