@@ -32,7 +32,7 @@ from six import print_ as print
 from requests_oauthlib import OAuth1
 from oauthlib.oauth1 import SIGNATURE_RSA
 
-from jira.exceptions import raise_on_error
+from jira.exceptions import raise_on_error, JIRAError
 # JIRA specific resources
 from jira.resources import Resource, Issue, Comment, Project, Attachment, Component, Dashboard, Filter, Votes, Watchers, Worklog, IssueLink, IssueLinkType, IssueType, Priority, Version, Role, Resolution, SecurityLevel, Status, User, CustomFieldOption, RemoteLink
 # GreenHopper specific resources
@@ -191,6 +191,15 @@ class JIRA(object):
         # that is performing the logout by killing the session
         self.async_do()
         self.kill_session()
+
+    def _check_for_html_error(self, content):
+        # TODO: Make it return errors when content is a webpage with errors
+        # JIRA has the bad habbit of returning errors in pages with 200 and embedding the error in a huge webpage.
+        if '<!-- SecurityTokenMissing -->' in content:
+            logging.warning("Got SecurityTokenMissing")
+            raise JIRAError("SecurityTokenMissing: %s" % content)
+            return False
+        return True
 
 # Information about this client
 
@@ -537,7 +546,7 @@ class JIRA(object):
         :param fields: comma-separated string of issue fields to include in the results
         :param expand: extra information to fetch inside each resource
         """
-        issue = Issue(self._options, self._session, self)
+        issue = Issue(self._options, self._session)
 
         params = {}
         if fields is not None:
@@ -1945,7 +1954,7 @@ class JIRA(object):
         payload = {'pid': pid, 'Delete': 'Delete', 'confirm': 'true'}
         r = self._session.post(url, headers=self._options['headers'], data=payload)
         if r.status_code == 200:
-            return True
+            return self._check_for_html_error(r.content.decode('utf8'))
         else:
             logging.warning('Got %s response from calling delete_project.' % r.status_code)
             return r.status_code
@@ -1964,14 +1973,27 @@ class JIRA(object):
         if key.upper() != key or not key.isalpha() or len(key) < 2 or len(key) > 10:
             logging.error('key parameter is not all uppercase alphanumeric of length between 2 and 10')
             return False
-        url = self._options['server'] + '/secure/admin/AddProject.jspa'
-        payload = {'name': name, 'key': key, 'keyEdited': 'true', 'permissionScheme': '', 'lead': assignee, 'assigneeType': '2'}
+        url = self._options['server'] + '/rest/project-templates/1.0/templates'
+
+        payload = {'name': name,
+                   'key': key,
+                   'keyEdited': 'false',
+                   #'permissionScheme': '',
+                   'projectTemplateWebItemKey': 'com.atlassian.jira-core-project-templates:jira-blank-item',
+                   'projectTemplateModuleKey': 'com.atlassian.jira-core-project-templates:jira-blank-item',
+                   #'projectTemplateWebItemKey': 'com.pyxis.greenhopper.jira:gh-kanban-template-item',
+                   #'projectTemplateModuleKey': 'com.pyxis.greenhopper.jira:gh-kanban-template',
+                   'lead': assignee,
+                   #'assigneeType': '2',
+                    }
+
         r = self._session.post(url, headers=self._options['headers'], data=payload)
-        content = r.content.decode('utf8')
-        if r.status_code == 200 and content.find('<meta name="projectKey" content="%s"/>' % key):
-            m = re.search("<meta name=\"projectId\" content=\"(\d+)\"\/>", content)
-            if m:
-                return m.groups()[0]  # that's the projectID
+        if r.status_code == 200:
+            raise_on_error(r)
+            r_json = json.loads(r.text)
+            content = r.content.decode('utf8')
+            return r_json
+
         f = tempfile.NamedTemporaryFile(suffix='.html', prefix='python-jira-error-create-project-', delete=False)
         f.write(r.content)
         logging.error("Unexpected result while running create project. Server response saved in %s for further investigation [HTTP response=%s]." % (f.name, r.status_code))
