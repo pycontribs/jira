@@ -242,7 +242,7 @@ class JiraTestManager(object):
                 self.project_b_issue3 = self.jira_admin.create_issue(project={'key': self.project_b}, summary='issue 3 from %s' % self.project_b, issuetype={'name': 'Bug'}).key
 
             except Exception as e:
-                logging.fatal("Basic test setup failed, that's FATAL!.")
+                logging.fatal("Basic test setup failed, that's FATAL!. %s" % e.message)
                 sys.exit(3)
 
     def jira_admin(self):
