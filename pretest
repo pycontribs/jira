@@ -1,0 +1,9 @@
+#!/bin/bash
+
+CODE=`curl -L -s  -u $CI_JIRA_ADMIN:$CI_JIRA_ADMIN_PASSWORD  -X GET -H "Content-Type: application/json" -o /dev/null -w "%{http_code}" https://pycontribs.atlassian.net/rest/api/2/issue/createmeta`
+if [ "$CODE" == "200" ]; then
+    echo INFO: JIRA authentication works so we can continue...
+else
+    echo FATAL: Unable to authenticate
+    exit 1
+fi

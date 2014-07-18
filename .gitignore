@@ -13,3 +13,4 @@ tests/settings.py
 encrypt-credentials.sh
 setenv.sh
 test-quick
+settings.py
