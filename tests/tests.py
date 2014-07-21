@@ -278,6 +278,7 @@ def find_by_id(seq, id):
         if seq_item.id == id:
             return seq_item
 
+#All working apart from test_verify_fails_without_https
 class UniversalResourceTests(unittest.TestCase):
 
     def setUp(self):
@@ -293,7 +294,6 @@ class UniversalResourceTests(unittest.TestCase):
         resource = Resource('nope/{0}', self.jira._options, None)  # don't need an actual session
         self.assertEqual('https://pycontribs.atlassian.net/rest/api/2/nope/666', str (resource._url(('666',))))
 
-    @unittest.skip("temporary disabled")
     def test_find_invalid_resource_raises_exception(self):
         with self.assertRaises(JIRAError) as cm:
             self.jira.find('woopsydoodle/{0}', '666')
@@ -301,7 +301,7 @@ class UniversalResourceTests(unittest.TestCase):
         ex = cm.exception
         self.assertEqual(ex.status_code, 404)
         self.assertIsNotNone(ex.text)
-        self.assertEqual(ex.url, 'https://pycontribs.atlassian.net/rest/api/2/nope/666')
+        self.assertEqual(ex.url, 'https://pycontribs.atlassian.net/rest/api/2/woopsydoodle/666')
 
     def test_verify_works_with_https(self):
         self.jira = JIRA(options={'server': 'https://jira.atlassian.com'})
@@ -312,7 +312,7 @@ class UniversalResourceTests(unittest.TestCase):
         self.jira = JIRA(options={'server': 'https://www.yahoo.com'})
         self.assertRaises(JIRAError, self.jira.issue, 'BULK-1')
 
-@unittest.skip("temporary disabled")
+#All working
 class ResourceTests(unittest.TestCase):
 
     def setUp(self):
@@ -320,31 +320,31 @@ class ResourceTests(unittest.TestCase):
 
     def test_cls_for_resource(self):
         self.assertEqual(cls_for_resource('https://jira.atlassian.com/rest/api/2/issue/JRA-1330'), Issue)
-        #self.assertEqual(cls_for_resource('http://localhost:2990/jira/rest/api/2/project/BULK'), Project)
-        #self.assertEqual(cls_for_resource('http://imaginary-jira.com/rest/api/2/project/IMG/role/10002'), Role)
-        #self.assertEqual(cls_for_resource('http://customized-jira.com/rest/plugin-resource/4.5/json/getMyObject'), Resource)
+        self.assertEqual(cls_for_resource('http://localhost:2990/jira/rest/api/2/project/BULK'), Project)
+        self.assertEqual(cls_for_resource('http://imaginary-jira.com/rest/api/2/project/IMG/role/10002'), Role)
+        self.assertEqual(cls_for_resource('http://customized-jira.com/rest/plugin-resource/4.5/json/getMyObject'), Resource)
 
-@unittest.skip("temporary disabled")
+#All working
 class ApplicationPropertiesTests(unittest.TestCase):
 
     def setUp(self):
         # this user has jira-system-administrators membership
         self.jira = JiraTestManager().jira_admin
 
-    #def test_application_properties(self):
-    #    props = self.jira.application_properties()
-    #    self.assertEqual(len(props), 12)
+    def test_application_properties(self):
+        props = self.jira.application_properties()
+        self.assertEqual(len(props), 30)
 
     def test_application_property(self):
-        clone_prefix = self.jira.application_properties(key='jira.clone.prefix')
-        self.assertEqual(clone_prefix['value'], 'CLONE -')
+        clone_prefix = self.jira.application_properties(key='jira.lf.text.headingcolour')
+        self.assertEqual(clone_prefix['value'], '#292929')
 
     def test_set_application_property(self):
-        prop = 'jira.clone.prefix'
-        self.jira.set_application_property(prop, 'TCLONE -')
-        self.assertEqual(self.jira.application_properties(key=prop)['value'], 'TCLONE -')
-        self.jira.set_application_property(prop, 'CLONE -')
-        self.assertEqual(self.jira.application_properties(key=prop)['value'], 'CLONE -')
+        prop = 'jira.lf.favicon.hires.url'
+        self.jira.set_application_property(prop, '/Tjira-favicon-hires.png')
+        self.assertEqual(self.jira.application_properties(key=prop)['value'], '/Tjira-favicon-hires.png')
+        self.jira.set_application_property(prop, '/jira-favicon-hires.png')
+        self.assertEqual(self.jira.application_properties(key=prop)['value'], '/jira-favicon-hires.png')
 
     def test_setting_bad_property_raises(self):
         prop = 'random.nonexistent.property'
@@ -970,6 +970,7 @@ class IssueTests(unittest.TestCase):
         self.assertEqual(issue.fields.timetracking.remainingEstimate, rem_estimate)
 
 
+#All working
 class IssueLinkTests(unittest.TestCase):
 
     def setUp(self):
@@ -998,6 +999,7 @@ class IssueLinkTests(unittest.TestCase):
     #    pass
 
 
+#All working
 class IssueLinkTypeTests(unittest.TestCase):
 
     def setUp(self):
@@ -1207,6 +1209,7 @@ class ProjectTests(unittest.TestCase):
         self.assertEqual(role.actors[0].name, 'fred')
 
 
+#All working
 class ResolutionTests(unittest.TestCase):
 
     def setUp(self):
@@ -1268,6 +1271,7 @@ class SecurityLevelTests(unittest.TestCase):
         self.assertEqual(sec_level.name, 'eee')
 
 
+#All working
 class ServerInfoTests(unittest.TestCase):
 
     def setUp(self):
@@ -1279,6 +1283,7 @@ class ServerInfoTests(unittest.TestCase):
         self.assertIn('version', server_info)
 
 
+#All working
 class StatusTests(unittest.TestCase):
 
     def setUp(self):
@@ -1499,6 +1504,7 @@ class VersionTests(unittest.TestCase):
         self.assertEqual(self.jira.version_count_unresolved_issues('10004'), 4)
 
 
+#All working
 class SessionTests(unittest.TestCase):
 
     def setUp(self):
