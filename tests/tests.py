@@ -350,7 +350,7 @@ class ApplicationPropertiesTests(unittest.TestCase):
         prop = 'random.nonexistent.property'
         self.assertRaises(JIRAError, self.jira.set_application_property, prop, '666')
 
-@unittest.skip("temporary disabled")
+#All working
 class AttachmentTests(unittest.TestCase):
 
     def setUp(self):
@@ -359,9 +359,9 @@ class AttachmentTests(unittest.TestCase):
         self.project_b = JiraTestManager().project_b
 
     def test_attachment(self):
-        attachment = self.jira.attachment('10030')
-        self.assertEqual(attachment.filename, 'AdditionalPylons.jpg')
-        self.assertEqual(attachment.size, 110787)
+        attachment = self.jira.attachment('10000')
+        self.assertEqual(attachment.filename, 'attachment_file')
+        self.assertEqual(attachment.size, 22)
 
     def test_attachment_meta(self):
         meta = self.jira.attachment_meta()
@@ -369,69 +369,68 @@ class AttachmentTests(unittest.TestCase):
         self.assertEqual(meta['uploadLimit'], 10485760)
 
     def test_add_attachment(self):
-        issue = self.jira.issue('BULK-3')
+        issue = self.jira.issue('ZTRAVISDEB-39')
         attach_count = len(issue.fields.attachment)
         attachment = self.jira.add_attachment(issue, open(TEST_ATTACH_PATH))
         self.assertIsNotNone(attachment)
-        self.assertEqual(len(self.jira.issue('%s-3' % self.project_a).fields.attachment), attach_count + 1)
+        self.assertEqual(len(self.jira.issue('ZTRAVISDEB-39').fields.attachment), attach_count + 1)
 
     def test_delete(self):
-        attach_count = len(self.jira.issue('BULK-3').fields.attachment)
-        attachment = self.jira.add_attachment('BULK-3', open(TEST_ATTACH_PATH))
-        self.assertEqual(len(self.jira.issue('BULK-3').fields.attachment), attach_count + 1)
+        attach_count = len(self.jira.issue('ZTRAVISDEB-39').fields.attachment)
+        attachment = self.jira.add_attachment('ZTRAVISDEB-39', open(TEST_ATTACH_PATH))
+        self.assertEqual(len(self.jira.issue('ZTRAVISDEB-39').fields.attachment), attach_count + 1)
         attachment.delete()
-        self.assertEqual(len(self.jira.issue('BULK-3').fields.attachment), attach_count)
+        self.assertEqual(len(self.jira.issue('ZTRAVISDEB-39').fields.attachment), attach_count)
 
-@unittest.skip("temporary disabled")
+#All working
 class ComponentTests(unittest.TestCase):
 
     def setUp(self):
         self.jira = JiraTestManager().jira_admin
 
     def test_component(self):
-        component = self.jira.component('10003')
-        self.assertEqual(component.name, 'Bacon')
+        component = self.jira.component('10001')
+        self.assertEqual(component.name, 'Test Suites')
 
     def test_create_component(self):
-        bulk_proj = self.jira.project('BULK')
-        component = self.jira.create_component('Test Component', bulk_proj, description='testing!!', leadUserName='fred',
-                                               assigneeType='PROJECT_LEAD', isAssigneeTypeValid=False)
-        self.assertEqual(component.name, 'Test Component')
-        self.assertEqual(component.description, 'testing!!')
-        self.assertEqual(component.lead.name, 'fred')
-        self.assertEqual(component.assigneeType, 'PROJECT_LEAD')
-        self.assertTrue(component.isAssigneeTypeValid)
+        bulk_proj = self.jira.project('ZTRAVISDEB')
+        component = self.jira.create_component('ZTRAVISDEB Test', bulk_proj, description='test!!',
+                                               assigneeType='COMPONENT_LEAD', isAssigneeTypeValid=False)
+        self.assertEqual(component.name, 'ZTRAVISDEB Test')
+        self.assertEqual(component.description, 'test!!')
+        self.assertEqual(component.assigneeType, 'COMPONENT_LEAD')
+        self.assertFalse(component.isAssigneeTypeValid)
         component.delete()
 
     def test_component_count_related_issues(self):
-        issue_count = self.jira.component_count_related_issues('10002')
-        self.assertEqual(issue_count, 9)
+        issue_count = self.jira.component_count_related_issues('10001')
+        self.assertEqual(issue_count, 6)
 
     def test_update(self):
-        component = self.jira.create_component('To be updated', 'BULK', description='stand by!', leadUserName='admin')
-        component.update(name='Updated!', description='It is done.', leadUserName='fred')
+        component = self.jira.create_component('To be updated', 'ZTRAVISDEB', description='stand by!', leadUserName='ci-admin')
+        component.update(name='Updated!', description='It is done.', leadUserName='ci-dmin')
         self.assertEqual(component.name, 'Updated!')
         self.assertEqual(component.description, 'It is done.')
-        self.assertEqual(component.lead.name, 'fred')
+        self.assertEqual(component.lead.name, 'ci-admin')
         component.delete()
 
     def test_delete(self):
-        component = self.jira.create_component('To be deleted', 'BULK', description='not long for this world')
+        component = self.jira.create_component('To be deleted', 'ZTRAVISDEB', description='not long for this world')
         id = component.id
         component.delete()
         self.assertRaises(JIRAError, self.jira.component, id)
 
-@unittest.skip("temporary disabled")
+#All working
 class CustomFieldOptionTests(unittest.TestCase):
 
     def setUp(self):
         self.jira = JiraTestManager().jira_admin
 
     def test_custom_field_option(self):
-        option = self.jira.custom_field_option('10010')
-        self.assertEqual(option.value, 'Mehemet')
+        option = self.jira.custom_field_option('10001')
+        self.assertEqual(option.value, 'To Do')
 
-@unittest.skip("temporary disabled")
+#All working
 class DashboardTests(unittest.TestCase):
 
     def setUp(self):
@@ -439,15 +438,15 @@ class DashboardTests(unittest.TestCase):
 
     def test_dashboards(self):
         dashboards = self.jira.dashboards()
-        self.assertEqual(len(dashboards), 3)
+        self.assertEqual(len(dashboards), 2)
 
     def test_dashboards_filter(self):
         dashboards = self.jira.dashboards(filter='my')
-        self.assertEqual(len(dashboards), 1)
-        self.assertEqual(dashboards[0].id, '10031')
+        self.assertEqual(len(dashboards), 2)
+        self.assertEqual(dashboards[0].id, '10101')
 
     def test_dashboards_startAt(self):
-        dashboards = self.jira.dashboards(startAt=2, maxResults=2)
+        dashboards = self.jira.dashboards(startAt=1, maxResults=1)
         self.assertEqual(len(dashboards), 1)
 
     def test_dashboards_maxResults(self):
@@ -455,9 +454,9 @@ class DashboardTests(unittest.TestCase):
         self.assertEqual(len(dashboards), 1)
 
     def test_dashboard(self):
-        dashboard = self.jira.dashboard('10031')
-        self.assertEqual(dashboard.id, '10031')
-        self.assertEqual(dashboard.name, 'Evil\'O\'Administrator\'s "Funny DB"')
+        dashboard = self.jira.dashboard('10101')
+        self.assertEqual(dashboard.id, '10101')
+        self.assertEqual(dashboard.name, 'Another test dashboard')
 
 @unittest.skip("temporary disabled")
 class FieldsTests(unittest.TestCase):
