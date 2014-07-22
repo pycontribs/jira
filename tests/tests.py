@@ -502,7 +502,7 @@ class GroupsTest(unittest.TestCase):
         self.assertEqual(groups['total'], 2)
 
 
-#All working
+#All working apart from 2 test
 class IssueTests(unittest.TestCase):
 
     def setUp(self):
@@ -1012,8 +1012,7 @@ class IssueLinkTypeTests(unittest.TestCase):
         self.assertEqual(link_type.id, '10002')
         self.assertEqual(link_type.name, 'Duplicate')
 
-
-@unittest.skip("temporary disabled")
+#All working
 class IssueTypesTests(unittest.TestCase):
 
     def setUp(self):
@@ -1021,40 +1020,38 @@ class IssueTypesTests(unittest.TestCase):
 
     def test_issue_types(self):
         types = self.jira.issue_types()
-        self.assertEqual(len(types), 12)
-        unq_issues = find_by_id(types, '6')
-        self.assertEqual(unq_issues.name, 'UNQ-ISSUES')
+        self.assertEqual(len(types), 8)
+        unq_issues = find_by_id(types, '10002')
+        self.assertEqual(unq_issues.name, 'Technical task')
 
     def test_issue_type(self):
         type = self.jira.issue_type('4')
         self.assertEqual(type.id, '4')
         self.assertEqual(type.name, 'Improvement')
 
-
-@unittest.skip("temporary disabled")
+#All working
 class MyPermissionsTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = JiraTestManager().jira_user()
+        self.jira = JiraTestManager().jira_normal
 
     def test_my_permissions(self):
         perms = self.jira.my_permissions()
-        self.assertEqual(len(perms['permissions']), 38)
+        self.assertEqual(len(perms['permissions']), 39)
 
     def test_my_permissions_by_project(self):
-        perms = self.jira.my_permissions(projectKey='BULK')
-        self.assertEqual(len(perms['permissions']), 38)
-        perms = self.jira.my_permissions(projectId='10031')
-        self.assertEqual(len(perms['permissions']), 38)
+        perms = self.jira.my_permissions(projectKey='ZTRAVISDEB')
+        self.assertEqual(len(perms['permissions']), 39)
+        perms = self.jira.my_permissions(projectId='10012')
+        self.assertEqual(len(perms['permissions']), 39)
 
     def test_my_permissions_by_issue(self):
-        perms = self.jira.my_permissions(issueKey='BLUK-7')
-        self.assertEqual(len(perms['permissions']), 38)
+        perms = self.jira.my_permissions(issueKey='ZTRAVISDEB-7')
+        self.assertEqual(len(perms['permissions']), 39)
         perms = self.jira.my_permissions(issueId='11021')
-        self.assertEqual(len(perms['permissions']), 38)
+        self.assertEqual(len(perms['permissions']), 39)
 
-
-@unittest.skip("temporary disabled")
+#All working
 class PrioritiesTests(unittest.TestCase):
 
     def setUp(self):
