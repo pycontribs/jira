@@ -502,6 +502,7 @@ class GroupsTest(unittest.TestCase):
         self.assertEqual(groups['total'], 2)
 
 
+#All working
 class IssueTests(unittest.TestCase):
 
     def setUp(self):
@@ -668,328 +669,300 @@ class IssueTests(unittest.TestCase):
         comment = self.jira.comment(issue, '10226')
         self.assertTrue(comment.body.startswith('first'))
 
-    @unittest.skip("temporary disabled")
     def test_add_comment(self):
-        comment = self.jira.add_comment('BULK-3', 'a test comment!',
+        comment = self.jira.add_comment('ZTRAVISDEB-3', 'a test comment!',
                                         visibility={'type': 'role', 'value': 'Administrators'})
         self.assertEqual(comment.body, 'a test comment!')
         self.assertEqual(comment.visibility.type, 'role')
         self.assertEqual(comment.visibility.value, 'Administrators')
 
-    @unittest.skip("temporary disabled")
     def test_add_comment_with_issue_obj(self):
-        issue = self.jira.issue('BULK-3')
-        comment = self.jira.add_comment(issue, 'a test comment!',
+        issue = self.jira.issue('ZTRAVISDEB-3')
+        comment = self.jira.add_comment(issue, 'a new test comment!',
                                         visibility={'type': 'role', 'value': 'Administrators'})
-        self.assertEqual(comment.body, 'a test comment!')
+        self.assertEqual(comment.body, 'a new test comment!')
         self.assertEqual(comment.visibility.type, 'role')
         self.assertEqual(comment.visibility.value, 'Administrators')
 
-    @unittest.skip("temporary disabled")
     def test_update_comment(self):
-        comment = self.jira.add_comment('BULK-3', 'updating soon!')
-        comment.update(body='updated now!', visibility={'type': 'role', 'value': 'Administrators'})
-        self.assertEqual(comment.body, 'updated now!')
+        comment = self.jira.add_comment('ZTRAVISDEB-3', 'updating soon!')
+        comment.update(body='updated!', visibility={'type': 'role', 'value': 'Administrators'})
+        self.assertEqual(comment.body, 'updated!')
         self.assertEqual(comment.visibility.type, 'role')
         self.assertEqual(comment.visibility.value, 'Administrators')
 
-    @unittest.skip("temporary disabled")
     def test_delete_comment(self):
-        comment = self.jira.add_comment('BULK-3', 'To be deleted!')
-        c_id = comment.id
+        c_len = len(self.jira.comments('ZTRAVISDEB-3'))
+        comment = self.jira.add_comment('ZTRAVISDEB-3', 'To be deleted!')
         comment.delete()
-        self.assertRaises(JIRAError, self.jira.comment, c_id, '')
+        self.assertEqual(len (self.jira.comments('ZTRAVISDEB-3')), c_len)
 
-    @unittest.skip("temporary disabled")
     def test_editmeta(self):
-        meta = self.jira.editmeta('BULK-1')
-        self.assertEqual(len(meta['fields']), 38)
-        self.assertTrue('customfield_10642' in meta['fields'])
-        self.assertTrue('customfield_10240' in meta['fields'])
+        meta = self.jira.editmeta('ZTRAVISDEB-1')
+        self.assertEqual(len(meta['fields']), 18)
+        self.assertTrue('customfield_10007' in meta['fields'])
+        self.assertTrue('customfield_10022' in meta['fields'])
 
-    @unittest.skip("temporary disabled")
     def test_editmeta_with_issue_obj(self):
-        issue = self.jira.issue('BULK-1')
+        issue = self.jira.issue('ZTRAVISDEB-1')
         meta = self.jira.editmeta(issue)
-        self.assertEqual(len(meta['fields']), 38)
-        self.assertTrue('customfield_10642' in meta['fields'])
-        self.assertTrue('customfield_10240' in meta['fields'])
+        self.assertEqual(len(meta['fields']), 18)
+        self.assertTrue('customfield_10022' in meta['fields'])
+        self.assertTrue('customfield_10007' in meta['fields'])
 
-    @unittest.skip("temporary disabled")
-    def test_remote_links(self):
-        links = self.jira.remote_links('QA-44')
-        self.assertEqual(len(links), 1)
-        links = self.jira.remote_links('BULK-1')
-        self.assertEqual(len(links), 0)
+#Nothing from remote link works
+#    def test_remote_links(self):
+#        self.jira.add_remote_link ('ZTRAVISDEB-3', globalId='python-test:story.of.horse.riding',
+#        links = self.jira.remote_links('QA-44')
+#        self.assertEqual(len(links), 1)
+#        links = self.jira.remote_links('BULK-1')
+#        self.assertEqual(len(links), 0)
+#
+#    @unittest.skip("temporary disabled")
+#    def test_remote_links_with_issue_obj(self):
+#        issue = self.jira.issue('QA-44')
+#        links = self.jira.remote_links(issue)
+#        self.assertEqual(len(links), 1)
+#        issue = self.jira.issue('BULK-1')
+#        links = self.jira.remote_links(issue)
+#        self.assertEqual(len(links), 0)
+#
+#    @unittest.skip("temporary disabled")
+#    def test_remote_link(self):
+#        link = self.jira.remote_link('QA-44', '10000')
+#        self.assertEqual(link.id, 10000)
+#        self.assertTrue(hasattr(link, 'globalId'))
+#        self.assertTrue(hasattr(link, 'relationship'))
+#
+#    @unittest.skip("temporary disabled")
+#    def test_remote_link_with_issue_obj(self):
+#        issue = self.jira.issue('QA-44')
+#        link = self.jira.remote_link(issue, '10000')
+#        self.assertEqual(link.id, 10000)
+#        self.assertTrue(hasattr(link, 'globalId'))
+#        self.assertTrue(hasattr(link, 'relationship'))
+#
+#    @unittest.skip("temporary disabled")
+#    def test_add_remote_link(self):
+#        link = self.jira.add_remote_link('BULK-3', globalId='python-test:story.of.horse.riding',
+#                                         object={'url': 'http://google.com', 'title': 'googlicious!'},
+#                                         application={'name': 'far too silly', 'type': 'sketch'}, relationship='mousebending')
+#        # creation response doesn't include full remote link info, so we fetch it again using the new internal ID
+#        link = self.jira.remote_link('BULK-3', link.id)
+#        self.assertEqual(link.application.name, 'far too silly')
+#        self.assertEqual(link.application.type, 'sketch')
+#        self.assertEqual(link.object.url, 'http://google.com')
+#        self.assertEqual(link.object.title, 'googlicious!')
+#        self.assertEqual(link.relationship, 'mousebending')
+#        self.assertEqual(link.globalId, 'python-test:story.of.horse.riding')
+#
+#    @unittest.skip("temporary disabled")
+#    def test_add_remote_link_with_issue_obj(self):
+#        issue = self.jira.issue('BULK-3')
+#        link = self.jira.add_remote_link(issue, globalId='python-test:story.of.horse.riding',
+#                                         object={'url': 'http://google.com', 'title': 'googlicious!'},
+#                                         application={'name': 'far too silly', 'type': 'sketch'}, relationship='mousebending')
+#        # creation response doesn't include full remote link info, so we fetch it again using the new internal ID
+#        link = self.jira.remote_link(issue, link.id)
+#        self.assertEqual(link.application.name, 'far too silly')
+#        self.assertEqual(link.application.type, 'sketch')
+#        self.assertEqual(link.object.url, 'http://google.com')
+#        self.assertEqual(link.object.title, 'googlicious!')
+#        self.assertEqual(link.relationship, 'mousebending')
+#        self.assertEqual(link.globalId, 'python-test:story.of.horse.riding')
+#
+#    @unittest.skip("temporary disabled")
+#    def test_update_remote_link(self):
+#        link = self.jira.add_remote_link('BULK-3', globalId='python-test:story.of.horse.riding',
+#                                         object={'url': 'http://google.com', 'title': 'googlicious!'},
+#                                         application={'name': 'far too silly', 'type': 'sketch'}, relationship='mousebending')
+#        # creation response doesn't include full remote link info, so we fetch it again using the new internal ID
+#        link = self.jira.remote_link('BULK-3', link.id)
+#        link.update(object={'url': 'http://yahoo.com', 'title': 'yahooery'}, globalId='python-test:updated.id',
+#                    relationship='cheesing')
+#        self.assertEqual(link.globalId, 'python-test:updated.id')
+#        self.assertEqual(link.relationship, 'cheesing')
+#        self.assertEqual(link.object.url, 'http://yahoo.com')
+#        self.assertEqual(link.object.title, 'yahooery')
+#        link.delete()
+#
+#    @unittest.skip("temporary disabled")
+#    def test_delete_remove_link(self):
+#        link = self.jira.add_remote_link('BULK-3', globalId='python-test:story.of.horse.riding',
+#                                         object={'url': 'http://google.com', 'title': 'googlicious!'},
+#                                         application={'name': 'far too silly', 'type': 'sketch'}, relationship='mousebending')
+#        _id = link.id
+#        link.delete()
+#        self.assertRaises(JIRAError, self.jira.remote_link, 'BULK-3', _id)
 
-    @unittest.skip("temporary disabled")
-    def test_remote_links_with_issue_obj(self):
-        issue = self.jira.issue('QA-44')
-        links = self.jira.remote_links(issue)
-        self.assertEqual(len(links), 1)
-        issue = self.jira.issue('BULK-1')
-        links = self.jira.remote_links(issue)
-        self.assertEqual(len(links), 0)
-
-    @unittest.skip("temporary disabled")
-    def test_remote_link(self):
-        link = self.jira.remote_link('QA-44', '10000')
-        self.assertEqual(link.id, 10000)
-        self.assertTrue(hasattr(link, 'globalId'))
-        self.assertTrue(hasattr(link, 'relationship'))
-
-    @unittest.skip("temporary disabled")
-    def test_remote_link_with_issue_obj(self):
-        issue = self.jira.issue('QA-44')
-        link = self.jira.remote_link(issue, '10000')
-        self.assertEqual(link.id, 10000)
-        self.assertTrue(hasattr(link, 'globalId'))
-        self.assertTrue(hasattr(link, 'relationship'))
-
-    @unittest.skip("temporary disabled")
-    def test_add_remote_link(self):
-        link = self.jira.add_remote_link('BULK-3', globalId='python-test:story.of.horse.riding',
-                                         object={'url': 'http://google.com', 'title': 'googlicious!'},
-                                         application={'name': 'far too silly', 'type': 'sketch'}, relationship='mousebending')
-        # creation response doesn't include full remote link info, so we fetch it again using the new internal ID
-        link = self.jira.remote_link('BULK-3', link.id)
-        self.assertEqual(link.application.name, 'far too silly')
-        self.assertEqual(link.application.type, 'sketch')
-        self.assertEqual(link.object.url, 'http://google.com')
-        self.assertEqual(link.object.title, 'googlicious!')
-        self.assertEqual(link.relationship, 'mousebending')
-        self.assertEqual(link.globalId, 'python-test:story.of.horse.riding')
-
-    @unittest.skip("temporary disabled")
-    def test_add_remote_link_with_issue_obj(self):
-        issue = self.jira.issue('BULK-3')
-        link = self.jira.add_remote_link(issue, globalId='python-test:story.of.horse.riding',
-                                         object={'url': 'http://google.com', 'title': 'googlicious!'},
-                                         application={'name': 'far too silly', 'type': 'sketch'}, relationship='mousebending')
-        # creation response doesn't include full remote link info, so we fetch it again using the new internal ID
-        link = self.jira.remote_link(issue, link.id)
-        self.assertEqual(link.application.name, 'far too silly')
-        self.assertEqual(link.application.type, 'sketch')
-        self.assertEqual(link.object.url, 'http://google.com')
-        self.assertEqual(link.object.title, 'googlicious!')
-        self.assertEqual(link.relationship, 'mousebending')
-        self.assertEqual(link.globalId, 'python-test:story.of.horse.riding')
-
-    @unittest.skip("temporary disabled")
-    def test_update_remote_link(self):
-        link = self.jira.add_remote_link('BULK-3', globalId='python-test:story.of.horse.riding',
-                                         object={'url': 'http://google.com', 'title': 'googlicious!'},
-                                         application={'name': 'far too silly', 'type': 'sketch'}, relationship='mousebending')
-        # creation response doesn't include full remote link info, so we fetch it again using the new internal ID
-        link = self.jira.remote_link('BULK-3', link.id)
-        link.update(object={'url': 'http://yahoo.com', 'title': 'yahooery'}, globalId='python-test:updated.id',
-                    relationship='cheesing')
-        self.assertEqual(link.globalId, 'python-test:updated.id')
-        self.assertEqual(link.relationship, 'cheesing')
-        self.assertEqual(link.object.url, 'http://yahoo.com')
-        self.assertEqual(link.object.title, 'yahooery')
-        link.delete()
-
-    @unittest.skip("temporary disabled")
-    def test_delete_remove_link(self):
-        link = self.jira.add_remote_link('BULK-3', globalId='python-test:story.of.horse.riding',
-                                         object={'url': 'http://google.com', 'title': 'googlicious!'},
-                                         application={'name': 'far too silly', 'type': 'sketch'}, relationship='mousebending')
-        _id = link.id
-        link.delete()
-        self.assertRaises(JIRAError, self.jira.remote_link, 'BULK-3', _id)
-
-    @unittest.skip("temporary disabled")
     def test_transitions(self):
-        transitions = self.jira.transitions('BULK-2')
-        self.assertEqual(len(transitions), 2)
+        transitions = self.jira.transitions('ZTRAVISDEB-2')
+        self.assertEqual(len(transitions), 3)
 
-    @unittest.skip("temporary disabled")
     def test_transitions_with_issue_obj(self):
-        issue = self.jira.issue('BULK-2')
+        issue = self.jira.issue('ZTRAVISDEB-2')
         transitions = self.jira.transitions(issue)
-        self.assertEqual(len(transitions), 2)
+        self.assertEqual(len(transitions), 3)
 
-    @unittest.skip("temporary disabled")
     def test_transition(self):
-        transition = self.jira.transitions('BULK-2', '701')
-        self.assertEqual(transition[0]['name'], 'Close Issue')
+        transition = self.jira.transitions('ZTRAVISDEB-2', '5')
+        self.assertEqual(transition[0]['name'], 'Resolve Issue')
 
-    @unittest.skip("temporary disabled")
     def test_transition_expand(self):
-        transition = self.jira.transitions('BULK-2', '701', expand=('transitions.fields'))
+        transition = self.jira.transitions('ZTRAVISDEB-2', '5', expand=('transitions.fields'))
         self.assertTrue('fields' in transition[0])
 
-    @unittest.skip("temporary disabled")
     def test_transition_issue_with_fieldargs(self):
-        issue = self.jira.create_issue(project={'key': 'BULK'}, summary='Test issue for transition created',
-                                       description='blahery', issuetype={'name': 'Bug'}, customfield_10540={'key': 'XSS'})
-        self.jira.transition_issue(issue.key, '2', assignee={'name': 'fred'})
+        issue = self.jira.create_issue(project={'key': 'ZTRAVISDEB'}, summary='Test issue for transition created',
+                                       description='blahery', issuetype={'name': 'Bug'}, customfield_10022='XSS')
+        self.jira.transition_issue(issue.key, '2', assignee={'name': 'ci-admin'})
         issue = self.jira.issue(issue.key)
-        self.assertEqual(issue.fields.assignee.name, 'fred')
-        self.assertEqual(issue.fields.status.id, '6')    # issue now 'Closed'
+        self.assertEqual(issue.fields.assignee.name, 'ci-admin')
+        self.assertEqual(issue.fields.status.id, '6')    # issue 'Closed'
 
-    @unittest.skip("temporary disabled")
     def test_transition_issue_obj_with_fieldargs(self):
-        issue = self.jira.create_issue(project={'key': 'BULK'}, summary='Test issue for transition created',
-                                       description='blahery', issuetype={'name': 'Bug'}, customfield_10540={'key': 'XSS'})
-        self.jira.transition_issue(issue, '2', assignee={'name': 'fred'})
+        issue = self.jira.create_issue(project={'key': 'ZTRAVISDEB'}, summary='Test issue for transition created',
+                                       description='blahery', issuetype={'name': 'Bug'}, customfield_10022='XSS')
+        self.jira.transition_issue(issue, '2', assignee={'name': 'ci-admin'})
         issue = self.jira.issue(issue.key)
-        self.assertEqual(issue.fields.assignee.name, 'fred')
-        self.assertEqual(issue.fields.status.id, '6')    # issue now 'Closed'
+        self.assertEqual(issue.fields.assignee.name, 'ci-admin')
+        self.assertEqual(issue.fields.status.id, '6') 
 
-    @unittest.skip("temporary disabled")
     def test_transition_issue_with_fielddict(self):
-        issue = self.jira.create_issue(project={'key': 'BULK'}, summary='Test issue for transition created',
-                                       description='blahery', issuetype={'name': 'Bug'}, customfield_10540={'key': 'XSS'})
+        issue = self.jira.create_issue(project={'key': 'ZTRAVISDEB'}, summary='Test issue for transition created',
+                                       description='blahery', issuetype={'name': 'Bug'}, customfield_10022='XSS')
         fields = {
             'assignee': {
-                'name': 'fred'
+                'name': 'ci-admin'
             }
         }
         self.jira.transition_issue(issue.key, '5', fields=fields)
         issue = self.jira.issue(issue.key)
-        self.assertEqual(issue.fields.assignee.name, 'fred')
-        self.assertEqual(issue.fields.status.id, '5')    # issue now 'Resolved'
+        self.assertEqual(issue.fields.assignee.name, 'ci-admin')
+        self.assertEqual(issue.fields.status.id, '5')
 
-    @unittest.skip("temporary disabled")
     def test_votes(self):
-        votes = self.jira.votes('BULK-1')
-        self.assertEqual(votes.votes, 5)
-
-    @unittest.skip('test data doesn\'t support voting')
-    def test_votes_with_issue_obj(self):
-        issue = self.jira.issue('BULK-1')
-        votes = self.jira.votes(issue)
-        self.assertEqual(votes.votes, 5)
-
-    @unittest.skip('test data doesn\'t support voting')
-    def test_add_vote(self):
-        votes = self.jira.votes('QA-44')
-        self.assertEqual(votes.votes, 0)
-        self.jira.add_vote('QA-44')
-        votes = self.jira.votes('QA-44')
+        votes = self.jira.votes('ZTRAVISDEB-1')
         self.assertEqual(votes.votes, 1)
 
-    @unittest.skip('test data doesn\'t support voting')
+    def test_votes_with_issue_obj(self):
+        issue = self.jira.issue('ZTRAVISDEB-1')
+        votes = self.jira.votes(issue)
+        self.assertEqual(votes.votes, 1)
+
+    def test_add_vote(self):
+        votes = self.jira.votes('ZTRAVISCGB-172')
+        self.assertEqual(votes.votes, 0)
+        self.jira.add_vote('ZTRAVISCGB-172')
+        votes = self.jira.votes('ZTRAVISCGB-172')
+        self.assertEqual(votes.votes, 1)
+        self.jira.remove_vote('ZTRAVISCGB-172')
+
     def test_add_vote_with_issue_obj(self):
-        issue = self.jira.issue('QA-44')
+        issue = self.jira.issue('ZTRAVISCGB-172')
         votes = self.jira.votes(issue)
         self.assertEqual(votes.votes, 0)
         self.jira.add_vote(issue)
         votes = self.jira.votes(issue)
         self.assertEqual(votes.votes, 1)
 
-    @unittest.skip('test data doesn\'t support voting')
     def test_remove_vote(self):
-        votes = self.jira.votes('QA-44')
+        votes = self.jira.votes('ZTRAVISCGB-172')
         self.assertEqual(votes.votes, 1)
-        self.jira.remove_vote('QA-44')
-        votes = self.jira.votes('QA-44')
+        self.jira.remove_vote('ZTRAVISCGB-172')
+        votes = self.jira.votes('ZTRAVISCGB-172')
         self.assertEqual(votes.votes, 0)
+        self.jira.add_vote('ZTRAVISCGB-172')
 
-    @unittest.skip('test data doesn\'t support voting')
-    def test_remove_vote(self):
-        issue = self.jira.issue('QA-44')
+    def test_remove_vote_with_issue_obj(self):
+        issue = self.jira.issue('ZTRAVISCGB-172')
         votes = self.jira.votes(issue)
         self.assertEqual(votes.votes, 1)
         self.jira.remove_vote(issue)
         votes = self.jira.votes(issue)
         self.assertEqual(votes.votes, 0)
 
-    @unittest.skip('test data doesn\'t support watching')
     def test_watchers(self):
-        watchers = self.jira.watchers('BULK-1')
-        self.assertEqual(watchers.watchCount, 18)
+        watchers = self.jira.watchers('ZTRAVISCGB-172')
+        self.assertEqual(watchers.watchCount, 1)
 
-    @unittest.skip('test data doesn\'t support watching')
     def test_watchers_with_issue_obj(self):
-        issue = self.jira.issue('BULK-1')
+        issue = self.jira.issue('ZTRAVISCGB-172')
         watchers = self.jira.watchers(issue)
-        self.assertEqual(watchers.watchCount, 18)
+        self.assertEqual(watchers.watchCount, 1)
 
-    @unittest.skip('test data doesn\'t support watching')
     def test_add_watcher(self):
-        self.assertEqual(self.jira.watchers('QA-44').watchCount, 0)
-        self.jira.add_watcher('QA-44', 'fred')
-        self.assertEqual(self.jira.watchers('QA-44').watchCount, 1)
+        self.assertEqual(self.jira.watchers('ZTRAVISCGB-172').watchCount, 1)
+        self.jira.add_watcher('ZTRAVISCGB-172', 'ci-admin')
+        self.assertEqual(self.jira.watchers('ZTRAVISCGB-172').watchCount, 2)
+        self.jira.remove_watcher('ZTRAVISCGB-172', 'ci-admin')
 
-    @unittest.skip('test data doesn\'t support watching')
     def test_remove_watcher(self):
-        self.assertEqual(self.jira.watchers('QA-44').watchCount, 1)
-        self.jira.remove_watcher('QA-44', 'fred')
-        self.assertEqual(self.jira.watchers('QA-44').watchCount, 0)
+        self.assertEqual(self.jira.watchers('ZTRAVISCGB-172').watchCount, 2)
+        self.jira.remove_watcher('ZTRAVISCGB-172', 'ci-admin')
+        self.assertEqual(self.jira.watchers('ZTRAVISCGB-172').watchCount, 1)
+        self.jira.add_watcher('ZTRAVISCGB-172', 'ci-admin')
 
-    @unittest.skip('test data doesn\'t support watching')
     def test_add_watcher_with_issue_obj(self):
-        issue = self.jira.issue('QA-44')
-        self.assertEqual(self.jira.watchers(issue).watchCount, 0)
-        self.jira.add_watcher(issue, 'fred')
+        issue = self.jira.issue('ZTRAVISCGB-172')
         self.assertEqual(self.jira.watchers(issue).watchCount, 1)
+        self.jira.add_watcher(issue, 'ci-admin')
+        self.assertEqual(self.jira.watchers(issue).watchCount, 2)
 
-    @unittest.skip('test data doesn\'t support watching')
     def test_remove_watcher_with_issue_obj(self):
-        issue = self.jira.issue('QA-44')
+        issue = self.jira.issue('ZTRAVISCGB-172')
+        self.assertEqual(self.jira.watchers(issue).watchCount, 2)
+        self.jira.remove_watcher(issue, 'ci-admin')
         self.assertEqual(self.jira.watchers(issue).watchCount, 1)
-        self.jira.remove_watcher(issue, 'fred')
-        self.assertEqual(self.jira.watchers(issue).watchCount, 0)
 
-    @unittest.skip('test data doesn\'t support voting')
     def test_worklogs(self):
-        worklogs = self.jira.worklogs('BULK-1')
-        self.assertEqual(len(worklogs), 6)
+        worklogs = self.jira.worklogs('ZTRAVISCGB-1')
+        self.assertEqual(len(worklogs), 3)
 
-    @unittest.skip('test data doesn\'t support voting')
     def test_worklogs_with_issue_obj(self):
-        issue = self.jira.issue('BULK-1')
+        issue = self.jira.issue('ZTRAVISCGB-1')
         worklogs = self.jira.worklogs(issue)
-        self.assertEqual(len(worklogs), 6)
+        self.assertEqual(len(worklogs), 3)
 
-    @unittest.skip('test data doesn\'t support voting')
     def test_worklog(self):
-        worklog = self.jira.worklog('BULK-1', '10045')
-        self.assertEqual(worklog.author.name, 'admin')
-        self.assertEqual(worklog.timeSpent, '4d')
+        worklog = self.jira.worklog('ZTRAVISCGB-1', '10002')
+        self.assertEqual(worklog.author.name, 'ci-admin')
+        self.assertEqual(worklog.timeSpent, '1d 2h')
 
-    @unittest.skip('test data doesn\'t support voting')
     def test_worklog_with_issue_obj(self):
-        issue = self.jira.issue('BULK-1')
-        worklog = self.jira.worklog(issue, '10045')
-        self.assertEqual(worklog.author.name, 'admin')
-        self.assertEqual(worklog.timeSpent, '4d')
+        issue = self.jira.issue('ZTRAVISCGB-1')
+        worklog = self.jira.worklog(issue, '10002')
+        self.assertEqual(worklog.author.name, 'ci-admin')
+        self.assertEqual(worklog.timeSpent, '1d 2h')
 
-    @unittest.skip('test data doesn\'t support voting')
     def test_add_worklog(self):
-        worklog_count = len(self.jira.worklogs('BULK-2'))
-        worklog = self.jira.add_worklog('BULK-2', '2h')
+        worklog_count = len(self.jira.worklogs('ZTRAVISDEB-2'))
+        worklog = self.jira.add_worklog('ZTRAVISDEB-2', '2h')
         self.assertIsNotNone(worklog)
-        self.assertEqual(len(self.jira.worklogs('BULK-2')), worklog_count + 1)
+        self.assertEqual(len(self.jira.worklogs('ZTRAVISDEB-2')), worklog_count + 1)
         worklog.delete()
 
-    @unittest.skip('test data doesn\'t support voting')
     def test_add_worklog_with_issue_obj(self):
-        issue = self.jira.issue('BULK-2')
+        issue = self.jira.issue('ZTRAVISDEB-2')
         worklog_count = len(self.jira.worklogs(issue))
         worklog = self.jira.add_worklog(issue, '2h')
         self.assertIsNotNone(worklog)
         self.assertEqual(len(self.jira.worklogs(issue)), worklog_count + 1)
         worklog.delete()
 
-    @unittest.skip('test data doesn\'t support voting')
     def test_update_worklog(self):
-        worklog = self.jira.add_worklog('BULK-2', '3h')
-        worklog.update(comment='Updated comment!', timeSpent='1h')
-        self.assertEqual(worklog.comment, 'Updated comment!')
-        self.assertEqual(worklog.timeSpent, '1h')
+        worklog = self.jira.add_worklog('ZTRAVISDEB-2', '3h')
+        worklog.update(comment='Updated!', timeSpent='2h')
+        self.assertEqual(worklog.comment, 'Updated!')
+        self.assertEqual(worklog.timeSpent, '2h')
         worklog.delete()
 
-    @unittest.skip('test data doesn\'t support voting')
     def test_delete_worklog(self):
-        issue = self.jira.issue('BULK-2', fields='worklog,timetracking')
+        issue = self.jira.issue('ZTRAVISDEB-2', fields='worklog,timetracking')
         rem_estimate = issue.fields.timetracking.remainingEstimate
-        worklog = self.jira.add_worklog('BULK-2', '4h')
+        worklog = self.jira.add_worklog('ZTRAVISDEB-2', '4h')
         worklog.delete()
-        issue = self.jira.issue('BULK-2', fields='worklog,timetracking')
+        issue = self.jira.issue('ZTRAVISDEB-2', fields='worklog,timetracking')
         self.assertEqual(issue.fields.timetracking.remainingEstimate, rem_estimate)
 
 
