@@ -1218,28 +1218,28 @@ class ResolutionTests(unittest.TestCase):
         self.assertEqual(resolution.name, 'Won\'t Fix')
 
 
-@unittest.skip("temporary disabled")
+#All working apart from test_search_issues_expandos
 class SearchTests(unittest.TestCase):
 
     def setUp(self):
         self.jira = JiraTestManager().jira_admin
 
     def test_search_issues(self):
-        issues = self.jira.search_issues('project=BULK')
+        issues = self.jira.search_issues('project=ZTRAVISDEB')
         self.assertEqual(len(issues), 50)  # default maxResults
         for issue in issues:
-            self.assertTrue(issue.key.startswith('BULK'))
+            self.assertTrue(issue.key.startswith('ZTRAVISDEB'))
 
     def test_search_issues_maxResults(self):
-        issues = self.jira.search_issues('project=XSS', maxResults=10)
+        issues = self.jira.search_issues('project=ZTRAVISDEB', maxResults=10)
         self.assertEqual(len(issues), 10)
 
     def test_search_issues_startAt(self):
-        issues = self.jira.search_issues('project=BULK', startAt=90, maxResults=500)
-        self.assertGreaterEqual(len(issues), 12)  # all but 12 issues in BULK
+        issues = self.jira.search_issues('project=ZTRAVISDEB', startAt=70, maxResults=500)
+        self.assertGreaterEqual(len(issues), 10) 
 
     def test_search_issues_field_limiting(self):
-        issues = self.jira.search_issues('key=BULK-1', fields='summary,comment')
+        issues = self.jira.search_issues('key=ZTRAVISDEB-1', fields='summary,comment')
         self.assertTrue(hasattr(issues[0].fields, 'summary'))
         self.assertTrue(hasattr(issues[0].fields, 'comment'))
         self.assertFalse(hasattr(issues[0].fields, 'reporter'))
@@ -1295,70 +1295,64 @@ class StatusTests(unittest.TestCase):
         self.assertEqual(status.id, '1')
         self.assertEqual(status.name, 'Open')
 
-@unittest.skip("temporary disabled")
-class UserTests(unittest.TestCase):
+#All working apart from 2 little methods
 
     def setUp(self):
         self.jira = JiraTestManager().jira_admin
 
     def test_user(self):
-        user = self.jira.user('fred')
-        self.assertEqual(user.name, 'fred')
-        self.assertEqual(user.emailAddress, 'fred@example.com')
+        user = self.jira.user('ci-admin')
+        self.assertEqual(user.name, 'ci-admin')
+        self.assertEqual(user.emailAddress, 'noreply@example.com')
 
     def test_search_assignable_users_for_projects(self):
-        users = self.jira.search_assignable_users_for_projects('fred', 'BULK,XSS')
-        self.assertEqual(len(users), 3)
+        users = self.jira.search_assignable_users_for_projects('ci-admin', 'ZTRAVISCGB,ZTRAVISDEB')
+        self.assertEqual(len(users), 1)
         usernames = map(lambda user: user.name, users)
-        self.assertIn('fred', usernames)
-        self.assertIn('fred2', usernames)
-        self.assertIn('fred&george', usernames)
+        self.assertIn('ci-admin', usernames)
 
     def test_search_assignable_users_for_projects_maxResults(self):
-        users = self.jira.search_assignable_users_for_projects('fred', 'BULK,XSS', maxResults=1)
+        users = self.jira.search_assignable_users_for_projects('ci-admin', 'ZTRAVISDEB,ZTRAVISCGB', maxResults=1)
         self.assertEqual(len(users), 1)
 
     def test_search_assignable_users_for_projects_startAt(self):
-        users = self.jira.search_assignable_users_for_projects('fred', 'BULK,XSS', startAt=1)
-        self.assertEqual(len(users), 2)
+        users = self.jira.search_assignable_users_for_projects('ci-admin', 'ZTRAVISCGB,ZTRAVISDEB', startAt=1)
+        self.assertEqual(len(users), 0)
 
     def test_search_assignable_users_for_issues_by_project(self):
-        users = self.jira.search_assignable_users_for_issues('b', project='DMN')
-        self.assertEqual(len(users), 2)
+        users = self.jira.search_assignable_users_for_issues('ci-admin', project='ZZA')
+        self.assertEqual(len(users), 1)
         usernames = map(lambda user: user.name, users)
-        self.assertIn('admin', usernames)
-        self.assertIn('aaa', usernames)
+        self.assertIn('ci-admin', usernames)
 
     def test_search_assignable_users_for_issues_by_project_maxResults(self):
-        users = self.jira.search_assignable_users_for_issues('b', project='DMN', maxResults=1)
-        self.assertEqual(len(users), 1)
+        users = self.jira.search_assignable_users_for_issues('ci-user', project='ZZA', maxResults=1)
+        self.assertEqual(len(users), 0)
 
     def test_search_assignable_users_for_issues_by_project_startAt(self):
-        users = self.jira.search_assignable_users_for_issues('b', project='DMN', startAt=1)
-        self.assertEqual(len(users), 1)
+        users = self.jira.search_assignable_users_for_issues('ci-user', project='ZZA', startAt=1)
+        self.assertEqual(len(users), 0)
 
     def test_search_assignable_users_for_issues_by_issue(self):
-        users = self.jira.search_assignable_users_for_issues('b', issueKey='BULK-1')
-        self.assertEqual(len(users), 4)
+        users = self.jira.search_assignable_users_for_issues('ci-admin', issueKey='ZTRAVISDEB-1')
+        self.assertEqual(len(users), 1)
         usernames = map(lambda user: user.name, users)
-        self.assertIn('admin', usernames)
-        self.assertIn('aaa', usernames)
-        self.assertIn('hamish', usernames)
-        self.assertIn('veenu', usernames)
+        self.assertIn('ci-admin', usernames)
 
     def test_search_assignable_users_for_issues_by_issue_maxResults(self):
-        users = self.jira.search_assignable_users_for_issues('b', issueKey='BULK-1', maxResults=2)
-        self.assertEqual(len(users), 2)
+        users = self.jira.search_assignable_users_for_issues('ci-admin', issueKey='ZTRAVISDEB-1', maxResults=2)
+        self.assertEqual(len(users), 1)
 
     def test_search_assignable_users_for_issues_by_issue_startAt(self):
-        users = self.jira.search_assignable_users_for_issues('b', issueKey='BULK-1', startAt=2)
-        self.assertEqual(len(users), 2)
+        users = self.jira.search_assignable_users_for_issues('ci-admin', issueKey='ZTRAVISDEB-1', startAt=2)
+        self.assertEqual(len(users), 0)
 
     def test_user_avatars(self):
-        avatars = self.jira.user_avatars('fred')
+        avatars = self.jira.user_avatars('ci-admin')
         self.assertEqual(len(avatars['system']), 24)
         self.assertEqual(len(avatars['custom']), 0)
 
+    @unittest.skip("disable until I have permissions to write/modify")
     def test_create_user_avatar(self):
         # Tests the end-to-end user avatar creation process: upload as temporary, confirm after cropping,
         # and selection.
@@ -1386,51 +1380,52 @@ class UserTests(unittest.TestCase):
             else:
                 raise Exception
 
-        self.jira.set_user_avatar('fred', '10070')
-        avatars = self.jira.user_avatars('fred')
-        self.assertEqual(find_selected_avatar(avatars)['id'], '10070')
+        self.jira.set_user_avatar('ci-admin', '10104')
+        avatars = self.jira.user_avatars('ci-admin')
+        self.assertEqual(find_selected_avatar(avatars)['id'], '10104')
 
-        self.jira.set_user_avatar('fred', '10071')
-        avatars = self.jira.user_avatars('fred')
-        self.assertEqual(find_selected_avatar(avatars)['id'], '10071')
+        self.jira.set_user_avatar('ci-admin', '10105')
+        avatars = self.jira.user_avatars('ci-admin')
+        self.assertEqual(find_selected_avatar(avatars)['id'], '10105')
 
+    @unittest.skip("disable until I have permissions to write/modify")
     def test_delete_user_avatar(self):
         size = os.path.getsize(TEST_ICON_PATH)
         filename = os.path.basename(TEST_ICON_PATH)
         with open(TEST_ICON_PATH, "rb") as icon:
-            props = self.jira.create_temp_user_avatar('admin', filename, size, icon.read(), auto_confirm=True)
-        self.jira.delete_user_avatar('admin', props['id'])
+            props = self.jira.create_temp_user_avatar('ci-admin', filename, size, icon.read())
+        print (props)
+        self.jira.delete_user_avatar('ci-admin', props['id'])
 
     def test_search_users(self):
-        users = self.jira.search_users('f')
-        self.assertEqual(len(users), 3)
+        users = self.jira.search_users('c')
+        self.assertEqual(len(users), 2)
         usernames = map(lambda user: user.name, users)
-        self.assertIn('fred&george', usernames)
-        self.assertIn('fred', usernames)
-        self.assertIn('fred2', usernames)
+        self.assertIn('ci-user', usernames)
+        self.assertIn('ci-admin', usernames)
 
     def test_search_users_maxResults(self):
-        users = self.jira.search_users('f', maxResults=2)
-        self.assertEqual(len(users), 2)
+        users = self.jira.search_users('c', maxResults=1)
+        self.assertEqual(len(users), 1)
 
     def test_search_users_startAt(self):
-        users = self.jira.search_users('f', startAt=2)
+        users = self.jira.search_users('c', startAt=1)
         self.assertEqual(len(users), 1)
 
     def test_search_allowed_users_for_issue_by_project(self):
-        users = self.jira.search_allowed_users_for_issue('w', projectKey='EVL')
-        self.assertEqual(len(users), 5)
+        users = self.jira.search_allowed_users_for_issue('a', projectKey='ZZA')
+        self.assertEqual(len(users), 3)
 
     def test_search_allowed_users_for_issue_by_issue(self):
-        users = self.jira.search_allowed_users_for_issue('b', issueKey='BULK-1')
-        self.assertEqual(len(users), 4)
+        users = self.jira.search_allowed_users_for_issue('a', issueKey='ZZA-1')
+        self.assertEqual(len(users), 3)
 
     def test_search_allowed_users_for_issue_maxResults(self):
-        users = self.jira.search_allowed_users_for_issue('w', projectKey='EVL', maxResults=2)
+        users = self.jira.search_allowed_users_for_issue('a', projectKey='ZZA', maxResults=2)
         self.assertEqual(len(users), 2)
 
     def test_search_allowed_users_for_issue_startAt(self):
-        users = self.jira.search_allowed_users_for_issue('w', projectKey='EVL', startAt=4)
+        users = self.jira.search_allowed_users_for_issue('c', projectKey='ZZA', startAt=1)
         self.assertEqual(len(users), 1)
 
 
