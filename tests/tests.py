@@ -1296,6 +1296,7 @@ class StatusTests(unittest.TestCase):
         self.assertEqual(status.name, 'Open')
 
 #All working apart from 2 little methods
+class UserTests(unittest.TestCase):
 
     def setUp(self):
         self.jira = JiraTestManager().jira_admin
@@ -1428,68 +1429,63 @@ class StatusTests(unittest.TestCase):
         users = self.jira.search_allowed_users_for_issue('c', projectKey='ZZA', startAt=1)
         self.assertEqual(len(users), 1)
 
-
-@unittest.skip("temporary disabled")
+#All working
 class VersionTests(unittest.TestCase):
 
     def setUp(self):
         self.jira = JiraTestManager().jira_admin
 
     def test_create_version(self):
-        version = self.jira.create_version('new version 1', 'BULK', releaseDate='2013-03-11',
+        version = self.jira.create_version('new version 1', 'ZZB', releaseDate='2015-03-11',
                                            description='test version!')
         self.assertEqual(version.name, 'new version 1')
         self.assertEqual(version.description, 'test version!')
-        self.assertEqual(version.releaseDate, '2013-03-11')
+        self.assertEqual(version.releaseDate, '2015-03-11')
         version.delete()
 
     def test_create_version_with_project_obj(self):
-        project = self.jira.project('BULK')
-        version = self.jira.create_version('new version 1', project, releaseDate='2013-03-11',
+        project = self.jira.project('ZZB')
+        version = self.jira.create_version('new version 1', project, releaseDate='2015-03-11',
                                            description='test version!')
         self.assertEqual(version.name, 'new version 1')
         self.assertEqual(version.description, 'test version!')
-        self.assertEqual(version.releaseDate, '2013-03-11')
+        self.assertEqual(version.releaseDate, '2015-03-11')
         version.delete()
 
     def test_update(self):
-        version = self.jira.create_version('update version 1', 'BULK', releaseDate='2013-03-11',
-                                           description='to be updated!')
-        version.update(name='updated version name', description='updated!')
-        self.assertEqual(version.name, 'updated version name')
-        self.assertEqual(version.description, 'updated!')
+        version = self.jira.create_version('new updated version 1', 'ZZB', releaseDate='2015-03-11',
+                                           description='new to be updated!')
+        version.update(name='new updated version name 1', description='new updated!')
+        self.assertEqual(version.name, 'new updated version name 1')
+        self.assertEqual(version.description, 'new updated!')
         version.delete()
 
     def test_delete(self):
-        version = self.jira.create_version('To be deleted', 'BULK', releaseDate='2013-03-11',
+        version = self.jira.create_version('To be deleted', 'ZZB', releaseDate='2015-03-11',
                                            description='not long for this world')
         id = version.id
         version.delete()
         self.assertRaises(JIRAError, self.jira.version, id)
 
     def test_move_version(self):
-        self.jira.move_version('10004', after=self.jira._get_url('version/10011'))
-        self.jira.move_version('10004', position='Later')
-
         # trying to move a version in a different project should fail
-        self.assertRaises(JIRAError, self.jira.move_version, '10003', self.jira._get_url('version/10011'))
+        self.assertRaises(JIRAError, self.jira.move_version, '10006', self.jira._get_url('version/10001'))
 
     def test_version(self):
-        version = self.jira.version('10003')
-        self.assertEqual(version.id, '10003')
-        self.assertEqual(version.name, '2.0')
+        version = self.jira.version('10006')
+        self.assertEqual(version.id, '10006')
+        self.assertEqual(version.name, 'updated version name')
 
-    @unittest.skip('Versions don\'t seem to need expandos')
     def test_version_expandos(self):
         pass
 
     def test_version_count_related_issues(self):
-        counts = self.jira.version_count_related_issues('10003')
-        self.assertEqual(counts['issuesFixedCount'], 1)
-        self.assertEqual(counts['issuesAffectedCount'], 1)
+        counts = self.jira.version_count_related_issues('10000')
+        self.assertEqual(counts['issuesFixedCount'], 0)
+        self.assertEqual(counts['issuesAffectedCount'], 0)
 
     def test_version_count_unresolved_issues(self):
-        self.assertEqual(self.jira.version_count_unresolved_issues('10004'), 4)
+        self.assertEqual(self.jira.version_count_unresolved_issues('10006'), 0)
 
 
 #All working
