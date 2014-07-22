@@ -1067,7 +1067,7 @@ class PrioritiesTests(unittest.TestCase):
         self.assertEqual(priority.name, 'Critical')
 
 
-@unittest.skip("temporary disabled")
+#All working
 class ProjectTests(unittest.TestCase):
 
     def setUp(self):
@@ -1075,28 +1075,28 @@ class ProjectTests(unittest.TestCase):
 
     def test_projects(self):
         projects = self.jira.projects()
-        self.assertEqual(len(projects), 12)
+        self.assertEqual(len(projects), 21)
 
     def test_project(self):
-        project = self.jira.project('BOOK')
-        self.assertEqual(project.id, '10540')
-        self.assertEqual(project.name, 'Book Request')
+        project = self.jira.project('ZZA')
+        self.assertEqual(project.id, '10002')
+        self.assertEqual(project.name, 'ZZA')
 
     def test_project_avatars(self):
-        avatars = self.jira.project_avatars('BULK')
-        self.assertEqual(len(avatars['custom']), 1)
-        self.assertEqual(len(avatars['system']), 12)
+        avatars = self.jira.project_avatars('ZZA')
+        self.assertEqual(len(avatars['custom']), 0)
+        self.assertEqual(len(avatars['system']), 16)
 
     def test_project_avatars_with_project_obj(self):
-        project = self.jira.project('BULK')
+        project = self.jira.project('ZZA')
         avatars = self.jira.project_avatars(project)
-        self.assertEqual(len(avatars['custom']), 1)
-        self.assertEqual(len(avatars['system']), 12)
+        self.assertEqual(len(avatars['custom']), 0)
+        self.assertEqual(len(avatars['system']), 16)
 
     def test_create_project_avatar(self):
         # Tests the end-to-end project avatar creation process: upload as temporary, confirm after cropping,
         # and selection.
-        project = self.jira.project('XSS')
+        project = self.jira.project('ZTRAVISDEB')
         size = os.path.getsize(TEST_ICON_PATH)
         filename = os.path.basename(TEST_ICON_PATH)
         with open(TEST_ICON_PATH, "rb") as icon:
@@ -1110,17 +1110,17 @@ class ProjectTests(unittest.TestCase):
         avatar_props = self.jira.confirm_project_avatar(project, props)
         self.assertIn('id', avatar_props)
 
-        self.jira.set_project_avatar('XSS', avatar_props['id'])
+        self.jira.set_project_avatar('ZTRAVISDEB', avatar_props['id'])
 
     def test_delete_project_avatar(self):
         size = os.path.getsize(TEST_ICON_PATH)
         filename = os.path.basename(TEST_ICON_PATH)
         with open(TEST_ICON_PATH, "rb") as icon:
-            props = self.jira.create_temp_project_avatar('XSS', filename, size, icon.read(), auto_confirm=True)
-        self.jira.delete_project_avatar('XSS', props['id'])
+            props = self.jira.create_temp_project_avatar('ZTRAVISDEB', filename, size, icon.read(), auto_confirm=True)
+        self.jira.delete_project_avatar('ZTRAVISDEB', props['id'])
 
     def test_delete_project_avatar_with_project_obj(self):
-        project = self.jira.project('XSS')
+        project = self.jira.project('ZTRAVISDEB')
         size = os.path.getsize(TEST_ICON_PATH)
         filename = os.path.basename(TEST_ICON_PATH)
         with open(TEST_ICON_PATH, "rb") as icon:
@@ -1135,71 +1135,71 @@ class ProjectTests(unittest.TestCase):
             else:
                 raise Exception
 
-        self.jira.set_project_avatar('XSS', '10000')
-        avatars = self.jira.project_avatars('XSS')
-        self.assertEqual(find_selected_avatar(avatars)['id'], '10000')
-
-        project = self.jira.project('XSS')
-        self.jira.set_project_avatar(project, '10001')
-        avatars = self.jira.project_avatars(project)
+        self.jira.set_project_avatar('ZTRAVISDEB', '10001')
+        avatars = self.jira.project_avatars('ZTRAVISDEB')
         self.assertEqual(find_selected_avatar(avatars)['id'], '10001')
 
+        project = self.jira.project('ZTRAVISDEB')
+        self.jira.set_project_avatar(project, '10208')
+        avatars = self.jira.project_avatars(project)
+        self.assertEqual(find_selected_avatar(avatars)['id'], '10208')
+
     def test_project_components(self):
-        components = self.jira.project_components('BULK')
-        self.assertGreaterEqual(len(components), 2)
-        bacon = find_by_id(components, '10003')
-        self.assertEqual(bacon.id, '10003')
-        self.assertEqual(bacon.name, 'Bacon')
+        components = self.jira.project_components('ZTRAVISDEB')
+        self.assertGreaterEqual(len(components), 3)
+        sample = find_by_id(components, '10000')
+        self.assertEqual(sample.id, '10000')
+        self.assertEqual(sample.name, 'Sample')
 
     def test_project_components_with_project_obj(self):
-        project = self.jira.project('BULK')
+        project = self.jira.project('ZTRAVISDEB')
         components = self.jira.project_components(project)
-        self.assertGreaterEqual(len(components), 2)
-        bacon = find_by_id(components, '10003')
-        self.assertEqual(bacon.id, '10003')
-        self.assertEqual(bacon.name, 'Bacon')
+        self.assertGreaterEqual(len(components), 3)
+        sample = find_by_id(components, '10000')
+        self.assertEqual(sample.id, '10000')
+        self.assertEqual(sample.name, 'Sample')
 
     def test_project_versions(self):
-        versions = self.jira.project_versions('BULK')
-        self.assertGreaterEqual(len(versions), 6)
-        love = find_by_id(versions, '10012')
-        self.assertEqual(love.id, '10012')
-        self.assertEqual(love.name, 'I love versions')
+        versions = self.jira.project_versions('ZTRAVISDEB')
+        self.assertGreaterEqual(len(versions), 2)
+        test = find_by_id(versions, '10001')
+        self.assertEqual(test.id, '10001')
+        self.assertEqual(test.name, 'Some other version')
 
     def test_project_versions_with_project_obj(self):
-        project = self.jira.project('BULK')
+        project = self.jira.project('ZTRAVISDEB')
         versions = self.jira.project_versions(project)
-        self.assertGreaterEqual(len(versions), 6)
-        love = find_by_id(versions, '10012')
-        self.assertEqual(love.id, '10012')
-        self.assertEqual(love.name, 'I love versions')
+        self.assertGreaterEqual(len(versions), 2)
+        test = find_by_id(versions, '10001')
+        self.assertEqual(test.id, '10001')
+        self.assertEqual(test.name, 'Some other version')
 
     def test_project_roles(self):
-        roles = self.jira.project_roles('XSS')
-        self.assertEqual(len(roles), 4)
+        roles = self.jira.project_roles('ZTRAVISDEB')
+        self.assertEqual(len(roles), 7)
         self.assertIn('Users', roles)
 
     def test_project_roles_with_project_obj(self):
-        project = self.jira.project('XSS')
+        project = self.jira.project('ZTRAVISDEB')
         roles = self.jira.project_roles(project)
-        self.assertEqual(len(roles), 4)
+        self.assertEqual(len(roles), 7)
         self.assertIn('Users', roles)
 
     def test_project_role(self):
-        role = self.jira.project_role('XSS', '10010')
-        self.assertEqual(role.id, 10010)
-        self.assertEqual(role.name, 'Doco Team')
+        role = self.jira.project_role('ZTRAVISDEB', '10103')
+        self.assertEqual(role.id, 10103)
+        self.assertEqual(role.name, 'atlassian-addons-project-access')
 
     def test_project_role_with_project_obj(self):
-        project = self.jira.project('XSS')
-        role = self.jira.project_role(project, '10010')
-        self.assertEqual(role.id, 10010)
-        self.assertEqual(role.name, 'Doco Team')
+        project = self.jira.project('ZTRAVISDEB')
+        role = self.jira.project_role(project, '10103')
+        self.assertEqual(role.id, 10103)
+        self.assertEqual(role.name, 'atlassian-addons-project-access')
 
     def test_update_project_role(self):
-        role = self.jira.project_role('XSS', '10010')
-        role.update(users='fred', groups=['jira-developers', 'jira-users'])
-        self.assertEqual(role.actors[0].name, 'fred')
+        role = self.jira.project_role('ZTRAVISDEB', '10103')
+        role.update(users='ci-admin', groups=['jira-developers', 'jira-users'])
+        self.assertEqual(role.actors[0].name, 'ci-admin')
 
 
 #All working
