@@ -1,9 +1,5 @@
 requests>=2.3.0
-requests_oauthlib>=0.3.3
 tlslite>=0.4.4
-sphinx
 six>=1.5.2
-xmlrunner>=1.7.3
 filemagic>=1.6
-ipython>=0.13
 setuptools>=0.8.0
