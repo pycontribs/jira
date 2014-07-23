@@ -26,10 +26,12 @@ if __name__ == "__main__":
 
         #os.system("python setup.py test")
 
-
-        cmds = ["pip install --user --upgrade -r requirements.txt",
-             "pip install --user --upgrade -r requirements-dev.txt",
-             "pip install --user --upgrade -r requirements-opt.txt || echo 'Warning: optional requirements install failed.'",
+        
+        #pip_cmd = "pip install --user --upgrade"
+        pip_cmd = "pip install --user"
+        cmds = ["%s -r requirements.txt" % pip_cmd,
+             "%s -r requirements-dev.txt" % pip_cmd,
+             "%s -r requirements-opt.txt || echo 'Warning: optional requirements install failed.'" % pip_cmd,
              "python -m autopep8 --ignore=E501 -i *.py jira/*.py examples/*.py",
              "python -m pep8 || echo 'WARNING: pep8 failed'",
              "python -m tox -e %s" % ",".join(detected_pys)]
