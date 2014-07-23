@@ -32,7 +32,7 @@ if __name__ == "__main__":
         cmds = ["%s -r requirements.txt" % pip_cmd,
              "%s -r requirements-dev.txt" % pip_cmd,
              "%s -r requirements-opt.txt || echo 'Warning: optional requirements install failed.'" % pip_cmd,
-             "python -m autopep8 --ignore=E501 -i *.py jira/*.py examples/*.py",
+             "python -m autopep8 --ignore=E501 -i *.py jira/*.py examples/*.py || echo 'Warning: autopep8 failed'",
              "python -m pep8 || echo 'WARNING: pep8 failed'",
              "python -m tox -e %s" % ",".join(detected_pys)]
         for cmd in cmds:
