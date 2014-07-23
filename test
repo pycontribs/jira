@@ -15,7 +15,7 @@ if __name__ == "__main__":
 
         # now we'll detect which python interpretors we have on this machine and run the tests for all of them
         #'python2.5':'py25',
-        known_pys = {  'python2.6':'py26', 'python2.7':'py27', 'python3.3':'py33' } # ,'python3':'py3', 'python3.2':'py32', 'python4':'py4'}
+        known_pys = {  'python2.6':'py26', 'python2.7':'py27', 'python3.3':'py33', 'python3.4':'py34' } # ,'python3':'py3', 'python3.2':'py32', 'python4':'py4'}
         #known_pys = { 'python2.7':'py27' } # ,'python3':'py3', 'python3.2':'py32', 'python4':'py4'}
 
         detected_pys = set()
@@ -28,7 +28,7 @@ if __name__ == "__main__":
 
         
         #pip_cmd = "pip install --user --upgrade"
-        pip_cmd = "pip install --user"
+        pip_cmd = "pip install --user --exists-action w"
         cmds = ["%s -r requirements.txt" % pip_cmd,
              "%s -r requirements-dev.txt" % pip_cmd,
              "%s -r requirements-opt.txt || echo 'Warning: optional requirements install failed.'" % pip_cmd,

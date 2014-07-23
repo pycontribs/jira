@@ -54,8 +54,9 @@ if 'pydevd' not in sys.modules:
         pass
 
 #encoding = sys.getdefaultencoding()
-#if encoding != 'UTF8':
+# if encoding != 'UTF8':
 #    warnings.warn("Python default encoding is '%s' instead of 'UTF8' which means that there is a big change of having problems. Possible workaround http://stackoverflow.com/a/17628350/99834" % encoding)
+
 
 def translate_resource_args(func):
     """
@@ -190,7 +191,7 @@ class JIRA(object):
     def __del__(self):
         # that is performing the logout by killing the session
         self.async_do()
-        #self.kill_session()
+        # self.kill_session()
 
     def _check_for_html_error(self, content):
         # TODO: Make it return errors when content is a webpage with errors
@@ -942,11 +943,11 @@ class JIRA(object):
             # based on REST Browser it needs: "2014-06-03T08:21:01.273+0000"
             data['started'] = started.strftime("%Y-%m-%dT%H:%M:%S.000%z")
         if user is not None:
-            data['author'] = { "name": user,
-                               'self': self.JIRA_BASE_URL + '/rest/api/2/user?username=' + user,
-                               'displayName': user,
-                               'active': False
-                               }
+            data['author'] = {"name": user,
+                              'self': self.JIRA_BASE_URL + '/rest/api/2/user?username=' + user,
+                              'displayName': user,
+                              'active': False
+                              }
             data['updateAuthor'] = data['author']
         # TODO: report bug to Atlassian: author and updateAuthor parameters are ignored.
         url = self._get_url('issue/{}/worklog'.format(issue))
@@ -1745,7 +1746,7 @@ class JIRA(object):
                 return mimetypes.guess_type("f." + imghdr.what(0, buff))[0]
             except (IOError, TypeError):
                 logging.warning("Couldn't detect content type of avatar image"
-                      ". Specify the 'contentType' parameter explicitly.")
+                                ". Specify the 'contentType' parameter explicitly.")
                 return None
 
     def email_user(self, user, body, title="JIRA Notification"):
@@ -1984,7 +1985,7 @@ class JIRA(object):
                    #'projectTemplateModuleKey': 'com.pyxis.greenhopper.jira:gh-kanban-template',
                    'lead': assignee,
                    #'assigneeType': '2',
-                    }
+                   }
 
         r = self._session.post(url, headers=self._options['headers'], data=payload)
         if r.status_code == 200:
