@@ -25,10 +25,8 @@ if __name__ == "__main__":
         detected_pys.add('docs')
 
         #os.system("python setup.py test")
-
-        
         #pip_cmd = "pip install --user --upgrade"
-        pip_cmd = "pip install --user --exists-action w"
+        pip_cmd = "pip install --user " # "--exists-action w" not existing everywhere
         cmds = ["%s -r requirements.txt" % pip_cmd,
              "%s -r requirements-dev.txt" % pip_cmd,
              "%s -r requirements-opt.txt || echo 'Warning: optional requirements install failed.'" % pip_cmd,
