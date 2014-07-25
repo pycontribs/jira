@@ -17,7 +17,7 @@ install:
 - pip install -r requirements-dev.txt
 script:
 - ./pretest
-- tox -e $TOX_ENV
+- travis_wait tox --skip-missing-interpreters -e $TOX_ENV
 branches:
   only:
   - master
