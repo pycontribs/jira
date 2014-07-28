@@ -278,7 +278,11 @@ def find_by_id(seq, id):
         if seq_item.id == id:
             return seq_item
 
-"""
+def find_by_name(seq, name):
+    for seq_item in seq:
+        if seq_item['name'] == name:
+            return seq_item
+
 class UniversalResourceTests(unittest.TestCase):
 
     def setUp(self):
@@ -303,7 +307,6 @@ class UniversalResourceTests(unittest.TestCase):
         self.assertEqual(ex.status_code, 404)
         self.assertIsNotNone(ex.text)
         self.assertEqual(ex.url, 'https://pycontribs.atlassian.net/rest/api/2/woopsydoodle/666')
-        print (self.test_manager.CI_JIRA_URL)
 
     def test_verify_works_with_https(self):
         self.jira = JIRA(options={'server': 'https://jira.atlassian.com'})
@@ -504,8 +507,6 @@ class FilterTests(unittest.TestCase):
         filter.delete()
         self.assertEqual(len(self.jira.favourite_filters()), initial_len)
 
-"""
-"""
 class GroupsTest(unittest.TestCase):
 
     def setUp(self):
@@ -513,16 +514,22 @@ class GroupsTest(unittest.TestCase):
 
     def test_groups(self):
         groups = self.jira.groups()
-        self.assertEqual(groups['total'], 11)
+        self.assertGreaterEqual(groups['total'], 0)
 
-    def test_groups_with_query(self):
+    def test_groups_for_users(self):
         groups = self.jira.groups('users')
-        self.assertEqual(groups['total'], 3)
+        self.assertIsNotNone(find_by_name(groups['groups'], 'users'))
 
     def test_groups_with_exclude(self):
-        groups = self.jira.groups('users', exclude='jira-users')
-        self.assertEqual(groups['total'], 2)
+        groups = self.jira.groups('users')
+        new_groups = self.jira.groups('users', exclude='users')
+        self.assertEqual(groups['total'] - 1, new_groups['total'])
 
+    def test_groups_for_jira(self):
+        groups = self.jira.groups('jira')
+        self.assertIsNotNone(find_by_name(groups['groups'], 'jira-users'))
+
+"""
 
 #All working apart from 2 test
 class IssueTests(unittest.TestCase):
