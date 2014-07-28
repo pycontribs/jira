@@ -333,7 +333,6 @@ class ResourceTests(unittest.TestCase):
 class ApplicationPropertiesTests(unittest.TestCase):
 
     def setUp(self):
-        # this user has jira-system-administrators membership
         self.jira = JiraTestManager().jira_admin
 
     def test_application_properties(self):
