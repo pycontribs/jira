@@ -272,6 +272,11 @@ def find_by_key(seq, key):
         if seq_item['key'] == key:
             return seq_item
 
+def find_by_key_value(seq, key):
+    for seq_item in seq:
+        if seq_item.key == key:
+            return seq_item
+
 
 def find_by_id(seq, id):
     for seq_item in seq:
@@ -529,45 +534,57 @@ class GroupsTest(unittest.TestCase):
         groups = self.jira.groups('jira')
         self.assertIsNotNone(find_by_name(groups['groups'], 'jira-users'))
 
-"""
-
-#All working apart from 2 test
 class IssueTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = JiraTestManager().jira_admin
+        self.test_manager = JiraTestManager()
+        self.jira = self.test_manager.jira_admin
+        self.jira_normal = self.test_manager.jira_normal
+        self.project_b = self.test_manager.project_b
+        self.project_a = self.test_manager.project_a
+        self.issue_1 = self.test_manager.project_b_issue1
+        self.issue_2 =  self.test_manager.project_b_issue2
+        self.issue_3 = self.test_manager.project_b_issue3
 
     def test_issue(self):
-        issue = self.jira.issue('ZTRAVISCGB-93')
-        self.assertEqual(issue.key, 'ZTRAVISCGB-93')
-        self.assertEqual(issue.fields.summary, 'issue 3 from ZTRAVISCGB')
+        issue = self.jira.issue(self.issue_1)
+        self.assertEqual(issue.key, self.issue_1)
+        self.assertEqual(issue.fields.summary, 'issue 1 from %s' %self.project_b)
 
     def test_issue_field_limiting(self):
-        issue = self.jira.issue('ZTRAVISCGB-92', fields='summary,comment')
-        self.assertEqual(issue.fields.summary, 'issue 2 from ZTRAVISCGB')
-        self.assertEqual(issue.fields.comment.total, 2)
+        issue = self.jira.issue(self.issue_2, fields='summary,comment')
+        self.assertEqual(issue.fields.summary, 'issue 2 from %s' %self.project_b)
+        comment1 = self.jira.add_comment(issue, 'First comment') 
+        comment2 = self.jira.add_comment(issue, 'Second comment') 
+        comment3 = self.jira.add_comment(issue, 'Third comment') 
+        new_issue = self.jira.issue(self.issue_2, fields = 'summary,comment')
+        self.assertEqual(new_issue.fields.comment.total, 3)
         self.assertFalse(hasattr(issue.fields, 'reporter'))
         self.assertFalse(hasattr(issue.fields, 'progress'))
-
+        comment1.delete()
+        comment2.delete()
+        comment3.delete()
+    
     def test_issue_expandos(self):
-        issue = self.jira.issue('ZTRAVISCGB-91', expand=('editmeta', 'schema'))
+        issue = self.jira.issue(self.issue_1, expand=('editmeta', 'schema'))
         self.assertTrue(hasattr(issue, 'editmeta'))
         self.assertTrue(hasattr(issue, 'schema'))
         self.assertFalse(hasattr(issue, 'changelog'))
 
     def test_create_issue_with_fieldargs(self):
-        issue = self.jira.create_issue(project={'key': 'ZTRAVISCGB'}, summary='Test issue created',
+        issue = self.jira.create_issue(project={'key': self.project_b}, summary='Test issue created',
                                        description='blahery', issuetype={'name': 'Bug'}, customfield_10022 = 'XSS')
         self.assertEqual(issue.fields.summary, 'Test issue created')
         self.assertEqual(issue.fields.description, 'blahery')
         self.assertEqual(issue.fields.issuetype.name, 'Bug')
-        self.assertEqual(issue.fields.project.key, 'ZTRAVISCGB')
+        self.assertEqual(issue.fields.project.key, self.project_b)
         self.assertEqual(issue.fields.customfield_10022, 'XSS')
+        issue.delete()
 
     def test_create_issue_with_fielddict(self):
         fields = {
             'project': {
-                'key': 'ZTRAVISCGB'
+                'key': self.project_b
             },
             'summary': 'Issue created from field dict',
             'description': "Some new issue for test",
@@ -583,30 +600,33 @@ class IssueTests(unittest.TestCase):
         self.assertEqual(issue.fields.summary, 'Issue created from field dict')
         self.assertEqual(issue.fields.description, "Some new issue for test")
         self.assertEqual(issue.fields.issuetype.name, 'Bug')
-        self.assertEqual(issue.fields.project.key, 'ZTRAVISCGB')
+        self.assertEqual(issue.fields.project.key, self.project_b)
         self.assertEqual(issue.fields.customfield_10022, 'XSS')
         self.assertEqual(issue.fields.priority.name, 'Major')
+        issue.delete()
 
     def test_create_issue_without_prefetch(self):
-        issue = self.jira.create_issue(prefetch=False, project={'key': 'ZTRAVISCGB'}, summary='Test issue created',
+        issue = self.jira.create_issue(prefetch=False, project={'key': self.project_b}, summary='Test issue created',
                                        description='blahery', issuetype={'name': 'Bug'}, customfield_10022='XSS')
         self.assertTrue(hasattr(issue, 'self'))
         self.assertFalse(hasattr(issue, 'fields'))
         self.assertFalse(hasattr(issue, 'customfield_10022'))
         self.assertTrue(hasattr(issue, 'raw'))
+        issue.delete()
 
     def test_update_with_fieldargs(self):
-        issue = self.jira.create_issue(project={'key': 'ZTRAVISCGB'}, summary='Test issue for updating',
+        issue = self.jira.create_issue(project={'key': self.project_b}, summary='Test issue for updating',
                                        description='Will be updated shortly', issuetype={'name': 'Bug'}, customfield_10022='XSS')
         issue.update(summary='Updated summary', description='Now updated', issuetype={'name': 'Improvement'})
         self.assertEqual(issue.fields.summary, 'Updated summary')
         self.assertEqual(issue.fields.description, 'Now updated')
         self.assertEqual(issue.fields.issuetype.name, 'Improvement')
         self.assertEqual(issue.fields.customfield_10022, 'XSS')
-        self.assertEqual(issue.fields.project.key, 'ZTRAVISCGB')
+        self.assertEqual(issue.fields.project.key, self.project_b)
+        issue.delete()
 
     def test_update_with_fielddict(self):
-        issue = self.jira.create_issue(project={'key': 'ZTRAVISCGB'}, summary='Test issue for updating',
+        issue = self.jira.create_issue(project={'key': self.project_b}, summary='Test issue for updating',
                 description='Will be updated shortly', issuetype={'name': 'Bug'}, customfield_10022='XSS')
         fields = {
             'summary': 'Issue is updated',
@@ -625,9 +645,10 @@ class IssueTests(unittest.TestCase):
         self.assertEqual(issue.fields.issuetype.name, 'Improvement')
         self.assertEqual(issue.fields.customfield_10022, 'DOC')
         self.assertEqual(issue.fields.priority.name, 'Major')
+        issue.delete()
 
     def test_delete(self):
-        issue = self.jira.create_issue(project={'key': 'ZTRAVISCGB'}, summary='Test issue created',
+        issue = self.jira.create_issue(project={'key': self.project_b}, summary='Test issue created',
                                        description='Not long for this world', issuetype={'name': 'Bug'}, customfield_10022='XSS')
         key = issue.key
         issue.delete()
@@ -635,103 +656,144 @@ class IssueTests(unittest.TestCase):
 
     def test_createmeta(self):
         meta = self.jira.createmeta()
-        self.assertEqual(len(meta['projects']), 21)
-        ztravisdeb_proj = find_by_key(meta['projects'], 'ZTRAVISDEB')
+        ztravisdeb_proj = find_by_key(meta['projects'], self.project_b)
         self.assertEqual(len(ztravisdeb_proj['issuetypes']), 8)
 
     def test_createmeta_filter_by_projectkey_and_name(self):
-        meta = self.jira.createmeta(projectKeys='ZTRAVISCGB', issuetypeNames='Bug')
+        meta = self.jira.createmeta(projectKeys=self.project_b, issuetypeNames='Bug')
         self.assertEqual(len(meta['projects']), 1)
         self.assertEqual(len(meta['projects'][0]['issuetypes']), 1)
 
     def test_createmeta_filter_by_projectkeys_and_name(self):
-        meta = self.jira.createmeta(projectKeys=('ZTRAVISCGB', 'ZTRAVISDEB'), issuetypeNames='Improvement')
+        meta = self.jira.createmeta(projectKeys=(self.project_a, self.project_b), issuetypeNames='Improvement')
         self.assertEqual(len(meta['projects']), 2)
         for project in meta['projects']:
             self.assertEqual(len(project['issuetypes']), 1)
 
     def test_createmeta_filter_by_id(self):
-        meta = self.jira.createmeta(projectIds=('10012', '10019'), issuetypeIds=('3', '4', '5'))
+        projects = self.jira.projects()
+        proja = find_by_key_value(projects, self.project_a)
+        projb = find_by_key_value(projects, self.project_b)
+        meta = self.jira.createmeta(projectIds=(proja.id, projb.id), issuetypeIds=('3', '4', '5'))
         self.assertEqual(len(meta['projects']), 2)
         for project in meta['projects']:
             self.assertEqual(len(project['issuetypes']), 3)
 
     def test_createmeta_expando(self):
         # limit to SCR project so the call returns promptly
-        meta = self.jira.createmeta(projectKeys='ZTRAVISDEB', expand='projects.issuetypes.fields')
+        meta = self.jira.createmeta(projectKeys=self.project_b, expand='projects.issuetypes.fields')
         self.assertTrue('fields' in meta['projects'][0]['issuetypes'][0])
 
     def test_assign_issue(self):
-        self.assertIsNone(self.jira.assign_issue('ZTRAVISDEB-40', 'ci-admin'))
-        self.assertEqual(self.jira.issue('ZTRAVISDEB-40').fields.assignee.name, 'ci-admin')
-        self.assertIsNone(self.jira.assign_issue('ZTRAVISDEB-41', 'ci-admin'))
-        self.assertEqual(self.jira.issue('ZTRAVISDEB-41').fields.assignee.name, 'ci-admin')
+        self.assertIsNone(self.jira.assign_issue(self.issue_1, 'ci-admin'))
+        self.assertEqual(self.jira.issue(self.issue_1).fields.assignee.name, 'ci-admin')
 
     def test_assign_issue_with_issue_obj(self):
-        issue = self.jira.issue('ZTRAVISDEB-41')
+        issue = self.jira.issue(self.issue_1)
         self.assertIsNone(self.jira.assign_issue(issue, 'ci-admin'))
-        self.assertEqual(self.jira.issue('ZTRAVISDEB-41').fields.assignee.name, 'ci-admin')
+        self.assertEqual(self.jira.issue(self.issue_1).fields.assignee.name, 'ci-admin')
 
     def test_assign_to_bad_issue_raises(self):
         self.assertRaises(JIRAError, self.jira.assign_issue, 'NOPE-1', 'notauser')
-
+    
     def test_comments(self):
-        comments = self.jira.comments('ZTRAVISCGB-1')
-        self.assertGreaterEqual(len(comments), 4)
-        comments = self.jira.comments('ZTRAVISCGB-2')
-        self.assertGreaterEqual(len(comments), 3)
+        issue = self.jira.issue(self.issue_1)
+        comment1 = self.jira.add_comment(self.issue_1, 'First comment') 
+        comment2 = self.jira.add_comment(self.issue_1, 'Second comment') 
+        comment3 = self.jira.add_comment(self.issue_1, 'Third comment') 
+        comment4 = self.jira.add_comment(self.issue_1, 'Fourth comment') 
+        comments = self.jira.comments(self.issue_1)
+        self.assertEqual(len(comments), 4)
+        comment1.delete()
+        comment2.delete()
+        comment3.delete()
+        comment4.delete()
+        issue = self.jira.issue(self.issue_2)
+        comment1 = self.jira.add_comment(self.issue_2, 'First comment') 
+        comment2 = self.jira.add_comment(self.issue_2, 'Second comment') 
+        comment3 = self.jira.add_comment(self.issue_2, 'Third comment') 
+        comments = self.jira.comments(self.issue_2)
+        self.assertEqual(len(comments), 3)
+        comment1.delete()
+        comment2.delete()
+        comment3.delete()
 
     def test_comments_with_issue_obj(self):
-        issue = self.jira.issue('ZTRAVISCGB-1')
-        self.assertGreaterEqual(len(self.jira.comments(issue)), 4)
-        issue = self.jira.issue('ZTRAVISCGB-2')
-        self.assertGreaterEqual(len(self.jira.comments(issue)), 3)
+        issue = self.jira.issue(self.issue_1)
+        comment1 = self.jira.add_comment(issue, 'First comment') 
+        comment2 = self.jira.add_comment(issue, 'Second comment') 
+        comment3 = self.jira.add_comment(issue, 'Third comment') 
+        comment4 = self.jira.add_comment(issue, 'Fourth comment') 
+        new_issue = self.jira.issue(self.issue_1)
+        comments = self.jira.comments(new_issue)
+        self.assertEqual(len(comments), 4)
+        comment1.delete()
+        comment2.delete()
+        comment3.delete()
+        comment4.delete()
+        issue = self.jira.issue(self.issue_2)
+        comment1 = self.jira.add_comment(issue, 'First comment') 
+        comment2 = self.jira.add_comment(issue, 'Second comment') 
+        comment3 = self.jira.add_comment(issue, 'Third comment') 
+        new_issue = self.jira.issue(self.issue_2)
+        comments = self.jira.comments(new_issue)
+        self.assertEqual(len(comments), 3)
+        comment1.delete()
+        comment2.delete()
+        comment3.delete()
 
     def test_comment(self):
-        comment = self.jira.comment('ZTRAVISCGB-1', '10226')
-        self.assertTrue(comment.body.startswith('first'))
+        comment = self.jira.add_comment(self.issue_1, 'just another test commnet')
+        new_comment = self.jira.comment(self.issue_1, str(comment))
+        self.assertTrue(new_comment.body.startswith('just another'))
+        comment.delete()
 
     def test_comment_with_issue_obj(self):
-        issue = self.jira.issue('ZTRAVISCGB-1')
-        comment = self.jira.comment(issue, '10226')
-        self.assertTrue(comment.body.startswith('first'))
+        comment = self.jira.add_comment(self.issue_2, 'just another test commnet')
+        issue = self.jira.issue(self.issue_2)
+        new_comment = self.jira.comment(issue, str(comment))
+        self.assertTrue(comment.body.startswith('just ano'))
+        comment.delete()
 
     def test_add_comment(self):
-        comment = self.jira.add_comment('ZTRAVISDEB-3', 'a test comment!',
+        comment = self.jira.add_comment(self.issue_3, 'a test comment!',
                                         visibility={'type': 'role', 'value': 'Administrators'})
         self.assertEqual(comment.body, 'a test comment!')
         self.assertEqual(comment.visibility.type, 'role')
         self.assertEqual(comment.visibility.value, 'Administrators')
+        comment.delete()
 
     def test_add_comment_with_issue_obj(self):
-        issue = self.jira.issue('ZTRAVISDEB-3')
+        issue = self.jira.issue(self.issue_3)
         comment = self.jira.add_comment(issue, 'a new test comment!',
                                         visibility={'type': 'role', 'value': 'Administrators'})
         self.assertEqual(comment.body, 'a new test comment!')
         self.assertEqual(comment.visibility.type, 'role')
         self.assertEqual(comment.visibility.value, 'Administrators')
+        comment.delete()
 
     def test_update_comment(self):
-        comment = self.jira.add_comment('ZTRAVISDEB-3', 'updating soon!')
+        comment = self.jira.add_comment(self.issue_3, 'updating soon!')
         comment.update(body='updated!', visibility={'type': 'role', 'value': 'Administrators'})
         self.assertEqual(comment.body, 'updated!')
         self.assertEqual(comment.visibility.type, 'role')
         self.assertEqual(comment.visibility.value, 'Administrators')
+        comment.delete()
 
     def test_delete_comment(self):
-        c_len = len(self.jira.comments('ZTRAVISDEB-3'))
-        comment = self.jira.add_comment('ZTRAVISDEB-3', 'To be deleted!')
+        c_len = len(self.jira.comments(self.issue_3))
+        comment = self.jira.add_comment(self.issue_3, 'To be deleted!')
         comment.delete()
-        self.assertEqual(len (self.jira.comments('ZTRAVISDEB-3')), c_len)
+        self.assertEqual(len (self.jira.comments(self.issue_3)), c_len)
 
     def test_editmeta(self):
-        meta = self.jira.editmeta('ZTRAVISDEB-1')
+        meta = self.jira.editmeta(self.issue_1)
         self.assertEqual(len(meta['fields']), 18)
         self.assertTrue('customfield_10007' in meta['fields'])
         self.assertTrue('customfield_10022' in meta['fields'])
 
     def test_editmeta_with_issue_obj(self):
-        issue = self.jira.issue('ZTRAVISDEB-1')
+        issue = self.jira.issue(self.issue_2)
         meta = self.jira.editmeta(issue)
         self.assertEqual(len(meta['fields']), 18)
         self.assertTrue('customfield_10022' in meta['fields'])
@@ -823,24 +885,24 @@ class IssueTests(unittest.TestCase):
 #        self.assertRaises(JIRAError, self.jira.remote_link, 'BULK-3', _id)
 
     def test_transitions(self):
-        transitions = self.jira.transitions('ZTRAVISDEB-2')
+        transitions = self.jira.transitions(self.issue_2)
         self.assertEqual(len(transitions), 3)
 
     def test_transitions_with_issue_obj(self):
-        issue = self.jira.issue('ZTRAVISDEB-2')
+        issue = self.jira.issue(self.issue_2)
         transitions = self.jira.transitions(issue)
         self.assertEqual(len(transitions), 3)
 
     def test_transition(self):
-        transition = self.jira.transitions('ZTRAVISDEB-2', '5')
+        transition = self.jira.transitions(self.issue_2, '5')
         self.assertEqual(transition[0]['name'], 'Resolve Issue')
 
     def test_transition_expand(self):
-        transition = self.jira.transitions('ZTRAVISDEB-2', '5', expand=('transitions.fields'))
+        transition = self.jira.transitions(self.issue_2, '5', expand=('transitions.fields'))
         self.assertTrue('fields' in transition[0])
 
     def test_transition_issue_with_fieldargs(self):
-        issue = self.jira.create_issue(project={'key': 'ZTRAVISDEB'}, summary='Test issue for transition created',
+        issue = self.jira.create_issue(project={'key': self.project_b}, summary='Test issue for transition created',
                                        description='blahery', issuetype={'name': 'Bug'}, customfield_10022='XSS')
         self.jira.transition_issue(issue.key, '2', assignee={'name': 'ci-admin'})
         issue = self.jira.issue(issue.key)
@@ -848,7 +910,7 @@ class IssueTests(unittest.TestCase):
         self.assertEqual(issue.fields.status.id, '6')    # issue 'Closed'
 
     def test_transition_issue_obj_with_fieldargs(self):
-        issue = self.jira.create_issue(project={'key': 'ZTRAVISDEB'}, summary='Test issue for transition created',
+        issue = self.jira.create_issue(project={'key': self.project_b}, summary='Test issue for transition created',
                                        description='blahery', issuetype={'name': 'Bug'}, customfield_10022='XSS')
         self.jira.transition_issue(issue, '2', assignee={'name': 'ci-admin'})
         issue = self.jira.issue(issue.key)
@@ -856,7 +918,7 @@ class IssueTests(unittest.TestCase):
         self.assertEqual(issue.fields.status.id, '6') 
 
     def test_transition_issue_with_fielddict(self):
-        issue = self.jira.create_issue(project={'key': 'ZTRAVISDEB'}, summary='Test issue for transition created',
+        issue = self.jira.create_issue(project={'key': self.project_b}, summary='Test issue for transition created',
                                        description='blahery', issuetype={'name': 'Bug'}, customfield_10022='XSS')
         fields = {
             'assignee': {
@@ -869,108 +931,120 @@ class IssueTests(unittest.TestCase):
         self.assertEqual(issue.fields.status.id, '5')
 
     def test_votes(self):
-        votes = self.jira.votes('ZTRAVISDEB-1')
-        self.assertEqual(votes.votes, 1)
+        votes = self.jira.votes(self.issue_1)
+        self.assertEqual(votes.votes, 0)
 
     def test_votes_with_issue_obj(self):
-        issue = self.jira.issue('ZTRAVISDEB-1')
+        issue = self.jira.issue(self.issue_1)
         votes = self.jira.votes(issue)
-        self.assertEqual(votes.votes, 1)
+        self.assertEqual(votes.votes, 0)
 
     def test_add_vote(self):
-        votes = self.jira.votes('ZTRAVISCGB-172')
-        self.assertEqual(votes.votes, 0)
-        self.jira.add_vote('ZTRAVISCGB-172')
-        votes = self.jira.votes('ZTRAVISCGB-172')
-        self.assertEqual(votes.votes, 1)
-        self.jira.remove_vote('ZTRAVISCGB-172')
+        votes = self.jira.votes(self.issue_2)
+        init_len = votes.votes
+        self.jira_normal.add_vote(self.issue_2)
+        votes = self.jira.votes(self.issue_2)
+        self.assertEqual(votes.votes, init_len + 1)
+        self.jira_normal.remove_vote(self.issue_2)
 
     def test_add_vote_with_issue_obj(self):
-        issue = self.jira.issue('ZTRAVISCGB-172')
+        issue = self.jira.issue(self.issue_2)
         votes = self.jira.votes(issue)
-        self.assertEqual(votes.votes, 0)
-        self.jira.add_vote(issue)
+        init_len = votes.votes
+        self.jira_normal.add_vote(issue)
         votes = self.jira.votes(issue)
-        self.assertEqual(votes.votes, 1)
+        self.assertEqual(votes.votes, init_len + 1)
+        self.jira_normal.remove_vote(self.issue_2)
 
     def test_remove_vote(self):
+        self.jira_normal.add_vote(self.issue_2)
+        votes = self.jira.votes(self.issue_2)
+        init_len = votes.votes
+        self.jira_normal.remove_vote(self.issue_2)
         votes = self.jira.votes('ZTRAVISCGB-172')
-        self.assertEqual(votes.votes, 1)
-        self.jira.remove_vote('ZTRAVISCGB-172')
-        votes = self.jira.votes('ZTRAVISCGB-172')
-        self.assertEqual(votes.votes, 0)
-        self.jira.add_vote('ZTRAVISCGB-172')
+        self.assertEqual(votes.votes, init_len - 1)
 
     def test_remove_vote_with_issue_obj(self):
-        issue = self.jira.issue('ZTRAVISCGB-172')
+        self.jira_normal.add_vote(self.issue_2)
+        issue = self.jira.issue(self.issue_2)
         votes = self.jira.votes(issue)
-        self.assertEqual(votes.votes, 1)
-        self.jira.remove_vote(issue)
+        init_len = votes.votes
+        self.jira_normal.remove_vote(issue)
         votes = self.jira.votes(issue)
-        self.assertEqual(votes.votes, 0)
+        self.assertEqual(votes.votes, init_len - 1)
 
     def test_watchers(self):
-        watchers = self.jira.watchers('ZTRAVISCGB-172')
+        watchers = self.jira.watchers(self.issue_1)
         self.assertEqual(watchers.watchCount, 1)
 
     def test_watchers_with_issue_obj(self):
-        issue = self.jira.issue('ZTRAVISCGB-172')
+        issue = self.jira.issue(self.issue_1)
         watchers = self.jira.watchers(issue)
         self.assertEqual(watchers.watchCount, 1)
 
     def test_add_watcher(self):
-        self.assertEqual(self.jira.watchers('ZTRAVISCGB-172').watchCount, 1)
-        self.jira.add_watcher('ZTRAVISCGB-172', 'ci-admin')
-        self.assertEqual(self.jira.watchers('ZTRAVISCGB-172').watchCount, 2)
-        self.jira.remove_watcher('ZTRAVISCGB-172', 'ci-admin')
+        init_watchers = self.jira.watchers(self.issue_1).watchCount
+        self.jira.add_watcher(self.issue_1, 'ci-user')
+        self.assertEqual(self.jira.watchers(self.issue_1).watchCount, init_watchers + 1)
+        self.jira.remove_watcher(self.issue_1, 'ci-user')
 
     def test_remove_watcher(self):
-        self.assertEqual(self.jira.watchers('ZTRAVISCGB-172').watchCount, 2)
-        self.jira.remove_watcher('ZTRAVISCGB-172', 'ci-admin')
-        self.assertEqual(self.jira.watchers('ZTRAVISCGB-172').watchCount, 1)
-        self.jira.add_watcher('ZTRAVISCGB-172', 'ci-admin')
+        self.jira.add_watcher(self.issue_1, 'ci-user')
+        init_watchers = self.jira.watchers(self.issue_1).watchCount
+        self.jira.remove_watcher(self.issue_1, 'ci-user')
+        self.assertEqual(self.jira.watchers(self.issue_1).watchCount, init_watchers - 1)
 
     def test_add_watcher_with_issue_obj(self):
-        issue = self.jira.issue('ZTRAVISCGB-172')
-        self.assertEqual(self.jira.watchers(issue).watchCount, 1)
-        self.jira.add_watcher(issue, 'ci-admin')
-        self.assertEqual(self.jira.watchers(issue).watchCount, 2)
+        issue = self.jira.issue(self.issue_1)
+        init_watchers = self.jira.watchers(issue).watchCount
+        self.jira.add_watcher(issue, 'ci-user')
+        self.assertEqual(self.jira.watchers(issue).watchCount, init_watchers + 1)
+        self.jira.remove_watcher(issue, 'ci-user')
 
     def test_remove_watcher_with_issue_obj(self):
-        issue = self.jira.issue('ZTRAVISCGB-172')
-        self.assertEqual(self.jira.watchers(issue).watchCount, 2)
+        issue = self.jira.issue(self.issue_1)
+        self.jira.add_watcher(issue, 'ci-user')
+        init_watchers = self.jira.watchers(issue).watchCount
         self.jira.remove_watcher(issue, 'ci-admin')
-        self.assertEqual(self.jira.watchers(issue).watchCount, 1)
+        self.assertEqual(self.jira.watchers(issue).watchCount, init_watchers - 1)
 
     def test_worklogs(self):
-        worklogs = self.jira.worklogs('ZTRAVISCGB-1')
-        self.assertEqual(len(worklogs), 3)
+        worklog = self.jira.add_worklog(self.issue_1, '2h')
+        worklogs = self.jira.worklogs(self.issue_1)
+        self.assertEqual(len(worklogs), 1)
+        worklog.delete()
 
     def test_worklogs_with_issue_obj(self):
-        issue = self.jira.issue('ZTRAVISCGB-1')
+        issue = self.jira.issue(self.issue_1)
+        worklog = self.jira.add_worklog(issue, '2h')
         worklogs = self.jira.worklogs(issue)
-        self.assertEqual(len(worklogs), 3)
+        self.assertEqual(len(worklogs), 1)
+        worklog.delete()
 
     def test_worklog(self):
-        worklog = self.jira.worklog('ZTRAVISCGB-1', '10002')
-        self.assertEqual(worklog.author.name, 'ci-admin')
-        self.assertEqual(worklog.timeSpent, '1d 2h')
+        worklog = self.jira.add_worklog(self.issue_1, '1d 2h')
+        new_worklog = self.jira.worklog(self.issue_1, str(worklog))
+        self.assertEqual(new_worklog.author.name, 'ci-admin')
+        self.assertEqual(new_worklog.timeSpent, '1d 2h')
+        worklog.delete()
 
     def test_worklog_with_issue_obj(self):
-        issue = self.jira.issue('ZTRAVISCGB-1')
-        worklog = self.jira.worklog(issue, '10002')
-        self.assertEqual(worklog.author.name, 'ci-admin')
-        self.assertEqual(worklog.timeSpent, '1d 2h')
+        issue = self.jira.issue(self.issue_1)
+        worklog = self.jira.add_worklog(issue, '1d 2h')
+        new_worklog = self.jira.worklog(issue, str(worklog))
+        self.assertEqual(new_worklog.author.name, 'ci-admin')
+        self.assertEqual(new_worklog.timeSpent, '1d 2h')
+        worklog.delete()
 
     def test_add_worklog(self):
-        worklog_count = len(self.jira.worklogs('ZTRAVISDEB-2'))
-        worklog = self.jira.add_worklog('ZTRAVISDEB-2', '2h')
+        worklog_count = len(self.jira.worklogs(self.issue_2))
+        worklog = self.jira.add_worklog(self.issue_2, '2h')
         self.assertIsNotNone(worklog)
-        self.assertEqual(len(self.jira.worklogs('ZTRAVISDEB-2')), worklog_count + 1)
+        self.assertEqual(len(self.jira.worklogs(self.issue_2)), worklog_count + 1)
         worklog.delete()
 
     def test_add_worklog_with_issue_obj(self):
-        issue = self.jira.issue('ZTRAVISDEB-2')
+        issue = self.jira.issue(self.issue_2)
         worklog_count = len(self.jira.worklogs(issue))
         worklog = self.jira.add_worklog(issue, '2h')
         self.assertIsNotNone(worklog)
@@ -978,21 +1052,21 @@ class IssueTests(unittest.TestCase):
         worklog.delete()
 
     def test_update_worklog(self):
-        worklog = self.jira.add_worklog('ZTRAVISDEB-2', '3h')
+        worklog = self.jira.add_worklog(self.issue_3, '3h')
         worklog.update(comment='Updated!', timeSpent='2h')
         self.assertEqual(worklog.comment, 'Updated!')
         self.assertEqual(worklog.timeSpent, '2h')
         worklog.delete()
+#    def test_delete_worklog(self):
+#        issue = self.jira.issue('ZTRAVISDEB-2', fields='worklog,timetracking')
+#        rem_estimate = issue.fields.timetracking.remainingEstimate
+#        worklog = self.jira.add_worklog('ZTRAVISDEB-2', '4h')
+#        worklog.delete()
+#        issue = self.jira.issue('ZTRAVISDEB-2', fields='worklog,timetracking')
+#        self.assertEqual(issue.fields.timetracking.remainingEstimate, rem_estimate)
 
-    def test_delete_worklog(self):
-        issue = self.jira.issue('ZTRAVISDEB-2', fields='worklog,timetracking')
-        rem_estimate = issue.fields.timetracking.remainingEstimate
-        worklog = self.jira.add_worklog('ZTRAVISDEB-2', '4h')
-        worklog.delete()
-        issue = self.jira.issue('ZTRAVISDEB-2', fields='worklog,timetracking')
-        self.assertEqual(issue.fields.timetracking.remainingEstimate, rem_estimate)
 
-
+    """
 #All working
 class IssueLinkTests(unittest.TestCase):
 
