@@ -475,24 +475,37 @@ class FieldsTests(unittest.TestCase):
     def test_fields(self):
         fields = self.jira.fields()
         self.assertEqual(len(fields), 64)
-"""
 
 
-"""
 class FilterTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = JiraTestManager().jira_admin
+        self.test_manager = JiraTestManager()
+        self.jira = self.test_manager.jira_admin
+        self.project_b = self.test_manager.project_b
+        self.issue_1 = self.test_manager.project_b_issue1
+        self.issue_2 =  self.test_manager.project_b_issue2
 
     def test_filter(self):
-        filter = self.jira.filter('10100')
-        self.assertEqual(filter.name, 'Bugs in Test Suites')
+        jql = "project = %s and component is not empty" %self.project_b
+        filter = self.jira.create_filter(name = "Some test filter", description = "just some test filter",
+                jql = jql, favourite = False)
+        self.assertEqual(filter.name, 'Some test filter')
         self.assertEqual(filter.owner.name, 'ci-admin')
+        filter.delete()
 
     def test_favourite_filters(self):
         filters = self.jira.favourite_filters()
-        self.assertEqual(len(filters), 1)
+        initial_len = len(filters)
+        jql = "project = %s and component is not empty" %self.project_b
+        filter = self.jira.create_filter(name = "Some test filter", description = "just some test filter",
+                jql = jql, favourite = True)
+        self.assertEqual(len(self.jira.favourite_filters()), initial_len + 1)
+        filter.delete()
+        self.assertEqual(len(self.jira.favourite_filters()), initial_len)
 
+"""
+"""
 class GroupsTest(unittest.TestCase):
 
     def setUp(self):
