@@ -533,7 +533,7 @@ class GroupsTest(unittest.TestCase):
     def test_groups_for_jira(self):
         groups = self.jira.groups('jira')
         self.assertIsNotNone(find_by_name(groups['groups'], 'jira-users'))
-
+"""
 class IssueTests(unittest.TestCase):
 
     def setUp(self):
@@ -1066,7 +1066,6 @@ class IssueTests(unittest.TestCase):
 #        self.assertEqual(issue.fields.timetracking.remainingEstimate, rem_estimate)
 
 
-    """
 #All working
 class IssueLinkTests(unittest.TestCase):
 
