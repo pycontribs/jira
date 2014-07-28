@@ -1007,7 +1007,6 @@ class IssueTests(unittest.TestCase):
         self.jira.remove_watcher(issue, 'ci-admin')
         self.assertEqual(self.jira.watchers(issue).watchCount, init_watchers - 1)
 
-#add_worklog doesn't work in python2.6
 #    def test_worklogs(self):
 #        worklog = self.jira.add_worklog(self.issue_1, '2h')
 #        worklogs = self.jira.worklogs(self.issue_1)
