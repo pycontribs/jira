@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+from __future__ import print_function
 """
 This module implements the Resource classes that translate JSON from JIRA REST resources
 into usable objects.
 """
-from __future__ import print_function
 
 import re
 import sys
