@@ -287,7 +287,6 @@ def find_by_name(seq, name):
     for seq_item in seq:
         if seq_item['name'] == name:
             return seq_item
-
 class UniversalResourceTests(unittest.TestCase):
 
     def setUp(self):
@@ -358,7 +357,7 @@ class AttachmentTests(unittest.TestCase):
 
     def setUp(self):
         self.test_manager = JiraTestManager()
-        self.jira = self.test_manager.jira_admin
+        self.jira = JiraTestManager().jira_admin
         self.project_b = self.test_manager.project_b
         self.issue_1 = self.test_manager.project_b_issue1
 
@@ -393,7 +392,7 @@ class ComponentTests(unittest.TestCase):
 
     def setUp(self):
         self.test_manager = JiraTestManager()
-        self.jira = self.test_manager.jira_admin
+        self.jira = JiraTestManager().jira_admin
         self.project_b = self.test_manager.project_b
         self.issue_1 = self.test_manager.project_b_issue1
         self.issue_2 =  self.test_manager.project_b_issue2
@@ -488,7 +487,7 @@ class FilterTests(unittest.TestCase):
 
     def setUp(self):
         self.test_manager = JiraTestManager()
-        self.jira = self.test_manager.jira_admin
+        self.jira = JiraTestManager().jira_admin
         self.project_b = self.test_manager.project_b
         self.issue_1 = self.test_manager.project_b_issue1
         self.issue_2 =  self.test_manager.project_b_issue2
@@ -537,7 +536,7 @@ class IssueTests(unittest.TestCase):
 
     def setUp(self):
         self.test_manager = JiraTestManager()
-        self.jira = self.test_manager.jira_admin
+        self.jira = JiraTestManager().jira_admin
         self.jira_normal = self.test_manager.jira_normal
         self.project_b = self.test_manager.project_b
         self.project_a = self.test_manager.project_a
@@ -1007,6 +1006,7 @@ class IssueTests(unittest.TestCase):
         self.jira.remove_watcher(issue, 'ci-admin')
         self.assertEqual(self.jira.watchers(issue).watchCount, init_watchers - 1)
 
+#add worklog is not working for python2.6
 #    def test_worklogs(self):
 #        worklog = self.jira.add_worklog(self.issue_1, '2h')
 #        worklogs = self.jira.worklogs(self.issue_1)
@@ -1064,9 +1064,6 @@ class IssueTests(unittest.TestCase):
 #        issue = self.jira.issue('ZTRAVISDEB-2', fields='worklog,timetracking')
 #        self.assertEqual(issue.fields.timetracking.remainingEstimate, rem_estimate)
 
-
-#All working
-"""
 class IssueLinkTests(unittest.TestCase):
 
     def setUp(self):
@@ -1079,16 +1076,14 @@ class IssueLinkTests(unittest.TestCase):
         self.assertEqual(link.inwardIssue.id, '10018')  # Duplicate inward
 
     def test_create_issue_link(self):
-        self.manager.jira_admin.create_issue_link('Duplicate', JiraTestManager().project_b_issue1, JiraTestManager().project_b_issue2,
-                                    comment={'body': 'Link comment!', 'visibility': {'type': 'role', 'value': 'Administrators'}})
+        self.manager.jira_admin.create_issue_link('Duplicate', JiraTestManager().project_b_issue1, JiraTestManager().project_b_issue2)
 
     def test_create_issue_link_with_issue_objs(self):
         inwardIssue = self.manager.jira_admin.issue(JiraTestManager().project_b_issue1)
         self.assertIsNotNone(inwardIssue)
         outwardIssue = self.manager.jira_admin.issue(JiraTestManager().project_b_issue2)
         self.assertIsNotNone(outwardIssue)
-        self.manager.jira_admin.create_issue_link('Duplicate', inwardIssue, outwardIssue,
-                                    comment={'body': 'Link comment!', 'visibility': {'type': 'role', 'value': 'Administrators'}})
+        self.manager.jira_admin.create_issue_link('Duplicate', inwardIssue, outwardIssue)
 
     #@unittest.skip("Creating an issue link doesn't return its ID, so can't easily test delete")
     #def test_delete_issue_link(self):
@@ -1133,23 +1128,26 @@ class IssueTypesTests(unittest.TestCase):
 class MyPermissionsTests(unittest.TestCase):
 
     def setUp(self):
+        self.test_manager = JiraTestManager()
         self.jira = JiraTestManager().jira_normal
+        self.issue_1 = self.test_manager.project_b_issue1
 
     def test_my_permissions(self):
         perms = self.jira.my_permissions()
-        self.assertEqual(len(perms['permissions']), 39)
+        self.assertEqual(len(perms['permissions']), 40)
 
     def test_my_permissions_by_project(self):
         perms = self.jira.my_permissions(projectKey='ZTRAVISDEB')
-        self.assertEqual(len(perms['permissions']), 39)
+        self.assertEqual(len(perms['permissions']), 40)
         perms = self.jira.my_permissions(projectId='10012')
-        self.assertEqual(len(perms['permissions']), 39)
+        self.assertEqual(len(perms['permissions']), 40)
 
     def test_my_permissions_by_issue(self):
         perms = self.jira.my_permissions(issueKey='ZTRAVISDEB-7')
-        self.assertEqual(len(perms['permissions']), 39)
+        self.assertEqual(len(perms['permissions']), 40)
         perms = self.jira.my_permissions(issueId='11021')
-        self.assertEqual(len(perms['permissions']), 39)
+        self.assertEqual(len(perms['permissions']), 40)
+"""
 
 #All working
 class PrioritiesTests(unittest.TestCase):
