@@ -288,7 +288,6 @@ def find_by_name(seq, name):
         if seq_item['name'] == name:
             return seq_item
 
-"""
 class UniversalResourceTests(unittest.TestCase):
 
     def setUp(self):
@@ -1187,39 +1186,39 @@ class ProjectTests(unittest.TestCase):
 #        self.assertEqual(len(avatars['custom']), 3)
 #        self.assertEqual(len(avatars['system']), 16)
 
-    def test_create_project_avatar(self):
-        # Tests the end-to-end project avatar creation process: upload as temporary, confirm after cropping,
-        # and selection.
-        project = self.jira.project(self.project_b)
-        size = os.path.getsize(TEST_ICON_PATH)
-        filename = os.path.basename(TEST_ICON_PATH)
-        with open(TEST_ICON_PATH, "rb") as icon:
-            props = self.jira.create_temp_project_avatar(project, filename, size, icon.read())
-        self.assertIn('cropperOffsetX', props)
-        self.assertIn('cropperOffsetY', props)
-        self.assertIn('cropperWidth', props)
-        self.assertTrue(props['needsCropping'])
-
-        props['needsCropping'] = False
-        avatar_props = self.jira.confirm_project_avatar(project, props)
-        self.assertIn('id', avatar_props)
-
-        self.jira.set_project_avatar(self.project_b, avatar_props['id'])
-
-    def test_delete_project_avatar(self):
-        size = os.path.getsize(TEST_ICON_PATH)
-        filename = os.path.basename(TEST_ICON_PATH)
-        with open(TEST_ICON_PATH, "rb") as icon:
-            props = self.jira.create_temp_project_avatar(self.project_b, filename, size, icon.read(), auto_confirm=True)
-        self.jira.delete_project_avatar(self.project_b, props['id'])
-
-    def test_delete_project_avatar_with_project_obj(self):
-        project = self.jira.project(self.project_b)
-        size = os.path.getsize(TEST_ICON_PATH)
-        filename = os.path.basename(TEST_ICON_PATH)
-        with open(TEST_ICON_PATH, "rb") as icon:
-            props = self.jira.create_temp_project_avatar(project, filename, size, icon.read(), auto_confirm=True)
-        self.jira.delete_project_avatar(project, props['id'])
+#    def test_create_project_avatar(self):
+#        # Tests the end-to-end project avatar creation process: upload as temporary, confirm after cropping,
+#        # and selection.
+#        project = self.jira.project(self.project_b)
+#        size = os.path.getsize(TEST_ICON_PATH)
+#        filename = os.path.basename(TEST_ICON_PATH)
+#        with open(TEST_ICON_PATH, "rb") as icon:
+#            props = self.jira.create_temp_project_avatar(project, filename, size, icon.read())
+#        self.assertIn('cropperOffsetX', props)
+#        self.assertIn('cropperOffsetY', props)
+#        self.assertIn('cropperWidth', props)
+#        self.assertTrue(props['needsCropping'])
+#
+#        props['needsCropping'] = False
+#        avatar_props = self.jira.confirm_project_avatar(project, props)
+#        self.assertIn('id', avatar_props)
+#
+#        self.jira.set_project_avatar(self.project_b, avatar_props['id'])
+#
+#    def test_delete_project_avatar(self):
+#        size = os.path.getsize(TEST_ICON_PATH)
+#        filename = os.path.basename(TEST_ICON_PATH)
+#        with open(TEST_ICON_PATH, "rb") as icon:
+#            props = self.jira.create_temp_project_avatar(self.project_b, filename, size, icon.read(), auto_confirm=True)
+#        self.jira.delete_project_avatar(self.project_b, props['id'])
+#
+#    def test_delete_project_avatar_with_project_obj(self):
+#        project = self.jira.project(self.project_b)
+#        size = os.path.getsize(TEST_ICON_PATH)
+#        filename = os.path.basename(TEST_ICON_PATH)
+#        with open(TEST_ICON_PATH, "rb") as icon:
+#            props = self.jira.create_temp_project_avatar(project, filename, size, icon.read(), auto_confirm=True)
+#        self.jira.delete_project_avatar(project, props['id'])
 
     def test_set_project_avatar(self):
         def find_selected_avatar(avatars):
@@ -1399,7 +1398,6 @@ class StatusTests(unittest.TestCase):
         status = self.jira.status('1')
         self.assertEqual(status.id, '1')
         self.assertEqual(status.name, 'Open')
-"""
 
 class UserTests(unittest.TestCase):
 
@@ -1513,8 +1511,8 @@ class UserTests(unittest.TestCase):
         users = self.jira.search_users('c')
         self.assertEqual(len(users), 2)
         usernames = map(lambda user: user.name, users)
-        self.assertIn('ci-user', usernames)
         self.assertIn('ci-admin', usernames)
+        self.assertIn('ci-user', usernames)
 
     def test_search_users_maxResults(self):
         users = self.jira.search_users('c', maxResults=1)
@@ -1539,16 +1537,15 @@ class UserTests(unittest.TestCase):
     def test_search_allowed_users_for_issue_startAt(self):
         users = self.jira.search_allowed_users_for_issue('c', projectKey=self.project_b, startAt=1)
         self.assertGreaterEqual(len(users), 0)
-"""
 
-#All working
 class VersionTests(unittest.TestCase):
 
     def setUp(self):
         self.jira = JiraTestManager().jira_admin
+        self.project_b = JiraTestManager().project_b
 
     def test_create_version(self):
-        version = self.jira.create_version('new version 1', 'ZZB', releaseDate='2015-03-11',
+        version = self.jira.create_version('new version 1', self.project_b, releaseDate='2015-03-11',
                                            description='test version!')
         self.assertEqual(version.name, 'new version 1')
         self.assertEqual(version.description, 'test version!')
@@ -1556,7 +1553,7 @@ class VersionTests(unittest.TestCase):
         version.delete()
 
     def test_create_version_with_project_obj(self):
-        project = self.jira.project('ZZB')
+        project = self.jira.project(self.project_b)
         version = self.jira.create_version('new version 1', project, releaseDate='2015-03-11',
                                            description='test version!')
         self.assertEqual(version.name, 'new version 1')
@@ -1565,7 +1562,7 @@ class VersionTests(unittest.TestCase):
         version.delete()
 
     def test_update(self):
-        version = self.jira.create_version('new updated version 1', 'ZZB', releaseDate='2015-03-11',
+        version = self.jira.create_version('new updated version 1', self.project_b, releaseDate='2015-03-11',
                                            description='new to be updated!')
         version.update(name='new updated version name 1', description='new updated!')
         self.assertEqual(version.name, 'new updated version name 1')
@@ -1573,7 +1570,7 @@ class VersionTests(unittest.TestCase):
         version.delete()
 
     def test_delete(self):
-        version = self.jira.create_version('To be deleted', 'ZZB', releaseDate='2015-03-11',
+        version = self.jira.create_version('To be deleted', self.project_b, releaseDate='2015-03-11',
                                            description='not long for this world')
         id = version.id
         version.delete()
@@ -1600,7 +1597,6 @@ class VersionTests(unittest.TestCase):
         self.assertEqual(self.jira.version_count_unresolved_issues('10006'), 0)
 
 
-#All working
 class SessionTests(unittest.TestCase):
 
     def setUp(self):
@@ -1625,7 +1621,7 @@ class SessionTests(unittest.TestCase):
     #    self.jira.kill_session()
     #    self.jira.session()
 
-#All working
+
 class WebsudoTests(unittest.TestCase):
 
     def setUp(self):
@@ -1636,7 +1632,6 @@ class WebsudoTests(unittest.TestCase):
 
     def test_kill_websudo_without_login_raises(self):
         self.assertRaises(ConnectionError, JIRA)
-"""
 
 if __name__ == '__main__':
 
