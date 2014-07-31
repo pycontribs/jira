@@ -29,8 +29,6 @@ from six import string_types
 from six.moves import html_parser
 from six import print_ as print
 
-from requests_oauthlib import OAuth1
-from oauthlib.oauth1 import SIGNATURE_RSA
 
 from jira.exceptions import raise_on_error, JIRAError
 # JIRA specific resources
@@ -1679,6 +1677,10 @@ class JIRA(object):
 
     def _create_oauth_session(self, oauth):
         verify = self._options['verify']
+
+        from requests_oauthlib import OAuth1
+        from oauthlib.oauth1 import SIGNATURE_RSA
+
         oauth = OAuth1(
             oauth['consumer_key'],
             rsa_key=oauth['key_cert'],

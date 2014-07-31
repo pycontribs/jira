@@ -16,8 +16,8 @@ from requests.exceptions import ConnectionError
 
 #import sys
 #from imp import reload
-#reload(sys)  # Reload does the trick!
-#sys.setdefaultencoding('UTF8')
+# reload(sys)  # Reload does the trick!
+# sys.setdefaultencoding('UTF8')
 
 if sys.version_info < (2, 7, 0):
     try:
@@ -46,7 +46,7 @@ from jira.resources import Resource, cls_for_resource, Issue, Project, Role
 
 TEST_ROOT = os.path.dirname(__file__)
 TEST_ICON_PATH = os.path.join(TEST_ROOT, 'icon.png')
-TEST_ATTACH_PATH = os.path.join(TEST_ROOT, '__init__.py')
+TEST_ATTACH_PATH = os.path.join(TEST_ROOT, 'tests.py')
 
 OAUTH = False
 CONSUMER_KEY = 'oauth-consumer'
@@ -58,6 +58,7 @@ try:
     OAUTH = True
 except:
     pass
+
 
 def get_status_code(host, path="/", auth=None):
     """ This function retreives the status code of a website by requesting
@@ -95,22 +96,25 @@ j.create_issue(project={'key': 'BULK'}, summary='issue 3 from BULK', issuetype={
 
 """
 
+
 class Singleton(type):
+
     def __init__(cls, name, bases, dict):
         super(Singleton, cls).__init__(name, bases, dict)
         cls.instance = None
 
-    def __call__(cls,*args,**kw):
+    def __call__(cls, *args, **kw):
         if cls.instance is None:
             cls.instance = super(Singleton, cls).__call__(*args, **kw)
         return cls.instance
 
+
 class JiraTestManager(object):
+
     """
     Used to instantiate and populate the JIRA instance with data used by the unit tests.
     """
     # __metaclass__ = Singleton
-
 
     # __instance = None
     #
@@ -122,7 +126,7 @@ class JiraTestManager(object):
     #     return cls.__instance
 
     #  Implementing some kind of Singleton, to prevent test initialization
-    #  http://stackoverflow.com/questions/31875/is-there-a-simple-elegant-way-to-define-singletons-in-python/33201#33201
+    # http://stackoverflow.com/questions/31875/is-there-a-simple-elegant-way-to-define-singletons-in-python/33201#33201
     __shared_state = {}
 
     def __init__(self):
@@ -152,7 +156,6 @@ class JiraTestManager(object):
                 else:
                     self.CI_JIRA_ADMIN_PASSWORD = None
 
-
                 if 'CI_JIRA_USER' in os.environ:
                     self.CI_JIRA_USER = os.environ['CI_JIRA_USER']
                 else:
@@ -162,8 +165,6 @@ class JiraTestManager(object):
                     self.CI_JIRA_USER_PASSWORD = os.environ['CI_JIRA_USER_PASSWORD']
                 else:
                     self.CI_JIRA_USER_PASSWORD = None
-
-
 
                 if OAUTH:
                     self.jira_admin = JIRA(oauth={
@@ -178,7 +179,7 @@ class JiraTestManager(object):
                     else:
                         self.jira_admin = JIRA(self.CI_JIRA_URL, validate=True, logging=False)
                 if self.jira_admin.current_user() != self.CI_JIRA_ADMIN:
-                    #self.jira_admin.
+                    # self.jira_admin.
                     self.initialized = 1
                     sys.exit(3)
 
@@ -220,11 +221,10 @@ class JiraTestManager(object):
                     chr(ord('A') + sys.version_info[0]) + \
                     chr(ord('A') + sys.version_info[1])
 
-                self.project_a = prefix + 'A' # old XSS
+                self.project_a = prefix + 'A'  # old XSS
                 self.project_a_name = "Test user=%s python=%s.%s A" % (getpass.getuser(), sys.version_info[0], sys.version_info[1])
                 self.project_b_name = "Test user=%s python=%s.%s B" % (getpass.getuser(), sys.version_info[0], sys.version_info[1])
-                self.project_b = prefix + 'B' # old BULK
-
+                self.project_b = prefix + 'B'  # old BULK
 
                 # TODO: fin a way to prevent SecurityTokenMissing for On Demand https://jira.atlassian.com/browse/JRA-39153
                 # self.jira_admin.delete_project(self.project_a)
@@ -272,6 +272,7 @@ def find_by_key(seq, key):
         if seq_item['key'] == key:
             return seq_item
 
+
 def find_by_key_value(seq, key):
     for seq_item in seq:
         if seq_item.key == key:
@@ -283,10 +284,12 @@ def find_by_id(seq, id):
         if seq_item.id == id:
             return seq_item
 
+
 def find_by_name(seq, name):
     for seq_item in seq:
         if seq_item['name'] == name:
             return seq_item
+
 
 class UniversalResourceTests(unittest.TestCase):
 
@@ -302,7 +305,7 @@ class UniversalResourceTests(unittest.TestCase):
 
     def test_universal_find_custom_resource(self):
         resource = Resource('nope/{0}', self.jira._options, None)  # don't need an actual session
-        self.assertEqual('https://pycontribs.atlassian.net/rest/api/2/nope/666', str (resource._url(('666',))))
+        self.assertEqual('https://pycontribs.atlassian.net/rest/api/2/nope/666', str(resource._url(('666',))))
 
     def test_find_invalid_resource_raises_exception(self):
         with self.assertRaises(JIRAError) as cm:
@@ -317,7 +320,8 @@ class UniversalResourceTests(unittest.TestCase):
         self.jira = JIRA(options={'server': 'https://jira.atlassian.com'})
 
     def test_verify_fails_without_https(self):
-        self.assertRaises (JIRAError, JIRA, options={'server': 'https://www.yahoo.com'})
+        self.assertRaises(JIRAError, JIRA, options={'server': 'https://www.yahoo.com'})
+
 
 class ResourceTests(unittest.TestCase):
 
@@ -329,6 +333,7 @@ class ResourceTests(unittest.TestCase):
         self.assertEqual(cls_for_resource('http://localhost:2990/jira/rest/api/2/project/BULK'), Project)
         self.assertEqual(cls_for_resource('http://imaginary-jira.com/rest/api/2/project/IMG/role/10002'), Role)
         self.assertEqual(cls_for_resource('http://customized-jira.com/rest/plugin-resource/4.5/json/getMyObject'), Resource)
+
 
 class ApplicationPropertiesTests(unittest.TestCase):
 
@@ -354,6 +359,7 @@ class ApplicationPropertiesTests(unittest.TestCase):
         prop = 'random.nonexistent.property'
         self.assertRaises(JIRAError, self.jira.set_application_property, prop, '666')
 
+
 class AttachmentTests(unittest.TestCase):
 
     def setUp(self):
@@ -367,7 +373,7 @@ class AttachmentTests(unittest.TestCase):
         attachment = self.jira.add_attachment(issue, open(TEST_ATTACH_PATH), "new test attachment")
         new_attachment = self.jira.attachment(attachment.id)
         self.assertEqual(new_attachment.filename, 'new test attachment')
-        self.assertEqual(new_attachment.size, 25)
+        self.assertEqual(new_attachment.size, os.path.getsize(TEST_ATTACH_PATH))
         attachment.delete()
 
     def test_attachment_meta(self):
@@ -389,6 +395,7 @@ class AttachmentTests(unittest.TestCase):
         attachment.delete()
         self.assertEqual(len(self.jira.issue(self.issue_1).fields.attachment), attach_count)
 
+
 class ComponentTests(unittest.TestCase):
 
     def setUp(self):
@@ -396,7 +403,7 @@ class ComponentTests(unittest.TestCase):
         self.jira = JiraTestManager().jira_admin
         self.project_b = self.test_manager.project_b
         self.issue_1 = self.test_manager.project_b_issue1
-        self.issue_2 =  self.test_manager.project_b_issue2
+        self.issue_2 = self.test_manager.project_b_issue2
 
     def test_component(self):
         component = self.jira.component('10001')
@@ -412,7 +419,7 @@ class ComponentTests(unittest.TestCase):
         self.assertFalse(component.isAssigneeTypeValid)
         component.delete()
 
-#COmponents field can't be modified from issue.update
+# COmponents field can't be modified from issue.update
 #    def test_component_count_related_issues(self):
 #        component = self.jira.create_component('PROJECT_B_TEST', self.project_b, description='test!!',
 #                                               assigneeType='COMPONENT_LEAD', isAssigneeTypeValid=False)
@@ -438,6 +445,7 @@ class ComponentTests(unittest.TestCase):
         component.delete()
         self.assertRaises(JIRAError, self.jira.component, id)
 
+
 class CustomFieldOptionTests(unittest.TestCase):
 
     def setUp(self):
@@ -446,6 +454,7 @@ class CustomFieldOptionTests(unittest.TestCase):
     def test_custom_field_option(self):
         option = self.jira.custom_field_option('10001')
         self.assertEqual(option.value, 'To Do')
+
 
 class DashboardTests(unittest.TestCase):
 
@@ -474,6 +483,7 @@ class DashboardTests(unittest.TestCase):
         self.assertEqual(dashboard.id, '10101')
         self.assertEqual(dashboard.name, 'Another test dashboard')
 
+
 class FieldsTests(unittest.TestCase):
 
     def setUp(self):
@@ -491,12 +501,12 @@ class FilterTests(unittest.TestCase):
         self.jira = JiraTestManager().jira_admin
         self.project_b = self.test_manager.project_b
         self.issue_1 = self.test_manager.project_b_issue1
-        self.issue_2 =  self.test_manager.project_b_issue2
+        self.issue_2 = self.test_manager.project_b_issue2
 
     def test_filter(self):
-        jql = "project = %s and component is not empty" %self.project_b
-        filter = self.jira.create_filter(name = "Some test filter", description = "just some test filter",
-                jql = jql, favourite = False)
+        jql = "project = %s and component is not empty" % self.project_b
+        filter = self.jira.create_filter(name="Some test filter", description="just some test filter",
+                                         jql=jql, favourite=False)
         self.assertEqual(filter.name, 'Some test filter')
         self.assertEqual(filter.owner.name, 'ci-admin')
         filter.delete()
@@ -504,12 +514,13 @@ class FilterTests(unittest.TestCase):
     def test_favourite_filters(self):
         filters = self.jira.favourite_filters()
         initial_len = len(filters)
-        jql = "project = %s and component is not empty" %self.project_b
-        filter = self.jira.create_filter(name = "Some test filter", description = "just some test filter",
-                jql = jql, favourite = True)
+        jql = "project = %s and component is not empty" % self.project_b
+        filter = self.jira.create_filter(name="Some test filter", description="just some test filter",
+                                         jql=jql, favourite=True)
         self.assertEqual(len(self.jira.favourite_filters()), initial_len + 1)
         filter.delete()
         self.assertEqual(len(self.jira.favourite_filters()), initial_len)
+
 
 class GroupsTest(unittest.TestCase):
 
@@ -533,6 +544,7 @@ class GroupsTest(unittest.TestCase):
         groups = self.jira.groups('jira')
         self.assertIsNotNone(find_by_name(groups['groups'], 'jira-users'))
 
+
 class IssueTests(unittest.TestCase):
 
     def setUp(self):
@@ -542,28 +554,28 @@ class IssueTests(unittest.TestCase):
         self.project_b = self.test_manager.project_b
         self.project_a = self.test_manager.project_a
         self.issue_1 = self.test_manager.project_b_issue1
-        self.issue_2 =  self.test_manager.project_b_issue2
+        self.issue_2 = self.test_manager.project_b_issue2
         self.issue_3 = self.test_manager.project_b_issue3
 
     def test_issue(self):
         issue = self.jira.issue(self.issue_1)
         self.assertEqual(issue.key, self.issue_1)
-        self.assertEqual(issue.fields.summary, 'issue 1 from %s' %self.project_b)
+        self.assertEqual(issue.fields.summary, 'issue 1 from %s' % self.project_b)
 
     def test_issue_field_limiting(self):
         issue = self.jira.issue(self.issue_2, fields='summary,comment')
-        self.assertEqual(issue.fields.summary, 'issue 2 from %s' %self.project_b)
-        comment1 = self.jira.add_comment(issue, 'First comment') 
-        comment2 = self.jira.add_comment(issue, 'Second comment') 
-        comment3 = self.jira.add_comment(issue, 'Third comment') 
-        new_issue = self.jira.issue(self.issue_2, fields = 'summary,comment')
+        self.assertEqual(issue.fields.summary, 'issue 2 from %s' % self.project_b)
+        comment1 = self.jira.add_comment(issue, 'First comment')
+        comment2 = self.jira.add_comment(issue, 'Second comment')
+        comment3 = self.jira.add_comment(issue, 'Third comment')
+        new_issue = self.jira.issue(self.issue_2, fields='summary,comment')
         self.assertEqual(new_issue.fields.comment.total, 3)
         self.assertFalse(hasattr(issue.fields, 'reporter'))
         self.assertFalse(hasattr(issue.fields, 'progress'))
         comment1.delete()
         comment2.delete()
         comment3.delete()
-    
+
     def test_issue_expandos(self):
         issue = self.jira.issue(self.issue_1, expand=('editmeta', 'schema'))
         self.assertTrue(hasattr(issue, 'editmeta'))
@@ -572,7 +584,7 @@ class IssueTests(unittest.TestCase):
 
     def test_create_issue_with_fieldargs(self):
         issue = self.jira.create_issue(project={'key': self.project_b}, summary='Test issue created',
-                                       description='blahery', issuetype={'name': 'Bug'}, customfield_10022 = 'XSS')
+                                       description='blahery', issuetype={'name': 'Bug'}, customfield_10022='XSS')
         self.assertEqual(issue.fields.summary, 'Test issue created')
         self.assertEqual(issue.fields.description, 'blahery')
         self.assertEqual(issue.fields.issuetype.name, 'Bug')
@@ -626,7 +638,7 @@ class IssueTests(unittest.TestCase):
 
     def test_update_with_fielddict(self):
         issue = self.jira.create_issue(project={'key': self.project_b}, summary='Test issue for updating',
-                description='Will be updated shortly', issuetype={'name': 'Bug'}, customfield_10022='XSS')
+                                       description='Will be updated shortly', issuetype={'name': 'Bug'}, customfield_10022='XSS')
         fields = {
             'summary': 'Issue is updated',
             'description': "it sure is",
@@ -694,13 +706,13 @@ class IssueTests(unittest.TestCase):
 
     def test_assign_to_bad_issue_raises(self):
         self.assertRaises(JIRAError, self.jira.assign_issue, 'NOPE-1', 'notauser')
-    
+
     def test_comments(self):
         issue = self.jira.issue(self.issue_1)
-        comment1 = self.jira.add_comment(self.issue_1, 'First comment') 
-        comment2 = self.jira.add_comment(self.issue_1, 'Second comment') 
-        comment3 = self.jira.add_comment(self.issue_1, 'Third comment') 
-        comment4 = self.jira.add_comment(self.issue_1, 'Fourth comment') 
+        comment1 = self.jira.add_comment(self.issue_1, 'First comment')
+        comment2 = self.jira.add_comment(self.issue_1, 'Second comment')
+        comment3 = self.jira.add_comment(self.issue_1, 'Third comment')
+        comment4 = self.jira.add_comment(self.issue_1, 'Fourth comment')
         comments = self.jira.comments(self.issue_1)
         self.assertEqual(len(comments), 4)
         comment1.delete()
@@ -708,9 +720,9 @@ class IssueTests(unittest.TestCase):
         comment3.delete()
         comment4.delete()
         issue = self.jira.issue(self.issue_2)
-        comment1 = self.jira.add_comment(self.issue_2, 'First comment') 
-        comment2 = self.jira.add_comment(self.issue_2, 'Second comment') 
-        comment3 = self.jira.add_comment(self.issue_2, 'Third comment') 
+        comment1 = self.jira.add_comment(self.issue_2, 'First comment')
+        comment2 = self.jira.add_comment(self.issue_2, 'Second comment')
+        comment3 = self.jira.add_comment(self.issue_2, 'Third comment')
         comments = self.jira.comments(self.issue_2)
         self.assertEqual(len(comments), 3)
         comment1.delete()
@@ -719,10 +731,10 @@ class IssueTests(unittest.TestCase):
 
     def test_comments_with_issue_obj(self):
         issue = self.jira.issue(self.issue_1)
-        comment1 = self.jira.add_comment(issue, 'First comment') 
-        comment2 = self.jira.add_comment(issue, 'Second comment') 
-        comment3 = self.jira.add_comment(issue, 'Third comment') 
-        comment4 = self.jira.add_comment(issue, 'Fourth comment') 
+        comment1 = self.jira.add_comment(issue, 'First comment')
+        comment2 = self.jira.add_comment(issue, 'Second comment')
+        comment3 = self.jira.add_comment(issue, 'Third comment')
+        comment4 = self.jira.add_comment(issue, 'Fourth comment')
         new_issue = self.jira.issue(self.issue_1)
         comments = self.jira.comments(new_issue)
         self.assertEqual(len(comments), 4)
@@ -731,9 +743,9 @@ class IssueTests(unittest.TestCase):
         comment3.delete()
         comment4.delete()
         issue = self.jira.issue(self.issue_2)
-        comment1 = self.jira.add_comment(issue, 'First comment') 
-        comment2 = self.jira.add_comment(issue, 'Second comment') 
-        comment3 = self.jira.add_comment(issue, 'Third comment') 
+        comment1 = self.jira.add_comment(issue, 'First comment')
+        comment2 = self.jira.add_comment(issue, 'Second comment')
+        comment3 = self.jira.add_comment(issue, 'Third comment')
         new_issue = self.jira.issue(self.issue_2)
         comments = self.jira.comments(new_issue)
         self.assertEqual(len(comments), 3)
@@ -783,7 +795,7 @@ class IssueTests(unittest.TestCase):
         c_len = len(self.jira.comments(self.issue_3))
         comment = self.jira.add_comment(self.issue_3, 'To be deleted!')
         comment.delete()
-        self.assertEqual(len (self.jira.comments(self.issue_3)), c_len)
+        self.assertEqual(len(self.jira.comments(self.issue_3)), c_len)
 
     def test_editmeta(self):
         meta = self.jira.editmeta(self.issue_1)
@@ -798,7 +810,7 @@ class IssueTests(unittest.TestCase):
         self.assertTrue('customfield_10022' in meta['fields'])
         self.assertTrue('customfield_10007' in meta['fields'])
 
-#Nothing from remote link works
+# Nothing from remote link works
 #    def test_remote_links(self):
 #        self.jira.add_remote_link ('ZTRAVISDEB-3', globalId='python-test:story.of.horse.riding',
 #        links = self.jira.remote_links('QA-44')
@@ -835,7 +847,7 @@ class IssueTests(unittest.TestCase):
 #        link = self.jira.add_remote_link('BULK-3', globalId='python-test:story.of.horse.riding',
 #                                         object={'url': 'http://google.com', 'title': 'googlicious!'},
 #                                         application={'name': 'far too silly', 'type': 'sketch'}, relationship='mousebending')
-#        # creation response doesn't include full remote link info, so we fetch it again using the new internal ID
+# creation response doesn't include full remote link info, so we fetch it again using the new internal ID
 #        link = self.jira.remote_link('BULK-3', link.id)
 #        self.assertEqual(link.application.name, 'far too silly')
 #        self.assertEqual(link.application.type, 'sketch')
@@ -850,7 +862,7 @@ class IssueTests(unittest.TestCase):
 #        link = self.jira.add_remote_link(issue, globalId='python-test:story.of.horse.riding',
 #                                         object={'url': 'http://google.com', 'title': 'googlicious!'},
 #                                         application={'name': 'far too silly', 'type': 'sketch'}, relationship='mousebending')
-#        # creation response doesn't include full remote link info, so we fetch it again using the new internal ID
+# creation response doesn't include full remote link info, so we fetch it again using the new internal ID
 #        link = self.jira.remote_link(issue, link.id)
 #        self.assertEqual(link.application.name, 'far too silly')
 #        self.assertEqual(link.application.type, 'sketch')
@@ -864,7 +876,7 @@ class IssueTests(unittest.TestCase):
 #        link = self.jira.add_remote_link('BULK-3', globalId='python-test:story.of.horse.riding',
 #                                         object={'url': 'http://google.com', 'title': 'googlicious!'},
 #                                         application={'name': 'far too silly', 'type': 'sketch'}, relationship='mousebending')
-#        # creation response doesn't include full remote link info, so we fetch it again using the new internal ID
+# creation response doesn't include full remote link info, so we fetch it again using the new internal ID
 #        link = self.jira.remote_link('BULK-3', link.id)
 #        link.update(object={'url': 'http://yahoo.com', 'title': 'yahooery'}, globalId='python-test:updated.id',
 #                    relationship='cheesing')
@@ -914,7 +926,7 @@ class IssueTests(unittest.TestCase):
         self.jira.transition_issue(issue, '2', assignee={'name': 'ci-admin'})
         issue = self.jira.issue(issue.key)
         self.assertEqual(issue.fields.assignee.name, 'ci-admin')
-        self.assertEqual(issue.fields.status.id, '6') 
+        self.assertEqual(issue.fields.status.id, '6')
 
     def test_transition_issue_with_fielddict(self):
         issue = self.jira.create_issue(project={'key': self.project_b}, summary='Test issue for transition created',
@@ -1007,7 +1019,7 @@ class IssueTests(unittest.TestCase):
         self.jira.remove_watcher(issue, 'ci-admin')
         self.assertEqual(self.jira.watchers(issue).watchCount, init_watchers - 1)
 
-#add worklog is not working for python2.6
+# add worklog is not working for python2.6
 #    def test_worklogs(self):
 #        worklog = self.jira.add_worklog(self.issue_1, '2h')
 #        worklogs = self.jira.worklogs(self.issue_1)
@@ -1065,6 +1077,7 @@ class IssueTests(unittest.TestCase):
 #        issue = self.jira.issue('ZTRAVISDEB-2', fields='worklog,timetracking')
 #        self.assertEqual(issue.fields.timetracking.remainingEstimate, rem_estimate)
 
+
 class IssueLinkTests(unittest.TestCase):
 
     def setUp(self):
@@ -1087,7 +1100,7 @@ class IssueLinkTests(unittest.TestCase):
         self.manager.jira_admin.create_issue_link('Duplicate', inwardIssue, outwardIssue)
 
     #@unittest.skip("Creating an issue link doesn't return its ID, so can't easily test delete")
-    #def test_delete_issue_link(self):
+    # def test_delete_issue_link(self):
     #    pass
 
 
@@ -1107,6 +1120,7 @@ class IssueLinkTypeTests(unittest.TestCase):
         self.assertEqual(link_type.id, '10002')
         self.assertEqual(link_type.name, 'Duplicate')
 
+
 class IssueTypesTests(unittest.TestCase):
 
     def setUp(self):
@@ -1122,6 +1136,7 @@ class IssueTypesTests(unittest.TestCase):
         type = self.jira.issue_type('4')
         self.assertEqual(type.id, '4')
         self.assertEqual(type.name, 'Improvement')
+
 
 class MyPermissionsTests(unittest.TestCase):
 
@@ -1146,6 +1161,7 @@ class MyPermissionsTests(unittest.TestCase):
         perms = self.jira.my_permissions(issueId='11021')
         self.assertEqual(len(perms['permissions']), 40)
 
+
 class PrioritiesTests(unittest.TestCase):
 
     def setUp(self):
@@ -1160,12 +1176,13 @@ class PrioritiesTests(unittest.TestCase):
         self.assertEqual(priority.id, '2')
         self.assertEqual(priority.name, 'Critical')
 
+
 class ProjectTests(unittest.TestCase):
 
     def setUp(self):
         self.jira = JiraTestManager().jira_admin
         self.project_b = JiraTestManager().project_b
-    
+
     def test_projects(self):
         projects = self.jira.projects()
         self.assertGreaterEqual(len(projects), 2)
@@ -1174,7 +1191,7 @@ class ProjectTests(unittest.TestCase):
         project = self.jira.project(self.project_b)
         self.assertEqual(project.key, self.project_b)
 
-#I have no idea what avatars['custom'] is and I get different results every time
+# I have no idea what avatars['custom'] is and I get different results every time
 #    def test_project_avatars(self):
 #        avatars = self.jira.project_avatars(self.project_b)
 #        self.assertEqual(len(avatars['custom']), 3)
@@ -1187,8 +1204,8 @@ class ProjectTests(unittest.TestCase):
 #        self.assertEqual(len(avatars['system']), 16)
 
 #    def test_create_project_avatar(self):
-#        # Tests the end-to-end project avatar creation process: upload as temporary, confirm after cropping,
-#        # and selection.
+# Tests the end-to-end project avatar creation process: upload as temporary, confirm after cropping,
+# and selection.
 #        project = self.jira.project(self.project_b)
 #        size = os.path.getsize(TEST_ICON_PATH)
 #        filename = os.path.basename(TEST_ICON_PATH)
@@ -1306,6 +1323,7 @@ class ProjectTests(unittest.TestCase):
         role.update(users='ci-admin', groups=['jira-developers', 'jira-users'])
         self.assertEqual(role.actors[0].name, 'ci-admin')
 
+
 class ResolutionTests(unittest.TestCase):
 
     def setUp(self):
@@ -1330,35 +1348,35 @@ class SearchTests(unittest.TestCase):
         self.issue = self.test_manager.project_b_issue1
 
     def test_search_issues(self):
-        issues = self.jira.search_issues('project=%s'%self.project_b)
+        issues = self.jira.search_issues('project=%s' % self.project_b)
         self.assertLessEqual(len(issues), 50)  # default maxResults
         for issue in issues:
             self.assertTrue(issue.key.startswith(self.project_b))
 
     def test_search_issues_maxResults(self):
-        issues = self.jira.search_issues('project=%s'%self.project_b, maxResults=10)
+        issues = self.jira.search_issues('project=%s' % self.project_b, maxResults=10)
         self.assertLessEqual(len(issues), 10)
 
     def test_search_issues_startAt(self):
-        issues = self.jira.search_issues('project=%s'%self.project_b, startAt=5770, maxResults=500)
-        self.assertLessEqual(len(issues), 500) 
+        issues = self.jira.search_issues('project=%s' % self.project_b, startAt=5770, maxResults=500)
+        self.assertLessEqual(len(issues), 500)
 
     def test_search_issues_field_limiting(self):
-        issues = self.jira.search_issues('key=%s'%self.issue, fields='summary,comment')
+        issues = self.jira.search_issues('key=%s' % self.issue, fields='summary,comment')
         self.assertTrue(hasattr(issues[0].fields, 'summary'))
         self.assertTrue(hasattr(issues[0].fields, 'comment'))
         self.assertFalse(hasattr(issues[0].fields, 'reporter'))
         self.assertFalse(hasattr(issues[0].fields, 'progress'))
 
-    #sort of working
+    # sort of working
     def test_search_issues_expandos(self):
-        issues = self.jira.search_issues('key=%s'%self.issue, expand=('names'))
+        issues = self.jira.search_issues('key=%s' % self.issue, expand=('names'))
         #self.assertTrue(hasattr(issues[0], 'names'))
         self.assertFalse(hasattr(issues[0], 'schema'))
 
 
 @unittest.skip("temporary disabled")
-#WRONG
+# WRONG
 class SecurityLevelTests(unittest.TestCase):
 
     def setUp(self):
@@ -1399,6 +1417,7 @@ class StatusTests(unittest.TestCase):
         self.assertEqual(status.id, '1')
         self.assertEqual(status.name, 'Open')
 
+
 class UserTests(unittest.TestCase):
 
     def setUp(self):
@@ -1414,17 +1433,17 @@ class UserTests(unittest.TestCase):
         self.assertEqual(user.emailAddress, 'noreply@example.com')
 
     def test_search_assignable_users_for_projects(self):
-        users = self.jira.search_assignable_users_for_projects('ci-admin', '%s,%s'%(self.project_a, self.project_b))
+        users = self.jira.search_assignable_users_for_projects('ci-admin', '%s,%s' % (self.project_a, self.project_b))
         self.assertGreaterEqual(len(users), 1)
         usernames = map(lambda user: user.name, users)
         self.assertIn('ci-admin', usernames)
 
     def test_search_assignable_users_for_projects_maxResults(self):
-        users = self.jira.search_assignable_users_for_projects('ci-admin', '%s,%s'%(self.project_a, self.project_b), maxResults=1)
+        users = self.jira.search_assignable_users_for_projects('ci-admin', '%s,%s' % (self.project_a, self.project_b), maxResults=1)
         self.assertLessEqual(len(users), 1)
 
     def test_search_assignable_users_for_projects_startAt(self):
-        users = self.jira.search_assignable_users_for_projects('ci-admin', '%s,%s'%(self.project_a, self.project_b), startAt=1)
+        users = self.jira.search_assignable_users_for_projects('ci-admin', '%s,%s' % (self.project_a, self.project_b), startAt=1)
         self.assertGreaterEqual(len(users), 0)
 
     def test_search_assignable_users_for_issues_by_project(self):
@@ -1461,7 +1480,7 @@ class UserTests(unittest.TestCase):
         self.assertEqual(len(avatars['custom']), 0)
 
     @unittest.skip("disable until I have permissions to write/modify")
-    #WRONG
+    # WRONG
     def test_create_user_avatar(self):
         # Tests the end-to-end user avatar creation process: upload as temporary, confirm after cropping,
         # and selection.
@@ -1498,7 +1517,7 @@ class UserTests(unittest.TestCase):
         self.assertEqual(find_selected_avatar(avatars)['id'], '10105')
 
     @unittest.skip("disable until I have permissions to write/modify")
-    #WRONG
+    # WRONG
     def test_delete_user_avatar(self):
         size = os.path.getsize(TEST_ICON_PATH)
         filename = os.path.basename(TEST_ICON_PATH)
@@ -1537,6 +1556,7 @@ class UserTests(unittest.TestCase):
     def test_search_allowed_users_for_issue_startAt(self):
         users = self.jira.search_allowed_users_for_issue('c', projectKey=self.project_b, startAt=1)
         self.assertGreaterEqual(len(users), 0)
+
 
 class VersionTests(unittest.TestCase):
 
@@ -1617,7 +1637,7 @@ class SessionTests(unittest.TestCase):
             self.assertEqual(type(e), ConnectionError)
 
     #@unittest.expectedFailure
-    #def test_kill_session(self):
+    # def test_kill_session(self):
     #    self.jira.kill_session()
     #    self.jira.session()
 
@@ -1636,8 +1656,8 @@ class WebsudoTests(unittest.TestCase):
 if __name__ == '__main__':
 
     #j = JIRA("https://issues.citrite.net")
-    #print(j.session())
+    # print(j.session())
 
     dirname = "test-reports-%s%s" % (sys.version_info[0], sys.version_info[1])
     unittest.main(testRunner=xmlrunner.XMLTestRunner(output=dirname))
-    #pass
+    # pass

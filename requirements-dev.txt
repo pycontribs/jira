@@ -2,6 +2,7 @@ tox
 pytest
 pytest-cov
 pytest-xdist
+pytest-pep8
 yanc
 xmlrunner>=1.7.5
 wheel
