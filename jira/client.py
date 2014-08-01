@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 from __future__ import print_function
@@ -53,9 +54,11 @@ if 'pydevd' not in sys.modules:
     except NotImplementedError:
         pass
 
-encoding = sys.getdefaultencoding()
-if encoding != 'UTF8':
-    warnings.warn("Python default encoding is '%s' instead of 'UTF8' which means that there is a big change of having problems. Possible workaround http://stackoverflow.com/a/17628350/99834" % encoding)
+warnings.simplefilter('default')
+
+#encoding = sys.getdefaultencoding()
+# if encoding != 'UTF8':
+#    warnings.warn("Python default encoding is '%s' instead of 'UTF8' which means that there is a big change of having problems. Possible workaround http://stackoverflow.com/a/17628350/99834" % encoding)
 
 
 def translate_resource_args(func):
@@ -153,6 +156,11 @@ class JIRA(object):
         """
         if options is None:
             options = {}
+            if server and hasattr(server, 'keys'):
+                warnings.warn("Old API usage, use JIRA(url) or JIRA(options={'server': url}, when using dictionary always use named parameters.", DeprecationWarning)
+                options = server
+                server = None
+
         if server:
             options['server'] = server
         if async:
@@ -185,11 +193,6 @@ class JIRA(object):
             self.session()  # This will raise an Exception if you are not allowed to login. It's better to fail faster than later.
         # We need version in order to know what API calls are available or not
         self._version = tuple(self.server_info()['versionNumbers'])
-
-    def __del__(self):
-        # that is performing the logout by killing the session
-        self.async_do()
-        self.kill_session()
 
 # Information about this client
 
@@ -2292,3 +2295,13 @@ class GreenHopper(JIRA):
         url = self._get_url('rank', base=self.GREENHOPPER_BASE_URL)
         r = self._session.put(url, data=json.dumps(data), headers={'Content-Type': 'application/json'})
         raise_on_error(r)
+
+if __name__ == '__main__':
+    url = 'http://issues.apache.org/jira'
+    print("1")
+    jira = JIRA(url)
+    print("2")
+    jira = JIRA(options={'server': url})
+    print("3 (should see a warning)")
+    j = JIRA({'server': url})
+    print(jira.issue('INFRA-7976'))

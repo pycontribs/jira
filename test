@@ -30,7 +30,8 @@ if __name__ == "__main__":
         cmds = ["pip install --user --upgrade setuptools virtualenv autopep8 tox xmlrunner ipython",
              "python -m autopep8 --ignore=E501 -i *.py jira/*.py examples/*.py",
              "python -m pep8 || echo 'WARNING: pep8 failed'",
-             "python -m tox -e %s" % ",".join(detected_pys)]
+             #"python -m tox -e %s" % ",".join(detected_pys)
+             ]
         for cmd in cmds:
             if os.system(cmd) != 0:
                 print("ERROR:	Command `%s` failed, testing stopped here." % cmd)
