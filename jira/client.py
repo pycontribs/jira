@@ -2136,12 +2136,12 @@ class GreenHopper(JIRA):
     def update_sprint(self, id, name=None, startDate=None, endDate=None):
         payload = {}
         if name:
-            payload['name']=name
+            payload['name'] = name
         if startDate:
-            payload['startDate']=startDate
+            payload['startDate'] = startDate
         if endDate:
-            payload['startDate']=endDate
-        #if state:
+            payload['startDate'] = endDate
+        # if state:
         #    payload['state']=state
 
         url = self._get_url('sprint/%s' % id, base=self.GREENHOPPER_BASE_URL)
