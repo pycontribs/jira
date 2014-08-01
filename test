@@ -15,7 +15,7 @@ if __name__ == "__main__":
 
         # now we'll detect which python interpretors we have on this machine and run the tests for all of them
         #'python2.5':'py25',
-        known_pys = {  'python2.6':'py26', 'python2.7':'py27', 'python3.3':'py33' } # ,'python3':'py3', 'python3.2':'py32', 'python4':'py4'}
+        known_pys = {  'python2.6':'py26', 'python2.7':'py27', 'python3.3':'py33', 'python3.4':'py34' } # ,'python3':'py3', 'python3.2':'py32', 'python4':'py4'}
         #known_pys = { 'python2.7':'py27' } # ,'python3':'py3', 'python3.2':'py32', 'python4':'py4'}
 
         detected_pys = set()
@@ -25,13 +25,13 @@ if __name__ == "__main__":
         detected_pys.add('docs')
 
         #os.system("python setup.py test")
-
-
-        cmds = ["pip install --user --upgrade setuptools virtualenv autopep8 tox xmlrunner ipython",
-             "python -m autopep8 --ignore=E501 -i *.py jira/*.py examples/*.py",
-             "python -m pep8 || echo 'WARNING: pep8 failed'",
-             #"python -m tox -e %s" % ",".join(detected_pys)
-             ]
+        #pip_cmd = "pip install --user --upgrade"
+        pip_cmd = "pip install --user " # "--exists-action w" not existing everywhere
+        cmds = ["%s -r requirements.txt" % pip_cmd,
+             "%s -r requirements-dev.txt" % pip_cmd,
+             "%s -r requirements-opt.txt || echo 'Warning: optional requirements install failed.'" % pip_cmd,
+             "python -m autopep8 --ignore=E501 -i *.py tests/*.py jira/*.py examples/*.py || echo 'Warning: autopep8 failed'",
+             "python -m tox -e %s" % ",".join(detected_pys)]
         for cmd in cmds:
             if os.system(cmd) != 0:
                 print("ERROR:	Command `%s` failed, testing stopped here." % cmd)

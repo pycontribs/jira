@@ -647,7 +647,7 @@ def dict2resource(raw, top=None, options=None, session=None):
     or a ``PropertyHolder`` object (if no ``self`` link is present).
     """
     if top is None:
-        top = type('PropertyHolder', (object,), raw)
+        top = type(str('PropertyHolder'), (object,), raw)
 
     seqs = tuple, list, set, frozenset
     for i, j in iteritems(raw):

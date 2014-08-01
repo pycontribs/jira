@@ -30,10 +30,8 @@ from six import string_types
 from six.moves.html_parser import HTMLParser
 from six import print_ as print
 
-from requests_oauthlib import OAuth1
-from oauthlib.oauth1 import SIGNATURE_RSA
 
-from jira.exceptions import raise_on_error
+from jira.exceptions import raise_on_error, JIRAError
 # JIRA specific resources
 from jira.resources import Resource, Issue, Comment, Project, Attachment, Component, Dashboard, Filter, Votes, Watchers, Worklog, IssueLink, IssueLinkType, IssueType, Priority, Version, Role, Resolution, SecurityLevel, Status, User, CustomFieldOption, RemoteLink
 # GreenHopper specific resources
@@ -109,8 +107,8 @@ class JIRA(object):
         "resilient": False,
         "async": False,
         "headers": {
-            'X-Atlassian-Token': 'nocheck',
-            #'Cache-Control': 'no-cache',
+            'X-Atlassian-Token': 'no-check',
+            'Cache-Control': 'no-cache',
             #'Pragma': 'no-cache',
             #'Expires': 'Thu, 01 Jan 1970 00:00:00 GMT'
         }
@@ -118,7 +116,7 @@ class JIRA(object):
 
     JIRA_BASE_URL = '{server}/rest/api/{rest_api_version}/{path}'
 
-    def __init__(self, server=None, options=None, basic_auth=None, oauth=None, validate=None, async=False):
+    def __init__(self, server=None, options=None, basic_auth=None, oauth=None, validate=None, async=False, logging=True):
         """
         Construct a JIRA client instance.
 
@@ -166,6 +164,8 @@ class JIRA(object):
         if async:
             options['async'] = async
 
+        self.logging = logging
+
         self._options = copy.copy(JIRA.DEFAULT_OPTIONS)
 
         self._options.update(options)
@@ -193,6 +193,15 @@ class JIRA(object):
             self.session()  # This will raise an Exception if you are not allowed to login. It's better to fail faster than later.
         # We need version in order to know what API calls are available or not
         self._version = tuple(self.server_info()['versionNumbers'])
+		
+    def _check_for_html_error(self, content):
+        # TODO: Make it return errors when content is a webpage with errors
+        # JIRA has the bad habbit of returning errors in pages with 200 and embedding the error in a huge webpage.
+        if '<!-- SecurityTokenMissing -->' in content:
+            logging.warning("Got SecurityTokenMissing")
+            raise JIRAError("SecurityTokenMissing: %s" % content)
+            return False
+        return True
 
 # Information about this client
 
@@ -619,7 +628,7 @@ class JIRA(object):
     @translate_resource_args
     def assign_issue(self, issue, assignee):
         """
-        Assign an issue to a user.
+        Assign an issue to a user. None will set it to unassigned. -1 will set it to Automatic.
 
         :param issue: the issue to assign
         :param assignee: the user to assign the issue to
@@ -876,7 +885,8 @@ class JIRA(object):
         """
         url = self._get_url('issue/' + str(issue) + '/watchers')
         params = {'username': watcher}
-        self._session.delete(url, params=params)
+        result = self._session.delete(url, params=params)
+        return result
 
     @translate_resource_args
     def worklogs(self, issue):
@@ -901,7 +911,7 @@ class JIRA(object):
 
     @translate_resource_args
     def add_worklog(self, issue, timeSpent=None, adjustEstimate=None,
-                    newEstimate=None, reduceBy=None, comment=None):
+                    newEstimate=None, reduceBy=None, comment=None, started=None, user=None):
         """
         Add a new worklog entry on an issue and return a Resource for it.
 
@@ -911,6 +921,7 @@ class JIRA(object):
         time estimate of the issue. The value can either be ``new``, ``leave``, ``manual`` or ``auto`` (default).
         :param newEstimate: the new value for the remaining estimate field. e.g. "2d"
         :param reduceBy: the amount to reduce the remaining estimate by e.g. "2d"
+        :param started: Moment when the work is logged, if not specified will default to now
         :param comment: optional worklog comment
         """
         params = {}
@@ -926,7 +937,21 @@ class JIRA(object):
             data['timeSpent'] = timeSpent
         if comment is not None:
             data['comment'] = comment
+        elif user:
+            # we log user inside comment as it doesn't always work
+            data['comment'] = user
 
+        if started is not None:
+            # based on REST Browser it needs: "2014-06-03T08:21:01.273+0000"
+            data['started'] = started.strftime("%Y-%m-%dT%H:%M:%S.000%z")
+        if user is not None:
+            data['author'] = {"name": user,
+                              'self': self.JIRA_BASE_URL + '/rest/api/2/user?username=' + user,
+                              'displayName': user,
+                              'active': False
+                              }
+            data['updateAuthor'] = data['author']
+        # TODO: report bug to Atlassian: author and updateAuthor parameters are ignored.
         url = self._get_url('issue/{}/worklog'.format(issue))
         r = self._session.post(url, params=params, headers={'content-type': 'application/json'}, data=json.dumps(data))
         raise_on_error(r)
@@ -1656,6 +1681,10 @@ class JIRA(object):
 
     def _create_oauth_session(self, oauth):
         verify = self._options['verify']
+
+        from requests_oauthlib import OAuth1
+        from oauthlib.oauth1 import SIGNATURE_RSA
+
         oauth = OAuth1(
             oauth['consumer_key'],
             rsa_key=oauth['key_cert'],
@@ -1722,8 +1751,8 @@ class JIRA(object):
             try:
                 return mimetypes.guess_type("f." + imghdr.what(0, buff))[0]
             except (IOError, TypeError):
-                print("WARNING: Couldn't detect content type of avatar image"
-                      ". Specify the 'contentType' parameter explicitly.")
+                logging.warning("Couldn't detect content type of avatar image"
+                                ". Specify the 'contentType' parameter explicitly.")
                 return None
 
     def email_user(self, user, body, title="JIRA Notification"):
@@ -1746,7 +1775,8 @@ class JIRA(object):
             'id': '',
             'Preview': 'Preview',
         }
-        r = self._session.post(url, headers={'X-Atlassian-Token': 'nocheck', 'Cache-Control': 'no-cache, no-store, no-transform'}, data=payload)
+
+        r = self._session.post(url, headers=self._options['headers'], data=payload)
         open("/tmp/jira_email_user_%s.html" % user, "w").write(r.content)
         # return False
 
@@ -1776,9 +1806,9 @@ class JIRA(object):
             "RunCanned": "Run",
         }
 
-        print(self.user(old_user).emailAddress)  # raw displayName
+        logging.debug("renaming %s" % self.user(old_user).emailAddress)  # raw displayName
 
-        r = self._session.post(url, headers={'X-Atlassian-Token': 'nocheck', 'Cache-Control': 'no-cache'}, data=payload)
+        r = self._session.post(url, headers=self._options['headers'], data=payload)
         if r.status_code == 404:
             logging.error("In order to be able to use rename_user() you need to install Script Runner plugin. See https://marketplace.atlassian.com/plugins/com.onresolve.jira.groovy.groovyrunner")
             return False
@@ -1829,7 +1859,7 @@ class JIRA(object):
             "returnUrl": "UserBrowser.jspa",
             "confirm": "true",
         }
-        r = self._session.post(url, headers={'X-Atlassian-Token': 'nocheck', 'Cache-Control': 'no-cache'}, data=payload)
+        r = self._session.post(url, headers=self._options['headers'], data=payload)
         # if r.status_code == 404:
         #    logging.error("404")
         #    return False
@@ -1930,7 +1960,7 @@ class JIRA(object):
         payload = {'pid': pid, 'Delete': 'Delete', 'confirm': 'true'}
         r = self._session.post(url, headers=self._options['headers'], data=payload)
         if r.status_code == 200:
-            return True
+            return self._check_for_html_error(r.content.decode('utf8'))
         else:
             logging.warning('Got %s response from calling delete_project.' % r.status_code)
             return r.status_code
@@ -1949,17 +1979,31 @@ class JIRA(object):
         if key.upper() != key or not key.isalpha() or len(key) < 2 or len(key) > 10:
             logging.error('key parameter is not all uppercase alphanumeric of length between 2 and 10')
             return False
-        url = self._options['server'] + '/secure/admin/AddProject.jspa'
-        payload = {'name': name, 'key': key, 'keyEdited': 'true', 'permissionScheme': '', 'lead': assignee, 'assigneeType': '2'}
+        url = self._options['server'] + '/rest/project-templates/1.0/templates'
+
+        payload = {'name': name,
+                   'key': key,
+                   'keyEdited': 'false',
+                   #'permissionScheme': '',
+                   'projectTemplateWebItemKey': 'com.atlassian.jira-core-project-templates:jira-blank-item',
+                   'projectTemplateModuleKey': 'com.atlassian.jira-core-project-templates:jira-blank-item',
+                   #'projectTemplateWebItemKey': 'com.pyxis.greenhopper.jira:gh-kanban-template-item',
+                   #'projectTemplateModuleKey': 'com.pyxis.greenhopper.jira:gh-kanban-template',
+                   'lead': assignee,
+                   #'assigneeType': '2',
+                   }
+
         r = self._session.post(url, headers=self._options['headers'], data=payload)
-        content = r.content.decode('utf8')
-        if r.status_code == 200 and content.find('<meta name="projectKey" content="%s"/>' % key):
-            m = re.search("<meta name=\"projectId\" content=\"(\d+)\"\/>", content)
-            if m:
-                return m.groups()[0]  # that's the projectID
+        if r.status_code == 200:
+            raise_on_error(r)
+            r_json = json.loads(r.text)
+            content = r.content.decode('utf8')
+            return r_json
+
         f = tempfile.NamedTemporaryFile(suffix='.html', prefix='python-jira-error-create-project-', delete=False)
         f.write(r.content)
-        logging.error("Unexpected result while running create project. Server response saved in %s for further investigation [HTTP response=%s]." % (f.name, r.status_code))
+        if self.logging:
+            logging.error("Unexpected result while running create project. Server response saved in %s for further investigation [HTTP response=%s]." % (f.name, r.status_code))
         return False
 
     def add_user(self, username, email, directoryId=1, password=None, fullname=None, sendEmail=False, active=True):
@@ -2102,17 +2146,17 @@ class GreenHopper(JIRA):
 
         :param id: the board to get sprints from
         :param extended: fetch additional information like startDate, endDate, completeDate,
-        much slower because it requires an additional requests for each sprint
-
-        "id": 893,
-        "name": "iteration.5",
-        "state": "FUTURE",
-        "linkedPagesCount": 0,
-        "startDate": "None",
-        "endDate": "None",
-        "completeDate": "None",
-        "remoteLinks": []
-
+            much slower because it requires an additional requests for each sprint
+        :rtype: dict
+             >>> { "id": 893,
+             >>> "name": "iteration.5",
+             >>> "state": "FUTURE",
+             >>> "linkedPagesCount": 0,
+             >>> "startDate": "None",
+             >>> "endDate": "None",
+             >>> "completeDate": "None",
+             >>> "remoteLinks": []
+             >>> }
         """
         r_json = self._get_json('sprintquery/%s?includeHistoricSprints=true&includeFutureSprints=true' % id, base=self.GREENHOPPER_BASE_URL)
 
@@ -2185,6 +2229,18 @@ class GreenHopper(JIRA):
         :param sprint_id: the sprint retieving issues from
         """
         return self._get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id), base=self.GREENHOPPER_BASE_URL)['sprint']
+
+    def delete_board(self, id):
+        """
+        Deletes an agile board.
+
+        :param id:
+        :return:
+        """
+        payload = {}
+        url = self._get_url('rapidview/%s' % id, base=self.GREENHOPPER_BASE_URL)
+        r = self._session.delete(url, headers={'content-type': 'application/json'}, data=json.dumps(payload))
+        raise_on_error(r)
 
     def create_board(self, name, project_ids, preset="scrum"):
         """

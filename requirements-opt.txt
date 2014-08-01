@@ -1,0 +1,2 @@
+ipython>=0.13
+requests_oauthlib>=0.3.3
