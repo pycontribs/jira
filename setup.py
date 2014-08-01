@@ -15,7 +15,7 @@ setup(
                       'tlslite>=0.4.4',
                       'six>=1.5.2'],
     setup_requires=[],
-    tests_require=['tlslite>=0.4.4', 'xmlrunner>=1.7.3', 'requests>=1.2.3', 'setuptools', 'tox', 'pep8', 'autopep8',
+    tests_require=['tlslite>=0.4.4', 'xmlrunner>=1.7.3', 'requests>=1.2.3', 'setuptools', 'tox', 'autopep8',
                    'sphinx', 'six>=1.5.2'],
     extras_require={
         'magic': ['filemagic>=1.6'],
