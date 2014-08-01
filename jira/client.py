@@ -536,7 +536,7 @@ class JIRA(object):
         :param fields: comma-separated string of issue fields to include in the results
         :param expand: extra information to fetch inside each resource
         """
-        issue = Issue(self._options, self._session, self)
+        issue = Issue(self._options, self._session)
 
         params = {}
         if fields is not None:
