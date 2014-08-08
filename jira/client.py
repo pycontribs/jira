@@ -193,7 +193,7 @@ class JIRA(object):
             self.session()  # This will raise an Exception if you are not allowed to login. It's better to fail faster than later.
         # We need version in order to know what API calls are available or not
         self._version = tuple(self.server_info()['versionNumbers'])
-		
+
     def _check_for_html_error(self, content):
         # TODO: Make it return errors when content is a webpage with errors
         # JIRA has the bad habbit of returning errors in pages with 200 and embedding the error in a huge webpage.
@@ -1264,7 +1264,7 @@ class JIRA(object):
 
 # Search
 
-    def search_issues(self, jql_str, startAt=0, maxResults=50, fields=None, expand=None, json_result=None):
+    def search_issues(self, jql_str, startAt=0, maxResults=50, validate_query=True, fields=None, expand=None, json_result=None):
         """
         Get a ResultList of issue Resources matching a JQL search string.
 
@@ -1291,6 +1291,7 @@ class JIRA(object):
             "jql": jql_str,
             "startAt": startAt,
             "maxResults": maxResults,
+            "validateQuery": validate_query,
             "fields": fields,
             "expand": expand
         }
