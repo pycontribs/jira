@@ -84,7 +84,11 @@ def process_config():
         return process_command_line()
 
     if parser.has_section('options'):
-        options = dict(parser.items('options'))
+        options = {}
+        for option, value in parser.items('options'):
+            if option in ("verify", "resilient", "async"):
+                value = parser.getboolean('options', option)
+            options[option] = value
     else:
         options = {}
 
