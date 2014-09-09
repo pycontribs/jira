@@ -952,7 +952,7 @@ class JIRA(object):
                               }
             data['updateAuthor'] = data['author']
         # TODO: report bug to Atlassian: author and updateAuthor parameters are ignored.
-        url = self._get_url('issue/{}/worklog'.format(issue))
+        url = self._get_url('issue/{0}/worklog'.format(issue))
         r = self._session.post(url, params=params, headers={'content-type': 'application/json'}, data=json.dumps(data))
         raise_on_error(r)
 
