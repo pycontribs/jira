@@ -1,3 +1,2 @@
 include LICENSE README RELEASE
 prune tests
-prune tools
