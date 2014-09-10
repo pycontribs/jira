@@ -1557,7 +1557,7 @@ class JIRA(object):
 # Versions
 
     @translate_resource_args
-    def create_version(self, name, project, description=None, releaseDate=None):
+    def create_version(self, name, project, description=None, releaseDate=None, startDate=None, archived=False, released=False):
         """
         Create a version in a project and return a Resource for it.
 
@@ -1565,15 +1565,20 @@ class JIRA(object):
         :param project: key of the project to create the version in
         :param description: a description of the version
         :param releaseDate: the release date assigned to the version
+        :param startDate: The start date for the version
         """
         data = {
             'name': name,
             'project': project,
+            'archived': archived,
+            'released': released
         }
         if description is not None:
             data['description'] = description
         if releaseDate is not None:
             data['releaseDate'] = releaseDate
+        if startDate is not None:
+            data['startDate'] = releaseDate
 
         url = self._get_url('version')
         r = self._session.post(url, headers={'content-type': 'application/json'}, data=json.dumps(data))
