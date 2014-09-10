@@ -216,6 +216,13 @@ and when you're done with an issue, you can send it to the great hard drive in t
 
     issue.delete()
 
+Updating components::
+
+    existingComponents = []
+    for component in issue.fields.components:
+        existingComponents.append({"name" : component.name})
+    issue.update(fields={"components": existingComponents})
+
 Searching
 ^^^^^^^^^
 
