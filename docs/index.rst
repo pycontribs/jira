@@ -399,10 +399,13 @@ http://bitbucket.org/bspeakmon/jira-python
 If you find a bug or have an idea for a useful feature, file it at that bitbucket project. Extra points for source
 code patches -- fork and send a pull request.
 
-Discussion
-----------
+Discussion and support
+----------------------
 
-We encourage all who wish to discuss the client to find the widest possible audience at http://answers.atlassian.com using the tag "python".
+We encourage all who wish to discuss by using https://answers.atlassian.com/questions/topics/754366/jira-python
+
+Keep in mind to use the jira-python tag when you add a new question. This will assure that the project mantainers 
+will get notified about your question.
 
 API Documentation
 =================
