@@ -910,7 +910,7 @@ class JIRA(object):
         return self._find_for_resource(Worklog, (issue, id))
 
     @translate_resource_args
-    def add_worklog(self, issue, timeSpent=None, adjustEstimate=None,
+    def add_worklog(self, issue, timeSpent=None, timeSpentSeconds=None, adjustEstimate=None,
                     newEstimate=None, reduceBy=None, comment=None, started=None, user=None):
         """
         Add a new worklog entry on an issue and return a Resource for it.
@@ -935,6 +935,8 @@ class JIRA(object):
         data = {}
         if timeSpent is not None:
             data['timeSpent'] = timeSpent
+        if timeSpentSeconds is not None:
+            data['timeSpentSeconds'] = timeSpentSeconds
         if comment is not None:
             data['comment'] = comment
         elif user:
