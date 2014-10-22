@@ -760,10 +760,11 @@ class JIRA(object):
         if relationship is not None:
             data['relationship'] = relationship
 
+        # check if the link comes from one of the configured application links
         for x in self.applicationlinks():
-            if x['displayUrl'] == self._options['server']:
-                data['globalId'] = "appId=%s&issueId=%s" % (x['id'], destination.raw['id'])
-                data['application'] = {'name': x['name'], 'type': "com.atlassian.jira"}
+            if x['application']['displayUrl'] == self._options['server']:
+                data['globalId'] = "appId=%s&issueId=%s" % (x['application']['id'], destination.raw['id'])
+                data['application'] = {'name': x['application']['name'], 'type': "com.atlassian.jira"}
                 break
 
         url = self._get_url('issue/' + str(issue) + '/remotelink')
