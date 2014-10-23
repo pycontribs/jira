@@ -58,15 +58,16 @@ Credits
 
 In additions to all the contributors we would like to thank to these companies:
 
-* [Atlassian](https://www.atlassian.com/) for developing such a powerful issue tracker and for providing a [free on-demand JIRA instance](https://pycontribs.atlassian.net) that we can use for continous integration testing.
-* [JetBrains](http://www.jetbrains.com) for providing us with free licenses of [PyCharm](http://www.jetbrains.com/pycharm/)
-* [Travis CI](https://travis-ci.org/) for hosting our continous integration
+* Atlassian_ for developing such a powerful issue tracker and for providing a [free on-demand JIRA instance](https://pycontribs.atlassian.net) that we can use for continous integration testing.
+* JetBrains_ for providing us with free licenses of [PyCharm](http://www.jetbrains.com/pycharm/)
+* Travis_ for hosting our continous integration
+* Navicat_ for providing us free licenses of their powerful database client GUI tools.
 
 [1]: http://docs.python-requests.org/
 [2]: http://www.virtualenv.org/en/latest/index.html
 
 .. image:: http://www.atlassian.com/dms/wac/images/press/Atlassian-logos/logoAtlassianPNG.png
-    :height: 100
+   :width: 100px
 
 .. image:: http://www.jetbrains.com/pycharm/docs/logo_pycharm.png
     :height: 100
@@ -74,3 +75,7 @@ In additions to all the contributors we would like to thank to these companies:
 .. image:: http://upload.wikimedia.org/wikipedia/en/6/6f/PremiumSoft_Navicat_Premium_Logo.jpg
     :height: 100
 
+.. _navicat: https://www.navicat.com/
+.. Travis: https://travis-ci.org/
+.. JetBrains: http://www.jetbrains.com
+.. Atlassian: (https://www.atlassian.com/
