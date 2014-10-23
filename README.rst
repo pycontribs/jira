@@ -51,15 +51,15 @@ You can also try `pip install --user --upgrade jira` which will install or upgra
 Usage
 ~~~~~
 
-See the documentation (http://readthedocs.org/docs/jira-python/) for full details.
+See the documentation_ for full details.
 
 Credits
 -------
 
 In additions to all the contributors we would like to thank to these companies:
 
-* Atlassian_ for developing such a powerful issue tracker and for providing a [free on-demand JIRA instance](https://pycontribs.atlassian.net) that we can use for continous integration testing.
-* JetBrains_ for providing us with free licenses of [PyCharm](http://www.jetbrains.com/pycharm/)
+* Atlassian_ for developing such a powerful issue tracker and for providing a free on-demand JIRA_ instance that we can use for continous integration testing.
+* JetBrains_ for providing us with free licenses of PyCharm_
 * Travis_ for hosting our continous integration
 * Navicat_ for providing us free licenses of their powerful database client GUI tools.
 
@@ -76,6 +76,9 @@ In additions to all the contributors we would like to thank to these companies:
     :height: 100
 
 .. _navicat: https://www.navicat.com/
-.. Travis: https://travis-ci.org/
-.. JetBrains: http://www.jetbrains.com
-.. Atlassian: (https://www.atlassian.com/
+.. _Travis: https://travis-ci.org/
+.. _JetBrains: http://www.jetbrains.com
+.. _Atlassian: https://www.atlassian.com/
+.. _PyCharm: http://www.jetbrains.com/pycharm/
+.. _JIRA: https://pycontribs.atlassian.net
+.. _documentation: http://readthedocs.org/docs/jira-python/
