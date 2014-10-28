@@ -70,10 +70,10 @@ In additions to all the contributors we would like to thank to these companies:
    :width: 100px
 
 .. image:: http://www.jetbrains.com/pycharm/docs/logo_pycharm.png
-    :height: 100
+    :height: 100px
 
-.. image:: http://upload.wikimedia.org/wikipedia/en/6/6f/PremiumSoft_Navicat_Premium_Logo.jpg
-    :height: 100
+.. image:: https://upload.wikimedia.org/wikipedia/en/9/90/PremiumSoft_Navicat_Premium_Logo.png
+    :height: 100px
 
 .. _navicat: https://www.navicat.com/
 .. _Travis: https://travis-ci.org/
