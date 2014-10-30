@@ -76,7 +76,7 @@ In additions to all the contributors we would like to thank to these companies:
 
 .. image:: https://upload.wikimedia.org/wikipedia/en/9/90/PremiumSoft_Navicat_Premium_Logo.png
     :height: 100px
-    :target: https://www.navicat.com/
+    :target: http://www.navicat.com/
 
 
 .. _navicat: https://www.navicat.com/
