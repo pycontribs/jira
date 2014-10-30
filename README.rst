@@ -68,12 +68,16 @@ In additions to all the contributors we would like to thank to these companies:
 
 .. image:: http://www.atlassian.com/dms/wac/images/press/Atlassian-logos/logoAtlassianPNG.png
    :width: 100px
+   :target: http://www.atlassian.com
 
 .. image:: http://www.jetbrains.com/pycharm/docs/logo_pycharm.png
     :height: 100px
+    :target: http://www.jetbrains.com/
 
 .. image:: https://upload.wikimedia.org/wikipedia/en/9/90/PremiumSoft_Navicat_Premium_Logo.png
     :height: 100px
+    :target: https://www.navicat.com/
+
 
 .. _navicat: https://www.navicat.com/
 .. _Travis: https://travis-ci.org/
