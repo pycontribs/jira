@@ -106,6 +106,7 @@ class JIRA(object):
         "verify": True,
         "resilient": False,
         "async": False,
+        "client_cert": None,
         "headers": {
             'X-Atlassian-Token': 'no-check',
             'Cache-Control': 'no-cache',
@@ -139,6 +140,7 @@ class JIRA(object):
             * rest_api_version -- the version of the REST resources under rest_path to use. Defaults to ``2``.
             * verify -- Verify SSL certs. Defaults to ``True``.
             * resilient -- If it should just retry recoverable errors. Defaults to `False`.
+            * client_cert -- a tuple of (cert,key) for the requests library for client side SSL
         :param basic_auth: A tuple of username and password to use when establishing a session via HTTP BASIC
         authentication.
         :param oauth: A dict of properties for OAuth authentication. The following properties are required:
@@ -1685,6 +1687,7 @@ class JIRA(object):
             self._session = requests.Session()
         self._session.verify = verify
         self._session.auth = (username, password)
+        self._session.cert = self._options['client_cert']
 
     def _create_oauth_session(self, oauth):
         verify = self._options['verify']
