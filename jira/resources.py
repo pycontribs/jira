@@ -115,10 +115,8 @@ class Resource(object):
 
         data = {}
         if fields is not None:
-            data['body'] = fields
-        else:
-            for arg in kwargs:
-                data[arg] = kwargs[arg]
+            data.update(fields)
+        data.update(kwargs)
 
         r = self._session.put(self.self, headers={'content-type': 'application/json'}, data=json.dumps(data))
         if 'autofix' in self._options and \
@@ -350,6 +348,8 @@ class Comment(Resource):
         if raw:
             self._parse_raw(raw)
 
+    def update(self, body):
+        super(Comment, self).update(body=body)
 
 class RemoteLink(Resource):
 
