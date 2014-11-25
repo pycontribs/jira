@@ -52,7 +52,7 @@ if 'pydevd' not in sys.modules:
     except NotImplementedError:
         pass
 
-warnings.simplefilter('default')
+#warnings.simplefilter('default')
 
 #encoding = sys.getdefaultencoding()
 # if encoding != 'UTF8':
@@ -1789,64 +1789,83 @@ class JIRA(object):
         :param old_user: string with username login
         :param new_user: string with username login
         """
+        
+        if self._version >= (6, 0, 0):
 
-        merge = "true"
-        try:
-            self.user(new_user)
-        except:
-            merge = "false"
+            url = self._options['server'] + '/rest/api/2/user'
+            payload = {
+                "name": new_user,
+            }
+            params = {
+                'username': old_user
+            }
 
-        url = self._options['server'] + '/secure/admin/groovy/CannedScriptRunner.jspa#result'
-        payload = {
-            "cannedScript": "com.onresolve.jira.groovy.canned.admin.RenameUser",
-            "cannedScriptArgs_FIELD_FROM_USER_ID": old_user,
-            "cannedScriptArgs_FIELD_TO_USER_ID": new_user,
-            "cannedScriptArgs_FIELD_MERGE": merge,
-            "id": "",
-            "RunCanned": "Run",
-        }
+            logging.debug("renaming %s" % self.user(old_user).emailAddress)  # raw displayName
 
-        logging.debug("renaming %s" % self.user(old_user).emailAddress)  # raw displayName
+            r = self._session.put(url, params=params, headers={'content-type': 'application/json'}, data=json.dumps(payload))
+            raise_on_error(r)
 
-        r = self._session.post(url, headers=self._options['headers'], data=payload)
-        if r.status_code == 404:
-            logging.error("In order to be able to use rename_user() you need to install Script Runner plugin. See https://marketplace.atlassian.com/plugins/com.onresolve.jira.groovy.groovyrunner")
-            return False
-        if r.status_code != 200:
-            logging.error(r.status_code)
 
-        raise_on_error(r)
+        else:
+            # old implementation needed the ScripRunner plugin
+            merge = "true"
+            try:
+                self.user(new_user)
+            except:
+                merge = "false"
 
-        if re.compile("XSRF Security Token Missing").search(r.content):
-            logging.fatal("Reconfigure JIRA and disable XSRF in order to be able call this. See https://developer.atlassian.com/display/JIRADEV/Form+Token+Handling")
-            return False
+            url = self._options['server'] + '/secure/admin/groovy/CannedScriptRunner.jspa#result'
+            payload = {
+                "cannedScript": "com.onresolve.jira.groovy.canned.admin.RenameUser",
+                "cannedScriptArgs_FIELD_FROM_USER_ID": old_user,
+                "cannedScriptArgs_FIELD_TO_USER_ID": new_user,
+                "cannedScriptArgs_FIELD_MERGE": merge,
+                "id": "",
+                "RunCanned": "Run",
+            }
 
-        open("/tmp/jira_rename_user_%s_to%s.html" % (old_user, new_user), "w").write(r.content)
+            logging.debug("renaming %s" % self.user(old_user).emailAddress)  # raw displayName
 
-        msg = r.status_code
-        m = re.search("<span class=\"errMsg\">(.*)<\/span>", r.content)
-        if m:
-            msg = m.group(1)
+            r = self._session.post(url, headers=self._options['headers'], data=payload)
+            if r.status_code == 404:
+                logging.error("In order to be able to use rename_user() you need to install Script Runner plugin. See https://marketplace.atlassian.com/plugins/com.onresolve.jira.groovy.groovyrunner")
+                return False
+            if r.status_code != 200:
+                logging.error(r.status_code)
+
+            raise_on_error(r)
+
+            if re.compile("XSRF Security Token Missing").search(r.content):
+                logging.fatal("Reconfigure JIRA and disable XSRF in order to be able call this. See https://developer.atlassian.com/display/JIRADEV/Form+Token+Handling")
+                return False
+
+            open("/tmp/jira_rename_user_%s_to%s.html" % (old_user, new_user), "w").write(r.content)
+
+            msg = r.status_code
+            m = re.search("<span class=\"errMsg\">(.*)<\/span>", r.content)
+            if m:
+                msg = m.group(1)
+                logging.error(msg)
+                return False
+                # <span class="errMsg">Target user ID must exist already for a merge</span>
+            p = re.compile("type=\"hidden\" name=\"cannedScriptArgs_Hidden_output\" value=\"(.*?)\"\/>", re.MULTILINE | re.DOTALL)
+            m = p.search(r.content)
+            if m:
+                h = HTMLParser.HTMLParser()
+                msg = h.unescape(m.group(1))
+                logging.info(msg)
+
+            # let's check if the user still exists
+            try:
+                self.user(old_user)
+            except:
+                logging.error("User %s does not exists." % old_user)
+                return msg
+
             logging.error(msg)
+            logging.error("User %s does still exists after rename, that's clearly a problem." % old_user)
             return False
-            # <span class="errMsg">Target user ID must exist already for a merge</span>
-        p = re.compile("type=\"hidden\" name=\"cannedScriptArgs_Hidden_output\" value=\"(.*?)\"\/>", re.MULTILINE | re.DOTALL)
-        m = p.search(r.content)
-        if m:
-            h = HTMLParser.HTMLParser()
-            msg = h.unescape(m.group(1))
-            logging.info(msg)
 
-        # let's check if the user still exists
-        try:
-            self.user(old_user)
-        except:
-            logging.error("User %s does not exists." % old_user)
-            return msg
-
-        logging.error(msg)
-        logging.error("User %s does still exists after rename, that's clearly a problem." % old_user)
-        return False
 
     def delete_user(self, username):
 

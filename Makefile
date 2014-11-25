@@ -11,6 +11,9 @@ uninstall:
 install_testrig:
 	pip install --user nose mock
 
+pep8:
+	py.test --pep8 -m pep8
+
 tox:
 	pip install --user tox detox
 	detox
