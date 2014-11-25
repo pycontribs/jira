@@ -558,10 +558,10 @@ class FilterTests(unittest.TestCase):
 
     def test_filter(self):
         jql = "project = %s and component is not empty" % self.project_b
-        filter = self.jira.create_filter(name="Some new test filter",
+        filter = self.jira.create_filter(name="Some brand new test filter",
                                          description="just some new test filter", jql=jql,
                                          favourite=False)
-        self.assertEqual(filter.name, 'Some new test filter')
+        self.assertEqual(filter.name, 'Some brand new test filter')
         self.assertEqual(filter.owner.name, 'ci-admin')
         filter.delete()
 
@@ -569,7 +569,7 @@ class FilterTests(unittest.TestCase):
         filters = self.jira.favourite_filters()
         initial_len = len(filters)
         jql = "project = %s and component is not empty" % self.project_b
-        filter = self.jira.create_filter(name="Some new test filter",
+        filter = self.jira.create_filter(name="Some brand new test filter",
                                          description="just some new test filter", jql=jql,
                                          favourite=True)
         self.assertEqual(len(self.jira.favourite_filters()), initial_len + 1)

@@ -910,7 +910,7 @@ class JIRA(object):
         return self._find_for_resource(Worklog, (issue, id))
 
     @translate_resource_args
-    def add_worklog(self, issue, timeSpent=None, adjustEstimate=None,
+    def add_worklog(self, issue, timeSpent=None, timeSpentSeconds=None, adjustEstimate=None,
                     newEstimate=None, reduceBy=None, comment=None, started=None, user=None):
         """
         Add a new worklog entry on an issue and return a Resource for it.
@@ -935,6 +935,8 @@ class JIRA(object):
         data = {}
         if timeSpent is not None:
             data['timeSpent'] = timeSpent
+        if timeSpentSeconds is not None:
+            data['timeSpentSeconds'] = timeSpentSeconds
         if comment is not None:
             data['comment'] = comment
         elif user:
@@ -952,7 +954,7 @@ class JIRA(object):
                               }
             data['updateAuthor'] = data['author']
         # TODO: report bug to Atlassian: author and updateAuthor parameters are ignored.
-        url = self._get_url('issue/{}/worklog'.format(issue))
+        url = self._get_url('issue/{0}/worklog'.format(issue))
         r = self._session.post(url, params=params, headers={'content-type': 'application/json'}, data=json.dumps(data))
         raise_on_error(r)
 
@@ -1777,7 +1779,7 @@ class JIRA(object):
         }
 
         r = self._session.post(url, headers=self._options['headers'], data=payload)
-        open("/tmp/jira_email_user_%s.html" % user, "w").write(r.content)
+        open("/tmp/jira_email_user_%s.html" % user, "w").write(r.text)
         # return False
 
         raise_on_error(r)
@@ -1866,7 +1868,6 @@ class JIRA(object):
             logging.error("User %s does still exists after rename, that's clearly a problem." % old_user)
             return False
 
-
     def delete_user(self, username):
 
         # name=vunguyen&returnUrl=UserBrowser.jspa
@@ -1886,7 +1887,7 @@ class JIRA(object):
             logging.error(r.status_code)
 
         # raise_on_error(r)
-        open("/tmp/jira_delete_user_%s_%s.html" % (r.status_code, username), "w").write(r.content)
+        open("/tmp/jira_delete_user_%s_%s.html" % (r.status_code, username), "w").write(r.text)
 
     def reindex(self, force=False, background=True):
         """
@@ -1912,17 +1913,17 @@ class JIRA(object):
             return 503
         # raise_on_error(r)
 
-        if not r.content.find("To perform the re-index now, please go to the") and force is False:
+        if not r.text.find("To perform the re-index now, please go to the") and force is False:
             return True
 
-        if r.content.find('All issues are being re-indexed'):
+        if r.text.find('All issues are being re-indexed'):
             logging.warning("JIRA re-indexing is already running.")
             return True  # still reindexing is considered still a success
 
-        if r.content.find('To perform the re-index now, please go to the') or force:
+        if r.text.find('To perform the re-index now, please go to the') or force:
             r = self._session.post(url, headers=self._options['headers'], params={"indexingStrategy": indexingStrategy, "reindex": "Re-Index"})
             # raise_on_error(r)
-            if r.content.find('All issues are being re-indexed') != -1:
+            if r.text.find('All issues are being re-indexed') != -1:
                 return True
             else:
                 logging.error("Failed to reindex jira, probably a bug.")
@@ -1979,7 +1980,7 @@ class JIRA(object):
         payload = {'pid': pid, 'Delete': 'Delete', 'confirm': 'true'}
         r = self._session.post(url, headers=self._options['headers'], data=payload)
         if r.status_code == 200:
-            return self._check_for_html_error(r.content.decode('utf8'))
+            return self._check_for_html_error(r.text)
         else:
             logging.warning('Got %s response from calling delete_project.' % r.status_code)
             return r.status_code
@@ -2016,11 +2017,11 @@ class JIRA(object):
         if r.status_code == 200:
             raise_on_error(r)
             r_json = json.loads(r.text)
-            content = r.content.decode('utf8')
+            content = r.text
             return r_json
 
         f = tempfile.NamedTemporaryFile(suffix='.html', prefix='python-jira-error-create-project-', delete=False)
-        f.write(r.content)
+        f.write(r.text)
         if self.logging:
             logging.error("Unexpected result while running create project. Server response saved in %s for further investigation [HTTP response=%s]." % (f.name, r.status_code))
         return False
@@ -2037,7 +2038,7 @@ class JIRA(object):
         r = self._session.post(url, headers=self._options['headers'], data=payload)
 
         if r.status_code == 200:
-            content = r.content.decode('utf8')
+            content = r.text
             if content.find('class="error">'):
                 m = re.search('class="error">(.*)</div>', content)
                 if m:
@@ -2064,7 +2065,7 @@ class JIRA(object):
             'join': 'submit'}
         r = self._session.post(url, headers=self._options['headers'], data=payload)
         if r.status_code == 200:
-            content = r.content.decode('utf8')
+            content = r.text
             if content.find('class="error">') != -1:
                 m = re.search('class="error">(.*)</div>', content)
                 if m:
