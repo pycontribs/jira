@@ -2183,7 +2183,6 @@ class GreenHopper(JIRA):
     def sprints_by_name(self, id, extended=False):
         sprints = {}
         for s in self.sprints(id, extended=extended):
-            print(s.raw)
             if s.name not in sprints:
                 sprints[s.name] = s.raw
             else:
