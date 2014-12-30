@@ -323,7 +323,6 @@ class Issue(Resource):
 
         This should work with: labels, multiple checkbox lists, multiple select
         """
-        field = self.instance.resolve_fields(field)
         self.update({"update": {field: [{"add": value}]}})
 
     def delete(self, deleteSubtasks=False):
