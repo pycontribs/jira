@@ -170,6 +170,10 @@ class Resource(object):
             else:
                 r = self._session.put(self.self, headers={'content-type': 'application/json'}, data=json.dumps(data))
                 raise_on_error(r)
+
+        elif 'autofix' not in self._options:
+            raise_on_error(r)
+
         self._load(self.self)
 
     def delete(self, params=None):
