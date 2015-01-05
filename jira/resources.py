@@ -162,10 +162,10 @@ class Resource(object):
                 #    data['fields']['assignee'] = {'name': self._options['autofix']}
             # EXPERIMENTAL --->
             # import grequests
-            if async and 'grequests' in sys.modules:
+            if async:
                 if not hasattr(self._session, '_async_jobs'):
                     self._session._async_jobs = set()
-                self._session._async_jobs.add(grequests.put(self.self, headers={'content-type': 'application/json'}, data=json.dumps(data)))
+                self._session._async_jobs.add(threaded_requests.put(self.self, headers={'content-type': 'application/json'}, data=json.dumps(data)))
             else:
                 r = self._session.put(self.self, headers={'content-type': 'application/json'}, data=json.dumps(data))
                 raise_on_error(r)
@@ -181,7 +181,7 @@ class Resource(object):
         if self._options['async']:
             if not hasattr(self._session, '_async_jobs'):
                 self._session._async_jobs = set()
-            self._session._async_jobs.add(grequests.delete(self.self, params=params))
+            self._session._async_jobs.add(threaded_requests.delete(self.self, params=params))
         else:
             r = self._session.delete(self.self, params=params)
             raise_on_error(r)

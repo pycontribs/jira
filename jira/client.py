@@ -44,19 +44,23 @@ try:
 except ImportError:
     import random
 
-if 'pydevd' not in sys.modules:
-    try:
-        import grequests
-    except ImportError:
-        pass
-    except NotImplementedError:
-        pass
-
-#warnings.simplefilter('default')
+# warnings.simplefilter('default')
 
 #encoding = sys.getdefaultencoding()
 # if encoding != 'UTF8':
 #    warnings.warn("Python default encoding is '%s' instead of 'UTF8' which means that there is a big change of having problems. Possible workaround http://stackoverflow.com/a/17628350/99834" % encoding)
+
+
+def threaded_requests(requests):
+    for fn, url, request_args in requests:
+        th = threading.Thread(
+            target=fn, args=(url,), kwargs=request_args, name=url,
+        )
+        th.start()
+
+    for th in threading.enumerate():
+        if th.name.startswith('http'):
+            th.join()
 
 
 def translate_resource_args(func):
@@ -244,7 +248,7 @@ class JIRA(object):
         """
         if hasattr(self._session, '_async_jobs'):
             logging.info("Executing async %s jobs found in queue by using %s threads..." % (len(self._session._async_jobs), size))
-            grequests.map(self._session._async_jobs, size=size)
+            threaded_requests.map(self._session._async_jobs, size=size)
 
 # Application properties
 
@@ -1791,7 +1795,7 @@ class JIRA(object):
         :param old_user: string with username login
         :param new_user: string with username login
         """
-        
+
         if self._version >= (6, 0, 0):
 
             url = self._options['server'] + '/rest/api/2/user'
@@ -1806,7 +1810,6 @@ class JIRA(object):
 
             r = self._session.put(url, params=params, headers={'content-type': 'application/json'}, data=json.dumps(payload))
             raise_on_error(r)
-
 
         else:
             # old implementation needed the ScripRunner plugin
