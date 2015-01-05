@@ -27,7 +27,7 @@ import json
 import warnings
 
 from six import string_types
-from six.moves.html_parser import HTMLParser
+from six.moves import html_parser
 from six import print_ as print
 
 
