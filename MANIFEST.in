@@ -1,3 +1,2 @@
 include LICENSE README.rst RELEASE
 prune tests
-prune tools

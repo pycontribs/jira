@@ -80,15 +80,19 @@ def oauth_dance(server, consumer_key, key_cert_data, print_tokens=False):
 
 
 def process_config():
-    parser = ConfigParser.SafeConfigParser()
+    parser = configparser.ConfigParser()
     try:
         parser.read(CONFIG_PATH)
-    except ConfigParser.ParsingError as err:
+    except configparser.ParsingError as err:
         print("Couldn't read config file at path: {}; reverting to command line".format(CONFIG_PATH))
         return process_command_line()
 
     if parser.has_section('options'):
-        options = dict(parser.items('options'))
+        options = {}
+        for option, value in parser.items('options'):
+            if option in ("verify", "resilient", "async"):
+                value = parser.getboolean('options', option)
+            options[option] = value
     else:
         options = {}
 

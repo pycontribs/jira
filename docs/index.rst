@@ -14,33 +14,6 @@ JIRA REST API. Some basic support for the GreenHopper REST API also exists.
 
 The source is stored at https://bitbucket.org/bspeakmon/jira-python.
 
-Changelog
-=========
-
-Version 0.13 -- April 10, 2013
-
-This is the first release driven by the community and fueled by its contributions.
-Many thanks to Markus Wiik, Sorin Sbarnea, Matt Doar, Doug Johnston, Greg Warner,
-Mark Egan-Fuller, Diogo Campos, and Randall Hunt for the feature work and
-bug-squishing that made such a terrific release possible!
-
-* Update to work with Requests 1.0+, including better OAuth support.
-* Basic support for the GreenHopper REST API.
-* Deprecate python-magic in favor of standard libraries imghdr and mimetypes.
-* Added optional ``filename`` parameter to ``add_attachment``
-* Added ability to pass a ``verify`` parameter to the requests session.
-* ``search_issues`` and ``dashboards`` now return a ``ResultList`` which includes some search metadata.
-* Various bugfixes (issues #5, #7, #8 and #11)
-
-Version 0.12 -- August 6, 2012
-
-* Reworked content-type usage to play nice with OAuth in JIRA 5.1.
-* Made interpretation and display of error messages more meaningful.
-* Implemented a config file for JIRA Shell.
-* Update to Requests 0.13.6 and IPython 0.13.
-
-*Known issues*: Project and user avatar creation doesn't work when using OAuth for authorization.
-
 Installation
 ============
 
@@ -243,6 +216,13 @@ and when you're done with an issue, you can send it to the great hard drive in t
 
     issue.delete()
 
+Updating components::
+
+    existingComponents = []
+    for component in issue.fields.components:
+        existingComponents.append({"name" : component.name})
+    issue.update(fields={"components": existingComponents})
+
 Searching
 ^^^^^^^^^
 
@@ -276,7 +256,7 @@ Adding, editing and deleting comments is similarly straightforward::
     comment = jira.add_comment('JRA-1330', 'new comment')    # no Issue object required
     comment = jira.add_comment(issue, 'new comment', visibility={'type': 'role', 'value': 'Administrators'})  # for admins only
 
-    comment.update('updated comment body')
+    comment.update(body = 'updated comment body')
     comment.delete()
 
 Transitions
@@ -426,10 +406,13 @@ http://bitbucket.org/bspeakmon/jira-python
 If you find a bug or have an idea for a useful feature, file it at that bitbucket project. Extra points for source
 code patches -- fork and send a pull request.
 
-Discussion
-----------
+Discussion and support
+----------------------
 
-We encourage all who wish to discuss the client to find the widest possible audience at http://answers.atlassian.com using the tag "python".
+We encourage all who wish to discuss by using https://answers.atlassian.com/questions/topics/754366/jira-python
+
+Keep in mind to use the jira-python tag when you add a new question. This will assure that the project mantainers 
+will get notified about your question.
 
 API Documentation
 =================
@@ -468,6 +451,8 @@ API Documentation
 
 Changelog
 =========
+
+.. literalinclude:: ../RELEASE
 
 Indices and tables
 ==================

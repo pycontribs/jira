@@ -23,7 +23,7 @@ setup(
     },
     entry_points={
         'console_scripts':
-        ['jirashell = tools.jirashell:main'],
+        ['jirashell = jira.jirashell:main'],
     },
 
     url='http://bitbucket.org/bspeakmon/jira-python',

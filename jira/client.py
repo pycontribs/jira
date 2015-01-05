@@ -27,7 +27,7 @@ import json
 import warnings
 
 from six import string_types
-from six.moves.html_parser import HTMLParser
+from six.moves import html_parser
 from six import print_ as print
 
 
@@ -61,7 +61,6 @@ def threaded_requests(requests):
     for th in threading.enumerate():
         if th.name.startswith('http'):
             th.join()
-
 
 def translate_resource_args(func):
     """
@@ -110,6 +109,7 @@ class JIRA(object):
         "verify": True,
         "resilient": False,
         "async": False,
+        "client_cert": None,
         "headers": {
             'X-Atlassian-Token': 'no-check',
             'Cache-Control': 'no-cache',
@@ -143,6 +143,7 @@ class JIRA(object):
             * rest_api_version -- the version of the REST resources under rest_path to use. Defaults to ``2``.
             * verify -- Verify SSL certs. Defaults to ``True``.
             * resilient -- If it should just retry recoverable errors. Defaults to `False`.
+            * client_cert -- a tuple of (cert,key) for the requests library for client side SSL
         :param basic_auth: A tuple of username and password to use when establishing a session via HTTP BASIC
         authentication.
         :param oauth: A dict of properties for OAuth authentication. The following properties are required:
@@ -764,10 +765,11 @@ class JIRA(object):
         if relationship is not None:
             data['relationship'] = relationship
 
+        # check if the link comes from one of the configured application links
         for x in self.applicationlinks():
-            if x['displayUrl'] == self._options['server']:
-                data['globalId'] = "appId=%s&issueId=%s" % (x['id'], destination.raw['id'])
-                data['application'] = {'name': x['name'], 'type': "com.atlassian.jira"}
+            if x['application']['displayUrl'] == self._options['server']:
+                data['globalId'] = "appId=%s&issueId=%s" % (x['application']['id'], destination.raw['id'])
+                data['application'] = {'name': x['application']['name'], 'type': "com.atlassian.jira"}
                 break
 
         url = self._get_url('issue/' + str(issue) + '/remotelink')
@@ -1270,7 +1272,7 @@ class JIRA(object):
 
 # Search
 
-    def search_issues(self, jql_str, startAt=0, maxResults=50, fields=None, expand=None, json_result=None):
+    def search_issues(self, jql_str, startAt=0, maxResults=50, validate_query=True, fields=None, expand=None, json_result=None):
         """
         Get a ResultList of issue Resources matching a JQL search string.
 
@@ -1297,6 +1299,7 @@ class JIRA(object):
             "jql": jql_str,
             "startAt": startAt,
             "maxResults": maxResults,
+            "validateQuery": validate_query,
             "fields": fields,
             "expand": expand
         }
@@ -1563,7 +1566,7 @@ class JIRA(object):
 # Versions
 
     @translate_resource_args
-    def create_version(self, name, project, description=None, releaseDate=None):
+    def create_version(self, name, project, description=None, releaseDate=None, startDate=None, archived=False, released=False):
         """
         Create a version in a project and return a Resource for it.
 
@@ -1571,15 +1574,20 @@ class JIRA(object):
         :param project: key of the project to create the version in
         :param description: a description of the version
         :param releaseDate: the release date assigned to the version
+        :param startDate: The start date for the version
         """
         data = {
             'name': name,
             'project': project,
+            'archived': archived,
+            'released': released
         }
         if description is not None:
             data['description'] = description
         if releaseDate is not None:
             data['releaseDate'] = releaseDate
+        if startDate is not None:
+            data['startDate'] = releaseDate
 
         url = self._get_url('version')
         r = self._session.post(url, headers={'content-type': 'application/json'}, data=json.dumps(data))
@@ -1684,6 +1692,7 @@ class JIRA(object):
             self._session = requests.Session()
         self._session.verify = verify
         self._session.auth = (username, password)
+        self._session.cert = self._options['client_cert']
 
     def _create_oauth_session(self, oauth):
         verify = self._options['verify']
@@ -1784,7 +1793,6 @@ class JIRA(object):
 
         r = self._session.post(url, headers=self._options['headers'], data=payload)
         open("/tmp/jira_email_user_%s.html" % user, "w").write(r.text)
-        # return False
 
         raise_on_error(r)
 
@@ -2196,7 +2204,6 @@ class GreenHopper(JIRA):
     def sprints_by_name(self, id, extended=False):
         sprints = {}
         for s in self.sprints(id, extended=extended):
-            print(s.raw)
             if s.name not in sprints:
                 sprints[s.name] = s.raw
             else:
@@ -2236,9 +2243,15 @@ class GreenHopper(JIRA):
         issues = [Issue(self._options, self._session, raw_issues_json) for raw_issues_json in r_json['contents']['completedIssues']]
         return issues
 
+    def completedIssuesEstimateSum(self, board_id, sprint_id):
+        """
+        Return the total completed points this sprint.
+        """
+        return self._get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id), base=self.GREENHOPPER_BASE_URL)['contents']['completedIssuesEstimateSum']['value']
+        
     def incompleted_issues(self, board_id, sprint_id):
         """
-        Return the completed issues for the given board id and sprint id
+        Return the completed issues for the sprint
         """
         r_json = self._get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id), base=self.GREENHOPPER_BASE_URL)
         issues = [Issue(self._options, self._session, raw_issues_json) for raw_issues_json in r_json['contents']['incompletedIssues']]

@@ -102,7 +102,7 @@ class Resource(object):
         headers = self._default_headers(headers)
         self._load(url, headers, params)
 
-    def update(self, async=None, jira=None, **kwargs):
+    def update(self, fields=None, async=None, jira=None, **kwargs):
         """
         Update this resource on the server. Keyword arguments are marshalled into a dict before being sent. If this
         resource doesn't support ``PUT``, a :py:exc:`.JIRAError` will be raised; subclasses that specialize this method
@@ -114,8 +114,9 @@ class Resource(object):
             async = self._options['async']
 
         data = {}
-        for arg in kwargs:
-            data[arg] = kwargs[arg]
+        if fields is not None:
+            data.update(fields)
+        data.update(kwargs)
 
         r = self._session.put(self.self, headers={'content-type': 'application/json'}, data=json.dumps(data))
         if 'autofix' in self._options and \
@@ -169,6 +170,10 @@ class Resource(object):
             else:
                 r = self._session.put(self.self, headers={'content-type': 'application/json'}, data=json.dumps(data))
                 raise_on_error(r)
+
+        elif 'autofix' not in self._options:
+            raise_on_error(r)
+
         self._load(self.self)
 
     def delete(self, params=None):
@@ -318,7 +323,6 @@ class Issue(Resource):
 
         This should work with: labels, multiple checkbox lists, multiple select
         """
-        field = self.instance.resolve_fields(field)
         self.update({"update": {field: [{"add": value}]}})
 
     def delete(self, deleteSubtasks=False):
@@ -347,6 +351,8 @@ class Comment(Resource):
         if raw:
             self._parse_raw(raw)
 
+    def update(self, body):
+        super(Comment, self).update(body=body)
 
 class RemoteLink(Resource):
 
