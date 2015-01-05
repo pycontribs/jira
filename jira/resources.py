@@ -170,6 +170,10 @@ class Resource(object):
             else:
                 r = self._session.put(self.self, headers={'content-type': 'application/json'}, data=json.dumps(data))
                 raise_on_error(r)
+
+        elif 'autofix' not in self._options:
+            raise_on_error(r)
+
         self._load(self.self)
 
     def delete(self, params=None):
@@ -319,7 +323,6 @@ class Issue(Resource):
 
         This should work with: labels, multiple checkbox lists, multiple select
         """
-        field = self.instance.resolve_fields(field)
         self.update({"update": {field: [{"add": value}]}})
 
     def delete(self, deleteSubtasks=False):
