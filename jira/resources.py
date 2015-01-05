@@ -354,6 +354,7 @@ class Comment(Resource):
     def update(self, body):
         super(Comment, self).update(body=body)
 
+
 class RemoteLink(Resource):
 
     """A link to a remote application from an issue."""

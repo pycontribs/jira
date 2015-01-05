@@ -62,6 +62,7 @@ def threaded_requests(requests):
         if th.name.startswith('http'):
             th.join()
 
+
 def translate_resource_args(func):
     """
     Decorator that converts Issue and Project resources to their keys when used as arguments.
@@ -2248,7 +2249,7 @@ class GreenHopper(JIRA):
         Return the total completed points this sprint.
         """
         return self._get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id), base=self.GREENHOPPER_BASE_URL)['contents']['completedIssuesEstimateSum']['value']
-        
+
     def incompleted_issues(self, board_id, sprint_id):
         """
         Return the completed issues for the sprint
