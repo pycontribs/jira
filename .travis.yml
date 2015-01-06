@@ -2,11 +2,12 @@ language: python
 os:
   - linux
   - osx
-python: 2.7
+#python: 2.7
 env:
   matrix:
   - TOX_ENV=py26
   - TOX_ENV=py27
+  - TOX_ENV=py33
   - TOX_ENV=py34
   - TOX_ENV=docs
   global:
@@ -26,3 +27,5 @@ branches:
   - master
 notifications:
   hipchat: 7d72ba6ba0bf07248f17e0a6a1a899@DevOps
+matrix:
+  fast_finish: true

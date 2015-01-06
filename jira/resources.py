@@ -315,7 +315,7 @@ class Issue(Resource):
                 fields_dict[field] = fieldargs[field]
             data['fields'] = fields_dict
 
-        super(Issue, self).update(async=async, jira=jira, **data)
+        super(Issue, self).update(fields=None, async=async, jira=jira, **data)
 
     def add_field_value(self, field, value):
         """
@@ -351,8 +351,14 @@ class Comment(Resource):
         if raw:
             self._parse_raw(raw)
 
-    def update(self, body):
-        super(Comment, self).update(body=body)
+    def update(self, fields=None, async=None, jira=None, body='', visibility=None):
+        # TODO: fix the Resource.update() override mess
+        data = {}
+        if body:
+            data['body'] = body
+        if visibility:
+            data['vissibility'] = visibility
+        super(Comment, self).update(data)
 
 
 class RemoteLink(Resource):
