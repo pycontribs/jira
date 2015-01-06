@@ -27,5 +27,5 @@ branches:
   - master
 notifications:
   hipchat: 7d72ba6ba0bf07248f17e0a6a1a899@DevOps
-matrix:
-  fast_finish: true
+#matrix:
+#  fast_finish: true

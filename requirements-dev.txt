@@ -1,7 +1,8 @@
 Sphinx
 autopep8
+oauthlib
 pep8
-pytest
+pytest>=2.6.0
 pytest-cov
 pytest-pep8
 pytest-xdist

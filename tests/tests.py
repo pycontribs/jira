@@ -472,7 +472,7 @@ class ComponentTests(unittest.TestCase):
             # We ignore errors as this code intends only to prepare for component creation
             pass
 
-        name = 'component-' + ''.join(random.sample(string.letters, 15))
+        name = 'component-' + ''.join(random.sample(string.ascii_letters, 15))
 
         component = self.jira.create_component(name,
                                                self.project_b, description='stand by!',
@@ -548,7 +548,7 @@ class FilterTests(unittest.TestCase):
 
     def test_filter(self):
         jql = "project = %s and component is not empty" % self.project_b
-        name = 'same filter ' + ''.join(random.sample(string.letters, 15))
+        name = 'same filter ' + ''.join(random.sample(string.ascii_letters, 15))
         myfilter = self.jira.create_filter(name=name,
                                            description="just some new test filter", jql=jql,
                                            favourite=False)
@@ -560,7 +560,7 @@ class FilterTests(unittest.TestCase):
         filters = self.jira.favourite_filters()
         initial_len = len(filters)
         jql = "project = %s and component is not empty" % self.project_b
-        name = "filter-to-fav-" + ''.join(random.sample(string.letters, 15))
+        name = "filter-to-fav-" + ''.join(random.sample(string.ascii_letters, 15))
         myfilter = self.jira.create_filter(name=name,
                                            description="just some new test filter", jql=jql,
                                            favourite=True)
