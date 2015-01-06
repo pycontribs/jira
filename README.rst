@@ -8,20 +8,26 @@ JIRA Python Library
 .. image:: https://coveralls.io/repos/pycontribs/jira/badge.png?branch=master
         :target: https://coveralls.io/r/pycontribs/jira
 
-.. image:: https://pypip.in/d/jira/badge.png
+.. image:: https://pypip.in/d/jira/badge.png?style=flat
         :target: https://pypi.python.org/pypi/jira/
 
-.. image:: https://pypip.in/v/jira/badge.png
+.. image:: https://pypip.in/v/jira/badge.png?style=flat
         :target: https://pypi.python.org/pypi/jira/
 
-.. image:: https://pypip.in/egg/jira/badge.png
+.. image:: https://pypip.in/egg/jira/badge.png?style=flat
         :target: https://pypi.python.org/pypi/jira/
 
-.. image:: https://pypip.in/wheel/jira/badge.png
+.. image:: https://pypip.in/wheel/jira/badge.png?style=flat
         :target: https://pypi.python.org/pypi/jira/
 
-.. image:: https://pypip.in/license/jira/badge.png
+.. image:: https://pypip.in/license/jira/badge.png?style=flat
         :target: https://pypi.python.org/pypi/jira/
+
+.. image:: https://pypip.in/download/jira/badge.svg?style=flat
+.. image:: https://pypip.in/version/jira/badge.svg?style=flat
+.. image:: https://pypip.in/py_versions/jira/badge.svg?style=flat
+.. image:: https://pypip.in/format/jira/badge.svg?style=flat
+.. image:: https://pypip.in/status/jira>/badge.svg
 
 This library eases the use of the JIRA REST API from Python
 
