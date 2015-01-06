@@ -1,6 +1,7 @@
 Sphinx
 autopep8
 oauthlib
+coveralls
 pep8
 pytest>=2.6.0
 pytest-cov

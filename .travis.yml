@@ -2,14 +2,12 @@ language: python
 os:
   - linux
   - osx
-#python: 2.7
+python:
+  - "2.6"
+  - "2.7"
+  - "3.3"
+  - "3.4"
 env:
-  matrix:
-  - TOX_ENV=py26
-  - TOX_ENV=py27
-  - TOX_ENV=py33
-  - TOX_ENV=py34
-  - TOX_ENV=docs
   global:
   - secure: EUpWmrnhHKPkz9cOGbEEwhBtUBRqtQ775ck042B8/pI9ZZZghbKl3Jm8ahpfms3JiZcHMCG06MBREs1ISK/g2OfHKsdULCg5g3UFXteVQo769kwh/x4lniSbU2eipcN0s9Q/Ak5zStwTa5aNQ4FU/3zSgTDxi/OcDKGXDbVwHD8=
   - secure: l/xwPJ01auD8LSRb9AaMXtqZ08uELw85zjnA/C3A72TvQip/zxrtlaFgSy7qEuMJxlSR8avNIhOeXNTwyU8WuSyn8E3OgLVbmiVwPO5w9Pt80Q34jrGxRO0HTpZY4YSJENDgV+IFswo9tMZx4qgQIcTHeADSHZgfY0cCQLaQ2Vk=
@@ -19,9 +17,13 @@ env:
 install:
 - pip install -r requirements.txt
 - pip install -r requirements-dev.txt
+- pip install -r requirements-opt.txt || "Failing to install optional requirements will not fail the build."
+- pip install coveralls
 script:
 - ./pretest
-- travis_wait tox --skip-missing-interpreters -e $TOX_ENV
+- travis_wait coverage run --source=jira setup.py test
+after_success:
+  coveralls
 branches:
   only:
   - master

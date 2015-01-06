@@ -1757,5 +1757,5 @@ if __name__ == '__main__':
     # print(j.session())
 
     dirname = "test-reports-%s%s" % (sys.version_info[0], sys.version_info[1])
-    unittest.main(testRunner=xmlrunner.XMLTestRunner(output=dirname))
+    unittest.main()
     # pass
