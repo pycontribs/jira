@@ -17,13 +17,14 @@ env:
 install:
 - pip install -r requirements.txt
 - pip install -r requirements-dev.txt
-- pip install -r requirements-opt.txt || "Failing to install optional requirements will not fail the build."
+- pip install -r requirements-opt.txt || echo "skipped"
 - pip install coveralls
 script:
 - ./pretest
 - travis_wait coverage run --source=jira setup.py test
 after_success:
   coveralls
+  python setup.py build_sphinx upload_docs
 branches:
   only:
   - master
