@@ -3,8 +3,6 @@ from __future__ import print_function
 import os
 import re
 import sys
-import time
-import pip
 import inspect
 import logging
 import getpass
@@ -24,20 +22,11 @@ if sys.version_info < (2, 7, 0):
     try:
         import unittest2 as unittest
     except ImportError:
+        import pip
         pip.main(['install', '--upgrade', '--user', 'unittest2'])
         import unittest2 as unittest
 else:
     import unittest
-
-try:
-    import xmlrunner
-    import requests
-except ImportError:
-    pip.main(['install', '--user', '--upgrade', 'tlslite',
-              'requests-oauthlib', 'requests', 'unittest-xml-reporting',
-              'xmlrunner'])
-    import xmlrunner
-    import requests
 
 cmd_folder = os.path.abspath(os.path.join(os.path.split(inspect.getfile(
     inspect.currentframe()))[0], ".."))
