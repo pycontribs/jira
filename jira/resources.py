@@ -6,17 +6,14 @@ This module implements the Resource classes that translate JSON from JIRA REST r
 into usable objects.
 """
 
+import collections
 import re
-import sys
 import logging
-import random
-import pprint
 import json
 
 from six import iteritems, string_types, text_type
-from six import print_ as print
 
-from jira.exceptions import raise_on_error, get_error_list
+from .utils import threaded_requests, json_loads, get_error_list, CaseInsensitiveDict
 
 
 class Resource(object):
@@ -55,7 +52,8 @@ class Resource(object):
         self._options = options
         self._session = session
 
-        # Explicitly define as None so we know when a resource has actually been loaded
+        # Explicitly define as None so we know when a resource has actually
+        # been loaded
         self.raw = None
         self.self = None
 
@@ -85,22 +83,26 @@ class Resource(object):
                                         text_type(hex(id(self))))
         return '<JIRA %s: %s>' % (self.__class__.__name__, ', '.join(names))
 
-    def find(self, ids=None, headers=None, params=None):
+    def __getattr__(self, item):
+        # this should make Project.key and similar to work
+        try:
+            return self[item]
+        except Exception as e:
+            if item in self.raw:
+                return self.raw[item]
+
+    def find(self, ids=None, params=None):
         if ids is None:
             ids = ()
 
         if isinstance(ids, string_types):
             ids = (ids,)
 
-        if headers is None:
-            headers = {}
-
         if params is None:
             params = {}
 
         url = self._url(ids)
-        headers = self._default_headers(headers)
-        self._load(url, headers, params)
+        self._load(url, params)
 
     def update(self, fields=None, async=None, jira=None, **kwargs):
         """
@@ -118,7 +120,8 @@ class Resource(object):
             data.update(fields)
         data.update(kwargs)
 
-        r = self._session.put(self.self, headers={'content-type': 'application/json'}, data=json.dumps(data))
+        r = self._session.put(
+            self.self, data=json.dumps(data))
         if 'autofix' in self._options and \
                 r.status_code == 400:
             user = None
@@ -126,24 +129,32 @@ class Resource(object):
             logging.error(error_list)
             if "The reporter specified is not a user." in error_list:
                 if 'reporter' not in data['fields']:
-                    logging.warning("autofix: setting reporter to '%s' and retrying the update." % self._options['autofix'])
-                    data['fields']['reporter'] = {'name': self._options['autofix']}
+                    logging.warning(
+                        "autofix: setting reporter to '%s' and retrying the update." % self._options['autofix'])
+                    data['fields']['reporter'] = {
+                        'name': self._options['autofix']}
 
             if "Issues must be assigned." in error_list:
                 if 'assignee' not in data['fields']:
-                    logging.warning("autofix: setting assignee to '%s' for %s and retrying the update." % (self._options['autofix'], self.key))
-                    data['fields']['assignee'] = {'name': self._options['autofix']}
-                    # for some reason the above approach fails on Jira 5.2.11 so we need to change the assignee before
+                    logging.warning("autofix: setting assignee to '%s' for %s and retrying the update." % (
+                        self._options['autofix'], self.key))
+                    data['fields']['assignee'] = {
+                        'name': self._options['autofix']}
+                    # for some reason the above approach fails on Jira 5.2.11
+                    # so we need to change the assignee before
 
             if "Issue type is a sub-task but parent issue key or id not specified." in error_list:
-                logging.warning("autofix: trying to fix sub-task without parent by converting to it to bug")
+                logging.warning(
+                    "autofix: trying to fix sub-task without parent by converting to it to bug")
                 data['fields']['issuetype'] = {"name": "Bug"}
             if "The summary is invalid because it contains newline characters." in error_list:
                 logging.warning("autofix: trying to fix newline in summary")
-                data['fields']['summary'] = self.fields.summary.replace("/n", "")
+                data['fields'][
+                    'summary'] = self.fields.summary.replace("/n", "")
             for error in error_list:
                 if re.search(u"^User '(.*)' was not found in the system\.", error, re.U):
-                    m = re.search(u"^User '(.*)' was not found in the system\.", error, re.U)
+                    m = re.search(
+                        u"^User '(.*)' was not found in the system\.", error, re.U)
                     if m:
                         user = m.groups()[0]
                     else:
@@ -156,7 +167,8 @@ class Resource(object):
                         raise NotImplemented()
 
             if user:
-                logging.warning("Trying to add missing orphan user '%s' in order to complete the previous failed operation." % user)
+                logging.warning(
+                    "Trying to add missing orphan user '%s' in order to complete the previous failed operation." % user)
                 jira.add_user(user, 'noreply@example.com', 10100, active=False)
                 # if 'assignee' not in data['fields']:
                 #    logging.warning("autofix: setting assignee to '%s' and retrying the update." % self._options['autofix'])
@@ -166,13 +178,11 @@ class Resource(object):
             if async:
                 if not hasattr(self._session, '_async_jobs'):
                     self._session._async_jobs = set()
-                self._session._async_jobs.add(threaded_requests.put(self.self, headers={'content-type': 'application/json'}, data=json.dumps(data)))
+                self._session._async_jobs.add(threaded_requests.put(
+                    self.self, data=json.dumps(data)))
             else:
-                r = self._session.put(self.self, headers={'content-type': 'application/json'}, data=json.dumps(data))
-                raise_on_error(r)
-
-        elif 'autofix' not in self._options:
-            raise_on_error(r)
+                r = self._session.put(
+                    self.self, data=json.dumps(data))
 
         self._load(self.self)
 
@@ -186,30 +196,34 @@ class Resource(object):
         if self._options['async']:
             if not hasattr(self._session, '_async_jobs'):
                 self._session._async_jobs = set()
-            self._session._async_jobs.add(threaded_requests.delete(self.self, params=params))
+            self._session._async_jobs.add(
+                threaded_requests.delete(self.self, params=params))
         else:
             r = self._session.delete(self.self, params=params)
-            raise_on_error(r)
 
-    def _load(self, url, headers=None, params=None):
+    def _load(self, url, headers=CaseInsensitiveDict(), params=None):
         r = self._session.get(url, headers=headers, params=params)
-        raise_on_error(r)
-
-        self._parse_raw(json.loads(r.text))
+        try:
+            j = json_loads(r)
+        except ValueError as e:
+            logging.error("%s:\n%s" % (e, r.text))
+            raise e
+        self._parse_raw(j)
 
     def _parse_raw(self, raw):
         self.raw = raw
         dict2resource(raw, self, self._options, self._session)
 
     def _url(self, ids):
-        url = '{server}/rest/{rest_path}/{rest_api_version}/'.format(**self._options)
+        url = '{server}/rest/{rest_path}/{rest_api_version}/'.format(
+            **self._options)
         url += self._resource.format(*ids)
         return url
 
     def _default_headers(self, user_headers):
-        result = dict(user_headers)
-        result['accept'] = 'application/json'
-        return result
+        #result = dict(user_headers)
+        #esult['accept'] = 'application/json'
+        return CaseInsensitiveDict(self._options['headers'].items() + user_headers.items())
 
 
 class Attachment(Resource):
@@ -226,7 +240,6 @@ class Attachment(Resource):
         Returns the file content as a string.
         """
         r = self._session.get(self.content)
-        raise_on_error(r)
         return r.content
 
 
@@ -636,7 +649,8 @@ class Sprint(GreenHopperResource):
     """A GreenHopper sprint."""
 
     def __init__(self, options, session, raw):
-        GreenHopperResource.__init__(self, 'sprints/{0}', options, session, raw)
+        GreenHopperResource.__init__(
+            self, 'sprints/{0}', options, session, raw)
         if raw:
             self._parse_raw(raw)
 
@@ -669,16 +683,19 @@ def dict2resource(raw, top=None, options=None, session=None):
                 resource = cls_for_resource(j['self'])(options, session, j)
                 setattr(top, i, resource)
             else:
-                setattr(top, i, dict2resource(j, options=options, session=session))
+                setattr(
+                    top, i, dict2resource(j, options=options, session=session))
         elif isinstance(j, seqs):
             seq_list = []
             for seq_elem in j:
                 if isinstance(seq_elem, dict):
                     if 'self' in seq_elem:
-                        resource = cls_for_resource(seq_elem['self'])(options, session, seq_elem)
+                        resource = cls_for_resource(seq_elem['self'])(
+                            options, session, seq_elem)
                         seq_list.append(resource)
                     else:
-                        seq_list.append(dict2resource(seq_elem, options=options, session=session))
+                        seq_list.append(
+                            dict2resource(seq_elem, options=options, session=session))
                 else:
                     seq_list.append(seq_elem)
             setattr(top, i, seq_list)

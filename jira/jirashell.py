@@ -26,15 +26,18 @@ import webbrowser
 from jira.client import JIRA
 from jira import __version__
 
-CONFIG_PATH = os.path.join(os.path.expanduser('~'), '.jira-python', 'jirashell.ini')
+CONFIG_PATH = os.path.join(
+    os.path.expanduser('~'), '.jira-python', 'jirashell.ini')
 
 
 def oauth_dance(server, consumer_key, key_cert_data, print_tokens=False):
     verify = server.startswith('https')
 
     # step 1: get request tokens
-    oauth = OAuth1(consumer_key, signature_method=SIGNATURE_RSA, rsa_key=key_cert_data)
-    r = requests.post(server + '/plugins/servlet/oauth/request-token', verify=verify, auth=oauth)
+    oauth = OAuth1(
+        consumer_key, signature_method=SIGNATURE_RSA, rsa_key=key_cert_data)
+    r = requests.post(
+        server + '/plugins/servlet/oauth/request-token', verify=verify, auth=oauth)
     request = dict(parse_qsl(r.text))
     request_token = request['oauth_token']
     request_token_secret = request['oauth_token_secret']
@@ -44,17 +47,22 @@ def oauth_dance(server, consumer_key, key_cert_data, print_tokens=False):
         print("    Request token secret: {}".format(request_token_secret))
 
     # step 2: prompt user to validate
-    auth_url = '{}/plugins/servlet/oauth/authorize?oauth_token={}'.format(server, request_token)
+    auth_url = '{}/plugins/servlet/oauth/authorize?oauth_token={}'.format(
+        server, request_token)
     if print_tokens:
-        print("Please visit this URL to authorize the OAuth request:\n\t{}".format(auth_url))
+        print(
+            "Please visit this URL to authorize the OAuth request:\n\t{}".format(auth_url))
     else:
         webbrowser.open_new(auth_url)
-        print("Your browser is opening the OAuth authorization for this client session.")
+        print(
+            "Your browser is opening the OAuth authorization for this client session.")
 
-    approved = input('Have you authorized this program to connect on your behalf to {}? (y/n)'.format(server))
+    approved = input(
+        'Have you authorized this program to connect on your behalf to {}? (y/n)'.format(server))
 
     if approved.lower() != 'y':
-        exit('Abandoning OAuth dance. Your partner faceplants. The audience boos. You feel shame.')
+        exit(
+            'Abandoning OAuth dance. Your partner faceplants. The audience boos. You feel shame.')
 
     # step 3: get access tokens for validated user
     oauth = OAuth1(consumer_key,
@@ -63,13 +71,15 @@ def oauth_dance(server, consumer_key, key_cert_data, print_tokens=False):
                    resource_owner_key=request_token,
                    resource_owner_secret=request_token_secret
                    )
-    r = requests.post(server + '/plugins/servlet/oauth/access-token', verify=verify, auth=oauth)
+    r = requests.post(
+        server + '/plugins/servlet/oauth/access-token', verify=verify, auth=oauth)
     access = dict(parse_qsl(r.text))
 
     if print_tokens:
         print("Access tokens received.")
         print("    Access token:        {}".format(access['oauth_token']))
-        print("    Access token secret: {}".format(access['oauth_token_secret']))
+        print("    Access token secret: {}".format(
+            access['oauth_token_secret']))
 
     return {
         'access_token': access['oauth_token'],
@@ -84,13 +94,14 @@ def process_config():
     try:
         parser.read(CONFIG_PATH)
     except configparser.ParsingError as err:
-        print("Couldn't read config file at path: {}; reverting to command line".format(CONFIG_PATH))
+        print("Couldn't read config file at path: {}; reverting to command line".format(
+            CONFIG_PATH))
         return process_command_line()
 
     if parser.has_section('options'):
         options = {}
         for option, value in parser.items('options'):
-            if option in ("verify", "resilient", "async"):
+            if option in ("verify", "async"):
                 value = parser.getboolean('options', option)
             options[option] = value
     else:
@@ -110,7 +121,8 @@ def process_config():
 
 
 def process_command_line():
-    parser = argparse.ArgumentParser(description='Start an interactive JIRA shell with the REST API.')
+    parser = argparse.ArgumentParser(
+        description='Start an interactive JIRA shell with the REST API.')
     jira_group = parser.add_argument_group('JIRA server connection options')
     jira_group.add_argument('-s', '--server',
                             help='The JIRA instance to connect to, including context path.')
@@ -138,7 +150,8 @@ def process_command_line():
     oauth_group.add_argument('-pt', '--print-tokens', action='store_true',
                              help='Print the negotiated OAuth tokens as they are retrieved.')
 
-    oauth_already_group = parser.add_argument_group('OAuth options for already-authenticated access tokens')
+    oauth_already_group = parser.add_argument_group(
+        'OAuth options for already-authenticated access tokens')
     oauth_already_group.add_argument('-at', '--access-token',
                                      help='OAuth access token for the user.')
     oauth_already_group.add_argument('-ats', '--access-token-secret',
@@ -173,7 +186,8 @@ def process_command_line():
 
     oauth = {}
     if args.oauth_dance:
-        oauth = oauth_dance(args.server, args.consumer_key, key_cert_data, args.print_tokens)
+        oauth = oauth_dance(
+            args.server, args.consumer_key, key_cert_data, args.print_tokens)
     elif args.access_token and args.access_token_secret and args.consumer_key and args.key_cert:
         oauth = {
             'access_token': args.access_token,
@@ -219,7 +233,8 @@ def main():
 
     from IPython.frontend.terminal.embed import InteractiveShellEmbed
 
-    ipshell = InteractiveShellEmbed(banner1='<JIRA Shell ' + __version__ + ' (' + jira.client_info() + ')>')
+    ipshell = InteractiveShellEmbed(
+        banner1='<JIRA Shell ' + __version__ + ' (' + jira.client_info() + ')>')
     ipshell("*** JIRA shell active; client is in 'jira'."
             ' Press Ctrl-D to exit.')
 

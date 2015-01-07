@@ -48,7 +48,7 @@ rm -rf build dist MANIFEST &> /dev/null
 #python setup.py register sdist build_sphinx upload upload_sphinx
 python setup.py register sdist bdist_wheel upload_docs upload --sign
 
-git log --date=short --pretty=format:"%cd %s" > RELEASE
+#git log --date=short --pretty=format:"%cd %s" > RELEASE
 git add RELEASE
 git tag -f -a $VERSION -m "Version $VERSION"
 git tag -f -a RELEASE -m "Current RELEASE"

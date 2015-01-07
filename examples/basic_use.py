@@ -29,12 +29,14 @@ atl_comments = [comment for comment in issue.fields.comment.comments
 jira.add_comment(issue, 'Comment text')
 
 # Change the issue's summary and description.
-issue.update(summary="I'm different!", description='Changed the summary to be different.')
+issue.update(
+    summary="I'm different!", description='Changed the summary to be different.')
 
 # You can update the entire labels field like this
 issue.update(labels=['AAA', 'BBB'])
 
-# Or modify the List of existing labels. The new label is unicode with no spaces
+# Or modify the List of existing labels. The new label is unicode with no
+# spaces
 issue.fields.labels.append(u'new_text')
 issue.update(fields={"labels": issue.fields.labels})
 

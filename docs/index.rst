@@ -449,10 +449,6 @@ API Documentation
     :undoc-members:
     :show-inheritance:
 
-Changelog
-=========
-
-.. literalinclude:: ../RELEASE
 
 Indices and tables
 ==================

@@ -7,6 +7,7 @@ pytest>=2.6.0
 pytest-cov
 pytest-pep8
 pytest-xdist
+pytest-instafail
 requests_oauthlib>=0.3.3
 tox
 wheel

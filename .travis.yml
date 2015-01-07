@@ -1,12 +1,12 @@
 language: python
 os:
-  - linux
-  - osx
+- linux
+- osx
 python:
-  - "2.6"
-  - "2.7"
-  - "3.3"
-  - "3.4"
+- '2.6'
+- '2.7'
+- '3.3'
+- '3.4'
 env:
   global:
   - secure: EUpWmrnhHKPkz9cOGbEEwhBtUBRqtQ775ck042B8/pI9ZZZghbKl3Jm8ahpfms3JiZcHMCG06MBREs1ISK/g2OfHKsdULCg5g3UFXteVQo769kwh/x4lniSbU2eipcN0s9Q/Ak5zStwTa5aNQ4FU/3zSgTDxi/OcDKGXDbVwHD8=
@@ -15,20 +15,28 @@ env:
   - secure: NHvQfaPAfQyWar87FmM2SWynOE2QaqgI4neX6aERey3kVZBsOdhPdmdnUBXvNd2BrfyfUuf1GOP2MGVXOAQ1Mg7MQ5ce85EufQgPqu3a/jum1J6GwO2tDOnYXlGGXwHbuTAyEKi9w8r5JRSz4cyY/H+iLTVd/ShjYAS8hOM5M1E=
   - secure: kCcRnV0K070zjFHwpUVM1kfKo2a8oK8eC2Xa4XEBtOdNAM/Ek+pLCM6zYgvD84ep9xv5I3XGOxHxsfqx/u25BuPvQ341p7VaGFJs2+K3OD0np/nyhfq3EBsCylthDxB/jXPqGw5X4QLcvSVucmQ9MIc/bwqV+E7eTIpccWr827Q=
 install:
-- pip install -r requirements.txt
-- pip install -r requirements-dev.txt
-- pip install -r requirements-opt.txt || echo "skipped"
-- pip install coveralls
+- pip -q install -r requirements.txt
+- pip -q install -r requirements-dev.txt
+- pip -q install -r requirements-opt.txt || echo "skipped"
+- pip -q install coveralls
 script:
-- ./pretest
-- travis_wait coverage run --source=jira setup.py test
+- "./pretest"
+- travis_wait python setup.py test
 after_success:
-  coveralls
-  python setup.py build_sphinx upload_docs
+- coveralls
+- python setup.py build_sphinx upload_docs release
 branches:
   only:
   - master
 notifications:
   hipchat: 7d72ba6ba0bf07248f17e0a6a1a899@DevOps
-#matrix:
-#  fast_finish: true
+deploy:
+  provider: pypi
+  user: sorin
+  password:
+    secure: R/fYV3nMSrv444/HJeT0p5gBMg3pn1Zon4AR33DG94kG/ONerKg5hCxNL94FBU/uFmXpi8qGEeattNMDCes75LTZkLvTy6z16WZZHOOR625n/ZGzhNd8kXHAqng5JtX6uMx6ZxFAbG83ljrbssxum2FcFDGcIz7auQPMFnRUCY0=
+  distributions: "sdist bdist_wheel"
+  before_deploy:
+  - echo "before deploy..."
+  after_deploy:
+  - echo "after deploy..."

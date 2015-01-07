@@ -87,7 +87,8 @@ def get_jira(profile=None, url="http://localhost:2990", username="admin", passwo
             verify = config.getboolean(profile, 'verify')
 
         else:
-            raise EnvironmentError("%s was not able to locate the config.ini file in current directory, user home directory or PYTHONPATH." % __name__)
+            raise EnvironmentError(
+                "%s was not able to locate the config.ini file in current directory, user home directory or PYTHONPATH." % __name__)
 
     options = JIRA.DEFAULT_OPTIONS
     options['server'] = url

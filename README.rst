@@ -2,11 +2,11 @@
 JIRA Python Library
 ===================
 
-.. image:: https://api.travis-ci.org/pycontribs/jira.svg?branch=master
-        :target: https://travis-ci.org/pycontribs/jira
+.. image:: https://pypip.in/py_versions/jira/badge.svg?style=flat
+        :target: https://pypi.python.org/pypi/jira/
 
-.. image:: https://img.shields.io/coveralls/pycontribs/jira.svg
-        :target: https://coveralls.io/r/pycontribs/jira
+.. image:: https://pypip.in/license/jira/badge.svg?style=flat
+        :target: https://pypi.python.org/pypi/jira/
 
 .. image:: https://pypip.in/download/jira/badge.svg?style=flat
         :target: https://pypi.python.org/pypi/jira/
@@ -14,23 +14,24 @@ JIRA Python Library
 .. image:: https://pypip.in/version/jira/badge.svg?style=flat
         :target: https://pypi.python.org/pypi/jira/
 
-.. image:: https://pypip.in/egg/jira/badge.png?style=flat
+.. image:: https://pypip.in/egg/jira/badge.svg?style=flat
         :target: https://pypi.python.org/pypi/jira/
 
-.. image:: https://pypip.in/wheel/jira/badge.png?style=flat
+.. image:: https://pypip.in/wheel/jira/badge.svg?style=flat
         :target: https://pypi.python.org/pypi/jira/
 
-.. image:: https://pypip.in/license/jira/badge.png?style=flat
-        :target: https://pypi.python.org/pypi/jira/
+.. |br| raw:: html
+------------
+
+.. image:: https://api.travis-ci.org/pycontribs/jira.svg?branch=master
+        :target: https://travis-ci.org/pycontribs/jira
 
 .. image:: https://pypip.in/status/jira/badge.svg?style=flat
         :target: https://pypi.python.org/pypi/jira/
 
-.. image:: https://pypip.in/py_versions/jira/badge.svg?style=flat
-        :target: https://pypi.python.org/pypi/jira/
+.. image:: https://img.shields.io/coveralls/pycontribs/jira.svg
+        :target: https://coveralls.io/r/pycontribs/jira
 
-.. image:: https://pypip.in/format/jira/badge.svg?style=flat
-        :target: https://pypi.python.org/pypi/jira/
 
 This library eases the use of the JIRA REST API from Python
 
@@ -75,11 +76,11 @@ In additions to all the contributors we would like to thank to these companies:
 [1]: http://docs.python-requests.org/
 [2]: http://www.virtualenv.org/en/latest/index.html
 
-.. image:: http://www.atlassian.com/dms/wac/images/press/Atlassian-logos/logoAtlassianPNG.png
+.. image:: https://www.atlassian.com/dms/wac/images/press/Atlassian-logos/logoAtlassianPNG.png
    :width: 100px
    :target: http://www.atlassian.com
 
-.. image:: http://www.jetbrains.com/pycharm/docs/logo_pycharm.png
+.. image:: https://www.jetbrains.com/pycharm/docs/logo_pycharm.png
     :height: 100px
     :target: http://www.jetbrains.com/
 

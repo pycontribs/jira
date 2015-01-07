@@ -2,8 +2,13 @@
 from __future__ import unicode_literals
 from requests import Session
 from requests.exceptions import ConnectionError
+from .utils import raise_on_error
 import logging
 import time
+import json
+
+
+MAX_RETRIES = 3
 
 
 class ResilientSession(Session):
@@ -14,100 +19,72 @@ class ResilientSession(Session):
     At this moment it supports: 502, 503, 504
     """
 
-    def __recoverable(self, error, url, request, counter=1):
-        if hasattr(error, 'status_code'):
-            if error.status_code in [502, 503, 504]:
-                error = "HTTP %s" % error.status_code
+    def __recoverable(self, response, url, request, counter=1):
+        if type(response) == ConnectionError:
+            logging.warn("Got ConnectionError [%s] errno:%s request%s url:%s\n%s\%s" % (
+                response, response.errno, request, url, vars(response), response.__dict__))
+        if hasattr(response, 'status_code'):
+            if response.status_code in [502, 503, 504]:
+                return False
+            elif response.status_code == 200 and \
+                    len(response.text) == 0 and \
+                    'X-Seraph-LoginReason' in response.headers and \
+                    'AUTHENTICATED_FAILED' in response.headers['X-Seraph-LoginReason']:
+                # Atlassion horror bug:
+                # https://answers.atlassian.com/questions/11457054/answers/11975162
+                logging.warning("Detected")
+                return True
             else:
                 return False
         DELAY = 10 * counter
-        logging.warn("Got recoverable error [%s] from %s %s, retry #%s in %ss" % (error, request, url, counter, DELAY))
+        logging.warn("Got recoverable error [%s] from %s %s, retry #%s in %ss" % (
+            response, request, url, counter, DELAY))
         time.sleep(DELAY)
         return True
 
-    def get(self, url, **kwargs):
+    def __verb(self, verb, url, **kwargs):
+
+        d = self.headers.copy()
+        d.update(kwargs.get('headers', {}))
+        kwargs['headers'] = d
+
+        # if we pass a dictionary as the 'data' we assume we want to send json
+        # data
+        data = kwargs.get('data', {})
+        if isinstance(data, dict):
+            data = json.dumps(data)
+
         counter = 0
         while True:
             counter += 1
             try:
-                r = super(ResilientSession, self).get(url, **kwargs)
+                method = getattr(super(ResilientSession, self), verb.lower())\
+
+                r = method(url, **kwargs)
             except ConnectionError as e:
-                r = e.message
-            if self.__recoverable(r, url, 'GET', counter):
+                r = e
+            if self.__recoverable(r, url, verb.upper(), counter):
                 continue
+            raise_on_error(r, verb=verb, **kwargs)
             return r
+
+    def get(self, url, **kwargs):
+        return self.__verb('GET', url, **kwargs)
 
     def post(self, url, **kwargs):
-        counter = 0
-        while True:
-            counter += 1
-            try:
-                r = super(ResilientSession, self).post(url, **kwargs)
-            except ConnectionError as e:
-                r = e.message
-            if self.__recoverable(r, url, 'POST', counter):
-                continue
-            return r
-
-    def delete(self, url, **kwargs):
-        counter = 0
-        while True:
-            counter += 1
-            try:
-                r = super(ResilientSession, self).delete(url, **kwargs)
-            except ConnectionError as e:
-                r = e.message
-            if self.__recoverable(r, url, 'DELETE', counter):
-                continue
-            return r
+        return self.__verb('POST', url, **kwargs)
 
     def put(self, url, **kwargs):
-        counter = 0
-        while True:
-            counter += 1
-            try:
-                r = super(ResilientSession, self).put(url, **kwargs)
-            except ConnectionError as e:
-                r = e.message
+        return self.__verb('PUT', url, **kwargs)
 
-            if self.__recoverable(r, url, 'PUT', counter):
-                continue
-            return r
+    def delete(self, url, **kwargs):
+        return self.__verb('DELETE', url, **kwargs)
 
     def head(self, url, **kwargs):
-        counter = 0
-        while True:
-            counter += 1
-            try:
-                r = super(ResilientSession, self).head(url, **kwargs)
-            except ConnectionError as e:
-                r = e.message
-            if self.__recoverable(r, url, 'HEAD', counter):
-                continue
-            return r
+        return self.__verb('HEAD', url, **kwargs)
 
     def patch(self, url, **kwargs):
-        counter = 0
-        while True:
-            counter += 1
-            try:
-                r = super(ResilientSession, self).patch(url, **kwargs)
-            except ConnectionError as e:
-                r = e.message
-
-            if self.__recoverable(r, url, 'PATCH', counter):
-                continue
-            return r
+        return self.__verb('PATCH', url, **kwargs)
 
     def options(self, url, **kwargs):
-        counter = 0
-        while True:
-            counter += 1
-            try:
-                r = super(ResilientSession, self).options(url, **kwargs)
-            except ConnectionError as e:
-                r = e.message
-
-            if self.__recoverable(r, url, 'OPTIONS', counter):
-                continue
-            return r
+        return self.__verb('OPTIONS', url, **kwargs)

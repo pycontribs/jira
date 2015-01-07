@@ -1,2 +1,2 @@
-include LICENSE README.rst RELEASE
+include LICENSE README.rst
 prune tests

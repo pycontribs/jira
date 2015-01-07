@@ -1,4 +1,4 @@
-.PHONY: clean install uninstall install_testrig tox test coverage travis flake8 pypi docs web tag release
+.PHONY: clean install uninstall install_testrig tox test travis flake8 pypi docs web tag release
 clean:
 	find . -name "*.pyc" -delete
 
@@ -11,23 +11,12 @@ uninstall:
 install_testrig:
 	pip install --user nose mock
 
-pep8:
-	py.test --pep8 -m pep8
-
 tox:
 	pip install --user tox detox
 	detox
 
 test: install_testrig
 	nosetests
-
-coverage:
-	pip install coverage
-	travis
-
-travis:
-	pip install coveralls
-	coverage run --source=blackhole runtests.py
 
 flake8:
 	pip install flake8
