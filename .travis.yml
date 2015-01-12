@@ -21,10 +21,34 @@ install:
 - pip -q install coveralls
 script:
 - "./pretest"
+- curl --silent -Lo travis_after_all.py https://raw.github.com/pycontribs/travis_after_all/master/travis_after_all.py
 - travis_wait python setup.py test
 after_success:
-- coveralls
-- python setup.py build_sphinx upload_docs release
+  - python travis_after_all.py
+  - export $(cat .to_export_back)
+  - |
+      if [ "$BUILD_LEADER" = "YES" ]; then
+        if [ "$BUILD_AGGREGATE_STATUS" = "others_succeeded" ]; then
+          echo "All jobs succeeded! PUBLISHING..."
+        else
+          echo "Some jobs failed"
+        fi
+      fi
+  - coveralls
+  - python setup.py build_sphinx upload_docs release
+after_failure:
+  - python travis_after_all.py
+  - export $(cat .to_export_back)
+  - |
+      if [ "$BUILD_LEADER" = "YES" ]; then
+        if [ "$BUILD_AGGREGATE_STATUS" = "others_failed" ]; then
+          echo "All jobs failed"
+        else
+          echo "Some jobs failed"
+        fi
+      fi
+after_script:
+  - echo leader=$BUILD_LEADER status=$BUILD_AGGREGATE_STATUS
 branches:
   only:
   - master
@@ -34,7 +58,7 @@ deploy:
   provider: pypi
   user: sorin
   password:
-    secure: R/fYV3nMSrv444/HJeT0p5gBMg3pn1Zon4AR33DG94kG/ONerKg5hCxNL94FBU/uFmXpi8qGEeattNMDCes75LTZkLvTy6z16WZZHOOR625n/ZGzhNd8kXHAqng5JtX6uMx6ZxFAbG83ljrbssxum2FcFDGcIz7auQPMFnRUCY0=
+    secure: "E0cjANF7SLBdYrsnWLK8X/xWznqkF0JrP/DVfDazPzUYH6ynFeneyofzNJQPLTLsqe1eKXhuUJ/Sbl+RHFB0ySo/j/7NfYd/9pm8hpUkGCvR09IwtvMLgWKp3k10NWab03o2GOkSJSrLvZofyZBGR40wwu2O9uXPCb2rvucCGbw="
   distributions: "sdist bdist_wheel"
   before_deploy:
   - echo "before deploy..."

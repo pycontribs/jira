@@ -116,10 +116,11 @@ def raise_on_error(r, verb='???', **kwargs):
                     error = r.text
             except ValueError:
                 error = r.text
-        raise JIRAError(r.status_code, error, r.url, request=request, **kwargs)
+        raise JIRAError(
+            r.status_code, error, r.url, request=request, response=r, **kwargs)
     # for debugging weird errors on CI
     if r.status_code not in [200, 201, 202, 204]:
-        raise JIRAError(r.status_code, request=r)
+        raise JIRAError(r.status_code, request=request, response=r)
     # testing for the WTH bug exposed on
     # https://answers.atlassian.com/questions/11457054/answers/11975162
     if r.status_code == 200 and len(r.text) == 0 \
@@ -132,11 +133,12 @@ class JIRAError(Exception):
 
     """General error raised for all problems in operation of the client."""
 
-    def __init__(self, status_code=None, text=None, url=None, request=None, **kwargs):
+    def __init__(self, status_code=None, text=None, url=None, request=None, response=None, **kwargs):
         self.status_code = status_code
         self.text = text
         self.url = url
         self.request = request
+        self.response = response
         self.headers = kwargs.get('headers', None)
 
     def __str__(self):
@@ -145,8 +147,19 @@ class JIRAError(Exception):
             t += "\n\ttext: %s" % self.text
         if self.url:
             t += "\n\turl: %s" % self.url
-        if self.headers:
-            t += "\n\theaders = " % self.headers
+
+        if self.request and hasattr(self.request, 'headers'):
+            t += "\n\trequest headers = " % self.request.headers
+
+        if self.request and hasattr(self.request, 'text'):
+            t += "\n\trequest text = " % self.request.text
+
+        if self.response and hasattr(self.response, 'headers'):
+            t += "\n\tresponse headers = " % self.response.headers
+
+        if self.response and hasattr(self.response, 'text'):
+            t += "\n\tresponse text = " % self.response.headers
+
         t += '\n'
         return t
 

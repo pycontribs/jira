@@ -103,7 +103,7 @@ Initialization
 
 Everything goes through the JIRA object, so make one::
 
-    from jira.client import JIRA
+    from jira import JIRA
 
     jira = JIRA()
 
@@ -112,13 +112,15 @@ default address for a JIRA instance started from the Atlassian Plugin SDK.
 
 You can manually set the JIRA server to use::
 
-    jac = JIRA(options={'server': 'https://jira.atlassian.com'})
+    jac = JIRA('https://jira.atlassian.com')
 
 Authentication
 --------------
 
 At initialization time, jira-python can optionally create an HTTP BASIC or use OAuth 1.0a access tokens for user
 authentication. These sessions will apply to all subsequent calls to the JIRA object.
+
+The library is able to load the credentials from inside the ~/.netrc file, so put them there instead of keeping them in your source code.
 
 HTTP BASIC
 ^^^^^^^^^^
@@ -417,38 +419,10 @@ will get notified about your question.
 API Documentation
 =================
 
-:mod:`client` Module
---------------------
-
-.. automodule:: jira.client
-    :members: JIRA,GreenHopper
+.. automodule:: jira
+    :members: JIRA, Priority, Comment, Worklog, Watchers, JIRAError
     :undoc-members:
     :show-inheritance:
-
-:mod:`exceptions` Module
-------------------------
-
-.. automodule:: jira.exceptions
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`resources` Module
------------------------
-
-.. automodule:: jira.resources
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`config` Module
------------------------
-
-.. automodule:: jira.config
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 
 Indices and tables
 ==================
