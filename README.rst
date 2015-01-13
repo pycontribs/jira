@@ -20,7 +20,6 @@ JIRA Python Library
 .. image:: https://pypip.in/wheel/jira/badge.svg?style=flat
         :target: https://pypi.python.org/pypi/jira/
 
-.. |br| raw:: html
 ------------
 
 .. image:: https://api.travis-ci.org/pycontribs/jira.svg?branch=master
