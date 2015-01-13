@@ -27,6 +27,8 @@ import pprint
 
 from six import string_types
 from six.moves import html_parser
+from requests_toolbelt import MultipartEncoder
+import requests
 
 # JIRA specific resources
 from jira.resources import Resource, Issue, Comment, Project, Attachment, Component, Dashboard, Filter, Votes, Watchers, \
@@ -342,16 +344,13 @@ class JIRA(object):
         if not fname:
             fname = os.path.basename(attachment.name)
 
-        content_type = mimetypes.guess_type(fname)[0]
-        if not content_type:
-            content_type = 'application/octet-stream'
+        m = MultipartEncoder(
+            fields={
+                'file': (fname, attachment, 'text/plain')}
+        )
 
-        files = {
-            'file': (fname, attachment, content_type)
-        }
-        # requests knows to add the correct content type when we set it None
         r = self._session.post(
-            url, files=files, headers=CaseInsensitiveDict({'content-type': None}))  # 'multipart/form-data'
+            url, data=m, headers=CaseInsensitiveDict({'content-type': m.content_type}))  # 'multipart/form-data'
 
         attachment = Attachment(self._options, self._session, json_loads(r)[0])
         return attachment

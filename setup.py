@@ -38,6 +38,10 @@ class PyTest(TestCommand):
         #     pass
         self.pytest_args.append("-s")
 
+        if os.isatty(sys.stdout.fileno()):
+            # when run manually we enable fail fast
+            self.pytest_args.append("--maxfail=2")
+
         try:
             import coveralls
             self.pytest_args.append("--cov=%s" % NAME)
@@ -102,7 +106,8 @@ setup(
     install_requires=['requests>=1.2.3',
                       'requests_oauthlib>=0.3.3',
                       'tlslite>=0.4.4',
-                      'six>=1.5.2'],
+                      'six>=1.5.2',
+                      'requests_toolbelt'],
     setup_requires=[],
     tests_require=['pytest', 'tlslite>=0.4.4', 'requests>=2.0',
                    'setuptools', 'pep8', 'autopep8', 'sphinx', 'six>=1.9.0'],

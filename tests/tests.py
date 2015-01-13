@@ -417,7 +417,7 @@ class AttachmentTests(unittest.TestCase):
     def test_delete(self):
         attach_count = len(self.jira.issue(self.issue_1).fields.attachment)
         attachment = self.jira.add_attachment(self.issue_1,
-                                              open(TEST_ATTACH_PATH))
+                                              open(TEST_ATTACH_PATH), 'to be deleted')
         self.assertEqual(len(self.jira.issue(self.issue_1).fields.attachment),
                          attach_count + 1)
         attachment.delete()
