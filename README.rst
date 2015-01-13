@@ -40,7 +40,7 @@ Quickstart
 
 Feeling impatient? I like your style.
 
-::
+.. code-block:: python
 
         from jira.client import JIRA
 
