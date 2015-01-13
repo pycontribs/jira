@@ -25,17 +25,17 @@ class ResilientSession(Session):
                 response, response.errno, request, url, vars(response), response.__dict__))
         if hasattr(response, 'status_code'):
             if response.status_code in [502, 503, 504]:
-                return False
+                return True
             elif response.status_code == 200 and \
                     len(response.text) == 0 and \
                     'X-Seraph-LoginReason' in response.headers and \
                     'AUTHENTICATED_FAILED' in response.headers['X-Seraph-LoginReason']:
-                # Atlassion horror bug:
-                # https://answers.atlassian.com/questions/11457054/answers/11975162
-                logging.warning("Detected")
+                logging.warning(
+                    "Detected Atlassian bug https://jira.atlassian.com/browse/JRA-41559 ...")
                 return True
             else:
                 return False
+
         DELAY = 10 * counter
         logging.warn("Got recoverable error [%s] from %s %s, retry #%s in %ss" % (
             response, request, url, counter, DELAY))
