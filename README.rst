@@ -20,7 +20,6 @@ JIRA Python Library
 .. image:: https://pypip.in/wheel/jira/badge.svg?style=flat
         :target: https://pypi.python.org/pypi/jira/
 
-.. |br| raw:: html
 ------------
 
 .. image:: https://api.travis-ci.org/pycontribs/jira.svg?branch=master
@@ -40,7 +39,7 @@ Quickstart
 
 Feeling impatient? I like your style.
 
-::
+.. code-block:: python
 
         from jira.client import JIRA
 
@@ -54,9 +53,11 @@ Feeling impatient? I like your style.
 Installation
 ~~~~~~~~~~~~
 
-Download and install using `pip install jira` or `easy_install jira`
+Download and install using ``pip install jira`` or ``easy_install jira``
 
-You can also try `pip install --user --upgrade jira` which will install or upgrade jira to user directory. Or maybe you ARE using a [virtualenv][2], right?
+You can also try ``pip install --user --upgrade jira`` which will install or
+upgrade jira to your user directory. Or maybe you ARE using a virtualenv_
+right?
 
 Usage
 ~~~~~
@@ -73,8 +74,7 @@ In additions to all the contributors we would like to thank to these companies:
 * Travis_ for hosting our continous integration
 * Navicat_ for providing us free licenses of their powerful database client GUI tools.
 
-[1]: http://docs.python-requests.org/
-[2]: http://www.virtualenv.org/en/latest/index.html
+.. _virtualenv: http://www.virtualenv.org/en/latest/index.html
 
 .. image:: https://www.atlassian.com/dms/wac/images/press/Atlassian-logos/logoAtlassianPNG.png
    :width: 100px

@@ -391,11 +391,12 @@ class AttachmentTests(unittest.TestCase):
 
     def test_attachment(self):
         issue = self.jira.issue(self.issue_1)
-        msg = "attachment of issue %s" % issue
         attachment = self.jira.add_attachment(issue, open(TEST_ATTACH_PATH),
                                               "new test attachment")
-        new_attachment = self.jira.attachment(attachment.id, msg=attachment)
-        self.assertEqual(new_attachment.filename, 'new test attachment', msg=msg)
+        new_attachment = self.jira.attachment(attachment.id)
+        msg = "attachment %s of issue %s" % (new_attachment.__dict__, issue)
+        self.assertEqual(
+            new_attachment.filename, 'new test attachment', msg=msg)
         self.assertEqual(
             new_attachment.size, os.path.getsize(TEST_ATTACH_PATH), msg=msg)
         attachment.delete()
