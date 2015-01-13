@@ -391,12 +391,13 @@ class AttachmentTests(unittest.TestCase):
 
     def test_attachment(self):
         issue = self.jira.issue(self.issue_1)
+        msg = "attachment of issue %s" % issue
         attachment = self.jira.add_attachment(issue, open(TEST_ATTACH_PATH),
                                               "new test attachment")
-        new_attachment = self.jira.attachment(attachment.id)
-        self.assertEqual(new_attachment.filename, 'new test attachment')
+        new_attachment = self.jira.attachment(attachment.id, msg=attachment)
+        self.assertEqual(new_attachment.filename, 'new test attachment', msg=msg)
         self.assertEqual(
-            new_attachment.size, os.path.getsize(TEST_ATTACH_PATH))
+            new_attachment.size, os.path.getsize(TEST_ATTACH_PATH), msg=msg)
         attachment.delete()
 
     def test_attachment_meta(self):
@@ -1726,6 +1727,22 @@ class VersionTests(unittest.TestCase):
 
     def test_version_expandos(self):
         pass
+
+
+class OtherTests(unittest.TestCase):
+
+    def test_session_invalid_login(self):
+        try:
+            JIRA('https://support.atlassian.com',
+                 basic_auth=("xxx", "xxx"),
+                 validate=True,
+                 logging=False)
+        except Exception as e:
+            self.assertIsInstance(e, JIRAError)
+            assert e.status_code == 401
+            str(JIRAError)  # to see that this does not raise an exception
+            return
+        assert False
 
 
 class SessionTests(unittest.TestCase):

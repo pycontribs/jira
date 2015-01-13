@@ -41,6 +41,8 @@ class PyTest(TestCommand):
         try:
             import coveralls
             self.pytest_args.append("--cov=%s" % NAME)
+            self.pytest_args.extend(["--cov-report","xml"])
+            
         except ImportError:
             pass
 
