@@ -21,7 +21,7 @@ class ResilientSession(Session):
 
     def __recoverable(self, response, url, request, counter=1):
         if type(response) == ConnectionError:
-            logging.warn("Got ConnectionError [%s] errno:%s request%s url:%s\n%s\%s" % (
+            logging.warn("Got ConnectionError [%s] errno:%s on %s %s\n%s\%s" % (
                 response, response.errno, request, url, vars(response), response.__dict__))
         if hasattr(response, 'status_code'):
             if response.status_code in [502, 503, 504]:
@@ -55,7 +55,7 @@ class ResilientSession(Session):
             data = json.dumps(data)
 
         counter = 0
-        while True:
+        while counter < MAX_RETRIES:
             counter += 1
             try:
                 method = getattr(super(ResilientSession, self), verb.lower())\
