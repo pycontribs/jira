@@ -391,7 +391,7 @@ class AttachmentTests(unittest.TestCase):
 
     def test_attachment(self):
         issue = self.jira.issue(self.issue_1)
-        attachment = self.jira.add_attachment(issue, open(TEST_ATTACH_PATH),
+        attachment = self.jira.add_attachment(issue, open(TEST_ATTACH_PATH, 'rb'),
                                               "new test attachment")
         new_attachment = self.jira.attachment(attachment.id)
         msg = "attachment %s of issue %s" % (new_attachment.__dict__, issue)
@@ -409,7 +409,8 @@ class AttachmentTests(unittest.TestCase):
     def test_add_attachment(self):
         issue = self.jira.issue(self.issue_1)
         attach_count = len(issue.fields.attachment)
-        attachment = self.jira.add_attachment(issue, open(TEST_ATTACH_PATH))
+        attachment = self.jira.add_attachment(
+            issue, open(TEST_ATTACH_PATH, 'rb'))
         self.assertIsNotNone(attachment)
         self.assertEqual(len(self.jira.issue(self.issue_1).fields.attachment),
                          attach_count + 1)
@@ -417,7 +418,7 @@ class AttachmentTests(unittest.TestCase):
     def test_delete(self):
         attach_count = len(self.jira.issue(self.issue_1).fields.attachment)
         attachment = self.jira.add_attachment(self.issue_1,
-                                              open(TEST_ATTACH_PATH), 'to be deleted')
+                                              open(TEST_ATTACH_PATH, 'rb'), 'to be deleted')
         self.assertEqual(len(self.jira.issue(self.issue_1).fields.attachment),
                          attach_count + 1)
         attachment.delete()

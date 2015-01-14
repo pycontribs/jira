@@ -337,6 +337,10 @@ class JIRA(object):
         """
         if isinstance(attachment, string_types):
             attachment = open(attachment, "rb")
+        if hasattr(attachment, 'read') and hasattr(attachment, 'mode') and attachment.mode != 'rb':
+            logging.warning(
+                "%s was not opened in 'rb' mode, attaching file may fail." % attachment.name)
+
         # TODO: Support attaching multiple files at once?
         url = self._get_url('issue/' + str(issue) + '/attachments')
 
