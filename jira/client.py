@@ -25,7 +25,7 @@ import json
 import warnings
 import pprint
 
-from six import string_types
+from six import string_types, integer_types
 from six.moves import html_parser
 from requests_toolbelt import MultipartEncoder
 import requests
@@ -604,6 +604,10 @@ class JIRA(object):
             for field in fieldargs:
                 fields_dict[field] = fieldargs[field]
             data['fields'] = fields_dict
+
+        p = data['fields']['project']
+        if isinstance(p, string_types) or isinstance(p, integer_types):
+            data['fields']['project'] = {'id': self.project(p).id}
 
         url = self._get_url('issue')
         r = self._session.post(url, data=json.dumps(data))

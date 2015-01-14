@@ -188,13 +188,13 @@ Reassign an issue::
 
 Creating issues is easy::
 
-    new_issue = jira.create_issue(project={'key': 'PROJ'}, summary='New issue from jira-python',
+    new_issue = jira.create_issue(project='PROJ_key_or_id', summary='New issue from jira-python',
                                   description='Look into this one', issuetype={'name': 'Bug'})
 
 Or you can use a dict::
 
     issue_dict = {
-        'project': {'key': 'PROJ'},
+        'project': {'id': 123},
         'summary': 'New issue from jira-python',
         'description': 'Look into this one',
         'issuetype': {'name': 'Bug'},

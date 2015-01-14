@@ -4,17 +4,6 @@ set -ex
 VERSION=$(python -c "from jira.version import __version__ ; print __version__")
 echo Preparing to release version $VERSION
 
-
-#source tox
-
-#pip install --upgrade pep8 autopep8 docutils
-
-echo === Testings ===
-#if ! python setup.py test; then
-#	echo "The test suite failed. Fix it!"
-#	exit 1
-#fi
-
 echo === Chechink that all changes are commited and pushed ===
 git pull -u
 
@@ -38,15 +27,7 @@ git diff
 echo "Please don't run this as a user. This generates a new release for PyPI. Press ^C to exit or Enter to continue."
 read
 
-
-# Clear old distutils stuff
-rm -rf build dist MANIFEST &> /dev/null
-
-# Build installers, etc. and upload to PyPI
-# python setup.py register sdist bdist_wininst upload
-
-#python setup.py register sdist build_sphinx upload upload_sphinx
-python setup.py register sdist bdist_wheel upload_docs upload --sign
+python setup.py register bdist_wheel build_sphinx upload_docs upload upload_sphinx --sign
 
 #git log --date=short --pretty=format:"%cd %s" > RELEASE
 git add RELEASE
