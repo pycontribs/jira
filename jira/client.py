@@ -203,6 +203,11 @@ class JIRA(object):
             globals()['logging'].error("invalid server_info: %s", si)
             raise e
 
+    def __del__(self):
+        session = getattr(self, "_session", None)
+        if session is not None:
+            session.close()
+
     def _check_for_html_error(self, content):
         # TODO: Make it return errors when content is a webpage with errors
         # JIRA has the bad habbit of returning errors in pages with 200 and
