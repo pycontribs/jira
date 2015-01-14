@@ -62,6 +62,7 @@ class ResilientSession(Session):
 
                 r = method(url, **kwargs)
             except ConnectionError as e:
+                logging.warning("%s while doing %s %s [%s]" % (e, verb.upper(), url, kwargs))
                 r = e
             if self.__recoverable(r, url, verb.upper(), counter):
                 continue
