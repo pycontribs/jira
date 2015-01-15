@@ -38,7 +38,7 @@ class PyTest(TestCommand):
         #     pass
         self.pytest_args.append("-s")
 
-        if os.isatty(sys.stdout.fileno()):
+        if sys.stdout.isatty():
             # when run manually we enable fail fast
             self.pytest_args.append("--maxfail=2")
 

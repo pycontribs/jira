@@ -1028,39 +1028,33 @@ class IssueTests(unittest.TestCase):
         self.assertEqual(issue.fields.status.id, '5')
 
     def test_votes(self):
+        self.jira_normal.remove_vote(self.issue_1)
+        # not checking the result on this
         votes = self.jira.votes(self.issue_1)
         self.assertEqual(votes.votes, 0)
 
+        self.jira_normal.add_vote(self.issue_1)
+        new_votes = self.jira.votes(self.issue_1)
+        assert votes.votes + 1 == new_votes.votes
+
+        self.jira_normal.remove_vote(self.issue_1)
+        new_votes = self.jira.votes(self.issue_1)
+        assert votes.votes == new_votes.votes
+
     def test_votes_with_issue_obj(self):
-        issue = self.jira.issue(self.issue_1)
+        issue = self.jira_normal.issue(self.issue_1)
+        self.jira_normal.remove_vote(issue)
+        # not checking the result on this
         votes = self.jira.votes(issue)
         self.assertEqual(votes.votes, 0)
 
-    def test_add_vote(self):
-        votes = self.jira.votes(self.issue_2)
-        init_len = votes.votes
-        self.jira_normal.add_vote(self.issue_2)
-        votes = self.jira.votes(self.issue_2)
-        self.assertEqual(votes.votes, init_len + 1)
-        self.jira_normal.remove_vote(self.issue_2)
-
-    def test_add_vote_with_issue_obj(self):
-        issue = self.jira.issue(self.issue_2)
-        votes = self.jira.votes(issue)
-        init_len = votes.votes
         self.jira_normal.add_vote(issue)
-        votes = self.jira.votes(issue)
-        self.assertEqual(votes.votes, init_len + 1)
-        self.jira_normal.remove_vote(self.issue_2)
+        new_votes = self.jira.votes(issue)
+        assert votes.votes + 1 == new_votes.votes
 
-    def test_remove_vote_with_issue_obj(self):
-        self.jira_normal.add_vote(self.issue_2)
-        issue = self.jira.issue(self.issue_2)
-        votes = self.jira.votes(issue)
-        init_len = votes.votes
         self.jira_normal.remove_vote(issue)
-        votes = self.jira.votes(issue)
-        self.assertEqual(votes.votes, init_len - 1)
+        new_votes = self.jira.votes(issue)
+        assert votes.votes == new_votes.votes
 
     def test_watchers(self):
         watchers = self.jira.watchers(self.issue_1)

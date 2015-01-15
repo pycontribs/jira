@@ -1768,8 +1768,7 @@ class JIRA(object):
 
     def _get_json(self, path, params=None, base=JIRA_BASE_URL):
         url = self._get_url(path, base)
-        r = self._session.get(
-            url, params=params, headers=self._options['headers'])
+        r = self._session.get(url, params=params)
         try:
             r_json = json_loads(r)
         except ValueError as e:
