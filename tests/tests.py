@@ -14,6 +14,7 @@ from time import sleep
 import py
 
 from six import print_ as print
+from six import integer_types, string_types
 from requests.exceptions import ConnectionError
 
 # import sys
@@ -388,43 +389,24 @@ class AttachmentTests(unittest.TestCase):
         self.jira = JiraTestManager().jira_admin
         self.project_b = self.test_manager.project_b
         self.issue_1 = self.test_manager.project_b_issue1
+        self.attachment = None
 
-    def test_attachment(self):
+    def test_0_attachment_meta(self):
+        meta = self.jira.attachment_meta()
+        self.assertTrue(meta['enabled'])
+        self.assertEqual(meta['uploadLimit'], 10485760)
+
+    def test_1_add_remove_attachment(self):
         issue = self.jira.issue(self.issue_1)
-        attachment = self.jira.add_attachment(issue, open(TEST_ATTACH_PATH, 'rb'),
-                                              "new test attachment")
-        new_attachment = self.jira.attachment(attachment.id)
+        self.attachment = self.jira.add_attachment(issue, open(TEST_ATTACH_PATH, 'rb'),
+                                                   "new test attachment")
+        new_attachment = self.jira.attachment(self.attachment.id)
         msg = "attachment %s of issue %s" % (new_attachment.__dict__, issue)
         self.assertEqual(
             new_attachment.filename, 'new test attachment', msg=msg)
         self.assertEqual(
             new_attachment.size, os.path.getsize(TEST_ATTACH_PATH), msg=msg)
-        attachment.delete()
-
-    def test_attachment_meta(self):
-        meta = self.jira.attachment_meta()
-        self.assertTrue(meta['enabled'])
-        self.assertEqual(meta['uploadLimit'], 10485760)
-
-    def test_add_attachment(self):
-        issue = self.jira.issue(self.issue_1)
-        attach_count = len(issue.fields.attachment)
-        attachment = self.jira.add_attachment(
-            issue, open(TEST_ATTACH_PATH, 'rb'))
-        self.assertIsNotNone(attachment)
-        self.assertEqual(len(self.jira.issue(self.issue_1).fields.attachment),
-                         attach_count + 1)
-
-    def test_delete(self):
-        attachments = self.jira.issue(self.issue_1).fields.attachment
-        print(attachments)
-        attachment = self.jira.add_attachment(self.issue_1,
-                                              open(TEST_ATTACH_PATH, 'rb'), 'to be deleted')
-        # self.assertEqual(len(self.jira.issue(self.issue_1).fields.attachment),
-        #                  attach_count + 1)
-        # attachment.delete()
-        # self.assertEqual(len(self.jira.issue(self.issue_1).fields.attachment),
-        #                  attach_count)
+        assert self.attachment.delete() is None
 
 
 class ComponentTests(unittest.TestCase):
@@ -1644,7 +1626,7 @@ class UserTests(unittest.TestCase):
         with open(TEST_ICON_PATH, "rb") as icon:
             props = self.jira.create_temp_user_avatar('ci-admin', filename,
                                                       size, icon.read())
-        print(props)
+        # print(props)
         self.jira.delete_user_avatar('ci-admin', props['id'])
 
     @unittest.skip("disabled as is not Travis friendly, probably due to parrallel execution")

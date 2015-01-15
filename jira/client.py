@@ -353,13 +353,14 @@ class JIRA(object):
         if not fname:
             fname = os.path.basename(attachment.name)
 
-        m = MultipartEncoder(
-            fields={
-                'file': (fname, attachment, 'text/plain')}
-        )
-
+        def file_stream():
+            return MultipartEncoder(
+                fields={
+                    'file': (fname, attachment, 'text/plain')}
+            )
+        m = file_stream()
         r = self._session.post(
-            url, data=m, headers=CaseInsensitiveDict({'content-type': m.content_type}))  # 'multipart/form-data'
+            url, data=m, headers=CaseInsensitiveDict({'content-type': m.content_type}), retry_data=file_stream)  # 'multipart/form-data'
 
         attachment = Attachment(self._options, self._session, json_loads(r)[0])
         return attachment
@@ -2042,7 +2043,6 @@ class JIRA(object):
         r = self._session.post(
             url, headers=CaseInsensitiveDict({'content-type': 'application/x-www-form-urlencoded'}), data=payload)
         if r.status_code == 200:
-            logging.warning(r)
             return self._check_for_html_error(r.text)
         else:
             logging.warning(
@@ -2490,14 +2490,3 @@ class GreenHopper(JIRA):
         url = self._get_url('rank', base=self.GREENHOPPER_BASE_URL)
         r = self._session.put(
             url, data=json.dumps(data))
-
-
-if __name__ == '__main__':
-    url = 'http://issues.apache.org/jira'
-    print("1")
-    jira = JIRA(url)
-    print("2")
-    jira = JIRA(options={'server': url})
-    print("3 (should see a warning)")
-    j = JIRA({'server': url})
-    print(jira.issue('INFRA-7976'))

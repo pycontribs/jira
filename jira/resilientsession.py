@@ -42,7 +42,7 @@ class ResilientSession(Session):
         time.sleep(DELAY)
         return True
 
-    def __verb(self, verb, url, **kwargs):
+    def __verb(self, verb, url, retry_data=None, **kwargs):
 
         d = self.headers.copy()
         d.update(kwargs.get('headers', {}))
@@ -66,6 +66,10 @@ class ResilientSession(Session):
                     "%s while doing %s %s [%s]" % (e, verb.upper(), url, kwargs))
                 r = e
             if self.__recoverable(r, url, verb.upper(), counter):
+                if retry_data:
+                    # if data is a stream, we cannot just read again from it,
+                    # retry_data() will give us a new stream with the data
+                    kwargs['data'] = retry_data()
                 continue
             raise_on_error(r, verb=verb, **kwargs)
             return r
