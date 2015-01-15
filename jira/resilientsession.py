@@ -8,9 +8,6 @@ import time
 import json
 
 
-MAX_RETRIES = 3
-
-
 class ResilientSession(Session):
 
     """
@@ -19,27 +16,30 @@ class ResilientSession(Session):
     At this moment it supports: 502, 503, 504
     """
 
+    def __init__(self):
+        self.max_retries = 3
+        super(ResilientSession, self).__init__()
+
     def __recoverable(self, response, url, request, counter=1):
+        msg = response
         if type(response) == ConnectionError:
             logging.warn("Got ConnectionError [%s] errno:%s on %s %s\n%s\%s" % (
                 response, response.errno, request, url, vars(response), response.__dict__))
         if hasattr(response, 'status_code'):
             if response.status_code in [502, 503, 504]:
                 return True
-            elif response.status_code == 200 and \
-                    len(response.text) == 0 and \
-                    'X-Seraph-LoginReason' in response.headers and \
-                    'AUTHENTICATED_FAILED' in response.headers['X-Seraph-LoginReason']:
-                logging.warning(
-                    "Detected Atlassian bug https://jira.atlassian.com/browse/JRA-41559 ...")
-                return True
-            else:
+            elif not (response.status_code == 200 and
+                      len(response.text) == 0 and
+                      'X-Seraph-LoginReason' in response.headers and
+                      'AUTHENTICATED_FAILED' in response.headers['X-Seraph-LoginReason']):
                 return False
+            else:
+                msg = "Atlassian's bug https://jira.atlassian.com/browse/JRA-41559"
 
-        DELAY = 10 * counter
-        logging.warn("Got recoverable error [%s] from %s %s, retry #%s in %ss" % (
-            response, request, url, counter, DELAY))
-        time.sleep(DELAY)
+        delay = 10 * counter
+        logging.warn("Got recoverable error from %s %s, will retry [%s/%s] in %ss. Err: %s" % (
+            request, url, counter, self.max_retries, delay, msg))
+        time.sleep(delay)
         return True
 
     def __verb(self, verb, url, retry_data=None, **kwargs):
@@ -55,7 +55,7 @@ class ResilientSession(Session):
             data = json.dumps(data)
 
         counter = 0
-        while counter < MAX_RETRIES:
+        while counter < self.max_retries:
             counter += 1
             try:
                 method = getattr(super(ResilientSession, self), verb.lower())\

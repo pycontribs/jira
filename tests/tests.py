@@ -141,10 +141,10 @@ class JiraTestManager(object):
                     if self.CI_JIRA_ADMIN:
                         self.jira_admin = JIRA(self.CI_JIRA_URL, basic_auth=(self.CI_JIRA_ADMIN,
                                                                              self.CI_JIRA_ADMIN_PASSWORD),
-                                               logging=False, validate=True)
+                                               logging=False, validate=True, max_retries=10)
                     else:
                         self.jira_admin = JIRA(self.CI_JIRA_URL, validate=True,
-                                               logging=False)
+                                               logging=False, max_retries=10)
                 if self.jira_admin.current_user() != self.CI_JIRA_ADMIN:
                     # self.jira_admin.
                     self.initialized = 1
@@ -157,16 +157,16 @@ class JiraTestManager(object):
                             'K83jBZnjnuVRcfjBflrKyThJa0KSjSs2',
                         'consumer_key': CONSUMER_KEY,
                         'key_cert': KEY_CERT_DATA,
-                    }, logging=False)
+                    }, logging=False, max_retries=10)
                 else:
                     if self.CI_JIRA_ADMIN:
                         self.jira_sysadmin = JIRA(self.CI_JIRA_URL,
                                                   basic_auth=(self.CI_JIRA_ADMIN,
                                                               self.CI_JIRA_ADMIN_PASSWORD),
-                                                  logging=False, validate=True)
+                                                  logging=False, validate=True, max_retries=10)
                     else:
                         self.jira_sysadmin = JIRA(self.CI_JIRA_URL,
-                                                  logging=False)
+                                                  logging=False, max_retries=10)
 
                 if OAUTH:
                     self.jira_normal = JIRA(oauth={
@@ -181,10 +181,10 @@ class JiraTestManager(object):
                         self.jira_normal = JIRA(self.CI_JIRA_URL,
                                                 basic_auth=(self.CI_JIRA_USER,
                                                             self.CI_JIRA_USER_PASSWORD),
-                                                validate=True, logging=False)
+                                                validate=True, logging=False, max_retries=10)
                     else:
                         self.jira_normal = JIRA(self.CI_JIRA_URL,
-                                                validate=True, logging=False)
+                                                validate=True, logging=False, max_retries=10)
 
                 # now we need some data to start with for the tests
 

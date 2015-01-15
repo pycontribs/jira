@@ -118,7 +118,7 @@ class JIRA(object):
     JIRA_BASE_URL = '{server}/rest/api/{rest_api_version}/{path}'
 
     def __init__(self, server=None, options=None, basic_auth=None, oauth=None, validate=None, async=False,
-                 logging=True):
+                 logging=True, max_retries=3):
         """
         Construct a JIRA client instance.
 
@@ -190,6 +190,8 @@ class JIRA(object):
             self._session = ResilientSession()
             self._session.verify = verify
         self._session.headers.update(self._options['headers'])
+
+        self._session.max_retries = max_retries
 
         if validate:
             # This will raise an Exception if you are not allowed to login.
