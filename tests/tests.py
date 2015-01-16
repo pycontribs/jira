@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from __future__ import print_function
+import json
 import os
 import re
 import sys
@@ -1789,6 +1790,36 @@ class WebsudoTests(unittest.TestCase):
 
     # def test_kill_websudo_without_login_raises(self):
     #    self.assertRaises(ConnectionError, JIRA)
+
+class UserAdministrationTests(unittest.TestCase):
+    jira = None
+
+    def setUp(self):
+        self.jira = JiraTestManager().jira_admin
+
+    def test_add_user(self):
+        result = self.jira.add_user('testUser1', 'testUser1@testingjirapython.org', password='testUser1')
+
+        # Use manual REST API call to isolate this test from breakages in other areas (like search for user method)
+        getUserUrl = self.jira.server_info()['baseUrl'] + '/rest/api/2/user/search'
+        payload = {'username': 'testUser1'}
+        getUserResponse = requests.get(getUserUrl,
+                                       auth=(JiraTestManager().CI_JIRA_ADMIN, JiraTestManager().CI_JIRA_ADMIN_PASSWORD),
+                                       params=payload
+        )
+
+        userlist = json.loads(getUserResponse.text)
+
+        self.assertNotEqual(0, len(userlist),'No users returned from REST API. User was not added succesfully. '
+                                            'Test fails.')
+
+        # In the case of multiple users returned, compile list of usernames and see if ours is in it.
+        usernamelist = []
+
+        for user in userlist.values:
+                usernamelist.append(user['name'])
+
+        self.assertIn('testUser1', usernamelist,'Expected user name not found after using add_user. Test fails.')
 
 
 if __name__ == '__main__':
