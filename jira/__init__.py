@@ -3,5 +3,5 @@ __author__ = 'bspeakmon@atlassian.com'
 
 from .version import __version__
 from .config import get_jira
-from .client import JIRA, Priority, Comment, Worklog, Watchers
+from .client import JIRA, Priority, Comment, Worklog, Watchers, User, Role, Issue, Project
 from .utils import JIRAError

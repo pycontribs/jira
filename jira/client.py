@@ -1932,25 +1932,15 @@ class JIRA(object):
 
     def delete_user(self, username):
 
-        # name=vunguyen&returnUrl=UserBrowser.jspa
+        url = self._options['server'] + '/rest/api/latest/user/?username=%s' % username
 
-        url = self._options['server'] + '/secure/admin/user/DeleteUser.jspa'
-        payload = {
-            "name": username,
-            "Delete": "Delete",
-            "returnUrl": "UserBrowser.jspa",
-            "confirm": "true",
-        }
-        r = self._session.post(
-            url, headers=self._options['headers'], data=payload)
-        # if r.status_code == 404:
-        #    logging.error("404")
-        #    return False
-        if r.status_code != 200:
+        r = self._session.delete(url)
+        if 200 <= r.status_code <= 299:
+            return True
+        else:
             logging.error(r.status_code)
+            return False
 
-        open("/tmp/jira_delete_user_%s_%s.html" %
-             (r.status_code, username), "w").write(r.text)
 
     def reindex(self, force=False, background=True):
         """
@@ -2113,40 +2103,27 @@ class JIRA(object):
 
     def add_user(self, username, email, directoryId=1, password=None, fullname=None, sendEmail=False, active=True):
 
-        if not password:
-            password = ''.join(
-                random.choice(string.ascii_uppercase + string.digits + string.ascii_lowercase) for x in range(10))
-        if not fullname:
-            fullname = username
+        fullname = username
         # TODO: default the directoryID to the first directory in jira instead
         # of 1 which is the internal one.
-        url = self._options['server'] + '/secure/admin/AddUser.jspa'
-        payload = {'username': username, 'active': 'false', 'email': email, 'directoryId': directoryId,
-                   'password': password, 'confirm': password, 'fullname': fullname, 'sendEmail': sendEmail}
-        r = self._session.post(
-            url, headers=self._options['headers'], data=payload)
+        url = self._options['server'] + '/rest/api/latest/user'
 
-        if r.status_code == 200:
-            content = r.text
-            if content.find('class="error">'):
-                m = re.search('class="error">(.*)</div>', content)
-                if m:
-                    msg = m.groups()[0]
-                    if msg == 'A user with that username already exists.':
-                        return True
-                    else:
-                        logging.error()
-                        return False
-            elif 'XSRF Security Token Missing' in content:
-                logging.error('XSRF Security Token Missing')
-                return False
-        if not active:
-            # active cannot be set on creation (ask Atlas why)
-            url = self._options['server'] + '/secure/admin/EditUser.jspa'
-            payload = {'editName': username, 'active': 'false',
-                       'email': email, 'fullName': fullname}
-            r = self._session.post(
-                url, headers=self._options['headers'], data=payload)
+        # implementation based on https://docs.atlassian.com/jira/REST/ondemand/#d2e5173
+        from collections import OrderedDict
+
+        x = OrderedDict()
+
+        x['displayName'] = fullname
+        x['emailAddress'] = email
+        x['name'] = username
+        if password:
+            x['password'] = password
+
+        payload = json.dumps(x)
+
+        self._session.post(url, data=payload)
+        return True
+
 
     def add_user_to_group(self, username, group):
         url = self._options['server'] + \

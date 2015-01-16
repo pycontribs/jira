@@ -41,8 +41,9 @@ cmd_folder = os.path.abspath(os.path.join(os.path.split(inspect.getfile(
 if cmd_folder not in sys.path:
     sys.path.insert(0, cmd_folder)
 
-from jira.client import JIRA, JIRAError
-from jira.resources import Resource, cls_for_resource, Issue, Project, Role
+import jira
+from jira import User, Role, Issue, JIRA, JIRAError, Project
+from jira.resources import Resource, cls_for_resource
 
 TEST_ROOT = os.path.dirname(__file__)
 TEST_ICON_PATH = os.path.join(TEST_ROOT, 'icon.png')
@@ -1767,36 +1768,31 @@ class WebsudoTests(unittest.TestCase):
     # def test_kill_websudo_without_login_raises(self):
     #    self.assertRaises(ConnectionError, JIRA)
 
+
 class UserAdministrationTests(unittest.TestCase):
     jira = None
 
     def setUp(self):
         self.jira = JiraTestManager().jira_admin
+        self.test_username = "test_%s" % JiraTestManager().project_a
+        self.test_email = "%s@example.com" % self.test_username
+        self.test_password = rndstr() + '$aZ5'
 
     def test_add_user(self):
-        result = self.jira.add_user('testUser1', 'testUser1@testingjirapython.org', password='testUser1')
 
-        # Use manual REST API call to isolate this test from breakages in other areas (like search for user method)
-        getUserUrl = self.jira.server_info()['baseUrl'] + '/rest/api/2/user/search'
-        payload = {'username': 'testUser1'}
-        getUserResponse = requests.get(getUserUrl,
-                                       auth=(JiraTestManager().CI_JIRA_ADMIN, JiraTestManager().CI_JIRA_ADMIN_PASSWORD),
-                                       params=payload
-        )
+        try:
+            self.jira.delete_user(self.test_username)
+        except JIRAError:
+            pass
 
-        userlist = json.loads(getUserResponse.text)
+        result = self.jira.add_user(self.test_username, self.test_email, password=self.test_password)
+        assert result, True
 
-        self.assertNotEqual(0, len(userlist),'No users returned from REST API. User was not added succesfully. '
-                                            'Test fails.')
+        x = self.jira.search_users(self.test_username)[0]
+        assert isinstance(x, jira.User)
 
-        # In the case of multiple users returned, compile list of usernames and see if ours is in it.
-        usernamelist = []
-
-        for user in userlist.values:
-                usernamelist.append(user['name'])
-
-        self.assertIn('testUser1', usernamelist,'Expected user name not found after using add_user. Test fails.')
-
+        x = self.jira.delete_user(self.test_username)
+        assert x, True
 
 if __name__ == '__main__':
     # j = JIRA("https://issues.citrite.net")
