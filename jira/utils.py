@@ -191,8 +191,3 @@ def get_error_list(r):
             except ValueError:
                 error_list = [r.text]
     return error_list
-
-if __name__ == '__main__':
-    x = CaseInsensitiveDict(XXX=1)
-    x.update({"xxx": 2})
-    print(x)

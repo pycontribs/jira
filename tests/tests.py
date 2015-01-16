@@ -15,6 +15,7 @@ from time import sleep
 import py
 
 from six import print_ as print
+from six import integer_types, string_types
 from requests.exceptions import ConnectionError
 
 # import sys
@@ -141,10 +142,10 @@ class JiraTestManager(object):
                     if self.CI_JIRA_ADMIN:
                         self.jira_admin = JIRA(self.CI_JIRA_URL, basic_auth=(self.CI_JIRA_ADMIN,
                                                                              self.CI_JIRA_ADMIN_PASSWORD),
-                                               logging=False, validate=True)
+                                               logging=False, validate=True, max_retries=10)
                     else:
                         self.jira_admin = JIRA(self.CI_JIRA_URL, validate=True,
-                                               logging=False)
+                                               logging=False, max_retries=10)
                 if self.jira_admin.current_user() != self.CI_JIRA_ADMIN:
                     # self.jira_admin.
                     self.initialized = 1
@@ -157,16 +158,16 @@ class JiraTestManager(object):
                             'K83jBZnjnuVRcfjBflrKyThJa0KSjSs2',
                         'consumer_key': CONSUMER_KEY,
                         'key_cert': KEY_CERT_DATA,
-                    }, logging=False)
+                    }, logging=False, max_retries=10)
                 else:
                     if self.CI_JIRA_ADMIN:
                         self.jira_sysadmin = JIRA(self.CI_JIRA_URL,
                                                   basic_auth=(self.CI_JIRA_ADMIN,
                                                               self.CI_JIRA_ADMIN_PASSWORD),
-                                                  logging=False, validate=True)
+                                                  logging=False, validate=True, max_retries=10)
                     else:
                         self.jira_sysadmin = JIRA(self.CI_JIRA_URL,
-                                                  logging=False)
+                                                  logging=False, max_retries=10)
 
                 if OAUTH:
                     self.jira_normal = JIRA(oauth={
@@ -181,10 +182,10 @@ class JiraTestManager(object):
                         self.jira_normal = JIRA(self.CI_JIRA_URL,
                                                 basic_auth=(self.CI_JIRA_USER,
                                                             self.CI_JIRA_USER_PASSWORD),
-                                                validate=True, logging=False)
+                                                validate=True, logging=False, max_retries=10)
                     else:
                         self.jira_normal = JIRA(self.CI_JIRA_URL,
-                                                validate=True, logging=False)
+                                                validate=True, logging=False, max_retries=10)
 
                 # now we need some data to start with for the tests
 
@@ -389,43 +390,24 @@ class AttachmentTests(unittest.TestCase):
         self.jira = JiraTestManager().jira_admin
         self.project_b = self.test_manager.project_b
         self.issue_1 = self.test_manager.project_b_issue1
+        self.attachment = None
 
-    def test_attachment(self):
+    def test_0_attachment_meta(self):
+        meta = self.jira.attachment_meta()
+        self.assertTrue(meta['enabled'])
+        self.assertEqual(meta['uploadLimit'], 10485760)
+
+    def test_1_add_remove_attachment(self):
         issue = self.jira.issue(self.issue_1)
-        attachment = self.jira.add_attachment(issue, open(TEST_ATTACH_PATH, 'rb'),
-                                              "new test attachment")
-        new_attachment = self.jira.attachment(attachment.id)
+        self.attachment = self.jira.add_attachment(issue, open(TEST_ATTACH_PATH, 'rb'),
+                                                   "new test attachment")
+        new_attachment = self.jira.attachment(self.attachment.id)
         msg = "attachment %s of issue %s" % (new_attachment.__dict__, issue)
         self.assertEqual(
             new_attachment.filename, 'new test attachment', msg=msg)
         self.assertEqual(
             new_attachment.size, os.path.getsize(TEST_ATTACH_PATH), msg=msg)
-        attachment.delete()
-
-    def test_attachment_meta(self):
-        meta = self.jira.attachment_meta()
-        self.assertTrue(meta['enabled'])
-        self.assertEqual(meta['uploadLimit'], 10485760)
-
-    def test_add_attachment(self):
-        issue = self.jira.issue(self.issue_1)
-        attach_count = len(issue.fields.attachment)
-        attachment = self.jira.add_attachment(
-            issue, open(TEST_ATTACH_PATH, 'rb'))
-        self.assertIsNotNone(attachment)
-        self.assertEqual(len(self.jira.issue(self.issue_1).fields.attachment),
-                         attach_count + 1)
-
-    def test_delete(self):
-        attachments = self.jira.issue(self.issue_1).fields.attachment
-        print(attachments)
-        attachment = self.jira.add_attachment(self.issue_1,
-                                              open(TEST_ATTACH_PATH, 'rb'), 'to be deleted')
-        # self.assertEqual(len(self.jira.issue(self.issue_1).fields.attachment),
-        #                  attach_count + 1)
-        # attachment.delete()
-        # self.assertEqual(len(self.jira.issue(self.issue_1).fields.attachment),
-        #                  attach_count)
+        assert self.attachment.delete() is None
 
 
 class ComponentTests(unittest.TestCase):
@@ -1047,39 +1029,33 @@ class IssueTests(unittest.TestCase):
         self.assertEqual(issue.fields.status.id, '5')
 
     def test_votes(self):
+        self.jira_normal.remove_vote(self.issue_1)
+        # not checking the result on this
         votes = self.jira.votes(self.issue_1)
         self.assertEqual(votes.votes, 0)
 
+        self.jira_normal.add_vote(self.issue_1)
+        new_votes = self.jira.votes(self.issue_1)
+        assert votes.votes + 1 == new_votes.votes
+
+        self.jira_normal.remove_vote(self.issue_1)
+        new_votes = self.jira.votes(self.issue_1)
+        assert votes.votes == new_votes.votes
+
     def test_votes_with_issue_obj(self):
-        issue = self.jira.issue(self.issue_1)
+        issue = self.jira_normal.issue(self.issue_1)
+        self.jira_normal.remove_vote(issue)
+        # not checking the result on this
         votes = self.jira.votes(issue)
         self.assertEqual(votes.votes, 0)
 
-    def test_add_vote(self):
-        votes = self.jira.votes(self.issue_2)
-        init_len = votes.votes
-        self.jira_normal.add_vote(self.issue_2)
-        votes = self.jira.votes(self.issue_2)
-        self.assertEqual(votes.votes, init_len + 1)
-        self.jira_normal.remove_vote(self.issue_2)
-
-    def test_add_vote_with_issue_obj(self):
-        issue = self.jira.issue(self.issue_2)
-        votes = self.jira.votes(issue)
-        init_len = votes.votes
         self.jira_normal.add_vote(issue)
-        votes = self.jira.votes(issue)
-        self.assertEqual(votes.votes, init_len + 1)
-        self.jira_normal.remove_vote(self.issue_2)
+        new_votes = self.jira.votes(issue)
+        assert votes.votes + 1 == new_votes.votes
 
-    def test_remove_vote_with_issue_obj(self):
-        self.jira_normal.add_vote(self.issue_2)
-        issue = self.jira.issue(self.issue_2)
-        votes = self.jira.votes(issue)
-        init_len = votes.votes
         self.jira_normal.remove_vote(issue)
-        votes = self.jira.votes(issue)
-        self.assertEqual(votes.votes, init_len - 1)
+        new_votes = self.jira.votes(issue)
+        assert votes.votes == new_votes.votes
 
     def test_watchers(self):
         watchers = self.jira.watchers(self.issue_1)
@@ -1645,7 +1621,7 @@ class UserTests(unittest.TestCase):
         with open(TEST_ICON_PATH, "rb") as icon:
             props = self.jira.create_temp_user_avatar('ci-admin', filename,
                                                       size, icon.read())
-        print(props)
+        # print(props)
         self.jira.delete_user_avatar('ci-admin', props['id'])
 
     @unittest.skip("disabled as is not Travis friendly, probably due to parrallel execution")
