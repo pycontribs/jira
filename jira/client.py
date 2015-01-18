@@ -559,6 +559,41 @@ class JIRA(object):
                                     'active': user['active']}
         return result
 
+    def add_group(self, groupname):
+        '''
+        Creates a new group in JIRA.
+        :param groupname: The name of the group you wish to create.
+        :return: Boolean - True if succesfull.
+        '''
+
+        url = self._options['server'] + '/rest/api/latest/group'
+
+        # implementation based on https://docs.atlassian.com/jira/REST/ondemand/#d2e5173
+        from collections import OrderedDict
+
+        x = OrderedDict()
+
+        x['name'] = groupname
+
+        payload = json.dumps(x)
+
+        self._session.post(url, data=payload)
+
+        return True
+
+    def remove_group(self, groupname):
+        '''
+        Deletes a group from the JIRA instance.
+        :param groupname: The group to be deleted from the JIRA instance.
+        :return: Boolean. Returns True on success.
+        '''
+
+        # implementation based on https://docs.atlassian.com/jira/REST/ondemand/#d2e5173
+        url = self._options['server'] + '/rest/api/latest/group'
+        x = {'groupname': groupname}
+        self._session.delete(url, params=x)
+        return True
+
     # Issues
 
     def issue(self, id, fields=None, expand=None):
@@ -2126,31 +2161,36 @@ class JIRA(object):
 
 
     def add_user_to_group(self, username, group):
-        url = self._options['server'] + \
-            '/secure/admin/user/EditUserGroups.jspa'
-        payload = {
-            'groupsToJoin': group,
-            'name': username,
-            'join': 'submit'}
-        r = self._session.post(
-            url, headers=self._options['headers'], data=payload)
-        if r.status_code == 200:
-            content = r.text
-            if content.find('class="error">') != -1:
-                m = re.search('class="error">(.*)</div>', content)
-                if m:
-                    msg = m.groups()[0]
-                    if msg == 'A user with that username already exists.':
-                        return True
-                    else:
-                        logging.error()
-                        return False
-            elif 'XSRF Security Token Missing' in content:
-                logging.error('XSRF Security Token Missing')
-                return False
-            else:
-                return True
-        return False
+        '''
+        Adds a user to an existing group.
+        :param username: Username that will be added to specified group.
+        :param group: Group that the user will be added to.
+        :return: Boolean, True for success, false for failure.
+        '''
+        url = self._options['server'] + '/rest/api/latest/group/user'
+        x = {'groupname': group}
+        y = {'name': username}
+
+        payload = json.dumps(y)
+
+        self._session.post(url, params=x, data=payload)
+
+        return True
+
+    def remove_user_from_group(self, username, groupname):
+        '''
+        Removes a user from a group.
+        :param username: The user to remove from the group.
+        :param groupname: The group that the user will be removed from.
+        :return:
+        '''
+        url = self._options['server'] + '/rest/api/latest/group/user'
+        x = {'groupname': groupname,
+             'username': username}
+
+        self._session.delete(url, params=x)
+
+        return True
 
     # Experimental
     # Experimental support for iDalko Grid, expect API to change as it's using private APIs currently

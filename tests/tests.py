@@ -1777,6 +1777,7 @@ class UserAdministrationTests(unittest.TestCase):
         self.test_username = "test_%s" % JiraTestManager().project_a
         self.test_email = "%s@example.com" % self.test_username
         self.test_password = rndstr() + '$aZ5'
+        self.test_groupname = 'testGroupFor_%s' % JiraTestManager().project_a
 
     def test_add_user(self):
 
@@ -1793,6 +1794,82 @@ class UserAdministrationTests(unittest.TestCase):
 
         x = self.jira.delete_user(self.test_username)
         assert x, True
+
+    def test_delete_user(self):
+        try:
+            # Make sure user exists before attempting test to delete.
+            self.jira.add_user(self.test_username, self.test_email, password=self.test_password)
+        except JIRAError:
+            pass
+
+        result = self.jira.delete_user(self.test_username)
+        assert result, True
+
+        x = self.jira.search_users(self.test_username)
+        self.assertEqual(len(x), 0, "Found test user when it should have been deleted. Test Fails.")
+
+    def test_add_group(self):
+        try:
+            self.jira.remove_group(self.test_groupname)
+        except JIRAError:
+            pass
+
+        result = self.jira.add_group(self.test_groupname)
+        assert result, True
+
+        x = self.jira.groups(query=self.test_groupname)
+        self.assertEqual(self.test_groupname, x['groups'][0]['name'], "Did not find expected group after trying to add"
+                                                                     " it. Test Fails.")
+        self.jira.remove_group(self.test_groupname)
+
+    def test_remove_group(self):
+        try:
+            self.jira.add_group(self.test_groupname)
+        except JIRAError:
+            pass
+
+        result = self.jira.remove_group(self.test_groupname)
+        assert result, True
+
+        x = self.jira.groups(query=self.test_groupname)
+        self.assertEqual(len(x['groups']), 0, 'Found group with name when it should have been deleted. Test Fails.')
+
+    def test_add_user_to_group(self):
+        try:
+            self.jira.add_user(self.test_username, self.test_email, password=self.test_password)
+            self.jira.add_group(self.test_groupname)
+            # Just in case user is already there.
+            self.jira.remove_user_from_group(self.test_username, self.test_groupname)
+        except JIRAError:
+            pass
+
+        result = self.jira.add_user_to_group(self.test_username, self.test_groupname)
+        assert result, True
+
+        x = self.jira.group_members(self.test_groupname)
+        self.assertIn(self.test_username, x.keys(), 'Username not returned in group member list. Test Fails.')
+
+        self.jira.remove_group(self.test_groupname)
+        self.jira.delete_user(self.test_username)
+
+    def test_remove_user_from_group(self):
+        try:
+            self.jira.add_user(self.test_username, self.test_email, password=self.test_password)
+            self.jira.add_group(self.test_groupname)
+            self.jira.add_user_to_group(self.test_username, self.test_groupname)
+        except JIRAError:
+            pass
+
+        result = self.jira.remove_user_from_group(self.test_username, self.test_groupname)
+        assert result, True
+
+        x = self.jira.group_members(self.test_groupname)
+        self.assertNotIn(self.test_username, x.keys(), 'Username found in group when it should have been removed. '
+                                                       'Test Fails.')
+
+        self.jira.remove_group(self.test_groupname)
+        self.jira.delete_user(self.test_username)
+
 
 if __name__ == '__main__':
     # j = JIRA("https://issues.citrite.net")
