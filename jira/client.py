@@ -1802,7 +1802,7 @@ class JIRA(object):
                 self._magic = None
             except AttributeError:
                 self._magic = None
-
+    
     def _get_mime_type(self, buff):
         if self._magic is not None:
             return self._magic.id_buffer(buff)
