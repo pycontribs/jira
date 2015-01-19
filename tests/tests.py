@@ -1785,7 +1785,8 @@ class UserAdministrationTests(unittest.TestCase):
         except JIRAError:
             pass
 
-        result = self.jira.add_user(self.test_username, self.test_email, password=self.test_password)
+        result = self.jira.add_user(
+            self.test_username, self.test_email, password=self.test_password)
         assert result, True
 
         x = self.jira.search_users(self.test_username)[0]

@@ -1932,7 +1932,8 @@ class JIRA(object):
 
     def delete_user(self, username):
 
-        url = self._options['server'] + '/rest/api/latest/user/?username=%s' % username
+        url = self._options['server'] + \
+            '/rest/api/latest/user/?username=%s' % username
 
         r = self._session.delete(url)
         if 200 <= r.status_code <= 299:
@@ -1940,7 +1941,6 @@ class JIRA(object):
         else:
             logging.error(r.status_code)
             return False
-
 
     def reindex(self, force=False, background=True):
         """
@@ -2108,7 +2108,8 @@ class JIRA(object):
         # of 1 which is the internal one.
         url = self._options['server'] + '/rest/api/latest/user'
 
-        # implementation based on https://docs.atlassian.com/jira/REST/ondemand/#d2e5173
+        # implementation based on
+        # https://docs.atlassian.com/jira/REST/ondemand/#d2e5173
         from collections import OrderedDict
 
         x = OrderedDict()
@@ -2123,7 +2124,6 @@ class JIRA(object):
 
         self._session.post(url, data=payload)
         return True
-
 
     def add_user_to_group(self, username, group):
         url = self._options['server'] + \
