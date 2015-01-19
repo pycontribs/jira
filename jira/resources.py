@@ -102,7 +102,7 @@ class Resource(object):
             params = {}
 
         url = self._url(ids)
-        self._load(url, params)
+        self._load(url, params=params)
 
     def update(self, fields=None, async=None, jira=None, **kwargs):
         """
