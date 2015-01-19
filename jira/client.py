@@ -1802,7 +1802,7 @@ class JIRA(object):
                 self._magic = None
             except AttributeError:
                 self._magic = None
-    
+
     def _get_mime_type(self, buff):
         if self._magic is not None:
             return self._magic.id_buffer(buff)
@@ -2110,7 +2110,10 @@ class JIRA(object):
 
         # implementation based on
         # https://docs.atlassian.com/jira/REST/ondemand/#d2e5173
-        from collections import OrderedDict
+        try:
+            from collections import OrderedDict
+        except ImportError:
+            from ordereddict import OrderedDict
 
         x = OrderedDict()
 

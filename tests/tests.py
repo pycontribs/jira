@@ -65,6 +65,15 @@ def rndstr():
     return ''.join(random.sample(string.ascii_letters, 6))
 
 
+def rndpassword():
+    # generates a password of lengh 14
+    s = ''.join(random.sample(string.ascii_uppercase, 5)) +\
+        ''.join(random.sample(string.ascii_lowercase, 5)) +\
+        ''.join(random.sample(string.digits, 2)) +\
+        ''.join(random.sample('~`!@#$%^&*()_+-=[]\\{}|;\':<>?,./', 2))
+    return ''.join(random.sample(s, len(s)))
+
+
 class Singleton(type):
 
     def __init__(cls, name, bases, dict):
@@ -1778,7 +1787,7 @@ class UserAdministrationTests(unittest.TestCase):
         self.jira = JiraTestManager().jira_admin
         self.test_username = "test_%s" % JiraTestManager().project_a
         self.test_email = "%s@example.com" % self.test_username
-        self.test_password = rndstr() + '$aZ5'
+        self.test_password = rndpassword()
 
     def test_add_user(self):
 

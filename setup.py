@@ -1,17 +1,19 @@
 #!/usr/bin/env python
+import logging
 import os
 import sys
-from setuptools import setup, find_packages
+import warnings
+
+from setuptools import setup, find_packages, Command
 from setuptools.command.test import test as TestCommand
-from setuptools import Command
 
 NAME = "jira"
-#exec(open('%s/version.py' % NAME).read())
 from jira import __version__
 
-import warnings
-import logging
 
+
+# this should help getting annoying warnings from inside distutils
+warnings.simplefilter('ignore', UserWarning)
 
 class PyTest(TestCommand):
     user_options = [('pytest-args=', 'a', "Arguments to pass to py.test")]
@@ -101,13 +103,14 @@ setup(
     cmdclass={'test': PyTest, 'release': Release},
     packages=find_packages(exclude=['tests', 'tools']),
     include_package_data=True,
-    # test_suite='nose.collector',
+
 
     install_requires=['requests>=1.2.3',
                       'requests_oauthlib>=0.3.3',
                       'tlslite>=0.4.4',
                       'six>=1.5.2',
-                      'requests_toolbelt'],
+                      'requests_toolbelt',
+                      'ordereddict'],
     setup_requires=[],
     tests_require=['pytest', 'tlslite>=0.4.4', 'requests>=2.0',
                    'setuptools', 'pep8', 'autopep8', 'sphinx', 'six>=1.9.0'],
@@ -120,22 +123,30 @@ setup(
         ['jirashell = jira.jirashell:main'],
     },
 
-    url='https://github.com/pycontribs/jira',
     license='BSD',
     description='Python library for interacting with JIRA via REST APIs.',
     long_description=open("README.rst").read(),
     author='Ben Speakmon',
     author_email='ben.speakmon@gmail.com',
     provides=[NAME],
-    keywords='jira atlassian rest api',
+    url='https://github.com/pycontribs/jira',
     bugtrack_url='https://github.com/pycontribs/jira/issues',
     home_page='https://github.com/pycontribs/jira',
+    keywords='jira atlassian rest api',
+    
     classifiers=[
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 2.5',
+        'Programming Language :: Python :: 2.6',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3',
         'Development Status :: 4 - Beta',
+        'Environment :: Other Environment',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
         'Operating System :: OS Independent',
-        'Programming Language :: Python :: 2.6',
+        'Topic :: Software Development :: Libraries :: Python Modules',
+		'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
