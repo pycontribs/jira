@@ -14,7 +14,7 @@ NAME = "jira"
 base_path = os.path.dirname(__file__)
 fp = open(os.path.join(base_path, NAME, 'version.py'))
 __version__ = re.compile(r".*__version__ = '(.*?)'",
-                     re.S).match(fp.read()).group(1)
+                         re.S).match(fp.read()).group(1)
 fp.close()
 
 
@@ -91,8 +91,11 @@ class Release(Command):
 
     def run(self):
         import json
-        import urllib2
-        response = urllib2.urlopen(
+        try:
+            from urllib.request import urlopen
+        except ImportError:
+            from urllib2 import urlopen
+        response = urlopen(
             "http://pypi.python.org/pypi/%s/json" % NAME)
         data = json.load(response)
         released_version = data['info']['version']

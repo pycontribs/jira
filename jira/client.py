@@ -56,9 +56,6 @@ except ImportError:
 # if encoding != 'UTF8':
 #    warnings.warn("Python default encoding is '%s' instead of 'UTF8' which means that there is a big change of having problems. Possible workaround http://stackoverflow.com/a/17628350/99834" % encoding)
 
-# we do want to log warrning from our code
-logging.captureWarnings(True)
-
 
 def translate_resource_args(func):
     """
@@ -217,8 +214,11 @@ class JIRA(object):
     def _check_update_(self):
         # check if the current version of the library is outdated
         import json
-        import urllib2
-        response = urllib2.urlopen(
+        try:
+            from urllib.request import urlopen
+        except ImportError:
+            from urllib2 import urlopen
+        response = urlopen(
             "http://pypi.python.org/pypi/jira/json")
         data = json.load(response)
         released_version = data['info']['version']
