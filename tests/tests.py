@@ -787,70 +787,18 @@ class IssueTests(unittest.TestCase):
         self.assertRaises(JIRAError, self.jira.assign_issue, 'NOPE-1',
                           'notauser')
 
-    @unittest.skip("Rework: len() is not a valid way to test.")
     def test_comments(self):
-        self.jira.issue(self.issue_1)
-        comment1 = self.jira.add_comment(self.issue_1, 'First comment')
-        comment2 = self.jira.add_comment(self.issue_1, 'Second comment')
-        comment3 = self.jira.add_comment(self.issue_1, 'Third comment')
-        comment4 = self.jira.add_comment(self.issue_1, 'Fourth comment')
-        comments = self.jira.comments(self.issue_1)
-        self.assertEqual(len(comments), 4)
-        comment1.delete()
-        comment2.delete()
-        comment3.delete()
-        comment4.delete()
-        self.jira.issue(self.issue_2)
-        comment1 = self.jira.add_comment(self.issue_2, 'First comment')
-        comment2 = self.jira.add_comment(self.issue_2, 'Second comment')
-        comment3 = self.jira.add_comment(self.issue_2, 'Third comment')
-        comments = self.jira.comments(self.issue_2)
-        self.assertEqual(len(comments), 3)
-        comment1.delete()
-        comment2.delete()
-        comment3.delete()
-
-    @unittest.skip("Rework: len() is not a valid way to test.")
-    def test_comments_with_issue_obj(self):
-        issue = self.jira.issue(self.issue_1)
-        comment1 = self.jira.add_comment(issue, 'First comment')
-        comment2 = self.jira.add_comment(issue, 'Second comment')
-        comment3 = self.jira.add_comment(issue, 'Third comment')
-        comment4 = self.jira.add_comment(issue, 'Fourth comment')
-        new_issue = self.jira.issue(self.issue_1)
-        comments = self.jira.comments(new_issue)
-        self.assertEqual(len(comments), 4)
-        comment1.delete()
-        comment2.delete()
-        comment3.delete()
-        comment4.delete()
-        issue = self.jira.issue(self.issue_2)
-        comment1 = self.jira.add_comment(issue, 'First comment')
-        comment2 = self.jira.add_comment(issue, 'Second comment')
-        comment3 = self.jira.add_comment(issue, 'Third comment')
-        new_issue = self.jira.issue(self.issue_2)
-        comments = self.jira.comments(new_issue)
-        self.assertEqual(len(comments), 3)
-        comment1.delete()
-        comment2.delete()
-        comment3.delete()
-
-    @unittest.skip("broken")
-    def test_comment(self):
-        comment = self.jira.add_comment(self.issue_1,
-                                        'just another test commnet')
-        new_comment = self.jira.comment(self.issue_1, str(comment))
-        self.assertTrue(new_comment.body.startswith('just another'))
-        comment.delete()
-
-    @unittest.skip("broken")
-    def test_comment_with_issue_obj(self):
-        comment = self.jira.add_comment(self.issue_2,
-                                        'just another test commnet')
-        issue = self.jira.issue(self.issue_2)
-        self.jira.comment(issue, str(comment))
-        self.assertTrue(comment.body.startswith('just ano'))
-        comment.delete()
+        for issue in [self.issue_1, self.jira.issue(self.issue_2)]:
+            self.jira.issue(issue)
+            comment1 = self.jira.add_comment(issue, 'First comment')
+            comment2 = self.jira.add_comment(issue, 'Second comment')
+            comments = self.jira.comments(issue)
+            assert comments[0].body == 'First comment'
+            assert comments[1].body == 'Second comment'
+            comment1.delete()
+            comment2.delete()
+            comments = self.jira.comments(issue)
+            assert len(comments) == 0
 
     def test_add_comment(self):
         comment = self.jira.add_comment(self.issue_3, 'a test comment!',
@@ -869,8 +817,6 @@ class IssueTests(unittest.TestCase):
         self.assertEqual(comment.visibility.value, 'Administrators')
         comment.delete()
 
-    @unittest.skip("temporary disabled because Resource.update() does not reload the object from the server side.")
-    # TODO: update() doesnt seem to reload the comment object on Travis?!
     def test_update_comment(self):
         comment = self.jira.add_comment(self.issue_3, 'updating soon!')
         comment.update(body='updated!')

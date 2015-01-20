@@ -119,6 +119,8 @@ class JIRA(object):
         }
     }
 
+    checked_version = False
+
     JIRA_BASE_URL = '{server}/rest/api/{rest_api_version}/{path}'
 
     def __init__(self, server=None, options=None, basic_auth=None, oauth=None, validate=None, async=False,
@@ -209,18 +211,14 @@ class JIRA(object):
             globals()['logging'].error("invalid server_info: %s", si)
             raise e
 
-        self._check_update_()
+        if not JIRA.checked_version:
+            self._check_update_()
+            JIRA.checked_version = True
 
     def _check_update_(self):
         # check if the current version of the library is outdated
-        import json
-        try:
-            from urllib.request import urlopen
-        except ImportError:
-            from urllib2 import urlopen
-        response = urlopen(
-            "http://pypi.python.org/pypi/jira/json")
-        data = json.load(response)
+        data = requests.get("http://pypi.python.org/pypi/jira/json").json()
+
         released_version = data['info']['version']
         if released_version > __version__:
             warnings.warn("You are running an outdated version of JIRA Python %s. Current version is %s. Do not file any bugs against older versions." % (
