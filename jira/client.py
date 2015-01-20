@@ -595,6 +595,11 @@ class JIRA(object):
         :param fields: comma-separated string of issue fields to include in the results
         :param expand: extra information to fetch inside each resource
         """
+
+        # this allows us to pass Issue objects to issue()
+        if type(id) == Issue:
+            return id
+
         issue = Issue(self._options, self._session)
 
         params = {}
