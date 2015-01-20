@@ -23,8 +23,7 @@ from oauthlib.oauth1 import SIGNATURE_RSA
 from requests_oauthlib import OAuth1
 
 import webbrowser
-from jira.client import JIRA
-from jira import __version__
+from jira import JIRA, __version__
 
 CONFIG_PATH = os.path.join(
     os.path.expanduser('~'), '.jira-python', 'jirashell.ini')

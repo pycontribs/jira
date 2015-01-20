@@ -27,8 +27,11 @@ import pprint
 
 from six import string_types, integer_types
 from six.moves import html_parser
-from requests_toolbelt import MultipartEncoder
 import requests
+try:
+    from requests_toolbelt import MultipartEncoder
+except:
+    pass
 
 # JIRA specific resources
 from jira.resources import Resource, Issue, Comment, Project, Attachment, Component, Dashboard, Filter, Votes, Watchers, \
@@ -37,6 +40,7 @@ from jira.resources import Resource, Issue, Comment, Project, Attachment, Compon
 # GreenHopper specific resources
 from jira.resources import GreenHopperResource, Board, Sprint
 from jira.resilientsession import ResilientSession
+from jira import __version__
 from .utils import threaded_requests, json_loads, JIRAError, CaseInsensitiveDict
 
 try:
@@ -51,6 +55,9 @@ except ImportError:
 # encoding = sys.getdefaultencoding()
 # if encoding != 'UTF8':
 #    warnings.warn("Python default encoding is '%s' instead of 'UTF8' which means that there is a big change of having problems. Possible workaround http://stackoverflow.com/a/17628350/99834" % encoding)
+
+# we do want to log warrning from our code
+logging.captureWarnings(True)
 
 
 def translate_resource_args(func):
@@ -205,6 +212,20 @@ class JIRA(object):
             globals()['logging'].error("invalid server_info: %s", si)
             raise e
 
+        self._check_update_()
+
+    def _check_update_(self):
+        # check if the current version of the library is outdated
+        import json
+        import urllib2
+        response = urllib2.urlopen(
+            "http://pypi.python.org/pypi/jira/json")
+        data = json.load(response)
+        released_version = data['info']['version']
+        if released_version > __version__:
+            warnings.warn("You are running an outdated version of JIRA Python %s. Current version is %s. Do not file any bugs against older versions." % (
+                __version__, released_version))
+
     def __del__(self):
         session = getattr(self, "_session", None)
         if session is not None:
@@ -355,14 +376,21 @@ class JIRA(object):
         if not fname:
             fname = os.path.basename(attachment.name)
 
-        def file_stream():
-            return MultipartEncoder(
-                fields={
-                    'file': (fname, attachment, 'text/plain')}
-            )
-        m = file_stream()
-        r = self._session.post(
-            url, data=m, headers=CaseInsensitiveDict({'content-type': m.content_type}), retry_data=file_stream)  # 'multipart/form-data'
+        if 'MultipartEncoder' not in globals():
+            r = self._session.post(
+                url,
+                files={
+                    'file': (fname, attachment, 'application/octet-stream')},
+                headers=CaseInsensitiveDict({'content-type': None}))
+        else:
+            def file_stream():
+                return MultipartEncoder(
+                    fields={
+                        'file': (fname, attachment, 'text/plain')}
+                )
+            m = file_stream()
+            r = self._session.post(
+                url, data=m, headers=CaseInsensitiveDict({'content-type': m.content_type}), retry_data=file_stream)
 
         attachment = Attachment(self._options, self._session, json_loads(r)[0])
         return attachment
@@ -2402,8 +2430,7 @@ class GreenHopper(JIRA):
               "remoteLinks": []
         }"""
 
-        payload = {}
-        payload['name'] = name
+        payload = {'name': name}
         if startDate:
             payload["startDate"] = startDate
         if endDate:

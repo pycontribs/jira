@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import logging
 import os
+import re
 import sys
 import warnings
 
@@ -8,12 +9,18 @@ from setuptools import setup, find_packages, Command
 from setuptools.command.test import test as TestCommand
 
 NAME = "jira"
-from jira import __version__
 
+# Get the version - do not use normal import because it does break coverage
+base_path = os.path.dirname(__file__)
+fp = open(os.path.join(base_path, NAME, 'version.py'))
+__version__ = re.compile(r".*__version__ = '(.*?)'",
+                     re.S).match(fp.read()).group(1)
+fp.close()
 
 
 # this should help getting annoying warnings from inside distutils
 warnings.simplefilter('ignore', UserWarning)
+
 
 class PyTest(TestCommand):
     user_options = [('pytest-args=', 'a', "Arguments to pass to py.test")]
@@ -47,6 +54,7 @@ class PyTest(TestCommand):
         try:
             import coveralls
             self.pytest_args.append("--cov=%s" % NAME)
+            self.pytest_args.extend(["--cov-report", "term"])
             self.pytest_args.extend(["--cov-report", "xml"])
 
         except ImportError:
@@ -133,7 +141,7 @@ setup(
     bugtrack_url='https://github.com/pycontribs/jira/issues',
     home_page='https://github.com/pycontribs/jira',
     keywords='jira atlassian rest api',
-    
+
     classifiers=[
         'Programming Language :: Python',
         'Programming Language :: Python :: 2.5',
@@ -146,7 +154,7 @@ setup(
         'License :: OSI Approved :: BSD License',
         'Operating System :: OS Independent',
         'Topic :: Software Development :: Libraries :: Python Modules',
-		'Programming Language :: Python :: 2.6',
+        'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',

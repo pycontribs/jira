@@ -1,7 +1,7 @@
 # This script shows how to connect to a JIRA instance with a
 # username and password over HTTP BASIC authentication.
 
-from jira.client import JIRA
+from jira import JIRA
 
 # By default, the client will connect to a JIRA instance started from the Atlassian Plugin SDK.
 # See

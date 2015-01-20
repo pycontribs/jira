@@ -41,7 +41,7 @@ Feeling impatient? I like your style.
 
 .. code-block:: python
 
-        from jira.client import JIRA
+        from jira import JIRA
 
         jira = JIRA('https://jira.atlassian.com')
 
