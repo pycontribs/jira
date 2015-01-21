@@ -122,6 +122,7 @@ class JIRA(object):
     checked_version = False
 
     JIRA_BASE_URL = '{server}/rest/api/{rest_api_version}/{path}'
+    AGILE_BASE_URL = '{server}/rest/greenhopper/1.0/{path}'
 
     def __init__(self, server=None, options=None, basic_auth=None, oauth=None, validate=None, async=False,
                  logging=True, max_retries=3):
@@ -2209,49 +2210,7 @@ class JIRA(object):
             url, headers=self._options['headers'], params=params)
         return json_loads(r)
 
-
-# GreenHopper
-
-
-class GreenHopper(JIRA):
-
-    """
-    Define a class to hold functions for accessing GreenHopper resources.
-    Extend the python-jira JIRA class.
-    """
-
-    GREENHOPPER_BASE_URL = '{server}/rest/greenhopper/1.0/{path}'
-
-    def __init__(self, options=None, basic_auth=None, oauth=None, async=None):
-        self._rank = None
-        JIRA.__init__(
-            self, options=options, basic_auth=basic_auth, oauth=oauth, async=None)
-
-    def find(self, resource_format, ids=None):
-        """
-        Get a GreenHopperResource object for any addressable resource on the server.
-
-        This method is a universal resource locator for any RESTful resource in GreenHopper. The
-        argument ``resource_format`` is a string of the form ``resource``, ``resource/{0}``,
-        ``resource/{0}/sub``, ``resource/{0}/sub/{1}``, etc. The format placeholders will be
-        populated from the ``ids`` argument if present. The existing authentication session
-        will be used.
-
-        The return value is an untyped Resource object, which will not support specialized
-        :py:meth:`.Resource.update` or :py:meth:`.Resource.delete` behavior. Moreover, it will
-        not know to return an issue Resource if the client uses the resource issue path. For this
-        reason, it is intended to support resources that are not included in the standard
-        Atlassian REST API.
-
-        :param resource_format: the subpath to the resource string
-        :param ids: values to substitute in the ``resource_format`` string
-        :type ids: tuple or None
-        """
-        resource = GreenHopperResource(
-            resource_format, self._options, self._session)
-        resource.find(ids)
-        return resource
-
+    # Jira Agile specific methods (GreenHopper)
     """
     Define the functions that interact with GreenHopper.
     """
@@ -2262,7 +2221,7 @@ class GreenHopper(JIRA):
         Get a list of board GreenHopperResources.
         """
         r_json = self._get_json(
-            'rapidviews/list', base=self.GREENHOPPER_BASE_URL)
+            'rapidviews/list', base=self.AGILE_BASE_URL)
 
         boards = [Board(self._options, self._session, raw_boards_json)
                   for raw_boards_json in r_json['views']]
@@ -2288,13 +2247,13 @@ class GreenHopper(JIRA):
              >>> }
         """
         r_json = self._get_json('sprintquery/%s?includeHistoricSprints=true&includeFutureSprints=true' % id,
-                                base=self.GREENHOPPER_BASE_URL)
+                                base=self.AGILE_BASE_URL)
 
         if extended:
             sprints = []
             for raw_sprints_json in r_json['sprints']:
                 r_json = self._get_json(
-                    'sprint/%s/edit/model' % raw_sprints_json['id'], base=self.GREENHOPPER_BASE_URL)
+                    'sprint/%s/edit/model' % raw_sprints_json['id'], base=self.AGILE_BASE_URL)
                 sprints.append(
                     Sprint(self._options, self._session, r_json['sprint']))
         else:
@@ -2324,7 +2283,7 @@ class GreenHopper(JIRA):
         # if state:
         #    payload['state']=state
 
-        url = self._get_url('sprint/%s' % id, base=self.GREENHOPPER_BASE_URL)
+        url = self._get_url('sprint/%s' % id, base=self.AGILE_BASE_URL)
         r = self._session.put(
             url, data=json.dumps(payload))
 
@@ -2343,7 +2302,7 @@ class GreenHopper(JIRA):
         # puntedIssues are for scope change?
 
         r_json = self._get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id),
-                                base=self.GREENHOPPER_BASE_URL)
+                                base=self.AGILE_BASE_URL)
         issues = [Issue(self._options, self._session, raw_issues_json) for raw_issues_json in
                   r_json['contents']['completedIssues']]
         return issues
@@ -2353,14 +2312,14 @@ class GreenHopper(JIRA):
         Return the total completed points this sprint.
         """
         return self._get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id),
-                              base=self.GREENHOPPER_BASE_URL)['contents']['completedIssuesEstimateSum']['value']
+                              base=self.AGILE_BASE_URL)['contents']['completedIssuesEstimateSum']['value']
 
     def incompleted_issues(self, board_id, sprint_id):
         """
         Return the completed issues for the sprint
         """
         r_json = self._get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id),
-                                base=self.GREENHOPPER_BASE_URL)
+                                base=self.AGILE_BASE_URL)
         issues = [Issue(self._options, self._session, raw_issues_json) for raw_issues_json in
                   r_json['contents']['incompletedIssues']]
         return issues
@@ -2373,7 +2332,7 @@ class GreenHopper(JIRA):
         :param sprint_id: the sprint retieving issues from
         """
         return self._get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id),
-                              base=self.GREENHOPPER_BASE_URL)['sprint']
+                              base=self.AGILE_BASE_URL)['sprint']
 
     def delete_board(self, id):
         """
@@ -2384,7 +2343,7 @@ class GreenHopper(JIRA):
         """
         payload = {}
         url = self._get_url(
-            'rapidview/%s' % id, base=self.GREENHOPPER_BASE_URL)
+            'rapidview/%s' % id, base=self.AGILE_BASE_URL)
         r = self._session.delete(
             url, data=json.dumps(payload))
 
@@ -2398,11 +2357,17 @@ class GreenHopper(JIRA):
         :type preset: 'kanban', 'scrum', 'diy'
         """
         payload = {}
+        if isinstance(project_ids, string_types):
+            ids = []
+            for p in project_ids.split(','):
+                ids.append(self.project(p).id)
+            project_ids = ','.join(ids)
+
         payload['name'] = name
         payload['projectIds'] = project_ids
         payload['preset'] = preset
         url = self._get_url(
-            'rapidview/create/presets', base=self.GREENHOPPER_BASE_URL)
+            'rapidview/create/presets', base=self.AGILE_BASE_URL)
         r = self._session.post(
             url, data=json.dumps(payload))
 
@@ -2417,7 +2382,7 @@ class GreenHopper(JIRA):
         :param board_id: the board to add the sprint to
         """
         url = self._get_url(
-            'sprint/%s' % board_id, base=self.GREENHOPPER_BASE_URL)
+            'sprint/%s' % board_id, base=self.AGILE_BASE_URL)
         r = self._session.post(
             url)
         raw_issue_json = json_loads(r)
@@ -2439,7 +2404,7 @@ class GreenHopper(JIRA):
         if endDate:
             payload["endDate"] = endDate
         url = self._get_url(
-            'sprint/%s' % raw_issue_json['id'], base=self.GREENHOPPER_BASE_URL)
+            'sprint/%s' % raw_issue_json['id'], base=self.AGILE_BASE_URL)
         r = self._session.put(
             url, data=json.dumps(payload))
         raw_issue_json = json_loads(r)
@@ -2465,7 +2430,7 @@ class GreenHopper(JIRA):
         data = {}
         data['issueKeys'] = issue_keys
         url = self._get_url('sprint/%s/issues/add' %
-                            (sprint_id), base=self.GREENHOPPER_BASE_URL)
+                            (sprint_id), base=self.AGILE_BASE_URL)
         r = self._session.put(url, data=json.dumps(data))
 
     def add_issues_to_epic(self, epic_id, issue_keys, ignore_epics=True):
@@ -2480,7 +2445,7 @@ class GreenHopper(JIRA):
         data['issueKeys'] = issue_keys
         data['ignoreEpics'] = ignore_epics
         url = self._get_url('epics/%s/add' %
-                            epic_id, base=self.GREENHOPPER_BASE_URL)
+                            epic_id, base=self.AGILE_BASE_URL)
         r = self._session.put(
             url, data=json.dumps(data))
 
@@ -2498,6 +2463,16 @@ class GreenHopper(JIRA):
                     self._rank = field['schema']['customId']
         data = {
             "issueKeys": [issue], "rankBeforeKey": next_issue, "customFieldId": self._rank}
-        url = self._get_url('rank', base=self.GREENHOPPER_BASE_URL)
+        url = self._get_url('rank', base=self.AGILE_BASE_URL)
         r = self._session.put(
             url, data=json.dumps(data))
+
+
+class GreenHopper(JIRA):
+
+    def __init__(self, options=None, basic_auth=None, oauth=None, async=None):
+        warnings.warn(
+            "GreenHopper() class is deprecated, just use JIRA() instead.", DeprecationWarning)
+        self._rank = None
+        JIRA.__init__(
+            self, options=options, basic_auth=basic_auth, oauth=oauth, async=async)

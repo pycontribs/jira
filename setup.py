@@ -49,7 +49,7 @@ class PyTest(TestCommand):
 
         if sys.stdout.isatty():
             # when run manually we enable fail fast
-            self.pytest_args.append("--maxfail=2")
+            self.pytest_args.append("--maxfail=1")
 
         try:
             import coveralls
