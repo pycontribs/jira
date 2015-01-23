@@ -107,6 +107,7 @@ class JIRA(object):
         "resilient": True,
         "async": False,
         "client_cert": None,
+        "check_update": True,
         "headers": {
             'X-Atlassian-Token': 'no-check',
             'Cache-Control': 'no-cache',
@@ -211,7 +212,7 @@ class JIRA(object):
             globals()['logging'].error("invalid server_info: %s", si)
             raise e
 
-        if not JIRA.checked_version:
+        if options['check_update'] and not JIRA.checked_version:
             self._check_update_()
             JIRA.checked_version = True
 
