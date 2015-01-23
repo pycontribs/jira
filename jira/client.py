@@ -213,7 +213,7 @@ class JIRA(object):
             globals()['logging'].error("invalid server_info: %s", si)
             raise e
 
-        if options['check_update'] and not JIRA.checked_version:
+        if self._options['check_update'] and not JIRA.checked_version:
             self._check_update_()
             JIRA.checked_version = True
 
