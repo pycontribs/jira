@@ -668,22 +668,19 @@ class IssueTests(unittest.TestCase):
         self.assertEqual(issue.fields.priority.name, 'Major')
         issue.delete()
 
-    @unittest.skip("broken")
     def test_create_issue_without_prefetch(self):
         issue = self.jira.create_issue(prefetch=False,
                                        project=self.project_b,
                                        summary='Test issue created',
                                        description='blahery', issuetype={'name': 'Bug'},
                                        customfield_10022='XSS')
-        self.assertTrue(hasattr(issue, 'self'))
-        self.assertFalse(hasattr(issue, 'fields'))
-        self.assertFalse(hasattr(issue, 'customfield_10022'))
-        self.assertTrue(hasattr(issue, 'raw'))
+
+        assert hasattr(issue, 'self')
+        assert hasattr(issue, 'raw')
+        assert 'fields' not in issue.raw
         issue.delete()
 
-    @unittest.skip("temporary skipping till we fix the update() issue")
     def test_update_with_fieldargs(self):
-        # TODO: Fix this ASAP
         issue = self.jira.create_issue(project=self.project_b,
                                        summary='Test issue for updating',
                                        description='Will be updated shortly',
@@ -698,7 +695,6 @@ class IssueTests(unittest.TestCase):
         self.assertEqual(issue.fields.project.key, self.project_b)
         issue.delete()
 
-    @unittest.skip("temporary skipping till we fix the update() issue")
     def test_update_with_fielddict(self):
         issue = self.jira.create_issue(project=self.project_b,
                                        summary='Test issue for updating', description='Will be updated shortly',
