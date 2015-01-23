@@ -816,13 +816,6 @@ class IssueTests(unittest.TestCase):
         # self.assertEqual(comment.visibility.value, 'Administrators')
         comment.delete()
 
-    @unittest.skip("needs rework, testing for lengh is not good")
-    def test_delete_comment(self):
-        c_len = len(self.jira.comments(self.issue_3))
-        comment = self.jira.add_comment(self.issue_3, 'To be deleted!')
-        comment.delete()
-        self.assertEqual(len(self.jira.comments(self.issue_3)), c_len)
-
     def test_editmeta(self):
         meta = self.jira.editmeta(self.issue_1)
         self.assertEqual(len(meta['fields']), 18)
