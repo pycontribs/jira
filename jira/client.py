@@ -41,7 +41,7 @@ from jira.resources import Resource, Issue, Comment, Project, Attachment, Compon
 from jira.resources import GreenHopperResource, Board, Sprint
 from jira.resilientsession import ResilientSession
 from jira import __version__
-from .utils import threaded_requests, json_loads, JIRAError, CaseInsensitiveDict
+from jira.utils import threaded_requests, json_loads, JIRAError, CaseInsensitiveDict
 
 try:
     from random import SystemRandom
@@ -655,7 +655,7 @@ class JIRA(object):
         else:
             return Issue(self._options, self._session, raw=raw_issue_json)
 
-    def createmeta(self, projectKeys=None, projectIds=None, issuetypeIds=None, issuetypeNames=None, expand=None):
+    def createmeta(self, projectKeys=None, projectIds=[], issuetypeIds=None, issuetypeNames=None, expand=None):
         """
         Gets the metadata required to create issues, optionally filtered by projects and issue types.
 
@@ -673,6 +673,8 @@ class JIRA(object):
         if projectKeys is not None:
             params['projectKeys'] = projectKeys
         if projectIds is not None:
+            if isinstance(projectIds, string_types):
+                projectIds = projectIds.split(',')
             params['projectIds'] = projectIds
         if issuetypeIds is not None:
             params['issuetypeIds'] = issuetypeIds
@@ -1815,7 +1817,7 @@ class JIRA(object):
         params = {}
         if expand is not None:
             params['expand'] = expand
-        resource.find(ids, params)
+        resource.find(id=ids, params=params)
         return resource
 
     def _try_magic(self):
@@ -2334,6 +2336,7 @@ class JIRA(object):
         return self._get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id),
                               base=self.AGILE_BASE_URL)['sprint']
 
+    # TODO: remove this as we do have Board.delete()
     def delete_board(self, id):
         """
         Deletes an agile board.
@@ -2364,6 +2367,8 @@ class JIRA(object):
             project_ids = ','.join(ids)
 
         payload['name'] = name
+        if isinstance(project_ids, string_types):
+            project_ids = project_ids.split(',')
         payload['projectIds'] = project_ids
         payload['preset'] = preset
         url = self._get_url(
@@ -2411,6 +2416,8 @@ class JIRA(object):
 
         return Sprint(self._options, self._session, raw=raw_issue_json)
 
+    # TODO: broken, this API does not exsit anymore and we need to use
+    # issue.update() to perform this operaiton
     def add_issues_to_sprint(self, sprint_id, issue_keys):
         """
         Add the issues in ``issue_keys`` to the ``sprint_id``. The sprint must

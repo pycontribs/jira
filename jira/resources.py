@@ -55,7 +55,6 @@ class Resource(object):
         # Explicitly define as None so we know when a resource has actually
         # been loaded
         self.raw = None
-        self.self = None
 
     def __str__(self):
         # Return the first value we find that is likely to be human readable.
@@ -91,17 +90,18 @@ class Resource(object):
             if item in self.raw:
                 return self.raw[item]
 
-    def find(self, ids=None, params=None):
-        if ids is None:
-            ids = ()
-
-        if isinstance(ids, string_types):
-            ids = (ids,)
+    def find(self, id, params=None):
 
         if params is None:
             params = {}
 
-        url = self._url(ids)
+        url = '{server}/rest/{rest_path}/{rest_api_version}/'.format(
+            **self._options)
+        if isinstance(id, tuple):
+            url += self._resource.format(*id)
+        else:
+            url += self._resource.format(id)
+
         self._load(url, params=params)
 
     def update(self, fields=None, async=None, jira=None, **kwargs):
@@ -120,8 +120,10 @@ class Resource(object):
             data.update(fields)
         data.update(kwargs)
 
+        data = json.dumps(data)
+
         r = self._session.put(
-            self.self, data=json.dumps(data))
+            self.self, data=data)
         if 'autofix' in self._options and \
                 r.status_code == 400:
             user = None
@@ -197,9 +199,9 @@ class Resource(object):
             if not hasattr(self._session, '_async_jobs'):
                 self._session._async_jobs = set()
             self._session._async_jobs.add(
-                threaded_requests.delete(self.self, params=params))
+                threaded_requests.delete(url=self.self, params=params))
         else:
-            r = self._session.delete(self.self, params=params)
+            r = self._session.delete(url=self.self, params=params)
 
     def _load(self, url, headers=CaseInsensitiveDict(), params=None):
         r = self._session.get(url, headers=headers, params=params)
@@ -213,12 +215,6 @@ class Resource(object):
     def _parse_raw(self, raw):
         self.raw = raw
         dict2resource(raw, self, self._options, self._session)
-
-    def _url(self, ids):
-        url = '{server}/rest/{rest_path}/{rest_api_version}/'.format(
-            **self._options)
-        url += self._resource.format(*ids)
-        return url
 
     def _default_headers(self, user_headers):
         #result = dict(user_headers)
@@ -328,7 +324,7 @@ class Issue(Resource):
                 fields_dict[field] = fieldargs[field]
             data['fields'] = fields_dict
 
-        super(Issue, self).update(fields=None, async=async, jira=jira, **data)
+        super(Issue, self).update(async=async, jira=jira, fields=data)
 
     def add_field_value(self, field, value):
         """
@@ -637,11 +633,9 @@ class GreenHopperResource(Resource):
         Resource.__init__(self, path, options, session)
         if raw:
             self._parse_raw(raw)
-
-    def _url(self, ids):
         url = '{server}/rest/greenhopper/1.0/'.format(**self._options)
-        url += self._resource.format(*ids)
-        return url
+        url += path.format(**raw)
+        self.self = url
 
 
 class Sprint(GreenHopperResource):
@@ -650,7 +644,7 @@ class Sprint(GreenHopperResource):
 
     def __init__(self, options, session, raw):
         GreenHopperResource.__init__(
-            self, 'sprints/{0}', options, session, raw)
+            self, 'sprint/{id}', options, session, raw)
         if raw:
             self._parse_raw(raw)
 
@@ -660,7 +654,8 @@ class Board(GreenHopperResource):
     """A GreenHopper board."""
 
     def __init__(self, options, session, raw):
-        GreenHopperResource.__init__(self, 'views/{0}', options, session, raw)
+        GreenHopperResource.__init__(
+            self, 'rapidview/{id}', options, session, raw)
         if raw:
             self._parse_raw(raw)
 

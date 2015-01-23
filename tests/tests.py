@@ -225,14 +225,16 @@ class JiraTestManager(object):
                 # https://jira.atlassian.com/browse/JRA-39153
                 try:
                     self.jira_admin.project(self.project_a)
-                except:
+                except Exception as e:
+                    logging.warning(e)
                     pass
                 else:
                     self.jira_admin.delete_project(self.project_a)
 
                 try:
                     self.jira_admin.project(self.project_b)
-                except:
+                except Exception as e:
+                    logging.warning(e)
                     pass
                 else:
                     self.jira_admin.delete_project(self.project_b)
@@ -329,13 +331,6 @@ class UniversalResourceTests(unittest.TestCase):
         issue = self.jira.issue(self.test_manager.project_b_issue1)
         self.assertEqual(resource.self, issue.self)
         self.assertEqual(resource.key, issue.key)
-
-    def test_universal_find_custom_resource(self):
-        # don't need an actual session
-        resource = Resource('nope/{0}', self.jira._options, None)
-        self.assertEqual(
-            'https://pycontribs.atlassian.net/rest/api/2/nope/666',
-            str(resource._url(('666',))))
 
     def test_find_invalid_resource_raises_exception(self):
         with self.assertRaises(JIRAError) as cm:
@@ -1054,6 +1049,29 @@ class IssueTests(unittest.TestCase):
         self.assertEqual(self.jira.watchers(issue).watchCount,
                          init_watchers - 1)
 
+    def test_agile(self):
+        uniq = rndstr()
+        board_name = 'board-' + uniq
+        sprint_name = 'sprint-' + uniq
+
+        b = self.jira.create_board(board_name, self.project_a)
+        assert isinstance(b.id, integer_types)
+
+        s = self.jira.create_sprint(sprint_name, b.id)
+        assert isinstance(s.id, integer_types)
+        assert s.name == sprint_name
+        assert s.state == 'FUTURE'
+
+        #self.jira.add_issues_to_sprint(s.id, self.issue_1)
+        #self.jira.add_issues_to_sprint(s.id, self.issue_2)
+
+        #self.jira.rank(self.issue_2, self.issue_1)
+
+        s.delete()
+
+        b.delete()
+        # self.jira.delete_board(b.id)
+
 
 # add worklog is not working for python2.6
 #    def test_worklogs(self):
@@ -1321,6 +1339,10 @@ class ProjectTests(unittest.TestCase):
         test = find_by_id(versions, version.id)
         self.assertEqual(test.id, version.id)
         self.assertEqual(test.name, name)
+
+        i = self.jira.issue(JiraTestManager().project_b_issue1)
+        i.update(fixVersions=[{'id': version.id}])
+
         version.delete()
 
     def test_project_versions_with_project_obj(self):
