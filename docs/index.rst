@@ -12,7 +12,7 @@ Welcome to jira-python's documentation!
 This documents the ``jira-python`` package (version |release|), a Python library designed to ease the use of the
 JIRA REST API. Some basic support for the GreenHopper REST API also exists.
 
-The source is stored at https://bitbucket.org/bspeakmon/jira-python.
+The source is stored at https://github.com/pycontribs/jira.
 
 Installation
 ============
