@@ -95,4 +95,4 @@ In additions to all the contributors we would like to thank to these companies:
 .. _Atlassian: https://www.atlassian.com/
 .. _PyCharm: http://www.jetbrains.com/pycharm/
 .. _JIRA: https://pycontribs.atlassian.net
-.. _documentation: http://readthedocs.org/docs/jira-python/
+.. _documentation: http://jira.readthedocs.org/en/latest/
