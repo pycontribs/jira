@@ -27,7 +27,7 @@ git diff
 echo "Please don't run this as a user. This generates a new release for PyPI. Press ^C to exit or Enter to continue."
 read
 
-python setup.py register bdist_wheel build_sphinx upload_docs upload upload_sphinx --sign
+python setup.py register bdist_wheel build_sphinx upload_docs upload --sign
 
 #git log --date=short --pretty=format:"%cd %s" > RELEASE
 git add RELEASE
