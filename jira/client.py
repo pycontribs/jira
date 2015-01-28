@@ -24,6 +24,10 @@ import logging
 import json
 import warnings
 import pprint
+try:
+    from collections import OrderedDict
+except ImportError:
+    from ordereddict import OrderedDict
 
 from six import string_types, integer_types
 from six.moves import html_parser
@@ -219,12 +223,17 @@ class JIRA(object):
 
     def _check_update_(self):
         # check if the current version of the library is outdated
-        data = requests.get("http://pypi.python.org/pypi/jira/json").json()
+        try:
+            data = requests.get("http://pypi.python.org/pypi/jira/json", timeout=2.001).json()
 
-        released_version = data['info']['version']
-        if released_version > __version__:
-            warnings.warn("You are running an outdated version of JIRA Python %s. Current version is %s. Do not file any bugs against older versions." % (
-                __version__, released_version))
+            released_version = data['info']['version']
+            if released_version > __version__:
+                warnings.warn("You are running an outdated version of JIRA Python %s. Current version is %s. Do not file any bugs against older versions." % (
+                    __version__, released_version))
+        except requests.RequestException:
+            pass
+        except Exception as e:
+            logging.warning(e)
 
     def __del__(self):
         session = getattr(self, "_session", None)
@@ -598,7 +607,6 @@ class JIRA(object):
 
         # implementation based on
         # https://docs.atlassian.com/jira/REST/ondemand/#d2e5173
-        from collections import OrderedDict
 
         x = OrderedDict()
 
@@ -2182,11 +2190,6 @@ class JIRA(object):
 
         # implementation based on
         # https://docs.atlassian.com/jira/REST/ondemand/#d2e5173
-        try:
-            from collections import OrderedDict
-        except ImportError:
-            from ordereddict import OrderedDict
-
         x = OrderedDict()
 
         x['displayName'] = fullname

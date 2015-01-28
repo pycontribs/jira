@@ -17,7 +17,10 @@ env:
 install:
 - pip -q install -r requirements.txt
 - pip -q install -r requirements-dev.txt
-- pip -q install -r requirements-opt.txt || echo "skipped"
+- pip -q install ipython || echo "optional skipped"
+- pip -q install pytest-cache || echo "optional skipped"
+- pip -q install unittest2 || echo "optional skipped"
+- pip -q install ordereddict || echo "optional skipped"
 - pip -q install coveralls
 script:
 - "./pretest"

@@ -426,11 +426,6 @@ class ComponentTests(unittest.TestCase):
         self.issue_1 = self.test_manager.project_b_issue1
         self.issue_2 = self.test_manager.project_b_issue2
 
-    @unittest.skip("broken")
-    def test_1_component(self):
-        component = self.jira.component('10001')
-        self.assertEqual(component.name, 'Test Suites')
-
     def test_2_create_component(self):
         proj = self.jira.project(self.project_b)
         name = "project-%s-component-%s" % (proj, rndstr())
@@ -442,6 +437,9 @@ class ComponentTests(unittest.TestCase):
         self.assertEqual(component.assigneeType, 'COMPONENT_LEAD')
         self.assertFalse(component.isAssigneeTypeValid)
         component.delete()
+
+        for c in self.jira.project_components(self.project_b):
+            print(x)
 
     # COmponents field can't be modified from issue.update
     #    def test_component_count_related_issues(self):
