@@ -89,6 +89,8 @@ class Resource(object):
         except Exception as e:
             if item in self.raw:
                 return self.raw[item]
+            else:
+                raise AttributeError("%r object has no attribute %r" % (self.__class__, item))
 
     def find(self, id, params=None):
 
