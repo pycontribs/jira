@@ -1415,7 +1415,8 @@ class JIRA(object):
         if fields is None:
             fields = []
 
-        if maxResults is None or not maxResults:
+        # If None is passed as parameter, this fetch all issues from the query
+        if not maxResults:
             maxResults = maxi
             infinite = True
 
