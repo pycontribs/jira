@@ -1720,7 +1720,7 @@ class JIRA(object):
         if releaseDate is not None:
             data['releaseDate'] = releaseDate
         if startDate is not None:
-            data['startDate'] = releaseDate
+            data['startDate'] = startDate
 
         url = self._get_url('version')
         r = self._session.post(
