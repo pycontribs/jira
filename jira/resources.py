@@ -95,7 +95,7 @@ class Resource(object):
             #                unpickling (i.e. pickle.load* methods).
             #   *NOTE*: if the __new__ method were to be implemented in this class, this may have
             #           to be removed or changed.
-            if item in ('__getnewargs__',):
+            if item == '__getnewargs__':
                 raise KeyError(item)
 
             if item in self.raw:
