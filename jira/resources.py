@@ -83,14 +83,21 @@ class Resource(object):
         return '<JIRA %s: %s>' % (self.__class__.__name__, ', '.join(names))
 
     def __getattr__(self, item):
-        # make sure pickling doesn't break
-        if item in ('__getnewargs__',):
-            raise KeyError(item)
-
         # this should make Project.key and similar to work
         try:
             return self[item]
         except Exception as e:
+            # Make sure pickling doesn't break
+            #   *MORE INFO*: This conditional wouldn't be necessary if __getattr__ wasn't used. But
+            #                since it is in use (no worries), we need to give the pickle.dump*
+            #                methods what they expect back. They expect to either get a KeyError
+            #                exception or a tuple of args to be passed to the __new__ method upon
+            #                unpickling (i.e. pickle.load* methods).
+            #   *NOTE*: if the __new__ method were to be implemented in this class, this may have
+            #           to be removed or changed.
+            if item in ('__getnewargs__',):
+                raise KeyError(item)
+
             if item in self.raw:
                 return self.raw[item]
 
