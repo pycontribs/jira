@@ -83,12 +83,28 @@ class Resource(object):
         return '<JIRA %s: %s>' % (self.__class__.__name__, ', '.join(names))
 
     def __getattr__(self, item):
+        # make sure pickling doesn't break
+        if item in ('__getnewargs__',):
+            raise KeyError(item)
+
         # this should make Project.key and similar to work
         try:
             return self[item]
         except Exception as e:
             if item in self.raw:
                 return self.raw[item]
+
+    def __getstate__(self):
+        """
+        Pickling the resource; using the raw dict
+        """
+        return self.raw
+
+    def __setstate__(self, raw_pickled):
+        """
+        Unpickling of the resource
+        """
+        self._parse_raw(raw_pickled)
 
     def find(self, id, params=None):
 
