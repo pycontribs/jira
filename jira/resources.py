@@ -100,6 +100,8 @@ class Resource(object):
 
             if item in self.raw:
                 return self.raw[item]
+            else:
+                raise AttributeError("%r object has no attribute %r" % (self.__class__, item))
 
     def __getstate__(self):
         """
@@ -355,7 +357,7 @@ class Issue(Resource):
 
         This should work with: labels, multiple checkbox lists, multiple select
         """
-        self.update({"update": {field: [{"add": value}]}})
+        super(Issue, self).update(fields={"update": {field: [{"add": value}]}})
 
     def delete(self, deleteSubtasks=False):
         """
