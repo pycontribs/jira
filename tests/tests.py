@@ -11,6 +11,7 @@ import requests
 import string
 import traceback
 import inspect
+import pickle
 from time import sleep
 import py
 
@@ -342,6 +343,14 @@ class UniversalResourceTests(unittest.TestCase):
         self.assertIsNotNone(ex.text)
         self.assertEqual(ex.url,
                          'https://pycontribs.atlassian.net/rest/api/2/woopsydoodle/666')
+
+    def test_pickling_resource(self):
+        resource = self.jira.find('issue/{0}',
+                                  self.test_manager.project_b_issue1)
+
+        pickled = pickle.dumps(resource)
+        unpickled = pickle.loads(pickled)
+        self.assertEqual(resource.key, unpickled.key)
 
 
 class ResourceTests(unittest.TestCase):
