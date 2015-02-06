@@ -334,7 +334,7 @@ class Issue(Resource):
 
         This should work with: labels, multiple checkbox lists, multiple select
         """
-        self.update({"update": {field: [{"add": value}]}})
+        super(Issue, self).update(fields={"update": {field: [{"add": value}]}})
 
     def delete(self, deleteSubtasks=False):
         """
