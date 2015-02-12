@@ -909,8 +909,25 @@ class JIRA(object):
             params['expand'] = expand
         return self._get_json('issue/' + str(issue) + '/transitions', params=params)['transitions']
 
+    def find_transitionid_by_name(self, issue, transition_name):
+        """
+        Get a transitionid available on the specified issue to the current user.
+        Look at https://developer.atlassian.com/static/rest/jira/6.1.html#d2e1074 for json reference
+        
+        :param issue: ID or key of the issue to get the transitions from
+        :param trans_name: iname of transition we are looking for
+        """
+        transitions_json = this.transitions(issue)
+        id = None
+
+        for transition in transtitions_json["transtions"]:
+            if transition["name"] == transition_name:
+                id = transition["id"]
+                break
+        return id
+
     @translate_resource_args
-    def transition_issue(self, issue, transitionId, fields=None, comment=None, **fieldargs):
+    def transition_issue(self, issue, transitionId=None, transition_name=None fields=None, comment=None, **fieldargs):
         # TODO: Support update verbs (same as issue.update())
         """
         Perform a transition on an issue.
@@ -921,10 +938,17 @@ class JIRA(object):
 
         :param issue: ID or key of the issue to perform the transition on
         :param transitionId: ID of the transition to perform
+        :param transition_name: name of the transition to perform
         :param comment: *Optional* String to add as comment to the issue when performing the transition.
         :param fields: a dict containing field names and the values to use. If present, all other keyword arguments\
         will be ignored
         """
+        
+        if transitionId is None and transitionName is not None:
+            transitionId = self.find_transitionid_by_name(issue, transition_name)
+            if transitionId is None:
+                 raise JIRAError("Invalid transition name. %s" % transition_name)
+
         data = {
             'transition': {
                 'id': transitionId
