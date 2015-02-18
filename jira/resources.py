@@ -87,10 +87,33 @@ class Resource(object):
         try:
             return self[item]
         except Exception as e:
+            # Make sure pickling doesn't break
+            #   *MORE INFO*: This conditional wouldn't be necessary if __getattr__ wasn't used. But
+            #                since it is in use (no worries), we need to give the pickle.dump*
+            #                methods what they expect back. They expect to either get a KeyError
+            #                exception or a tuple of args to be passed to the __new__ method upon
+            #                unpickling (i.e. pickle.load* methods).
+            #   *NOTE*: if the __new__ method were to be implemented in this class, this may have
+            #           to be removed or changed.
+            if item == '__getnewargs__':
+                raise KeyError(item)
+
             if item in self.raw:
                 return self.raw[item]
             else:
                 raise AttributeError("%r object has no attribute %r" % (self.__class__, item))
+
+    def __getstate__(self):
+        """
+        Pickling the resource; using the raw dict
+        """
+        return self.raw
+
+    def __setstate__(self, raw_pickled):
+        """
+        Unpickling of the resource
+        """
+        self._parse_raw(raw_pickled)
 
     def find(self, id, params=None):
 
