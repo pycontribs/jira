@@ -909,8 +909,26 @@ class JIRA(object):
             params['expand'] = expand
         return self._get_json('issue/' + str(issue) + '/transitions', params=params)['transitions']
 
+    def find_transitionid_by_name(self, issue, transition_name):
+        """
+        Get a transitionid available on the specified issue to the current user.
+        Look at https://developer.atlassian.com/static/rest/jira/6.1.html#d2e1074 for json reference
+        
+        :param issue: ID or key of the issue to get the transitions from
+        :param trans_name: iname of transition we are looking for
+        """
+        transitions_json = this.transitions(issue)
+        id = None
+
+        for transition in transtitions_json["transtions"]:
+            if transition["name"].lower() == transition_name.lower():
+                id = transition["id"]
+                break
+        return id
+
+
     @translate_resource_args
-    def transition_issue(self, issue, transitionId, fields=None, comment=None, **fieldargs):
+    def transition_issue(self, issue, transition, fields=None, comment=None, **fieldargs):
         # TODO: Support update verbs (same as issue.update())
         """
         Perform a transition on an issue.
@@ -920,11 +938,22 @@ class JIRA(object):
         will be ignored. Field values will be set on the issue as part of the transition process.
 
         :param issue: ID or key of the issue to perform the transition on
-        :param transitionId: ID of the transition to perform
+        :param transition: ID or name of the transition to perform
         :param comment: *Optional* String to add as comment to the issue when performing the transition.
         :param fields: a dict containing field names and the values to use. If present, all other keyword arguments\
         will be ignored
         """
+        
+        transitionId = None
+        
+        try:
+            transitionId = int(transition)
+        except:
+            # cannot cast to int, so try to find transitionId by name
+            transitionId = self.find_transitionid_by_name(issue, transition)
+            if transitionId is None:
+                 raise JIRAError("Invalid transition name. %s" % transition)
+        
         data = {
             'transition': {
                 'id': transitionId
