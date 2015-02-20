@@ -386,12 +386,15 @@ class JIRA(object):
             fname = os.path.basename(attachment.name)
 
         if 'MultipartEncoder' not in globals():
+            method = 'old'
             r = self._session.post(
                 url,
                 files={
                     'file': (fname, attachment, 'application/octet-stream')},
                 headers=CaseInsensitiveDict({'content-type': None}))
         else:
+            method = 'MultipartEncoder'
+
             def file_stream():
                 return MultipartEncoder(
                     fields={
@@ -402,6 +405,8 @@ class JIRA(object):
                 url, data=m, headers=CaseInsensitiveDict({'content-type': m.content_type}), retry_data=file_stream)
 
         attachment = Attachment(self._options, self._session, json_loads(r)[0])
+        if attachment.size == 0:
+            raise JIRAError("Added empty attachment via %s method?!: r: %s\nattachment: %s" % (method, r, attachment))
         return attachment
 
     # Components
