@@ -14,6 +14,7 @@ import inspect
 import pickle
 from time import sleep
 import py
+import pytest
 
 from six import print_ as print
 from six import integer_types, string_types
@@ -344,6 +345,8 @@ class UniversalResourceTests(unittest.TestCase):
         self.assertEqual(ex.url,
                          'https://pycontribs.atlassian.net/rest/api/2/woopsydoodle/666')
 
+    @pytest.mark.xfail
+    # see https://github.com/pycontribs/jira/pull/30
     def test_pickling_resource(self):
         resource = self.jira.find('issue/{0}',
                                   self.test_manager.project_b_issue1)
@@ -727,17 +730,17 @@ class IssueTests(unittest.TestCase):
         issue.delete()
 
     def test_update_with_label(self):
-         issue = self.jira.create_issue(project=self.project_b,
+        issue = self.jira.create_issue(project=self.project_b,
                                        summary='Test issue for updating labels', description='Label testing',
                                        issuetype={'name': 'Bug'})
 
-         labelarray = ['testLabel']
-         fields = {
-            'labels' : labelarray
-         }
+        labelarray = ['testLabel']
+        fields = {
+            'labels': labelarray
+        }
 
-         issue.update(fields=fields)
-         self.assertEqual(issue.fields.labels, ['testLabel'])
+        issue.update(fields=fields)
+        self.assertEqual(issue.fields.labels, ['testLabel'])
 
     def test_update_with_bad_label(self):
         issue = self.jira.create_issue(project=self.project_b,
@@ -751,7 +754,6 @@ class IssueTests(unittest.TestCase):
         }
 
         self.assertRaises(JIRAError, issue.update, fields=fields)
-
 
     def test_delete(self):
         issue = self.jira.create_issue(project=self.project_b,

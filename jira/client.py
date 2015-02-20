@@ -913,7 +913,7 @@ class JIRA(object):
         """
         Get a transitionid available on the specified issue to the current user.
         Look at https://developer.atlassian.com/static/rest/jira/6.1.html#d2e1074 for json reference
-        
+
         :param issue: ID or key of the issue to get the transitions from
         :param trans_name: iname of transition we are looking for
         """
@@ -925,7 +925,6 @@ class JIRA(object):
                 id = transition["id"]
                 break
         return id
-
 
     @translate_resource_args
     def transition_issue(self, issue, transition, fields=None, comment=None, **fieldargs):
@@ -943,17 +942,17 @@ class JIRA(object):
         :param fields: a dict containing field names and the values to use. If present, all other keyword arguments\
         will be ignored
         """
-        
+
         transitionId = None
-        
+
         try:
             transitionId = int(transition)
         except:
             # cannot cast to int, so try to find transitionId by name
             transitionId = self.find_transitionid_by_name(issue, transition)
             if transitionId is None:
-                 raise JIRAError("Invalid transition name. %s" % transition)
-        
+                raise JIRAError("Invalid transition name. %s" % transition)
+
         data = {
             'transition': {
                 'id': transitionId
@@ -2172,14 +2171,16 @@ class JIRA(object):
         j = json_loads(r)
 
         template_key = None
+        templates = []
         for template in j['projectTemplates']:
-            if template['name'] == 'JIRA Classic':
+            templates.append(template['name'])
+            if template['name'] in ['JIRA Classic', 'JIRA Default Schemes']:
                 template_key = template['projectTemplateModuleCompleteKey']
                 break
 
         if not template_key:
             raise JIRAError(
-                "Unable to find a suitable project template to use. %s" % pprint.pformat(j))
+                "Unable to find a suitable project template to use. Found only: " + ', '.join(templates))
 
         payload = {'name': name,
                    'key': key,
