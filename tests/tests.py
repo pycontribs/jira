@@ -726,6 +726,17 @@ class IssueTests(unittest.TestCase):
         self.assertEqual(issue.fields.priority.name, 'Major')
         issue.delete()
 
+    def test_update_with_label(self):
+         issue = self.jira.create_issue(project=self.project_b,
+                                       summary='Test issue for updating labels', description='Label testing',
+                                       issuetype={'name': 'Bug'})
+         fields = {
+            'labels' : 'testLabel'
+         }
+
+         issue.update(fields=fields)
+         self.assertEqual(issue.fields.labels,'testLabel')
+
     def test_delete(self):
         issue = self.jira.create_issue(project=self.project_b,
                                        summary='Test issue created',
