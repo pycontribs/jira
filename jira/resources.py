@@ -391,7 +391,7 @@ class Comment(Resource):
         if body:
             data['body'] = body
         if visibility:
-            data['vissibility'] = visibility
+            data['visibility'] = visibility
         super(Comment, self).update(data)
 
 
