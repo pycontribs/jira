@@ -386,15 +386,22 @@ class ApplicationPropertiesTests(unittest.TestCase):
             key='jira.lf.text.headingcolour')
         self.assertEqual(clone_prefix['value'], '#292929')
 
-    @unittest.skip("may fail to to running test concurrentlym")
     def test_set_application_property(self):
         prop = 'jira.lf.favicon.hires.url'
-        self.jira.set_application_property(prop, '/Tjira-favicon-hires.png')
-        self.assertEqual(self.jira.application_properties(key=prop)['value'],
-                         '/Tjira-favicon-hires.png')
-        self.jira.set_application_property(prop, '/jira-favicon-hires.png')
-        self.assertEqual(self.jira.application_properties(key=prop)['value'],
-                         '/jira-favicon-hires.png')
+        valid_value = '/jira-favicon-hires.png'
+        invalud_value = '/Tjira-favicon-hires.png'
+        counter = 0
+
+        while self.jira.application_properties(key=prop)['value'] != valid_value and conter < 3:
+            if counter:
+                sleep(10)
+            self.jira.set_application_property(prop, invalid_value)
+            self.assertEqual(self.jira.application_properties(key=prop)['value'],
+                             invalid_value)
+            self.jira.set_application_property(prop, valid_value)
+            self.assertEqual(self.jira.application_properties(key=prop)['value'],
+                             valid_value)
+            counter += 1
 
     def test_setting_bad_property_raises(self):
         prop = 'random.nonexistent.property'
@@ -1748,17 +1755,12 @@ class SessionTests(unittest.TestCase):
         anon_jira = JIRA('https://support.atlassian.com', logging=False)
         self.assertRaises(JIRAError, anon_jira.session)
 
-    @unittest.skip("Returns AttributeError instead of ConnectionError due to serverInfo usage.")
     def test_session_server_offline(self):
         try:
             JIRA('https://127.0.0.1:1', logging=False)
         except Exception as e:
-            self.assertEqual(type(e), ConnectionError)
-
-            #@unittest.expectedFailure
-            # def test_kill_session(self):
-            #    self.jira.kill_session()
-            #    self.jira.session()
+            logging.error(e)
+            self.assertEqual(type(e), JIRAError)
 
 
 class WebsudoTests(unittest.TestCase):

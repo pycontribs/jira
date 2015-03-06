@@ -391,7 +391,7 @@ class JIRA(object):
                 url,
                 files={
                     'file': (fname, attachment, 'application/octet-stream')},
-                headers=CaseInsensitiveDict({'content-type': None}))
+                headers=CaseInsensitiveDict({'content-type': None, 'X-Atlassian-Token': 'nocheck'}))
         else:
             method = 'MultipartEncoder'
 
