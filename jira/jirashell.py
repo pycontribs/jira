@@ -29,8 +29,9 @@ CONFIG_PATH = os.path.join(
     os.path.expanduser('~'), '.jira-python', 'jirashell.ini')
 
 
-def oauth_dance(server, consumer_key, key_cert_data, print_tokens=False):
-    verify = server.startswith('https')
+def oauth_dance(server, consumer_key, key_cert_data, print_tokens=False, verify=None):
+    if verify is None:
+        verify = server.startswith('https')
 
     # step 1: get request tokens
     oauth = OAuth1(
@@ -89,13 +90,16 @@ def oauth_dance(server, consumer_key, key_cert_data, print_tokens=False):
 
 
 def process_config():
+    if not os.path.exists(CONFIG_PATH):
+        return {}, {} , {}
+
     parser = configparser.ConfigParser()
     try:
         parser.read(CONFIG_PATH)
     except configparser.ParsingError as err:
-        print("Couldn't read config file at path: {}; reverting to command line".format(
+        print("Couldn't read config file at path: {}".format(
             CONFIG_PATH))
-        return process_command_line()
+        raise
 
     if parser.has_section('options'):
         options = {}
@@ -129,6 +133,9 @@ def process_command_line():
                             help='The root path of the REST API to use.')
     jira_group.add_argument('-v', '--rest-api-version',
                             help='The version of the API under the specified name.')
+
+    jira_group.add_argument('--no-verify', action='store_true',
+                            help='do not verify the ssl certificate')
 
     basic_auth_group = parser.add_argument_group('BASIC auth options')
     basic_auth_group.add_argument('-u', '--username',
@@ -168,6 +175,10 @@ def process_command_line():
     if args.rest_api_version:
         options['rest_api_version'] = args.rest_api_version
 
+    options['verify'] = True
+    if args.no_verify:
+        options['verify'] = False
+
     if args.prompt_for_password:
         args.password = getpass()
 
@@ -183,13 +194,20 @@ def process_command_line():
         with open(args.key_cert, 'r') as key_cert_file:
             key_cert_data = key_cert_file.read()
 
-    oauth = {}
+    oauth = {
+            'oauth_dance': False,
+    }
     if args.oauth_dance:
-        oauth = oauth_dance(
-            args.server, args.consumer_key, key_cert_data, args.print_tokens)
+        oauth = {
+            'oauth_dance': True,
+            'consumer_key': args.consumer_key,
+            'key_cert': key_cert_data,
+            'print_tokens': args.print_tokens,
+        }
     elif args.access_token and args.access_token_secret and args.consumer_key and args.key_cert:
         oauth = {
             'access_token': args.access_token,
+            'oauth_dance': False,
             'access_token_secret': args.access_token_secret,
             'consumer_key': args.consumer_key,
             'key_cert': key_cert_data,
@@ -199,12 +217,7 @@ def process_command_line():
 
 
 def get_config():
-    if os.path.exists(CONFIG_PATH):
-        options, basic_auth, oauth = process_config()
-    else:
-        options = {}
-        basic_auth = {}
-        oauth = {}
+    options, basic_auth, oauth = process_config()
 
     cmd_options, cmd_basic_auth, cmd_oauth = process_command_line()
 
@@ -227,6 +240,10 @@ def main():
 
     if basic_auth:
         basic_auth = (basic_auth['username'], basic_auth['password'])
+
+    if oauth['oauth_dance']:
+        oauth = oauth_dance(
+            options['server'], oauth['consumer_key'], oauth['key_cert'], oauth['print_tokens'], options['verify'])
 
     jira = JIRA(options=options, basic_auth=basic_auth, oauth=oauth)
 
