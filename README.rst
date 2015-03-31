@@ -31,6 +31,8 @@ JIRA Python Library
 .. image:: https://img.shields.io/coveralls/pycontribs/jira.svg
         :target: https://coveralls.io/r/pycontribs/jira
 
+.. image:: http://api.flattr.com/button/flattr-badge-large.png
+        :target: https://flattr.com/submit/auto?user_id=sbarnea&url=https://github.com/pycontribs/jira&title=Python JIRA&language=&tags=github&category=software
 
 This library eases the use of the JIRA REST API from Python
 
