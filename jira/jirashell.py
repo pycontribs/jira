@@ -91,7 +91,7 @@ def oauth_dance(server, consumer_key, key_cert_data, print_tokens=False, verify=
 
 def process_config():
     if not os.path.exists(CONFIG_PATH):
-        return {}, {} , {}
+        return {}, {}, {}
 
     parser = configparser.ConfigParser()
     try:
@@ -195,7 +195,7 @@ def process_command_line():
             key_cert_data = key_cert_file.read()
 
     oauth = {
-            'oauth_dance': False,
+        'oauth_dance': False,
     }
     if args.oauth_dance:
         oauth = {

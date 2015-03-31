@@ -98,22 +98,22 @@ class Resource(object):
             if item == '__getnewargs__':
                 raise KeyError(item)
 
-            if item in self.raw:
+            if hasattr(self, 'raw') and item in self.raw:
                 return self.raw[item]
             else:
                 raise AttributeError("%r object has no attribute %r" % (self.__class__, item))
-
-    def __getstate__(self):
-        """
-        Pickling the resource; using the raw dict
-        """
-        return self.raw
-
-    def __setstate__(self, raw_pickled):
-        """
-        Unpickling of the resource
-        """
-        self._parse_raw(raw_pickled)
+    # def __getstate__(self):
+    #     """
+    #     Pickling the resource; using the raw dict
+    #     """
+    #     return self.raw
+    #
+    # def __setstate__(self, raw_pickled):
+    #     """
+    #     Unpickling of the resource
+    #     """
+    #     self._parse_raw(raw_pickled)
+    #
 
     def find(self, id, params=None):
 

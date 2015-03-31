@@ -1,4 +1,4 @@
-requests>=2.3.0
+requests>=2.6.0
 tlslite>=0.4.4
 six>=1.9.0
 filemagic>=1.6
