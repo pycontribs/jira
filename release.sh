@@ -28,7 +28,7 @@ echo "Please don't run this as a user. This generates a new release for PyPI. Pr
 read
 
 #git log --date=short --pretty=format:"%cd %s" > RELEASE
-git add RELEASE
+#git add RELEASE
 git tag -a $VERSION -m "Version $VERSION"
 git tag -f -a RELEASE -m "Current RELEASE"
 
