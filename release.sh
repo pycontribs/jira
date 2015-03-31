@@ -32,7 +32,7 @@ read
 git tag -a $VERSION -m "Version $VERSION"
 git tag -f -a RELEASE -m "Current RELEASE"
 
-python setup.py register bdist_wheel build_sphinx upload_docs upload --sign
+python setup.py register sdist bdist_wheel build_sphinx upload_docs upload --sign
 
 git push --force origin --tags
 
