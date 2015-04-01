@@ -373,7 +373,7 @@ class Issue(Resource):
 
         :return: URL of the issue
         """
-        return "%s/browse/%s" % (self._options['server'], str(self))
+        return "%s/browse/%s" % (self._options['server'], self.key)
 
 
 class Comment(Resource):
