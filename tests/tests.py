@@ -120,30 +120,30 @@ class JiraTestManager(object):
                     self.CI_JIRA_URL = os.environ['CI_JIRA_URL']
                     self.max_retries = 5
                 else:
-                    self.CI_JIRA_URL = "http://localhost:2990"
-                    self.max_retries = 1
+                    self.CI_JIRA_URL = "https://pycontribs.atlassian.net"
+                    self.max_retries = 5
 
                 if 'CI_JIRA_ADMIN' in os.environ:
                     self.CI_JIRA_ADMIN = os.environ['CI_JIRA_ADMIN']
                 else:
-                    self.CI_JIRA_ADMIN = None
+                    self.CI_JIRA_ADMIN = 'ci-admin'
 
                 if 'CI_JIRA_ADMIN_PASSWORD' in os.environ:
                     self.CI_JIRA_ADMIN_PASSWORD = os.environ[
                         'CI_JIRA_ADMIN_PASSWORD']
                 else:
-                    self.CI_JIRA_ADMIN_PASSWORD = None
+                    self.CI_JIRA_ADMIN_PASSWORD = 'sd4s3dgec5fhg4tfsds3434'
 
                 if 'CI_JIRA_USER' in os.environ:
                     self.CI_JIRA_USER = os.environ['CI_JIRA_USER']
                 else:
-                    self.CI_JIRA_USER = None
+                    self.CI_JIRA_USER = 'ci-user'
 
                 if 'CI_JIRA_USER_PASSWORD' in os.environ:
                     self.CI_JIRA_USER_PASSWORD = os.environ[
                         'CI_JIRA_USER_PASSWORD']
                 else:
-                    self.CI_JIRA_USER_PASSWORD = None
+                    self.CI_JIRA_USER_PASSWORD = 'sd4s3dgec5fhg4tfsds3434'
 
                 if OAUTH:
                     self.jira_admin = JIRA(oauth={
