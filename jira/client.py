@@ -402,7 +402,7 @@ class JIRA(object):
                 )
             m = file_stream()
             r = self._session.post(
-                url, data=m, headers=CaseInsensitiveDict({'content-type': m.content_type}), retry_data=file_stream)
+                url, data=m, headers=CaseInsensitiveDict({'content-type': m.content_type, 'X-Atlassian-Token': 'nocheck'}), retry_data=file_stream)
 
         attachment = Attachment(self._options, self._session, json_loads(r)[0])
         if attachment.size == 0:
