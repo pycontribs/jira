@@ -34,7 +34,12 @@ JIRA Python Library
 .. image:: http://api.flattr.com/button/flattr-badge-large.png
         :target: https://flattr.com/submit/auto?user_id=sbarnea&url=https://github.com/pycontribs/jira&title=Python JIRA&language=&tags=github&category=software
 
-This library eases the use of the JIRA REST API from Python
+.. image:: https://img.shields.io/bountysource/team/pycontribs/activity.svg
+        :target: https://www.bountysource.com/teams/pycontribs/issues?tracker_ids=3650997
+
+This library eases the use of the JIRA REST API from Python and it has been used in production for years.
+
+As this is an open-source project that is community maintained, do not be surprised if some bugs or features are not implemented quickly enough. You are always welcomed to use BountySource_ to motivate others to help.
 
 Quickstart
 ----------
@@ -75,6 +80,7 @@ In additions to all the contributors we would like to thank to these companies:
 * JetBrains_ for providing us with free licenses of PyCharm_
 * Travis_ for hosting our continous integration
 * Navicat_ for providing us free licenses of their powerful database client GUI tools.
+* Citrix_ for providing maintenance of the library.
 
 .. _virtualenv: http://www.virtualenv.org/en/latest/index.html
 
@@ -83,13 +89,16 @@ In additions to all the contributors we would like to thank to these companies:
    :target: http://www.atlassian.com
 
 .. image:: https://www.jetbrains.com/pycharm/docs/logo_pycharm.png
-    :height: 100px
+    :width: 100px
     :target: http://www.jetbrains.com/
 
 .. image:: https://upload.wikimedia.org/wikipedia/en/9/90/PremiumSoft_Navicat_Premium_Logo.png
-    :height: 100px
+    :width: 100px
     :target: http://www.navicat.com/
 
+.. image:: http://www.citrix.com/content/citrix/en_us/go/pocketplan/_jcr_content/par/sectionblock_1/sectionPar/contentblock/contentPar/col_control/colPar-1/image.img.jpg/1396300197957.jpg
+    :width: 100px
+    :target: http://www.citrix.com/
 
 .. _navicat: https://www.navicat.com/
 .. _Travis: https://travis-ci.org/
@@ -98,3 +107,5 @@ In additions to all the contributors we would like to thank to these companies:
 .. _PyCharm: http://www.jetbrains.com/pycharm/
 .. _JIRA: https://pycontribs.atlassian.net
 .. _documentation: http://jira.readthedocs.org/en/latest/
+.. _Citrix: http://www.citrix.com/
+.. _BountySource: https://www.bountysource.com/teams/pycontribs/issues?tracker_ids=3650997
