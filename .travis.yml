@@ -15,7 +15,7 @@ install:
 - pip -q install ordereddict || echo "optional skipped"
 - pip -q install coveralls
 script:
-- ./pretest && curl --silent -Lo travis_after_all.py https://raw.github.com/pycontribs/travis_after_all/master/travis_after_all.py && travis_wait python setup.py prerelease test sdist bdist_wheel
+- curl --silent -Lo travis_after_all.py https://raw.github.com/pycontribs/travis_after_all/master/travis_after_all.py && travis_wait python setup.py prerelease test sdist bdist_wheel
 - export PACKAGE_VERSION=$(python -c "from jira.version import __version__; print __version__")
 after_success:
   - python travis_after_all.py
