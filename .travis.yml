@@ -1,7 +1,6 @@
 language: python
 os:
 - linux
-- osx
 python:
 - '2.6'
 - '2.7'
@@ -23,7 +22,7 @@ install:
 - pip -q install ordereddict || echo "optional skipped"
 - pip -q install coveralls
 script:
-- "./pretest" && curl --silent -Lo travis_after_all.py https://raw.github.com/pycontribs/travis_after_all/master/travis_after_all.py && travis_wait python setup.py test
+- ./pretest && curl --silent -Lo travis_after_all.py https://raw.github.com/pycontribs/travis_after_all/master/travis_after_all.py && travis_wait python setup.py test
 after_success:
   - python travis_after_all.py
   - export $(cat .to_export_back)
@@ -55,13 +54,13 @@ branches:
   - master
 notifications:
   hipchat: 7d72ba6ba0bf07248f17e0a6a1a899@DevOps
+before_deploy:
+  - echo "before deploy..."
 deploy:
   provider: pypi
   user: sorin
   password:
     secure: "E0cjANF7SLBdYrsnWLK8X/xWznqkF0JrP/DVfDazPzUYH6ynFeneyofzNJQPLTLsqe1eKXhuUJ/Sbl+RHFB0ySo/j/7NfYd/9pm8hpUkGCvR09IwtvMLgWKp3k10NWab03o2GOkSJSrLvZofyZBGR40wwu2O9uXPCb2rvucCGbw="
   distributions: "bdist_wheel"
-  before_deploy:
-  - echo "before deploy..."
-  after_deploy:
+after_deploy:
   - echo "after deploy..."
