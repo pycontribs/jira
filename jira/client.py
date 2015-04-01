@@ -24,6 +24,7 @@ import logging
 import json
 import warnings
 import pprint
+import sys
 try:
     from collections import OrderedDict
 except ImportError:
@@ -238,7 +239,8 @@ class JIRA(object):
     def __del__(self):
         session = getattr(self, "_session", None)
         if session is not None:
-            session.close()
+            if sys.version_info < (3, 4, 0):  # workaround for https://github.com/kennethreitz/requests/issues/2303
+                session.close()
 
     def _check_for_html_error(self, content):
         # TODO: Make it return errors when content is a webpage with errors
