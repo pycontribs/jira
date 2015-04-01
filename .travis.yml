@@ -15,7 +15,7 @@ install:
 - pip -q install ordereddict || echo "optional skipped"
 - pip -q install coveralls
 script:
-- curl --silent -Lo travis_after_all.py https://raw.github.com/pycontribs/travis_after_all/master/travis_after_all.py && travis_wait python setup.py prerelease test sdist bdist_wheel
+- curl --silent -Lo travis_after_all.py https://raw.github.com/pycontribs/travis_after_all/master/travis_after_all.py && travis_wait python setup.py prerelease test
 - export PACKAGE_VERSION=$(python -c "from jira.version import __version__; print(__version__)")
 after_success:
   - python travis_after_all.py
@@ -29,7 +29,7 @@ after_success:
         fi
       fi
   - coveralls
-  - python setup.py build_sphinx upload_docs release
+  - python setup.py build_sphinx upload_docs sdist bdist_wheel
 after_failure:
   - python travis_after_all.py
   - export $(cat .to_export_back)
@@ -58,6 +58,7 @@ deploy:
     skip_cleanup: true
     on:
       tags: true
+      condition: "$BUILD_LEADER = YES"
   - provider: pypi
     user: sorin
     password:
