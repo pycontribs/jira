@@ -31,7 +31,12 @@ except ImportError:
     from ordereddict import OrderedDict
 
 from six import string_types, integer_types
-from six.moves import html_parser
+# six.moves does not play well with pyinstaller, see https://github.com/pycontribs/jira/issues/38
+# from six.moves import html_parser
+if sys.version_info < (3, 0, 0):
+    import HTMLParser as html_parser
+else:
+    import html.parser as html_parser
 import requests
 try:
     from requests_toolbelt import MultipartEncoder
