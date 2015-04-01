@@ -4,6 +4,7 @@ import os
 import re
 import sys
 import warnings
+import codecs
 
 from setuptools import setup, find_packages, Command
 from setuptools.command.test import test as TestCommand
@@ -96,7 +97,7 @@ class Release(Command):
             from urllib2 import urlopen
         response = urlopen(
             "http://pypi.python.org/pypi/%s/json" % NAME)
-        data = json.load(response)
+        data = json.load(codecs.getreader("utf-8")(response))
         released_version = data['info']['version']
         if released_version == __version__:
             raise RuntimeError(
@@ -124,7 +125,7 @@ class PreRelease(Command):
             from urllib2 import urlopen
         response = urlopen(
             "http://pypi.python.org/pypi/%s/json" % NAME)
-        data = json.load(response)
+        data = json.load(codecs.getreader("utf-8")(response))
         released_version = data['info']['version']
         if released_version >= __version__:
             raise RuntimeError(
