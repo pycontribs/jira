@@ -15,7 +15,8 @@ install:
 - pip -q install ordereddict || echo "optional skipped"
 - pip -q install coveralls
 script:
-- ./pretest && curl --silent -Lo travis_after_all.py https://raw.github.com/pycontribs/travis_after_all/master/travis_after_all.py && travis_wait python setup.py test
+- ./pretest && curl --silent -Lo travis_after_all.py https://raw.github.com/pycontribs/travis_after_all/master/travis_after_all.py && travis_wait python setup.py prerelease test sdist bdist_wheel
+- export PACKAGE_VERSION=$(python -c "from jira.version import __version__; print __version__")
 after_success:
   - python travis_after_all.py
   - export $(cat .to_export_back)
@@ -50,10 +51,17 @@ notifications:
 before_deploy:
   - echo "before deploy..."
 deploy:
-  provider: pypi
-  user: sorin
-  password:
-    secure: "E0cjANF7SLBdYrsnWLK8X/xWznqkF0JrP/DVfDazPzUYH6ynFeneyofzNJQPLTLsqe1eKXhuUJ/Sbl+RHFB0ySo/j/7NfYd/9pm8hpUkGCvR09IwtvMLgWKp3k10NWab03o2GOkSJSrLvZofyZBGR40wwu2O9uXPCb2rvucCGbw="
-  distributions: "bdist_wheel"
+  - provider: releases
+    api_key:
+      - secure: "gr9iOcQjdoAyUAim6FWKzJI9MBaJo9XKfGQGu7wdPXUFhg80Rp6GLJsowP+aU94NjXM1UQlVHDAy627WtjBlLH2SvmVEIIr7+UKBopBYuXG5jJ1m3wOZE+4f1Pqe9bqFc1DxgucqE8qF0sC24fIbNM2ToeyYrxrS6RoL2gRrX2I="
+    file: "dist/jira-$PACKAGE_VERSION.tar.gz"
+    skip_cleanup: true
+    on:
+      tags: true
+  - provider: pypi
+    user: sorin
+    password:
+      secure: "E0cjANF7SLBdYrsnWLK8X/xWznqkF0JrP/DVfDazPzUYH6ynFeneyofzNJQPLTLsqe1eKXhuUJ/Sbl+RHFB0ySo/j/7NfYd/9pm8hpUkGCvR09IwtvMLgWKp3k10NWab03o2GOkSJSrLvZofyZBGR40wwu2O9uXPCb2rvucCGbw="
+    distributions: "bdist_wheel"
 after_deploy:
   - echo "after deploy..."

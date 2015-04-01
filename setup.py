@@ -17,7 +17,6 @@ __version__ = re.compile(r".*__version__ = '(.*?)'",
                          re.S).match(fp.read()).group(1)
 fp.close()
 
-
 # this should help getting annoying warnings from inside distutils
 warnings.simplefilter('ignore', UserWarning)
 
@@ -106,24 +105,48 @@ class Release(Command):
             raise RuntimeError("Cannot release a version (%s) smaller than the PyPI current release (%s)." % (
                 __version__, released_version))
 
-        sys.exit()
+class PreRelease(Command):
+    user_options = []
+
+    def initialize_options(self):
+        # Command.initialize_options(self)
+        pass
+
+    def finalize_options(self):
+        # Command.finalize_options(self)
+        pass
+
+    def run(self):
+        import json
+        try:
+            from urllib.request import urlopen
+        except ImportError:
+            from urllib2 import urlopen
+        response = urlopen(
+            "http://pypi.python.org/pypi/%s/json" % NAME)
+        data = json.load(response)
+        released_version = data['info']['version']
+        if released_version >= __version__:
+            raise RuntimeError(
+                "Current version of the package is equal or lower than the already published ones (PyPi). Increse version to be able to pass prerelease stage.")
+
 
 setup(
     name=NAME,
     version=__version__,
-    cmdclass={'test': PyTest, 'release': Release},
+    cmdclass={'test': PyTest, 'release': Release, 'prerelease': PreRelease},
     packages=find_packages(exclude=['tests', 'tools']),
     include_package_data=True,
 
 
-    install_requires=['requests>=1.2.3',
+    install_requires=['requests>=2.6.0',
                       'requests_oauthlib>=0.3.3',
                       'tlslite>=0.4.4',
-                      'six>=1.5.2',
+                      'six>=1.9.0',
                       'requests_toolbelt',
                       'ordereddict'],
     setup_requires=[],
-    tests_require=['pytest', 'tlslite>=0.4.4', 'requests>=2.0',
+    tests_require=['pytest', 'tlslite>=0.4.4', 'requests>=2.6.0',
                    'setuptools', 'pep8', 'autopep8', 'sphinx', 'six>=1.9.0'],
     extras_require={
         'magic': ['filemagic>=1.6'],
