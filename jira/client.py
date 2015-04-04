@@ -405,7 +405,7 @@ class JIRA(object):
             def file_stream():
                 return MultipartEncoder(
                     fields={
-                        'file': (fname, attachment, 'text/plain')}
+                        'file': (fname, attachment, 'application/octet-stream')}
                 )
             m = file_stream()
             r = self._session.post(
