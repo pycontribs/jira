@@ -106,6 +106,7 @@ class Release(Command):
             raise RuntimeError("Cannot release a version (%s) smaller than the PyPI current release (%s)." % (
                 __version__, released_version))
 
+
 class PreRelease(Command):
     user_options = []
 

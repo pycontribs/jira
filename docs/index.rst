@@ -225,6 +225,29 @@ Updating components::
         existingComponents.append({"name" : component.name})
     issue.update(fields={"components": existingComponents})
 
+
+Fields
+~~~~~~
+
+    issue.fields.worklogs                                 # list of Worklog objects
+    issue.fields.worklogs[0].author
+    issue.fields.worklogs[0].comment
+    issue.fields.worklogs[0].created
+    issue.fields.worklogs[0].id
+    issue.fields.worklogs[0].self
+    issue.fields.worklogs[0].started
+    issue.fields.worklogs[0].timeSpent
+    issue.fields.worklogs[0].timeSpentSeconds
+    issue.fields.worklogs[0].updateAuthor                # dictionary
+    issue.fields.worklogs[0].updated
+
+
+    issue.fields.timetracking.remainingEstimate           # may be NULL or string ("0m", "2h"...)
+    issue.fields.timetracking.remainingEstimateSeconds    # may be NULL or integer
+    issue.fields.timetracking.timeSpent                   # may be NULL or string
+    issue.fields.timetracking.timeSpentSeconds            # may be NULL or integer
+
+
 Searching
 ^^^^^^^^^
 

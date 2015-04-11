@@ -642,6 +642,13 @@ class IssueTests(unittest.TestCase):
         comment2.delete()
         comment3.delete()
 
+    def test_issue_equal(self):
+        issue1 = self.jira.issue(self.issue_1)
+        issue2 = self.jira.issue(self.issue_2)
+        issues = self.jira.search_issues('key=%s' % self.issue_1)
+        self.assertTrue(issue1 == issues[0])
+        self.assertFalse(issue2 == issues[0])
+
     def test_issue_expandos(self):
         issue = self.jira.issue(self.issue_1, expand='editmeta,schema')
         self.assertTrue(hasattr(issue, 'editmeta'))
@@ -1104,65 +1111,61 @@ class IssueTests(unittest.TestCase):
         b.delete()
         # self.jira.delete_board(b.id)
 
+    def test_worklogs(self):
+        worklog = self.jira.add_worklog(self.issue_1, '2h')
+        worklogs = self.jira.worklogs(self.issue_1)
+        self.assertEqual(len(worklogs), 1)
+        worklog.delete()
 
-# add worklog is not working for python2.6
-#    def test_worklogs(self):
-#        worklog = self.jira.add_worklog(self.issue_1, '2h')
-#        worklogs = self.jira.worklogs(self.issue_1)
-#        self.assertEqual(len(worklogs), 1)
-#        worklog.delete()
-#
-#    def test_worklogs_with_issue_obj(self):
-#        issue = self.jira.issue(self.issue_1)
-#        worklog = self.jira.add_worklog(issue, '2h')
-#        worklogs = self.jira.worklogs(issue)
-#        self.assertEqual(len(worklogs), 1)
-#        worklog.delete()
-#
-#    def test_worklog(self):
-#        worklog = self.jira.add_worklog(self.issue_1, '1d 2h')
-#        new_worklog = self.jira.worklog(self.issue_1, str(worklog))
-#        self.assertEqual(new_worklog.author.name, 'ci-admin')
-#        self.assertEqual(new_worklog.timeSpent, '1d 2h')
-#        worklog.delete()
-#
-#    def test_worklog_with_issue_obj(self):
-#        issue = self.jira.issue(self.issue_1)
-#        worklog = self.jira.add_worklog(issue, '1d 2h')
-#        new_worklog = self.jira.worklog(issue, str(worklog))
-#        self.assertEqual(new_worklog.author.name, 'ci-admin')
-#        self.assertEqual(new_worklog.timeSpent, '1d 2h')
-#        worklog.delete()
-#
-#    def test_add_worklog(self):
-#        worklog_count = len(self.jira.worklogs(self.issue_2))
-#        worklog = self.jira.add_worklog(self.issue_2, '2h')
-#        self.assertIsNotNone(worklog)
-#        self.assertEqual(len(self.jira.worklogs(self.issue_2)), worklog_count + 1)
-#        worklog.delete()
-#
-#    def test_add_worklog_with_issue_obj(self):
-#        issue = self.jira.issue(self.issue_2)
-#        worklog_count = len(self.jira.worklogs(issue))
-#        worklog = self.jira.add_worklog(issue, '2h')
-#        self.assertIsNotNone(worklog)
-#        self.assertEqual(len(self.jira.worklogs(issue)), worklog_count + 1)
-#        worklog.delete()
-#
-#    def test_update_worklog(self):
-#        worklog = self.jira.add_worklog(self.issue_3, '3h')
-#        worklog.update(comment='Updated!', timeSpent='2h')
-#        self.assertEqual(worklog.comment, 'Updated!')
-#        self.assertEqual(worklog.timeSpent, '2h')
-#        worklog.delete()
-#    def test_delete_worklog(self):
-#        issue = self.jira.issue('ZTRAVISDEB-2', fields='worklog,timetracking')
-#        rem_estimate = issue.fields.timetracking.remainingEstimate
-#        worklog = self.jira.add_worklog('ZTRAVISDEB-2', '4h')
-#        worklog.delete()
-#        issue = self.jira.issue('ZTRAVISDEB-2', fields='worklog,timetracking')
-# self.assertEqual(issue.fields.timetracking.remainingEstimate,
-# rem_estimate)
+    def test_worklogs_with_issue_obj(self):
+        issue = self.jira.issue(self.issue_1)
+        worklog = self.jira.add_worklog(issue, '2h')
+        worklogs = self.jira.worklogs(issue)
+        self.assertEqual(len(worklogs), 1)
+        worklog.delete()
+
+    def test_worklog(self):
+        worklog = self.jira.add_worklog(self.issue_1, '1d 2h')
+        new_worklog = self.jira.worklog(self.issue_1, str(worklog))
+        self.assertEqual(new_worklog.author.name, 'ci-admin')
+        self.assertEqual(new_worklog.timeSpent, '1d 2h')
+        worklog.delete()
+
+    def test_worklog_with_issue_obj(self):
+        issue = self.jira.issue(self.issue_1)
+        worklog = self.jira.add_worklog(issue, '1d 2h')
+        new_worklog = self.jira.worklog(issue, str(worklog))
+        self.assertEqual(new_worklog.author.name, 'ci-admin')
+        self.assertEqual(new_worklog.timeSpent, '1d 2h')
+        worklog.delete()
+
+    def test_add_worklog(self):
+        worklog_count = len(self.jira.worklogs(self.issue_2))
+        worklog = self.jira.add_worklog(self.issue_2, '2h')
+        self.assertIsNotNone(worklog)
+        self.assertEqual(len(self.jira.worklogs(self.issue_2)), worklog_count + 1)
+        worklog.delete()
+
+    def test_add_worklog_with_issue_obj(self):
+        issue = self.jira.issue(self.issue_2)
+        worklog_count = len(self.jira.worklogs(issue))
+        worklog = self.jira.add_worklog(issue, '2h')
+        self.assertIsNotNone(worklog)
+        self.assertEqual(len(self.jira.worklogs(issue)), worklog_count + 1)
+        worklog.delete()
+
+    def test_update_and_delete_worklog(self):
+        worklog = self.jira.add_worklog(self.issue_3, '3h')
+        issue = self.jira.issue(self.issue_3, fields='worklog,timetracking')
+        worklog.update(comment='Updated!', timeSpent='2h')
+        self.assertEqual(worklog.comment, 'Updated!')
+        rem_estimate = issue.fields.timetracking.remainingEstimate
+        self.assertEqual(worklog.timeSpent, '2h')
+        issue = self.jira.issue(self.issue_3, fields='worklog,timetracking')
+        self.assertEqual(issue.fields.timetracking.remainingEstimate, "1h")
+        worklog.delete()
+        issue = self.jira.issue(self.issue_3, fields='worklog,timetracking')
+        self.assertEqual(issue.fields.timetracking.remainingEstimate, "3h")
 
 
 class IssueLinkTests(unittest.TestCase):

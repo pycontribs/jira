@@ -375,6 +375,9 @@ class Issue(Resource):
         """
         return "%s/browse/%s" % (self._options['server'], self.key)
 
+    def __eq__(self, other):
+        return self.id == other.id
+
 
 class Comment(Resource):
 
@@ -453,6 +456,15 @@ class Watchers(Resource):
         Remove the specified user from the watchers list.
         """
         super(Watchers, self).delete(params={'username': username})
+
+
+class TimeTracking(Resource):
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(self, 'issue/{0}/worklog/{1}', options, session)
+        self.remainingEstimate = None
+        if raw:
+            self._parse_raw(raw)
 
 
 class Worklog(Resource):
@@ -702,6 +714,8 @@ def dict2resource(raw, top=None, options=None, session=None):
             if 'self' in j:
                 resource = cls_for_resource(j['self'])(options, session, j)
                 setattr(top, i, resource)
+            elif i == 'timetracking':
+                setattr(top, 'timetracking', TimeTracking(options, session, j))
             else:
                 setattr(
                     top, i, dict2resource(j, options=options, session=session))
