@@ -63,6 +63,6 @@ deploy:
     user: sorin
     password:
       secure: "E0cjANF7SLBdYrsnWLK8X/xWznqkF0JrP/DVfDazPzUYH6ynFeneyofzNJQPLTLsqe1eKXhuUJ/Sbl+RHFB0ySo/j/7NfYd/9pm8hpUkGCvR09IwtvMLgWKp3k10NWab03o2GOkSJSrLvZofyZBGR40wwu2O9uXPCb2rvucCGbw="
-    distributions: "bdist_wheel"
+    distributions: "sdist bdist_wheel"
 after_deploy:
   - echo "after deploy..."

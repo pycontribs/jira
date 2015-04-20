@@ -27,8 +27,8 @@ git diff
 echo "Please don't run this as a user. This generates a new release for PyPI. Press ^C to exit or Enter to continue."
 read
 
-#git log --date=short --pretty=format:"%cd %s" > RELEASE
-#git add RELEASE
+git log --date=short --pretty=format:"%cd %s" > CHANGELOG
+git add CHANGELOG
 git tag -a $VERSION -m "Version $VERSION"
 git tag -f -a RELEASE -m "Current RELEASE"
 
