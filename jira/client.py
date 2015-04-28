@@ -865,7 +865,7 @@ class JIRA(object):
             # In many (if not most) configurations, non-admin users are
             # not allowed to list applicationlinks; if we aren't allowed,
             # let's let people try to add remote links anyway, we just
-            # won't be able to be quite as helpful as we could have been.
+            # won't be able to be quite as helpful.
             warnings.warn(
                 "Unable to gather applicationlinks; you will not be able "
                 "to add links to remote issues: (%s) %s" % (
