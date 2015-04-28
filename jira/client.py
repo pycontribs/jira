@@ -929,10 +929,10 @@ class JIRA(object):
         :param issue: ID or key of the issue to get the transitions from
         :param trans_name: iname of transition we are looking for
         """
-        transitions_json = this.transitions(issue)
+        transitions_json = self.transitions(issue)
         id = None
 
-        for transition in transtitions_json["transtions"]:
+        for transition in transitions_json:
             if transition["name"].lower() == transition_name.lower():
                 id = transition["id"]
                 break
