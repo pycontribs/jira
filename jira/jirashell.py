@@ -194,9 +194,7 @@ def process_command_line():
         with open(args.key_cert, 'r') as key_cert_file:
             key_cert_data = key_cert_file.read()
 
-    oauth = {
-        'oauth_dance': False,
-    }
+    oauth = {}
     if args.oauth_dance:
         oauth = {
             'oauth_dance': True,
@@ -241,7 +239,7 @@ def main():
     if basic_auth:
         basic_auth = (basic_auth['username'], basic_auth['password'])
 
-    if oauth['oauth_dance']:
+    if 'oauth_dance' in oauth and oauth['oauth_dance']:
         oauth = oauth_dance(
             options['server'], oauth['consumer_key'], oauth['key_cert'], oauth['print_tokens'], options['verify'])
 
