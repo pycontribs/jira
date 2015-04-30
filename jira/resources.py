@@ -325,7 +325,7 @@ class Issue(Resource):
         if raw:
             self._parse_raw(raw)
 
-    def update(self, fields=None, async=None, jira=None, **fieldargs):
+    def update(self, fields=None, update=None, async=None, jira=None, **fieldargs):
         """
         Update this issue on the server.
 
@@ -337,17 +337,42 @@ class Issue(Resource):
         fields in an issue. This information is available through the :py:meth:`.JIRA.editmeta` method. Further examples
         are available here: https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Edit+issues
 
-        :param fields: a dict containing field names and the values to use; if present, all other keyword arguments\
-        will be ignored
+        :param fields: a dict containing field names and the values to use
+        
+        :param update: a dict containing update operations to apply
+        
+        keyword arguments will generally be merged into fields, except lists, which will be merged into updates
         """
         data = {}
         if fields is not None:
-            data['fields'] = fields
+            fields_dict = fields
         else:
             fields_dict = {}
-            for field in fieldargs:
-                fields_dict[field] = fieldargs[field]
-            data['fields'] = fields_dict
+        data['fields'] = fields_dict
+        if update is not None:
+            update_dict = update
+        else:
+            update_dict = {}
+        data['update'] = update_dict
+        for field, value in fieldargs.iteritems():
+            # apply some heuristics to make certain changes easier
+            if isinstance(value, string_types):
+                if field == 'assignee' or field == 'reporter':
+                    fields_dict['assignee'] = {'name': value}
+                elif field == 'comment':
+                    if not 'comment' in update_dict:
+                        update_dict['comment'] = []
+                    update_dict['comment'].append({
+                        'add': { 'body': value }
+                    })
+                else:
+                    fields_dict[field] = value
+            elif isinstance(value, list):
+                if not field in update_dict:
+                    update_dict[field] = []
+                update_dict[field].extend(value)
+            else:
+                fields_dict[field] = value
 
         super(Issue, self).update(async=async, jira=jira, fields=data)
 
