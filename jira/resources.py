@@ -263,6 +263,13 @@ class Attachment(Resource):
         r = self._session.get(self.content)
         return r.content
 
+    def iter_content(self, chunk_size=1024):
+        """
+        Returns the file content as an iterable stream.
+        """
+        r = self._session.get(self.content, stream=True)
+        return r.iter_content(chunk_size)
+
 
 class Component(Resource):
 
