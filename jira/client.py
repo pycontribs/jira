@@ -1545,6 +1545,10 @@ class JIRA(object):
         """Get a dict of server information for this JIRA instance."""
         return self._get_json('serverInfo')
 
+    def myself(self):
+        """Get a dict of server information for this JIRA instance."""
+        return self._get_json('myself')
+
     # Status
 
     def statuses(self):
