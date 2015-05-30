@@ -53,14 +53,14 @@ except ImportError:
     pass
 
 # JIRA specific resources
-from jira.resources import Resource, Issue, Comment, Project, Attachment, Component, Dashboard, Filter, Votes, Watchers, \
+from .resources import Resource, Issue, Comment, Project, Attachment, Component, Dashboard, Filter, Votes, Watchers, \
     Worklog, IssueLink, IssueLinkType, IssueType, Priority, Version, Role, Resolution, SecurityLevel, Status, User, \
     CustomFieldOption, RemoteLink
 # GreenHopper specific resources
-from jira.resources import GreenHopperResource, Board, Sprint
-from jira.resilientsession import ResilientSession
-from jira import __version__
-from jira.utils import threaded_requests, json_loads, JIRAError, CaseInsensitiveDict
+from .resources import GreenHopperResource, Board, Sprint
+from .resilientsession import ResilientSession
+from .version import __version__
+from .utils import threaded_requests, json_loads, JIRAError, CaseInsensitiveDict
 
 try:
     from random import SystemRandom
