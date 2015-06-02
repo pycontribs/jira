@@ -2150,16 +2150,40 @@ class JIRA(object):
             if not found:
                 logging.error("Unable to recognize project `%s`" % pid)
                 return False
-        url = self._options['server'] + '/secure/admin/DeleteProject.jspa'
+
+        uri = '/secure/admin/DeleteProject.jspa'
+        url = self._options['server'] + uri
         payload = {'pid': pid, 'Delete': 'Delete', 'confirm': 'true'}
+        try:
+            r = self._gain_sudo_session(payload, uri)
+            if r.status_code != 200 or not self._check_for_html_error(r.text):
+                return False
+        except JIRAError as e:
+            raise JIRAError(0, "You must have global administrator rights to delete projects.")
+            return False
+
         r = self._session.post(
             url, headers=CaseInsensitiveDict({'content-type': 'application/x-www-form-urlencoded'}), data=payload)
+
         if r.status_code == 200:
             return self._check_for_html_error(r.text)
         else:
             logging.warning(
                 'Got %s response from calling delete_project.' % r.status_code)
             return r.status_code
+
+    def _gain_sudo_session (self, options, destination):
+        url = self._options['server'] + '/secure/admin/WebSudoAuthenticate.jspa'
+        payload = {
+            'webSudoPassword': self._session.auth[1],
+            'webSudoDestination': destination,
+            'webSudoIsPost': 'true',
+        }
+
+        payload.update(options)
+
+        return self._session.post(
+            url, headers=CaseInsensitiveDict({'content-type': 'application/x-www-form-urlencoded'}), data=payload)
 
     def create_project(self, key, name=None, assignee=None):
         """
