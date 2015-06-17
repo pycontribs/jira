@@ -2226,7 +2226,8 @@ class JIRA(object):
 
     def add_user(self, username, email, directoryId=1, password=None, fullname=None, sendEmail=False, active=True):
 
-        fullname = username
+        if not fullname:
+            fullname = username
         # TODO: default the directoryID to the first directory in jira instead
         # of 1 which is the internal one.
         url = self._options['server'] + '/rest/api/latest/user'
