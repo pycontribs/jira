@@ -242,8 +242,6 @@ def main():
     if 'oauth_dance' in oauth and oauth['oauth_dance']:
         oauth = oauth_dance(
             options['server'], oauth['consumer_key'], oauth['key_cert'], oauth['print_tokens'], options['verify'])
-    else:
-        oauth = None
 
     jira = JIRA(options=options, basic_auth=basic_auth, oauth=oauth)
 
