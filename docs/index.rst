@@ -269,7 +269,7 @@ Comments
 Comments, like issues, are objects. Get at issue comments through the parent Issue object or the JIRA object's
 dedicated method::
 
-    comments_a = issue.fields.comments.comments
+    comments_a = issue.fields.comment.comments
     comments_b = jira.comments(issue) # comments_b == comments_a
 
 Get an individual comment if you know its ID::
