@@ -361,7 +361,8 @@ class Issue(Resource):
         else:
             update_dict = {}
         data['update'] = update_dict
-        for field, value in fieldargs.iteritems():
+        for field in sorted(fieldargs.keys()):
+            value = fieldargs[field]
             # apply some heuristics to make certain changes easier
             if isinstance(value, string_types):
                 if field == 'assignee' or field == 'reporter':
