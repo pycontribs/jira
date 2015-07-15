@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to jira-python's documentation!
-==============================================
+Python JIRA Library Documentation
+=================================
 
 .. toctree::
    :maxdepth: 2
@@ -227,7 +227,7 @@ Updating components::
 
 
 Fields
-~~~~~~
+------
 
     issue.fields.worklogs                                 # list of Worklog objects
     issue.fields.worklogs[0].author
@@ -249,7 +249,7 @@ Fields
 
 
 Searching
-^^^^^^^^^
+---------
 
 Leverage the power of `JQL <https://confluence.atlassian.com/display/JIRA/Advanced+Searching>`_
 to quickly find the issues you want::
@@ -264,7 +264,7 @@ to quickly find the issues you want::
     print [issue.fields.summary for issue in jira.search_issues('reporter = currentUser() order by created desc', maxResults=3)]
 
 Comments
-^^^^^^^^
+--------
 
 Comments, like issues, are objects. Get at issue comments through the parent Issue object or the JIRA object's
 dedicated method::
@@ -285,7 +285,7 @@ Adding, editing and deleting comments is similarly straightforward::
     comment.delete()
 
 Transitions
-^^^^^^^^^^^
+-----------
 
 Learn what transitions are available on an issue::
 

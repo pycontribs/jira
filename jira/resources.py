@@ -345,9 +345,9 @@ class Issue(Resource):
         are available here: https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Edit+issues
 
         :param fields: a dict containing field names and the values to use
-        
+
         :param update: a dict containing update operations to apply
-        
+
         keyword arguments will generally be merged into fields, except lists, which will be merged into updates
         """
         data = {}
@@ -367,15 +367,15 @@ class Issue(Resource):
                 if field == 'assignee' or field == 'reporter':
                     fields_dict['assignee'] = {'name': value}
                 elif field == 'comment':
-                    if not 'comment' in update_dict:
+                    if 'comment' not in update_dict:
                         update_dict['comment'] = []
                     update_dict['comment'].append({
-                        'add': { 'body': value }
+                        'add': {'body': value}
                     })
                 else:
                     fields_dict[field] = value
             elif isinstance(value, list):
-                if not field in update_dict:
+                if field not in update_dict:
                     update_dict[field] = []
                 update_dict[field].extend(value)
             else:

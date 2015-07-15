@@ -1376,8 +1376,10 @@ class ProjectTests(unittest.TestCase):
         self.assertEqual(test.name, name)
 
         i = self.jira.issue(JiraTestManager().project_b_issue1)
-        i.update(fixVersions=[{'id': version.id}])
-
+        i.update(fields={
+            'versions': [{'id': version.id}],
+            'fixVersions': [{'id': version.id}]
+        })
         version.delete()
 
     def test_project_versions_with_project_obj(self):

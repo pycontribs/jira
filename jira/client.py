@@ -28,7 +28,8 @@ import sys
 import datetime
 import calendar
 import hashlib
-import urlparse
+from six.moves.urllib.parse import urlparse, urlencode
+
 try:
     from collections import OrderedDict
 except ImportError:
@@ -106,11 +107,12 @@ class ResultList(list):
 
 
 class QshGenerator:
+
     def __init__(self, context_path):
-        self.context_path= context_path
+        self.context_path = context_path
 
     def __call__(self, req):
-        parse_result = urlparse.urlparse(req.url)
+        parse_result = urlparse(req.url)
 
         path = parse_result.path[len(self.context_path):] if len(self.context_path) > 1 else parse_result.path
         query = '&'.join(sorted(parse_result.query.split("&")))
@@ -228,7 +230,7 @@ class JIRA(object):
         if self._options['server'].endswith('/'):
             self._options['server'] = self._options['server'][:-1]
 
-        context_path = urlparse.urlparse(self._options['server']).path
+        context_path = urlparse(self._options['server']).path
         if len(context_path) > 0:
             self._options['context_path'] = context_path
 
@@ -383,7 +385,7 @@ class JIRA(object):
         if cached and hasattr(self, '_applicationlinks'):
             return self._applicationlinks
 
-        #url = self._options['server'] + '/rest/applinks/latest/applicationlink'
+        # url = self._options['server'] + '/rest/applinks/latest/applicationlink'
         url = self._options['server'] + \
             '/rest/applinks/latest/listApplicationlinks'
 
@@ -604,7 +606,6 @@ class JIRA(object):
     def update_filter(self, filter_id,
                       name=None, description=None,
                       jql=None, favourite=None):
-
         """
         Updates a filter and return a filter Resource for it.
 
@@ -991,7 +992,7 @@ class JIRA(object):
             self._options, self._session, raw=json_loads(r))
         return remote_link
 
-   def add_simple_link(self, issue, object):
+    def add_simple_link(self, issue, object):
         """
         Add a simple remote link from an issue to web resource.  This avoids the admin access problems from add_remote_link by just using a simple object and presuming all fields are correct and not requiring more complex ``application`` data.
             ``object`` should be a dict containing at least ``url`` to the linked external URL
@@ -2004,7 +2005,7 @@ class JIRA(object):
     def _create_jwt_session(self, jwt):
         try:
             jwt_auth = JWTAuth(jwt['secret'], alg='HS256')
-        except NameError, e:
+        except NameError as e:
             globals()['logging'].error("JWT authentication requires requests_jwt")
             raise e
         jwt_auth.add_field("iat", lambda req: JIRA._timestamp())
@@ -2054,7 +2055,9 @@ class JIRA(object):
         else:
             try:
                 _magic = magic.Magic(flags=magic.MAGIC_MIME_TYPE)
-                cleanup = lambda _: _magic.close()
+
+                def cleanup():
+                    _magic.close()
                 self._magic_weakref = weakref.ref(self, cleanup)
                 self._magic = _magic
             except TypeError:
@@ -2310,7 +2313,7 @@ class JIRA(object):
                 'Got %s response from calling delete_project.' % r.status_code)
             return r.status_code
 
-    def _gain_sudo_session (self, options, destination):
+    def _gain_sudo_session(self, options, destination):
         url = self._options['server'] + '/secure/admin/WebSudoAuthenticate.jspa'
         payload = {
             'webSudoPassword': self._session.auth[1],
