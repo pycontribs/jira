@@ -633,23 +633,26 @@ class JIRA(object):
 # Groups
 
     # non-resource
-    def groups(self, query=None, exclude=None, maxResults=None):
+    def groups(self, query=None, exclude=None, maxResults=9999):
         """
         Return a list of groups matching the specified criteria.
 
         Keyword arguments:
         query -- filter groups by name with this string
         exclude -- filter out groups by name with this string
-        maxResults -- maximum results to return. defaults to system property jira.ajax.autocomplete.limit (20)
+        maxResults -- maximum results to return. defaults to 9999
         """
         params = {}
+        groups = []
         if query is not None:
             params['query'] = query
         if exclude is not None:
             params['exclude'] = exclude
         if maxResults is not None:
             params['maxResults'] = maxResults
-        return self._get_json('groups/picker', params=params)
+        for group in self._get_json('groups/picker', params=params)['groups']:
+            groups.append(group['name'])
+        return sorted(groups)
 
     def group_members(self, group):
         """
@@ -685,7 +688,6 @@ class JIRA(object):
         :param groupname: The name of the group you wish to create.
         :return: Boolean - True if succesfull.
         '''
-
         url = self._options['server'] + '/rest/api/latest/group'
 
         # implementation based on
