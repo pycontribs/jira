@@ -14,7 +14,7 @@ try:
 except:
     from six.moves import configparser
 
-from jira.client import JIRA
+from .client import JIRA
 
 
 def get_jira(profile=None, url="http://localhost:2990", username="admin", password="admin", appid=None, autofix=False, verify=True):

@@ -25,6 +25,10 @@ import json
 import warnings
 import pprint
 import sys
+import datetime
+import calendar
+import hashlib
+import urlparse
 try:
     from collections import OrderedDict
 except ImportError:
@@ -43,15 +47,20 @@ try:
 except:
     pass
 
+try:
+    from requests_jwt import JWTAuth
+except ImportError:
+    pass
+
 # JIRA specific resources
-from jira.resources import Resource, Issue, Comment, Project, Attachment, Component, Dashboard, Filter, Votes, Watchers, \
+from .resources import Resource, Issue, Comment, Project, Attachment, Component, Dashboard, Filter, Votes, Watchers, \
     Worklog, IssueLink, IssueLinkType, IssueType, Priority, Version, Role, Resolution, SecurityLevel, Status, User, \
     CustomFieldOption, RemoteLink
 # GreenHopper specific resources
-from jira.resources import GreenHopperResource, Board, Sprint
-from jira.resilientsession import ResilientSession
-from jira import __version__
-from jira.utils import threaded_requests, json_loads, JIRAError, CaseInsensitiveDict
+from .resources import GreenHopperResource, Board, Sprint
+from .resilientsession import ResilientSession
+from .version import __version__
+from .utils import threaded_requests, json_loads, JIRAError, CaseInsensitiveDict
 
 try:
     from random import SystemRandom
@@ -96,6 +105,20 @@ class ResultList(list):
         self.total = _total if _total is not None else len(self)
 
 
+class QshGenerator:
+    def __init__(self, context_path):
+        self.context_path= context_path
+
+    def __call__(self, req):
+        parse_result = urlparse.urlparse(req.url)
+
+        path = parse_result.path[len(self.context_path):] if len(self.context_path) > 1 else parse_result.path
+        query = '&'.join(sorted(parse_result.query.split("&")))
+        qsh = '%(method)s&%(path)s&%(query)s' % {'method': req.method.upper(), 'path': path, 'query': query}
+
+        return hashlib.sha256(qsh).hexdigest()
+
+
 class JIRA(object):
 
     """
@@ -111,6 +134,7 @@ class JIRA(object):
 
     DEFAULT_OPTIONS = {
         "server": "http://localhost:2990/jira",
+        "context_path": "/",
         "rest_path": "api",
         "rest_api_version": "2",
         "verify": True,
@@ -135,8 +159,8 @@ class JIRA(object):
     JIRA_BASE_URL = '{server}/rest/api/{rest_api_version}/{path}'
     AGILE_BASE_URL = '{server}/rest/greenhopper/1.0/{path}'
 
-    def __init__(self, server=None, options=None, basic_auth=None, oauth=None, validate=None, async=False,
-                 logging=True, max_retries=3):
+    def __init__(self, server=None, options=None, basic_auth=None, oauth=None, jwt=None,
+                 validate=False, get_server_info=True, async=False, logging=True, max_retries=3):
         """
         Construct a JIRA client instance.
 
@@ -167,8 +191,16 @@ class JIRA(object):
             * consumer_key -- key of the OAuth application link defined in JIRA
             * key_cert -- private key file to sign requests with (should be the pair of the public key supplied to
             JIRA in the OAuth application link)
+        :param jwt: A dict of properties for JWT authentication supported by Atlassian Connect. The following
+            properties are required:
+            * secret -- shared secret as delivered during 'installed' lifecycle event
+            (see https://developer.atlassian.com/static/connect/docs/latest/modules/lifecycle.html for details)
+            * payload -- dict of fields to be inserted in the JWT payload, e.g. 'iss'
+            Example jwt structure: ``{'secret': SHARED_SECRET, 'payload': {'iss': PLUGIN_KEY}}``
         :param validate: If true it will validate your credentials first. Remember that if you are accesing JIRA
             as anononymous it will fail to instanciate.
+        :param get_server_info: If true it will fetch server version info first to determine if some API calls
+            are available.
         :param async: To enable async requests for those actions where we implemented it, like issue update() or delete().
         Obviously this means that you cannot rely on the return code when this is enabled.
         """
@@ -196,6 +228,10 @@ class JIRA(object):
         if self._options['server'].endswith('/'):
             self._options['server'] = self._options['server'][:-1]
 
+        context_path = urlparse.urlparse(self._options['server']).path
+        if len(context_path) > 0:
+            self._options['context_path'] = context_path
+
         self._try_magic()
 
         if oauth:
@@ -203,6 +239,8 @@ class JIRA(object):
         elif basic_auth:
             self._create_http_basic_session(*basic_auth)
             self._session.headers.update(self._options['headers'])
+        elif jwt:
+            self._create_jwt_session(jwt)
         else:
             verify = self._options['verify']
             self._session = ResilientSession()
@@ -215,13 +253,17 @@ class JIRA(object):
             # This will raise an Exception if you are not allowed to login.
             # It's better to fail faster than later.
             self.session()
-        # We need version in order to know what API calls are available or not
-        si = self.server_info()
-        try:
-            self._version = tuple(si['versionNumbers'])
-        except Exception as e:
-            globals()['logging'].error("invalid server_info: %s", si)
-            raise e
+
+        if get_server_info:
+            # We need version in order to know what API calls are available or not
+            si = self.server_info()
+            try:
+                self._version = tuple(si['versionNumbers'])
+            except Exception as e:
+                globals()['logging'].error("invalid server_info: %s", si)
+                raise e
+        else:
+            self._version = (0, 0, 0)
 
         if self._options['check_update'] and not JIRA.checked_version:
             self._check_update_()
@@ -1531,6 +1573,10 @@ class JIRA(object):
         """Get a dict of server information for this JIRA instance."""
         return self._get_json('serverInfo')
 
+    def myself(self):
+        """Get a dict of server information for this JIRA instance."""
+        return self._get_json('myself')
+
     # Status
 
     def statuses(self):
@@ -1905,6 +1951,28 @@ class JIRA(object):
         self._session = ResilientSession()
         self._session.verify = verify
         self._session.auth = oauth
+
+    @staticmethod
+    def _timestamp(dt=None):
+        t = datetime.datetime.utcnow()
+        if dt is not None:
+            t += dt
+        return calendar.timegm(t.timetuple())
+
+    def _create_jwt_session(self, jwt):
+        try:
+            jwt_auth = JWTAuth(jwt['secret'], alg='HS256')
+        except NameError, e:
+            globals()['logging'].error("JWT authentication requires requests_jwt")
+            raise e
+        jwt_auth.add_field("iat", lambda req: JIRA._timestamp())
+        jwt_auth.add_field("exp", lambda req: JIRA._timestamp(datetime.timedelta(minutes=3)))
+        jwt_auth.add_field("qsh", QshGenerator(self._options['context_path']))
+        for f in jwt['payload'].items():
+            jwt_auth.add_field(f[0], f[1])
+        self._session = ResilientSession()
+        self._session.verify = self._options['verify']
+        self._session.auth = jwt_auth
 
     def _set_avatar(self, params, url, avatar):
         data = {
