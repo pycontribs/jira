@@ -167,6 +167,8 @@ setup(
     license='BSD',
     description='Python library for interacting with JIRA via REST APIs.',
     long_description=open("README.rst").read(),
+    maintainer='Sorin Sbarnea',
+    maintainer_email='sorin.sbarnea@gmail.com',
     author='Ben Speakmon',
     author_email='ben.speakmon@gmail.com',
     provides=[NAME],
