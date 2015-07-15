@@ -1,5 +1,53 @@
+2015-07-15 Attempt to fully automate the release and tagging of git based on what is released.
+2015-07-15 Enabled new travis builders as we do not need sudo. Fixed iteritems() which doesn't work anymore with py34. Increased version to v0.50
+2015-07-15 Attempt to fix the unittest and to eliminate warnings from the test executions.
+2015-07-15 Merge branch 'coddingtonbear-allow_remotelinks_if_no_applicationlinks'
+2015-07-15 Merge branch 'allow_remotelinks_if_no_applicationlinks' of https://github.com/coddingtonbear/jira into coddingtonbear-allow_remotelinks_if_no_applicationlinks
+2015-07-15 Merge pull request #67 from fastcat/issue-66
+2015-07-15 Merge pull request #92 from BATS/fix_jiraclient_non_oauth
+2015-07-15 Merge branch 'awurster-patch-1'
+2015-07-15 Merge branch 'patch-1' of https://github.com/awurster/jira into awurster-patch-1
+2015-07-15 Merge pull request #86 from BATS/JIRAError_fixes
+2015-07-15 Merge branch 'fastcat-issue-65'
+2015-07-15 Merge branch 'issue-65' of https://github.com/fastcat/jira into fastcat-issue-65
+2015-07-15 Merge branch 'fikander-master'
+2015-07-15 Merge branch 'master' of https://github.com/fikander/jira into fikander-master
+2015-07-15 Merge pull request #97 from dbaxa/add_maintainer_info
+2015-07-15 Merge branch 'geoghegan-patch-1'
+2015-07-15 Merge branch 'patch-1' of https://github.com/geoghegan/jira into geoghegan-patch-1
+2015-07-15 Merge branch 'tuenti-master'
+2015-07-15 Merge branch 'master' of https://github.com/tuenti/jira into tuenti-master
+2015-07-15 Merge pull request #83 from mproffitt/pycontribs-jira-80-delete_project-fails
+2015-07-15 Merge pull request #82 from metashock/master
+2015-07-15 Merge pull request #74 from ianunruh/feature/attachment-stream
+2015-07-15 Merge pull request #98 from dbaxa/make_setup_test_work_without_installing_deps_first
+2015-07-15 Make `python setup.py test` work without first needing to install any dependencies.
+2015-07-15 Fill in the current maintainer information.
+2015-07-06 Add update_filter to client
+2015-06-19 Fix jirashell.py for non-oauth authentication
+2015-06-17 Honor fullname arg in add_user
+2015-06-13 Fix JIRAError to correctly include full details
+2015-06-02 JIRA Issue 80 - delete project fails to delete
+2015-05-30 Includes are now relative to jira package
+2015-05-30 Added myself AIP support
+2015-05-30 JWT authentitcation support for Atlassian Connect
+2015-05-27 Fixed naming error in the documentation.
+2015-05-25 adding add_simple_link()
+2015-05-15 Add attachment content streaming
+2015-05-07 jirashell configured via jirashell.ini didn't allow no-oauth authentication
+2015-04-30 Add support to Issue.update to use the update key, and make some common forms of updates easier
+2015-04-30 Don't always set oauth flag, to prevent oauth mode from always being enabled, even if basic auth is requested
+2015-04-28 Minor change to cause a new build to be triggered.
+2015-04-28 Bumping patch version number to 0.48.1.
+2015-04-28 Do not prevent users from adding remote links if we are not able to fetch applicationlinks.
+2015-04-28 Merge pull request #55 from Laakso/vesa_branch
+2015-04-28 Merge pull request #57 from MerelyAPseudonym/master
+2015-04-20 Now travis should publish both sdist and wheel. Also included changelist.
+2015-04-15 Attempt to appease Travis.
+2015-04-15 Restore issue transitions by fixing some flubs.
 2015-04-11 increaded version to 0.47
 2015-04-11 Implemented worklog tests and fixed worklog and timetracking.
+2015-04-04 Fixed mimetype issue with Jira attachment. MultipartEncoder sent attachment in 'text/plain' mode which caused issues with pdf files. See images 3 images from images directory, after the change, mimetype was identified correctly.
 2015-04-01 Now Travis should release only if all jobs do succeed.
 2015-04-01 sorted the decoding of the json response
 2015-04-01 Increased version number to v0.45 but in the future this should be done automatically on each release.

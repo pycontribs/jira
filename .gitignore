@@ -1,6 +1,7 @@
 .idea/
 *.pyc
 *.egg
+*.bak
 .coverage.*
 dist/
 reports/
