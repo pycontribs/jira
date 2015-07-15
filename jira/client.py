@@ -974,6 +974,31 @@ class JIRA(object):
             self._options, self._session, raw=json_loads(r))
         return remote_link
 
+   def add_simple_link(self, issue, object):
+        """
+        Add a simple remote link from an issue to web resource.  This avoids the admin access problems from add_remote_link by just using a simple object and presuming all fields are correct and not requiring more complex ``application`` data.
+            ``object`` should be a dict containing at least ``url`` to the linked external URL
+             and ``title`` to display for the link inside JIRA.
+
+        For definitions of the allowable fields for ``object`` , see https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+for+Remote+Issue+Links.
+
+        :param issue: the issue to add the remote link to
+        :param object: the dictionary used to create remotelink data
+        """
+
+        data = {}
+
+        # hard code data dict to be passed as ``object`` to avoid any permissions errors
+        data = object
+
+        url = self._get_url('issue/' + str(issue) + '/remotelink')
+        r = self._session.post(
+            url, data=json.dumps(data))
+
+        simple_link = RemoteLink(
+            self._options, self._session, raw=json_loads(r))
+        return simple_link
+
     # non-resource
     @translate_resource_args
     def transitions(self, issue, id=None, expand=None):
