@@ -58,12 +58,14 @@ deploy:
     file: "dist/jira-$PACKAGE_VERSION.tar.gz"
     skip_cleanup: true
     on:
-      tags: true
       condition: "$BUILD_LEADER = YES"
   - provider: pypi
     user: sorin
     password:
       secure: "E0cjANF7SLBdYrsnWLK8X/xWznqkF0JrP/DVfDazPzUYH6ynFeneyofzNJQPLTLsqe1eKXhuUJ/Sbl+RHFB0ySo/j/7NfYd/9pm8hpUkGCvR09IwtvMLgWKp3k10NWab03o2GOkSJSrLvZofyZBGR40wwu2O9uXPCb2rvucCGbw="
     distributions: "sdist bdist_wheel"
+    on:
+      condition: "$BUILD_LEADER = YES"
 after_deploy:
-  - echo "after deploy..."
+  - echo "Now we only have to increase the version number, tag the changset and push..."
+  - ./release.sh
