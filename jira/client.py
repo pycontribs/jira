@@ -928,6 +928,23 @@ class JIRA(object):
             "broken: see https://bitbucket.org/bspeakmon/jira-python/issue/46 and https://jira.atlassian.com/browse/JRA-38551",
             Warning)
 
+        try:
+            applicationlinks = self.applicationlinks()
+        except JIRAError as e:
+            applicationlinks = []
+            # In many (if not most) configurations, non-admin users are
+            # not allowed to list applicationlinks; if we aren't allowed,
+            # let's let people try to add remote links anyway, we just
+            # won't be able to be quite as helpful.
+            warnings.warn(
+                "Unable to gather applicationlinks; you will not be able "
+                "to add links to remote issues: (%s) %s" % (
+                    e.status_code,
+                    e.text
+                ),
+                Warning
+            )
+
         data = {}
         if type(destination) == Issue:
 
@@ -936,7 +953,7 @@ class JIRA(object):
                 'url': destination.permalink()
             }
 
-            for x in self.applicationlinks():
+            for x in applicationlinks:
                 if x['application']['displayUrl'] == destination._options['server']:
                     data['globalId'] = "appId=%s&issueId=%s" % (
                         x['application']['id'], destination.raw['id'])
@@ -958,7 +975,7 @@ class JIRA(object):
             data['relationship'] = relationship
 
         # check if the link comes from one of the configured application links
-        for x in self.applicationlinks():
+        for x in applicationlinks:
             if x['application']['displayUrl'] == self._options['server']:
                 data['globalId'] = "appId=%s&issueId=%s" % (
                     x['application']['id'], destination.raw['id'])
