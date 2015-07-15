@@ -592,20 +592,11 @@ class GroupsTest(unittest.TestCase):
 
     def test_groups(self):
         groups = self.jira.groups()
-        self.assertGreaterEqual(groups['total'], 0)
+        self.assertGreater(len(groups), 0)
 
     def test_groups_for_users(self):
-        groups = self.jira.groups('users')
-        self.assertIsNotNone(find_by_name(groups['groups'], 'users'))
-
-    def test_groups_with_exclude(self):
-        groups = self.jira.groups('users')
-        new_groups = self.jira.groups('users', exclude='users')
-        self.assertEqual(groups['total'] - 1, new_groups['total'])
-
-    def test_groups_for_jira(self):
-        groups = self.jira.groups('jira')
-        self.assertIsNotNone(find_by_name(groups['groups'], 'jira-users'))
+        groups = self.jira.groups('jira-users')
+        self.assertGreater(len(groups), 0)
 
 
 class IssueTests(unittest.TestCase):
@@ -1832,7 +1823,7 @@ class UserAdministrationTests(unittest.TestCase):
         assert result, True
 
         x = self.jira.groups(query=self.test_groupname)
-        self.assertEqual(self.test_groupname, x['groups'][0]['name'], "Did not find expected group after trying to add"
+        self.assertEqual(self.test_groupname, x[0], "Did not find expected group after trying to add"
                          " it. Test Fails.")
         self.jira.remove_group(self.test_groupname)
 
@@ -1847,7 +1838,7 @@ class UserAdministrationTests(unittest.TestCase):
 
         x = self.jira.groups(query=self.test_groupname)
         self.assertEqual(len(
-            x['groups']), 0, 'Found group with name when it should have been deleted. Test Fails.')
+            x), 0, 'Found group with name when it should have been deleted. Test Fails.')
 
     def test_add_user_to_group(self):
         try:
