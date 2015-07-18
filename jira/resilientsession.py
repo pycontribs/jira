@@ -29,7 +29,7 @@ class ResilientSession(Session):
             if response.status_code in [502, 503, 504]:
                 return True
             elif not (response.status_code == 200 and
-                      len(response.text) == 0 and
+                      len(response.content) == 0 and
                       'X-Seraph-LoginReason' in response.headers and
                       'AUTHENTICATED_FAILED' in response.headers['X-Seraph-LoginReason']):
                 return False
