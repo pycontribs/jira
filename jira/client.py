@@ -143,7 +143,7 @@ class JIRA(object):
         "resilient": True,
         "async": False,
         "client_cert": None,
-        "check_update": True,
+        "check_update": False,
         "headers": {
             'X-Atlassian-Token': 'no-check',
             'Cache-Control': 'no-cache',
