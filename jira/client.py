@@ -2694,7 +2694,7 @@ class JIRA(object):
         """
         data = {}
         data['idOrKeys'] = issue_keys
-        data['customFieldId'] = = 10004
+        data['customFieldId'] = 10004
         data['sprintId'] = sprint_id
         data['addToBacklog'] = false
         url = self._get_url('sprint/rank', base=self.AGILE_BASE_URL)
