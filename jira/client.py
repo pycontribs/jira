@@ -2692,9 +2692,17 @@ class JIRA(object):
         :param sprint_id: the sprint to add issues to
         :param issue_keys: the issues to add to the sprint
         """
+        
+        # Get the customFieldId for "Sprint"
+        jira_fields_url = self._get_url('field', base=self.JIRA_BASE_URL)
+        jira_fields = self._session.get(jira_fields_url).json()
+        sprint_field_name = "Sprint"
+        sprint_field_id = [f['schema']['customId'] for f in fields
+                           if f['name'] == sprint_field_name][0]
+        
         data = {}
         data['idOrKeys'] = issue_keys
-        data['customFieldId'] = 10004
+        data['customFieldId'] = sprint_field_id
         data['sprintId'] = sprint_id
         data['addToBacklog'] = false
         url = self._get_url('sprint/rank', base=self.AGILE_BASE_URL)
