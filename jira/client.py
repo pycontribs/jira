@@ -2697,7 +2697,7 @@ class JIRA(object):
         jira_fields_url = self._get_url('field', base=self.JIRA_BASE_URL)
         jira_fields = self._session.get(jira_fields_url).json()
         sprint_field_name = "Sprint"
-        sprint_field_id = [f['schema']['customId'] for f in fields
+        sprint_field_id = [f['schema']['customId'] for f in jira_fields
                            if f['name'] == sprint_field_name][0]
         
         data = {}
