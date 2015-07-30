@@ -2391,7 +2391,7 @@ class JIRA(object):
                     f.name, r.status_code))
         return False
 
-    def add_user(self, username, email, directoryId=1, password=None, fullname=None, sendEmail=False, active=True):
+    def add_user(self, username, email, directoryId=1, password=None, fullname=None, active=True):
 
         if not fullname:
             fullname = username
