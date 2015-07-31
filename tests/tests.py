@@ -1100,7 +1100,10 @@ class IssueTests(unittest.TestCase):
         sprint_customfield = "customfield_" + str(sprint_field_id)
         
         updated_issue_1 = self.jira.issue(self.issue_1)
-        assert updated_issue_1.fields[sprint_customfield][0]['id'] == s.id
+        serialised_sprint = getattr(updated_issue_1.fields, sprint_customfield)[0]
+
+        # Too hard to serialise the sprint object. Performing simple regex match instead.
+        assert re.search('\[id=' + str(s.id) + ',', serialised_sprint)
         
         #self.jira.add_issues_to_sprint(s.id, self.issue_2)
 
