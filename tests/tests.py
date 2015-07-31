@@ -1092,14 +1092,14 @@ class IssueTests(unittest.TestCase):
         assert s.name == sprint_name
         assert s.state == 'FUTURE'
 
-        self.jira.add_issues_to_sprint(s.id, [self.issue_1.key])
+        self.jira.add_issues_to_sprint(s.id, [self.issue_1])
         
         sprint_field_name = "Sprint"
         sprint_field_id = [f['schema']['customId'] for f in self.jira.fields()
                            if f['name'] == sprint_field_name][0]
         sprint_customfield = "customfield_" + str(sprint_field_id)
         
-        updated_issue_1 = self.jira.issue(self.issue_1.key)
+        updated_issue_1 = self.jira.issue(self.issue_1)
         assert updated_issue_1.fields[sprint_customfield][0]['id'] == s.id
         
         #self.jira.add_issues_to_sprint(s.id, self.issue_2)
