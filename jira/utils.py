@@ -123,7 +123,7 @@ def raise_on_error(r, verb='???', **kwargs):
         raise JIRAError(r.status_code, request=request, response=r, **kwargs)
     # testing for the WTH bug exposed on
     # https://answers.atlassian.com/questions/11457054/answers/11975162
-    if r.status_code == 200 and len(r.text) == 0 \
+    if r.status_code == 200 and len(r.content) == 0 \
             and 'X-Seraph-LoginReason' in r.headers \
             and 'AUTHENTICATED_FAILED' in r.headers['X-Seraph-LoginReason']:
         pass
