@@ -2673,8 +2673,9 @@ class JIRA(object):
 
         return Sprint(self._options, self._session, raw=raw_issue_json)
 
-    # TODO: broken, this API does not exsit anymore and we need to use
+    # TODO: broken, this API does not exist anymore and we need to use
     # issue.update() to perform this operaiton
+    # Workaround based on https://answers.atlassian.com/questions/277651/jira-agile-rest-api-example
     def add_issues_to_sprint(self, sprint_id, issue_keys):
         """
         Add the issues in ``issue_keys`` to the ``sprint_id``. The sprint must
@@ -2691,10 +2692,18 @@ class JIRA(object):
         :param sprint_id: the sprint to add issues to
         :param issue_keys: the issues to add to the sprint
         """
+        
+        # Get the customFieldId for "Sprint"
+        sprint_field_name = "Sprint"
+        sprint_field_id = [f['schema']['customId'] for f in self.fields()
+                           if f['name'] == sprint_field_name][0]
+        
         data = {}
-        data['issueKeys'] = issue_keys
-        url = self._get_url('sprint/%s/issues/add' %
-                            (sprint_id), base=self.AGILE_BASE_URL)
+        data['idOrKeys'] = issue_keys
+        data['customFieldId'] = sprint_field_id
+        data['sprintId'] = sprint_id
+        data['addToBacklog'] = False
+        url = self._get_url('sprint/rank', base=self.AGILE_BASE_URL)
         r = self._session.put(url, data=json.dumps(data))
 
     def add_issues_to_epic(self, epic_id, issue_keys, ignore_epics=True):
