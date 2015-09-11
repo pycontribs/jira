@@ -66,7 +66,8 @@ class ResilientSession(Session):
                     "%s while doing %s %s [%s]" % (e, verb.upper(), url, kwargs))
                 exception = e
             retry_number += 1
-            if self.__recoverable(response or exception, url, verb.upper(), retry_number):
+            response_or_exception = response if response is not None else exception
+            if self.__recoverable(response_or_exception, url, verb.upper(), retry_number):
                 if retry_data:
                     # if data is a stream, we cannot just read again from it,
                     # retry_data() will give us a new stream with the data
