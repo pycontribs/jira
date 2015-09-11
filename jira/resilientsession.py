@@ -54,25 +54,30 @@ class ResilientSession(Session):
         if isinstance(data, dict):
             data = json.dumps(data)
 
-        counter = 0
-        while counter < self.max_retries:
-            counter += 1
+        retry_number = 0
+        while retry_number <= self.max_retries:
+            response = None
+            exception = None
             try:
-                method = getattr(super(ResilientSession, self), verb.lower())\
-
-                r = method(url, **kwargs)
+                method = getattr(super(ResilientSession, self), verb.lower())
+                response = method(url, **kwargs)
             except ConnectionError as e:
                 logging.warning(
                     "%s while doing %s %s [%s]" % (e, verb.upper(), url, kwargs))
-                r = e
-            if self.__recoverable(r, url, verb.upper(), counter):
+                exception = e
+            retry_number += 1
+            if self.__recoverable(response or exception, url, verb.upper(), retry_number):
                 if retry_data:
                     # if data is a stream, we cannot just read again from it,
                     # retry_data() will give us a new stream with the data
                     kwargs['data'] = retry_data()
                 continue
-            raise_on_error(r, verb=verb, **kwargs)
-            return r
+            else:
+                break
+        if exception is not None:
+            raise exception
+        raise_on_error(response, verb=verb, **kwargs)
+        return response
 
     def get(self, url, **kwargs):
         return self.__verb('GET', url, **kwargs)
