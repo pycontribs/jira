@@ -1093,18 +1093,18 @@ class IssueTests(unittest.TestCase):
         assert s.state == 'FUTURE'
 
         self.jira.add_issues_to_sprint(s.id, [self.issue_1])
-        
+
         sprint_field_name = "Sprint"
         sprint_field_id = [f['schema']['customId'] for f in self.jira.fields()
                            if f['name'] == sprint_field_name][0]
         sprint_customfield = "customfield_" + str(sprint_field_id)
-        
+
         updated_issue_1 = self.jira.issue(self.issue_1)
         serialised_sprint = getattr(updated_issue_1.fields, sprint_customfield)[0]
 
         # Too hard to serialise the sprint object. Performing simple regex match instead.
         assert re.search('\[id=' + str(s.id) + ',', serialised_sprint)
-        
+
         #self.jira.add_issues_to_sprint(s.id, self.issue_2)
 
         #self.jira.rank(self.issue_2, self.issue_1)
@@ -1681,6 +1681,10 @@ class UserTests(unittest.TestCase):
         users = self.jira.search_allowed_users_for_issue('c',
                                                          projectKey=self.project_b, startAt=1)
         self.assertGreaterEqual(len(users), 0)
+
+    def test_add_users_to_set(self):
+        users_set = set(self.jira.user('ci-admin'), self.jira.user('ci-admin'))
+        self.assertEqual(len(users_set), 1)
 
 
 class VersionTests(unittest.TestCase):
