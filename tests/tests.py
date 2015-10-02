@@ -1644,7 +1644,7 @@ class UserTests(unittest.TestCase):
         # print(props)
         self.jira.delete_user_avatar('ci-admin', props['id'])
 
-    @unittest.skip("disabled as is not Travis friendly, probably due to parrallel execution")
+    @unittest.skip("disabled as is not Travis friendly, probably due to parallel execution")
     def test_search_users(self):
         users = self.jira.search_users('c')
         self.assertEqual(len(users), 2)
@@ -1652,12 +1652,12 @@ class UserTests(unittest.TestCase):
         self.assertIn('ci-admin', usernames)
         self.assertIn('ci-user', usernames)
 
-    @unittest.skip("disabled as is not Travis friendly, probably due to parrallel execution")
+    @unittest.skip("disabled as is not Travis friendly, probably due to parallel execution")
     def test_search_users_maxresults(self):
         users = self.jira.search_users('c', maxResults=1)
         self.assertGreaterEqual(len(users), 1)
 
-    @unittest.skip("disabled as is not Travis friendly, probably due to parrallel execution")
+    @unittest.skip("disabled as is not Travis friendly, probably due to parallel execution")
     def test_search_users_startat(self):
         users = self.jira.search_users('c', startAt=1)
         self.assertGreaterEqual(len(users), 1)
