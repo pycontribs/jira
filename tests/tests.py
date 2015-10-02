@@ -1683,7 +1683,7 @@ class UserTests(unittest.TestCase):
         self.assertGreaterEqual(len(users), 0)
 
     def test_add_users_to_set(self):
-        users_set = set(self.jira.user('ci-admin'), self.jira.user('ci-admin'))
+        users_set = set([self.jira.user('ci-admin'), self.jira.user('ci-admin')])
         self.assertEqual(len(users_set), 1)
 
 
