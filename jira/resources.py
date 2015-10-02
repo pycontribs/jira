@@ -652,6 +652,12 @@ class User(Resource):
         if raw:
             self._parse_raw(raw)
 
+    def __hash__(self):
+        return hash(str(self.name))
+
+    def __eq__(self, other):
+        return str(self.name) == str(other.name)
+
 
 class Version(Resource):
 
