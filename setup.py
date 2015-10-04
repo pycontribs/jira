@@ -40,18 +40,11 @@ class PyTest(TestCommand):
             self.pytest_args.append("--ff")
         except ImportError:
             pass
-
-        # try:
-        #     import pytest_instafail
-        #     self.pytest_args.append("--instafail")
-        # except ImportError:
-        #     pass
         self.pytest_args.append("-s")
 
         if sys.stdout.isatty():
             # when run manually we enable fail fast
             self.pytest_args.append("--maxfail=1")
-
         try:
             import coveralls
             self.pytest_args.append("--cov=%s" % NAME)
@@ -151,7 +144,7 @@ setup(
                       'ordereddict'],
     setup_requires=['pytest', ],
     tests_require=['pytest', 'tlslite>=0.4.4', 'requests>=2.6.0',
-                   'setuptools', 'pep8', 'autopep8', 'sphinx', 'six>=1.9.0',
+                   'setuptools', 'pep8', 'autopep8', 'sphinx', 'sphinx_rtd_theme', 'six>=1.9.0',
                    'pytest-cov', 'pytest-pep8', 'pytest-instafail',
                    'pytest-xdist',
                    ],
@@ -183,7 +176,7 @@ setup(
         'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'Environment :: Other Environment',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
