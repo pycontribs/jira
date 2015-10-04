@@ -2058,7 +2058,7 @@ class JIRA(object):
             try:
                 _magic = magic.Magic(flags=magic.MAGIC_MIME_TYPE)
 
-                def cleanup():
+                def cleanup(x):
                     _magic.close()
                 self._magic_weakref = weakref.ref(self, cleanup)
                 self._magic = _magic
@@ -2531,7 +2531,7 @@ class JIRA(object):
                     "Fatal error, duplicate Sprint Name (%s) found on board %s." % (s.name, id)))
         return sprints
 
-    def update_sprint(self, id, name=None, startDate=None, endDate=None):
+    def update_sprint(self, id, name=None, startDate=None, endDate=None, state=None):
         payload = {}
         if name:
             payload['name'] = name
@@ -2539,8 +2539,8 @@ class JIRA(object):
             payload['startDate'] = startDate
         if endDate:
             payload['startDate'] = endDate
-        # if state:
-        #    payload['state']=state
+        if state:
+            payload['state']=state
 
         url = self._get_url('sprint/%s' % id, base=self.AGILE_BASE_URL)
         r = self._session.put(
