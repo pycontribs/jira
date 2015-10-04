@@ -22,6 +22,15 @@ fp.close()
 # this should help getting annoying warnings from inside distutils
 warnings.simplefilter('ignore', UserWarning)
 
+def _is_ordereddict_needed():
+    ''' Check if `ordereddict` package really needed '''
+    try:
+        from collections import OrderedDict
+        return False
+    except ImportError:
+        pass
+    return True
+
 
 class PyTest(TestCommand):
     user_options = [('pytest-args=', 'a', "Arguments to pass to py.test")]
@@ -140,8 +149,7 @@ setup(
                       'requests_oauthlib>=0.3.3',
                       'tlslite>=0.4.4',
                       'six>=1.9.0',
-                      'requests_toolbelt',
-                      'ordereddict'],
+                      'requests_toolbelt'] + (['ordereddict'] if _is_ordereddict_needed() else []),
     setup_requires=['pytest', ],
     tests_require=['pytest', 'tlslite>=0.4.4', 'requests>=2.6.0',
                    'setuptools', 'pep8', 'autopep8', 'sphinx', 'sphinx_rtd_theme', 'six>=1.9.0',
