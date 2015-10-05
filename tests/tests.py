@@ -1093,18 +1093,18 @@ class IssueTests(unittest.TestCase):
         assert s.state == 'FUTURE'
 
         self.jira.add_issues_to_sprint(s.id, [self.issue_1])
-        
+
         sprint_field_name = "Sprint"
         sprint_field_id = [f['schema']['customId'] for f in self.jira.fields()
                            if f['name'] == sprint_field_name][0]
         sprint_customfield = "customfield_" + str(sprint_field_id)
-        
+
         updated_issue_1 = self.jira.issue(self.issue_1)
         serialised_sprint = getattr(updated_issue_1.fields, sprint_customfield)[0]
 
         # Too hard to serialise the sprint object. Performing simple regex match instead.
         assert re.search('\[id=' + str(s.id) + ',', serialised_sprint)
-        
+
         #self.jira.add_issues_to_sprint(s.id, self.issue_2)
 
         #self.jira.rank(self.issue_2, self.issue_1)
@@ -1591,7 +1591,7 @@ class UserTests(unittest.TestCase):
 
     def test_user_avatars(self):
         avatars = self.jira.user_avatars('ci-admin')
-        self.assertEqual(len(avatars['system']), 24)
+        self.assertGreaterEqual(len(avatars['system']), 20)  # observed values between 20-24 so far
         self.assertEqual(len(avatars['custom']), 0)
 
     @unittest.skip("disable until I have permissions to write/modify")

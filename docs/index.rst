@@ -3,19 +3,26 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Python JIRA Library Documentation
-=================================
 
-.. toctree::
-   :maxdepth: 2
+Python JIRA
+###########
+Python library to work with JIRA APIs
+
+.. contents::
+.. section-numbering::
+.. :depth: 2
+
 
 This documents the ``jira-python`` package (version |release|), a Python library designed to ease the use of the
 JIRA REST API. Some basic support for the GreenHopper REST API also exists.
 
 The source is stored at https://github.com/pycontribs/jira.
 
+Until someone will find a better way to generate the release notes you can read
+https://github.com/pycontribs/jira/blob/master/CHANGELOG which is generated based on git commit messages.
+
 Installation
-============
+************
 
 The easiest (and best) way to install jira-python is through `pip <http://www.pip-installer.org/>`_::
 
@@ -39,7 +46,7 @@ Source packages are also available at PyPI:
 .. _Dependencies:
 
 Dependencies
-------------
+============
 
 Python
 ^^^^^^
@@ -80,7 +87,7 @@ a fairly cumbersome process in Windows. On Linux and OS X, a ``pip install pycry
 Installing through pip takes care of these dependencies for you.
 
 Examples
-========
+********
 
 Here's a quick usage example:
 
@@ -328,7 +335,7 @@ It's no trouble to get the components, versions or roles either (assuming you ha
     [v.name for v in reversed(versions)]        # '5.1.1', '5.1', '5.0.7', '5.0.6', etc.
 
 jirashell
-=========
+*********
 
 There is no substitute for play. The only way to really know a service, an API or a package is to explore it, poke at
 it, and bang your elbows -- trial and error. A REST design is especially well-suited to active exploration, and the
@@ -392,7 +399,7 @@ Since the *Resource* class maps the server's JSON response directly into a Pytho
 see exactly what's in your resources.
 
 Advanced
-========
+********
 
 Resource Objects and Properties
 -------------------------------
@@ -422,7 +429,7 @@ issues in the server's projects. Since these properties are determined by JIRA's
 The JIRA client's methods document whether they will return a *Resource* or a properties object.
 
 Contributing
-============
+************
 
 The client is an open source project under the BSD license. Contributions of any kind are welcome!
 
@@ -432,7 +439,7 @@ If you find a bug or have an idea for a useful feature, file it at that bitbucke
 code patches -- fork and send a pull request.
 
 Discussion and support
-----------------------
+======================
 
 We encourage all who wish to discuss by using https://answers.atlassian.com/questions/topics/754366/jira-python
 
@@ -448,7 +455,7 @@ API Documentation
     :show-inheritance:
 
 Indices and tables
-==================
+******************
 
 * :ref:`genindex`
 * :ref:`modindex`

@@ -2540,7 +2540,7 @@ class JIRA(object):
         if endDate:
             payload['startDate'] = endDate
         if state:
-            payload['state']=state
+            payload['state'] = state
 
         url = self._get_url('sprint/%s' % id, base=self.AGILE_BASE_URL)
         r = self._session.put(
@@ -2692,12 +2692,12 @@ class JIRA(object):
         :param sprint_id: the sprint to add issues to
         :param issue_keys: the issues to add to the sprint
         """
-        
+
         # Get the customFieldId for "Sprint"
         sprint_field_name = "Sprint"
         sprint_field_id = [f['schema']['customId'] for f in self.fields()
                            if f['name'] == sprint_field_name][0]
-        
+
         data = {}
         data['idOrKeys'] = issue_keys
         data['customFieldId'] = sprint_field_id
