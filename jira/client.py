@@ -2391,7 +2391,27 @@ class JIRA(object):
                     f.name, r.status_code))
         return False
 
-    def add_user(self, username, email, directoryId=1, password=None, fullname=None, active=True):
+    def add_user(self, username, email, directoryId=1, password=None,
+                 fullname=None, notify=False, active=True):
+        '''
+        Creates a new JIRA user
+
+        :param username: the username of the new user
+        :type username: ``str``
+        :param email: email address of the new user
+        :type email: ``str``
+        :param directoryId: the directory ID the new user should be a part of
+        :type directoryId: ``int``
+        :param password: Optional, the password for the new user
+        :type password: ``str``
+        :param fullname: Optional, the full name of the new user
+        :type fullname: ``str``
+        :param notify: Whether or not to send a notification to the new user
+        :type notify ``bool``
+        :param active: Whether or not to make the new user active upon creation
+        :type active: ``bool``
+        :return:
+        '''
 
         if not fullname:
             fullname = username
@@ -2408,6 +2428,8 @@ class JIRA(object):
         x['name'] = username
         if password:
             x['password'] = password
+        if notify:
+            x['notification'] = 'True'
 
         payload = json.dumps(x)
 
