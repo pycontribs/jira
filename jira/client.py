@@ -2328,7 +2328,7 @@ class JIRA(object):
         return self._session.post(
             url, headers=CaseInsensitiveDict({'content-type': 'application/x-www-form-urlencoded'}), data=payload)
 
-    def create_project(self, key, name=None, assignee=None):
+    def create_project(self, key, name=None, assignee=None, type="Software"):
         """
         Key is mandatory and has to match JIRA project key requirements, usually only 2-10 uppercase characters.
         If name is not specified it will use the key value.
@@ -2371,6 +2371,10 @@ class JIRA(object):
                    'lead': assignee,
                    #'assigneeType': '2',
                    }
+
+        if self._version[0] > 6:
+            # JIRA versions before 7 will throw an error if we specify type parameter
+            payload['type'] = type
 
         headers = CaseInsensitiveDict(
             {'Content-Type': 'application/x-www-form-urlencoded'})
