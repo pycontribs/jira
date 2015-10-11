@@ -29,6 +29,7 @@ import datetime
 import calendar
 import hashlib
 from six.moves.urllib.parse import urlparse, urlencode
+from requests.utils import get_netrc_auth
 
 try:
     from collections import OrderedDict
@@ -58,11 +59,11 @@ from .resources import Resource, Issue, Comment, Project, Attachment, Component,
     Worklog, IssueLink, IssueLinkType, IssueType, Priority, Version, Role, Resolution, SecurityLevel, Status, User, \
     CustomFieldOption, RemoteLink
 # GreenHopper specific resources
-from .resources import GreenHopperResource, Board, Sprint
+from .resources import Board, Sprint
 from .resilientsession import ResilientSession
 from .version import __version__
-from .utils import threaded_requests, json_loads, JIRAError, CaseInsensitiveDict
-
+from .utils import threaded_requests, json_loads, CaseInsensitiveDict
+from .exceptions import JIRAError
 try:
     from random import SystemRandom
 
@@ -2317,6 +2318,10 @@ class JIRA(object):
 
     def _gain_sudo_session(self, options, destination):
         url = self._options['server'] + '/secure/admin/WebSudoAuthenticate.jspa'
+
+        if not self._session.auth:
+            self._session.auth = get_netrc_auth(url)
+
         payload = {
             'webSudoPassword': self._session.auth[1],
             'webSudoDestination': destination,
