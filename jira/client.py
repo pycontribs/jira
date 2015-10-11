@@ -272,6 +272,12 @@ class JIRA(object):
             self._check_update_()
             JIRA.checked_version = True
 
+        # TODO: check if this works with non-admin accounts
+        self._fields = {}
+        for f in self.fields():
+            for name in f['clauseNames']:
+                self._fields[name] = f['id']
+
     def _check_update_(self):
         # check if the current version of the library is outdated
         try:
@@ -1571,6 +1577,21 @@ class JIRA(object):
         if fields is None:
             fields = []
 
+        if isinstance(fields, basestring):
+            if "," in fields:
+                fields = fields.split(",")
+            else:
+                fields = [fields]
+
+        # this will translate JQL field names to REST API Name
+        # most people do know the JQL names so this will help them use the API easier
+        untranslate = {}  # use to add friendly aliases when we get the results back
+        if self._fields:
+            for i, field in enumerate(fields):
+                if field in self._fields:
+                    untranslate[self._fields[field]] = fields[i]
+                    fields[i] = self._fields[field]
+
         # If None is passed as parameter, this fetch all issues from the query
         if not maxResults:
             maxResults = maxi
@@ -1601,6 +1622,13 @@ class JIRA(object):
                                resource['issues']]
                 issues.extend(issue_batch)
                 cnt = len(issue_batch)
+
+        if untranslate:
+            for i in issues:
+                for k, v in untranslate.iteritems():
+                    if k in i.raw['fields']:
+                        i.raw['fields'][v] = i.raw['fields'][k]
+
         return ResultList(issues, total)
 
     # Security levels
