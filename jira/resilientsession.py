@@ -5,6 +5,7 @@ from requests.exceptions import ConnectionError
 import logging
 import time
 import json
+from .exceptions import JIRAError
 
 
 def raise_on_error(r, verb='???', **kwargs):

@@ -22,6 +22,7 @@ fp.close()
 # this should help getting annoying warnings from inside distutils
 warnings.simplefilter('ignore', UserWarning)
 
+
 def _is_ordereddict_needed():
     ''' Check if `ordereddict` package really needed '''
     try:

@@ -29,6 +29,10 @@ pypi:
 	python2.7 setup.py bdist_wheel upload
 	#python3.4 setup.py bdist_wheel upload
 
+pypitest:
+	python setup.py check --restructuredtext --strict
+	python2.7 setup.py bdist_wheel upload
+
 docs:
 	pip install sphinx
 	sphinx-build -b html docs/ docs/build/

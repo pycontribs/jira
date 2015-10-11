@@ -1,5 +1,4 @@
-ipython>=0.13
-pytest-cache
+ipython>=4.0.0
 unittest2
 ordereddict
 PyJWT
