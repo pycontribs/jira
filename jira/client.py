@@ -227,6 +227,8 @@ class JIRA(object):
 
         self._options.update(options)
 
+        self._rank = None
+
         # Rip off trailing slash since all urls depend on that
         if self._options['server'].endswith('/'):
             self._options['server'] = self._options['server'][:-1]
@@ -2805,6 +2807,5 @@ class GreenHopper(JIRA):
     def __init__(self, options=None, basic_auth=None, oauth=None, async=None):
         warnings.warn(
             "GreenHopper() class is deprecated, just use JIRA() instead.", DeprecationWarning)
-        self._rank = None
         JIRA.__init__(
             self, options=options, basic_auth=basic_auth, oauth=oauth, async=async)
