@@ -2793,8 +2793,13 @@ class JIRA(object):
         # {"issueKeys":["ANERDS-102"],"rankBeforeKey":"ANERDS-94","rankAfterKey":"ANERDS-7","customFieldId":11431}
         if not self._rank:
             for field in self.fields():
-                if field['name'] == 'Rank' and field['schema']['custom'] == "com.pyxis.greenhopper.jira:gh-global-rank":
-                    self._rank = field['schema']['customId']
+                if field['name'] == 'Rank':
+                    if field['schema']['custom'] == "com.pyxis.greenhopper.jira:gh-lexo-rank":
+                        self._rank = field['schema']['customId']
+                        break
+                    elif field['schema']['custom'] == "com.pyxis.greenhopper.jira:gh-global-rank":
+                        # Obsolete since JIRA v6.3.13.1
+                        self._rank = field['schema']['customId']
         data = {
             "issueKeys": [issue], "rankBeforeKey": next_issue, "customFieldId": self._rank}
         url = self._get_url('rank', base=self.AGILE_BASE_URL)
