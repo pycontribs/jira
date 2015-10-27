@@ -29,6 +29,7 @@ import datetime
 import calendar
 import hashlib
 from six.moves.urllib.parse import urlparse, urlencode
+from six import string_types, iteritems
 from requests.utils import get_netrc_auth
 
 try:
@@ -1577,7 +1578,7 @@ class JIRA(object):
         if fields is None:
             fields = []
 
-        if isinstance(fields, basestring):
+        if isinstance(fields, string_types):
             if "," in fields:
                 fields = fields.split(",")
             else:
@@ -1625,7 +1626,7 @@ class JIRA(object):
 
         if untranslate:
             for i in issues:
-                for k, v in untranslate.iteritems():
+                for k, v in iteritems(untranslate):
                     if k in i.raw['fields']:
                         i.raw['fields'][v] = i.raw['fields'][k]
 
