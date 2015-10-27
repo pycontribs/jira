@@ -357,6 +357,7 @@ class Filter(Resource):
         if raw:
             self._parse_raw(raw)
 
+
 class Issue(Resource):
     """A JIRA issue."""
 
@@ -372,7 +373,7 @@ class Issue(Resource):
             """ :type : list[Comment] """
             self.issuelinks = None
             """ :type : list[IssueLink] """
-            self.worklog= None
+            self.worklog = None
             """ :type : list[Worklog] """
 
     def __init__(self, options, session, raw=None):
@@ -465,6 +466,7 @@ class Issue(Resource):
 
     def __eq__(self, other):
         return self.id == other.id
+
 
 class Comment(Resource):
 

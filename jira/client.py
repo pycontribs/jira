@@ -18,22 +18,23 @@ import mimetypes
 import copy
 import os
 import re
-import string
 import tempfile
 import logging
 import json
 import warnings
-import pprint
 import sys
 import datetime
 import calendar
 import hashlib
+# noinspection PyUnresolvedReferences
 from six.moves.urllib.parse import urlparse, urlencode
+from six import iteritems
 from requests.utils import get_netrc_auth
 
 try:
     from collections import OrderedDict
 except ImportError:
+    # noinspection PyUnresolvedReferences
     from ordereddict import OrderedDict
 
 from six import string_types, integer_types
@@ -45,6 +46,7 @@ else:
     import html.parser as html_parser
 import requests
 try:
+    # noinspection PyUnresolvedReferences
     from requests_toolbelt import MultipartEncoder
 except:
     pass
@@ -108,7 +110,6 @@ def _get_template_list(data):
 
 
 class ResultList(list):
-
     def __init__(self, iterable=None, _startAt=None, _maxResults=None, _total=None, _isLast=None):
         if iterable is not None:
             list.__init__(self, iterable)
@@ -123,7 +124,6 @@ class ResultList(list):
 
 
 class QshGenerator:
-
     def __init__(self, context_path):
         self.context_path = context_path
 
@@ -138,7 +138,6 @@ class QshGenerator:
 
 
 class JIRA(object):
-
     """
     User interface to JIRA.
 
@@ -155,8 +154,8 @@ class JIRA(object):
         "context_path": "/",
         "rest_path": "api",
         "rest_api_version": "2",
-        "agile_rest_path" : GreenHopperResource.GREENHOPPER_REST_PATH,
-        "agile_rest_api_version" : "1.0",
+        "agile_rest_path": GreenHopperResource.GREENHOPPER_REST_PATH,
+        "agile_rest_api_version": "1.0",
         "verify": True,
         "resilient": True,
         "async": False,
@@ -169,8 +168,8 @@ class JIRA(object):
             'Content-Type': 'application/json',  # ;charset=UTF-8',
             # 'Accept': 'application/json',  # default for REST
 
-            #'Pragma': 'no-cache',
-            #'Expires': 'Thu, 01 Jan 1970 00:00:00 GMT'
+            # 'Pragma': 'no-cache',
+            # 'Expires': 'Thu, 01 Jan 1970 00:00:00 GMT'
         }
     }
 
@@ -309,8 +308,9 @@ class JIRA(object):
 
             released_version = data['info']['version']
             if released_version > __version__:
-                warnings.warn("You are running an outdated version of JIRA Python %s. Current version is %s. Do not file any bugs against older versions." % (
-                    __version__, released_version))
+                warnings.warn(
+                    "You are running an outdated version of JIRA Python %s. Current version is %s. Do not file any bugs against older versions." % (
+                        __version__, released_version))
         except requests.RequestException:
             pass
         except Exception as e:
@@ -332,7 +332,7 @@ class JIRA(object):
             return False
         return True
 
-    def _fetch_pages(self, item_type, items_key, request_path, startAt, maxResults, params = None, base=JIRA_BASE_URL):
+    def _fetch_pages(self, item_type, items_key, request_path, startAt, maxResults, params=None, base=JIRA_BASE_URL):
         """
         Fetches
         :param item_type: Type of single item. ResultList of such items will be returned.
@@ -423,7 +423,7 @@ class JIRA(object):
                 len(self._session._async_jobs), size))
             threaded_requests.map(self._session._async_jobs, size=size)
 
-        # Application properties
+            # Application properties
 
     # non-resource
     def application_properties(self, key=None):
@@ -465,7 +465,7 @@ class JIRA(object):
 
         # url = self._options['server'] + '/rest/applinks/latest/applicationlink'
         url = self._options['server'] + \
-            '/rest/applinks/latest/listApplicationlinks'
+              '/rest/applinks/latest/listApplicationlinks'
 
         r = self._session.get(url)
 
@@ -609,6 +609,7 @@ class JIRA(object):
         :param startAt: index of the first dashboard to return
         :param maxResults: maximum number of dashboards to return.
             If maxResults evaluates as False, it will try to get all items in batches.
+
         :rtype ResultList
         """
         params = {}
@@ -1641,7 +1642,7 @@ class JIRA(object):
         if fields is None:
             fields = []
 
-        if isinstance(fields, ("".__class__, u"".__class__)):
+        if isinstance(fields, string_types):
             fields = fields.split(",")
 
         # this will translate JQL field names to REST API Name
@@ -1670,7 +1671,7 @@ class JIRA(object):
 
         if untranslate:
             for i in issues:
-                for k, v in untranslate.items():
+                for k, v in iteritems(untranslate):
                     if k in i.raw['fields']:
                         i.raw['fields'][v] = i.raw['fields'][k]
 
@@ -2195,8 +2196,7 @@ class JIRA(object):
             except:
                 merge = "false"
 
-            url = self._options[
-                'server'] + '/secure/admin/groovy/CannedScriptRunner.jspa#result'
+            url = self._options['server'] + '/secure/admin/groovy/CannedScriptRunner.jspa#result'
             payload = {
                 "cannedScript": "com.onresolve.jira.groovy.canned.admin.RenameUser",
                 "cannedScriptArgs_FIELD_FROM_USER_ID": old_user,
@@ -2255,8 +2255,7 @@ class JIRA(object):
 
     def delete_user(self, username):
 
-        url = self._options['server'] + \
-            '/rest/api/latest/user/?username=%s' % username
+        url = self._options['server'] + '/rest/api/latest/user/?username=%s' % username
 
         r = self._session.delete(url)
         if 200 <= r.status_code <= 299:
@@ -2462,7 +2461,6 @@ class JIRA(object):
                  fullname=None, notify=False, active=True, ignore_existing=False):
         '''
         Creates a new JIRA user
-
         :param username: the username of the new user
         :type username: ``str``
         :param email: email address of the new user
@@ -2477,9 +2475,7 @@ class JIRA(object):
         :type notify ``bool``
         :param active: Whether or not to make the new user active upon creation
         :type active: ``bool``
-        :return:
         '''
-
         if not fullname:
             fullname = username
         # TODO: default the directoryID to the first directory in jira instead
@@ -2577,6 +2573,7 @@ class JIRA(object):
         :param maxResults: The maximum number of boards to return per page. Default: 50
         :param type: Filters results to boards of the specified type. Valid values: scrum, kanban.
         :param name: Filters results to boards that match or partially match the specified name.
+
         :rtype ResultList[Board]
 
         When old GreenHopper private API is used, paging is not enabled and all parameters are ignored.
@@ -2613,6 +2610,7 @@ class JIRA(object):
         :param maxResults: the maximum number of sprints to return
         :param state: Filters results to sprints in specified states. Valid values: future, active, closed.
             You can define multiple states separated by commas
+
         :rtype dict
         :return (content depends on API version, but always contains id, name, state, startDate and endDate)
 
@@ -2744,7 +2742,7 @@ class JIRA(object):
     # TODO: remove this as we do have Board.delete()
     def delete_board(self, id):
         """ Deletes an agile board. """
-        board = Board(self._options, self._session, raw = {'id':id})
+        board = Board(self._options, self._session, raw={'id': id})
         board.delete()
 
     def create_board(self, name, project_ids, preset="scrum"):
@@ -2907,7 +2905,7 @@ class JIRA(object):
 
         if self._options['agile_rest_path'] == GreenHopperResource.AGILE_BASE_REST_PATH:
             url = self._get_url('issue/rank', base=self.AGILE_BASE_URL)
-            payload = { 'issues': [issue], 'rankBeforeIssue': next_issue, 'rankCustomFieldId': self._rank }
+            payload = {'issues': [issue], 'rankBeforeIssue': next_issue, 'rankCustomFieldId': self._rank}
             try:
                 r = self._session.put(url, data=json.dumps(payload))
             except JIRAError as e:
@@ -2927,7 +2925,6 @@ class JIRA(object):
 
 
 class GreenHopper(JIRA):
-
     def __init__(self, options=None, basic_auth=None, oauth=None, async=None):
         warnings.warn(
             "GreenHopper() class is deprecated, just use JIRA() instead.", DeprecationWarning)
