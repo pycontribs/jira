@@ -848,6 +848,12 @@ class JIRA(object):
         if isinstance(p, string_types) or isinstance(p, integer_types):
             data['fields']['project'] = {'id': self.project(p).id}
 
+        p = data['fields']['issuetype']
+        if isinstance(p, integer_types):
+            data['fields']['issuetype'] = {'id': p}
+        if isinstance(p, string_types) or isinstance(p, integer_types):
+            data['fields']['issuetype'] = {'id': self.issue_type_by_name(p).id}
+
         url = self._get_url('issue')
         r = self._session.post(url, data=json.dumps(data))
 
@@ -1398,6 +1404,14 @@ class JIRA(object):
         :param id: ID of the issue type to get
         """
         return self._find_for_resource(IssueType, id)
+
+    def issue_type_by_name(self, name):
+        issue_types = self.issue_types()
+        try:
+            issue_type = [it for it in issue_types if it.name == name][0]
+        except IndexError:
+            raise KeyError("Issue type '%s' is unknown." % name)
+        return issue_type
 
     # User permissions
 
