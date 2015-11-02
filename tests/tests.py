@@ -1,35 +1,30 @@
 #!/usr/bin/env python
 from __future__ import print_function
-import json
 import os
 import re
 import sys
 import logging
 import getpass
 import random
-import requests
 import string
 import traceback
 import inspect
 import pickle
+import platform
 from time import sleep
+
 import py
 import pytest
-
+import requests
 from six import print_ as print
-from six import integer_types, string_types
-from requests.exceptions import ConnectionError
+from six import integer_types
 
-# import sys
-# from imp import reload
-# reload(sys)  # Reload does the trick!
-# sys.setdefaultencoding('UTF8')
-
-if sys.version_info < (2, 7, 0):
+if platform.python_version() < '3':
     try:
         import unittest2 as unittest
     except ImportError:
         import pip
+
         if hasattr(sys, 'real_prefix'):
             pip.main(['install', '--upgrade', 'unittest2'])
         else:
@@ -44,7 +39,7 @@ if cmd_folder not in sys.path:
     sys.path.insert(0, cmd_folder)
 
 import jira
-from jira import User, Role, Issue, JIRA, JIRAError, Project
+from jira import Role, Issue, JIRA, JIRAError, Project
 from jira.resources import Resource, cls_for_resource
 
 TEST_ROOT = os.path.dirname(__file__)
@@ -62,6 +57,14 @@ try:
 except:
     pass
 
+if 'CI_JIRA_URL' in os.environ:
+    not_on_custom_jira_instance = pytest.mark.skipif(True, reason="Not applicable for custom JIRA instance")
+    print('Picked up custom JIRA engine.')
+else:
+    def noop(arg):
+        return arg
+    not_on_custom_jira_instance = noop
+
 
 def rndstr():
     return ''.join(random.sample(string.ascii_letters, 6))
@@ -69,15 +72,14 @@ def rndstr():
 
 def rndpassword():
     # generates a password of lengh 14
-    s = ''.join(random.sample(string.ascii_uppercase, 5)) +\
-        ''.join(random.sample(string.ascii_lowercase, 5)) +\
-        ''.join(random.sample(string.digits, 2)) +\
+    s = ''.join(random.sample(string.ascii_uppercase, 5)) + \
+        ''.join(random.sample(string.ascii_lowercase, 5)) + \
+        ''.join(random.sample(string.digits, 2)) + \
         ''.join(random.sample('~`!@#$%^&*()_+-=[]\\{}|;\':<>?,./', 2))
     return ''.join(random.sample(s, len(s)))
 
 
 class Singleton(type):
-
     def __init__(cls, name, bases, dict):
         super(Singleton, cls).__init__(name, bases, dict)
         cls.instance = None
@@ -89,7 +91,6 @@ class Singleton(type):
 
 
 class JiraTestManager(object):
-
     """
     Used to instantiate and populate the JIRA instance with data used by the unit tests.
     """
@@ -144,6 +145,8 @@ class JiraTestManager(object):
                         'CI_JIRA_USER_PASSWORD']
                 else:
                     self.CI_JIRA_USER_PASSWORD = 'sd4s3dgec5fhg4tfsds3434'
+
+                self.CI_JIRA_ISSUE = os.environ.get('CI_JIRA_ISSUE', 'Bug')
 
                 if OAUTH:
                     self.jira_admin = JIRA(oauth={
@@ -257,20 +260,20 @@ class JiraTestManager(object):
 
                 self.project_b_issue1_obj = self.jira_admin.create_issue(project=self.project_b,
                                                                          summary='issue 1 from %s'
-                                                                         % self.project_b,
-                                                                         issuetype={'name': 'Bug'})
+                                                                                 % self.project_b,
+                                                                         issuetype=self.CI_JIRA_ISSUE)
                 self.project_b_issue1 = self.project_b_issue1_obj.key
 
                 self.project_b_issue2_obj = self.jira_admin.create_issue(project=self.project_b,
                                                                          summary='issue 2 from %s'
-                                                                         % self.project_b,
-                                                                         issuetype={'name': 'Bug'})
+                                                                                 % self.project_b,
+                                                                         issuetype={'name': self.CI_JIRA_ISSUE})
                 self.project_b_issue2 = self.project_b_issue2_obj.key
 
                 self.project_b_issue3_obj = self.jira_admin.create_issue(project=self.project_b,
                                                                          summary='issue 3 from %s'
-                                                                         % self.project_b,
-                                                                         issuetype={'name': 'Bug'})
+                                                                                 % self.project_b,
+                                                                         issuetype={'name': self.CI_JIRA_ISSUE})
                 self.project_b_issue3 = self.project_b_issue3_obj.key
 
             except Exception as e:
@@ -291,9 +294,9 @@ class JiraTestManager(object):
                 sleep(1)
                 counter += 1
                 if counter > 60:
-                    logging.fatal("Something is clearly not right with\
-                            initialization, killing the tests to prevent a\
-                            deadlock.")
+                    logging.fatal("Something is clearly not right with " +
+                                  "initialization, killing the tests to prevent a " +
+                                  "deadlock.")
                     sys.exit(3)
 
 
@@ -322,7 +325,6 @@ def find_by_name(seq, name):
 
 
 class UniversalResourceTests(unittest.TestCase):
-
     def setUp(self):
         self.jira = JiraTestManager().jira_admin
         self.test_manager = JiraTestManager()
@@ -342,8 +344,7 @@ class UniversalResourceTests(unittest.TestCase):
         # py26,27,34 gets 404 but on py33 gets 400
         assert ex.status_code in [400, 404]
         self.assertIsNotNone(ex.text)
-        self.assertEqual(ex.url,
-                         'https://pycontribs.atlassian.net/rest/api/2/woopsydoodle/666')
+        self.assertRegex(ex.url, '^https?://.*/rest/api/2/woopsydoodle/666$')
 
     @pytest.mark.xfail
     # see https://github.com/pycontribs/jira/pull/30
@@ -357,7 +358,6 @@ class UniversalResourceTests(unittest.TestCase):
 
 
 class ResourceTests(unittest.TestCase):
-
     def setUp(self):
         pass
 
@@ -373,13 +373,14 @@ class ResourceTests(unittest.TestCase):
 
 
 class ApplicationPropertiesTests(unittest.TestCase):
-
     def setUp(self):
         self.jira = JiraTestManager().jira_admin
 
     def test_application_properties(self):
         props = self.jira.application_properties()
-        self.assertEqual(len(props), 30)
+        for p in props:
+            self.assertIsInstance(p, dict)
+            self.assertTrue(set(p.keys()).issuperset(set(['type', 'name', 'value', 'key', 'id'])))
 
     def test_application_property(self):
         clone_prefix = self.jira.application_properties(
@@ -389,10 +390,10 @@ class ApplicationPropertiesTests(unittest.TestCase):
     def test_set_application_property(self):
         prop = 'jira.lf.favicon.hires.url'
         valid_value = '/jira-favicon-hires.png'
-        invalud_value = '/Tjira-favicon-hires.png'
+        invalid_value = '/Tjira-favicon-hires.png'
         counter = 0
 
-        while self.jira.application_properties(key=prop)['value'] != valid_value and conter < 3:
+        while self.jira.application_properties(key=prop)['value'] != valid_value and counter < 3:
             if counter:
                 sleep(10)
             self.jira.set_application_property(prop, invalid_value)
@@ -410,7 +411,6 @@ class ApplicationPropertiesTests(unittest.TestCase):
 
 
 class AttachmentTests(unittest.TestCase):
-
     def setUp(self):
         self.test_manager = JiraTestManager()
         self.jira = JiraTestManager().jira_admin
@@ -437,7 +437,6 @@ class AttachmentTests(unittest.TestCase):
 
 
 class ComponentTests(unittest.TestCase):
-
     def setUp(self):
         self.test_manager = JiraTestManager()
         self.jira = JiraTestManager().jira_admin
@@ -458,7 +457,7 @@ class ComponentTests(unittest.TestCase):
         component.delete()
 
         for c in self.jira.project_components(self.project_b):
-            print(x)
+            print(c)
 
     # COmponents field can't be modified from issue.update
     #    def test_component_count_related_issues(self):
@@ -488,13 +487,13 @@ class ComponentTests(unittest.TestCase):
 
         component = self.jira.create_component(name,
                                                self.project_b, description='stand by!',
-                                               leadUserName='ci-admin')
+                                               leadUserName=self.test_manager.CI_JIRA_ADMIN)
         name = 'renamed-' + name
         component.update(name=name, description='It is done.',
-                         leadUserName='ci-admin')
+                         leadUserName=self.test_manager.CI_JIRA_ADMIN)
         self.assertEqual(component.name, name)
         self.assertEqual(component.description, 'It is done.')
-        self.assertEqual(component.lead.name, 'ci-admin')
+        self.assertEqual(component.lead.name, self.test_manager.CI_JIRA_ADMIN)
         component.delete()
 
     def test_4_delete(self):
@@ -506,17 +505,17 @@ class ComponentTests(unittest.TestCase):
 
 
 class CustomFieldOptionTests(unittest.TestCase):
-
     def setUp(self):
         self.jira = JiraTestManager().jira_admin
 
+    @not_on_custom_jira_instance
     def test_custom_field_option(self):
         option = self.jira.custom_field_option('10001')
         self.assertEqual(option.value, 'To Do')
 
 
+@not_on_custom_jira_instance
 class DashboardTests(unittest.TestCase):
-
     def setUp(self):
         self.jira = JiraTestManager().jira_admin
 
@@ -543,8 +542,8 @@ class DashboardTests(unittest.TestCase):
         self.assertEqual(dashboard.name, 'Another test dashboard')
 
 
+@not_on_custom_jira_instance
 class FieldsTests(unittest.TestCase):
-
     def setUp(self):
         self.jira = JiraTestManager().jira_admin
 
@@ -554,7 +553,6 @@ class FieldsTests(unittest.TestCase):
 
 
 class FilterTests(unittest.TestCase):
-
     def setUp(self):
         self.test_manager = JiraTestManager()
         self.jira = JiraTestManager().jira_admin
@@ -569,7 +567,7 @@ class FilterTests(unittest.TestCase):
                                            description="just some new test filter", jql=jql,
                                            favourite=False)
         self.assertEqual(myfilter.name, name)
-        self.assertEqual(myfilter.owner.name, 'ci-admin')
+        self.assertEqual(myfilter.owner.name, self.test_manager.CI_JIRA_ADMIN)
         myfilter.delete()
 
     def test_favourite_filters(self):
@@ -585,10 +583,11 @@ class FilterTests(unittest.TestCase):
         myfilter.delete()
 
 
+@not_on_custom_jira_instance
 class GroupsTest(unittest.TestCase):
-
     def setUp(self):
-        self.jira = JiraTestManager().jira_admin
+        self.test_manager = JiraTestManager()
+        self.jira = self.test_manager.jira_admin
 
     def test_groups(self):
         groups = self.jira.groups()
@@ -600,7 +599,6 @@ class GroupsTest(unittest.TestCase):
 
 
 class IssueTests(unittest.TestCase):
-
     def setUp(self):
         self.test_manager = JiraTestManager()
         self.jira = JiraTestManager().jira_admin
@@ -645,8 +643,9 @@ class IssueTests(unittest.TestCase):
         self.assertTrue(hasattr(issue, 'editmeta'))
         self.assertTrue(hasattr(issue, 'schema'))
         # testing for changelog is not reliable because it may exist or not based on test order
-        #self.assertFalse(hasattr(issue, 'changelog'))
+        # self.assertFalse(hasattr(issue, 'changelog'))
 
+    @not_on_custom_jira_instance
     def test_create_issue_with_fieldargs(self):
         issue = self.jira.create_issue(project=self.project_b,
                                        summary='Test issue created', description='blahery',
@@ -658,6 +657,7 @@ class IssueTests(unittest.TestCase):
         self.assertEqual(issue.fields.customfield_10022, 'XSS')
         issue.delete()
 
+    @not_on_custom_jira_instance
     def test_create_issue_with_fielddict(self):
         fields = {
             'project': {
@@ -683,6 +683,7 @@ class IssueTests(unittest.TestCase):
         self.assertEqual(issue.fields.priority.name, 'Major')
         issue.delete()
 
+    @not_on_custom_jira_instance
     def test_create_issue_without_prefetch(self):
         issue = self.jira.create_issue(prefetch=False,
                                        project=self.project_b,
@@ -695,6 +696,7 @@ class IssueTests(unittest.TestCase):
         assert 'fields' not in issue.raw
         issue.delete()
 
+    @not_on_custom_jira_instance
     def test_update_with_fieldargs(self):
         issue = self.jira.create_issue(project=self.project_b,
                                        summary='Test issue for updating',
@@ -710,6 +712,7 @@ class IssueTests(unittest.TestCase):
         self.assertEqual(issue.fields.project.key, self.project_b)
         issue.delete()
 
+    @not_on_custom_jira_instance
     def test_update_with_fielddict(self):
         issue = self.jira.create_issue(project=self.project_b,
                                        summary='Test issue for updating', description='Will be updated shortly',
@@ -737,7 +740,7 @@ class IssueTests(unittest.TestCase):
     def test_update_with_label(self):
         issue = self.jira.create_issue(project=self.project_b,
                                        summary='Test issue for updating labels', description='Label testing',
-                                       issuetype={'name': 'Bug'})
+                                       issuetype=self.test_manager.CI_JIRA_ISSUE)
 
         labelarray = ['testLabel']
         fields = {
@@ -750,7 +753,7 @@ class IssueTests(unittest.TestCase):
     def test_update_with_bad_label(self):
         issue = self.jira.create_issue(project=self.project_b,
                                        summary='Test issue for updating labels', description='Label testing',
-                                       issuetype={'name': 'Bug'})
+                                       issuetype=self.test_manager.CI_JIRA_ISSUE)
 
         issue.fields.labels.append('this should not work')
 
@@ -764,23 +767,25 @@ class IssueTests(unittest.TestCase):
         issue = self.jira.create_issue(project=self.project_b,
                                        summary='Test issue created',
                                        description='Not long for this world',
-                                       issuetype={'name': 'Bug'},
-                                       customfield_10022='XSS')
+                                       issuetype=self.test_manager.CI_JIRA_ISSUE)
         key = issue.key
         issue.delete()
         self.assertRaises(JIRAError, self.jira.issue, key)
 
+    @not_on_custom_jira_instance
     def test_createmeta(self):
         meta = self.jira.createmeta()
         ztravisdeb_proj = find_by_key(meta['projects'], self.project_b)
         self.assertEqual(len(ztravisdeb_proj['issuetypes']), 8)
 
+    @not_on_custom_jira_instance
     def test_createmeta_filter_by_projectkey_and_name(self):
         meta = self.jira.createmeta(projectKeys=self.project_b,
                                     issuetypeNames='Bug')
         self.assertEqual(len(meta['projects']), 1)
         self.assertEqual(len(meta['projects'][0]['issuetypes']), 1)
 
+    @not_on_custom_jira_instance
     def test_createmeta_filter_by_projectkeys_and_name(self):
         meta = self.jira.createmeta(projectKeys=(self.project_a,
                                                  self.project_b), issuetypeNames='Improvement')
@@ -788,6 +793,7 @@ class IssueTests(unittest.TestCase):
         for project in meta['projects']:
             self.assertEqual(len(project['issuetypes']), 1)
 
+    @not_on_custom_jira_instance
     def test_createmeta_filter_by_id(self):
         projects = self.jira.projects()
         proja = find_by_key_value(projects, self.project_a)
@@ -805,15 +811,15 @@ class IssueTests(unittest.TestCase):
         self.assertTrue('fields' in meta['projects'][0]['issuetypes'][0])
 
     def test_assign_issue(self):
-        self.assertIsNone(self.jira.assign_issue(self.issue_1, 'ci-admin'))
+        self.assertIsNone(self.jira.assign_issue(self.issue_1, self.test_manager.CI_JIRA_ADMIN))
         self.assertEqual(self.jira.issue(self.issue_1).fields.assignee.name,
-                         'ci-admin')
+                         self.test_manager.CI_JIRA_ADMIN)
 
     def test_assign_issue_with_issue_obj(self):
         issue = self.jira.issue(self.issue_1)
-        self.assertIsNone(self.jira.assign_issue(issue, 'ci-admin'))
+        self.assertIsNone(self.jira.assign_issue(issue, self.test_manager.CI_JIRA_ADMIN))
         self.assertEqual(self.jira.issue(self.issue_1).fields.assignee.name,
-                         'ci-admin')
+                         self.test_manager.CI_JIRA_ADMIN)
 
     def test_assign_to_bad_issue_raises(self):
         self.assertRaises(JIRAError, self.jira.assign_issue, 'NOPE-1',
@@ -857,12 +863,14 @@ class IssueTests(unittest.TestCase):
         # self.assertEqual(comment.visibility.value, 'Administrators')
         comment.delete()
 
+    @not_on_custom_jira_instance
     def test_editmeta(self):
         meta = self.jira.editmeta(self.issue_1)
         self.assertEqual(len(meta['fields']), 18)
         self.assertTrue('customfield_10007' in meta['fields'])
         self.assertTrue('customfield_10022' in meta['fields'])
 
+    @not_on_custom_jira_instance
     def test_editmeta_with_issue_obj(self):
         issue = self.jira.issue(self.issue_2)
         meta = self.jira.editmeta(issue)
@@ -976,39 +984,36 @@ class IssueTests(unittest.TestCase):
     def test_transition_issue_with_fieldargs(self):
         issue = self.jira.create_issue(project=self.project_b,
                                        summary='Test issue for transition created',
-                                       description='blahery', issuetype={'name': 'Bug'},
-                                       customfield_10022='XSS')
+                                       description='blahery', issuetype=self.test_manager.CI_JIRA_ISSUE)
         self.jira.transition_issue(issue.key, '2',
-                                   assignee={'name': 'ci-admin'})
+                                   assignee={'name': self.test_manager.CI_JIRA_ADMIN})
         issue = self.jira.issue(issue.key)
-        self.assertEqual(issue.fields.assignee.name, 'ci-admin')
+        self.assertEqual(issue.fields.assignee.name, self.test_manager.CI_JIRA_ADMIN)
         self.assertEqual(issue.fields.status.id, '6')  # issue 'Closed'
 
     def test_transition_issue_obj_with_fieldargs(self):
         issue = self.jira.create_issue(project=self.project_b,
                                        summary='Test issue for transition created',
                                        description='blahery',
-                                       issuetype={'name': 'Bug'},
-                                       customfield_10022='XSS')
-        self.jira.transition_issue(issue, '2', assignee={'name': 'ci-admin'})
+                                       issuetype=self.test_manager.CI_JIRA_ISSUE)
+        self.jira.transition_issue(issue, '2', assignee={'name': self.test_manager.CI_JIRA_ADMIN})
         issue = self.jira.issue(issue.key)
-        self.assertEqual(issue.fields.assignee.name, 'ci-admin')
+        self.assertEqual(issue.fields.assignee.name, self.test_manager.CI_JIRA_ADMIN)
         self.assertEqual(issue.fields.status.id, '6')
 
     def test_transition_issue_with_fielddict(self):
         issue = self.jira.create_issue(project=self.project_b,
                                        summary='Test issue for transition created',
                                        description='blahery',
-                                       issuetype={'name': 'Bug'},
-                                       customfield_10022='XSS')
+                                       issuetype=self.test_manager.CI_JIRA_ISSUE)
         fields = {
             'assignee': {
-                'name': 'ci-admin'
+                'name': self.test_manager.CI_JIRA_ADMIN
             }
         }
         self.jira.transition_issue(issue.key, '5', fields=fields)
         issue = self.jira.issue(issue.key)
-        self.assertEqual(issue.fields.assignee.name, 'ci-admin')
+        self.assertEqual(issue.fields.assignee.name, self.test_manager.CI_JIRA_ADMIN)
         self.assertEqual(issue.fields.status.id, '5')
 
     def test_votes(self):
@@ -1051,34 +1056,35 @@ class IssueTests(unittest.TestCase):
 
     def test_add_watcher(self):
         init_watchers = self.jira.watchers(self.issue_1).watchCount
-        self.jira.add_watcher(self.issue_1, 'ci-user')
+        self.jira.add_watcher(self.issue_1, self.test_manager.CI_JIRA_USER)
         self.assertEqual(self.jira.watchers(self.issue_1).watchCount,
                          init_watchers + 1)
-        self.jira.remove_watcher(self.issue_1, 'ci-user')
+        self.jira.remove_watcher(self.issue_1, self.test_manager.CI_JIRA_USER)
 
     def test_remove_watcher(self):
-        self.jira.add_watcher(self.issue_1, 'ci-user')
+        self.jira.add_watcher(self.issue_1, self.test_manager.CI_JIRA_USER)
         init_watchers = self.jira.watchers(self.issue_1).watchCount
-        self.jira.remove_watcher(self.issue_1, 'ci-user')
+        self.jira.remove_watcher(self.issue_1, self.test_manager.CI_JIRA_USER)
         self.assertEqual(self.jira.watchers(self.issue_1).watchCount,
                          init_watchers - 1)
 
     def test_add_watcher_with_issue_obj(self):
         issue = self.jira.issue(self.issue_1)
         init_watchers = self.jira.watchers(issue).watchCount
-        self.jira.add_watcher(issue, 'ci-user')
+        self.jira.add_watcher(issue, self.test_manager.CI_JIRA_USER)
         self.assertEqual(self.jira.watchers(issue).watchCount,
                          init_watchers + 1)
-        self.jira.remove_watcher(issue, 'ci-user')
+        self.jira.remove_watcher(issue, self.test_manager.CI_JIRA_USER)
 
     def test_remove_watcher_with_issue_obj(self):
         issue = self.jira.issue(self.issue_1)
-        self.jira.add_watcher(issue, 'ci-user')
+        self.jira.add_watcher(issue, self.test_manager.CI_JIRA_USER)
         init_watchers = self.jira.watchers(issue).watchCount
-        self.jira.remove_watcher(issue, 'ci-admin')
+        self.jira.remove_watcher(issue, self.test_manager.CI_JIRA_ADMIN)
         self.assertEqual(self.jira.watchers(issue).watchCount,
                          init_watchers - 1)
 
+    @not_on_custom_jira_instance
     def test_agile(self):
         uniq = rndstr()
         board_name = 'board-' + uniq
@@ -1105,9 +1111,9 @@ class IssueTests(unittest.TestCase):
         # Too hard to serialise the sprint object. Performing simple regex match instead.
         assert re.search('\[id=' + str(s.id) + ',', serialised_sprint)
 
-        #self.jira.add_issues_to_sprint(s.id, self.issue_2)
+        # self.jira.add_issues_to_sprint(s.id, self.issue_2)
 
-        #self.jira.rank(self.issue_2, self.issue_1)
+        # self.jira.rank(self.issue_2, self.issue_1)
 
         s.delete()
 
@@ -1130,7 +1136,7 @@ class IssueTests(unittest.TestCase):
     def test_worklog(self):
         worklog = self.jira.add_worklog(self.issue_1, '1d 2h')
         new_worklog = self.jira.worklog(self.issue_1, str(worklog))
-        self.assertEqual(new_worklog.author.name, 'ci-admin')
+        self.assertEqual(new_worklog.author.name, self.test_manager.CI_JIRA_ADMIN)
         self.assertEqual(new_worklog.timeSpent, '1d 2h')
         worklog.delete()
 
@@ -1138,7 +1144,7 @@ class IssueTests(unittest.TestCase):
         issue = self.jira.issue(self.issue_1)
         worklog = self.jira.add_worklog(issue, '1d 2h')
         new_worklog = self.jira.worklog(issue, str(worklog))
-        self.assertEqual(new_worklog.author.name, 'ci-admin')
+        self.assertEqual(new_worklog.author.name, self.test_manager.CI_JIRA_ADMIN)
         self.assertEqual(new_worklog.timeSpent, '1d 2h')
         worklog.delete()
 
@@ -1172,7 +1178,6 @@ class IssueTests(unittest.TestCase):
 
 
 class IssueLinkTests(unittest.TestCase):
-
     def setUp(self):
         self.manager = JiraTestManager()
 
@@ -1198,15 +1203,15 @@ class IssueLinkTests(unittest.TestCase):
         self.manager.jira_admin.create_issue_link('Duplicate',
                                                   inwardissue, outwardissue)
 
-        #@unittest.skip("Creating an issue link doesn't return its ID, so can't easily test delete")
+        # @unittest.skip("Creating an issue link doesn't return its ID, so can't easily test delete")
         # def test_delete_issue_link(self):
         #    pass
 
 
 class IssueLinkTypeTests(unittest.TestCase):
-
     def setUp(self):
-        self.jira = JiraTestManager().jira_admin
+        self.test_manager = JiraTestManager()
+        self.jira = self.test_manager.jira_admin
 
     def test_issue_link_types(self):
         link_types = self.jira.issue_link_types()
@@ -1221,16 +1226,17 @@ class IssueLinkTypeTests(unittest.TestCase):
 
 
 class IssueTypesTests(unittest.TestCase):
-
     def setUp(self):
         self.jira = JiraTestManager().jira_admin
 
+    @not_on_custom_jira_instance
     def test_issue_types(self):
         types = self.jira.issue_types()
         self.assertEqual(len(types), 8)
         unq_issues = find_by_id(types, '10002')
         self.assertEqual(unq_issues.name, 'Technical task')
 
+    @not_on_custom_jira_instance
     def test_issue_type(self):
         mytype = self.jira.issue_type('4')
         self.assertEqual(mytype.id, '4')
@@ -1238,7 +1244,6 @@ class IssueTypesTests(unittest.TestCase):
 
 
 class MyPermissionsTests(unittest.TestCase):
-
     def setUp(self):
         self.test_manager = JiraTestManager()
         self.jira = JiraTestManager().jira_normal
@@ -1264,7 +1269,6 @@ class MyPermissionsTests(unittest.TestCase):
 
 
 class PrioritiesTests(unittest.TestCase):
-
     def setUp(self):
         self.jira = JiraTestManager().jira_admin
 
@@ -1272,6 +1276,7 @@ class PrioritiesTests(unittest.TestCase):
         priorities = self.jira.priorities()
         self.assertEqual(len(priorities), 5)
 
+    @not_on_custom_jira_instance
     def test_priority(self):
         priority = self.jira.priority('2')
         self.assertEqual(priority.id, '2')
@@ -1279,7 +1284,6 @@ class PrioritiesTests(unittest.TestCase):
 
 
 class ProjectTests(unittest.TestCase):
-
     def setUp(self):
         self.jira = JiraTestManager().jira_admin
         self.project_b = JiraTestManager().project_b
@@ -1397,37 +1401,42 @@ class ProjectTests(unittest.TestCase):
         self.assertEqual(test.name, name)
         version.delete()
 
+    @not_on_custom_jira_instance
     def test_project_roles(self):
         roles = self.jira.project_roles(self.project_b)
         self.assertEqual(len(roles), 7)
         self.assertIn('Users', roles)
 
+    @not_on_custom_jira_instance
     def test_project_roles_with_project_obj(self):
         project = self.jira.project(self.project_b)
         roles = self.jira.project_roles(project)
         self.assertEqual(len(roles), 7)
         self.assertIn('Users', roles)
 
+    @not_on_custom_jira_instance
     def test_project_role(self):
         role = self.jira.project_role(self.project_b, '10103')
         self.assertEqual(role.id, 10103)
         self.assertEqual(role.name, 'atlassian-addons-project-access')
 
+    @not_on_custom_jira_instance
     def test_project_role_with_project_obj(self):
         project = self.jira.project(self.project_b)
         role = self.jira.project_role(project, '10103')
         self.assertEqual(role.id, 10103)
         self.assertEqual(role.name, 'atlassian-addons-project-access')
 
+    @not_on_custom_jira_instance
     def test_update_project_role(self):
         role = self.jira.project_role(self.project_b, '10103')
-        role.update(users='ci-admin', groups=['jira-developers',
-                                              'jira-users'])
-        self.assertEqual(role.actors[0].name, 'ci-admin')
+        role.update(users=self.test_manager.CI_JIRA_ADMIN, groups=['jira-developers',
+                                                                   'jira-users'])
+        self.assertEqual(role.actors[0].name, self.test_manager.CI_JIRA_ADMIN)
 
 
+@not_on_custom_jira_instance
 class ResolutionTests(unittest.TestCase):
-
     def setUp(self):
         self.jira = JiraTestManager().jira_admin
 
@@ -1442,7 +1451,6 @@ class ResolutionTests(unittest.TestCase):
 
 
 class SearchTests(unittest.TestCase):
-
     def setUp(self):
         self.jira = JiraTestManager().jira_admin
         self.project_b = JiraTestManager().project_b
@@ -1484,7 +1492,6 @@ class SearchTests(unittest.TestCase):
 
 @unittest.skip("temporary disabled")
 class SecurityLevelTests(unittest.TestCase):
-
     def setUp(self):
         self.jira = JiraTestManager().jira_admin
 
@@ -1495,7 +1502,6 @@ class SecurityLevelTests(unittest.TestCase):
 
 
 class ServerInfoTests(unittest.TestCase):
-
     def setUp(self):
         self.jira = JiraTestManager().jira_admin
 
@@ -1506,7 +1512,6 @@ class ServerInfoTests(unittest.TestCase):
 
 
 class StatusTests(unittest.TestCase):
-
     def setUp(self):
         self.jira = JiraTestManager().jira_admin
 
@@ -1525,7 +1530,6 @@ class StatusTests(unittest.TestCase):
 
 
 class UserTests(unittest.TestCase):
-
     def setUp(self):
         self.jira = JiraTestManager().jira_admin
         self.project_a = JiraTestManager().project_a
@@ -1534,63 +1538,65 @@ class UserTests(unittest.TestCase):
         self.issue = self.test_manager.project_b_issue3
 
     def test_user(self):
-        user = self.jira.user('ci-admin')
-        self.assertEqual(user.name, 'ci-admin')
-        self.assertEqual(user.emailAddress, 'noreply@example.com')
+        user = self.jira.user(self.test_manager.CI_JIRA_ADMIN)
+        self.assertEqual(user.name, self.test_manager.CI_JIRA_ADMIN)
+        self.assertRegex(user.emailAddress, '.*@example.com')
 
     def test_search_assignable_users_for_projects(self):
-        users = self.jira.search_assignable_users_for_projects('ci-admin',
+        users = self.jira.search_assignable_users_for_projects(self.test_manager.CI_JIRA_ADMIN,
                                                                '%s,%s' % (self.project_a, self.project_b))
         self.assertGreaterEqual(len(users), 1)
         usernames = map(lambda user: user.name, users)
-        self.assertIn('ci-admin', usernames)
+        self.assertIn(self.test_manager.CI_JIRA_ADMIN, usernames)
 
     def test_search_assignable_users_for_projects_maxresults(self):
-        users = self.jira.search_assignable_users_for_projects('ci-admin',
+        users = self.jira.search_assignable_users_for_projects(self.test_manager.CI_JIRA_ADMIN,
                                                                '%s,%s' % (self.project_a, self.project_b), maxResults=1)
         self.assertLessEqual(len(users), 1)
 
     def test_search_assignable_users_for_projects_startat(self):
-        users = self.jira.search_assignable_users_for_projects('ci-admin',
+        users = self.jira.search_assignable_users_for_projects(self.test_manager.CI_JIRA_ADMIN,
                                                                '%s,%s' % (self.project_a, self.project_b), startAt=1)
         self.assertGreaterEqual(len(users), 0)
 
+    @not_on_custom_jira_instance
     def test_search_assignable_users_for_issues_by_project(self):
-        users = self.jira.search_assignable_users_for_issues('ci-admin',
+        users = self.jira.search_assignable_users_for_issues(self.test_manager.CI_JIRA_ADMIN,
                                                              project=self.project_b)
         self.assertEqual(len(users), 1)
         usernames = map(lambda user: user.name, users)
-        self.assertIn('ci-admin', usernames)
+        self.assertIn(self.test_manager.CI_JIRA_ADMIN, usernames)
 
     def test_search_assignable_users_for_issues_by_project_maxresults(self):
-        users = self.jira.search_assignable_users_for_issues('ci-user',
+        users = self.jira.search_assignable_users_for_issues(self.test_manager.CI_JIRA_USER,
                                                              project=self.project_b, maxResults=1)
         self.assertLessEqual(len(users), 1)
 
     def test_search_assignable_users_for_issues_by_project_startat(self):
-        users = self.jira.search_assignable_users_for_issues('ci-user',
+        users = self.jira.search_assignable_users_for_issues(self.test_manager.CI_JIRA_USER,
                                                              project=self.project_a, startAt=1)
         self.assertGreaterEqual(len(users), 0)
 
+    @not_on_custom_jira_instance
     def test_search_assignable_users_for_issues_by_issue(self):
-        users = self.jira.search_assignable_users_for_issues('ci-admin',
+        users = self.jira.search_assignable_users_for_issues(self.test_manager.CI_JIRA_ADMIN,
                                                              issueKey=self.issue)
         self.assertEqual(len(users), 1)
         usernames = map(lambda user: user.name, users)
-        self.assertIn('ci-admin', usernames)
+        self.assertIn(self.test_manager.CI_JIRA_ADMIN, usernames)
 
     def test_search_assignable_users_for_issues_by_issue_maxresults(self):
-        users = self.jira.search_assignable_users_for_issues('ci-admin',
+        users = self.jira.search_assignable_users_for_issues(self.test_manager.CI_JIRA_ADMIN,
                                                              issueKey=self.issue, maxResults=2)
         self.assertLessEqual(len(users), 2)
 
     def test_search_assignable_users_for_issues_by_issue_startat(self):
-        users = self.jira.search_assignable_users_for_issues('ci-admin',
+        users = self.jira.search_assignable_users_for_issues(self.test_manager.CI_JIRA_ADMIN,
                                                              issueKey=self.issue, startAt=2)
         self.assertGreaterEqual(len(users), 0)
 
     def test_user_avatars(self):
-        avatars = self.jira.user_avatars('ci-admin')
+        avatars = self.jira.user_avatars(self.test_manager.CI_JIRA_ADMIN)
         self.assertGreaterEqual(len(avatars['system']), 20)  # observed values between 20-24 so far
         self.assertEqual(len(avatars['custom']), 0)
 
@@ -1625,12 +1631,12 @@ class UserTests(unittest.TestCase):
             else:
                 raise Exception
 
-        self.jira.set_user_avatar('ci-admin', '10104')
-        avatars = self.jira.user_avatars('ci-admin')
+        self.jira.set_user_avatar(self.test_manager.CI_JIRA_ADMIN, '10104')
+        avatars = self.jira.user_avatars(self.test_manager.CI_JIRA_ADMIN)
         self.assertEqual(find_selected_avatar(avatars)['id'], '10104')
 
-        self.jira.set_user_avatar('ci-admin', '10105')
-        avatars = self.jira.user_avatars('ci-admin')
+        self.jira.set_user_avatar(self.test_manager.CI_JIRA_ADMIN, '10105')
+        avatars = self.jira.user_avatars(self.test_manager.CI_JIRA_ADMIN)
         self.assertEqual(find_selected_avatar(avatars)['id'], '10105')
 
     @unittest.skip("disable until I have permissions to write/modify")
@@ -1639,18 +1645,18 @@ class UserTests(unittest.TestCase):
         size = os.path.getsize(TEST_ICON_PATH)
         filename = os.path.basename(TEST_ICON_PATH)
         with open(TEST_ICON_PATH, "rb") as icon:
-            props = self.jira.create_temp_user_avatar('ci-admin', filename,
+            props = self.jira.create_temp_user_avatar(self.test_manager.CI_JIRA_ADMIN, filename,
                                                       size, icon.read())
         # print(props)
-        self.jira.delete_user_avatar('ci-admin', props['id'])
+        self.jira.delete_user_avatar(self.test_manager.CI_JIRA_ADMIN, props['id'])
 
     @unittest.skip("disabled as is not Travis friendly, probably due to parallel execution")
     def test_search_users(self):
         users = self.jira.search_users('c')
         self.assertEqual(len(users), 2)
         usernames = map(lambda user: user.name, users)
-        self.assertIn('ci-admin', usernames)
-        self.assertIn('ci-user', usernames)
+        self.assertIn(self.test_manager.CI_JIRA_ADMIN, usernames)
+        self.assertIn(self.test_manager.CI_JIRA_USER, usernames)
 
     @unittest.skip("disabled as is not Travis friendly, probably due to parallel execution")
     def test_search_users_maxresults(self):
@@ -1662,11 +1668,13 @@ class UserTests(unittest.TestCase):
         users = self.jira.search_users('c', startAt=1)
         self.assertGreaterEqual(len(users), 1)
 
+    @not_on_custom_jira_instance
     def test_search_allowed_users_for_issue_by_project(self):
         users = self.jira.search_allowed_users_for_issue('a',
                                                          projectKey=self.project_a)
         self.assertGreaterEqual(len(users), 1)
 
+    @not_on_custom_jira_instance
     def test_search_allowed_users_for_issue_by_issue(self):
         users = self.jira.search_allowed_users_for_issue('a',
                                                          issueKey=self.issue)
@@ -1683,12 +1691,12 @@ class UserTests(unittest.TestCase):
         self.assertGreaterEqual(len(users), 0)
 
     def test_add_users_to_set(self):
-        users_set = set([self.jira.user('ci-admin'), self.jira.user('ci-admin')])
+        users_set = set(
+            [self.jira.user(self.test_manager.CI_JIRA_ADMIN), self.jira.user(self.test_manager.CI_JIRA_ADMIN)])
         self.assertEqual(len(users_set), 1)
 
 
 class VersionTests(unittest.TestCase):
-
     def setUp(self):
         self.jira = JiraTestManager().jira_admin
         self.project_b = JiraTestManager().project_b
@@ -1739,7 +1747,6 @@ class VersionTests(unittest.TestCase):
 
 
 class OtherTests(unittest.TestCase):
-
     def test_session_invalid_login(self):
         try:
             JIRA('https://support.atlassian.com',
@@ -1755,7 +1762,6 @@ class OtherTests(unittest.TestCase):
 
 
 class SessionTests(unittest.TestCase):
-
     def setUp(self):
         self.jira = JiraTestManager().jira_admin
 
@@ -1767,16 +1773,16 @@ class SessionTests(unittest.TestCase):
         anon_jira = JIRA('https://support.atlassian.com', logging=False)
         self.assertRaises(JIRAError, anon_jira.session)
 
+    @pytest.mark.skipif(platform.python_version() < '3', reason='Does not work with Python 2')
     def test_session_server_offline(self):
         try:
             JIRA('https://127.0.0.1:1', logging=False)
         except Exception as e:
             logging.error(e)
-            self.assertEqual(type(e), JIRAError)
+            self.assertIn(type(e), (JIRAError, requests.exceptions.ConnectionError))
 
 
 class WebsudoTests(unittest.TestCase):
-
     def setUp(self):
         self.jira = JiraTestManager().jira_admin
 
@@ -1797,6 +1803,7 @@ class UserAdministrationTests(unittest.TestCase):
         self.test_password = rndpassword()
         self.test_groupname = 'testGroupFor_%s' % JiraTestManager().project_a
 
+    @pytest.mark.xfail(reason='User is present in JIRA, but cannot be found via REST API.')
     def test_add_user(self):
 
         try:
@@ -1840,7 +1847,7 @@ class UserAdministrationTests(unittest.TestCase):
 
         x = self.jira.groups(query=self.test_groupname)
         self.assertEqual(self.test_groupname, x[0], "Did not find expected group after trying to add"
-                         " it. Test Fails.")
+                                                    " it. Test Fails.")
         self.jira.remove_group(self.test_groupname)
 
     def test_remove_group(self):
@@ -1856,6 +1863,7 @@ class UserAdministrationTests(unittest.TestCase):
         self.assertEqual(len(
             x), 0, 'Found group with name when it should have been deleted. Test Fails.')
 
+    @not_on_custom_jira_instance
     def test_add_user_to_group(self):
         try:
             self.jira.add_user(

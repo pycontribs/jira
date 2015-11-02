@@ -15,6 +15,7 @@ from six import iteritems, string_types, text_type
 
 from .utils import threaded_requests, json_loads, CaseInsensitiveDict
 
+
 def get_error_list(r):
     error_list = []
     if r.status_code >= 400:
@@ -42,6 +43,7 @@ def get_error_list(r):
             except ValueError:
                 error_list = [r.text]
     return error_list
+
 
 class Resource(object):
 
