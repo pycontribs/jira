@@ -151,7 +151,6 @@ setup(
                       'tlslite>=0.4.4',
                       'six>=1.9.0',
                       'requests_toolbelt'] + (['ordereddict'] if _is_ordereddict_needed() else []),
-    setup_requires=['pytest', ],
     tests_require=['pytest', 'tlslite>=0.4.4', 'requests>=2.6.0',
                    'setuptools', 'pep8', 'autopep8', 'sphinx', 'sphinx_rtd_theme', 'six>=1.9.0',
                    'pytest-cov', 'pytest-pep8', 'pytest-instafail',
