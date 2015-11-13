@@ -1579,10 +1579,7 @@ class JIRA(object):
             fields = []
 
         if isinstance(fields, basestring):
-            if "," in fields:
-                fields = fields.split(",")
-            else:
-                fields = [fields]
+            fields = fields.split(",")
 
         # this will translate JQL field names to REST API Name
         # most people do know the JQL names so this will help them use the API easier
