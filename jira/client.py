@@ -1578,7 +1578,7 @@ class JIRA(object):
         if fields is None:
             fields = []
 
-        if isinstance(fields, basestring):
+        if isinstance(fields, ("".__class__, u"".__class__)):
             fields = fields.split(",")
 
         # this will translate JQL field names to REST API Name
