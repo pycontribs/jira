@@ -1625,7 +1625,7 @@ class JIRA(object):
 
         if untranslate:
             for i in issues:
-                for k, v in untranslate.iteritems():
+                for k, v in untranslate.items():
                     if k in i.raw['fields']:
                         i.raw['fields'][v] = i.raw['fields'][k]
 
