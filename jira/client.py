@@ -275,8 +275,9 @@ class JIRA(object):
         # TODO: check if this works with non-admin accounts
         self._fields = {}
         for f in self.fields():
-            for name in f['clauseNames']:
-                self._fields[name] = f['id']
+            if 'clauseNames' in f:
+                for name in f['clauseNames']:
+                    self._fields[name] = f['id']
 
     def _check_update_(self):
         # check if the current version of the library is outdated
