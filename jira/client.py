@@ -96,15 +96,19 @@ def translate_resource_args(func):
 
     return wrapper
 
-
 class ResultList(list):
 
-    def __init__(self, iterable=None, _total=None):
+    def __init__(self, iterable=None, _startAt=None, _maxResults=None, _total=None, _isLast=None):
         if iterable is not None:
             list.__init__(self, iterable)
         else:
             list.__init__(self)
-        self.total = _total if _total is not None else len(self)
+
+        self.startAt = _startAt
+        self.maxResults = _maxResults
+        # Optional parameters:
+        self.isLast = _isLast
+        self.total = _total
 
 
 class QshGenerator:
@@ -186,6 +190,7 @@ class JIRA(object):
             * rest_api_version -- the version of the REST resources under rest_path to use. Defaults to ``2``.
             * verify -- Verify SSL certs. Defaults to ``True``.
             * client_cert -- a tuple of (cert,key) for the requests library for client side SSL
+            * check_update -- Check whether using the newest python-jira library version.
         :param basic_auth: A tuple of username and password to use when establishing a session via HTTP BASIC
         authentication.
         :param oauth: A dict of properties for OAuth authentication. The following properties are required:
@@ -310,6 +315,53 @@ class JIRA(object):
             raise JIRAError("SecurityTokenMissing: %s" % content)
             return False
         return True
+
+    def _fetch_pages(self, item_type, items_key, request_path, startAt, maxResults, params, base=JIRA_BASE_URL):
+        """
+        Fetches
+        :param item_type: Type of single item. ResultList of such items will be returned.
+        :param items_key: Path to the items in JSON returned from server.
+                Set it to None, if response is an array, and not a JSON object.
+        :param request_path: path in request URL
+        :param startAt: index of the first record to be fetched
+        :param maxResults: Maximum number of items to return.
+                If maxResults evaluates as False, it will try to get all items in batches.
+        :param params: Params to be set in all requests.
+            startAt and maxResults params will be added to this dictionary.
+        :param base: base URL
+        :return: ResultList
+        """
+
+        page_params = params.copy()
+        if startAt:
+            page_params['startAt'] = startAt
+        if maxResults:
+            page_params['maxResults'] = maxResults
+        resource = self._get_json(request_path, params=page_params, base=base)
+        next_items_page = [item_type(self._options, self._session, raw_issue_json) for raw_issue_json in
+                           (resource[items_key] if items_key else resource)]
+        items = next_items_page
+
+        total = resource.get('total')
+        # 'isLast' is the optional key added to responses in JIRA Agile 6.7.6. So far not used in basic JIRA API.
+        is_last = resource.get('isLast')
+        start_at_from_response = resource.get('startAt')
+        max_results_from_response = resource.get('maxResults')
+
+        # If maxResults evaluates as False, get all items in batches
+        if not maxResults:
+            page_size = max_results_from_response or len(items)
+            page_start = (startAt or start_at_from_response or 0) + page_size
+            while not is_last and (total is None or page_start < total) and len(next_items_page) == page_size:
+                page_params['startAt'] = page_start
+                page_params['maxResults'] = page_size
+                resource = self._get_json(request_path, params=page_params, base=base)
+                next_items_page = [item_type(self._options, self._session, raw_issue_json) for raw_issue_json in
+                                   (resource[items_key] if items_key else resource)]
+                items.extend(next_items_page)
+                page_start += page_size
+
+        return ResultList(items, start_at_from_response, max_results_from_response, total, is_last)
 
     # Information about this client
 
@@ -539,19 +591,14 @@ class JIRA(object):
 
         :param filter: either "favourite" or "my", the type of dashboards to return
         :param startAt: index of the first dashboard to return
-        :param maxResults: maximum number of dashboards to return. The total number of
-            results is always available in the ``total`` attribute of the returned ResultList.
+        :param maxResults: maximum number of dashboards to return.
+            If maxResults evaluates as False, it will try to get all items in batches.
+        :rtype ResultList
         """
         params = {}
         if filter is not None:
             params['filter'] = filter
-        params['startAt'] = startAt
-        params['maxResults'] = maxResults
-
-        r_json = self._get_json('dashboard', params=params)
-        dashboards = [Dashboard(self._options, self._session, raw_dash_json)
-                      for raw_dash_json in r_json['dashboards']]
-        return ResultList(dashboards, r_json['total'])
+        return self._fetch_pages(Dashboard, 'dashboards', 'dashboard', startAt, maxResults, params)
 
     def dashboard(self, id):
         """
@@ -647,10 +694,9 @@ class JIRA(object):
         """
         Return a list of groups matching the specified criteria.
 
-        Keyword arguments:
-        query -- filter groups by name with this string
-        exclude -- filter out groups by name with this string
-        maxResults -- maximum results to return. defaults to 9999
+        :param query: filter groups by name with this string
+        :param exclude: filter out groups by name with this string
+        :param maxResults: maximum results to return. defaults to 9999
         """
         params = {}
         groups = []
@@ -1569,14 +1615,13 @@ class JIRA(object):
         :param startAt: index of the first issue to return
         :param maxResults: maximum number of issues to return. Total number of results
             is available in the ``total`` attribute of the returned ResultList.
-            If maxResults evaluates as False, it will try to get all issues in batches of 50.
+            If maxResults evaluates as False, it will try to get all issues in batches.
         :param fields: comma-separated string of issue fields to include in the results
         :param expand: extra information to fetch inside each resource
+        :param json_result: JSON response will be returned when this parameter is set to True.
+                Otherwise, ResultList will be returned.
         """
         # TODO what to do about the expand, which isn't related to the issues?
-        infinite = False
-        maxi = 50
-        idx = 0
         if fields is None:
             fields = []
 
@@ -1592,11 +1637,6 @@ class JIRA(object):
                     untranslate[self._fields[field]] = fields[i]
                     fields[i] = self._fields[field]
 
-        # If None is passed as parameter, this fetch all issues from the query
-        if not maxResults:
-            maxResults = maxi
-            infinite = True
-
         search_params = {
             "jql": jql_str,
             "startAt": startAt,
@@ -1606,22 +1646,11 @@ class JIRA(object):
             "expand": expand
         }
         if json_result:
+            if not maxResults:
+                warnings.warn('All issues cannot be fetched at once, when json_result parameter is set', Warning)
             return self._get_json('search', params=search_params)
 
-        resource = self._get_json('search', params=search_params)
-        issues = [Issue(self._options, self._session, raw_issue_json)
-                  for raw_issue_json in resource['issues']]
-        cnt = len(issues)
-        total = resource['total']
-        if infinite:
-            while cnt == maxi:
-                idx += maxi
-                search_params["startAt"] = idx
-                resource = self._get_json('search', params=search_params)
-                issue_batch = [Issue(self._options, self._session, raw_issue_json) for raw_issue_json in
-                               resource['issues']]
-                issues.extend(issue_batch)
-                cnt = len(issue_batch)
+        issues = self._fetch_pages(Issue, 'issues', 'search', startAt, maxResults, search_params)
 
         if untranslate:
             for i in issues:
@@ -1629,7 +1658,7 @@ class JIRA(object):
                     if k in i.raw['fields']:
                         i.raw['fields'][v] = i.raw['fields'][k]
 
-        return ResultList(issues, total)
+        return issues
 
     # Security levels
     def security_level(self, id):
@@ -1691,19 +1720,14 @@ class JIRA(object):
         :param username: a string to match usernames against
         :param projectKeys: comma-separated list of project keys to check for issue assignment permissions
         :param startAt: index of the first user to return
-        :param maxResults: maximum number of users to return
+        :param maxResults: maximum number of users to return.
+                If maxResults evaluates as False, it will try to get all users in batches.
         """
         params = {
             'username': username,
             'projectKeys': projectKeys,
-            'startAt': startAt,
-            'maxResults': maxResults
         }
-        r_json = self._get_json(
-            'user/assignable/multiProjectSearch', params=params)
-        users = [User(self._options, self._session, raw_user_json)
-                 for raw_user_json in r_json]
-        return users
+        return self._fetch_pages(User, None, 'user/assignable/multiProjectSearch', startAt, maxResults, params)
 
     def search_assignable_users_for_issues(self, username, project=None, issueKey=None, expand=None, startAt=0,
                                            maxResults=50):
@@ -1720,12 +1744,11 @@ class JIRA(object):
         :param issueKey: filter returned users by this issue (expected if a result will be used to edit this issue)
         :param expand: extra information to fetch inside each resource
         :param startAt: index of the first user to return
-        :param maxResults: maximum number of users to return
+        :param maxResults: maximum number of users to return.
+                If maxResults evaluates as False, it will try to get all items in batches.
         """
         params = {
-            'username': username,
-            'startAt': startAt,
-            'maxResults': maxResults,
+            'username': username
         }
         if project is not None:
             params['project'] = project
@@ -1733,10 +1756,7 @@ class JIRA(object):
             params['issueKey'] = issueKey
         if expand is not None:
             params['expand'] = expand
-        r_json = self._get_json('user/assignable/search', params)
-        users = [User(self._options, self._session, raw_user_json)
-                 for raw_user_json in r_json]
-        return users
+        return self._fetch_pages(User, None, 'user/assignable/search', startAt, maxResults, params)
 
     # non-resource
     def user_avatars(self, username):
@@ -1843,46 +1863,40 @@ class JIRA(object):
         """
         Get a list of user Resources that match the specified search string.
 
-        :param user: a string to match usernames, name or email against
-        :param startAt: index of the first user to return
-        :param maxResults: maximum number of users to return
+        :param user: a string to match usernames, name or email against.
+        :param startAt: index of the first user to return.
+        :param maxResults: maximum number of users to return.
+                If maxResults evaluates as False, it will try to get all items in batches.
+        :param includeActive: If true, then active users are included in the results.
+        :param includeInactive: If true, then inactive users are included in the results.
         """
         params = {
             'username': user,
-            'startAt': startAt,
-            'maxResults': maxResults,
             'includeActive': includeActive,
             'includeInactive': includeInactive
         }
-        r_json = self._get_json('user/search', params=params)
-        users = [User(self._options, self._session, raw_user_json)
-                 for raw_user_json in r_json]
-        return users
+        return self._fetch_pages(User, None, 'user/search', startAt, maxResults, params)
 
     def search_allowed_users_for_issue(self, user, issueKey=None, projectKey=None, startAt=0, maxResults=50):
         """
         Get a list of user Resources that match a username string and have browse permission for the issue or
         project.
 
-        :param user: a string to match usernames against
-        :param issueKey: find users with browse permission for this issue
-        :param projectKey: find users with browse permission for this project
-        :param startAt: index of the first user to return
-        :param maxResults: maximum number of users to return
+        :param user: a string to match usernames against.
+        :param issueKey: find users with browse permission for this issue.
+        :param projectKey: find users with browse permission for this project.
+        :param startAt: index of the first user to return.
+        :param maxResults: maximum number of users to return.
+                If maxResults evaluates as False, it will try to get all items in batches.
         """
         params = {
-            'username': user,
-            'startAt': startAt,
-            'maxResults': maxResults,
+            'username': user
         }
         if issueKey is not None:
             params['issueKey'] = issueKey
         if projectKey is not None:
             params['projectKey'] = projectKey
-        r_json = self._get_json('user/viewissue/search', params)
-        users = [User(self._options, self._session, raw_user_json)
-                 for raw_user_json in r_json]
-        return users
+        return self._fetch_pages(User, None, 'user/viewissue/search', startAt, maxResults, params)
 
     # Versions
 
