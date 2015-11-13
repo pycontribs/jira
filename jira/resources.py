@@ -349,15 +349,35 @@ class Filter(Resource):
         if raw:
             self._parse_raw(raw)
 
-
 class Issue(Resource):
-
     """A JIRA issue."""
+
+    class _IssueFields:
+        def __init__(self):
+            self.attachment = None
+            """ :type : list[Attachment] """
+            self.description = None
+            """ :type : str """
+            self.project = None
+            """ :type : Project """
+            self.comment = None
+            """ :type : list[Comment] """
+            self.issuelinks = None
+            """ :type : list[IssueLink] """
+            self.worklog= None
+            """ :type : list[Worklog] """
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(self, 'issue/{0}', options, session)
         if raw:
             self._parse_raw(raw)
+
+        self.fields = None
+        """ :type : Issue._IssueFields """
+        self.id = None
+        """ :type : int """
+        self.key = None
+        """ :type : str """
 
     def update(self, fields=None, update=None, async=None, jira=None, **fieldargs):
         """
@@ -437,7 +457,6 @@ class Issue(Resource):
 
     def __eq__(self, other):
         return self.id == other.id
-
 
 class Comment(Resource):
 
