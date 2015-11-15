@@ -275,8 +275,9 @@ class JIRA(object):
         # TODO: check if this works with non-admin accounts
         self._fields = {}
         for f in self.fields():
-            for name in f['clauseNames']:
-                self._fields[name] = f['id']
+            if 'clauseNames' in f:
+                for name in f['clauseNames']:
+                    self._fields[name] = f['id']
 
     def _check_update_(self):
         # check if the current version of the library is outdated
@@ -1577,11 +1578,8 @@ class JIRA(object):
         if fields is None:
             fields = []
 
-        if isinstance(fields, basestring):
-            if "," in fields:
-                fields = fields.split(",")
-            else:
-                fields = [fields]
+        if isinstance(fields, ("".__class__, u"".__class__)):
+            fields = fields.split(",")
 
         # this will translate JQL field names to REST API Name
         # most people do know the JQL names so this will help them use the API easier
@@ -1625,7 +1623,7 @@ class JIRA(object):
 
         if untranslate:
             for i in issues:
-                for k, v in untranslate.iteritems():
+                for k, v in untranslate.items():
                     if k in i.raw['fields']:
                         i.raw['fields'][v] = i.raw['fields'][k]
 
