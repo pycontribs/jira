@@ -316,7 +316,7 @@ class JIRA(object):
             return False
         return True
 
-    def _fetch_pages(self, item_type, items_key, request_path, startAt, maxResults, params, base=JIRA_BASE_URL):
+    def _fetch_pages(self, item_type, items_key, request_path, startAt, maxResults, params = None, base=JIRA_BASE_URL):
         """
         Fetches
         :param item_type: Type of single item. ResultList of such items will be returned.
@@ -326,13 +326,13 @@ class JIRA(object):
         :param startAt: index of the first record to be fetched
         :param maxResults: Maximum number of items to return.
                 If maxResults evaluates as False, it will try to get all items in batches.
-        :param params: Params to be set in all requests.
-            startAt and maxResults params will be added to this dictionary.
+        :param params: Params to be used in all requests. Should not contain startAt and maxResults,
+                        as they will be added for each request created from this function.
         :param base: base URL
         :return: ResultList
         """
 
-        page_params = params.copy()
+        page_params = params.copy() if params else {}
         if startAt:
             page_params['startAt'] = startAt
         if maxResults:
@@ -2069,7 +2069,7 @@ class JIRA(object):
         r = self._session.put(url, params=params, data=json.dumps(data))
 
     def _get_url(self, path, base=JIRA_BASE_URL):
-        options = self._options
+        options = self._options.copy()
         options.update({'path': path})
         return base.format(**options)
 
