@@ -4,7 +4,7 @@ set -e
 VERSION=$(python -c "from jira.version import __version__ ; print __version__")
 echo Preparing to release version $VERSION
 
-echo === Chechink that all changes are commited and pushed ===
+echo === Checking that all changes are commited and pushed ===
 git pull -u
 
 #git diff
