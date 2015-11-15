@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from requests import Session
 from requests.exceptions import ConnectionError
 import logging
+import random
 import time
 import json
 from .exceptions import JIRAError
@@ -73,7 +74,7 @@ class ResilientSession(Session):
                 response, response.errno, request, url, vars(response), response.__dict__))
         if hasattr(response, 'status_code'):
             if response.status_code in [502, 503, 504]:
-                return True
+                msg = "%s %s" % (response.status_code, response.reason)
             elif not (response.status_code == 200 and
                       len(response.content) == 0 and
                       'X-Seraph-LoginReason' in response.headers and
@@ -82,7 +83,8 @@ class ResilientSession(Session):
             else:
                 msg = "Atlassian's bug https://jira.atlassian.com/browse/JRA-41559"
 
-        delay = 10 * counter
+        # Exponential backoff with full jitter.
+        delay = min(60, 10 * 2 ** counter) * random.random()
         logging.warn("Got recoverable error from %s %s, will retry [%s/%s] in %ss. Err: %s" % (
             request, url, counter, self.max_retries, delay, msg))
         time.sleep(delay)
