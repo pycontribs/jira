@@ -227,6 +227,8 @@ class JIRA(object):
 
         self._options.update(options)
 
+        self._rank = None
+
         # Rip off trailing slash since all urls depend on that
         if self._options['server'].endswith('/'):
             self._options['server'] = self._options['server'][:-1]
@@ -2789,8 +2791,13 @@ class JIRA(object):
         # {"issueKeys":["ANERDS-102"],"rankBeforeKey":"ANERDS-94","rankAfterKey":"ANERDS-7","customFieldId":11431}
         if not self._rank:
             for field in self.fields():
-                if field['name'] == 'Rank' and field['schema']['custom'] == "com.pyxis.greenhopper.jira:gh-global-rank":
-                    self._rank = field['schema']['customId']
+                if field['name'] == 'Rank':
+                    if field['schema']['custom'] == "com.pyxis.greenhopper.jira:gh-lexo-rank":
+                        self._rank = field['schema']['customId']
+                        break
+                    elif field['schema']['custom'] == "com.pyxis.greenhopper.jira:gh-global-rank":
+                        # Obsolete since JIRA v6.3.13.1
+                        self._rank = field['schema']['customId']
         data = {
             "issueKeys": [issue], "rankBeforeKey": next_issue, "customFieldId": self._rank}
         url = self._get_url('rank', base=self.AGILE_BASE_URL)
@@ -2803,6 +2810,5 @@ class GreenHopper(JIRA):
     def __init__(self, options=None, basic_auth=None, oauth=None, async=None):
         warnings.warn(
             "GreenHopper() class is deprecated, just use JIRA() instead.", DeprecationWarning)
-        self._rank = None
         JIRA.__init__(
             self, options=options, basic_auth=basic_auth, oauth=oauth, async=async)
