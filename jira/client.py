@@ -59,7 +59,7 @@ from .resources import Resource, Issue, Comment, Project, Attachment, Component,
     Worklog, IssueLink, IssueLinkType, IssueType, Priority, Version, Role, Resolution, SecurityLevel, Status, User, \
     CustomFieldOption, RemoteLink
 # GreenHopper specific resources
-from .resources import Board, Sprint
+from .resources import GreenHopperResource, Board, Sprint
 from .resilientsession import ResilientSession
 from .version import __version__
 from .utils import threaded_requests, json_loads, CaseInsensitiveDict
@@ -96,15 +96,19 @@ def translate_resource_args(func):
 
     return wrapper
 
-
 class ResultList(list):
 
-    def __init__(self, iterable=None, _total=None):
+    def __init__(self, iterable=None, _startAt=None, _maxResults=None, _total=None, _isLast=None):
         if iterable is not None:
             list.__init__(self, iterable)
         else:
             list.__init__(self)
-        self.total = _total if _total is not None else len(self)
+
+        self.startAt = _startAt
+        self.maxResults = _maxResults
+        # Optional parameters:
+        self.isLast = _isLast
+        self.total = _total
 
 
 class QshGenerator:
@@ -140,6 +144,8 @@ class JIRA(object):
         "context_path": "/",
         "rest_path": "api",
         "rest_api_version": "2",
+        "agile_rest_path" : GreenHopperResource.GREENHOPPER_REST_PATH,
+        "agile_rest_api_version" : "1.0",
         "verify": True,
         "resilient": True,
         "async": False,
@@ -159,8 +165,9 @@ class JIRA(object):
 
     checked_version = False
 
-    JIRA_BASE_URL = '{server}/rest/api/{rest_api_version}/{path}'
-    AGILE_BASE_URL = '{server}/rest/greenhopper/1.0/{path}'
+    # TODO: remove these two variables and use the ones defined in resources
+    JIRA_BASE_URL = Resource.JIRA_BASE_URL
+    AGILE_BASE_URL = GreenHopperResource.AGILE_BASE_URL
 
     def __init__(self, server=None, options=None, basic_auth=None, oauth=None, jwt=None,
                  validate=False, get_server_info=True, async=False, logging=True, max_retries=3):
@@ -184,8 +191,11 @@ class JIRA(object):
             * server -- the server address and context path to use. Defaults to ``http://localhost:2990/jira``.
             * rest_path -- the root REST path to use. Defaults to ``api``, where the JIRA REST resources live.
             * rest_api_version -- the version of the REST resources under rest_path to use. Defaults to ``2``.
+            * agile_rest_path - the REST path to use for JIRA Agile requests. Defaults to ``greenhopper`` (old, private
+               API). Check `GreenHopperResource` for other supported values.
             * verify -- Verify SSL certs. Defaults to ``True``.
             * client_cert -- a tuple of (cert,key) for the requests library for client side SSL
+            * check_update -- Check whether using the newest python-jira library version.
         :param basic_auth: A tuple of username and password to use when establishing a session via HTTP BASIC
         authentication.
         :param oauth: A dict of properties for OAuth authentication. The following properties are required:
@@ -310,6 +320,53 @@ class JIRA(object):
             raise JIRAError("SecurityTokenMissing: %s" % content)
             return False
         return True
+
+    def _fetch_pages(self, item_type, items_key, request_path, startAt, maxResults, params = None, base=JIRA_BASE_URL):
+        """
+        Fetches
+        :param item_type: Type of single item. ResultList of such items will be returned.
+        :param items_key: Path to the items in JSON returned from server.
+                Set it to None, if response is an array, and not a JSON object.
+        :param request_path: path in request URL
+        :param startAt: index of the first record to be fetched
+        :param maxResults: Maximum number of items to return.
+                If maxResults evaluates as False, it will try to get all items in batches.
+        :param params: Params to be used in all requests. Should not contain startAt and maxResults,
+                        as they will be added for each request created from this function.
+        :param base: base URL
+        :return: ResultList
+        """
+
+        page_params = params.copy() if params else {}
+        if startAt:
+            page_params['startAt'] = startAt
+        if maxResults:
+            page_params['maxResults'] = maxResults
+        resource = self._get_json(request_path, params=page_params, base=base)
+        next_items_page = [item_type(self._options, self._session, raw_issue_json) for raw_issue_json in
+                           (resource[items_key] if items_key else resource)]
+        items = next_items_page
+
+        total = resource.get('total')
+        # 'isLast' is the optional key added to responses in JIRA Agile 6.7.6. So far not used in basic JIRA API.
+        is_last = resource.get('isLast')
+        start_at_from_response = resource.get('startAt')
+        max_results_from_response = resource.get('maxResults')
+
+        # If maxResults evaluates as False, get all items in batches
+        if not maxResults:
+            page_size = max_results_from_response or len(items)
+            page_start = (startAt or start_at_from_response or 0) + page_size
+            while not is_last and (total is None or page_start < total) and len(next_items_page) == page_size:
+                page_params['startAt'] = page_start
+                page_params['maxResults'] = page_size
+                resource = self._get_json(request_path, params=page_params, base=base)
+                next_items_page = [item_type(self._options, self._session, raw_issue_json) for raw_issue_json in
+                                   (resource[items_key] if items_key else resource)]
+                items.extend(next_items_page)
+                page_start += page_size
+
+        return ResultList(items, start_at_from_response, max_results_from_response, total, is_last)
 
     # Information about this client
 
@@ -539,19 +596,14 @@ class JIRA(object):
 
         :param filter: either "favourite" or "my", the type of dashboards to return
         :param startAt: index of the first dashboard to return
-        :param maxResults: maximum number of dashboards to return. The total number of
-            results is always available in the ``total`` attribute of the returned ResultList.
+        :param maxResults: maximum number of dashboards to return.
+            If maxResults evaluates as False, it will try to get all items in batches.
+        :rtype ResultList
         """
         params = {}
         if filter is not None:
             params['filter'] = filter
-        params['startAt'] = startAt
-        params['maxResults'] = maxResults
-
-        r_json = self._get_json('dashboard', params=params)
-        dashboards = [Dashboard(self._options, self._session, raw_dash_json)
-                      for raw_dash_json in r_json['dashboards']]
-        return ResultList(dashboards, r_json['total'])
+        return self._fetch_pages(Dashboard, 'dashboards', 'dashboard', startAt, maxResults, params)
 
     def dashboard(self, id):
         """
@@ -647,10 +699,9 @@ class JIRA(object):
         """
         Return a list of groups matching the specified criteria.
 
-        Keyword arguments:
-        query -- filter groups by name with this string
-        exclude -- filter out groups by name with this string
-        maxResults -- maximum results to return. defaults to 9999
+        :param query: filter groups by name with this string
+        :param exclude: filter out groups by name with this string
+        :param maxResults: maximum results to return. defaults to 9999
         """
         params = {}
         groups = []
@@ -1569,14 +1620,13 @@ class JIRA(object):
         :param startAt: index of the first issue to return
         :param maxResults: maximum number of issues to return. Total number of results
             is available in the ``total`` attribute of the returned ResultList.
-            If maxResults evaluates as False, it will try to get all issues in batches of 50.
+            If maxResults evaluates as False, it will try to get all issues in batches.
         :param fields: comma-separated string of issue fields to include in the results
         :param expand: extra information to fetch inside each resource
+        :param json_result: JSON response will be returned when this parameter is set to True.
+                Otherwise, ResultList will be returned.
         """
         # TODO what to do about the expand, which isn't related to the issues?
-        infinite = False
-        maxi = 50
-        idx = 0
         if fields is None:
             fields = []
 
@@ -1592,11 +1642,6 @@ class JIRA(object):
                     untranslate[self._fields[field]] = fields[i]
                     fields[i] = self._fields[field]
 
-        # If None is passed as parameter, this fetch all issues from the query
-        if not maxResults:
-            maxResults = maxi
-            infinite = True
-
         search_params = {
             "jql": jql_str,
             "startAt": startAt,
@@ -1606,22 +1651,11 @@ class JIRA(object):
             "expand": expand
         }
         if json_result:
+            if not maxResults:
+                warnings.warn('All issues cannot be fetched at once, when json_result parameter is set', Warning)
             return self._get_json('search', params=search_params)
 
-        resource = self._get_json('search', params=search_params)
-        issues = [Issue(self._options, self._session, raw_issue_json)
-                  for raw_issue_json in resource['issues']]
-        cnt = len(issues)
-        total = resource['total']
-        if infinite:
-            while cnt == maxi:
-                idx += maxi
-                search_params["startAt"] = idx
-                resource = self._get_json('search', params=search_params)
-                issue_batch = [Issue(self._options, self._session, raw_issue_json) for raw_issue_json in
-                               resource['issues']]
-                issues.extend(issue_batch)
-                cnt = len(issue_batch)
+        issues = self._fetch_pages(Issue, 'issues', 'search', startAt, maxResults, search_params)
 
         if untranslate:
             for i in issues:
@@ -1629,7 +1663,7 @@ class JIRA(object):
                     if k in i.raw['fields']:
                         i.raw['fields'][v] = i.raw['fields'][k]
 
-        return ResultList(issues, total)
+        return issues
 
     # Security levels
     def security_level(self, id):
@@ -1691,19 +1725,14 @@ class JIRA(object):
         :param username: a string to match usernames against
         :param projectKeys: comma-separated list of project keys to check for issue assignment permissions
         :param startAt: index of the first user to return
-        :param maxResults: maximum number of users to return
+        :param maxResults: maximum number of users to return.
+                If maxResults evaluates as False, it will try to get all users in batches.
         """
         params = {
             'username': username,
             'projectKeys': projectKeys,
-            'startAt': startAt,
-            'maxResults': maxResults
         }
-        r_json = self._get_json(
-            'user/assignable/multiProjectSearch', params=params)
-        users = [User(self._options, self._session, raw_user_json)
-                 for raw_user_json in r_json]
-        return users
+        return self._fetch_pages(User, None, 'user/assignable/multiProjectSearch', startAt, maxResults, params)
 
     def search_assignable_users_for_issues(self, username, project=None, issueKey=None, expand=None, startAt=0,
                                            maxResults=50):
@@ -1720,12 +1749,11 @@ class JIRA(object):
         :param issueKey: filter returned users by this issue (expected if a result will be used to edit this issue)
         :param expand: extra information to fetch inside each resource
         :param startAt: index of the first user to return
-        :param maxResults: maximum number of users to return
+        :param maxResults: maximum number of users to return.
+                If maxResults evaluates as False, it will try to get all items in batches.
         """
         params = {
-            'username': username,
-            'startAt': startAt,
-            'maxResults': maxResults,
+            'username': username
         }
         if project is not None:
             params['project'] = project
@@ -1733,10 +1761,7 @@ class JIRA(object):
             params['issueKey'] = issueKey
         if expand is not None:
             params['expand'] = expand
-        r_json = self._get_json('user/assignable/search', params)
-        users = [User(self._options, self._session, raw_user_json)
-                 for raw_user_json in r_json]
-        return users
+        return self._fetch_pages(User, None, 'user/assignable/search', startAt, maxResults, params)
 
     # non-resource
     def user_avatars(self, username):
@@ -1843,46 +1868,40 @@ class JIRA(object):
         """
         Get a list of user Resources that match the specified search string.
 
-        :param user: a string to match usernames, name or email against
-        :param startAt: index of the first user to return
-        :param maxResults: maximum number of users to return
+        :param user: a string to match usernames, name or email against.
+        :param startAt: index of the first user to return.
+        :param maxResults: maximum number of users to return.
+                If maxResults evaluates as False, it will try to get all items in batches.
+        :param includeActive: If true, then active users are included in the results.
+        :param includeInactive: If true, then inactive users are included in the results.
         """
         params = {
             'username': user,
-            'startAt': startAt,
-            'maxResults': maxResults,
             'includeActive': includeActive,
             'includeInactive': includeInactive
         }
-        r_json = self._get_json('user/search', params=params)
-        users = [User(self._options, self._session, raw_user_json)
-                 for raw_user_json in r_json]
-        return users
+        return self._fetch_pages(User, None, 'user/search', startAt, maxResults, params)
 
     def search_allowed_users_for_issue(self, user, issueKey=None, projectKey=None, startAt=0, maxResults=50):
         """
         Get a list of user Resources that match a username string and have browse permission for the issue or
         project.
 
-        :param user: a string to match usernames against
-        :param issueKey: find users with browse permission for this issue
-        :param projectKey: find users with browse permission for this project
-        :param startAt: index of the first user to return
-        :param maxResults: maximum number of users to return
+        :param user: a string to match usernames against.
+        :param issueKey: find users with browse permission for this issue.
+        :param projectKey: find users with browse permission for this project.
+        :param startAt: index of the first user to return.
+        :param maxResults: maximum number of users to return.
+                If maxResults evaluates as False, it will try to get all items in batches.
         """
         params = {
-            'username': user,
-            'startAt': startAt,
-            'maxResults': maxResults,
+            'username': user
         }
         if issueKey is not None:
             params['issueKey'] = issueKey
         if projectKey is not None:
             params['projectKey'] = projectKey
-        r_json = self._get_json('user/viewissue/search', params)
-        users = [User(self._options, self._session, raw_user_json)
-                 for raw_user_json in r_json]
-        return users
+        return self._fetch_pages(User, None, 'user/viewissue/search', startAt, maxResults, params)
 
     # Versions
 
@@ -2055,7 +2074,7 @@ class JIRA(object):
         r = self._session.put(url, params=params, data=json.dumps(data))
 
     def _get_url(self, path, base=JIRA_BASE_URL):
-        options = self._options
+        options = self._options.copy()
         options.update({'path': path})
         return base.format(**options)
 
@@ -2534,51 +2553,82 @@ class JIRA(object):
     """
 
     @translate_resource_args
-    def boards(self):
+    def boards(self, startAt=0, maxResults=50, type=None, name=None):
         """
-        Get a list of board GreenHopperResources.
-        """
-        r_json = self._get_json(
-            'rapidviews/list', base=self.AGILE_BASE_URL)
+        Get a list of board resources.
 
-        boards = [Board(self._options, self._session, raw_boards_json)
-                  for raw_boards_json in r_json['views']]
-        return boards
+        :param startAt: The starting index of the returned boards. Base index: 0.
+        :param maxResults: The maximum number of boards to return per page. Default: 50
+        :param type: Filters results to boards of the specified type. Valid values: scrum, kanban.
+        :param name: Filters results to boards that match or partially match the specified name.
+        :rtype ResultList[Board]
+
+        When old GreenHopper private API is used, paging is not enabled and all parameters are ignored.
+        """
+
+        params = {}
+        if type:
+            params['type'] = type
+        if name:
+            params['name'] = name
+
+        if self._options['agile_rest_path'] == GreenHopperResource.GREENHOPPER_REST_PATH:
+            # Old, private API did not support pagination, all records were present in response,
+            #   and no parameters were supported.
+            if startAt or maxResults or params:
+                warnings.warn('Old private GreenHopper API is used, all parameters will be ignored.', Warning)
+
+            r_json = self._get_json('rapidviews/list', base=self.AGILE_BASE_URL)
+            boards = [Board(self._options, self._session, raw_boards_json) for raw_boards_json in r_json['views']]
+            return ResultList(boards, 0, len(boards), len(boards), True)
+        else:
+            return self._fetch_pages(Board, 'values', 'board', startAt, maxResults, params, base=self.AGILE_BASE_URL)
 
     @translate_resource_args
-    def sprints(self, id, extended=False):
+    def sprints(self, board_id=None, extended=False, startAt=0, maxResults=50, state=None):
         """
         Get a list of sprint GreenHopperResources.
 
-        :param id: the board to get sprints from
-        :param extended: fetch additional information like startDate, endDate, completeDate,
-            much slower because it requires an additional requests for each sprint
-        :rtype: dict
-             >>> { "id": 893,
-             >>> "name": "iteration.5",
-             >>> "state": "FUTURE",
-             >>> "linkedPagesCount": 0,
-             >>> "startDate": "None",
-             >>> "endDate": "None",
-             >>> "completeDate": "None",
-             >>> "remoteLinks": []
-             >>> }
+        :param board_id: the board to get sprints from
+        :param extended: Used only by old GreenHopper API to fetch additional information like
+            startDate, endDate, completeDate, much slower because it requires an additional requests for each sprint.
+            New JIRA Agile API always returns this information without a need for additional requests.
+        :param startAt: the index of the first sprint to return (0 based)
+        :param maxResults: the maximum number of sprints to return
+        :param state: Filters results to sprints in specified states. Valid values: future, active, closed.
+            You can define multiple states separated by commas
+        :rtype dict
+        :return (content depends on API version, but always contains id, name, state, startDate and endDate)
+
+        When old GreenHopper private API is used, paging is not enabled,
+            and `startAt`, `maxResults` and `state` parameters are ignored.
         """
-        r_json = self._get_json('sprintquery/%s?includeHistoricSprints=true&includeFutureSprints=true' % id,
-                                base=self.AGILE_BASE_URL)
 
-        if extended:
-            sprints = []
-            for raw_sprints_json in r_json['sprints']:
-                r_json = self._get_json(
-                    'sprint/%s/edit/model' % raw_sprints_json['id'], base=self.AGILE_BASE_URL)
-                sprints.append(
-                    Sprint(self._options, self._session, r_json['sprint']))
+        params = {}
+        if state:
+            if isinstance(state, string_types):
+                state = state.split(",")
+            params['state'] = state
+
+        if self._options['agile_rest_path'] == GreenHopperResource.GREENHOPPER_REST_PATH:
+            r_json = self._get_json('sprintquery/%s?includeHistoricSprints=true&includeFutureSprints=true' % board_id,
+                                    base=self.AGILE_BASE_URL)
+
+            if params:
+                warnings.warn('Old private GreenHopper API is used, parameters %s will be ignored.' % params.keys(),
+                              Warning)
+
+            if extended:
+                sprints = [Sprint(self._options, self._session, self.sprint_info(None, raw_sprints_json['id']))
+                           for raw_sprints_json in r_json['sprints']]
+            else:
+                sprints = [Sprint(self._options, self._session, raw_sprints_json)
+                           for raw_sprints_json in r_json['sprints']]
+
+            return ResultList(sprints, 0, len(sprints), len(sprints), True)
         else:
-            sprints = [Sprint(self._options, self._session, raw_sprints_json)
-                       for raw_sprints_json in r_json['sprints']]
-
-        return sprints
+            return self._fetch_pages(Sprint, 'values', 'board/%s/sprint' % board_id, startAt, maxResults, params,
+                                     self.AGILE_BASE_URL)
 
     def sprints_by_name(self, id, extended=False):
         sprints = {}
@@ -2597,8 +2647,10 @@ class JIRA(object):
         if startDate:
             payload['startDate'] = startDate
         if endDate:
-            payload['startDate'] = endDate
+            payload['endDate'] = endDate
         if state:
+            if self._options['agile_rest_path'] != GreenHopperResource.GREENHOPPER_REST_PATH:
+                raise NotImplementedError('Public JIRA API does not support state update')
             payload['state'] = state
 
         url = self._get_url('sprint/%s' % id, base=self.AGILE_BASE_URL)
@@ -2619,6 +2671,10 @@ class JIRA(object):
         # issueKeysAddedDuringSprint used to mark some with a * ?
         # puntedIssues are for scope change?
 
+        if self._options['agile_rest_path'] != GreenHopperResource.GREENHOPPER_REST_PATH:
+            raise NotImplementedError('JIRA Agile Public API does not support this request')
+        warnings.warn('JIRA.completed_issues uses deprecated API, that is going to be removed on the 1st February 2016',
+                      DeprecationWarning)
         r_json = self._get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id),
                                 base=self.AGILE_BASE_URL)
         issues = [Issue(self._options, self._session, raw_issues_json) for raw_issues_json in
@@ -2629,6 +2685,11 @@ class JIRA(object):
         """
         Return the total completed points this sprint.
         """
+        if self._options['agile_rest_path'] != GreenHopperResource.GREENHOPPER_REST_PATH:
+            raise NotImplementedError('JIRA Agile Public API does not support this request')
+        warnings.warn('JIRA.completedIssuesEstimateSum uses deprecated API, that is going to be removed'
+                      ' on the 1st February 2016',
+                      DeprecationWarning)
         return self._get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id),
                               base=self.AGILE_BASE_URL)['contents']['completedIssuesEstimateSum']['value']
 
@@ -2636,35 +2697,39 @@ class JIRA(object):
         """
         Return the completed issues for the sprint
         """
+        if self._options['agile_rest_path'] != GreenHopperResource.GREENHOPPER_REST_PATH:
+            raise NotImplementedError('JIRA Agile Public API does not support this request')
+        warnings.warn('JIRA.incompleted_issues uses deprecated API, that is going to be removed'
+                      'on the 1st February 2016',
+                      DeprecationWarning)
         r_json = self._get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id),
                                 base=self.AGILE_BASE_URL)
         issues = [Issue(self._options, self._session, raw_issues_json) for raw_issues_json in
                   r_json['contents']['incompletedIssues']]
         return issues
 
+    # TODO: remove sprint_info() method, sprint() method suit the convention more
     def sprint_info(self, board_id, sprint_id):
         """
         Return the information about a sprint.
 
-        :param board_id: the board retrieving issues from
-        :param sprint_id: the sprint retieving issues from
+        :param board_id: the board retrieving issues from. Deprecated and ignored.
+        :param sprint_id: the sprint retrieving issues from
         """
-        return self._get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id),
-                              base=self.AGILE_BASE_URL)['sprint']
+        sprint = Sprint(self._options, self._session)
+        sprint.find(id)
+        return sprint.raw
+
+    def sprint(self, id):
+        sprint = Sprint(self._options, self._session)
+        sprint.find(id)
+        return sprint
 
     # TODO: remove this as we do have Board.delete()
     def delete_board(self, id):
-        """
-        Deletes an agile board.
-
-        :param id:
-        :return:
-        """
-        payload = {}
-        url = self._get_url(
-            'rapidview/%s' % id, base=self.AGILE_BASE_URL)
-        r = self._session.delete(
-            url, data=json.dumps(payload))
+        """ Deletes an agile board. """
+        board = Board(self._options, self._session, raw = {'id':id})
+        board.delete()
 
     def create_board(self, name, project_ids, preset="scrum"):
         """
@@ -2675,6 +2740,9 @@ class JIRA(object):
         :param preset: what preset to use for this board
         :type preset: 'kanban', 'scrum', 'diy'
         """
+        if self._options['agile_rest_path'] != GreenHopperResource.GREENHOPPER_REST_PATH:
+            raise NotImplementedError('JIRA Agile Public API does not support this request')
+
         payload = {}
         if isinstance(project_ids, string_types):
             ids = []
@@ -2702,39 +2770,42 @@ class JIRA(object):
         :param name: name of the sprint
         :param board_id: the board to add the sprint to
         """
-        url = self._get_url(
-            'sprint/%s' % board_id, base=self.AGILE_BASE_URL)
-        r = self._session.post(
-            url)
-        raw_issue_json = json_loads(r)
-        """ now r contains something like:
-        {
-              "id": 742,
-              "name": "Sprint 89",
-              "state": "FUTURE",
-              "linkedPagesCount": 0,
-              "startDate": "None",
-              "endDate": "None",
-              "completeDate": "None",
-              "remoteLinks": []
-        }"""
 
         payload = {'name': name}
         if startDate:
             payload["startDate"] = startDate
         if endDate:
             payload["endDate"] = endDate
-        url = self._get_url(
-            'sprint/%s' % raw_issue_json['id'], base=self.AGILE_BASE_URL)
-        r = self._session.put(
-            url, data=json.dumps(payload))
-        raw_issue_json = json_loads(r)
+
+        if self._options['agile_rest_path'] == GreenHopperResource.GREENHOPPER_REST_PATH:
+            url = self._get_url('sprint/%s' % board_id, base=self.AGILE_BASE_URL)
+            r = self._session.post(url)
+            raw_issue_json = json_loads(r)
+            """ now r contains something like:
+            {
+                  "id": 742,
+                  "name": "Sprint 89",
+                  "state": "FUTURE",
+                  "linkedPagesCount": 0,
+                  "startDate": "None",
+                  "endDate": "None",
+                  "completeDate": "None",
+                  "remoteLinks": []
+            }"""
+
+            url = self._get_url(
+                'sprint/%s' % raw_issue_json['id'], base=self.AGILE_BASE_URL)
+            r = self._session.put(
+                url, data=json.dumps(payload))
+            raw_issue_json = json_loads(r)
+        else:
+            url = self._get_url('sprint', base=self.AGILE_BASE_URL)
+            payload['originBoardId'] = board_id
+            r = self._session.post(url, data=json.dumps(payload))
+            raw_issue_json = json_loads(r)
 
         return Sprint(self._options, self._session, raw=raw_issue_json)
 
-    # TODO: broken, this API does not exist anymore and we need to use
-    # issue.update() to perform this operaiton
-    # Workaround based on https://answers.atlassian.com/questions/277651/jira-agile-rest-api-example
     def add_issues_to_sprint(self, sprint_id, issue_keys):
         """
         Add the issues in ``issue_keys`` to the ``sprint_id``. The sprint must
@@ -2752,18 +2823,33 @@ class JIRA(object):
         :param issue_keys: the issues to add to the sprint
         """
 
-        # Get the customFieldId for "Sprint"
-        sprint_field_name = "Sprint"
-        sprint_field_id = [f['schema']['customId'] for f in self.fields()
-                           if f['name'] == sprint_field_name][0]
+        if self._options['agile_rest_path'] == GreenHopperResource.AGILE_BASE_REST_PATH:
+            url = self._get_url('sprint/%s/issue' % sprint_id, base=self.AGILE_BASE_URL)
+            payload = {'issues': issue_keys}
+            try:
+                self._session.post(url, data=json.dumps(payload))
+            except JIRAError as e:
+                if e.status_code == 404:
+                    warnings.warn('Status code 404 may mean, that too old JIRA Agile version is installed.'
+                                  ' At least version 6.7.10 is required.')
+                raise
+        elif self._options['agile_rest_path'] == GreenHopperResource.GREENHOPPER_REST_PATH:
+            # In old, private API the function does not exist anymore and we need to use
+            # issue.update() to perform this operation
+            # Workaround based on https://answers.atlassian.com/questions/277651/jira-agile-rest-api-example
 
-        data = {}
-        data['idOrKeys'] = issue_keys
-        data['customFieldId'] = sprint_field_id
-        data['sprintId'] = sprint_id
-        data['addToBacklog'] = False
-        url = self._get_url('sprint/rank', base=self.AGILE_BASE_URL)
-        r = self._session.put(url, data=json.dumps(data))
+            # Get the customFieldId for "Sprint"
+            sprint_field_name = "Sprint"
+            sprint_field_id = [f['schema']['customId'] for f in self.fields()
+                               if f['name'] == sprint_field_name][0]
+
+            data = {'idOrKeys': issue_keys, 'customFieldId': sprint_field_id,
+                    'sprintId': sprint_id, 'addToBacklog': False}
+            url = self._get_url('sprint/rank', base=self.AGILE_BASE_URL)
+            r = self._session.put(url, data=json.dumps(data))
+        else:
+            raise NotImplementedError('No API for adding issues to sprint for agile_rest_path="%s"' %
+                                      self._options['agile_rest_path'])
 
     def add_issues_to_epic(self, epic_id, issue_keys, ignore_epics=True):
         """
@@ -2773,6 +2859,10 @@ class JIRA(object):
         :param issue_keys: the issues to add to the epic
         :param ignore_epics: ignore any issues listed in ``issue_keys`` that are epics
         """
+        if self._options['agile_rest_path'] != GreenHopperResource.GREENHOPPER_REST_PATH:
+            # TODO: simulate functionality using issue.update()?
+            raise NotImplementedError('JIRA Agile Public API does not support this request')
+
         data = {}
         data['issueKeys'] = issue_keys
         data['ignoreEpics'] = ignore_epics
@@ -2781,6 +2871,7 @@ class JIRA(object):
         r = self._session.put(
             url, data=json.dumps(data))
 
+    # TODO: Both GreenHopper and new JIRA Agile API support moving more than one issue.
     def rank(self, issue, next_issue):
         """
         Rank an issue before another using the default Ranking field, the one named 'Rank'.
@@ -2788,7 +2879,6 @@ class JIRA(object):
         :param issue: issue key of the issue to be ranked before the second one.
         :param next_issue: issue key of the second issue.
         """
-        # {"issueKeys":["ANERDS-102"],"rankBeforeKey":"ANERDS-94","rankAfterKey":"ANERDS-7","customFieldId":11431}
         if not self._rank:
             for field in self.fields():
                 if field['name'] == 'Rank':
@@ -2798,11 +2888,26 @@ class JIRA(object):
                     elif field['schema']['custom'] == "com.pyxis.greenhopper.jira:gh-global-rank":
                         # Obsolete since JIRA v6.3.13.1
                         self._rank = field['schema']['customId']
-        data = {
-            "issueKeys": [issue], "rankBeforeKey": next_issue, "customFieldId": self._rank}
-        url = self._get_url('rank', base=self.AGILE_BASE_URL)
-        r = self._session.put(
-            url, data=json.dumps(data))
+
+        if self._options['agile_rest_path'] == GreenHopperResource.AGILE_BASE_REST_PATH:
+            url = self._get_url('issue/rank', base=self.AGILE_BASE_URL)
+            payload = { 'issues': [issue], 'rankBeforeIssue': next_issue, 'rankCustomFieldId': self._rank }
+            try:
+                r = self._session.put(url, data=json.dumps(payload))
+            except JIRAError as e:
+                if e.status_code == 404:
+                    warnings.warn('Status code 404 may mean, that too old JIRA Agile version is installed.'
+                                  ' At least version 6.7.10 is required.')
+                raise
+        elif self._options['agile_rest_path'] == GreenHopperResource.GREENHOPPER_REST_PATH:
+            # {"issueKeys":["ANERDS-102"],"rankBeforeKey":"ANERDS-94","rankAfterKey":"ANERDS-7","customFieldId":11431}
+            data = {
+                "issueKeys": [issue], "rankBeforeKey": next_issue, "customFieldId": self._rank}
+            url = self._get_url('rank', base=self.AGILE_BASE_URL)
+            r = self._session.put(url, data=json.dumps(data))
+        else:
+            raise NotImplementedError('No API for ranking issues for agile_rest_path="%s"' %
+                                      self._options['agile_rest_path'])
 
 
 class GreenHopper(JIRA):
