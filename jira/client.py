@@ -2429,7 +2429,7 @@ class JIRA(object):
         return False
 
     def add_user(self, username, email, directoryId=1, password=None,
-                 fullname=None, notify=False, active=True):
+                 fullname=None, notify=False, active=True, ignore_existing=False):
         '''
         Creates a new JIRA user
 
@@ -2469,8 +2469,13 @@ class JIRA(object):
             x['notification'] = 'True'
 
         payload = json.dumps(x)
-
-        self._session.post(url, data=payload)
+        try:
+            self._session.post(url, data=payload)
+        except JIRAError as e:
+            err = e.response.json()['errors']
+            if 'username' in err and err['username'] == 'A user with that username already exists.' and ignore_existing:
+                return True
+            raise e
         return True
 
     def add_user_to_group(self, username, group):
