@@ -3,3 +3,4 @@ unittest2
 ordereddict
 PyJWT
 requests_jwt
+filemagic>=1.6

@@ -69,15 +69,18 @@ class Resource(object):
     ``ids`` parameter to ``find()``.
     """
 
+    JIRA_BASE_URL = '{server}/rest/{rest_path}/{rest_api_version}/{path}'
+
     # A prioritized list of the keys in self.raw most likely to contain a human
     # readable name or identifier, or that offer other key information.
     _READABLE_IDS = ('displayName', 'key', 'name', 'filename', 'value',
                      'scope', 'votes', 'id', 'mimeType', 'closed')
 
-    def __init__(self, resource, options, session):
+    def __init__(self, resource, options, session, base_url=JIRA_BASE_URL):
         self._resource = resource
         self._options = options
         self._session = session
+        self._base_url = base_url
 
         # Explicitly define as None so we know when a resource has actually
         # been loaded
@@ -147,14 +150,17 @@ class Resource(object):
         if params is None:
             params = {}
 
-        url = '{server}/rest/{rest_path}/{rest_api_version}/'.format(
-            **self._options)
         if isinstance(id, tuple):
-            url += self._resource.format(*id)
+            path = self._resource.format(*id)
         else:
-            url += self._resource.format(id)
-
+            path = self._resource.format(id)
+        url = self._get_url(self, path)
         self._load(url, params=params)
+
+    def _get_url(self, path):
+        options = self._options.copy()
+        options.update({'path': path})
+        return self._base_url.format(**options)
 
     def update(self, fields=None, async=None, jira=None, **kwargs):
         """
@@ -255,13 +261,15 @@ class Resource(object):
         else:
             r = self._session.delete(url=self.self, params=params)
 
-    def _load(self, url, headers=CaseInsensitiveDict(), params=None):
+    def _load(self, url, headers=CaseInsensitiveDict(), params=None, path=None):
         r = self._session.get(url, headers=headers, params=params)
         try:
             j = json_loads(r)
         except ValueError as e:
             logging.error("%s:\n%s" % (e, r.text))
             raise e
+        if path:
+            j = j[path]
         self._parse_raw(j)
 
     def _parse_raw(self, raw):
@@ -349,15 +357,35 @@ class Filter(Resource):
         if raw:
             self._parse_raw(raw)
 
-
 class Issue(Resource):
-
     """A JIRA issue."""
+
+    class _IssueFields:
+        def __init__(self):
+            self.attachment = None
+            """ :type : list[Attachment] """
+            self.description = None
+            """ :type : str """
+            self.project = None
+            """ :type : Project """
+            self.comment = None
+            """ :type : list[Comment] """
+            self.issuelinks = None
+            """ :type : list[IssueLink] """
+            self.worklog= None
+            """ :type : list[Worklog] """
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(self, 'issue/{0}', options, session)
         if raw:
             self._parse_raw(raw)
+
+        self.fields = None
+        """ :type : Issue._IssueFields """
+        self.id = None
+        """ :type : int """
+        self.key = None
+        """ :type : str """
 
     def update(self, fields=None, update=None, async=None, jira=None, **fieldargs):
         """
@@ -437,7 +465,6 @@ class Issue(Resource):
 
     def __eq__(self, other):
         return self.id == other.id
-
 
 class Comment(Resource):
 
@@ -732,35 +759,57 @@ class GreenHopperResource(Resource):
 
     """A generic GreenHopper resource."""
 
+    AGILE_BASE_URL = '{server}/rest/{agile_rest_path}/{agile_rest_api_version}/{path}'
+
+    GREENHOPPER_REST_PATH = "greenhopper"
+    """ Old, private API. Deprecated and will be removed from JIRA on the 1st February 2016. """
+    AGILE_EXPERIMENTAL_REST_PATH = "greenhopper/experimental-api"
+    """ Experimental API available in JIRA Agile 6.7.3 - 6.7.6, basically the same as Public API """
+    AGILE_BASE_REST_PATH = "agile"
+    """ Public API introduced in JIRA Agile 6.7.7. """
+
     def __init__(self, path, options, session, raw):
-        Resource.__init__(self, path, options, session)
+        self.self = None
+
+        Resource.__init__(self, path, options, session, self.AGILE_BASE_URL)
         if raw:
             self._parse_raw(raw)
-        url = '{server}/rest/greenhopper/1.0/'.format(**self._options)
-        url += path.format(**raw)
-        self.self = url
+            # Old GreenHopper API did not contain self - create it for backward compatibility.
+            if not self.self:
+                self.self = self._get_url(path.format(raw['id']))
 
 
 class Sprint(GreenHopperResource):
 
     """A GreenHopper sprint."""
 
-    def __init__(self, options, session, raw):
-        GreenHopperResource.__init__(
-            self, 'sprint/{id}', options, session, raw)
-        if raw:
-            self._parse_raw(raw)
+    def __init__(self, options, session, raw=None):
+        GreenHopperResource.__init__(self, 'sprint/{0}', options, session, raw)
+
+    def find(self, id, params=None):
+        if self._options['agile_rest_path'] != GreenHopperResource.GREENHOPPER_REST_PATH:
+            Resource.find(self, id, params)
+        else:
+            # Old, private GreenHopper API had non-standard way of loading Sprint
+            url = self._get_url(self, 'sprint/%s/edit/model' % id)
+            j = self._load(url, params=params, path='sprint')
+            self._parse_raw(j)
 
 
 class Board(GreenHopperResource):
 
     """A GreenHopper board."""
 
-    def __init__(self, options, session, raw):
-        GreenHopperResource.__init__(
-            self, 'rapidview/{id}', options, session, raw)
-        if raw:
-            self._parse_raw(raw)
+    def __init__(self, options, session, raw=None):
+        path = 'rapidview/{0}' if options['agile_rest_path'] == self.GREENHOPPER_REST_PATH else 'board/{id}'
+        GreenHopperResource.__init__(self, path, options, session, raw)
+
+    def delete(self, params=None):
+        if self._options['agile_rest_path'] != GreenHopperResource.GREENHOPPER_REST_PATH:
+            raise NotImplementedError('JIRA Agile Public API does not support Board removal')
+
+        Resource.delete(self, params)
+
 
 # Utilities
 
