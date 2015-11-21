@@ -96,6 +96,17 @@ def translate_resource_args(func):
 
     return wrapper
 
+
+def _get_template_list(data):
+    template_list = []
+    if 'projectTemplates' in data:
+        template_list = data['projectTemplates']
+    elif 'projectTemplatesGroupedByType' in data:
+        for group in data['projectTemplatesGroupedByType']:
+            template_list.extend(group['projectTemplates'])
+    return template_list
+
+
 class ResultList(list):
 
     def __init__(self, iterable=None, _startAt=None, _maxResults=None, _total=None, _isLast=None):
@@ -2403,9 +2414,9 @@ class JIRA(object):
 
         template_key = None
         templates = []
-        for template in j['projectTemplates']:
+        for template in _get_template_list(j):
             templates.append(template['name'])
-            if template['name'] in ['JIRA Classic', 'JIRA Default Schemes']:
+            if template['name'] in ['JIRA Classic', 'JIRA Default Schemes', 'Basic software development']:
                 template_key = template['projectTemplateModuleCompleteKey']
                 break
 
