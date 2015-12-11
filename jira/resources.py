@@ -154,7 +154,7 @@ class Resource(object):
             path = self._resource.format(*id)
         else:
             path = self._resource.format(id)
-        url = self._get_url(self, path)
+        url = self._get_url(path)
         self._load(url, params=params)
 
     def _get_url(self, path):
