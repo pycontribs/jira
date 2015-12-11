@@ -31,5 +31,3 @@ class JIRAError(Exception):
 
         t += '\n'
         return t
-
-
