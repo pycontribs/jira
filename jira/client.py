@@ -609,8 +609,12 @@ class JIRA(object):
         :param startAt: index of the first dashboard to return
         :param maxResults: maximum number of dashboards to return.
             If maxResults evaluates as False, it will try to get all items in batches.
+<<<<<<< HEAD
+        :rtype: ResultList
+=======
 
         :rtype ResultList
+>>>>>>> master
         """
         params = {}
         if filter is not None:
@@ -2473,8 +2477,14 @@ class JIRA(object):
 
     def add_user(self, username, email, directoryId=1, password=None,
                  fullname=None, notify=False, active=True, ignore_existing=False):
+<<<<<<< HEAD
+        """
+        Creates a new JIRA user.
+
+=======
         '''
         Creates a new JIRA user
+>>>>>>> master
         :param username: the username of the new user
         :type username: ``str``
         :param email: email address of the new user
@@ -2486,10 +2496,16 @@ class JIRA(object):
         :param fullname: Optional, the full name of the new user
         :type fullname: ``str``
         :param notify: Whether or not to send a notification to the new user
-        :type notify ``bool``
+        :type notify: ``bool``
         :param active: Whether or not to make the new user active upon creation
         :type active: ``bool``
+<<<<<<< HEAD
+        :return: True
+        """
+
+=======
         '''
+>>>>>>> master
         if not fullname:
             fullname = username
         # TODO: default the directoryID to the first directory in jira instead
@@ -2587,8 +2603,12 @@ class JIRA(object):
         :param maxResults: The maximum number of boards to return per page. Default: 50
         :param type: Filters results to boards of the specified type. Valid values: scrum, kanban.
         :param name: Filters results to boards that match or partially match the specified name.
+<<<<<<< HEAD
+        :rtype: ResultList[Board]
+=======
 
         :rtype ResultList[Board]
+>>>>>>> master
 
         When old GreenHopper private API is used, paging is not enabled and all parameters are ignored.
         """
@@ -2612,7 +2632,7 @@ class JIRA(object):
             return self._fetch_pages(Board, 'values', 'board', startAt, maxResults, params, base=self.AGILE_BASE_URL)
 
     @translate_resource_args
-    def sprints(self, board_id=None, extended=False, startAt=0, maxResults=50, state=None):
+    def sprints(self, board_id, extended=False, startAt=0, maxResults=50, state=None):
         """
         Get a list of sprint GreenHopperResources.
 
@@ -2624,9 +2644,14 @@ class JIRA(object):
         :param maxResults: the maximum number of sprints to return
         :param state: Filters results to sprints in specified states. Valid values: future, active, closed.
             You can define multiple states separated by commas
+<<<<<<< HEAD
+        :rtype: dict
+        :return: (content depends on API version, but always contains id, name, state, startDate and endDate)
+=======
 
         :rtype dict
         :return (content depends on API version, but always contains id, name, state, startDate and endDate)
+>>>>>>> master
 
         When old GreenHopper private API is used, paging is not enabled,
             and `startAt`, `maxResults` and `state` parameters are ignored.
@@ -2643,8 +2668,7 @@ class JIRA(object):
                                     base=self.AGILE_BASE_URL)
 
             if params:
-                warnings.warn('Old private GreenHopper API is used, parameters %s will be ignored.' % params.keys(),
-                              Warning)
+                warnings.warn('Old private GreenHopper API is used, parameters %s will be ignored.' % params, Warning)
 
             if extended:
                 sprints = [Sprint(self._options, self._session, self.sprint_info(None, raw_sprints_json['id']))
@@ -2745,7 +2769,7 @@ class JIRA(object):
         :param sprint_id: the sprint retrieving issues from
         """
         sprint = Sprint(self._options, self._session)
-        sprint.find(id)
+        sprint.find(sprint_id)
         return sprint.raw
 
     def sprint(self, id):

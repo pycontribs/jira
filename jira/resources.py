@@ -795,9 +795,8 @@ class Sprint(GreenHopperResource):
             Resource.find(self, id, params)
         else:
             # Old, private GreenHopper API had non-standard way of loading Sprint
-            url = self._get_url(self, 'sprint/%s/edit/model' % id)
-            j = self._load(url, params=params, path='sprint')
-            self._parse_raw(j)
+            url = self._get_url('sprint/%s/edit/model' % id)
+            self._load(url, params=params, path='sprint')
 
 
 class Board(GreenHopperResource):
