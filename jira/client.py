@@ -609,12 +609,8 @@ class JIRA(object):
         :param startAt: index of the first dashboard to return
         :param maxResults: maximum number of dashboards to return.
             If maxResults evaluates as False, it will try to get all items in batches.
-<<<<<<< HEAD
-        :rtype: ResultList
-=======
 
         :rtype ResultList
->>>>>>> master
         """
         params = {}
         if filter is not None:
@@ -2477,14 +2473,8 @@ class JIRA(object):
 
     def add_user(self, username, email, directoryId=1, password=None,
                  fullname=None, notify=False, active=True, ignore_existing=False):
-<<<<<<< HEAD
-        """
-        Creates a new JIRA user.
-
-=======
         '''
         Creates a new JIRA user
->>>>>>> master
         :param username: the username of the new user
         :type username: ``str``
         :param email: email address of the new user
@@ -2499,13 +2489,7 @@ class JIRA(object):
         :type notify: ``bool``
         :param active: Whether or not to make the new user active upon creation
         :type active: ``bool``
-<<<<<<< HEAD
-        :return: True
-        """
-
-=======
         '''
->>>>>>> master
         if not fullname:
             fullname = username
         # TODO: default the directoryID to the first directory in jira instead
@@ -2603,12 +2587,7 @@ class JIRA(object):
         :param maxResults: The maximum number of boards to return per page. Default: 50
         :param type: Filters results to boards of the specified type. Valid values: scrum, kanban.
         :param name: Filters results to boards that match or partially match the specified name.
-<<<<<<< HEAD
         :rtype: ResultList[Board]
-=======
-
-        :rtype ResultList[Board]
->>>>>>> master
 
         When old GreenHopper private API is used, paging is not enabled and all parameters are ignored.
         """
@@ -2644,14 +2623,9 @@ class JIRA(object):
         :param maxResults: the maximum number of sprints to return
         :param state: Filters results to sprints in specified states. Valid values: future, active, closed.
             You can define multiple states separated by commas
-<<<<<<< HEAD
-        :rtype: dict
-        :return: (content depends on API version, but always contains id, name, state, startDate and endDate)
-=======
 
         :rtype dict
         :return (content depends on API version, but always contains id, name, state, startDate and endDate)
->>>>>>> master
 
         When old GreenHopper private API is used, paging is not enabled,
             and `startAt`, `maxResults` and `state` parameters are ignored.
