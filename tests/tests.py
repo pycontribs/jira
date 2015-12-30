@@ -631,7 +631,6 @@ class IssueTests(unittest.TestCase):
         comment2.delete()
         comment3.delete()
 
-    @pytest.mark.xfail  # Searched issued does not contain basic fields.
     def test_issue_equal(self):
         issue1 = self.jira.issue(self.issue_1)
         issue2 = self.jira.issue(self.issue_2)
