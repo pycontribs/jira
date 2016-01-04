@@ -380,8 +380,6 @@ class Issue(Resource):
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(self, 'issue/{0}', options, session)
-        if raw:
-            self._parse_raw(raw)
 
         self.fields = None
         """ :type : Issue._IssueFields """
@@ -389,6 +387,8 @@ class Issue(Resource):
         """ :type : int """
         self.key = None
         """ :type : str """
+        if raw:
+            self._parse_raw(raw)
 
     def update(self, fields=None, update=None, async=None, jira=None, **fieldargs):
         """

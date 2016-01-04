@@ -346,16 +346,16 @@ class UniversalResourceTests(unittest.TestCase):
         self.assertIsNotNone(ex.text)
         self.assertRegex(ex.url, '^https?://.*/rest/api/2/woopsydoodle/666$')
 
-    @pytest.mark.xfail
-    # see https://github.com/pycontribs/jira/pull/30
     def test_pickling_resource(self):
         resource = self.jira.find('issue/{0}',
                                   self.test_manager.project_b_issue1)
 
-        pickled = pickle.dumps(resource)
+        pickled = pickle.dumps(resource.raw)
         unpickled = pickle.loads(pickled)
-        self.assertEqual(resource.key, unpickled.key)
-
+        cls = cls_for_resource(unpickled['self'])
+        unpickled_instance = cls(self.jira._options, self.jira._session, raw=pickle.loads(pickled))
+        self.assertEqual(resource.key, unpickled_instance.key)
+        self.assertTrue(resource == unpickled_instance)
 
 class ResourceTests(unittest.TestCase):
     def setUp(self):
@@ -631,7 +631,6 @@ class IssueTests(unittest.TestCase):
         comment2.delete()
         comment3.delete()
 
-    @pytest.mark.xfail  # Searched issued does not contain basic fields.
     def test_issue_equal(self):
         issue1 = self.jira.issue(self.issue_1)
         issue2 = self.jira.issue(self.issue_2)
