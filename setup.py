@@ -24,7 +24,7 @@ warnings.simplefilter('ignore', UserWarning)
 
 
 def _is_ordereddict_needed():
-    ''' Check if `ordereddict` package really needed '''
+    """ Check if `ordereddict` package really needed """
     try:
         from collections import OrderedDict
         return False
@@ -40,8 +40,7 @@ class PyTest(TestCommand):
         TestCommand.initialize_options(self)
         self.pytest_args = []
 
-        FORMAT = '%(levelname)-10s %(message)s'
-        logging.basicConfig(format=FORMAT)
+        logging.basicConfig(format='%(levelname)-10s %(message)s')
         logging.getLogger().setLevel(logging.INFO)
 
         # if we have pytest-cache module we enable the test failures first mode

@@ -82,5 +82,3 @@ def json_loads(r):
     else:
         # json.loads() fails with empy bodies
         return {}
-
-

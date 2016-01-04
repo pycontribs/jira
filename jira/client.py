@@ -96,6 +96,7 @@ def translate_resource_args(func):
 
     return wrapper
 
+
 class ResultList(list):
 
     def __init__(self, iterable=None, _startAt=None, _maxResults=None, _total=None, _isLast=None):
@@ -144,8 +145,8 @@ class JIRA(object):
         "context_path": "/",
         "rest_path": "api",
         "rest_api_version": "2",
-        "agile_rest_path" : GreenHopperResource.GREENHOPPER_REST_PATH,
-        "agile_rest_api_version" : "1.0",
+        "agile_rest_path": GreenHopperResource.GREENHOPPER_REST_PATH,
+        "agile_rest_api_version": "1.0",
         "verify": True,
         "resilient": True,
         "async": False,
@@ -321,7 +322,7 @@ class JIRA(object):
             return False
         return True
 
-    def _fetch_pages(self, item_type, items_key, request_path, startAt, maxResults, params = None, base=JIRA_BASE_URL):
+    def _fetch_pages(self, item_type, items_key, request_path, startAt, maxResults, params=None, base=JIRA_BASE_URL):
         """
         Fetches
         :param item_type: Type of single item. ResultList of such items will be returned.
@@ -2733,7 +2734,7 @@ class JIRA(object):
     # TODO: remove this as we do have Board.delete()
     def delete_board(self, id):
         """ Deletes an agile board. """
-        board = Board(self._options, self._session, raw = {'id':id})
+        board = Board(self._options, self._session, raw={'id': id})
         board.delete()
 
     def create_board(self, name, project_ids, preset="scrum"):
@@ -2896,7 +2897,7 @@ class JIRA(object):
 
         if self._options['agile_rest_path'] == GreenHopperResource.AGILE_BASE_REST_PATH:
             url = self._get_url('issue/rank', base=self.AGILE_BASE_URL)
-            payload = { 'issues': [issue], 'rankBeforeIssue': next_issue, 'rankCustomFieldId': self._rank }
+            payload = {'issues': [issue], 'rankBeforeIssue': next_issue, 'rankCustomFieldId': self._rank}
             try:
                 r = self._session.put(url, data=json.dumps(payload))
             except JIRAError as e:
