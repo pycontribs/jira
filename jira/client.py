@@ -334,7 +334,7 @@ class JIRA(object):
             return False
         return True
 
-    def _fetch_pages(self, item_type, items_key, request_path, startAt, maxResults, params=None, base=JIRA_BASE_URL):
+    def _fetch_pages(self, item_type, items_key, request_path, startAt=0, maxResults=50, params=None, base=JIRA_BASE_URL):
         """
         Fetches
         :param item_type: Type of single item. ResultList of such items will be returned.
@@ -910,6 +910,7 @@ class JIRA(object):
         payload = {'name': assignee}
         r = self._session.put(
             url, data=json.dumps(payload))
+        return r
 
     @translate_resource_args
     def comments(self, issue):
