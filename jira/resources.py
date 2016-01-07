@@ -156,7 +156,7 @@ class Resource(object):
             path = self._resource.format(*id)
         else:
             path = self._resource.format(id)
-        url = self._get_url(self, path)
+        url = self._get_url(path)
         self._load(url, params=params)
 
     def _get_url(self, path):
@@ -381,8 +381,6 @@ class Issue(Resource):
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(self, 'issue/{0}', options, session)
-        if raw:
-            self._parse_raw(raw)
 
         self.fields = None
         """ :type : Issue._IssueFields """
@@ -390,6 +388,8 @@ class Issue(Resource):
         """ :type : int """
         self.key = None
         """ :type : str """
+        if raw:
+            self._parse_raw(raw)
 
     def update(self, fields=None, update=None, async=None, jira=None, **fieldargs):
         """
@@ -796,9 +796,8 @@ class Sprint(GreenHopperResource):
             Resource.find(self, id, params)
         else:
             # Old, private GreenHopper API had non-standard way of loading Sprint
-            url = self._get_url(self, 'sprint/%s/edit/model' % id)
-            j = self._load(url, params=params, path='sprint')
-            self._parse_raw(j)
+            url = self._get_url('sprint/%s/edit/model' % id)
+            self._load(url, params=params, path='sprint')
 
 
 class Board(GreenHopperResource):
