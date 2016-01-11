@@ -1009,9 +1009,6 @@ class JIRA(object):
         :param application: application information for the link (see the above link for details)
         :param relationship: relationship description for the link (see the above link for details)
         """
-        warnings.warn(
-            "broken: see https://bitbucket.org/bspeakmon/jira-python/issue/46 and https://jira.atlassian.com/browse/JRA-38551",
-            Warning)
 
         try:
             applicationlinks = self.applicationlinks()
