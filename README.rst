@@ -2,22 +2,19 @@
 JIRA Python Library
 ===================
 
-.. image:: https://pypip.in/py_versions/jira/badge.svg?style=flat
+.. image:: https://img.shields.io/pypi/pyversions/jira.svg
         :target: https://pypi.python.org/pypi/jira/
 
-.. image:: https://pypip.in/license/jira/badge.svg?style=flat
+.. image:: https://img.shields.io/pypi/l/jira.svg
         :target: https://pypi.python.org/pypi/jira/
 
-.. image:: https://pypip.in/download/jira/badge.svg?style=flat
+.. image:: https://img.shields.io/pypi/dm/jira.svg
         :target: https://pypi.python.org/pypi/jira/
 
-.. image:: https://pypip.in/version/jira/badge.svg?style=flat
+.. image:: https://img.shields.io/pypi/v/nine.svg
         :target: https://pypi.python.org/pypi/jira/
 
-.. image:: https://pypip.in/egg/jira/badge.svg?style=flat
-        :target: https://pypi.python.org/pypi/jira/
-
-.. image:: https://pypip.in/wheel/jira/badge.svg?style=flat
+.. image:: https://img.shields.io/pypi/wheel/Django.svg
         :target: https://pypi.python.org/pypi/jira/
 
 ------------
@@ -25,14 +22,14 @@ JIRA Python Library
 .. image:: https://api.travis-ci.org/pycontribs/jira.svg?branch=master
         :target: https://travis-ci.org/pycontribs/jira
 
-.. image:: https://pypip.in/status/jira/badge.svg?style=flat
+.. image:: https://img.shields.io/pypi/status/jira.svg
         :target: https://pypi.python.org/pypi/jira/
 
 .. image:: https://img.shields.io/coveralls/pycontribs/jira.svg
         :target: https://coveralls.io/r/pycontribs/jira
 
 .. image:: http://api.flattr.com/button/flattr-badge-large.png
-        :target: https://flattr.com/submit/auto?user_id=sbarnea&url=https://github.com/pycontribs/jira&title=Python JIRA&language=&tags=github&category=software
+        :target: https://flattr.com/submit/auto?user_id=sbarnea&url=https://github.com/pycontribs/jira&title=Python%20JIRA&language=&tags=github&category=software
 
 .. image:: https://img.shields.io/bountysource/team/pycontribs/activity.svg
         :target: https://www.bountysource.com/teams/pycontribs/issues?tracker_ids=3650997
