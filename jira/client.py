@@ -26,6 +26,8 @@ import sys
 import datetime
 import calendar
 import hashlib
+from numbers import Number
+
 # noinspection PyUnresolvedReferences
 from six.moves.urllib.parse import urlparse, urlencode
 from six import iteritems
@@ -62,7 +64,7 @@ from .resources import Resource, Issue, Comment, Project, Attachment, Component,
     CustomFieldOption, RemoteLink
 # GreenHopper specific resources
 from .resources import GreenHopperResource, Board, Sprint
-from .resilientsession import ResilientSession
+from .resilientsession import ResilientSession, raise_on_error
 from .version import __version__
 from .utils import threaded_requests, json_loads, CaseInsensitiveDict
 from .exceptions import JIRAError
@@ -77,7 +79,7 @@ except ImportError:
 
 # encoding = sys.getdefaultencoding()
 # if encoding != 'UTF8':
-#    warnings.warn("Python default encoding is '%s' instead of 'UTF8' which means that there is a big change of having problems. Possible workaround http://stackoverflow.com/a/17628350/99834" % encoding)
+#    warnings.warning("Python default encoding is '%s' instead of 'UTF8' which means that there is a big change of having problems. Possible workaround http://stackoverflow.com/a/17628350/99834" % encoding)
 
 
 def translate_resource_args(func):
@@ -360,26 +362,38 @@ class JIRA(object):
                            (resource[items_key] if items_key else resource)]
         items = next_items_page
 
-        total = resource.get('total')
-        # 'isLast' is the optional key added to responses in JIRA Agile 6.7.6. So far not used in basic JIRA API.
-        is_last = resource.get('isLast')
-        start_at_from_response = resource.get('startAt')
-        max_results_from_response = resource.get('maxResults')
+        if True: #isinstance(resource, dict):
 
-        # If maxResults evaluates as False, get all items in batches
-        if not maxResults:
-            page_size = max_results_from_response or len(items)
-            page_start = (startAt or start_at_from_response or 0) + page_size
-            while not is_last and (total is None or page_start < total) and len(next_items_page) == page_size:
-                page_params['startAt'] = page_start
-                page_params['maxResults'] = page_size
-                resource = self._get_json(request_path, params=page_params, base=base)
-                next_items_page = [item_type(self._options, self._session, raw_issue_json) for raw_issue_json in
-                                   (resource[items_key] if items_key else resource)]
-                items.extend(next_items_page)
-                page_start += page_size
+            if isinstance(resource, dict):
+                total = resource.get('total', 1)
+                # 'isLast' is the optional key added to responses in JIRA Agile 6.7.6. So far not used in basic JIRA API.
+                is_last = resource.get('isLast', True)
+                start_at_from_response = resource.get('startAt', 0)
+                max_results_from_response = resource.get('maxResults', 1)
+            else:
+                # if is a list
+                total = 1
+                is_last = True
+                start_at_from_response = 0
+                max_results_from_response = 1
 
-        return ResultList(items, start_at_from_response, max_results_from_response, total, is_last)
+            # If maxResults evaluates as False, get all items in batches
+            if not maxResults:
+                page_size = max_results_from_response or len(items)
+                page_start = (startAt or start_at_from_response or 0) + page_size
+                while not is_last and (total is None or page_start < total) and len(next_items_page) == page_size:
+                    page_params['startAt'] = page_start
+                    page_params['maxResults'] = page_size
+                    resource = self._get_json(request_path, params=page_params, base=base)
+                    next_items_page = [item_type(self._options, self._session, raw_issue_json) for raw_issue_json in
+                                       (resource[items_key] if items_key else resource)]
+                    items.extend(next_items_page)
+                    page_start += page_size
+
+            return ResultList(items, start_at_from_response, max_results_from_response, total, is_last)
+        else:
+            # it seams that search_users can return a list() containing a single user!
+            return ResultList([item_type(self._options, self._session, resource)], 0, 1, 1, True)
 
     # Information about this client
 
@@ -910,7 +924,8 @@ class JIRA(object):
         payload = {'name': assignee}
         r = self._session.put(
             url, data=json.dumps(payload))
-        return r
+        raise_on_error(r)
+        return True
 
     @translate_resource_args
     def comments(self, issue):
@@ -1180,6 +1195,12 @@ class JIRA(object):
         url = self._get_url('issue/' + str(issue) + '/transitions')
         r = self._session.post(
             url, data=json.dumps(data))
+        try:
+            r_json = json_loads(r)
+        except ValueError as e:
+            logging.error("%s\n%s" % (e, r.text))
+            raise e
+        return r_json
 
     @translate_resource_args
     def votes(self, issue):
@@ -1609,7 +1630,9 @@ class JIRA(object):
 
         :param project: ID or key of the project to get roles from
         """
-        return self._get_json('project/' + project + '/role')
+        roles_dict = self._get_json('project/' + project + '/role')
+
+        # TODO: return on a list of Roles()
 
     @translate_resource_args
     def project_role(self, project, id):
@@ -1619,6 +1642,8 @@ class JIRA(object):
         :param project: ID or key of the project to get the role from
         :param id: ID of the role to get
         """
+        if isinstance(id, Number):
+            id = "%s" % id
         return self._find_for_resource(Role, (project, id))
 
     # Resolutions
@@ -2369,7 +2394,10 @@ class JIRA(object):
                 logging.error("Unable to recognize project `%s`" % pid)
                 return False
 
-        uri = '/secure/admin/DeleteProject.jspa'
+        if self._version[0] >= 7:
+            uri = '/secure/project/DeleteProject.jspa'
+        else:
+            uri = '/secure/admin/DeleteProject.jspa'
         url = self._options['server'] + uri
         payload = {'pid': pid, 'Delete': 'Delete', 'confirm': 'true'}
         try:

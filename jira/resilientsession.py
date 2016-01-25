@@ -70,7 +70,7 @@ class ResilientSession(Session):
     def __recoverable(self, response, url, request, counter=1):
         msg = response
         if type(response) == ConnectionError:
-            logging.warn("Got ConnectionError [%s] errno:%s on %s %s\n%s\%s" % (
+            logging.warning("Got ConnectionError [%s] errno:%s on %s %s\n%s\%s" % (
                 response, response.errno, request, url, vars(response), response.__dict__))
         if hasattr(response, 'status_code'):
             if response.status_code in [502, 503, 504]:
@@ -85,7 +85,7 @@ class ResilientSession(Session):
 
         # Exponential backoff with full jitter.
         delay = min(60, 10 * 2 ** counter) * random.random()
-        logging.warn("Got recoverable error from %s %s, will retry [%s/%s] in %ss. Err: %s" % (
+        logging.warning("Got recoverable error from %s %s, will retry [%s/%s] in %ss. Err: %s" % (
             request, url, counter, self.max_retries, delay, msg))
         time.sleep(delay)
         return True
