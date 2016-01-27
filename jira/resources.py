@@ -756,6 +756,9 @@ class Version(Resource):
 
         super(Version, self).update(**data)
 
+    def __eq__(self, other):
+        return self.id == other.id and self.name == other.name
+
 
 # GreenHopper
 
