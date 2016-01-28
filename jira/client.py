@@ -1852,6 +1852,9 @@ class JIRA(object):
         if size != size_from_file:
             size = size_from_file
 
+        # remove path from filename
+        filename = os.path.split(filename)[1]
+
         params = {
             'username': user,
             'filename': filename,
@@ -2397,13 +2400,13 @@ class JIRA(object):
             uri = '/secure/admin/DeleteProject.jspa'
         url = self._options['server'] + uri
         payload = {'pid': pid, 'Delete': 'Delete', 'confirm': 'true'}
-        try:
-            r = self._gain_sudo_session(payload, uri)
-            if r.status_code != 200 or not self._check_for_html_error(r.text):
-                return False
-        except JIRAError as e:
-            raise JIRAError(0, "You must have global administrator rights to delete projects.")
-            return False
+        # try:
+        #     r = self._gain_sudo_session(payload, uri)
+        #     if r.status_code != 200 or not self._check_for_html_error(r.text):
+        #         return False
+        # except JIRAError as e:
+        #     raise JIRAError(0, "You must have global administrator rights to delete projects.")
+        #     return False
 
         r = self._session.post(
             url, headers=CaseInsensitiveDict({'content-type': 'application/x-www-form-urlencoded'}), data=payload)

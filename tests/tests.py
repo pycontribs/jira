@@ -1187,16 +1187,15 @@ class IssueLinkTests(unittest.TestCase):
 
     def setUp(self):
         self.manager = JiraTestManager()
+        self.link_types = self.manager.jira_admin.issue_link_types()
 
-    @unittest.skip("broken")
     def test_issue_link(self):
-        self.link = self.manager.jira_admin.issue_link('10002')
+        self.link = self.manager.jira_admin.issue_link_type(self.link_types[0].id)
         link = self.link  # Duplicate outward
-        self.assertEqual(link.id, '10002')
-        self.assertEqual(link.inwardIssue.id, '10018')  # Duplicate inward
+        self.assertEqual(link.id, self.link_types[0].id)
 
     def test_create_issue_link(self):
-        self.manager.jira_admin.create_issue_link('Duplicate',
+        self.manager.jira_admin.create_issue_link(self.link_types[0].outward,
                                                   JiraTestManager().project_b_issue1,
                                                   JiraTestManager().project_b_issue2)
 
@@ -1207,48 +1206,17 @@ class IssueLinkTests(unittest.TestCase):
         outwardissue = self.manager.jira_admin.issue(
             JiraTestManager().project_b_issue2)
         self.assertIsNotNone(outwardissue)
-        self.manager.jira_admin.create_issue_link('Duplicate',
+        self.manager.jira_admin.create_issue_link(self.link_types[0].outward,
                                                   inwardissue, outwardissue)
 
         # @unittest.skip("Creating an issue link doesn't return its ID, so can't easily test delete")
         # def test_delete_issue_link(self):
         #    pass
 
-
-class IssueLinkTypeTests(unittest.TestCase):
-
-    def setUp(self):
-        self.test_manager = JiraTestManager()
-        self.jira = self.test_manager.jira_admin
-
-    def test_issue_link_types(self):
-        link_types = self.jira.issue_link_types()
-        duplicate = find_by_id(link_types, '10001')
-        self.assertEqual(duplicate.name, 'Cloners')
-
     def test_issue_link_type(self):
-        link_type = self.jira.issue_link_type('10002')
-        self.assertEqual(link_type.id, '10002')
-        self.assertEqual(link_type.name, 'Duplicate')
-
-
-class IssueTypesTests(unittest.TestCase):
-
-    def setUp(self):
-        self.jira = JiraTestManager().jira_admin
-
-    @not_on_custom_jira_instance
-    def test_issue_types(self):
-        types = self.jira.issue_types()
-        self.assertEqual(len(types), 8)
-        unq_issues = find_by_id(types, '10002')
-        self.assertEqual(unq_issues.name, 'Technical task')
-
-    @not_on_custom_jira_instance
-    def test_issue_type(self):
-        mytype = self.jira.issue_type('4')
-        self.assertEqual(mytype.id, '4')
-        self.assertEqual(mytype.name, 'Improvement')
+        link_type = self.manager.jira_admin.issue_link_type(self.link_types[0].id)
+        self.assertEqual(link_type.id, self.link_types[0].id)
+        self.assertEqual(link_type.name, self.link_types[0].name)
 
 
 class MyPermissionsTests(unittest.TestCase):
@@ -1615,7 +1583,7 @@ class UserTests(unittest.TestCase):
         size = os.path.getsize(TEST_ICON_PATH)
         filename = os.path.basename(TEST_ICON_PATH)
         with open(TEST_ICON_PATH, "rb") as icon:
-            props = self.jira.create_temp_user_avatar(JiraTestManager().CI_JIRA_ADMIN, filename,
+            props = self.jira.create_temp_user_avatar(JiraTestManager().CI_JIRA_ADMIN, TEST_ICON_PATH,
                                                       size, icon.read())
         self.assertIn('cropperOffsetX', props)
         self.assertIn('cropperOffsetY', props)
