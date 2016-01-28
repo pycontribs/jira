@@ -11,9 +11,6 @@ JIRA Python Library
 .. image:: https://img.shields.io/pypi/dm/jira.svg
         :target: https://pypi.python.org/pypi/jira/
 
-.. image:: https://img.shields.io/pypi/v/nine.svg
-        :target: https://pypi.python.org/pypi/jira/
-
 .. image:: https://img.shields.io/pypi/wheel/Django.svg
         :target: https://pypi.python.org/pypi/jira/
 
