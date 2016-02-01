@@ -253,6 +253,7 @@ class JiraTestManager(object):
                 # try:
                 self.jira_admin.create_project(self.project_a,
                                                self.project_a_name)
+                self.project_a_id = self.jira_admin.project(self.project_a).id
                 # except Exception as e:
                 #    logging.warning("Got %s" % e)
                 # try:
@@ -1230,19 +1231,18 @@ class MyPermissionsTests(unittest.TestCase):
         perms = self.jira.my_permissions()
         self.assertGreaterEqual(len(perms['permissions']), 40)
 
-    @unittest.skip("broken")
     def test_my_permissions_by_project(self):
-        perms = self.jira.my_permissions(projectKey='ZTRAVISDEB')
-        self.assertGreaterEqual(len(perms['permissions']), 40)
-        perms = self.jira.my_permissions(projectId='10012')
-        self.assertGreaterEqual(len(perms['permissions']), 40)
+        perms = self.jira.my_permissions(projectKey=self.test_manager.project_a)
+        self.assertGreaterEqual(len(perms['permissions']), 10)
+        perms = self.jira.my_permissions(projectId=self.test_manager.project_a_id)
+        self.assertGreaterEqual(len(perms['permissions']), 10)
 
     @unittest.skip("broken")
     def test_my_permissions_by_issue(self):
         perms = self.jira.my_permissions(issueKey='ZTRAVISDEB-7')
-        self.assertGreaterEqual(len(perms['permissions']), 40)
+        self.assertGreaterEqual(len(perms['permissions']), 10)
         perms = self.jira.my_permissions(issueId='11021')
-        self.assertGreaterEqual(len(perms['permissions']), 40)
+        self.assertGreaterEqual(len(perms['permissions']), 10)
 
 
 class PrioritiesTests(unittest.TestCase):
@@ -1425,7 +1425,6 @@ class SearchTests(unittest.TestCase):
         self.test_manager = JiraTestManager()
         self.issue = self.test_manager.project_b_issue1
 
-    @pytest.mark.xfail  # Searched issued does not contain basic fields.
     def test_search_issues(self):
         issues = self.jira.search_issues('project=%s' % self.project_b)
         self.assertLessEqual(len(issues), 50)  # default maxResults
@@ -1442,7 +1441,6 @@ class SearchTests(unittest.TestCase):
                                          startAt=5770, maxResults=500)
         self.assertLessEqual(len(issues), 500)
 
-    @pytest.mark.xfail  # Searched issued does not contain basic fields.
     def test_search_issues_field_limiting(self):
         issues = self.jira.search_issues('key=%s' % self.issue,
                                          fields='summary,comment')
@@ -1451,25 +1449,25 @@ class SearchTests(unittest.TestCase):
         self.assertFalse(hasattr(issues[0].fields, 'reporter'))
         self.assertFalse(hasattr(issues[0].fields, 'progress'))
 
-    # sort of working
-    @unittest.skip("broken")
     def test_search_issues_expandos(self):
         issues = self.jira.search_issues('key=%s' % self.issue,
-                                         expand='names')
+                                         expand='changelog')
         # self.assertTrue(hasattr(issues[0], 'names'))
-        self.assertFalse(hasattr(issues[0], 'schema'))
+        self.assertEqual(len(issues), 1)
+        self.assertFalse(hasattr(issues[0], 'editmeta'))
+        self.assertTrue(hasattr(issues[0], 'changelog'))
+        self.assertEqual(issues[0].key, self.issue)
 
-
-@unittest.skip("temporary disabled")
+@unittest.skip("Skipped due to https://jira.atlassian.com/browse/JRA-59619")
 class SecurityLevelTests(unittest.TestCase):
 
     def setUp(self):
         self.jira = JiraTestManager().jira_admin
 
     def test_security_level(self):
-        sec_level = self.jira.security_level('10001')
-        self.assertEqual(sec_level.id, '10001')
-        self.assertEqual(sec_level.name, 'eee')
+        # This is hardcoded due to Atlassian bug: https://jira.atlassian.com/browse/JRA-59619
+        sec_level = self.jira.security_level('10000')
+        self.assertEqual(sec_level.id, '10000')
 
 
 class ServerInfoTests(unittest.TestCase):
@@ -1633,27 +1631,18 @@ class UserTests(unittest.TestCase):
         # print(props)
         self.jira.delete_user_avatar(self.test_manager.CI_JIRA_ADMIN, props['id'])
 
-    @unittest.skip("disabled as is not Travis friendly, probably due to parallel execution")
     def test_search_users(self):
-        users = self.jira.search_users('c')
-        self.assertEqual(len(users), 2)
+        users = self.jira.search_users(self.test_manager.CI_JIRA_USER)
+        self.assertGreaterEqual(len(users), 1)
         usernames = map(lambda user: user.name, users)
-        self.assertIn(self.test_manager.CI_JIRA_ADMIN, usernames)
         self.assertIn(self.test_manager.CI_JIRA_USER, usernames)
 
-    @unittest.skip("disabled as is not Travis friendly, probably due to parallel execution")
     def test_search_users_maxresults(self):
-        users = self.jira.search_users('c', maxResults=1)
+        users = self.jira.search_users(self.test_manager.CI_JIRA_USER, maxResults=1)
         self.assertGreaterEqual(len(users), 1)
 
-    @unittest.skip("disabled as is not Travis friendly, probably due to parallel execution")
-    def test_search_users_startat(self):
-        users = self.jira.search_users('c', startAt=1)
-        self.assertGreaterEqual(len(users), 1)
-
-    @not_on_custom_jira_instance
     def test_search_allowed_users_for_issue_by_project(self):
-        users = self.jira.search_allowed_users_for_issue('a',
+        users = self.jira.search_allowed_users_for_issue(self.test_manager.CI_JIRA_USER,
                                                          projectKey=self.project_a)
         self.assertGreaterEqual(len(users), 1)
 
@@ -1767,8 +1756,10 @@ class SessionTests(unittest.TestCase):
         try:
             JIRA('https://127.0.0.1:1', logging=False, max_retries=0)
         except Exception as e:
-            logging.error(e)
-            self.assertIn(type(e), (JIRAError, requests.exceptions.ConnectionError))
+            self.assertIn(type(e), (JIRAError, requests.exceptions.ConnectionError), e)
+            return
+        self.assertTrue(False, "Instantiation of invalid JIRA instance succeeded.")
+
 
 
 class WebsudoTests(unittest.TestCase):
@@ -1901,8 +1892,10 @@ class UserAdministrationTests(unittest.TestCase):
 
 if __name__ == '__main__':
 
+    # when running tests we expect various errors and we don't want to display them by default
     logging.getLogger("requests").setLevel(logging.FATAL)
     logging.getLogger("urllib3").setLevel(logging.FATAL)
+    logging.getLogger("jira").setLevel(logging.FATAL)
 
     # j = JIRA("https://issues.citrite.net")
     # print(j.session())
