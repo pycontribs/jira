@@ -41,7 +41,7 @@ class PyTest(TestCommand):
         self.pytest_args = []
 
         logging.basicConfig(format='%(levelname)-10s %(message)s')
-        logging.getLogger().setLevel(logging.INFO)
+        logging.getLogger("jira").setLevel(logging.INFO)
 
         # if we have pytest-cache module we enable the test failures first mode
         try:
@@ -75,7 +75,7 @@ class PyTest(TestCommand):
                 "python -m autopep8 -r --in-place jira/ tests/ examples/",
                 shell=True)
         except subprocess.CalledProcessError:
-            logging.getLogger().warn('autopep8 is not installed so '
+            log.warning('autopep8 is not installed so '
                                      'it will not be run')
         # import here, cause outside the eggs aren't loaded
         import pytest
