@@ -84,6 +84,7 @@ except ImportError:
 
 log = logging.getLogger('jira')
 
+
 def translate_resource_args(func):
     """
     Decorator that converts Issue and Project resources to their keys when used as arguments.
@@ -364,7 +365,7 @@ class JIRA(object):
                            (resource[items_key] if items_key else resource)]
         items = next_items_page
 
-        if True: #isinstance(resource, dict):
+        if True:  # isinstance(resource, dict):
 
             if isinstance(resource, dict):
                 total = resource.get('total', 1)
@@ -2182,7 +2183,7 @@ class JIRA(object):
                 return mimetypes.guess_type("f." + imghdr.what(0, buff))[0]
             except (IOError, TypeError):
                 log.warning("Couldn't detect content type of avatar image"
-                                ". Specify the 'contentType' parameter explicitly.")
+                            ". Specify the 'contentType' parameter explicitly.")
                 return None
 
     def email_user(self, user, body, title="JIRA Notification"):
@@ -2397,10 +2398,7 @@ class JIRA(object):
                 log.error("Unable to recognize project `%s`" % pid)
                 return False
 
-        if self._version[0] >= 7:
-            uri = '/secure/project/DeleteProject.jspa'
-        else:
-            uri = '/secure/admin/DeleteProject.jspa'
+        uri = '/secure/project/DeleteProject.jspa'
         url = self._options['server'] + uri
         payload = {'pid': pid, 'Delete': 'Delete', 'confirm': 'true'}
         # try:

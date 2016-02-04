@@ -10,6 +10,7 @@ from .exceptions import JIRAError
 
 log = logging.getLogger('jira')
 
+
 def raise_on_error(r, verb='???', **kwargs):
     request = kwargs.get('request', None)
     headers = kwargs.get('headers', None)

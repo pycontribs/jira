@@ -17,6 +17,7 @@ from .utils import threaded_requests, json_loads, CaseInsensitiveDict
 
 log = logging.getLogger('jira')
 
+
 def get_error_list(r):
     error_list = []
     if r.status_code >= 400:
