@@ -11,7 +11,9 @@ if sys.version[0] == '2':
     sys.setdefaultencoding('UTF8')
 
 if __name__ == "__main__":
-        log = logging.getLogger("jira")
+        logging.getLogger("jira").addHandler(NullHandler())
+        logging.getLogger("urllib3").setLevel(logging.FATAL)
+        logging.getLogger("requests").setLevel(logging.FATAL)
 
         # now we'll detect which python interpretors we have on this machine and run the tests for all of them
         #'python2.5':'py25',
@@ -36,7 +38,7 @@ if __name__ == "__main__":
              "python -m tox -e %s" % ",".join(detected_pys)]
         if sys.platform == 'darwin':
             if os.system('atlas-version'):
-                log.warning('Atlassian SDK executables not found in path, we will try to install them.')
+                logging.warning('Atlassian SDK executables not found in path, we will try to install them.')
             cmds.append('brew tap atlassian/tap')
             cmds.append('brew install atlassian/tap/atlassian-plugin-sdk')
         for cmd in cmds:

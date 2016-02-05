@@ -88,7 +88,7 @@ except ImportError:
 # if encoding != 'UTF8':
 #    warnings.warning("Python default encoding is '%s' instead of 'UTF8' which means that there is a big change of having problems. Possible workaround http://stackoverflow.com/a/17628350/99834" % encoding)
 
-log = logging.getLogger('jira').addHandler(NullHandler())
+logging.getLogger('jira').addHandler(NullHandler())
 
 
 def translate_resource_args(func):
@@ -298,7 +298,7 @@ class JIRA(object):
             try:
                 self._version = tuple(si['versionNumbers'])
             except Exception as e:
-                log.error("invalid server_info: %s", si)
+                logging.error("invalid server_info: %s", si)
                 raise e
         else:
             self._version = (0, 0, 0)
@@ -327,7 +327,7 @@ class JIRA(object):
         except requests.RequestException:
             pass
         except Exception as e:
-            log.warning(e)
+            logging.warning(e)
 
     def __del__(self):
         session = getattr(self, "_session", None)
@@ -340,7 +340,7 @@ class JIRA(object):
         # JIRA has the bad habbit of returning errors in pages with 200 and
         # embedding the error in a huge webpage.
         if '<!-- SecurityTokenMissing -->' in content:
-            log.warning("Got SecurityTokenMissing")
+            logging.warning("Got SecurityTokenMissing")
             raise JIRAError("SecurityTokenMissing: %s" % content)
             return False
         return True
@@ -529,7 +529,7 @@ class JIRA(object):
         if isinstance(attachment, string_types):
             attachment = open(attachment, "rb")
         if hasattr(attachment, 'read') and hasattr(attachment, 'mode') and attachment.mode != 'rb':
-            log.warning(
+            logging.warning(
                 "%s was not opened in 'rb' mode, attaching file may fail." % attachment.name)
 
         # TODO: Support attaching multiple files at once?
@@ -1207,7 +1207,7 @@ class JIRA(object):
         try:
             r_json = json_loads(r)
         except ValueError as e:
-            log.error("%s\n%s" % (e, r.text))
+            logging.error("%s\n%s" % (e, r.text))
             raise e
         return r_json
 
@@ -1745,7 +1745,7 @@ class JIRA(object):
         retry = 0
         j = self._get_json('serverInfo')
         while not j and retry < 3:
-            log.warning("Bug https://jira.atlassian.com/browse/JRA-59676 trying again...")
+            logging.warning("Bug https://jira.atlassian.com/browse/JRA-59676 trying again...")
             retry += 1
             j = self._get_json('serverInfo')
         return j
@@ -2128,7 +2128,7 @@ class JIRA(object):
         try:
             jwt_auth = JWTAuth(jwt['secret'], alg='HS256')
         except NameError as e:
-            log.error("JWT authentication requires requests_jwt")
+            logging.error("JWT authentication requires requests_jwt")
             raise e
         jwt_auth.add_field("iat", lambda req: JIRA._timestamp())
         jwt_auth.add_field("exp", lambda req: JIRA._timestamp(datetime.timedelta(minutes=3)))
@@ -2156,7 +2156,7 @@ class JIRA(object):
         try:
             r_json = json_loads(r)
         except ValueError as e:
-            log.error("%s\n%s" % (e, r.text))
+            logging.error("%s\n%s" % (e, r.text))
             raise e
         return r_json
 
@@ -2194,7 +2194,7 @@ class JIRA(object):
             try:
                 return mimetypes.guess_type("f." + imghdr.what(0, buff))[0]
             except (IOError, TypeError):
-                log.warning("Couldn't detect content type of avatar image"
+                logging.warning("Couldn't detect content type of avatar image"
                             ". Specify the 'contentType' parameter explicitly.")
                 return None
 
@@ -2272,14 +2272,14 @@ class JIRA(object):
             r = self._session.post(
                 url, headers=self._options['headers'], data=payload)
             if r.status_code == 404:
-                log.error(
+                logging.error(
                     "In order to be able to use rename_user() you need to install Script Runner plugin. See https://marketplace.atlassian.com/plugins/com.onresolve.jira.groovy.groovyrunner")
                 return False
             if r.status_code != 200:
-                log.error(r.status_code)
+                logging.error(r.status_code)
 
             if re.compile("XSRF Security Token Missing").search(r.content):
-                log.fatal(
+                logging.fatal(
                     "Reconfigure JIRA and disable XSRF in order to be able call this. See https://developer.atlassian.com/display/JIRADEV/Form+Token+Handling")
                 return False
 
@@ -2290,7 +2290,7 @@ class JIRA(object):
             m = re.search("<span class=\"errMsg\">(.*)<\/span>", r.content)
             if m:
                 msg = m.group(1)
-                log.error(msg)
+                logging.error(msg)
                 return False
                 # <span class="errMsg">Target user ID must exist already for a merge</span>
             p = re.compile("type=\"hidden\" name=\"cannedScriptArgs_Hidden_output\" value=\"(.*?)\"\/>",
@@ -2305,10 +2305,10 @@ class JIRA(object):
             try:
                 self.user(old_user)
             except Exception as e:
-                log.error("User %s does not exists. %s", old_user, e)
+                logging.error("User %s does not exists. %s", old_user, e)
                 return msg
 
-            log.error(msg + '\n' + "User %s does still exists after rename, that's clearly a problem." % old_user)
+            logging.error(msg + '\n' + "User %s does still exists after rename, that's clearly a problem." % old_user)
             return False
 
     def delete_user(self, username):
@@ -2319,7 +2319,7 @@ class JIRA(object):
         if 200 <= r.status_code <= 299:
             return True
         else:
-            log.error(r.status_code)
+            logging.error(r.status_code)
             return False
 
     def reindex(self, force=False, background=True):
@@ -2349,7 +2349,7 @@ class JIRA(object):
             return True
 
         if r.text.find('All issues are being re-indexed'):
-            log.warning("JIRA re-indexing is already running.")
+            logging.warning("JIRA re-indexing is already running.")
             return True  # still reindexing is considered still a success
 
         if r.text.find('To perform the re-index now, please go to the') or force:
@@ -2358,7 +2358,7 @@ class JIRA(object):
             if r.text.find('All issues are being re-indexed') != -1:
                 return True
             else:
-                log.error("Failed to reindex jira, probably a bug.")
+                logging.error("Failed to reindex jira, probably a bug.")
                 return False
 
     def backup(self, filename='backup.zip'):
@@ -2372,7 +2372,7 @@ class JIRA(object):
         if r.status_code == 200:
             return True
         else:
-            log.warning(
+            logging.warning(
                 'Got %s response from calling backup.' % r.status_code)
             return r.status_code
 
@@ -2407,7 +2407,7 @@ class JIRA(object):
                     found = True
                     break
             if not found:
-                log.error("Unable to recognize project `%s`" % pid)
+                logging.error("Unable to recognize project `%s`" % pid)
                 return False
 
         uri = '/secure/project/DeleteProject.jspa'
@@ -2427,7 +2427,7 @@ class JIRA(object):
         if r.status_code == 200:
             return self._check_for_html_error(r.text)
         else:
-            log.warning(
+            logging.warning(
                 'Got %s response from calling delete_project.' % r.status_code)
             return r.status_code
 
@@ -2460,7 +2460,7 @@ class JIRA(object):
         if name is None:
             name = key
         if key.upper() != key or not key.isalpha() or len(key) < 2 or len(key) > 10:
-            log.error(
+            logging.error(
                 'key parameter is not all uppercase alphanumeric of length between 2 and 10')
             return False
         url = self._options['server'] + \
@@ -2510,7 +2510,7 @@ class JIRA(object):
         f.write(r.text)
 
         if self.logging:
-            log.error(
+            logging.error(
                 "Unexpected result while running create project. Server response saved in %s for further investigation [HTTP response=%s]." % (
                     f.name, r.status_code))
         return False

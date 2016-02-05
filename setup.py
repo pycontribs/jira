@@ -75,7 +75,7 @@ class PyTest(TestCommand):
                 "python -m autopep8 -r --in-place jira/ tests/ examples/",
                 shell=True)
         except subprocess.CalledProcessError:
-            log.warning('autopep8 is not installed so '
+            logging.warning('autopep8 is not installed so '
                         'it will not be run')
         # import here, cause outside the eggs aren't loaded
         import pytest
