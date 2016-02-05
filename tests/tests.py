@@ -1052,44 +1052,21 @@ class IssueTests(unittest.TestCase):
         new_votes = self.jira.votes(issue)
         assert votes.votes == new_votes.votes
 
-    def test_watchers(self):
-        watchers = self.jira.watchers(self.issue_1)
-        self.assertEqual(watchers.watchCount, 1)
+    def test_add_remove_watcher(self):
 
-    def test_watchers_with_issue_obj(self):
-        issue = self.jira.issue(self.issue_1)
-        watchers = self.jira.watchers(issue)
-        self.assertEqual(watchers.watchCount, 1)
-
-    def test_add_watcher(self):
+        # removing it in case it exists, so we know its state
+        self.jira.remove_watcher(self.issue_1, self.test_manager.CI_JIRA_USER)
         init_watchers = self.jira.watchers(self.issue_1).watchCount
+
+        # adding a new watcher
         self.jira.add_watcher(self.issue_1, self.test_manager.CI_JIRA_USER)
         self.assertEqual(self.jira.watchers(self.issue_1).watchCount,
                          init_watchers + 1)
+
+        # now we verify that remove does indeed remove watchers
         self.jira.remove_watcher(self.issue_1, self.test_manager.CI_JIRA_USER)
-
-    def test_remove_watcher(self):
-        self.jira.add_watcher(self.issue_1, self.test_manager.CI_JIRA_USER)
-        init_watchers = self.jira.watchers(self.issue_1).watchCount
-        self.jira.remove_watcher(self.issue_1, self.test_manager.CI_JIRA_USER)
-        self.assertEqual(self.jira.watchers(self.issue_1).watchCount,
-                         init_watchers - 1)
-
-    def test_add_watcher_with_issue_obj(self):
-        issue = self.jira.issue(self.issue_1)
-        init_watchers = self.jira.watchers(issue).watchCount
-        self.jira.add_watcher(issue, self.test_manager.CI_JIRA_USER)
-        self.assertEqual(self.jira.watchers(issue).watchCount,
-                         init_watchers + 1)
-        self.jira.remove_watcher(issue, self.test_manager.CI_JIRA_USER)
-
-    def test_remove_watcher_with_issue_obj(self):
-        issue = self.jira.issue(self.issue_1)
-        self.jira.add_watcher(issue, self.test_manager.CI_JIRA_USER)
-        init_watchers = self.jira.watchers(issue).watchCount
-        self.jira.remove_watcher(issue, self.test_manager.CI_JIRA_ADMIN)
-        self.assertEqual(self.jira.watchers(issue).watchCount,
-                         init_watchers - 1)
+        new_watchers = self.jira.watchers(self.issue_1).watchCount
+        self.assertEqual(init_watchers, new_watchers)
 
     @not_on_custom_jira_instance
     def test_agile(self):
