@@ -9,13 +9,19 @@ into usable objects.
 import collections
 import re
 import logging
+try:  # Python 2.7+
+    from logging import NullHandler
+except ImportError:
+    class NullHandler(logging.Handler):
+        def emit(self, record):
+            pass
 import json
 
 from six import iteritems, string_types, text_type
 
 from .utils import threaded_requests, json_loads, CaseInsensitiveDict
 
-log = logging.getLogger('jira')
+log = logging.getLogger('jira').addHandler(NullHandler())
 
 
 def get_error_list(r):

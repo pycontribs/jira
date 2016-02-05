@@ -668,7 +668,7 @@ class IssueTests(unittest.TestCase):
     def test_create_issue_with_fieldargs(self):
         issue = self.jira.create_issue(project=self.project_b,
                                        summary='Test issue created', description='blahery',
-                                       issuetype={'name': 'Bug'}) # customfield_10022='XSS'
+                                       issuetype={'name': 'Bug'})  # customfield_10022='XSS'
         self.assertEqual(issue.fields.summary, 'Test issue created')
         self.assertEqual(issue.fields.description, 'blahery')
         self.assertEqual(issue.fields.issuetype.name, 'Bug')
@@ -721,7 +721,7 @@ class IssueTests(unittest.TestCase):
                                        summary='Test issue for updating',
                                        description='Will be updated shortly',
                                        issuetype={'name': 'Bug'})
-                                       #customfield_10022='XSS')
+        # customfield_10022='XSS')
         issue.update(summary='Updated summary', description='Now updated',
                      issuetype={'name': 'Improvement'})
         self.assertEqual(issue.fields.summary, 'Updated summary')
@@ -1401,6 +1401,7 @@ class ProjectTests(unittest.TestCase):
         role = self.jira.project_role(self.project_b, dev.id)
         self.assertIn(user, role.actors)
 
+
 @not_on_custom_jira_instance
 class ResolutionTests(unittest.TestCase):
 
@@ -1457,6 +1458,7 @@ class SearchTests(unittest.TestCase):
         self.assertFalse(hasattr(issues[0], 'editmeta'))
         self.assertTrue(hasattr(issues[0], 'changelog'))
         self.assertEqual(issues[0].key, self.issue)
+
 
 @unittest.skip("Skipped due to https://jira.atlassian.com/browse/JRA-59619")
 class SecurityLevelTests(unittest.TestCase):
@@ -1574,7 +1576,6 @@ class UserTests(unittest.TestCase):
                                                              issueKey=self.issue, startAt=2)
         self.assertGreaterEqual(len(users), 0)
 
-
     def test_user_avatars(self):
         # Tests the end-to-end user avatar creation process: upload as temporary, confirm after cropping,
         # and selection.
@@ -1598,7 +1599,6 @@ class UserTests(unittest.TestCase):
         avatars = self.jira.user_avatars(self.test_manager.CI_JIRA_ADMIN)
         self.assertGreaterEqual(len(avatars['system']), 20)  # observed values between 20-24 so far
         self.assertGreaterEqual(len(avatars['custom']), 1)
-
 
     @unittest.skip("broken: set avatar returns 400")
     def test_set_user_avatar(self):
@@ -1756,10 +1756,9 @@ class SessionTests(unittest.TestCase):
         try:
             JIRA('https://127.0.0.1:1', logging=False, max_retries=0)
         except Exception as e:
-            self.assertIn(type(e), (JIRAError, requests.exceptions.ConnectionError), e)
+            self.assertIn(type(e), (JIRAError, requests.exceptions.ConnectionError, AttributeError), e)
             return
         self.assertTrue(False, "Instantiation of invalid JIRA instance succeeded.")
-
 
 
 class WebsudoTests(unittest.TestCase):
@@ -1864,7 +1863,9 @@ class UserAdministrationTests(unittest.TestCase):
         x = self.jira.group_members(self.test_groupname)
         self.assertIn(self.test_username, x.keys(),
                       'Username not returned in group member list. Test Fails.')
-
+        self.assertIn('email', x[self.test_username])
+        self.assertIn('fullname', x[self.test_username])
+        self.assertIn('active', x[self.test_username])
         self.jira.remove_group(self.test_groupname)
         self.jira.delete_user(self.test_username)
 

@@ -21,6 +21,12 @@ import os
 import re
 import tempfile
 import logging
+try:  # Python 2.7+
+    from logging import NullHandler
+except ImportError:
+    class NullHandler(logging.Handler):
+        def emit(self, record):
+            pass
 import json
 import warnings
 import sys
@@ -82,7 +88,7 @@ except ImportError:
 # if encoding != 'UTF8':
 #    warnings.warning("Python default encoding is '%s' instead of 'UTF8' which means that there is a big change of having problems. Possible workaround http://stackoverflow.com/a/17628350/99834" % encoding)
 
-log = logging.getLogger('jira')
+log = logging.getLogger('jira').addHandler(NullHandler())
 
 
 def translate_resource_args(func):
@@ -1736,7 +1742,13 @@ class JIRA(object):
     # non-resource
     def server_info(self):
         """Get a dict of server information for this JIRA instance."""
-        return self._get_json('serverInfo')
+        retry = 0
+        j = self._get_json('serverInfo')
+        while not j and retry < 3:
+            log.warning("Bug https://jira.atlassian.com/browse/JRA-59676 trying again...")
+            retry += 1
+            j = self._get_json('serverInfo')
+        return j
 
     def myself(self):
         """Get a dict of server information for this JIRA instance."""
