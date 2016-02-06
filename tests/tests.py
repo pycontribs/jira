@@ -352,7 +352,7 @@ class UniversalResourceTests(unittest.TestCase):
         # py26,27,34 gets 404 but on py33 gets 400
         assert ex.status_code in [400, 404]
         self.assertIsNotNone(ex.text)
-        self.assertRegex(ex.url, '^https?://.*/rest/api/latest/woopsydoodle/666$')
+        self.assertRegex(ex.url, '^https?://.*/rest/api/(2|latest)/woopsydoodle/666$')
 
     def test_pickling_resource(self):
         resource = self.jira.find('issue/{0}',
