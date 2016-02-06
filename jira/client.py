@@ -470,7 +470,7 @@ class JIRA(object):
         :param value: value to assign to the property
         """
         url = self._options['server'] + \
-            '/rest/api/2/application-properties/' + key
+            '/rest/api/latest/application-properties/' + key
         payload = {
             'id': key,
             'value': value
@@ -932,7 +932,7 @@ class JIRA(object):
         :param assignee: the user to assign the issue to
         """
         url = self._options['server'] + \
-            '/rest/api/2/issue/' + str(issue) + '/assignee'
+            '/rest/api/latest/issue/' + str(issue) + '/assignee'
         payload = {'name': assignee}
         r = self._session.put(
             url, data=json.dumps(payload))
@@ -1335,7 +1335,7 @@ class JIRA(object):
             data['started'] = started.strftime("%Y-%m-%dT%H:%M:%S.000%z")
         if user is not None:
             data['author'] = {"name": user,
-                              'self': self.JIRA_BASE_URL + '/rest/api/2/user?username=' + user,
+                              'self': self.JIRA_BASE_URL + '/rest/api/latest/user?username=' + user,
                               'displayName': user,
                               'active': False
                               }
@@ -2234,7 +2234,7 @@ class JIRA(object):
 
         if self._version >= (6, 0, 0):
 
-            url = self._options['server'] + '/rest/api/2/user'
+            url = self._options['server'] + '/rest/api/latest/user'
             payload = {
                 "name": new_user,
             }
@@ -2464,7 +2464,7 @@ class JIRA(object):
                 'key parameter is not all uppercase alphanumeric of length between 2 and 10')
             return False
         url = self._options['server'] + \
-            '/rest/project-templates/1.0/templates'
+            '/rest/project-templates/latest/templates'
 
         r = self._session.get(url)
         j = json_loads(r)
@@ -2479,7 +2479,7 @@ class JIRA(object):
 
         if not template_key:
             raise JIRAError(
-                "Unable to find a suitable project template to use. Found only: " + ', '.join(templates))
+                "Unable to find a suitable project template to use. Found only: %s" + json.dumps(j))
 
         payload = {'name': name,
                    'key': key,
