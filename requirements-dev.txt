@@ -1,8 +1,8 @@
-Sphinx
-autopep8
+Sphinx>=1.3
+autopep8>=1.2.1
 oauthlib
 coveralls
-pep8
+pep8>=1.6.2
 pytest>=2.6.0
 pytest-cov
 pytest-pep8

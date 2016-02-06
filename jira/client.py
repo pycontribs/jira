@@ -25,6 +25,7 @@ try:  # Python 2.7+
     from logging import NullHandler
 except ImportError:
     class NullHandler(logging.Handler):
+
         def emit(self, record):
             pass
 import json
@@ -2195,7 +2196,7 @@ class JIRA(object):
                 return mimetypes.guess_type("f." + imghdr.what(0, buff))[0]
             except (IOError, TypeError):
                 logging.warning("Couldn't detect content type of avatar image"
-                            ". Specify the 'contentType' parameter explicitly.")
+                                ". Specify the 'contentType' parameter explicitly.")
                 return None
 
     def email_user(self, user, body, title="JIRA Notification"):
