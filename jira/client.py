@@ -2479,7 +2479,7 @@ class JIRA(object):
 
         if not template_key:
             raise JIRAError(
-                "Unable to find a suitable project template to use. Found only: %s" + json.dumps(j))
+                "Unable to find a suitable project template to use. Found only: %s" % json.dumps(j))
 
         payload = {'name': name,
                    'key': key,
