@@ -82,7 +82,7 @@ In additions to all the contributors we would like to thank to these companies:
    :width: 100px
    :target: http://www.atlassian.com
 
-.. image:: https://www.jetbrains.com/pycharm/docs/logo_pycharm.png
+.. image:: http://blog.jetbrains.com/pycharm/files/2015/12/PyCharm_400x400_Twitter_logo_white.png
     :width: 100px
     :target: http://www.jetbrains.com/
 
