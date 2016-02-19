@@ -1,5 +1,6 @@
 requests>=2.6.0
 requests-oauthlib>=0.3.3
+requests-kerberos
 tlslite>=0.4.4
 six>=1.9.0
 setuptools>=0.8.0

@@ -193,7 +193,7 @@ class JIRA(object):
     JIRA_BASE_URL = Resource.JIRA_BASE_URL
     AGILE_BASE_URL = GreenHopperResource.AGILE_BASE_URL
 
-    def __init__(self, server=None, options=None, basic_auth=None, oauth=None, jwt=None,
+    def __init__(self, server=None, options=None, basic_auth=None, oauth=None, jwt=None, kerberos=False,
                  validate=False, get_server_info=True, async=False, logging=True, max_retries=3):
         """
         Construct a JIRA client instance.
@@ -228,6 +228,7 @@ class JIRA(object):
             * consumer_key -- key of the OAuth application link defined in JIRA
             * key_cert -- private key file to sign requests with (should be the pair of the public key supplied to
             JIRA in the OAuth application link)
+        :param kerberos: If true it will enable Kerberos authentication.
         :param jwt: A dict of properties for JWT authentication supported by Atlassian Connect. The following
             properties are required:
             * secret -- shared secret as delivered during 'installed' lifecycle event
@@ -280,6 +281,8 @@ class JIRA(object):
             self._session.headers.update(self._options['headers'])
         elif jwt:
             self._create_jwt_session(jwt)
+        elif kerberos:
+            self._create_kerberos_session()
         else:
             verify = self._options['verify']
             self._session = ResilientSession()
@@ -2117,6 +2120,15 @@ class JIRA(object):
         self._session = ResilientSession()
         self._session.verify = verify
         self._session.auth = oauth
+
+    def _create_kerberos_session(self):
+        verify = self._options['verify']
+
+        from requests_kerberos import HTTPKerberosAuth
+
+        self._session = ResilientSession()
+        self._session.verify = verify
+        self._session.auth = HTTPKerberosAuth()
 
     @staticmethod
     def _timestamp(dt=None):
