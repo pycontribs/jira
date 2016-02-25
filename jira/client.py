@@ -1397,6 +1397,17 @@ class JIRA(object):
         r = self._session.post(
             url, data=json.dumps(data))
 
+	@translate_resource_args
+	def delete_issue_link(self, linkId):
+		"""
+		Delete a link between two issues.
+
+		:param linkId: the ID of the link to delete
+		"""
+
+		url = self._get_url('issueLink') + "/" + linkId
+		r = self.jira._session.delete(url)
+		
     def issue_link(self, id):
         """
         Get an issue link Resource from the server.
