@@ -63,6 +63,10 @@ requests-oauthlib
 -----------------
 Used to implement OAuth. The latest version as of this writing is 0.3.3.
 
+requests-kerberos
+-----------------
+Used to implement Kerberos.
+
 IPython
 -------
 The `IPython enhanced Python interpreter <http://ipython.org>`_ provides the fancy chrome used by
@@ -169,6 +173,13 @@ Pass a dict of OAuth properties to the ``oauth`` constructor argument::
 
 See https://confluence.atlassian.com/display/JIRA/Configuring+OAuth+Authentication+for+an+Application+Link for details
 on configuring an OAuth provider for JIRA.
+
+Kerberos
+^^^^^^^^
+
+To enable Kerberos auth, set ``kerberos=True``::
+
+    authed_jira = JIRA(kerberos=True)
 
 .. _jirashell-label:
 
@@ -444,7 +455,7 @@ Discussion and support
 
 We encourage all who wish to discuss by using https://answers.atlassian.com/questions/topics/754366/jira-python
 
-Keep in mind to use the jira-python tag when you add a new question. This will assure that the project mantainers 
+Keep in mind to use the jira-python tag when you add a new question. This will assure that the project mantainers
 will get notified about your question.
 
 API Documentation
