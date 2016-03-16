@@ -5,7 +5,7 @@ VERSION=$(python -c "from jira.version import __version__ ; print __version__")
 echo Preparing to release version $VERSION
 
 echo === Checking that all changes are commited and pushed ===
-git pull -u
+git pull
 
 #git diff
 # Disallow unstaged changes in the working tree
