@@ -1,3 +1,130 @@
+2016-03-16 remove wrong parameter in release.sh
+2016-03-16 test rsa key
+2016-03-09 Merge pull request #175 from tuukkamustonen/kerberos-auth
+2016-03-09 Merge pull request #176 from bakkeby/master
+2016-02-25 Changed linkId to id for consistency
+2016-02-25 Correcting tabs vs spaces
+2016-02-25 Adding functionality to allow deletion of issue links
+2016-02-19 Adds support for Kerberos auth.
+2016-02-18 Updated PyCharm logo as they also removed the old one when they rebranded it.
+2016-02-11 Merge pull request #172 from casahome2000/master
+2016-02-06 Configured minimal versions for pep8 related packages.
+2016-02-06 fixed the version check for invalid request.
+2016-02-06 Logged the initial JSON response for templates when they do not contain the expected format. This should help us identify what happens while running tests on Travis.
+2016-02-06 changed api version calls to use "latest" instead of 2.
+2016-02-05 resolves issue where incompleted_issues() was failing for missing key; 'incompletedIssues' corrected to 'issuesNotCompletedInCurrentSprint'
+2016-02-05 Should fix the inconsistent failures with watchers tests.
+2016-02-05 Swiched back to the use of logging module directly instead of a variable.
+2016-02-05 Implemented a special retry mechanism for serverInfo REST call in order to workaround bug https://jira.atlassian.com/browse/JRA-59676
+2016-02-04 Repaired delete_project() as it seems not to be working on JIRA 6.x.
+2016-02-01 Fixed few others broken unittests.
+2016-02-01 Reworked the way we log warnings and errors, now we use the named logger "jira".
+2016-01-28 Removed duplicate python versions from setup.py
+2016-01-28 Removed pypi version badge as is useless
+2016-01-28 More unittest fixes, now they should finally pass after months of having many of them broken.
+2016-01-27 Implemented __eq__ for Version resource.
+2016-01-25 Merge branch 'master' of github.com:pycontribs/jira
+2016-01-25 Fixed many of the broken unittests. Disabled some uneeded logging for running unittests.
+2016-01-21 Merge pull request #162 from trivee/master
+2016-01-21 Merge pull request #168 from daniellawrence/master
+2016-01-20 Badge cleanup
+2016-01-10 Request JSON payloads to avoid the problem described in https://jira.atlassian.com/browse/JRA-38551
+2016-01-07 assign_issue() now returns errors
+2016-01-07 Merge branch 'master' of github.com:pycontribs/jira
+2016-01-04 Linting plus initial work on enabling local testing using the atlassian-sdk
+2016-01-04 Merge pull request #159 from eleusis/master
+2016-01-04 (Minor) Fix UniversalResourceTests.test_pickling_resource() - Work with the raw dict instead of pickling the whole resource and running into issues with PropertyHolder
+2015-12-30 (#158) Fix initialisation of resources.Issue when raw is passed in
+2015-12-11 Fix conflict markers from merge.
+2015-12-11 Merge pull request #146 from ak-ambi/master
+2015-12-11 Merge branch 'pr/147'
+2015-12-11 Merge branch 'master' into pr/147
+2015-12-11 Merge pull request #148 from Achimh3011/make_tests_runnable_on_Jira_VM
+2015-12-11 Merge pull request #152 from filmackay/master
+2015-11-24 clean up string detection: string_types
+2015-11-24 remove superfluous self parameter
+2015-11-22 Exclude tests working with users - not understood why they fail now.
+2015-11-22 Skip tests that rely on specifics of the standard Jira if a non-standard Jira is used.
+2015-11-22 Add correct treatment of "issuetype" parameter.
+2015-11-22 Fix whitespace and allow for python3.
+2015-11-21 Fix call of Resource._get_url().
+2015-11-21 Adapt project template search to new structure.
+2015-11-21 Fixed problems found during tests execution.
+2015-11-21 Fixed bugs found in new JIRA API
+2015-11-16 Merge branch 'master' of github.com:pycontribs/jira
+2015-11-16 Added option for ignoring existing users on user_add.
+2015-11-16 Merge pull request #131 from dbaxa/do_not_fail_tests_on_prerelease_failure
+2015-11-16 Merge pull request #144 from ak-ambi/jira_agile
+2015-11-15 Add new option 'agile_rest_path', which may be used to select new public JIRA Agile API.
+2015-11-15 Small improvements
+2015-11-15 Added JIRA._fetch_pages function and used it in all functions using pagination and extended ResultList class.
+2015-11-15 Merge pull request #136 from abdarraafi/shatil-setup.py-fixes
+2015-11-15 Merge pull request #139 from cgrandsjo/patch-2
+2015-11-15 Merge pull request #140 from ak-ambi/master
+2015-11-15 Merge pull request #135 from abdarraafi/master
+2015-11-15 Merge pull request #132 from osomdev/master
+2015-11-15 Merge pull request #128 from MichiganLabs/issue-rank
+2015-11-15 Merge pull request #129 from nbaggott/resilient-client-backoff
+2015-11-15 Merge pull request #141 from filmackay/master
+2015-11-13 bump version
+2015-11-13 cover python 3.5
+2015-11-13 py3 compatible string test
+2015-11-13 redundant if test in split
+2015-11-13 test for clauseNames presence
+2015-11-13 items for py3 compat
+2015-11-13 Added type hints to Issue class.
+2015-11-06 Update release.sh
+2015-11-02 Fix setup.py's setup_requires and requirements.txt
+2015-11-02 Move optional filemagic line to requirements-opt
+2015-10-28 Do not try to recover if we're not going to do the retry.
+2015-10-28 Do not run prerelease as part of the standard test run. Instead run it after inside after_success.
+2015-10-23 Restore missing delay in ResilientClient and & implement exponentional backoff
+2015-10-19 gh-global-rank field is obsolete.
+2015-10-19 Ensure JIRA class has _rank field
+2015-10-11 Fix #93: ability to retrieve custom fields by their JQL names.
+2015-10-11 Websudo fix when used with .netrc files.
+2015-10-11 Added support for the type parameter on create_project, as this is required for JIRA 7.
+2015-10-11 Moved JIRAError to exceptions.
+2015-10-05 Merge branch 'master' of github.com:pycontribs/jira
+2015-10-05 moved raise_on_error to resilientsession
+2015-10-05 documentation improvements, fixed one test
+2015-10-05 Merge pull request #119 from fender4645/master
+2015-10-05 Merge pull request #124 from dugjason/master
+2015-10-05 Merge pull request #121 from BATS/ResilientSession_fixes
+2015-10-04 fixed #123 by enabling change of sprint state.
+2015-10-04 Merge branch 'master' of github.com:pycontribs/jira
+2015-10-04 removed dead code
+2015-10-04 Merge pull request #116 from zaufi/master
+2015-10-02 Merge branch 'release/1.1.0-1'
+2015-10-02 HOTFIX in test; pass two elements into set properly
+2015-10-02 Merge tag '1.1.0' into develop
+2015-10-02 Merge branch 'release/1.1.0'
+2015-10-02 Merge pull request #1 from dugjason/feature/user_sets
+2015-10-02 Fix typo
+2015-10-02 Add __hash__ and __eq__ methods to User class to allow user objects to be added to a Set correctly
+2015-09-11 Fixup: Correctly cope with Requests object truthiness...
+2015-09-11 Bugfixes for ResilientSession retry logic
+2015-08-31 Issue 118 Add ability to send email notification when creating a new user
+2015-08-13 Python > 3.1 do not need `ordereddict` package.
+2015-08-04 Merge pull request #113 from fender4645/master
+2015-08-04 Merge pull request #103 from milo-minderbinder/master
+2015-08-04 Merge pull request #110 from dann7387/patch-1
+2015-07-31 Change test to use simple regex
+2015-07-31 Update self.issue_1.key to self.issue_1
+2015-07-31 Update test and assert to use arrays.
+2015-07-31 Fix typo with assigning false boolean.
+2015-07-31 Add unit test for adding issue to sprint.
+2015-07-31 Refactor method of retrieving custom field info.
+2015-07-29 Issue 112 - sendEmail kwarg doesn't work when calling add_user method
+2015-07-28 Fix typo in list comprehension.
+2015-07-28 Perform dynamic lookup of custom field id for Sprint field
+2015-07-27 Fix typo with assignment.
+2015-07-27 Workaround for adding an issue to a sprint
+2015-07-15 Minor fixes to jirashell issues #100, #102, and #66, and tweaks fix from d5856742771890ad18165197f6bc7eb3ff8cd086. The oauth_dance and print_tokens options specified in jirashell.ini configuration file are now correctly parsed as boolean values and OAuth with pre-authenticated access_token and access_token_secret (skipping oauth_dance) is fixed. OAuth options are now minimally validated for completeness, so #66 is fixed, allowing for basic_auth without causing issue #102 as the merged commit d5856742771890ad18165197f6bc7eb3ff8cd086 did previously.
+2015-07-15 Merge remote-tracking branch 'upstream/master'
+2015-07-15 Fixed #88 so now groups are returned as a sorted list of strings.
+2015-07-15 Fix issue #100 - The problem is that 'oauth_dance' should be an optional option argument, if it is not set, or if it is set to false, a valid use case still exists where OAuth should be used if the user supplies access_token and access_token_secret through command line or configuration file options. This would be the case if the user had already authenticated externally with OAuth and had valid, authenticated tokens to pass to jirashell.
+2015-07-15 Attempt to fully automate the release and tagging of git based on what is released.
 2015-07-15 Attempt to fully automate the release and tagging of git based on what is released.
 2015-07-15 Enabled new travis builders as we do not need sudo. Fixed iteritems() which doesn't work anymore with py34. Increased version to v0.50
 2015-07-15 Attempt to fix the unittest and to eliminate warnings from the test executions.
