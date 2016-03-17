@@ -32,6 +32,8 @@ import json
 import warnings
 import sys
 import datetime
+import time
+import xml.etree.ElementTree as etree
 import calendar
 import hashlib
 from numbers import Number
@@ -1409,7 +1411,7 @@ class JIRA(object):
 
         url = self._get_url('issueLink') + "/" + id
         r = self.jira._session.delete(url)
-		
+
     def issue_link(self, id):
         """
         Get an issue link Resource from the server.
@@ -2384,20 +2386,97 @@ class JIRA(object):
                 logging.error("Failed to reindex jira, probably a bug.")
                 return False
 
-    def backup(self, filename='backup.zip'):
+    def backup(self, filename='backup.zip', cloud=False, attachments=False):
         """
         Will call jira export to backup as zipped xml. Returning with success does not mean that the backup process finished.
         """
-        url = self._options['server'] + '/secure/admin/XmlBackup.jspa'
-        payload = {'filename': filename}
-        r = self._session.post(
-            url, headers=self._options['headers'], data=payload)
-        if r.status_code == 200:
-            return True
+        if cloud:
+            url = self._options['server'] + '/rest/obm/1.0/runbackup'
+            payload = json.dumps({"cbAttachments": attachments})
+            self._options['headers']['X-Requested-With'] = 'XMLHttpRequest'
+        else:
+            url = self._options['server'] + '/secure/admin/XmlBackup.jspa'
+            payload = {'filename': filename}
+        try:
+            r = self._session.post( url, headers=self._options['headers'], data=payload)
+            if r.status_code == 200:
+                return True
+            else:
+                logging.warning(
+                    'Got %s response from calling backup.' % r.status_code)
+                return r.status_code
+        except Exception as e:
+            print("I see %s" % e)
+
+    def backup_progress(self, cloud=True):
+        """
+        Returns status of cloud backup as a dict.
+        Is there a way to get progress for Server version?
+        """
+        epoch_time = int(time.time() * 1000)
+        if cloud:
+            url = self._options['server'] + '/rest/obm/1.0/getprogress?_=%i' % epoch_time
         else:
             logging.warning(
-                'Got %s response from calling backup.' % r.status_code)
-            return r.status_code
+                    'This functionality is not available in Server version'
+                    )
+            return None
+        r = self._session.get(
+                url, headers=self._options['headers']
+                )
+        # This is weird.  I used to get xml, but now I'm getting json
+        try:
+            return json.loads(r.text)
+        except:
+            progress = {}
+            try:
+                root = etree.fromstring(r.text)
+            except etree.ParseError as pe:
+                logging.warning(
+                    'Unable to find backup info.  You probably need to initiate a new backup'
+                    )
+                return None
+            for k in root.keys():
+                progress[k] = root.get(k)
+            return progress
+
+    def backup_complete(self, cloud=True):
+        """
+        Returns boolean based on 'alternativePercentage' and 'size' returned
+        from backup_progress (cloud only)
+        """
+        if not cloud:
+            logging.warning(
+                    'This functionality is not available in Server version'
+                    )
+            return None
+        status = self.backup_progress(cloud=cloud)
+        perc_complete = int(re.search(r"\s([0-9]*)\s",
+                            status['alternativePercentage'] ).group(1))
+        file_size = int(status['size'])
+        return perc_complete >= 100 and file_size > 0
+
+    def backup_download(self, filename=None, cloud=True):
+        """
+        Downloads backup file from WebDAV (cloud only)
+        """
+        if not cloud:
+            logging.warning(
+                    'This functionality is not available in Server version'
+                    )
+            return None
+        remote_file = self.backup_progress(cloud=cloud)['fileName']
+        local_file = filename or remote_file
+        url = self._options['server'] + '/webdav/backupmanager/' + remote_file
+        try:
+            r = self._session.get(url, headers=self._options['headers'])
+            with open(local_file, 'bw') as file:
+                file.write(r.content)
+        except JIRAError as je:
+            logging.warning(
+                'Unable to access backup file: %s' % je
+                )
+            return None
 
     def current_user(self):
         if not hasattr(self, '_serverInfo') or 'username' not in self._serverInfo:
