@@ -2424,17 +2424,21 @@ class JIRA(object):
         r = self._session.get(
                 url, headers=self._options['headers']
                 )
-        progress = {}
+        # This is weird.  I used to get xml, but now I'm getting json
         try:
-            root = etree.fromstring(r.text)
-        except ParseError as pe:
-            logging.warning(
-                'Unable to find backup info.  You probably need to initiate a new backup'
-                )
-            return None
-        for k in root.keys():
-            progress[k] = root.get(k)
-        return progress
+            return json.loads(r.text)
+        except:
+            progress = {}
+            try:
+                root = etree.fromstring(r.text)
+            except etree.ParseError as pe:
+                logging.warning(
+                    'Unable to find backup info.  You probably need to initiate a new backup'
+                    )
+                return None
+            for k in root.keys():
+                progress[k] = root.get(k)
+            return progress
 
     def backup_complete(self, cloud=True):
         """
