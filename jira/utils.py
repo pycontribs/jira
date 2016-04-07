@@ -2,7 +2,6 @@
 from __future__ import unicode_literals
 import threading
 import json
-import logging
 from .resilientsession import raise_on_error
 
 
@@ -45,7 +44,7 @@ C
                 self[key.lower()] = value
                 self.pop(key, None)
 
-        #self.itemlist[key.lower()] = value
+        # self.itemlist[key.lower()] = value
 
     def __setitem__(self, key, value):
         super(CaseInsensitiveDict, self).__setitem__(key.lower(), value)

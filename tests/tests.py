@@ -38,9 +38,9 @@ cmd_folder = os.path.abspath(os.path.join(os.path.split(inspect.getfile(
 if cmd_folder not in sys.path:
     sys.path.insert(0, cmd_folder)
 
-import jira
-from jira import Role, Issue, JIRA, JIRAError, Project
-from jira.resources import Resource, cls_for_resource
+import jira  # noqa
+from jira import Role, Issue, JIRA, JIRAError, Project  # noqa
+from jira.resources import Resource, cls_for_resource   # noqa
 
 TEST_ROOT = os.path.dirname(__file__)
 TEST_ICON_PATH = os.path.join(TEST_ROOT, 'icon.png')
@@ -159,8 +159,7 @@ class JiraTestManager(object):
                         'access_token': 'hTxcwsbUQiFuFALf7KZHDaeAJIo3tLUK',
                         'access_token_secret': 'aNCLQFP3ORNU6WY7HQISbqbhf0UudDAf',
                         'consumer_key': CONSUMER_KEY,
-                        'key_cert': KEY_CERT_DATA,
-                    })
+                        'key_cert': KEY_CERT_DATA})
                 else:
                     if self.CI_JIRA_ADMIN:
                         self.jira_admin = JIRA(self.CI_JIRA_URL, basic_auth=(self.CI_JIRA_ADMIN,
@@ -180,8 +179,7 @@ class JiraTestManager(object):
                         'access_token_secret':
                             'K83jBZnjnuVRcfjBflrKyThJa0KSjSs2',
                         'consumer_key': CONSUMER_KEY,
-                        'key_cert': KEY_CERT_DATA,
-                    }, logging=False, max_retries=self.max_retries)
+                        'key_cert': KEY_CERT_DATA}, logging=False, max_retries=self.max_retries)
                 else:
                     if self.CI_JIRA_ADMIN:
                         self.jira_sysadmin = JIRA(self.CI_JIRA_URL,
@@ -198,8 +196,7 @@ class JiraTestManager(object):
                         'access_token_secret':
                             '5WbLBybPDg1lqqyFjyXSCsCtAWTwz1eD',
                         'consumer_key': CONSUMER_KEY,
-                        'key_cert': KEY_CERT_DATA,
-                    })
+                        'key_cert': KEY_CERT_DATA})
                 else:
                     if self.CI_JIRA_ADMIN:
                         self.jira_normal = JIRA(self.CI_JIRA_URL,
@@ -491,7 +488,7 @@ class ComponentTests(unittest.TestCase):
                 if component.name == 'To be updated':
                     component.delete()
                     break
-        except Exception as e:
+        except Exception:
             # We ignore errors as this code intends only to prepare for
             # component creation
             pass
@@ -673,32 +670,28 @@ class IssueTests(unittest.TestCase):
         self.assertEqual(issue.fields.description, 'blahery')
         self.assertEqual(issue.fields.issuetype.name, 'Bug')
         self.assertEqual(issue.fields.project.key, self.project_b)
-        #self.assertEqual(issue.fields.customfield_10022, 'XSS')
+        # self.assertEqual(issue.fields.customfield_10022, 'XSS')
         issue.delete()
 
     @not_on_custom_jira_instance
     def test_create_issue_with_fielddict(self):
         fields = {
             'project': {
-                'key': self.project_b
-            },
+                'key': self.project_b},
             'summary': 'Issue created from field dict',
             'description': "Some new issue for test",
             'issuetype': {
-                'name': 'Bug'
-            },
-            #'customfield_10022': 'XSS',
+                'name': 'Bug'},
+            # 'customfield_10022': 'XSS',
             'priority': {
-                'name': 'Major'
-            }
-        }
+                'name': 'Major'}}
         issue = self.jira.create_issue(fields=fields)
         self.assertEqual(issue.fields.summary,
                          'Issue created from field dict')
         self.assertEqual(issue.fields.description, "Some new issue for test")
         self.assertEqual(issue.fields.issuetype.name, 'Bug')
         self.assertEqual(issue.fields.project.key, self.project_b)
-        #self.assertEqual(issue.fields.customfield_10022, 'XSS')
+        # self.assertEqual(issue.fields.customfield_10022, 'XSS')
         self.assertEqual(issue.fields.priority.name, 'Major')
         issue.delete()
 
@@ -727,7 +720,7 @@ class IssueTests(unittest.TestCase):
         self.assertEqual(issue.fields.summary, 'Updated summary')
         self.assertEqual(issue.fields.description, 'Now updated')
         self.assertEqual(issue.fields.issuetype.name, 'Improvement')
-        #self.assertEqual(issue.fields.customfield_10022, 'XSS')
+        # self.assertEqual(issue.fields.customfield_10022, 'XSS')
         self.assertEqual(issue.fields.project.key, self.project_b)
         issue.delete()
 
@@ -740,18 +733,15 @@ class IssueTests(unittest.TestCase):
             'summary': 'Issue is updated',
             'description': "it sure is",
             'issuetype': {
-                'name': 'Improvement'
-            },
-            #'customfield_10022': 'DOC',
+                'name': 'Improvement'},
+            # 'customfield_10022': 'DOC',
             'priority': {
-                'name': 'Major'
-            }
-        }
+                'name': 'Major'}}
         issue.update(fields=fields)
         self.assertEqual(issue.fields.summary, 'Issue is updated')
         self.assertEqual(issue.fields.description, 'it sure is')
         self.assertEqual(issue.fields.issuetype.name, 'Improvement')
-        #self.assertEqual(issue.fields.customfield_10022, 'DOC')
+        # self.assertEqual(issue.fields.customfield_10022, 'DOC')
         self.assertEqual(issue.fields.priority.name, 'Major')
         issue.delete()
 
@@ -762,8 +752,7 @@ class IssueTests(unittest.TestCase):
 
         labelarray = ['testLabel']
         fields = {
-            'labels': labelarray
-        }
+            'labels': labelarray}
 
         issue.update(fields=fields)
         self.assertEqual(issue.fields.labels, ['testLabel'])
@@ -776,8 +765,7 @@ class IssueTests(unittest.TestCase):
         issue.fields.labels.append('this should not work')
 
         fields = {
-            'labels': issue.fields.labels
-        }
+            'labels': issue.fields.labels}
 
         self.assertRaises(JIRAError, issue.update, fields=fields)
 
@@ -1152,7 +1140,7 @@ class IssueTests(unittest.TestCase):
         issue = self.jira.issue(self.issue_3, fields='worklog,timetracking')
         worklog.update(comment='Updated!', timeSpent='2h')
         self.assertEqual(worklog.comment, 'Updated!')
-        rem_estimate = issue.fields.timetracking.remainingEstimate
+        # rem_estimate = issue.fields.timetracking.remainingEstimate
         self.assertEqual(worklog.timeSpent, '2h')
         issue = self.jira.issue(self.issue_3, fields='worklog,timetracking')
         self.assertEqual(issue.fields.timetracking.remainingEstimate, "1h")
@@ -1342,8 +1330,7 @@ class ProjectTests(unittest.TestCase):
         i = self.jira.issue(JiraTestManager().project_b_issue1)
         i.update(fields={
             'versions': [{'id': version.id}],
-            'fixVersions': [{'id': version.id}]
-        })
+            'fixVersions': [{'id': version.id}]})
         version.delete()
 
     def test_project_versions_with_project_obj(self):
@@ -1557,7 +1544,7 @@ class UserTests(unittest.TestCase):
         # Tests the end-to-end user avatar creation process: upload as temporary, confirm after cropping,
         # and selection.
         size = os.path.getsize(TEST_ICON_PATH)
-        filename = os.path.basename(TEST_ICON_PATH)
+        # filename = os.path.basename(TEST_ICON_PATH)
         with open(TEST_ICON_PATH, "rb") as icon:
             props = self.jira.create_temp_user_avatar(JiraTestManager().CI_JIRA_ADMIN, TEST_ICON_PATH,
                                                       size, icon.read())
@@ -1727,8 +1714,8 @@ class SessionTests(unittest.TestCase):
         anon_jira = JIRA('https://support.atlassian.com', logging=False)
         self.assertRaises(JIRAError, anon_jira.session)
 
-    #@pytest.mark.skipif(platform.python_version() < '3', reason='Does not work with Python 2')
-    #@not_on_custom_jira_instance  # takes way too long
+    # @pytest.mark.skipif(platform.python_version() < '3', reason='Does not work with Python 2')
+    # @not_on_custom_jira_instance  # takes way too long
     def test_session_server_offline(self):
         try:
             JIRA('https://127.0.0.1:1', logging=False, max_retries=0)
@@ -1766,7 +1753,7 @@ class UserAdministrationTests(unittest.TestCase):
         try:
             self.jira.delete_user(self.test_username)
         except JIRAError as e:
-            pass
+            raise e
 
         result = self.jira.add_user(
             self.test_username, self.test_email, password=self.test_password)

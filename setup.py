@@ -17,12 +17,12 @@ try:
     # 1.0.5-1-g06d6b50
     last_version, increment, changeset = git_version.split('-')
     version = last_version.split('.')
-    version[-1] = str(int(version[-1])+1)
+    version[-1] = str(int(version[-1]) + 1)
     __version__ = "%sdev%s+%s" % (".".join(version), increment, changeset)
 
 except Exception as e:
     print(e)
-    
+
     # Get the version - do not use normal import because it does break coverage
     base_path = os.path.dirname(__file__)
     fp = open(os.path.join(base_path, NAME, 'version.py'))
@@ -37,7 +37,6 @@ warnings.simplefilter('ignore', UserWarning)
 def _is_ordereddict_needed():
     """ Check if `ordereddict` package really needed """
     try:
-        from collections import OrderedDict
         return False
     except ImportError:
         pass
@@ -56,7 +55,7 @@ class PyTest(TestCommand):
 
         # if we have pytest-cache module we enable the test failures first mode
         try:
-            import pytest_cache
+            import pytest_cache  # noqa
             self.pytest_args.append("--ff")
         except ImportError:
             pass
@@ -66,7 +65,7 @@ class PyTest(TestCommand):
             # when run manually we enable fail fast
             self.pytest_args.append("--maxfail=1")
         try:
-            import coveralls
+            import coveralls  # noqa
             self.pytest_args.append("--cov=%s" % NAME)
             self.pytest_args.extend(["--cov-report", "term"])
             self.pytest_args.extend(["--cov-report", "xml"])
@@ -82,12 +81,12 @@ class PyTest(TestCommand):
     def run_tests(self):
         # before running tests we need to run autopep8
         try:
-            r = subprocess.check_call(
+            subprocess.check_call(
                 "python -m autopep8 -r --in-place jira/ tests/ examples/",
                 shell=True)
         except subprocess.CalledProcessError:
             logging.warning('autopep8 is not installed so '
-                        'it will not be run')
+                            'it will not be run')
         # import here, cause outside the eggs aren't loaded
         import pytest
         errno = pytest.main(self.pytest_args)
@@ -117,7 +116,8 @@ class Release(Command):
         released_version = data['info']['version']
         if released_version == __version__:
             raise RuntimeError(
-                "This version was already released, remove it from PyPi if you want to release it again or increase the version number. http://pypi.python.org/pypi/%s/" % NAME)
+                "This version was already released, remove it from PyPi if you want "
+                "to release it again or increase the version number. http://pypi.python.org/pypi/%s/" % NAME)
         elif released_version > __version__:
             raise RuntimeError("Cannot release a version (%s) smaller than the PyPI current release (%s)." % (
                 __version__, released_version))
@@ -168,12 +168,10 @@ setup(
                    ],
     extras_require={
         'magic': ['filemagic>=1.6'],
-        'shell': ['ipython>=0.13'],
-    },
+        'shell': ['ipython>=0.13']},
     entry_points={
         'console_scripts':
-        ['jirashell = jira.jirashell:main'],
-    },
+        ['jirashell = jira.jirashell:main']},
 
     license='BSD',
     description='Python library for interacting with JIRA via REST APIs.',
@@ -202,6 +200,4 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python',
         'Topic :: Internet :: WWW/HTTP',
-        'Topic :: Software Development :: Libraries :: Python Modules',
-    ],
-)
+        'Topic :: Software Development :: Libraries :: Python Modules'])

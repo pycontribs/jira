@@ -21,6 +21,7 @@ test: install_testrig
 flake8:
 	pip install flake8
 	flake8 blackhole --ignore="F403"
+	flake8 --install-hook
 
 pypi:
 	python setup.py check --restructuredtext --strict

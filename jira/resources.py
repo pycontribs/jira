@@ -6,7 +6,6 @@ This module implements the Resource classes that translate JSON from JIRA REST r
 into usable objects.
 """
 
-import collections
 import re
 import logging
 try:  # Python 2.7+
@@ -142,7 +141,7 @@ class Resource(object):
             if hasattr(self, 'raw') and item in self.raw:
                 return self.raw[item]
             else:
-                raise AttributeError("%r object has no attribute %r" % (self.__class__, item))
+                raise AttributeError("%r object has no attribute %r (%s)" % (self.__class__, item, e))
     # def __getstate__(self):
     #     """
     #     Pickling the resource; using the raw dict
@@ -270,7 +269,7 @@ class Resource(object):
             self._session._async_jobs.add(
                 threaded_requests.delete(url=self.self, params=params))
         else:
-            r = self._session.delete(url=self.self, params=params)
+            return self._session.delete(url=self.self, params=params)
 
     def _load(self, url, headers=CaseInsensitiveDict(), params=None, path=None):
         r = self._session.get(url, headers=headers, params=params)
@@ -288,8 +287,8 @@ class Resource(object):
         dict2resource(raw, self, self._options, self._session)
 
     def _default_headers(self, user_headers):
-        #result = dict(user_headers)
-        #esult['accept'] = 'application/json'
+        # result = dict(user_headers)
+        # esult['accept'] = 'application/json'
         return CaseInsensitiveDict(self._options['headers'].items() + user_headers.items())
 
 
@@ -439,8 +438,7 @@ class Issue(Resource):
                     if 'comment' not in update_dict:
                         update_dict['comment'] = []
                     update_dict['comment'].append({
-                        'add': {'body': value}
-                    })
+                        'add': {'body': value}})
                 else:
                     fields_dict[field] = value
             elif isinstance(value, list):
@@ -521,8 +519,7 @@ class RemoteLink(Resource):
         :param relationship: relationship description for the link (see the above link for details)
         """
         data = {
-            'object': object
-        }
+            'object': object}
         if globalId is not None:
             data['globalId'] = globalId
         if application is not None:
@@ -674,9 +671,7 @@ class Role(Resource):
             'id': self.id,
             'categorisedActors': {
                 'atlassian-user-role-actor': users,
-                'atlassian-group-role-actor': groups
-            }
-        }
+                'atlassian-group-role-actor': groups}}
 
         super(Role, self).update(**data)
 
@@ -893,8 +888,7 @@ resource_class_map = {
     r'version/[^/]+$': Version,
     # GreenHopper specific resources
     r'sprints/[^/]+$': Sprint,
-    r'views/[^/]+$': Board,
-}
+    r'views/[^/]+$': Board}
 
 
 def cls_for_resource(resource_literal):

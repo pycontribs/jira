@@ -2,6 +2,7 @@
 # username and password over HTTP BASIC authentication.
 
 from jira import JIRA
+from collections import Counter
 
 # By default, the client will connect to a JIRA instance started from the Atlassian Plugin SDK.
 # See
@@ -17,6 +18,5 @@ props = jira.application_properties()
 issues = jira.search_issues('assignee=admin')
 
 # Find the top three projects containing issues reported by admin
-from collections import Counter
 top_three = Counter(
     [issue.fields.project.key for issue in issues]).most_common(3)
