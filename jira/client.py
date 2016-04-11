@@ -1097,8 +1097,9 @@ class JIRA(object):
         the admin access problems from add_remote_link by just using a simple
         object and presuming all fields are correct and not requiring more
         complex ``application`` data.
-            ``object`` should be a dict containing at least ``url`` to the
-            linked external URL and ``title`` to display for the link inside JIRA.
+
+        ``object`` should be a dict containing at least ``url`` to the
+        linked external URL and ``title`` to display for the link inside JIRA.
 
         For definitions of the allowable fields for ``object`` , see https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+for+Remote+Issue+Links.
 
