@@ -30,6 +30,8 @@ from jira.version import __version__  # noqa
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode']
 
+autodoc_default_flags = ['members', 'undoc-members', 'show-inheritance']
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
