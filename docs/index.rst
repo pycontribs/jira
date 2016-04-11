@@ -9,6 +9,8 @@ Python JIRA
 Python library to work with JIRA APIs
 
 .. toctree::
+    :numbered:
+
     installation
     examples
     jirashell
