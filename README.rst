@@ -16,6 +16,9 @@ JIRA Python Library
 
 ------------
 
+.. image:: https://readthedocs.org/projects/jira/badge/?version=latest
+        :target: http://jira.readthedocs.org/en/latest/?badge=latest
+
 .. image:: https://api.travis-ci.org/pycontribs/jira.svg?branch=master
         :target: https://travis-ci.org/pycontribs/jira
 
