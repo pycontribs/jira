@@ -2463,6 +2463,11 @@ class JIRA(object):
         """
         Project can be id, project key or project name. It will return False if it fails.
         """
+
+        # allows us to call it with Project objects
+        if hasattr(pid, 'id'):
+            pid = pid.id
+
         found = False
         try:
             if not str(int(pid)) == pid:
