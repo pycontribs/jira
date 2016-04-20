@@ -868,6 +868,7 @@ class JIRA(object):
             data['fields'] = fields_dict
 
         p = data['fields']['project']
+
         if isinstance(p, string_types) or isinstance(p, integer_types):
             data['fields']['project'] = {'id': self.project(p).id}
 
@@ -2164,6 +2165,8 @@ class JIRA(object):
         if expand is not None:
             params['expand'] = expand
         resource.find(id=ids, params=params)
+        if not resource:
+            raise JIRAError("Unable to find resource %s(%s)", resource_cls, ids)
         return resource
 
     def _try_magic(self):
