@@ -13,6 +13,7 @@ pytest-pep8
 pytest-xdist
 pytest>=2.6.0
 requests_oauthlib>=0.3.3
+sphinx_rtd_theme
 tox
 wheel
 xmlrunner>=1.7.5
