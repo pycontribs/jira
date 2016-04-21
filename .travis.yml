@@ -69,6 +69,19 @@ deploy:
     distributions: "sdist bdist_wheel"
     on:
       condition: "$BUILD_LEADER = YES"
+      branch: master
+  - provider: pypi
+    server: https://testpypi.python.org/pypi
+    user: sorins
+    password:
+      secure: "E0cjANF7SLBdYrsnWLK8X/xWznqkF0JrP/DVfDazPzUYH6ynFeneyofzNJQPLTLsqe1eKXhuUJ/Sbl+RHFB0ySo/j/7NfYd/9pm8hpUkGCvR09IwtvMLgWKp3k10NWab03o2GOkSJSrLvZofyZBGR40wwu2O9uXPCb2rvucCGbw="
+    distributions: "sdist bdist_wheel"
+    on:
+      condition: "$BUILD_LEADER = YES"
+      branch: develop
+
 after_deploy:
   - echo "Now we only have to increase the version number, tag the changset and push..."
   - ./release.sh
+  on:
+      branch: master

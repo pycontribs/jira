@@ -172,6 +172,7 @@ setup(
     url='https://github.com/pycontribs/jira',
     bugtrack_url='https://github.com/pycontribs/jira/issues',
     home_page='https://github.com/pycontribs/jira',
+    download_url='https://github.com/pycontribs/jira/archive/%s.tar.gz' % __version__,
     keywords='jira atlassian rest api',
 
     classifiers=[
