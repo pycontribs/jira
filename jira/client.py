@@ -2379,7 +2379,7 @@ class JIRA(object):
                     'Got %s response from calling backup.' % r.status_code)
                 return r.status_code
         except Exception as e:
-            print("I see %s" % e)
+            logging.error("I see %s", e)
 
     def backup_progress(self, cloud=True):
         """

@@ -1,3 +1,7 @@
+import os
+import tempfile
+
+
 class JIRAError(Exception):
 
     """General error raised for all problems in operation of the client."""
@@ -12,22 +16,27 @@ class JIRAError(Exception):
 
     def __str__(self):
         t = "JiraError HTTP %s" % self.status_code
-        if self.text:
-            t += "\n\ttext: %s" % self.text
+        # if self.text:
+        #     t += "\n\ttext: %s" % self.text
+
+        fd, file_name = tempfile.mkstemp(suffix='.tmp', prefix='jiraerror-')
+        f = open(file_name, "w")
+
         if self.url:
-            t += "\n\turl: %s" % self.url
+            t += " url: %s" % self.url
+
+        t += " dump: %s" % file_name
 
         if self.request is not None and hasattr(self.request, 'headers'):
-            t += "\n\trequest headers = %s" % self.request.headers
+            f.write("\n\trequest headers = %s" % self.request.headers)
 
         if self.request is not None and hasattr(self.request, 'text'):
-            t += "\n\trequest text = %s" % self.request.text
+            f.write("\n\trequest text = %s" % self.request.text)
 
         if self.response is not None and hasattr(self.response, 'headers'):
-            t += "\n\tresponse headers = %s" % self.response.headers
+            f.write("\n\tresponse headers = %s" % self.response.headers)
 
         if self.response is not None and hasattr(self.response, 'text'):
-            t += "\n\tresponse text = %s" % self.response.text
+            f.write("\n\tresponse text = %s" % self.response.text)
 
-        t += '\n'
         return t
