@@ -83,5 +83,3 @@ deploy:
 after_deploy:
   - echo "Now we only have to increase the version number, tag the changset and push..."
   - ./release.sh
-  on:
-      branch: master
