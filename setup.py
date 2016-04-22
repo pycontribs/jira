@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import logging
 import os
-import re
 import sys
 import subprocess
 import warnings
@@ -16,7 +15,7 @@ here = os.path.dirname(__file__)
 if here not in sys.path:
     sys.path.insert(0, here)
 
-from jira.version import __version__
+from jira.version import __version__  # noqa
 
 # this should help getting annoying warnings from inside distutils
 warnings.simplefilter('ignore', UserWarning)

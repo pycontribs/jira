@@ -1,4 +1,4 @@
-all: clean install uninstall install_testrig tox test flake8 pypi docs tag release
+all: clean install uninstall install_testrig tox flake8 test pypi docs tag release
 .PHONY: all
 
 PACKAGE_NAME=$(shell python setup.py --name)
@@ -26,7 +26,7 @@ test: install_testrig
 flake8:
 	python -m pip install flake8
 	python -m flake8
-	python -m flake8 --install-hook
+	python -m flake8 --install-hook 2>/dev/null || true
 
 pypi:
 	python setup.py check --restructuredtext --strict

@@ -1,5 +1,7 @@
 language: python
 sudo: false
+matrix:
+  fast_finish: true
 os:
 - linux
 python:
@@ -57,7 +59,7 @@ before_deploy:
 deploy:
   - provider: releases
     api_key:
-      - secure: "gr9iOcQjdoAyUAim6FWKzJI9MBaJo9XKfGQGu7wdPXUFhg80Rp6GLJsowP+aU94NjXM1UQlVHDAy627WtjBlLH2SvmVEIIr7+UKBopBYuXG5jJ1m3wOZE+4f1Pqe9bqFc1DxgucqE8qF0sC24fIbNM2ToeyYrxrS6RoL2gRrX2I="
+      secure: "gr9iOcQjdoAyUAim6FWKzJI9MBaJo9XKfGQGu7wdPXUFhg80Rp6GLJsowP+aU94NjXM1UQlVHDAy627WtjBlLH2SvmVEIIr7+UKBopBYuXG5jJ1m3wOZE+4f1Pqe9bqFc1DxgucqE8qF0sC24fIbNM2ToeyYrxrS6RoL2gRrX2I="
     file: "dist/jira-$PACKAGE_VERSION.tar.gz"
     skip_cleanup: true
     on:

@@ -7,7 +7,6 @@ import logging
 import getpass
 import random
 import string
-import traceback
 import inspect
 import pickle
 import platform
@@ -282,7 +281,7 @@ class JiraTestManager(object):
 
             except Exception as e:
                 # exc_type, exc_value, exc_traceback = sys.exc_info()
-                #formatted_lines = traceback.format_exc().splitlines()
+                # formatted_lines = traceback.format_exc().splitlines()
                 formatted_lines = []
                 msg = "Basic test setup failed: %s\n\t%s" % (
                     e, "\n\t".join(formatted_lines))
