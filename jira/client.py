@@ -2531,10 +2531,6 @@ class JIRA(object):
             assignee = self.current_user()
         if name is None:
             name = key
-        if key.upper() != key or not key.isalpha() or len(key) < 2 or len(key) > 10:
-            logging.error(
-                'key parameter is not all uppercase alphanumeric of length between 2 and 10')
-            return False
         url = self._options['server'] + \
             '/rest/project-templates/latest/templates'
 

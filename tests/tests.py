@@ -216,8 +216,9 @@ class JiraTestManager(object):
 
                 prefix = 'Z' + (re.sub("[^A-Z]", "",
                                        getpass.getuser().upper()))[0:6] + \
-                         chr(ord('A') + sys.version_info[0]) + \
-                         chr(ord('A') + sys.version_info[1])
+                         str(sys.version_info[0]) + \
+                         str(sys.version_info[1])
+                print(prefix)
 
                 self.project_a = prefix + 'A'  # old XSS
                 self.project_a_name = "Test user=%s python=%s.%s A" \
