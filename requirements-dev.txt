@@ -18,3 +18,4 @@ tox
 wheel
 xmlrunner>=1.7.5
 yanc
+requires.io
