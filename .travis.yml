@@ -1,13 +1,12 @@
 language: python
 sudo: false
 matrix:
-  fast_finish: true
+  fast_finish: false
 os:
 - linux
 python:
 - '2.6'
 - '2.7'
-- '3.3'
 - '3.4'
 - '3.5'
 install:

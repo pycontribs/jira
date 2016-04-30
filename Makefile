@@ -1,4 +1,4 @@
-all: clean install uninstall install_testrig tox flake8 test pypi docs tag release
+all: clean install uninstall tox flake8 test pypi docs tag release
 .PHONY: all
 
 PACKAGE_NAME=$(shell python setup.py --name)
@@ -13,15 +13,13 @@ install:
 uninstall:
 	python -m pip uninstall -y $(PACKAGE_NAME)
 
-install_testrig:
-	python -m pip install --user nose mock
 
 tox:
 	python -m pip install --user tox
 	python -m tox
 
-test: install_testrig
-	nosetests
+test:
+	python setup.py test
 
 flake8:
 	python -m pip install flake8
