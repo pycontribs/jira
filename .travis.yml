@@ -10,15 +10,13 @@ python:
 - '3.4'
 - '3.5'
 install:
-- pip -q install -r requirements.txt
-- pip -q install -r requirements-dev.txt
 - pip -q install ipython || echo "optional skipped"
 - pip -q install pytest-cache || echo "optional skipped"
 - pip -q install unittest2 || echo "optional skipped"
 - pip -q install ordereddict || echo "optional skipped"
 - pip -q install coveralls
 script:
-- travis_wait python setup.py test
+- travis_wait make test
 - export PACKAGE_VERSION=$(python -c "from jira.version import __version__; print(__version__)")
 after_success:
   - python travis_after_all.py
@@ -53,7 +51,9 @@ branches:
   - master
   - develop
 notifications:
-  hipchat: 7d72ba6ba0bf07248f17e0a6a1a899@DevOps
+  email:
+  - pycontribs@googlegroups.com
+  - sorin.sbarnea@gmail.com
 before_deploy:
   - echo "before deploy..."
 deploy:

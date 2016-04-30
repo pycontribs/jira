@@ -7,18 +7,22 @@ clean:
 	find . -name "*.pyc" -delete
 
 install:
-	python -m pip install -r requirements-dev.txt
+	
 	python setup.py install
 
 uninstall:
 	python -m pip uninstall -y $(PACKAGE_NAME)
 
+prepare:
+	python -m pip install -r requirements.txt
+	python -m pip install -r requirements-opt.txt
+	python -m pip install -r requirements-dev.txt
 
 tox:
 	python -m pip install --user tox
 	python -m tox
 
-test:
+test: prepare
 	python setup.py test
 
 flake8:
