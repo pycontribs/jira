@@ -1612,7 +1612,7 @@ class UserTests(unittest.TestCase):
 
     def test_search_users_maxresults(self):
         users = self.jira.search_users(self.test_manager.CI_JIRA_USER, maxResults=1)
-        self.assertGreaterEqual(len(users), 1)
+        self.assertGreaterEqual(1, len(users))
 
     def test_search_allowed_users_for_issue_by_project(self):
         users = self.jira.search_allowed_users_for_issue(self.test_manager.CI_JIRA_USER,
