@@ -10,15 +10,15 @@ install:
 	python setup.py install
 
 uninstall:
-	python -m pip uninstall -y $(PACKAGE_NAME)
+	pip uninstall -y $(PACKAGE_NAME)
 
 prepare:
-	python -m pip install -q -r requirements.txt
-	python -m pip install -q -r requirements-opt.txt
-	python -m pip install -q -r requirements-dev.txt
+	pip install -q -r requirements.txt
+	pip install -q -r requirements-opt.txt
+	pip install -q -r requirements-dev.txt
 
 tox:
-	python -m pip install --user tox
+	pip install --user tox
 	python -m tox
 
 test: prepare flake8
@@ -37,7 +37,7 @@ pypitest:
 	python setup.py sdist bdist_wheel upload -r pypi-test
 
 docs:
-	python -m pip install sphinx
+	pip install sphinx
 	python setup.py build_sphinx
 	#sphinx-build -b html docs/ docs/build/
 
