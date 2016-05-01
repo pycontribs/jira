@@ -243,8 +243,8 @@ Projects are objects, just like issues::
 Also, just like issue objects, project objects are augmented with their fields::
 
     jra = jira.project('JRA')
-    print jra.name                 # 'JIRA'
-    print jira.lead.displayName    # 'Paul Slade [Atlassian]'
+    print(jra.name)                 # 'JIRA'
+    print(jra.lead.displayName)     # 'Paul Slade [Atlassian]'
 
 It's no trouble to get the components, versions or roles either (assuming you have permission)::
 

@@ -868,6 +868,7 @@ class JIRA(object):
             data['fields'] = fields_dict
 
         p = data['fields']['project']
+
         if isinstance(p, string_types) or isinstance(p, integer_types):
             data['fields']['project'] = {'id': self.project(p).id}
 
@@ -2164,6 +2165,8 @@ class JIRA(object):
         if expand is not None:
             params['expand'] = expand
         resource.find(id=ids, params=params)
+        if not resource:
+            raise JIRAError("Unable to find resource %s(%s)", resource_cls, ids)
         return resource
 
     def _try_magic(self):
@@ -2376,7 +2379,7 @@ class JIRA(object):
                     'Got %s response from calling backup.' % r.status_code)
                 return r.status_code
         except Exception as e:
-            print("I see %s" % e)
+            logging.error("I see %s", e)
 
     def backup_progress(self, cloud=True):
         """
@@ -2460,6 +2463,11 @@ class JIRA(object):
         """
         Project can be id, project key or project name. It will return False if it fails.
         """
+
+        # allows us to call it with Project objects
+        if hasattr(pid, 'id'):
+            pid = pid.id
+
         found = False
         try:
             if not str(int(pid)) == pid:
@@ -2523,10 +2531,6 @@ class JIRA(object):
             assignee = self.current_user()
         if name is None:
             name = key
-        if key.upper() != key or not key.isalpha() or len(key) < 2 or len(key) > 10:
-            logging.error(
-                'key parameter is not all uppercase alphanumeric of length between 2 and 10')
-            return False
         url = self._options['server'] + \
             '/rest/project-templates/latest/templates'
 

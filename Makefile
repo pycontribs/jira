@@ -1,4 +1,8 @@
-.PHONY: clean install uninstall install_testrig tox test travis flake8 pypi docs web tag release
+all: clean install uninstall tox flake8 test pypi docs tag release
+.PHONY: all docs
+
+PACKAGE_NAME=$(shell python setup.py --name)
+
 clean:
 	find . -name "*.pyc" -delete
 
@@ -6,40 +10,36 @@ install:
 	python setup.py install
 
 uninstall:
-	pip uninstall blackhole
+	pip uninstall -y $(PACKAGE_NAME)
 
-install_testrig:
-	pip install --user nose mock
+prepare:
+	pip install -q -r requirements.txt
+	pip install -q -r requirements-opt.txt
+	pip install -q -r requirements-dev.txt
 
 tox:
-	pip install --user tox detox
-	detox
+	pip install --user tox
+	python -m tox
 
-test: install_testrig
-	nosetests
+test: prepare flake8
+	python setup.py test
 
 flake8:
-	pip install flake8
-	flake8 blackhole --ignore="F403"
-	flake8 --install-hook
+	python -m flake8
+	python -m flake8 --install-hook 2>/dev/null || true
 
 pypi:
 	python setup.py check --restructuredtext --strict
-	#python setup.py sdist upload
-	#python2.6 setup.py bdist_wheel upload
-	python2.7 setup.py bdist_wheel upload
-	#python3.4 setup.py bdist_wheel upload
+	python setup.py sdist bdist_wheel upload
 
 pypitest:
 	python setup.py check --restructuredtext --strict
-	python2.7 setup.py bdist_wheel upload
+	python setup.py sdist bdist_wheel upload -r pypi-test
 
 docs:
 	pip install sphinx
-	sphinx-build -b html docs/ docs/build/
-
-web: docs
-	rsync -e "ssh -p 2222" -P -rvz --delete docs/build/ kura@blackhole.io:/var/www/blackhole.io/
+	python setup.py build_sphinx
+	#sphinx-build -b html docs/ docs/build/
 
 tag:
 	bumpversion minor

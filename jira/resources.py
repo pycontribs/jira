@@ -119,7 +119,7 @@ class Resource(object):
                     names.append(name + '=' + repr(self.raw[name]))
         if not names:
             return '<JIRA %s at %s>' % (self.__class__.__name__,
-                                        text_type(hex(id(self))))
+                                        id(self))
         return '<JIRA %s: %s>' % (self.__class__.__name__, ', '.join(names))
 
     def __getattr__(self, item):

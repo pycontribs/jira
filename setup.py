@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import logging
 import os
-import re
 import sys
 import subprocess
 import warnings
@@ -12,23 +11,11 @@ from setuptools.command.test import test as TestCommand
 
 NAME = "jira"
 
-try:
-    git_version = subprocess.check_output(["git", "describe"]).decode().rstrip()
-    # 1.0.5-1-g06d6b50
-    last_version, increment, changeset = git_version.split('-')
-    version = last_version.split('.')
-    version[-1] = str(int(version[-1]) + 1)
-    __version__ = "%sdev%s+%s" % (".".join(version), increment, changeset)
+here = os.path.dirname(__file__)
+if here not in sys.path:
+    sys.path.insert(0, here)
 
-except Exception as e:
-    print(e)
-
-    # Get the version - do not use normal import because it does break coverage
-    base_path = os.path.dirname(__file__)
-    fp = open(os.path.join(base_path, NAME, 'version.py'))
-    __version__ = re.compile(r".*__version__ = '(.*?)'",
-                             re.S).match(fp.read()).group(1)
-    fp.close()
+from jira.version import __version__  # noqa
 
 # this should help getting annoying warnings from inside distutils
 warnings.simplefilter('ignore', UserWarning)
@@ -184,6 +171,7 @@ setup(
     url='https://github.com/pycontribs/jira',
     bugtrack_url='https://github.com/pycontribs/jira/issues',
     home_page='https://github.com/pycontribs/jira',
+    download_url='https://github.com/pycontribs/jira/archive/%s.tar.gz' % __version__,
     keywords='jira atlassian rest api',
 
     classifiers=[
