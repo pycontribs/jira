@@ -10,7 +10,6 @@ import string
 import inspect
 import pickle
 import platform
-import traceback
 from time import sleep
 
 import py
@@ -289,13 +288,8 @@ class JiraTestManager(object):
                                                                          issuetype={'name': self.CI_JIRA_ISSUE})
                 self.project_b_issue3 = self.project_b_issue3_obj.key
 
-            except Exception as e:
-                # exc_type, exc_value, exc_traceback = sys.exc_info()
-                formatted_lines = traceback.format_exc().splitlines()
-                # formatted_lines = []
-                msg = "Basic test setup failed: %s\n\t%s" % (
-                    e, "\n\t".join(formatted_lines))
-                logging.fatal(msg)
+            except Exception:
+                logging.exception("Basic test setup failed")
                 self.initialized = 1
                 py.test.exit("FATAL")
 
