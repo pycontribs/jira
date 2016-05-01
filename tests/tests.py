@@ -220,12 +220,10 @@ class JiraTestManager(object):
                          str(sys.version_info[1])
 
                 self.project_a = prefix + 'A'  # old XSS
-                self.project_a_name = "Test user=%s python=%s.%s A" \
-                                      % (getpass.getuser(), sys.version_info[0],
-                                         sys.version_info[1])
-                self.project_b_name = "Test user=%s python=%s.%s B" \
-                                      % (getpass.getuser(), sys.version_info[0],
-                                         sys.version_info[1])
+                self.project_a_name = "Test user=%s key=%s A" \
+                                      % (getpass.getuser(), self.project_a)
+                self.project_b_name = "Test user=%s key=%s B" \
+                                      % (getpass.getuser(), self.project_b)
                 self.project_b = prefix + 'B'  # old BULK
 
                 # TODO: fin a way to prevent SecurityTokenMissing for On Demand
