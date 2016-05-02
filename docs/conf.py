@@ -19,7 +19,7 @@ import sphinx_rtd_theme
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath('..'))
-from jira.version import __version__  # noqa
+from jira import __version__  # noqa
 
 # -- General configuration -----------------------------------------------------
 
@@ -28,7 +28,17 @@ from jira.version import __version__  # noqa
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode']
+extensions = [
+    'sphinx.ext.autodoc',
+    'sphinx.ext.viewcode',
+    'sphinx.ext.intersphinx']
+
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/3.5', None),
+    'requests': ('http://docs.python-requests.org/en/latest/', None),
+    'requests-oauthlib': ('https://requests-oauthlib.readthedocs.io/en/latest/', None),
+    'ipython': ('http://ipython.readthedocs.io/en/stable/', None),
+    'pip': ('http://pip.readthedocs.io/en/stable/', None), }
 
 autodoc_default_flags = ['members', 'undoc-members', 'show-inheritance']
 

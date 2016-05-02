@@ -52,9 +52,15 @@ pypitest:
 	$(PYENV_HOME)/bin/python setup.py sdist bdist_wheel upload -r pypi-test
 
 docs:
+	@echo "INFO:	Building the docs"
 	$(PYENV_HOME)/bin/pip install sphinx
 	$(PYENV_HOME)/bin/python setup.py build_sphinx
-	#sphinx-build -b html docs/ docs/build/
+	@mkdir -p docs/build/docset
+	@mkdir -p docs/build/html/docset
+	@DOC2DASH_OPTS=$(shell [ -d "$HOME/Library/Application Support/doc2dash/DocSets" ] && echo '--add-to-global')
+	doc2dash --force --name jira docs/build/html --destination docs/build/docset --icon docs/_static/python-32.png --online-redirect-url https://jira.readthedocs.io/en/stable/ $(DOC2DASH_OPTS)
+	cd docs/build/docset && tar --exclude='.DS_Store' -czf ../html/docset/jira.tgz jira.docset
+	# TODO: publish the docs
 
 tag:
 	bumpversion minor
