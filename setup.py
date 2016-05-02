@@ -15,7 +15,7 @@ here = os.path.dirname(__file__)
 if here not in sys.path:
     sys.path.insert(0, here)
 
-from jira.version import __version__  # noqa
+__version__ = __import__(NAME).get_version()
 
 # this should help getting annoying warnings from inside distutils
 warnings.simplefilter('ignore', UserWarning)
@@ -154,6 +154,7 @@ setup(
                    'pytest-xdist',
                    ],
     extras_require={
+        'all': [],
         'magic': ['filemagic>=1.6'],
         'shell': ['ipython>=0.13']},
     entry_points={

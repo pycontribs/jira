@@ -50,7 +50,7 @@ from .resources import Resource, Issue, Comment, Project, Attachment, Component,
 # GreenHopper specific resources
 from .resources import GreenHopperResource, Board, Sprint
 from .resilientsession import ResilientSession, raise_on_error
-from .version import __version__
+from . import __version__
 from .utils import threaded_requests, json_loads, CaseInsensitiveDict
 from .exceptions import JIRAError
 

@@ -1,4 +1,4 @@
-all: clean install uninstall tox flake8 test pypi docs tag release
+all: clean flake8 test pypi docs tag release
 .PHONY: all docs
 
 PACKAGE_NAME=$(shell python setup.py --name)
@@ -11,7 +11,7 @@ PYENV_HOME := $(DIR)/.tox/$(PYTHON_VERSION)-$(PLATFORM)/
 clean:
 	find . -name "*.pyc" -delete
 
-install:
+install: prepare
 	$(PYENV_HOME)/bin/python setup.py install
 
 uninstall:
