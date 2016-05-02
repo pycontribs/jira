@@ -1,0 +1,257 @@
+Examples
+********
+
+.. contents:: Contents
+   :local:
+
+Here's a quick usage example:
+
+.. literalinclude:: ../examples/basic_use.py
+
+Another example shows how to authenticate with your JIRA username and password:
+
+.. literalinclude:: ../examples/basic_auth.py
+
+This example shows how to work with GreenHopper:
+
+.. literalinclude:: ../examples/greenhopper.py
+
+
+Quickstart
+==========
+
+Initialization
+--------------
+
+Everything goes through the JIRA object, so make one::
+
+    from jira import JIRA
+
+    jira = JIRA()
+
+This connects to a JIRA started on your local machine at http://localhost:2990/jira, which not coincidentally is the
+default address for a JIRA instance started from the Atlassian Plugin SDK.
+
+You can manually set the JIRA server to use::
+
+    jac = JIRA('https://jira.atlassian.com')
+
+Authentication
+--------------
+
+At initialization time, jira-python can optionally create an HTTP BASIC or use OAuth 1.0a access tokens for user
+authentication. These sessions will apply to all subsequent calls to the JIRA object.
+
+The library is able to load the credentials from inside the ~/.netrc file, so put them there instead of keeping them in your source code.
+
+HTTP BASIC
+^^^^^^^^^^
+
+Pass a tuple of (username, password) to the ``basic_auth`` constructor argument::
+
+    authed_jira = JIRA(basic_auth=('username', 'password'))
+
+OAuth
+^^^^^
+
+Pass a dict of OAuth properties to the ``oauth`` constructor argument::
+
+    # all values are samples and won't work in your code!
+    key_cert_data = None
+    with open(key_cert, 'r') as key_cert_file:
+        key_cert_data = key_cert_file.read()
+
+    oauth_dict = {
+        'access_token': 'd87f3hajglkjh89a97f8',
+        'access_token_secret': 'a9f8ag0ehaljkhgeds90',
+        'consumer_key': 'jira-oauth-consumer',
+        'key_cert': key_cert_data
+    }
+    authed_jira = JIRA(oauth=oauth_dict)
+
+.. note ::
+    The OAuth access tokens must be obtained and authorized ahead of time through the standard OAuth dance. For
+    interactive use, ``jirashell`` can perform the dance with you if you don't already have valid tokens.
+
+.. note ::
+    OAuth in Jira uses RSA-SHA1 which requires the PyCrypto library. PyCrypto is **not** installed automatically
+    when installing jira-python. See also the :ref:`Dependencies`. section above.
+
+* The access token and token secret uniquely identify the user.
+* The consumer key must match the OAuth provider configured on the JIRA server.
+* The key cert data must be the private key that matches the public key configured on the JIRA server's OAuth provider.
+
+See https://confluence.atlassian.com/display/JIRA/Configuring+OAuth+Authentication+for+an+Application+Link for details
+on configuring an OAuth provider for JIRA.
+
+Kerberos
+^^^^^^^^
+
+To enable Kerberos auth, set ``kerberos=True``::
+
+    authed_jira = JIRA(kerberos=True)
+
+.. _jirashell-label:
+
+Issues
+------
+
+Issues are objects. You get hold of them through the JIRA object::
+
+    issue = jira.issue('JRA-1330')
+
+Issue JSON is marshaled automatically and used to augment the returned Issue object, so you can get direct access to
+fields::
+
+    summary = issue.fields.summary         # 'Field level security permissions'
+    votes = issue.fields.votes.votes       # 440 (at least)
+
+If you only want a few specific fields, save time by asking for them explicitly::
+
+    issue = jira.issue('JRA-1330', fields='summary,comment')
+
+Reassign an issue::
+
+    # requires issue assign permission, which is different from issue editing permission!
+    jira.assign_issue(issue, 'newassignee')
+
+Creating issues is easy::
+
+    new_issue = jira.create_issue(project='PROJ_key_or_id', summary='New issue from jira-python',
+                                  description='Look into this one', issuetype={'name': 'Bug'})
+
+Or you can use a dict::
+
+    issue_dict = {
+        'project': {'id': 123},
+        'summary': 'New issue from jira-python',
+        'description': 'Look into this one',
+        'issuetype': {'name': 'Bug'},
+    }
+    new_issue = jira.create_issue(fields=issue_dict)
+
+.. note::
+    Project, summary, description and issue type are always required when creating issues. Your JIRA may require
+    additional fields for creating issues; see the ``jira.createmeta`` method for getting access to that information.
+
+You can also update an issue's fields with keyword arguments::
+
+    issue.update(summary='new summary', description='A new summary was added')
+    issue.update(assignee={'name': 'new_user'})    # reassigning in update requires issue edit permission
+
+or with a dict of new field values::
+
+    issue.update(fields={'summary': 'new summary', 'description': 'A new summary was added'})
+
+and when you're done with an issue, you can send it to the great hard drive in the sky::
+
+    issue.delete()
+
+Updating components::
+
+    existingComponents = []
+    for component in issue.fields.components:
+        existingComponents.append({"name" : component.name})
+    issue.update(fields={"components": existingComponents})
+
+
+Fields
+------
+
+    issue.fields.worklogs                                 # list of Worklog objects
+    issue.fields.worklogs[0].author
+    issue.fields.worklogs[0].comment
+    issue.fields.worklogs[0].created
+    issue.fields.worklogs[0].id
+    issue.fields.worklogs[0].self
+    issue.fields.worklogs[0].started
+    issue.fields.worklogs[0].timeSpent
+    issue.fields.worklogs[0].timeSpentSeconds
+    issue.fields.worklogs[0].updateAuthor                # dictionary
+    issue.fields.worklogs[0].updated
+
+
+    issue.fields.timetracking.remainingEstimate           # may be NULL or string ("0m", "2h"...)
+    issue.fields.timetracking.remainingEstimateSeconds    # may be NULL or integer
+    issue.fields.timetracking.timeSpent                   # may be NULL or string
+    issue.fields.timetracking.timeSpentSeconds            # may be NULL or integer
+
+
+Searching
+---------
+
+Leverage the power of `JQL <https://confluence.atlassian.com/display/JIRA/Advanced+Searching>`_
+to quickly find the issues you want::
+
+    issues_in_proj = jira.search_issues('project=PROJ')
+    all_proj_issues_but_mine = jira.search_issues('project=PROJ and assignee != currentUser()')
+
+    # my top 5 issues due by the end of the week, ordered by priority
+    oh_crap = jira.search_issues('assignee = currentUser() and due < endOfWeek() order by priority desc', maxResults=5)
+
+    # Summaries of my last 3 reported issues
+    print [issue.fields.summary for issue in jira.search_issues('reporter = currentUser() order by created desc', maxResults=3)]
+
+Comments
+--------
+
+Comments, like issues, are objects. Get at issue comments through the parent Issue object or the JIRA object's
+dedicated method::
+
+    comments_a = issue.fields.comment.comments
+    comments_b = jira.comments(issue) # comments_b == comments_a
+
+Get an individual comment if you know its ID::
+
+    comment = jira.comment('JRA-1330', '10234')
+
+Adding, editing and deleting comments is similarly straightforward::
+
+    comment = jira.add_comment('JRA-1330', 'new comment')    # no Issue object required
+    comment = jira.add_comment(issue, 'new comment', visibility={'type': 'role', 'value': 'Administrators'})  # for admins only
+
+    comment.update(body = 'updated comment body')
+    comment.delete()
+
+Transitions
+-----------
+
+Learn what transitions are available on an issue::
+
+    issue = jira.issue('PROJ-1')
+    transitions = jira.transitions(issue)
+    [(t['id'], t['name']) for t in transitions]    # [(u'5', u'Resolve Issue'), (u'2', u'Close Issue')]
+
+.. note::
+    Only the transitions available to the currently authenticated user will be returned!
+
+Then perform a transition on an issue::
+
+    # Resolve the issue and assign it to 'pm_user' in one step
+    jira.transition_issue(issue, '5', assignee={'name': 'pm_user'}, resolution={'id': '3'})
+
+    # The above line is equivalent to:
+    jira.transition_issue(issue, '5', fields: {'assignee':{'name': 'pm_user'}, 'resolution':{'id': '3'}})
+
+Projects
+--------
+
+Projects are objects, just like issues::
+
+    projects = jira.projects()
+
+Also, just like issue objects, project objects are augmented with their fields::
+
+    jra = jira.project('JRA')
+    print(jra.name)                 # 'JIRA'
+    print(jra.lead.displayName)     # 'Paul Slade [Atlassian]'
+
+It's no trouble to get the components, versions or roles either (assuming you have permission)::
+
+    components = jira.project_components(jra)
+    [c.name for c in components]                # 'Accessibility', 'Activity Stream', 'Administration', etc.
+
+    jira.project_roles(jra)                     # 'Administrators', 'Developers', etc.
+
+    versions = jira.project_versions(jra)
+    [v.name for v in reversed(versions)]        # '5.1.1', '5.1', '5.0.7', '5.0.6', etc.
