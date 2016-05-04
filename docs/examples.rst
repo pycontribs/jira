@@ -255,3 +255,26 @@ It's no trouble to get the components, versions or roles either (assuming you ha
 
     versions = jira.project_versions(jra)
     [v.name for v in reversed(versions)]        # '5.1.1', '5.1', '5.0.7', '5.0.6', etc.
+
+Watchers
+--------
+
+Watchers are objects, represented by :class:`jira.resources.Watchers`::
+
+    watcher = jira.watchers(issue)
+    print("Issue has {} watcher(s)".format(watcher.watchCount))
+    for watcher in watcher.watchers:
+        print(watcher)
+        # watcher is instance of jira.resources.User:
+        print(watcher.emailAddress)
+
+You can add users to watchers by their name::
+
+    jira.add_watcher(issue, 'username')
+    jira.add_watcher(issue, user_resource.name)
+
+And of course you can remove users from watcher::
+
+    jira.remove_watcher(issue, 'username')
+    jira.remove_watcher(issue, user_resource.name)
+
