@@ -255,3 +255,55 @@ It's no trouble to get the components, versions or roles either (assuming you ha
 
     versions = jira.project_versions(jra)
     [v.name for v in reversed(versions)]        # '5.1.1', '5.1', '5.0.7', '5.0.6', etc.
+
+Watchers
+--------
+
+Watchers are objects, represented by :class:`jira.resources.Watchers`::
+
+    watcher = jira.watchers(issue)
+    print("Issue has {} watcher(s)".format(watcher.watchCount))
+    for watcher in watcher.watchers:
+        print(watcher)
+        # watcher is instance of jira.resources.User:
+        print(watcher.emailAddress)
+
+You can add users to watchers by their name::
+
+    jira.add_watcher(issue, 'username')
+    jira.add_watcher(issue, user_resource.name)
+
+And of course you can remove users from watcher::
+
+    jira.remove_watcher(issue, 'username')
+    jira.remove_watcher(issue, user_resource.name)
+
+Attachments
+-----------
+
+Attachments let user add files to issues. First you'll need an issue to which the attachment will be uploaded.
+Next, you'll need file itself, that is going to be attachment. File could be file-like object or string, representing
+path on local machine. Also you can select final name of the attachment if you don't like original.
+Here are some examples::
+
+    # upload file from `/some/path/attachment.txt`
+    jira.add_attachment(issue=issue, attachment='/some/path/attachment.txt')
+
+    # read and upload a file (note binary mode for opening, it's important):
+    with open('/some/path/attachment.txt', 'rb') as f:
+        jira.add_attachment(issue=issue, attachment=f)
+
+    # attach file from memory (you can skip IO operations). In this case you MUST provide `filename`.
+    import StringIO
+    attachment = StringIO.StringIO()
+    attachment.write(data)
+    jira.add_attachment(issue=issue, attachment=attachment, filename='content.txt')
+
+If you would like to list all available attachment, you can do it with through attachment field::
+
+
+    for attachment in issue.fields.attachment:
+        print("Name: '{filename}', size: {size}".format(
+            filename=attachment.filename, size=attachment.size))
+        # to read content use `get` method:
+        print("Content: '{}'".format(attachment.get()))
