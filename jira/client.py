@@ -1108,11 +1108,7 @@ class JIRA(object):
         :param object: the dictionary used to create remotelink data
         """
 
-        data = {}
-
-        # hard code data dict to be passed as ``object`` to avoid any permissions errors
-        data = object
-
+        data = {"object": object}
         url = self._get_url('issue/' + str(issue) + '/remotelink')
         r = self._session.post(
             url, data=json.dumps(data))
