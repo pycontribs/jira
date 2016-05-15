@@ -1394,7 +1394,7 @@ class JIRA(object):
         """
 
         url = self._get_url('issueLink') + "/" + id
-        return self.jira._session.delete(url)
+        return self._session.delete(url)
 
     def issue_link(self, id):
         """
