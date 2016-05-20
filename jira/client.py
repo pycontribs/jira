@@ -236,6 +236,10 @@ class JIRA(object):
         :param async: To enable async requests for those actions where we implemented it, like issue update() or delete().
         Obviously this means that you cannot rely on the return code when this is enabled.
         """
+        # force a copy of the tuple to be used in __del__() because
+        # sys.version_info could have already been deleted in __del__()
+        self.sys_version_info = tuple([i for i in sys.version_info])
+
         if options is None:
             options = {}
             if server and hasattr(server, 'keys'):
@@ -330,8 +334,15 @@ class JIRA(object):
     def __del__(self):
         session = getattr(self, "_session", None)
         if session is not None:
-            if sys.version_info < (3, 4, 0):  # workaround for https://github.com/kennethreitz/requests/issues/2303
-                session.close()
+            if self.sys_version_info < (3, 4, 0):  # workaround for https://github.com/kennethreitz/requests/issues/2303
+                try:
+                    session.close()
+                except TypeError:
+                    # TypeError: "'NoneType' object is not callable"
+                    # Could still happen here because other references are also
+                    # in the process to be torn down, see warning section in
+                    # https://docs.python.org/2/reference/datamodel.html#object.__del__
+                    pass
 
     def _check_for_html_error(self, content):
         # TODO: Make it return errors when content is a webpage with errors
