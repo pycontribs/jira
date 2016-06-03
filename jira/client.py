@@ -2316,6 +2316,32 @@ class JIRA(object):
             logging.error(r.status_code)
             return False
 
+    def deactivate_user(self, username):
+        """
+        Disables/deactivates the user.
+        """
+        if self.server_info().get('deploymentType') == 'Cloud':
+            url = self._options['server'] + '/admin/rest/um/1/user/deactivate?username=' + username
+            self._options['headers']['Content-Type'] = 'application/json'
+            userInfo = {}
+        else:
+            url = self._options['server'] + '/secure/admin/user/EditUser.jspa'
+            self._options['headers']['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8'
+            user = self.user(username)
+            userInfo = { 'inline':'true', 'decorator':'dialog', 'username':user.name,
+                    'fullName':user.displayName, 'email':user.emailAddress, 'editName':user.name
+                    }
+        try:
+            r = self._session.post( url, headers=self._options['headers'], data = userInfo)
+            if r.status_code == 200:
+                return True
+            else:
+                logging.warning(
+                    'Got response from deactivating %s: %s' % (username, r.status_code))
+                return r.status_code
+        except Exception as e:
+            print("Error Deactivating %s:  %s" % (username, e) )
+
     def reindex(self, force=False, background=True):
         """
         Start jira re-indexing. Returns True if reindexing is in progress or not needed, or False.
