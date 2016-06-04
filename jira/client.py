@@ -2516,11 +2516,13 @@ class JIRA(object):
         return self._session.post(
             url, headers=CaseInsensitiveDict({'content-type': 'application/x-www-form-urlencoded'}), data=payload)
 
-    def create_project(self, key, name=None, assignee=None, type="Software"):
+    def create_project(self, key, name=None, assignee=None, type="Software", template_name=None):
         """
         Key is mandatory and has to match JIRA project key requirements, usually only 2-10 uppercase characters.
         If name is not specified it will use the key value.
         If assignee is not specified it will use current user.
+        Parameter template_name is used to create a project based on one of the existing project templates.
+        If template_name is not specified, then it should use one of the default values.
         The returned value should evaluate to False if it fails otherwise it will be the new project id.
         """
         if assignee is None:
@@ -2537,7 +2539,7 @@ class JIRA(object):
         templates = []
         for template in _get_template_list(j):
             templates.append(template['name'])
-            if template['name'] in ['JIRA Classic', 'JIRA Default Schemes', 'Basic software development']:
+            if template['name'] in ['JIRA Classic', 'JIRA Default Schemes', 'Basic software development', template_name]:
                 template_key = template['projectTemplateModuleCompleteKey']
                 break
 
