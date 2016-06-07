@@ -2339,11 +2339,16 @@ class JIRA(object):
             url = self._options['server'] + '/secure/admin/user/EditUser.jspa'
             self._options['headers']['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8'
             user = self.user(username)
-            userInfo = { 'inline':'true', 'decorator':'dialog', 'username':user.name,
-                    'fullName':user.displayName, 'email':user.emailAddress, 'editName':user.name
-                    }
+            userInfo = {
+                'inline': 'true',
+                'decorator': 'dialog',
+                'username': user.name,
+                'fullName': user.displayName,
+                'email': user.emailAddress,
+                'editName': user.name
+            }
         try:
-            r = self._session.post( url, headers=self._options['headers'], data = userInfo)
+            r = self._session.post(url, headers=self._options['headers'], data=userInfo)
             if r.status_code == 200:
                 return True
             else:
@@ -2351,7 +2356,7 @@ class JIRA(object):
                     'Got response from deactivating %s: %s' % (username, r.status_code))
                 return r.status_code
         except Exception as e:
-            print("Error Deactivating %s:  %s" % (username, e) )
+            print("Error Deactivating %s: %s" % (username, e))
 
     def reindex(self, force=False, background=True):
         """
