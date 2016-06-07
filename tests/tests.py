@@ -222,9 +222,9 @@ class JiraTestManager(object):
                 self.project_a = prefix + 'A'  # old XSS
                 self.project_a_name = "Test user=%s key=%s A" \
                                       % (getpass.getuser(), self.project_a)
+                self.project_b = prefix + 'B'  # old BULK
                 self.project_b_name = "Test user=%s key=%s B" \
                                       % (getpass.getuser(), self.project_b)
-                self.project_b = prefix + 'B'  # old BULK
 
                 # TODO: fin a way to prevent SecurityTokenMissing for On Demand
                 # https://jira.atlassian.com/browse/JRA-39153
