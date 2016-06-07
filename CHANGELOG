@@ -1,823 +1,2044 @@
-2016-03-16 Auto-generating release notes.
-2016-03-16 Auto-generating release notes.
-2016-03-16 Tried to make release 1.0.6
-2016-03-16 Improved release.sh
-2016-03-16 Auto-generating release notes.
-2016-03-16 Auto-generating release notes.
-2016-03-16 Auto-generating release notes.
-2016-03-16 Auto-generating release notes.
-2016-03-16 Auto-generating release notes.
-2016-03-16 Auto-generating release notes.
-2016-03-16 Auto-generating release notes.
-2016-03-16 Auto-generating release notes.
-2016-03-16 Auto-generating release notes.
-2016-03-16 remove wrong parameter in release.sh
-2016-03-16 test rsa key
-2016-03-09 Merge pull request #175 from tuukkamustonen/kerberos-auth
-2016-03-09 Merge pull request #176 from bakkeby/master
-2016-02-25 Changed linkId to id for consistency
-2016-02-25 Correcting tabs vs spaces
-2016-02-25 Adding functionality to allow deletion of issue links
-2016-02-19 Adds support for Kerberos auth.
-2016-02-18 Updated PyCharm logo as they also removed the old one when they rebranded it.
-2016-02-11 Merge pull request #172 from casahome2000/master
-2016-02-06 Configured minimal versions for pep8 related packages.
-2016-02-06 fixed the version check for invalid request.
-2016-02-06 Logged the initial JSON response for templates when they do not contain the expected format. This should help us identify what happens while running tests on Travis.
-2016-02-06 changed api version calls to use "latest" instead of 2.
-2016-02-05 resolves issue where incompleted_issues() was failing for missing key; 'incompletedIssues' corrected to 'issuesNotCompletedInCurrentSprint'
-2016-02-05 Should fix the inconsistent failures with watchers tests.
-2016-02-05 Swiched back to the use of logging module directly instead of a variable.
-2016-02-05 Implemented a special retry mechanism for serverInfo REST call in order to workaround bug https://jira.atlassian.com/browse/JRA-59676
-2016-02-04 Repaired delete_project() as it seems not to be working on JIRA 6.x.
-2016-02-01 Fixed few others broken unittests.
-2016-02-01 Reworked the way we log warnings and errors, now we use the named logger "jira".
-2016-01-28 Removed duplicate python versions from setup.py
-2016-01-28 Removed pypi version badge as is useless
-2016-01-28 More unittest fixes, now they should finally pass after months of having many of them broken.
-2016-01-27 Implemented __eq__ for Version resource.
-2016-01-25 Merge branch 'master' of github.com:pycontribs/jira
-2016-01-25 Fixed many of the broken unittests. Disabled some uneeded logging for running unittests.
-2016-01-21 Merge pull request #162 from trivee/master
-2016-01-21 Merge pull request #168 from daniellawrence/master
-2016-01-20 Badge cleanup
-2016-01-10 Request JSON payloads to avoid the problem described in https://jira.atlassian.com/browse/JRA-38551
-2016-01-07 assign_issue() now returns errors
-2016-01-07 Merge branch 'master' of github.com:pycontribs/jira
-2016-01-04 Linting plus initial work on enabling local testing using the atlassian-sdk
-2016-01-04 Merge pull request #159 from eleusis/master
-2016-01-04 (Minor) Fix UniversalResourceTests.test_pickling_resource() - Work with the raw dict instead of pickling the whole resource and running into issues with PropertyHolder
-2015-12-30 (#158) Fix initialisation of resources.Issue when raw is passed in
-2015-12-11 Fix conflict markers from merge.
-2015-12-11 Merge pull request #146 from ak-ambi/master
-2015-12-11 Merge branch 'pr/147'
-2015-12-11 Merge branch 'master' into pr/147
-2015-12-11 Merge pull request #148 from Achimh3011/make_tests_runnable_on_Jira_VM
-2015-12-11 Merge pull request #152 from filmackay/master
-2015-11-24 clean up string detection: string_types
-2015-11-24 remove superfluous self parameter
-2015-11-22 Exclude tests working with users - not understood why they fail now.
-2015-11-22 Skip tests that rely on specifics of the standard Jira if a non-standard Jira is used.
-2015-11-22 Add correct treatment of "issuetype" parameter.
-2015-11-22 Fix whitespace and allow for python3.
-2015-11-21 Fix call of Resource._get_url().
-2015-11-21 Adapt project template search to new structure.
-2015-11-21 Fixed problems found during tests execution.
-2015-11-21 Fixed bugs found in new JIRA API
-2015-11-16 Merge branch 'master' of github.com:pycontribs/jira
-2015-11-16 Added option for ignoring existing users on user_add.
-2015-11-16 Merge pull request #131 from dbaxa/do_not_fail_tests_on_prerelease_failure
-2015-11-16 Merge pull request #144 from ak-ambi/jira_agile
-2015-11-15 Add new option 'agile_rest_path', which may be used to select new public JIRA Agile API.
-2015-11-15 Small improvements
-2015-11-15 Added JIRA._fetch_pages function and used it in all functions using pagination and extended ResultList class.
-2015-11-15 Merge pull request #136 from abdarraafi/shatil-setup.py-fixes
-2015-11-15 Merge pull request #139 from cgrandsjo/patch-2
-2015-11-15 Merge pull request #140 from ak-ambi/master
-2015-11-15 Merge pull request #135 from abdarraafi/master
-2015-11-15 Merge pull request #132 from osomdev/master
-2015-11-15 Merge pull request #128 from MichiganLabs/issue-rank
-2015-11-15 Merge pull request #129 from nbaggott/resilient-client-backoff
-2015-11-15 Merge pull request #141 from filmackay/master
-2015-11-13 bump version
-2015-11-13 cover python 3.5
-2015-11-13 py3 compatible string test
-2015-11-13 redundant if test in split
-2015-11-13 test for clauseNames presence
-2015-11-13 items for py3 compat
-2015-11-13 Added type hints to Issue class.
-2015-11-06 Update release.sh
-2015-11-02 Fix setup.py's setup_requires and requirements.txt
-2015-11-02 Move optional filemagic line to requirements-opt
-2015-10-28 Do not try to recover if we're not going to do the retry.
-2015-10-28 Do not run prerelease as part of the standard test run. Instead run it after inside after_success.
-2015-10-23 Restore missing delay in ResilientClient and & implement exponentional backoff
-2015-10-19 gh-global-rank field is obsolete.
-2015-10-19 Ensure JIRA class has _rank field
-2015-10-11 Fix #93: ability to retrieve custom fields by their JQL names.
-2015-10-11 Websudo fix when used with .netrc files.
-2015-10-11 Added support for the type parameter on create_project, as this is required for JIRA 7.
-2015-10-11 Moved JIRAError to exceptions.
-2015-10-05 Merge branch 'master' of github.com:pycontribs/jira
-2015-10-05 moved raise_on_error to resilientsession
-2015-10-05 documentation improvements, fixed one test
-2015-10-05 Merge pull request #119 from fender4645/master
-2015-10-05 Merge pull request #124 from dugjason/master
-2015-10-05 Merge pull request #121 from BATS/ResilientSession_fixes
-2015-10-04 fixed #123 by enabling change of sprint state.
-2015-10-04 Merge branch 'master' of github.com:pycontribs/jira
-2015-10-04 removed dead code
-2015-10-04 Merge pull request #116 from zaufi/master
-2015-10-02 Merge branch 'release/1.1.0-1'
-2015-10-02 HOTFIX in test; pass two elements into set properly
-2015-10-02 Merge tag '1.1.0' into develop
-2015-10-02 Merge branch 'release/1.1.0'
-2015-10-02 Merge pull request #1 from dugjason/feature/user_sets
-2015-10-02 Fix typo
-2015-10-02 Add __hash__ and __eq__ methods to User class to allow user objects to be added to a Set correctly
-2015-09-11 Fixup: Correctly cope with Requests object truthiness...
-2015-09-11 Bugfixes for ResilientSession retry logic
-2015-08-31 Issue 118 Add ability to send email notification when creating a new user
-2015-08-13 Python > 3.1 do not need `ordereddict` package.
-2015-08-04 Merge pull request #113 from fender4645/master
-2015-08-04 Merge pull request #103 from milo-minderbinder/master
-2015-08-04 Merge pull request #110 from dann7387/patch-1
-2015-07-31 Change test to use simple regex
-2015-07-31 Update self.issue_1.key to self.issue_1
-2015-07-31 Update test and assert to use arrays.
-2015-07-31 Fix typo with assigning false boolean.
-2015-07-31 Add unit test for adding issue to sprint.
-2015-07-31 Refactor method of retrieving custom field info.
-2015-07-29 Issue 112 - sendEmail kwarg doesn't work when calling add_user method
-2015-07-28 Fix typo in list comprehension.
-2015-07-28 Perform dynamic lookup of custom field id for Sprint field
-2015-07-27 Fix typo with assignment.
-2015-07-27 Workaround for adding an issue to a sprint
-2015-07-15 Minor fixes to jirashell issues #100, #102, and #66, and tweaks fix from d5856742771890ad18165197f6bc7eb3ff8cd086. The oauth_dance and print_tokens options specified in jirashell.ini configuration file are now correctly parsed as boolean values and OAuth with pre-authenticated access_token and access_token_secret (skipping oauth_dance) is fixed. OAuth options are now minimally validated for completeness, so #66 is fixed, allowing for basic_auth without causing issue #102 as the merged commit d5856742771890ad18165197f6bc7eb3ff8cd086 did previously.
-2015-07-15 Merge remote-tracking branch 'upstream/master'
-2015-07-15 Fixed #88 so now groups are returned as a sorted list of strings.
-2015-07-15 Fix issue #100 - The problem is that 'oauth_dance' should be an optional option argument, if it is not set, or if it is set to false, a valid use case still exists where OAuth should be used if the user supplies access_token and access_token_secret through command line or configuration file options. This would be the case if the user had already authenticated externally with OAuth and had valid, authenticated tokens to pass to jirashell.
-2015-07-15 Attempt to fully automate the release and tagging of git based on what is released.
-2015-07-15 Attempt to fully automate the release and tagging of git based on what is released.
-2015-07-15 Enabled new travis builders as we do not need sudo. Fixed iteritems() which doesn't work anymore with py34. Increased version to v0.50
-2015-07-15 Attempt to fix the unittest and to eliminate warnings from the test executions.
-2015-07-15 Merge branch 'coddingtonbear-allow_remotelinks_if_no_applicationlinks'
-2015-07-15 Merge branch 'allow_remotelinks_if_no_applicationlinks' of https://github.com/coddingtonbear/jira into coddingtonbear-allow_remotelinks_if_no_applicationlinks
-2015-07-15 Merge pull request #67 from fastcat/issue-66
-2015-07-15 Merge pull request #92 from BATS/fix_jiraclient_non_oauth
-2015-07-15 Merge branch 'awurster-patch-1'
-2015-07-15 Merge branch 'patch-1' of https://github.com/awurster/jira into awurster-patch-1
-2015-07-15 Merge pull request #86 from BATS/JIRAError_fixes
-2015-07-15 Merge branch 'fastcat-issue-65'
-2015-07-15 Merge branch 'issue-65' of https://github.com/fastcat/jira into fastcat-issue-65
-2015-07-15 Merge branch 'fikander-master'
-2015-07-15 Merge branch 'master' of https://github.com/fikander/jira into fikander-master
-2015-07-15 Merge pull request #97 from dbaxa/add_maintainer_info
-2015-07-15 Merge branch 'geoghegan-patch-1'
-2015-07-15 Merge branch 'patch-1' of https://github.com/geoghegan/jira into geoghegan-patch-1
-2015-07-15 Merge branch 'tuenti-master'
-2015-07-15 Merge branch 'master' of https://github.com/tuenti/jira into tuenti-master
-2015-07-15 Merge pull request #83 from mproffitt/pycontribs-jira-80-delete_project-fails
-2015-07-15 Merge pull request #82 from metashock/master
-2015-07-15 Merge pull request #74 from ianunruh/feature/attachment-stream
-2015-07-15 Merge pull request #98 from dbaxa/make_setup_test_work_without_installing_deps_first
-2015-07-15 Make `python setup.py test` work without first needing to install any dependencies.
-2015-07-15 Fill in the current maintainer information.
-2015-07-06 Add update_filter to client
-2015-06-19 Fix jirashell.py for non-oauth authentication
-2015-06-17 Honor fullname arg in add_user
-2015-06-13 Fix JIRAError to correctly include full details
-2015-06-02 JIRA Issue 80 - delete project fails to delete
-2015-05-30 Includes are now relative to jira package
-2015-05-30 Added myself AIP support
-2015-05-30 JWT authentitcation support for Atlassian Connect
-2015-05-27 Fixed naming error in the documentation.
-2015-05-25 adding add_simple_link()
-2015-05-15 Add attachment content streaming
-2015-05-07 jirashell configured via jirashell.ini didn't allow no-oauth authentication
-2015-04-30 Add support to Issue.update to use the update key, and make some common forms of updates easier
-2015-04-30 Don't always set oauth flag, to prevent oauth mode from always being enabled, even if basic auth is requested
-2015-04-28 Minor change to cause a new build to be triggered.
-2015-04-28 Bumping patch version number to 0.48.1.
-2015-04-28 Do not prevent users from adding remote links if we are not able to fetch applicationlinks.
-2015-04-28 Merge pull request #55 from Laakso/vesa_branch
-2015-04-28 Merge pull request #57 from MerelyAPseudonym/master
-2015-04-20 Now travis should publish both sdist and wheel. Also included changelist.
-2015-04-15 Attempt to appease Travis.
-2015-04-15 Restore issue transitions by fixing some flubs.
-2015-04-11 increaded version to 0.47
-2015-04-11 Implemented worklog tests and fixed worklog and timetracking.
-2015-04-04 Fixed mimetype issue with Jira attachment. MultipartEncoder sent attachment in 'text/plain' mode which caused issues with pdf files. See images 3 images from images directory, after the change, mimetype was identified correctly.
-2015-04-01 Now Travis should release only if all jobs do succeed.
-2015-04-01 sorted the decoding of the json response
-2015-04-01 Increased version number to v0.45 but in the future this should be done automatically on each release.
-2015-04-01 Minor Travis fix for py3 build.
-2015-04-01 removed the pretest phase as now everyone should be able to run the tests.
-2015-04-01 Implemented a prerelease stage that will prevent running the tests on travis for already released versions. This is needed in order to enable future automatic releases.
-2015-04-01 Fix for #28 : broken permalinks.
-2015-04-01 Removed the secured credentials from Travis because they do not work with pull requests. See http://docs.travis-ci.com/user/pull-requests/ From now on everybody should be able to run the tests, lets hope that the OnDemand server will be able to cope with the tests.
-2015-04-01 validated .travis.yml
-2015-04-01 fix #38 so the code will also work with PyInstaller
-2015-04-01 Workaround for py34 weakref issue from https://github.com/kennethreitz/requests/issues/2303
-2015-04-01 Merge branch 'master' of github.com:pycontribs/jira
-2015-04-01 Added Citrix to credits, changed default documentation theme and documented the BountySource usage.
-2015-04-01 Bugfix in Travis config file which seems not to fail fast on multiple script commands.
-2015-04-01 Merge pull request #54 from bruno-mendes-movile/fix-attlassian-token-header
-2015-03-31 fix atlassian header
-2015-03-31 v0.43 release which fixes pickle bug.
-2015-03-31 #46 Experimental drop of custom getstate/setstate in Resource that was preventing Pickle from restoring the objects properly (_options).
-2015-03-31 Added sdist to release.
-2015-03-31 commented `git add RELEASE`
-2015-03-31 v0.42 minor fix regarding release script tagging.
-2015-03-31 Added flattr button.
-2015-03-25 Merge pull request #50 from thedavecollins/master
-2015-03-25 Allow OAuth dance to ignore ssl certificate
-2015-03-06 v0.41 that enabled new unitises and fixes #44
-2015-02-21 Merge pull request #42 from vzapolskiy/fix_typo
-2015-02-21 Comment: fix typo in comment 'visibility' name
-2015-02-20 v0.40 - new release with small bug fixes.
-2015-02-20 Added an exception in case the just added attachment has size=0 so we can debug the weird case of empty attachments.
-2015-02-20 marked the pickle test as xfail and some pep8
-2015-02-20 Merge pull request #40 from fabio-silva-movile/patch-3
-2015-02-20 Merge pull request #41 from sargentstudley/#32_Applying_updating_malformed_label_does_not_produce_exception
-2015-02-19 Finished initial baseline label test. Added test for issue #32 that looks for an exception from a bad label with spaces.
-2015-02-19 Added initial label unit test.
-2015-02-18 Merge pull request #30 from marklap/master
-2015-02-18 Update client.py
-2015-02-17 Update client.py
-2015-02-06 Merge branch 'master' of https://github.com/pycontribs/jira
-2015-02-06 no need to take the tuple lookup hit with one item
-2015-02-06 make it more clear about what we're doing to support pickling
-2015-02-06 add tests for pickling resources
-2015-02-06 enabling the pickling of resources
-2015-02-06 Merge pull request #19 from marcelslotema/patch-1
-2015-02-06 Merge pull request #21 from bardal/master
-2015-02-05 v0.39: minor bug fixings
-2015-02-05 Merge branch 'master' of github.com:pycontribs/jira
-2015-02-05 Merge pull request #24 from fabio-silva-movile/patch-1
-2015-02-05 fixing #23 bug: startDate in create_version()
-2015-02-04 Update client.py
-2015-01-29 Raise an AttributeError if a requested attribute doesn't exist within self or self.raw. This is a bug fix to ensure calls to hasattr return false when the attribute doesn't exist.
-2015-01-29 Issue add_field_value should use Resource update function
-2015-01-28 Corrected source URL inside the documentation.
-2015-01-28 Updated the link to documentation
-2015-01-28 removed upload_sphinx from release
-2015-01-28 Merge branch 'master' of github.com:pycontribs/jira
-2015-01-28 v0.38 which should work well on intranets.
-2015-01-28 Merge pull request #17 from bardal/patch-1
-2015-01-28 Now the version check should take up to 2 seconds and should not prevent loading if it fails.
-2015-01-27 Update index.rst
-2015-01-23 v0.37 release.
-2015-01-23 Merge pull request #15 from pycontribs/sargentstudley-add_user
-2015-01-23 fixed error with last merge
-2015-01-23 Merge branch 'master' of github.com:pycontribs/jira into sargentstudley-add_user
-2015-01-23 Merge branch 'sargentstudley-add_user' of github.com:pycontribs/jira into sargentstudley-add_user
-2015-01-23 Merge branch 'add_user' of https://github.com/sargentstudley/jira into sargentstudley-add_user
-2015-01-23 Merge branch 'add_user' of https://github.com/sargentstudley/jira into sargentstudley-add_user
-2015-01-23 removed a test that is not needed anymore.
-2015-01-23 Merge pull request #14 from njones11/master
-2015-01-23 Repaired 3 additional tests
-2015-01-23 added the first tests for JIRA Agile. Also this should fix the Issue.update()
-2015-01-23 Give users ability to disable update check
-2015-01-21 Deprecated GreenHopper class and moved all methors into JIRA. Other plugins should use the mixin pattern to add their methods.
-2015-01-20 allowing to pass Issue() instances instead of id/keys to issue()
-2015-01-20 Optimized the check_update code so it checks version only once. Fixed the comments tests.
-2015-01-20 py26 and py3 compatibility updates.
-2015-01-20 Changed the way we load the version in setup.py in order to properly perform coverage. Also added fallback on add_attachment for the case where we do not have the filestreamer module.
-2015-01-19 added ordereddict dependency that is required for py26 compatibility improved the random password complexity to avoid falure from server side.
-2015-01-19 changed number of retries to 5 unless jira is running on localhost, when it will use 1.
-2015-01-19 Merge branch 'master' of github.com:pycontribs/jira
-2015-01-19 pep8
-2015-01-17 - Added tests to flesh out User and Group CRUD operations. - Added add_group method to client. - Added remove_group method to client. - Rewrote add_user_to_group to use REST API - Added remove_user_from_group to client.
-2015-01-16 Merge pull request #12 from alexallah/master
-2015-01-17 fix resource _load incorrect argument
-2015-01-16 This should fix UserAdministrationTests and make them run on Travis too.
-2015-01-16 Merge pull request #10 from sargentstudley/add_user
-2015-01-16 Merge remote-tracking branch 'upstream/master' into add_user
-2015-01-16 - Created unit test class for user administration - Created add_user unit test.
-2015-01-15 Attempt to improve the retry mechanism. Will default to 3 for normal usage and 10 for running the tests.
-2015-01-15 reworked tests of votes so they should not randomly fail anymore.
-2015-01-15 Fixed failure of add_attachment test when using retry was triggered. This was caused by the file stream. Now it will get a new file stream if the initial post fails.
-2015-01-14 fixed create_issue() which was broken due to project being passed wrongly.
-2015-01-14 Increased verbosity in order to debug some CI failings.
-2015-01-14 Merge branch 'master' of github.com:pycontribs/jira
-2015-01-14 Updated tests to prevent failure to upload attachment with Python 3.
-2015-01-14 Merge pull request #7 from vmarkovtsev/master
-2015-01-14 Fix ResourceLeak warning with CPython3
-2015-01-13 Now HTTP codes 502,503,504 do retry.
-2015-01-13 Configured default max_retries to 3.
-2015-01-13 Fixed add_attachments which now is able to stream the files, preventing size limitation bugs.
-2015-01-13 improved tests
-2015-01-13 improved tests
-2015-01-13 Added a new test for failed authentication Made test_attachment more verbose Added export of coverage data into xml format
-2015-01-13 Merge pull request #4 from msabramo/patch-1
-2015-01-13 Merge pull request #5 from msabramo/make_valid_on_pypi
-2015-01-13 Merge pull request #6 from msabramo/readme_misc
-2015-01-12 README.rst: Double back quotes, fix links
-2015-01-12 README.rst: Make valid on PyPI
-2015-01-12 README.rst: syntax highlighting
-2015-01-12 Implemented travis_after_all so we release only once.
-2015-01-12 Test changes towards getting them passing on Travis too
-2015-01-06 additional travis compatibility changes
-2015-01-06 additional travis compatibility changes
-2015-01-06 additional travis compatibility changes
-2015-01-06 additional travis compatibility changes
-2015-01-06 disabled xdist plugin in order to execute on travis.
-2015-01-06 Major changes to unittests in order to make them pass on Travis.
-2015-01-06 Added new icons to README page.
-2015-01-05 autopep8
-2015-01-05 Merge branch 'master' of bitbucket.org:bspeakmon/jira-python
-2015-01-05 Added upload_docs and switch to usage of default GPG signature.
-2015-01-05 Merged in taquart/jira-python/taquart/fixing-the-commentupdate-example-1420064736261 (pull request #73)
-2015-01-05 Merged in rowanthorpe/jira-python/fix-configparser-to-match-v3-import (pull request #71)
-2015-01-05 Merged in evers/jira-python (pull request #72)
-2015-01-05 Merged in franciscoruiz/jira-python/franciscoruiz/removed-print-statement-from-greenhopper-1417788172609 (pull request #69)
-2015-01-05 Merged in mejoe/jira-python/completed_points (pull request #68)
-2015-01-05 Merged in simonventuri/jira-python/yosemite-six-fix (pull request #66)
-2015-01-05 added wheel deployment
-2015-01-05 Removal of gevents as it is incompatible with Python 2.7.8 and because we can use requests threading for the same purpose.
-2014-12-31 Fixing the comment.update() example
-2014-12-30 fix issue.add_field_value, fixes #144
-2014-12-30 dont forget raise_on_error if not autofixing
-2014-12-23 Fix configparser usage to match v3-compat import.
-2014-12-05 Removed 'print' statement from Greenhopper.sprints_by_name
-2014-12-01 Add sum of completed issues for a board/sprint
-2014-11-25 Merged in misa/jira-python (pull request #62)
-2014-11-25 Merged in rmelhem/jira-python (pull request #67)
-2014-11-25 Merge branch 'master' of github.com:pycontribs/jira
-2014-11-25 Implemented username rename for JIRA 6.0.0+
-2014-11-07 Added support for client-side SSL with HTTP-Basic session.
-2014-11-05 Fix html_parser import from six.moves.
-2014-10-30 navicat does not have https (sic!) :)
-2014-10-30 Updated image links
-2014-10-28 Updated Navicat Logo
-2014-10-23 Update README.rst
-2014-10-23 Update README.rst
-2014-10-22 Merged in bunkerbewohner/jira-python (pull request #63)
-2014-10-13 bugfix of KeyError in JIRA.add_remote_link during check of application links
-2014-10-07 Merge pull request #3 from gmc-dev/master
-2014-10-04 fixes #2
-2014-10-01 Add a fields keyword arg; regular keyword arguments will take precedence
-2014-09-26 Reverting commit 5f4c4a4, added an update method for Comment for fix #53
-2014-09-17 Merged in rawfalafel/jira-python/fix/validate-search-query (pull request #61)
-2014-09-17 v0.32 is fixing #132 decoding errors on several cases, cased by the wrong usage of response.content instead of response.text, first one being binary.
-2014-09-10 fixing #53 Unable to update a comment
-2014-09-10 Fix for #112 : added startDate, released and archived to create_version()
-2014-09-10 Fixed #96 by documenting how to update components.
-2014-09-10 Fixing #81 by removing requests_oauth from the package.
-2014-09-10 Fixing #61 - documenting how to get support on jira-python
-2014-09-10 Assured that RELEASE file that contains the changelog is updated when making new releases.
-2014-09-09 Added automatic release note creation.
-2014-09-09 Fixed #101 - added back python 2.6 compatibility.
-2014-09-09 Fixed issue #94 jirashell being broken. Moved jirashell.py inside jira package, tools was clearly not an inspired name for a package.
-2014-09-09 Merged in tomikall/jira-python (pull request #60)
-2014-08-12 Fix process_config() to work with configparser from six and Python 3.
-2014-08-12 Fix #130 : Read options `verify`, `resilient`, and `async` as booleans from user's `jirashell.ini` file.
-2014-08-08 Add option to disable query validation. Part of the REST api
-2014-08-04 pep8 tests still not working
-2014-08-01 pep8 moved to setup.cfg few other fixes, should pass pep8 now.
-2014-08-01 Merge branch 'master' of github.com:pycontribs/jira
-2014-08-01 v0.31 merge with bitbcket copy.
-2014-08-01 v0.31 manual merge with github fork (used to revive unittests)
-2014-08-01 v0.30 containing a real fix for JIRA.__init__()
-2014-08-01 v0.28 fast-track merge of latest patches.
-2014-08-01 Merged in xistence/jira-python/bugfix/future_imports (pull request #59)
-2014-08-01 Merged in xistence/jira-python/bugfix/jira.issues (pull request #58)
-2014-07-31 removed pep8 from test cases
-2014-07-31 pep8 work + forced py.test to run on single thread.
-2014-07-30 all the tests are now generic
-2014-07-30 run tests from UserTests
-2014-07-30 run job only with the class SearchTests
-2014-07-29 Move from __future__ import statement
-2014-07-29 Remove erroneous self
-2014-07-29 added a few tests from ProjectTests
-2014-07-29 generalised a few other tests
-2014-07-28 another run
-2014-07-28 add_worklog does not work for python2.6
-2014-07-28 one more run
-2014-07-28 run again without IssuesTests
-2014-07-28 added general tests for IssueTests
-2014-07-28 tests for travis
-2014-07-28 general tests for filters
-2014-07-25 some changes for general projects
-2014-07-25 probably fixing CI with jenkins.
-2014-07-25 added travis_wait
-2014-07-25 all working for python2.7 (for the moment)
-2014-07-25 Updated tests for the new added projects
-2014-07-23 pep8 + added py34 in addition to py33, one of them must be tested.
-2014-07-23 made autopep8 optional
-2014-07-23 removed --upgrade from pip install
-2014-07-23 reorganized requirements, hoping to make the test easier and also to reduce dependencies for installations.
-2014-07-23 added timeouts to curl, should fix the travis issue, hopefully
-2014-07-23 removed -n4 from tox until we find a solution for working with fixtures with multiple threads, seems to be a design limitation with py.test
-2014-07-23 added all the tests appart from 3 for which I don't have enough permissions and those from remote_link
-2014-07-22 added tests from VersionTests
-2014-07-22 Added tests from UserTests
-2014-07-22 added tests from ProjectTests
-2014-07-22 added 3 new classes
-2014-07-22 Tests from Issue tests are now working
-2014-07-21 Fixed some other test cases
-2014-07-21 Other 15 test cases are working
-2014-07-21 tests for classes ResourceTest and ApplicationPropertiesTest are now working
-2014-07-18 Merge branch 'master' of github.com:pycontribs/jira
-2014-07-18 ZZF-15731 #comment this should end-up in jira
-2014-07-18 Merge branch 'master' of github.com:pycontribs/jira
-2014-07-18 some working tests from UniversalResourceTests
-2014-07-18 Fix for test_issue_link(self) faild build #18.3
-2014-07-18 fixed test_issue_link()
-2014-07-18 Merge commit 'ab39b68245a551d613aeeb1e9177248b67797a31'
-2014-07-18 tests cleanup, enabled py34 in travis, added pretest before running tests.
-2014-07-18 Updated user prefix
-2014-07-18 Merge branch 'master' of github.com:pycontribs/jira
-2014-07-18 logging improvement, corrected doc build via tox, probably fixed a deadlock with running unittests in parallel.
-2014-07-18 logging improvement, corrected doc build via tox, probably fixed a deadlock with running unittests in parallel.
-2014-07-18 fixed typo in nocheck -> no-check
-2014-07-18 removed logging and fixed the test manager class
-2014-07-18 added debug code for Travis failure as we were not able to replicate same failure locally.
-2014-07-18 Disabled kill session for the moment as it seems to cause some strange errors with unittests.
-2014-07-18 Added logging of fatal exceptions when initializing unit tests.
-2014-07-18 repairing unittests
-2014-07-18 repaired project create
-2014-07-17 Merged in abstracttype/jira-python/abstracttype/fix-greenhopperincompleted_issues-base_-1404297141573 (pull request #57)
-2014-07-16 v0.29 added delete_board()
-2014-07-15 fixed broken images
-2014-07-15 CI enablement work
-2014-07-15 Merge branch 'master' of github.com:pycontribs/jira
-2014-07-15 Added creatation time to log_work, documented accetable values for assign_issue, converted few prints to use the logger.
-2014-07-12 Update README
-2014-07-11 v0.28 fixed critial bug related tu unicode support (type(str(..))) and initial work for enabling continous-integration with Travis and the Atlassian provided on-demand JIRA test instance.
-2014-07-02 Fix `GreenHopper.incompleted_issues` - BASE_URL was previously used as the `params` argument
-2014-06-28 fixed typo in filename.
-2014-06-28 added tox, pep8 and autopep8 as requirements.
-2014-06-28 added travis config file
-2014-06-22 Initial implementation of update_sprint() which can alter start and end dates.
-2014-06-22 Partial fix for #116 : unicode errors.
-2014-06-22 Merge branch 'master' of ssh://bitbucket.org/bspeakmon/jira-python
-2014-06-22 flush async queue on delete.
-2014-06-19 Improved async support.
-2014-06-17 Merge branch 'master' of ssh://bitbucket.org/bspeakmon/jira-python
-2014-06-17 Re-enabling async support, now you can enable it by adding async=True when you create the JIRA object.
-2014-06-08 Merged in johnjiang/jira-python/fix-add-remote-link (pull request #56)
-2014-06-06 Fix for instances where destination is NOT an issue but just a normal dict
-2014-05-30 documented usage of add_remote_link()
-2014-05-30 v0.25 fixing #34 : add_remote_link should be able to receive remote issue instances as parameter.
-2014-05-30 fixing #108 : jira __init__ kills version() method
-2014-05-30 v0.24 fixing #107 by killing sessions inside the destructor.
-2014-05-30 v0.23 fixing the broken search.
-2014-05-30 Merge branch 'master' of ssh://bitbucket.org/bspeakmon/jira-python
-2014-05-30 Partial fix #46 now waiting for Atlassian to fix their side.
-2014-05-30 Fixed #106
-2014-04-30 Merged in rentouch/jira-python/fixed_get_json_params (pull request #55)
-2014-04-30 Fix function calls which are using the "param" argument on the function _get_json(), as param isn't the second argument anymore since the "base" arg was added in eb8be46.
-2014-04-24 #104: added connection errors as recoverable errors: DNS resolve issues, connection refused.
-2014-04-24 pep8 reformatting.
-2014-04-24 #104 :retry mechanism. add resilient=True to the server options and it will retry failed requests.
-2014-04-24 Merged in SimplicityGuy/jira-python-fixes (pull request #51)
-2014-04-24 Merged in chiemseesurfer/jira-python (pull request #53)
-2014-04-24 Merged in jvtrigueros/jira-python/basic-auth-using-post (pull request #54)
-2014-04-22 Fixing code formatting as per request.
-2014-04-16 add update to Version class to archive versions
-2014-04-12 Merged in jvtrigueros/jira-python/basic-auth-using-post (pull request #52)
-2014-04-08 When using Basic Authentication, use a POST request
-2014-04-01 Merged in jaimesoriano/jira-python/trust-requests-proxy-selection (pull request #50)
-2014-03-31 Merged bspeakmon/jira-python into master
-2014-03-31 Fixed the last few issues of the GreeHopperResource usage.
-2014-03-30 Fixing issue where GreenHopper was using JIRA's API URL through _get_url.
-2014-03-29 Minor comment cleanup and addition of GreenHopper resources to resource_class_map
-2014-03-29 Merged in SimplicityGuy/jira-python-fixes (pull request #49)
-2014-03-28 Moving GreenHopper over to use GreenHopperResource, updating comments, and fixing a few TODOs.
-2014-03-28 Trust proxy selection provided by requests by default
-2014-03-26 Minor cleanup.
-2014-03-26 Missed part of that checkin.
-2014-03-26 Merged bspeakmon/jira-python into master
-2014-03-26 Fixing issue where importing print_ from six tried to override the built in print. This does not work. So, fixed up existing print usage to avoid having to import print_
-2014-03-15 Fixed two import bugs introduced by previous commit.
-2014-03-15 Merged bspeakmon/jira-python into master
-2014-03-15 Merged in platinummonkey/jira-python (pull request #45)
-2014-03-15 added six as a dependency fro py2-py3 compatibility.
-2014-03-15 Merged in freeseacher/jira-python (pull request #44)
-2014-03-15 Merged in guyroz/jira-python (pull request #46)
-2014-03-15 Merged in SimplicityGuy/jira-python-fixes (pull request #47)
-2014-03-14 Fixed issue with deprecated IPython usage
-2014-03-14 Fixed issue #93, missing newline @ line 29
-2014-03-09 move sphinx to test_requre from setup_requires
-2014-03-06 PEP8 Compliance and fixed Python3 support utilizing the `six` library
-2014-02-18 Merged in freeseacher/allow-request-full-search-result-1392721783002 (pull request #1)
-2014-02-18 allow request full search result. for work with it like with simple dict
-2014-02-17 removed tendo as a dependency
-2014-02-17 Minor fixes needed for continous-integration.
-2014-02-12 v0.21 adding experimental support for iDalko Grid.
-2014-02-11 fixed release so it does force change of tags instead of failing to push them at the end of the release process.
-2014-02-11 release v0.20 minor bug fixing mainly, but should fix some pip install failures.
-2014-02-11 Merge branch 'master' of ssh://bitbucket.org/bspeakmon/jira-python
-2014-02-11 Fixing incompatibility between ipython and geven modules.
-2014-02-11 Merged in scott_weintraub/jira-python (pull request #40)
-2014-02-11 Merged in davidszotten/jira-python/fix_setup_requires (pull request #41)
-2014-02-11 Merged in db_atlass/jira-python/fix_random (pull request #42)
-2014-02-11 Merged in jdelic/jira-python/feature/output-auth-url-if-printtokens (pull request #43)
-2014-02-09 Output auth_url instead of opening a webbrowser when the user opted to print the tokens
-2014-02-06 v0.19 Added get() method that returns attachment content.
-2014-02-06 Use SystemRandom where it is available instead of random.
-2014-02-05 remove `requests_oauthlib` from `setup_requires`
-2014-02-04 Added create_filter(name = None, description = None,                     jql = None, favourite = None)
-2014-02-02 Merged in il_bale/jira-python (pull request #39)
-2014-02-02 Add configuration parameter to enable/disable SSL certificate verification
-2014-01-21 Merged in nyetsche/jira-python (pull request #36)
-2014-01-21 Merge branch 'master' of ssh://bitbucket.org/bspeakmon/jira-python
-2014-01-21 Enabled search_issues() to return all issues by setting maxResults=None
-2014-01-20 Merged in pnichols104/jira-python (pull request #38)
-2014-01-17 fixed bug in add_user_to_group where find statement always evaluates as True
-2014-01-14 Release 0.17 : added support for comments in work logs.
-2014-01-14 Merged in fpierfed/jira-python (pull request #37)
-2014-01-14 Added ability to specify a comment text in creating a worklog item.
-2014-01-10 Updated README to use the new package name.
-2013-12-24 add maxResults option to groups()
-2013-12-24 Renamed the pypi product to jira from jira-python so it does match the package name.
-2013-12-22 Configured to use newer xmlrunner that exports the main class properly.
-2013-12-22 added requitements.txt for prepering the test execution.
-2013-12-22 Increased memory for test instance, enabled JMX RMI so we can debug it if needed.
-2013-12-22 switched to the renamed xmlrunner, which is patched and under our control.
-2013-12-22 Prevented tools from being included into the distribution in order to prevent polution of package namespace. jirashell is for the moment not distributed until we decide where we are going to put it.
-2013-12-22 Removed the tests from sdist, not not poluting module namespace anymore.
-2013-12-20 Various Python 2.6-3.3 compatibility fixes.
-2013-12-19 Release 0.16 adds LICENSE file to archive, optional login verification on instantiation
-2013-12-19 added license file to the packaged distribution
-2013-12-19 added optional parameter validate to the constructor that will validate your credential at instantiation time, solving #37
-2013-12-19 removed typo in group_members()
-2013-12-19 Merge branch 'master' of ssh://bitbucket.org/bspeakmon/jira-python
-2013-12-19 Added group_members() method.
-2013-12-18 Merged in aliles/jira-python (pull request #35)
-2013-12-18 Fix warning for implicit close of libmagic
-2013-12-16 Added release script and increased version to 0.15
-2013-12-16 Implemented add_user_to_group() and changed the initialization of unitests so it will test if a jira instance is running on 2990 and start it if necessary. Unit tests still failing with ~90/160, but that’s much better than the previous 100% failure.
-2013-12-11 Removed distributed option (-n4) form py.test config so it can run even without xdist.
-2013-12-11 Added test configs.
-2013-12-11 Added ability to auto-start jira test instance from unittests if it is not already running.
-2013-12-10 Merge branch 'master' of ssh://bitbucket.org/bspeakmon/jira-python
-2013-12-10 updated test command to install tox and autopep8 if needed.
-2013-12-10 pep8 fixes
-2013-12-10 Merged in nferch/jira-python (pull request #34)
-2013-12-09 2nd fix for broken py26 due to sys.version
-2013-12-09 fixed broken py26 due to sys.version
-2013-12-03 support Python <= 2.6 sys.version_info
-2013-11-26 Merge branch 'master' of ssh://bitbucket.org/bspeakmon/jira-python
-2013-11-26 Executed autopep8, now part of the test execution.
-2013-11-25 Merged in jonromero/jira-python/jonromero/fixes-httpsbitbucketorgbspeakmonjirapyth-1380256994854 (pull request #33)
-2013-11-25 Merged in alectolytic/jira-python/py3 (pull request #32)
-2013-11-25 Real implementation or delete_user().
-2013-11-25 Implemented delete_user().
-2013-11-18 Implemented add_user()
-2013-10-23 [Issue #55] Additional changes for python3 support
-2013-10-23 Basic Python 3 port
-2013-10-17 Implemented create_project() and delete_project() - tested only on Jira 5.2.11
-2013-10-08 Added rank() method for GreenHopper class, which now allows you to rank one issue before another.
-2013-10-07 Merged in jonromero/jira-python-2/jonromero/typo-1381168098819 (pull request #2)
-2013-10-07 typo
-2013-10-07 Merged in jonromero/jira-python-1/jonromero/handling-old-api-also-1381167726957 (pull request #1)
-2013-10-07 minor patch in order to make sure that r_json is defined
-2013-10-07 handling old API also
-2013-10-03 Added code to deal with failure to update issue because it has no assignee, this can happen when the current assignee is invalid.
-2013-10-03 Removed fixed dependency on tlslite fixing #58
-2013-10-03 Merged in mdoar/jira-python-add-labels (pull request #28)
-2013-10-03 Merged in joernsn/jira-python (pull request #29)
-2013-09-30 Fix issue #63
-2013-09-27 Fixes https://bitbucket.org/bspeakmon/jira-python/issue/56/rest-resource-sprints-renamed-to
-2013-09-12 Added async support for update command, which would use requests. This is still experimental and triggered only manually so it should not affect normal usage.
-2013-09-03 Added support for specifying issue id as int
-2013-08-30 Issue #52 added modifying labels to the documentation
-2013-08-20 Fixing issue #50 by detecting the correct issue-type and reversing the direction when needed.
-2013-08-20 Fixing #49 by auto fixing assignee and reporter if update() fails due them having invalid values. This will work only if you do not specify these fields in the original requests and if you enable this feature by adding autofix='username' as a parameter when you create the JIRA instance.
-2013-08-19 Merge branch 'master' of ssh://bitbucket.org/bspeakmon/jira-python
-2013-08-19 added applicationlinks() method
-2013-08-19 Added default headers to the configuration so you can override them for all calls.
-2013-08-03 added missing jira params for search-user
-2013-08-02 Merged in jjinux/jira-python (pull request #27)
-2013-08-02 Fixed an error in a comment in an example
-2013-07-31 Added jira.backup() that would call backup option in Jira admin.
-2013-07-31 Added code for auto-detection and usage of HTTP(S) proxies. Also this would allow you to use a custom proxy if you want.
-2013-07-29 Added debug information regarding the load of the config.ini (visible only python logging level is set to DEBUG).
-2013-07-29 Merge branch 'master' of ssh://bitbucket.org/bspeakmon/jira-python
-2013-07-20 Merged in frobnic8/jira-python (pull request #26)
-2013-07-20 Fixed bug for unloaded resources in Resource.__repr__
-2013-07-20 Added additional fallback for Resource.__repr__
-2013-07-19 Merge branch 'master' of ssh://bitbucket.org/bspeakmon/jira-python
-2013-07-19 Added detection for authentication failure in the response.
-2013-07-19 Merged in frobnic8/jira-python (pull request #25)
-2013-07-19 Merged in markeganfuller/jira-python (pull request #23)
-2013-07-19 Merged in kraiz/jira-python/kraiz/be-aware-of-wrong-magic-version-which-ha-1369150687222 (pull request #24)
-2013-07-19 Merged in agrimm/jira-python/gh-epic (pull request #22)
-2013-06-21 Added better unicode handling for Resource.__str__
-2013-06-19 Added child support for nested selects to the __str__ method on Resource.
-2013-06-11 Added __str__ and __repr__ support to the basic Resource class.
-2013-06-11 Merged bspeakmon/jira-python into master
-2013-05-21 be aware of wrong magic version (which has no keyword argument "mime")
-2013-05-13 Essential fix that will enable you to connect to more than one Jira instance at once, otherwise it will fail as the defaults dictionary was not copied on instantiation.
-2013-05-13 Added improved output of error messages for Jira 6.x
-2013-05-13 Merged bspeakmon/jira-python into master
-2013-05-03 Add method for adding issues to epics
-2013-04-19 Added rename_user() method, current implementation relies on Script Runner plugin. Still, if this is missing it will fail nicely indicating what you have to do.
-2013-04-19 Added the option to load the default jira profile specified inside the config.ini
-2013-04-19 Prevented reindex() from throwing exception when reindex operation returns 503 while jira is doing the foreground reindexing.
-2013-04-16 Added reindex() for JIRA class. Now you can trigger Jira reindexing using python-jira. Implementation supports force mode and background/foreground mode.
-2013-04-15 Merged in sorin/jira-python (pull request #19)
-2013-04-15 Switched to SafeConfigParser for config module.
-2013-04-10 Added config.py module which allows people to init JIRA with a single command and by keeping credentials to another file.
-2013-04-10 Added jira.config module which allows people to load jira credentials from a config file.
-2013-04-10 Added sphinx to setup.py so now you can build documentation using `python setup.py build_sphinx` modified:   setup.py
-2013-04-10 Improved documentation regarding transitions, now includes example of setting the resolution field and alternative way to specify parameters. modified:   .gitignore modified:   docs/index.rst
-2013-04-10 Fix name typo in docs
-2013-04-10 woopsy, deleted the pycrypto stuff on accident
-2013-04-10 Add changelog and acknowledgements for 0.13 release
-2013-04-09 Set version 0.13 for release
-2013-04-09 Fix GreenHopper object placement (damn it mdoar :)
-2013-04-09 Merged in dvj/jira-python/libmagic-optional (pull request #17)
-2013-04-09 Merged in mdoar/jira-gh-python (pull request #16)
-2013-04-07 make python-magic optional
-2013-04-06 Fix a comment
-2013-04-05 Change ordering of parameters for transition_issues to maintain backwards compatibility
-2013-04-04 Updated documentation to refer to JIRA. Ensure no TODO appears in docs
-2013-04-04 Add optional comment parameter to transition_issue
-2013-04-01 Add changelog for upcoming release
-2013-04-01 Added class for accessing GreenHopper via REST. Example use script added too.
-2013-04-01 Added class for accessing GreenHopper via REST. Example use script added too.
-2013-03-28 Remove unneeded cookie authentication when using Basic Auth
-2013-03-28 Document new verify parameter
-2013-03-28 Add 'verify' parameter to options dict
-2013-03-27 Document the PyCrypto requirement for OAuth
-2013-03-27 Update docs with the new ResultList return type
-2013-03-27 Add ResultList class for including search metadata
-2013-03-23 Merged bspeakmon/jira-python into master
-2013-03-21 Clarify docs regarding add_attachment()
-2013-03-20 Merge branch 'master' of bitbucket.org:bspeakmon/jira-python
-2013-03-20 Fix broken OAuth in jirashell by switching to requests_oauthlib
-2013-03-20 Merged in gdw2/jira-python (pull request #15)
-2013-03-20 fixed minor typo in docs
-2013-03-19 Add requests_oauthlib to dependencies
-2013-03-19 Use requests_oauthlib for OAuth
-2013-03-17 Merged in markeganfuller/jira-python (pull request #8)
-2013-03-16 Update requests requirement in docs
-2013-03-16 Merge pull request #11
-2013-03-15 Merged in vassius/jira-python (pull request #12)
-2013-03-15 Merged in vassius/jira-python/issue-14 (pull request #13)
-2013-03-15 Document new parameter
-2013-03-15 Changed requests version in setup.py dependencies
-2013-03-06 Add optional file name parameter to add_attachment()
-2013-03-05 Fix issue #14
-2013-03-04 Fix issue #7 and #8
-2013-03-01 Added content-type to Resource.update
-2013-02-22 Updating to work with requests-1.1.0
-2013-02-20 Merged in shawnps/jira-python (pull request #10)
-2013-02-21 fix project URL in docs
-2013-02-04 Merge branch 'master' of bitbucket.org:markeganfuller/jira-python
-2013-02-04 Fix for empty errorMessages, moved length check to main logic for deciding which error message to use and added check for 'errors' in the response.
-2013-02-04 Merged bspeakmon/jira-python into master
-2013-01-27 Update to new address + contact info
-2013-01-17 Merged in markeganfuller/jira-python (pull request #6)
-2013-01-15 Added a length check on error messages. This avoids any "IndexError: list index out of range" when an empty list is returned.
-2012-12-06 Merged in ranman/jira-python (pull request #4)
-2012-09-13 pep8 fixes
-2012-09-13 Merge branch 'hotfix/authentication'
-2012-09-13 rip off trailing slash on server urls and add auth.
-2012-09-04 update dictionary instead of adding together items
-2012-08-06 Update docs for release
-2012-08-06 Bump to version 0.12 for imminent release
-2012-08-06 Bump to latest version of requests and ipython. Also made ranges open-ended (fixes #2)
-2012-08-06 hardcode some access tokens for running tests with oauth (I'll move it to a file later)
-2012-08-06 Add option to print oauth tokens as they're received
-2012-08-03 Move tests and test resources to their own package
-2012-08-03 Read from a config file and merge it with command line options
-2012-08-03 prefer oauth to basic_auth if both exist
-2012-08-01 - refactor tests to prepare for oauth support
-2012-07-30 - standardize content-type autodetect
-2012-07-30 - make tests more forgiving when less-than-exact comparisons are required - fix a few other brokens
-2012-07-30 - make error message detection more intelligent
-2012-07-27 - improve autodetection (still not quite right)
-2012-07-27 - auto-add content type to PUT/POST if it's not already there   (add_attachment and friends are still broken)
-2012-06-19 - fix broken oauth initialization
-2012-06-18 - start doc updates
-2012-06-18 - bump to version 0.11
-2012-06-18 - fix broken oauth initialization
-2012-06-18 - add update and delete examples
-2012-06-08 don't need explicit argparse import
-2012-06-08 use webbrowser to simplify the authorization process
-2012-06-08 use webbrowser to simplify the authorization process
-2012-06-08 add OAuth dance support to jirashell
-2012-06-08 add OAuth support to client and jirashell
-2012-06-08 make raise_on_error more helpful
-2012-06-08 add tlslite to dependencies for requests_oauth bump to beta list (oooOOOOoooo)
-2012-06-08 incorporate private fork of requests-oauth to handle RSA-SHA1 for atlassian oauth
-2012-06-06 - added -P option for jirashell to read password from prompt
-2012-06-04 - refactor raise_on_error to exceptions.py - make __str__ value useful
-2012-06-01 - bump to version 0.9 for summit release
-2012-05-29 Implement decorators for handling resource arguments in JIRA client calls
-2012-05-23 remove Comments and Dashboards resources; specify a better couple of createmeta tests
-2012-05-18 update set_application_property() doc
-2012-05-18 - spiffy up sphinx docs
-2012-05-17 implement issue.update(), issue.delete()
-2012-05-17 test version.update()
-2012-05-17 implement and test role.update()
-2012-05-17 test worklog.update()
-2012-05-17 implement and test RemoteLink.update()
-2012-05-17 - test comment.update()
-2012-05-17 - implement Resource.update() - test component.update()
-2012-05-17 bump to version 0.8 for next release
-2012-05-17 Merged in vitaly4uk/jira-python (pull request #2)
-2012-05-17 package version have been updated
-2012-05-17 _get_url now use api version
-2012-05-16 fix several resource construction bugs; implement delete functionality
-2012-05-15 kill unused import
-2012-05-15 use standard icon test resource for avatar tests
-2012-05-15 factor out set_avatar logic
-2012-05-15 implement project avatar upload and selection
-2012-05-15 implement user avatar upload and selection
-2012-05-14 add missing comment for search_allowed_users_for_issue()
-2012-05-14 implement add_attachment()
-2012-05-14 implement transition_issue
-2012-05-14 kill missed pass statement
-2012-05-14 implement create_issue()
-2012-05-14 - centralize version info
-2012-05-14 - make python 2.7 requirement explicit
-2012-05-11 - implement add_remote_link()
-2012-05-11 - implement move_version()
-2012-05-11 - implement create_version()
-2012-05-11 - implement add/remove votes/watchers
-2012-05-11 - add stubs for add/remove vote and watcher - implement create_issue_link()
-2012-05-11 - implement add_comment()
-2012-05-11 - implement create_component and tests
-2012-05-11 - add basic test for add_worklog()
-2012-05-10 Merged in gak/jira-python (pull request #1)
-2012-05-10 - add placeholder for add_comment()
-2012-05-08 - add SSL verification if the server url starts with https
-2012-05-07 - add doc link to readme
-2012-05-07 - first doc with sphinx pass - use jira-python for name - remove separate module doc pages
-2012-05-07 - kill docstring warning
-2012-05-06 - add add_worklog method with timeSpent, adjustEstimate et al.
-2012-05-03 - include source path in sphinx sys.path
-2012-05-03 - add rst autogen for client modules - update conf.py to find modules in source path
-2012-05-03 - add sphinx doc skeleton
-2012-05-03 - bump to version 0.7.0
-2012-05-03 - doc exception
-2012-05-03 - update gitignore
-2012-05-03 - removed utils; we don't seem to need it - updated ignores
-2012-05-03 - restructure module
-2012-05-03 - add docstrings
-2012-05-03 - fix formatting
-2012-05-03 - rest of docstrings for jira module - remove options argument from universal find()
-2012-05-03 - start API docstrings
-2012-05-02 - convert tools to package - fix jirashell installation in setuptools - bump to version 0.6
-2012-05-02 - make jirashell a proper module and give it an entry point
-2012-05-02 - make jirashell a proper module and give it an entry point
-2012-05-02 - use json from python standard library
-2012-05-02 - raise JIRAError for _get_json() operations that fail
-2012-05-02 - improve exceptions - test that invalid find throws proper exception
-2012-05-02 - eliminate some duplication
-2012-05-01 - update install instructions
-2012-05-01 - fix path to repo
-2012-05-01 - add license
-2012-05-01 - update README
-2012-05-01 - update README - change project name
-2012-05-01 - update examples
-2012-04-30 - move resources to use session - fix warnings
-2012-04-30 - use requests session to persist cookies/headers - add oauth placeholder
-2012-04-30 - add cls_for_resource tests - correct total fields value for default test data
-2012-04-30 - return Resource for unmatched self links
-2012-04-30 - kill unused import
-2012-04-30 - fix universal resource loader
-2012-04-30 - add support for issue remote links
-2012-04-29 - add setup.py - add README placeholder
-2012-04-29 - rename private vars
-2012-04-29 - session/websudo tests
-2012-04-29 - fix wrong param order in session()
-2012-04-29 - most of the remaining tests
-2012-04-29 - parameter name standardization - handle passed params correctly
-2012-04-28 - rename roles() and role() - remove expand param from versions until I can confirm it exists
-2012-04-28 - correct my_permissions()
-2012-04-28 - more tests
-2012-04-28 - support all-groups option
-2012-04-27 - lots more tests
-2012-04-27 - clean up application_properties()
-2012-04-27 - fix typo in customFieldOption Resource
-2012-04-27 - fix REs for resource matching
-2012-04-27 - fix wrong var name bug :/
-2012-04-27 - start tests (YAY)
-2012-04-27 - add expandos - promote customFieldOption to Resource
-2012-04-27 - clean up _get_json uses - add expand parameters to affected resources
-2012-04-26 - code cleanup
-2012-04-26 - recursive resource parsing
-2012-04-25 - fixed format bug I just introduced :/
-2012-04-25 - clean up string formatting - remove unneeded paramter in _get_json
-2012-04-25 - method refactoring - always turn raw json in resources into object attributes
-2012-04-24 - fix searches - implement rest of reading
-2012-04-24 - derp
-2012-04-24 - implement remaining resources - clear up some gets
-2012-04-24 - always create cookies (this lets us do anonymous access)
-2012-04-24 - add server info to jirashell
-2012-04-24 - use direct JSON get instead of search resource
-2012-04-23 - reorganize project structure
-2012-04-23 - implement rest of non-resource methods - move example use to its own file
-2012-04-23 safer check for tuple coercion (thanks to dchambers)
-2012-04-22 - help message
-2012-04-22 - fix ipython shell
-2012-04-22 Merge branch 'master' of bitbucket.org:bspeakmon_atlassian/jira5-python
-2012-04-22 - merge util method
-2012-04-22 - start console
-2012-04-19 Merge branch 'master' of ssh://bitbucket.org/bspeakmon_atlassian/jira5-python
-2012-04-19 - implement a few non-resource client methods
-2012-04-18 Pass (auth) cookies through to resource constructors
-2012-04-18 - implement BASIC session (need to save cookies intelligently)
-2012-04-18 - stubbed API
-2012-04-18 - take **kw in delete() - use new string formatting
-2012-04-17 Examples using the attribute access from the JSON response
-2012-04-17 - augment returned object with params of json
-2012-04-15 make resource loading more general
-2012-04-13 - added options param to fine - search returns list of issues
-2012-04-13 Take a raw param to build issues out of other issues
-2012-04-13 Change save to update() and take kwargs
-2012-04-12 Refactor issue method into clearer parts
-2012-04-10 implement JQL search
-2012-04-10 Implement generic find() method and clean up API
-2012-04-10 - raise on 400-500 errors from server
-2012-04-09 - more sketches
-2012-04-09 - actually we can do better
-2012-04-09 - optionally enable issue finding - move issue resource to separate module - use new-style classes
-2012-04-05 - checkpoint work on issue-related client
+Changelog
+=========
+
+Upcoming release (unreleased changes)
+-------------------------------------
+
+- Fix #194 Exception AttributeError: "'NoneType' object has no attribute
+  'version_info'" [Long Vu]
+
+- Added template_name parameter to create_project to be able to specify
+  template directly, and fix issues where function cannot find suitable
+  project name. [Kovalenko]
+
+- Fix #157. [John T. Wodder II]
+
+- Delete Issue Link Bug Fix. [Dilshan Rajapakse]
+
+- Add documentation for attachments. [Grigory Chernyshev]
+
+- Add documentation for watchers. [Grigory Chernyshev]
+
+- Added docset building to the documentation build. [Sorin Sbarnea]
+
+- Adopted django versioning implementaion. [Sorin Sbarnea]
+
+- Merge branch 'develop' of github.com:pycontribs/jira into develop.
+  [Sorin Sbarnea]
+
+- Merge remote-tracking branch 'upstream/develop' into develop. [John T.
+  Wodder II]
+
+- Make the sections numbered again. [John T. Wodder II]
+
+- Add section headers for each class in the API docs. [John T. Wodder
+  II]
+
+- Split up documentation into multiple pages. [John T. Wodder II]
+
+- Added virtualenv usage to Makefile. [Sorin Sbarnea]
+
+- Sorted the project name duplication error with the tests. [Sorin
+  Sbarnea]
+
+- Simplified setup Exception code in tests. [Sorin Sbarnea]
+
+- Attempt to keep py26 compatibility. [Sorin Sbarnea]
+
+- Log JiraError details on console for Travis. [Sorin Sbarnea]
+
+- Removed requests-kerberos requirements as it was breaking docs. [Sorin
+  Sbarnea]
+
+- Fixed assert in test_search_users_maxresults. [Sorin Sbarnea]
+
+- Updated and moved requirements into one place. [Sorin Sbarnea]
+
+- Ci maintenance. [Sorin Sbarnea]
+
+- Merge branch 'develop' of github.com:pycontribs/jira into develop.
+  [Sorin Sbarnea]
+
+- Update index.rst. [Daniel Jonsson]
+
+- Added requires.io badge. [Sorin Sbarnea]
+
+- Resolved #137 by removing the check for project key from the client
+  app. [Sorin Sbarnea]
+
+- Switched to local travis_after_all.py. [Sorin Sbarnea]
+
+- Flake8 fixes. [Sorin Sbarnea]
+
+- Travis: Remove `on` inside afte_deploy as is not supported. [Sorin
+  Sbarnea]
+
+- Fixed two broken tests and many other warnings. [Sorin Sbarnea]
+
+- Attempt to fix travis publishing and the missing URLs for the uploaded
+  releases. Also should start uploading dev release to pypitest. [Sorin
+  Sbarnea]
+
+- Allows us to call delete_project() with Project object instance.
+  [Sorin Sbarnea]
+
+- Experimental change for testing error handling. [Sorin Sbarnea]
+
+- Fixed linting and enabled build of develop branch pn travis. [Sorin
+  Sbarnea]
+
+- Switched to smart versioning for develop branch. [Sorin Sbarnea]
+
+- Added docs badge. [Sorin Sbarnea]
+
+- Flake8 fixes (lots) [Sorin Sbarnea]
+
+- Merge branch 'master' of github.com:pycontribs/jira. [Sorin Sbarnea]
+
+- Add missing issues report methods. [Lionel Cuevas]
+
+- Used to get xml in response to backup progress, now getting json. [Guy
+  Matz]
+
+- Added functionality for backing up from Cloud version. [Guy Matz]
+
+- Tried to make release 1.0.6. [Sorin Sbarnea]
+
+- Improved release.sh. [Sorin Sbarnea]
+
+1.0.4 (2016-03-16)
+------------------
+
+- Remove wrong parameter in release.sh. [Sorin Sbarnea]
+
+- Test rsa key. [Sorin Sbarnea]
+
+- Adds support for Kerberos auth. [Tuukka Mustonen]
+
+- Changed linkId to id for consistency. [bakkeby]
+
+- Correcting tabs vs spaces. [bakkeby]
+
+- Adding functionality to allow deletion of issue links. [bakkeby]
+
+- Updated PyCharm logo as they also removed the old one when they
+  rebranded it. [Sorin Sbarnea]
+
+- Resolves issue where incompleted_issues() was failing for missing key;
+  'incompletedIssues' corrected to 'issuesNotCompletedInCurrentSprint'
+  [casahome2000]
+
+- Configured minimal versions for pep8 related packages. [Sorin Sbarnea]
+
+- Fixed the version check for invalid request. [Sorin Sbarnea]
+
+- Logged the initial JSON response for templates when they do not
+  contain the expected format. This should help us identify what happens
+  while running tests on Travis. [Sorin Sbarnea]
+
+- Changed api version calls to use "latest" instead of 2. [Sorin
+  Sbarnea]
+
+- Should fix the inconsistent failures with watchers tests. [Sorin
+  Sbarnea]
+
+- Swiched back to the use of logging module directly instead of a
+  variable. [Sorin Sbarnea]
+
+- Implemented a special retry mechanism for serverInfo REST call in
+  order to workaround bug https://jira.atlassian.com/browse/JRA-59676.
+  [Sorin Sbarnea]
+
+- Repaired delete_project() as it seems not to be working on JIRA 6.x.
+  [Sorin Sbarnea]
+
+- Fixed few others broken unittests. [Sorin Sbarnea]
+
+- Reworked the way we log warnings and errors, now we use the named
+  logger "jira". [Sorin Sbarnea]
+
+- Removed duplicate python versions from setup.py. [Sorin Sbarnea]
+
+- Removed pypi version badge as is useless. [Sorin Sbarnea]
+
+- More unittest fixes, now they should finally pass after months of
+  having many of them broken. [Sorin Sbarnea]
+
+- Implemented __eq__ for Version resource. [Sorin Sbarnea]
+
+- Merge branch 'master' of github.com:pycontribs/jira. [Sorin Sbarnea]
+
+- Request JSON payloads to avoid the problem described in
+  https://jira.atlassian.com/browse/JRA-38551. [Vladimir Vysotsky]
+
+- Badge cleanup. [Daniel Lawrence]
+
+- Fixed many of the broken unittests. Disabled some uneeded logging for
+  running unittests. [Sorin Sbarnea]
+
+- Assign_issue() now returns errors. [Sorin Sbarnea]
+
+- Merge branch 'master' of github.com:pycontribs/jira. [Sorin Sbarnea]
+
+- (Minor) Fix UniversalResourceTests.test_pickling_resource() - Work
+  with the raw dict instead of pickling the whole resource and running
+  into issues with PropertyHolder. [Sham Chukoury]
+
+- (#158) Fix initialisation of resources.Issue when raw is passed in.
+  [Sham Chukoury]
+
+- Fix conflict markers from merge. [Achim Herwig]
+
+- Fixed problems found during tests execution. [Paweł Stankowski]
+
+- Merge branch 'pr/147' [Sorin Sbarnea]
+
+- Merge branch 'master' into pr/147. [Sorin Sbarnea]
+
+- Exclude tests working with users - not understood why they fail now.
+  [Achim Herwig]
+
+- Skip tests that rely on specifics of the standard Jira if a non-
+  standard Jira is used. [Achim Herwig]
+
+- Add correct treatment of "issuetype" parameter. [Achim Herwig]
+
+- Fix whitespace and allow for python3. [Achim Herwig]
+
+- Fix call of Resource._get_url(). [Achim Herwig]
+
+- Adapt project template search to new structure. [Achim Herwig]
+
+- Clean up string detection: string_types. [Fil Mackay]
+
+- Remove superfluous self parameter. [Fil Mackay]
+
+- Fixed bugs found in new JIRA API. [Paweł Stankowski]
+
+- Linting plus initial work on enabling local testing using the
+  atlassian-sdk. [Sorin Sbarnea]
+
+- Merge branch 'master' of github.com:pycontribs/jira. [Sorin Sbarnea]
+
+- Do not run prerelease as part of the standard test run. Instead run it
+  after inside after_success. [David Black]
+
+- Add new option 'agile_rest_path', which may be used to select new
+  public JIRA Agile API. [Paweł Stankowski]
+
+- Small improvements. [Paweł Stankowski]
+
+- Added JIRA._fetch_pages function and used it in all functions using
+  pagination and extended ResultList class. [Paweł Stankowski]
+
+- Fix setup.py's setup_requires and requirements.txt. [Shatil Rafiullah]
+
+- Update release.sh. [cgrandsjo]
+
+- Added type hints to Issue class. [Paweł Stankowski]
+
+- Move optional filemagic line to requirements-opt. [Shatil Rafiullah]
+
+- Do not try to recover if we're not going to do the retry. [Alek
+  Mierzwicki]
+
+- Gh-global-rank field is obsolete. [Josh Friend]
+
+- Ensure JIRA class has _rank field. [Josh Friend]
+
+- Restore missing delay in ResilientClient and & implement exponentional
+  backoff. [Nick Baggott]
+
+- Cover python 3.5. [Fil Mackay]
+
+- Py3 compatible string test. [Fil Mackay]
+
+- Redundant if test in split. [Fil Mackay]
+
+- Test for clauseNames presence. [Fil Mackay]
+
+- Items for py3 compat. [Fil Mackay]
+
+- Added option for ignoring existing users on user_add. [Sorin Sbarnea]
+
+1.0.3 (2015-10-11)
+------------------
+
+- Fix #93: ability to retrieve custom fields by their JQL names. [Sorin
+  Sbarnea]
+
+- Websudo fix when used with .netrc files. [Sorin Sbarnea]
+
+- Added support for the type parameter on create_project, as this is
+  required for JIRA 7. [Sorin Sbarnea]
+
+- Moved JIRAError to exceptions. [Sorin Sbarnea]
+
+- Merge branch 'master' of github.com:pycontribs/jira. [Sorin Sbarnea]
+
+- Issue 118 Add ability to send email notification when creating a new
+  user. [Chris Kast]
+
+- Merge branch 'release/1.1.0-1' [Jason Dugdale]
+
+- HOTFIX in test; pass two elements into set properly. [Jason Dugdale]
+
+- Merge tag '1.1.0' into develop. [Jason Dugdale]
+
+- Merge branch 'release/1.1.0' [Jason Dugdale]
+
+- Add __hash__ and __eq__ methods to User class to allow user objects to
+  be added to a Set correctly. [Jason Dugdale]
+
+- Fixup: Correctly cope with Requests object truthiness... [Daniel
+  Fortunov]
+
+- Bugfixes for ResilientSession retry logic. [Daniel Fortunov]
+
+- Moved raise_on_error to resilientsession. [Sorin Sbarnea]
+
+- Documentation improvements, fixed one test. [Sorin Sbarnea]
+
+- Fixed #123 by enabling change of sprint state. [Sorin Sbarnea]
+
+- Merge branch 'master' of github.com:pycontribs/jira. [Sorin Sbarnea]
+
+- Python > 3.1 do not need `ordereddict` package. [Alex Turbov]
+
+- Removed dead code. [Sorin Sbarnea]
+
+- Issue 112 - sendEmail kwarg doesn't work when calling add_user method.
+  [Chris Kast]
+
+- Minor fixes to jirashell issues #100, #102, and #66, and tweaks fix
+  from d5856742771890ad18165197f6bc7eb3ff8cd086. The oauth_dance and
+  print_tokens options specified in jirashell.ini configuration file are
+  now correctly parsed as boolean values and OAuth with pre-
+  authenticated access_token and access_token_secret (skipping
+  oauth_dance) is fixed. OAuth options are now minimally validated for
+  completeness, so #66 is fixed, allowing for basic_auth without causing
+  issue #102 as the merged commit
+  d5856742771890ad18165197f6bc7eb3ff8cd086 did previously. [Milo
+  Minderbinder]
+
+- Merge remote-tracking branch 'upstream/master' [Milo Minderbinder]
+
+- Fix issue #100 - The problem is that 'oauth_dance' should be an
+  optional option argument, if it is not set, or if it is set to false,
+  a valid use case still exists where OAuth should be used if the user
+  supplies access_token and access_token_secret through command line or
+  configuration file options. This would be the case if the user had
+  already authenticated externally with OAuth and had valid,
+  authenticated tokens to pass to jirashell. [Milo Minderbinder]
+
+- Attempt to fully automate the release and tagging of git based on what
+  is released. [Sorin Sbarnea]
+
+- Change test to use simple regex. [Danny Cheung]
+
+- Update self.issue_1.key to self.issue_1. [Danny Cheung]
+
+- Update test and assert to use arrays. [Danny Cheung]
+
+- Add unit test for adding issue to sprint. [Danny Cheung]
+
+- Refactor method of retrieving custom field info. [Danny Cheung]
+
+- Perform dynamic lookup of custom field id for Sprint field. [Danny
+  Cheung]
+
+- Workaround for adding an issue to a sprint. [Danny Cheung]
+
+- Fixed #88 so now groups are returned as a sorted list of strings.
+  [Sorin Sbarnea]
+
+1.0.1 (2015-07-15)
+------------------
+
+- Attempt to fully automate the release and tagging of git based on what
+  is released. [Sorin Sbarnea]
+
+0.50 (2015-07-15)
+-----------------
+
+- Enabled new travis builders as we do not need sudo. Fixed iteritems()
+  which doesn't work anymore with py34. Increased version to v0.50.
+  [Sorin Sbarnea]
+
+0.49 (2015-07-15)
+-----------------
+
+- Attempt to fix the unittest and to eliminate warnings from the test
+  executions. [Sorin Sbarnea]
+
+- Merge branch 'coddingtonbear-allow_remotelinks_if_no_applicationlinks'
+  [Sorin Sbarnea]
+
+- Merge branch 'allow_remotelinks_if_no_applicationlinks' of
+  https://github.com/coddingtonbear/jira into coddingtonbear-
+  allow_remotelinks_if_no_applicationlinks. [Sorin Sbarnea]
+
+- Minor change to cause a new build to be triggered. [Adam Coddington]
+
+- Don't always set oauth flag, to prevent oauth mode from always being
+  enabled, even if basic auth is requested. [Matthew Gabeler-Lee]
+
+- Fix jirashell.py for non-oauth authentication. [Daniel Fortunov]
+
+- Merge branch 'awurster-patch-1' [Sorin Sbarnea]
+
+- Merge branch 'patch-1' of https://github.com/awurster/jira into
+  awurster-patch-1. [Sorin Sbarnea]
+
+- Adding add_simple_link() [Andrew Wurster]
+
+- Fix JIRAError to correctly include full details. [Daniel Fortunov]
+
+- Merge branch 'fastcat-issue-65' [Sorin Sbarnea]
+
+- Merge branch 'issue-65' of https://github.com/fastcat/jira into
+  fastcat-issue-65. [Sorin Sbarnea]
+
+- Add support to Issue.update to use the update key, and make some
+  common forms of updates easier. [Matthew Gabeler-Lee]
+
+- Merge branch 'fikander-master' [Sorin Sbarnea]
+
+- Merge branch 'master' of https://github.com/fikander/jira into
+  fikander-master. [Sorin Sbarnea]
+
+- Includes are now relative to jira package. [Tomasz Kustrzynski]
+
+- Added myself AIP support. [Tomasz Kustrzynski]
+
+- JWT authentitcation support for Atlassian Connect. [Tomasz
+  Kustrzynski]
+
+- Jirashell configured via jirashell.ini didn't allow no-oauth
+  authentication. [Tomasz Kustrzynski]
+
+- Fill in the current maintainer information. [David Black]
+
+- Merge branch 'geoghegan-patch-1' [Sorin Sbarnea]
+
+- Merge branch 'patch-1' of https://github.com/geoghegan/jira into
+  geoghegan-patch-1. [Sorin Sbarnea]
+
+- Honor fullname arg in add_user. [Nick Geoghegan]
+
+- Merge branch 'tuenti-master' [Sorin Sbarnea]
+
+- Merge branch 'master' of https://github.com/tuenti/jira into tuenti-
+  master. [Sorin Sbarnea]
+
+- Add update_filter to client. [Oscar]
+
+- JIRA Issue 80 - delete project fails to delete. [Martin Proffitt]
+
+- Fixed naming error in the documentation. [Thorsten Heymann]
+
+- Add attachment content streaming. [Ian Unruh]
+
+- Make `python setup.py test` work without first needing to install any
+  dependencies. [David Black]
+
+0.48.1 (2015-04-23)
+-------------------
+
+- Bumping patch version number to 0.48.1. [Adam Coddington]
+
+- Do not prevent users from adding remote links if we are not able to
+  fetch applicationlinks. [Adam Coddington]
+
+- Fixed mimetype issue with Jira attachment. MultipartEncoder sent
+  attachment in 'text/plain' mode which caused issues with pdf files.
+  See images 3 images from images directory, after the change, mimetype
+  was identified correctly. [Vesa Laakso]
+
+- Now travis should publish both sdist and wheel. Also included
+  changelist. [Sorin Sbarnea]
+
+0.48 (2015-04-14)
+-----------------
+
+- Attempt to appease Travis. [Josh Tilles]
+
+- Restore issue transitions by fixing some flubs. [Josh Tilles]
+
+0.47 (2015-04-11)
+-----------------
+
+- Increaded version to 0.47. [Sorin Sbarnea]
+
+- Implemented worklog tests and fixed worklog and timetracking. [Sorin
+  Sbarnea]
+
+- Now Travis should release only if all jobs do succeed. [Sorin Sbarnea]
+
+- Sorted the decoding of the json response. [Sorin Sbarnea]
+
+- Increased version number to v0.45 but in the future this should be
+  done automatically on each release. [Sorin Sbarnea]
+
+- Minor Travis fix for py3 build. [Sorin Sbarnea]
+
+- Removed the pretest phase as now everyone should be able to run the
+  tests. [Sorin Sbarnea]
+
+- Implemented a prerelease stage that will prevent running the tests on
+  travis for already released versions. This is needed in order to
+  enable future automatic releases. [Sorin Sbarnea]
+
+- Fix for #28 : broken permalinks. [Sorin Sbarnea]
+
+- Removed the secured credentials from Travis because they do not work
+  with pull requests. See http://docs.travis-ci.com/user/pull-requests/
+  From now on everybody should be able to run the tests, lets hope that
+  the OnDemand server will be able to cope with the tests. [Sorin
+  Sbarnea]
+
+- Validated .travis.yml. [Sorin Sbarnea]
+
+- Fix #38 so the code will also work with PyInstaller. [Sorin Sbarnea]
+
+- Workaround for py34 weakref issue from
+  https://github.com/kennethreitz/requests/issues/2303. [Sorin Sbarnea]
+
+- Merge branch 'master' of github.com:pycontribs/jira. [Sorin Sbarnea]
+
+- Fix atlassian header. [bruno-mendes-movile]
+
+- Added Citrix to credits, changed default documentation theme and
+  documented the BountySource usage. [Sorin Sbarnea]
+
+- Bugfix in Travis config file which seems not to fail fast on multiple
+  script commands. [Sorin Sbarnea]
+
+0.43 (2015-03-31)
+-----------------
+
+- V0.43 release which fixes pickle bug. [Sorin Sbarnea]
+
+- #46 Experimental drop of custom getstate/setstate in Resource that was
+  preventing Pickle from restoring the objects properly (_options).
+  [Sorin Sbarnea]
+
+- Added sdist to release. [Sorin Sbarnea]
+
+0.42 (2015-03-31)
+-----------------
+
+- Commented `git add RELEASE` [Sorin Sbarnea]
+
+- V0.42 minor fix regarding release script tagging. [Sorin Sbarnea]
+
+- Added flattr button. [Sorin Sbarnea]
+
+- Allow OAuth dance to ignore ssl certificate. [Dave Collins]
+
+- V0.41 that enabled new unitises and fixes #44.
+  [sorin.sbarnea@gmail.com]
+
+- V0.40 - new release with small bug fixes. [Sorin Sbarnea]
+
+- Added an exception in case the just added attachment has size=0 so we
+  can debug the weird case of empty attachments. [Sorin Sbarnea]
+
+- Marked the pickle test as xfail and some pep8. [Sorin Sbarnea]
+
+- Update client.py. [Fabio Oliveira Silva]
+
+- Update client.py. [Fabio Oliveira Silva]
+
+- Finished initial baseline label test. Added test for issue #32 that
+  looks for an exception from a bad label with spaces. [Matt Studley]
+
+- Added initial label unit test. [Matt Studley]
+
+- Merge branch 'master' of https://github.com/pycontribs/jira. [Mark
+  LaPerriere]
+
+- Issue add_field_value should use Resource update function.
+  [marcelslotema]
+
+- Raise an AttributeError if a requested attribute doesn't exist within
+  self or self.raw. This is a bug fix to ensure calls to hasattr return
+  false when the attribute doesn't exist. [bardal]
+
+- No need to take the tuple lookup hit with one item. [Mark LaPerriere]
+
+- Make it more clear about what we're doing to support pickling. [Mark
+  LaPerriere]
+
+- Add tests for pickling resources. [Mark LaPerriere]
+
+- Enabling the pickling of resources. [Mark LaPerriere]
+
+- V0.39: minor bug fixings. [sorin.sbarnea@gmail.com]
+
+- Merge branch 'master' of github.com:pycontribs/jira.
+  [sorin.sbarnea@gmail.com]
+
+- Update client.py. [Fabio Oliveira Silva]
+
+- Fixing #23 bug: startDate in create_version()
+  [sorin.sbarnea@gmail.com]
+
+- Corrected source URL inside the documentation. [Sorin Sbarnea]
+
+- Updated the link to documentation. [Sorin Sbarnea]
+
+- Removed upload_sphinx from release. [Sorin Sbarnea]
+
+- Merge branch 'master' of github.com:pycontribs/jira. [Sorin Sbarnea]
+
+- Update index.rst. [bardal]
+
+- V0.38 which should work well on intranets. [Sorin Sbarnea]
+
+- Now the version check should take up to 2 seconds and should not
+  prevent loading if it fails. [Sorin Sbarnea]
+
+- V0.37 release. [Sorin Sbarnea]
+
+- Fixed error with last merge. [Sorin Sbarnea]
+
+- Merge branch 'master' of github.com:pycontribs/jira into
+  sargentstudley-add_user. [Sorin Sbarnea]
+
+- Give users ability to disable update check. [Nicholas Jones]
+
+- Merge branch 'sargentstudley-add_user' of github.com:pycontribs/jira
+  into sargentstudley-add_user. [Sorin Sbarnea]
+
+- Merge branch 'add_user' of https://github.com/sargentstudley/jira into
+  sargentstudley-add_user. [Sorin Sbarnea]
+
+- Merge branch 'add_user' of https://github.com/sargentstudley/jira into
+  sargentstudley-add_user. [Sorin Sbarnea]
+
+- - Added tests to flesh out User and Group CRUD operations. - Added
+  add_group method to client. - Added remove_group method to client. -
+  Rewrote add_user_to_group to use REST API - Added
+  remove_user_from_group to client. [Matt Studley]
+
+- Removed a test that is not needed anymore. [Sorin Sbarnea]
+
+- Repaired 3 additional tests. [Sorin Sbarnea]
+
+- Added the first tests for JIRA Agile. Also this should fix the
+  Issue.update() [Sorin Sbarnea]
+
+- Deprecated GreenHopper class and moved all methors into JIRA. Other
+  plugins should use the mixin pattern to add their methods. [Sorin
+  Sbarnea]
+
+- Allowing to pass Issue() instances instead of id/keys to issue()
+  [Sorin Sbarnea]
+
+- Optimized the check_update code so it checks version only once. Fixed
+  the comments tests. [Sorin Sbarnea]
+
+- Py26 and py3 compatibility updates. [Sorin Sbarnea]
+
+- Changed the way we load the version in setup.py in order to properly
+  perform coverage. Also added fallback on add_attachment for the case
+  where we do not have the filestreamer module. [Sorin Sbarnea]
+
+- Added ordereddict dependency that is required for py26 compatibility
+  improved the random password complexity to avoid falure from server
+  side. [sorin.sbarnea@gmail.com]
+
+- Changed number of retries to 5 unless jira is running on localhost,
+  when it will use 1. [sorin.sbarnea@gmail.com]
+
+- Merge branch 'master' of github.com:pycontribs/jira.
+  [sorin.sbarnea@gmail.com]
+
+- Fix resource _load incorrect argument. [Oleksandr Allakhverdiyev]
+
+- Pep8. [sorin.sbarnea@gmail.com]
+
+- This should fix UserAdministrationTests and make them run on Travis
+  too. [sorin.sbarnea@gmail.com]
+
+- Merge remote-tracking branch 'upstream/master' into add_user. [Matt
+  Studley]
+
+- Attempt to improve the retry mechanism. Will default to 3 for normal
+  usage and 10 for running the tests. [Sorin Sbarnea]
+
+- Reworked tests of votes so they should not randomly fail anymore.
+  [Sorin Sbarnea]
+
+- Fixed failure of add_attachment test when using retry was triggered.
+  This was caused by the file stream. Now it will get a new file stream
+  if the initial post fails. [Sorin Sbarnea]
+
+- - Created unit test class for user administration - Created add_user
+  unit test. [Matt Studley]
+
+- Fixed create_issue() which was broken due to project being passed
+  wrongly. [Sorin Sbarnea]
+
+- Increased verbosity in order to debug some CI failings. [Sorin
+  Sbarnea]
+
+- Merge branch 'master' of github.com:pycontribs/jira. [Sorin Sbarnea]
+
+- Fix ResourceLeak warning with CPython3. [Vadim Markovtsev]
+
+- Updated tests to prevent failure to upload attachment with Python 3.
+  [Sorin Sbarnea]
+
+- Now HTTP codes 502,503,504 do retry. [Sorin Sbarnea]
+
+- Configured default max_retries to 3. [Sorin Sbarnea]
+
+- Fixed add_attachments which now is able to stream the files,
+  preventing size limitation bugs. [Sorin Sbarnea]
+
+- Improved tests. [Sorin Sbarnea]
+
+- Improved tests. [Sorin Sbarnea]
+
+- README.rst: syntax highlighting. [Marc Abramowitz]
+
+- README.rst: Make valid on PyPI. [Marc Abramowitz]
+
+- README.rst: Double back quotes, fix links. [Marc Abramowitz]
+
+- Added a new test for failed authentication Made test_attachment more
+  verbose Added export of coverage data into xml format. [Sorin Sbarnea]
+
+- Implemented travis_after_all so we release only once. [Sorin Sbarnea]
+
+- Test changes towards getting them passing on Travis too. [Sorin
+  Sbarnea]
+
+- Additional travis compatibility changes. [Sorin Sbarnea]
+
+- Additional travis compatibility changes. [Sorin Sbarnea]
+
+- Additional travis compatibility changes. [Sorin Sbarnea]
+
+- Additional travis compatibility changes. [Sorin Sbarnea]
+
+- Disabled xdist plugin in order to execute on travis. [Sorin Sbarnea]
+
+- Major changes to unittests in order to make them pass on Travis.
+  [Sorin Sbarnea]
+
+- Added new icons to README page. [Sorin Sbarnea]
+
+- Autopep8. [Sorin Sbarnea]
+
+- Merge branch 'master' of bitbucket.org:bspeakmon/jira-python. [Sorin
+  Sbarnea]
+
+- Merged in taquart/jira-python/taquart/fixing-the-commentupdate-
+  example-1420064736261 (pull request #73) [Sorin Sbarnea]
+
+- Fixing the comment.update() example. [taquart]
+
+- Merged in rowanthorpe/jira-python/fix-configparser-to-match-v3-import
+  (pull request #71) [Sorin Sbarnea]
+
+- Fix configparser usage to match v3-compat import. [Rowan Thorpe]
+
+- Merged in evers/jira-python (pull request #72) [Sorin Sbarnea]
+
+- Fix issue.add_field_value, fixes #144. [Ronald Evers]
+
+- Dont forget raise_on_error if not autofixing. [Ronald Evers]
+
+- Merged in franciscoruiz/jira-python/franciscoruiz/removed-print-
+  statement-from-greenhopper-1417788172609 (pull request #69) [Sorin
+  Sbarnea]
+
+- Removed 'print' statement from Greenhopper.sprints_by_name. [Fran
+  Ruiz]
+
+- Merged in mejoe/jira-python/completed_points (pull request #68) [Sorin
+  Sbarnea]
+
+- Add sum of completed issues for a board/sprint. [Joe McBride]
+
+- Merged in simonventuri/jira-python/yosemite-six-fix (pull request #66)
+  [Sorin Sbarnea]
+
+- Fix html_parser import from six.moves. [Simon Venturi]
+
+- Merged in misa/jira-python (pull request #62) [Sorin Sbarnea]
+
+- Add a fields keyword arg; regular keyword arguments will take
+  precedence. [Mihai Ibanescu]
+
+- Reverting commit 5f4c4a4, added an update method for Comment for fix
+  #53. [Mihai Ibanescu]
+
+- Merged in rmelhem/jira-python (pull request #67) [Sorin Sbarnea]
+
+- Added support for client-side SSL with HTTP-Basic session. [Rafic
+  Melhem]
+
+- Merged in bunkerbewohner/jira-python (pull request #63) [Sorin
+  Sbarnea]
+
+- Bugfix of KeyError in JIRA.add_remote_link during check of application
+  links. [Mathias Kahl]
+
+- Merged in rawfalafel/jira-python/fix/validate-search-query (pull
+  request #61) [Sorin Sbarnea]
+
+- Add option to disable query validation. Part of the REST api.
+  [rawfalafel]
+
+- Fixing #53 Unable to update a comment. [sorin.sbarnea@gmail.com]
+
+- Fix for #112 : added startDate, released and archived to
+  create_version() [sorin.sbarnea@gmail.com]
+
+- Fixed #96 by documenting how to update components.
+  [sorin.sbarnea@gmail.com]
+
+- Fixing #81 by removing requests_oauth from the package.
+  [sorin.sbarnea@gmail.com]
+
+- Fixing #61 - documenting how to get support on jira-python.
+  [sorin.sbarnea@gmail.com]
+
+- Assured that RELEASE file that contains the changelog is updated when
+  making new releases. [sorin.sbarnea@gmail.com]
+
+- Added upload_docs and switch to usage of default GPG signature. [Sorin
+  Sbarnea]
+
+- Added wheel deployment. [Sorin Sbarnea]
+
+0.33 (2015-01-05)
+-----------------
+
+- Removal of gevents as it is incompatible with Python 2.7.8 and because
+  we can use requests threading for the same purpose. [Sorin Sbarnea]
+
+- Merge branch 'master' of github.com:pycontribs/jira.
+  [sorin.sbarnea@gmail.com]
+
+- Navicat does not have https (sic!) :) [Sorin Sbarnea]
+
+- Updated image links. [Sorin Sbarnea]
+
+- Updated Navicat Logo. [Sorin Sbarnea]
+
+- Update README.rst. [Sorin Sbarnea]
+
+- Update README.rst. [Sorin Sbarnea]
+
+- Fixes #2. [Gervasio Marchand]
+
+- Implemented username rename for JIRA 6.0.0+ [sorin.sbarnea@gmail.com]
+
+0.32 (2014-09-17)
+-----------------
+
+- V0.32 is fixing #132 decoding errors on several cases, cased by the
+  wrong usage of response.content instead of response.text, first one
+  being binary. [sorin.sbarnea@gmail.com]
+
+- Pep8 tests still not working. [Bogdan Marchis]
+
+- Pep8 moved to setup.cfg few other fixes, should pass pep8 now. [Sorin
+  Sbarnea]
+
+- Merge branch 'master' of github.com:pycontribs/jira. [Sorin Sbarnea]
+
+- Removed pep8 from test cases. [Bogdan Marchis]
+
+- V0.31 merge with bitbcket copy. [Sorin Sbarnea]
+
+- Pep8 work + forced py.test to run on single thread. [Sorin Sbarnea]
+
+- All the tests are now generic. [Bogdan Marchis]
+
+- Run tests from UserTests. [Bogdan Marchis]
+
+- Run job only with the class SearchTests. [Bogdan Marchis]
+
+- Added a few tests from ProjectTests. [Bogdan Marchis]
+
+- Generalised a few other tests. [Bogdan Marchis]
+
+- Another run. [Bogdan Marchis]
+
+- Add_worklog does not work for python2.6. [Bogdan Marchis]
+
+- One more run. [Bogdan Marchis]
+
+- Run again without IssuesTests. [Bogdan Marchis]
+
+- Added general tests for IssueTests. [Bogdan Marchis]
+
+- Tests for travis. [Bogdan Marchis]
+
+- General tests for filters. [Bogdan Marchis]
+
+- Some changes for general projects. [Bogdan Marchis]
+
+- Probably fixing CI with jenkins. [sorin.sbarnea@gmail.com]
+
+- Added travis_wait. [sorin.sbarnea@gmail.com]
+
+- All working for python2.7 (for the moment) [Bogdan Marchis]
+
+- Updated tests for the new added projects. [Bogdan Marchis]
+
+- Pep8 + added py34 in addition to py33, one of them must be tested.
+  [sorin.sbarnea@gmail.com]
+
+- Made autopep8 optional. [sorin.sbarnea@gmail.com]
+
+- Removed --upgrade from pip install. [sorin.sbarnea@gmail.com]
+
+- Reorganized requirements, hoping to make the test easier and also to
+  reduce dependencies for installations. [sorin.sbarnea@gmail.com]
+
+- Added timeouts to curl, should fix the travis issue, hopefully.
+  [sorin.sbarnea@gmail.com]
+
+- Removed -n4 from tox until we find a solution for working with
+  fixtures with multiple threads, seems to be a design limitation with
+  py.test. [sorin.sbarnea@gmail.com]
+
+- Added all the tests appart from 3 for which I don't have enough
+  permissions and those from remote_link. [Bogdan Marchis]
+
+- Added tests from VersionTests. [Bogdan Marchis]
+
+- Added tests from UserTests. [Bogdan Marchis]
+
+- Added tests from ProjectTests. [Bogdan Marchis]
+
+- Added 3 new classes. [Bogdan Marchis]
+
+- Tests from Issue tests are now working. [Bogdan Marchis]
+
+- Fixed some other test cases. [Bogdan Marchis]
+
+- Other 15 test cases are working. [Bogdan Marchis]
+
+- Tests for classes ResourceTest and ApplicationPropertiesTest are now
+  working. [Bogdan Marchis]
+
+- Merge branch 'master' of github.com:pycontribs/jira.
+  [sorin.sbarnea@gmail.com]
+
+- Merge branch 'master' of github.com:pycontribs/jira. [Bogdan Marchis]
+
+- Some working tests from UniversalResourceTests. [Bogdan Marchis]
+
+- ZZF-15731 #comment this should end-up in jira.
+  [sorin.sbarnea@gmail.com]
+
+- Fix for test_issue_link(self) faild build #18.3.
+  [sorin.sbarnea@gmail.com]
+
+- Fixed test_issue_link() [sorin.sbarnea@gmail.com]
+
+- Merge commit 'ab39b68245a551d613aeeb1e9177248b67797a31'
+  [sorin.sbarnea@gmail.com]
+
+- Updated user prefix. [Bogdan Marchis]
+
+- Tests cleanup, enabled py34 in travis, added pretest before running
+  tests. [sorin.sbarnea@gmail.com]
+
+- Merge branch 'master' of github.com:pycontribs/jira.
+  [sorin.sbarnea@gmail.com]
+
+- Logging improvement, corrected doc build via tox, probably fixed a
+  deadlock with running unittests in parallel. [sorin.sbarnea@gmail.com]
+
+- Logging improvement, corrected doc build via tox, probably fixed a
+  deadlock with running unittests in parallel. [sorin.sbarnea@gmail.com]
+
+- Removed logging and fixed the test manager class.
+  [sorin.sbarnea@gmail.com]
+
+- Added debug code for Travis failure as we were not able to replicate
+  same failure locally. [sorin.sbarnea@gmail.com]
+
+- Disabled kill session for the moment as it seems to cause some strange
+  errors with unittests. [sorin.sbarnea@gmail.com]
+
+- Added logging of fatal exceptions when initializing unit tests.
+  [sorin.sbarnea@gmail.com]
+
+- Repairing unittests. [sorin.sbarnea@gmail.com]
+
+- Repaired project create. [sorin.sbarnea@gmail.com]
+
+- V0.29 added delete_board() [sorin.sbarnea@gmail.com]
+
+- Fixed broken images. [sorin.sbarnea@gmail.com]
+
+- CI enablement work. [sorin.sbarnea@gmail.com]
+
+- Merge branch 'master' of github.com:pycontribs/jira.
+  [sorin.sbarnea@gmail.com]
+
+- Update README. [Sorin Sbarnea]
+
+- Added creatation time to log_work, documented accetable values for
+  assign_issue, converted few prints to use the logger.
+  [sorin.sbarnea@gmail.com]
+
+- V0.28 fixed critial bug related tu unicode support (type(str(..))) and
+  initial work for enabling continous-integration with Travis and the
+  Atlassian provided on-demand JIRA test instance.
+  [sorin.sbarnea@gmail.com]
+
+- Added tox, pep8 and autopep8 as requirements.
+  [sorin.sbarnea@gmail.com]
+
+- Added travis config file. [sorin.sbarnea@gmail.com]
+
+0.31 (2014-09-09)
+-----------------
+
+- Added automatic release note creation. [sorin.sbarnea@gmail.com]
+
+- Fixed #101 - added back python 2.6 compatibility. [dd]
+
+- Fixed issue #94 jirashell being broken. Moved jirashell.py inside jira
+  package, tools was clearly not an inspired name for a package. [dd]
+
+- Merged in tomikall/jira-python (pull request #60) [Sorin Sbarnea]
+
+- Fix process_config() to work with configparser from six and Python 3.
+  [Tomi Kallio]
+
+- Fix #130 : Read options `verify`, `resilient`, and `async` as booleans
+  from user's `jirashell.ini` file. [Tomi Kallio]
+
+- V0.31 manual merge with github fork (used to revive unittests) [Sorin
+  Sbarnea]
+
+0.30 (2014-08-01)
+-----------------
+
+- V0.30 containing a real fix for JIRA.__init__() [Sorin Sbarnea]
+
+0.28 (2014-08-01)
+-----------------
+
+- V0.28 fast-track merge of latest patches. [Sorin Sbarnea]
+
+- Merged in xistence/jira-python/bugfix/future_imports (pull request
+  #59) [Sorin Sbarnea]
+
+- Move from __future__ import statement. [Bert JW Regeer]
+
+- Merged in xistence/jira-python/bugfix/jira.issues (pull request #58)
+  [Sorin Sbarnea]
+
+- Remove erroneous self. [Bert JW Regeer]
+
+- Merged in abstracttype/jira-python/abstracttype/fix-
+  greenhopperincompleted_issues-base_-1404297141573 (pull request #57)
+  [Sorin Sbarnea]
+
+- Fix `GreenHopper.incompleted_issues` - BASE_URL was previously used as
+  the `params` argument. [Nathan Reynolds]
+
+- Initial implementation of update_sprint() which can alter start and
+  end dates. [sorin.sbarnea@gmail.com]
+
+- Partial fix for #116 : unicode errors. [sorin.sbarnea@gmail.com]
+
+- Merge branch 'master' of ssh://bitbucket.org/bspeakmon/jira-python.
+  [Sorin Sbarnea]
+
+- Improved async support. [Sorin Sbarnea]
+
+- Flush async queue on delete. [Sorin Sbarnea]
+
+- Merge branch 'master' of ssh://bitbucket.org/bspeakmon/jira-python.
+  [Sorin Sbarnea]
+
+- Merged in johnjiang/jira-python/fix-add-remote-link (pull request #56)
+  [Sorin Sbarnea]
+
+- Fix for instances where destination is NOT an issue but just a normal
+  dict. [John Jiang]
+
+- Re-enabling async support, now you can enable it by adding async=True
+  when you create the JIRA object. [Sorin Sbarnea]
+
+0.25 (2014-05-30)
+-----------------
+
+- Documented usage of add_remote_link() [sorin.sbarnea@gmail.com]
+
+- V0.25 fixing #34 : add_remote_link should be able to receive remote
+  issue instances as parameter. [sorin.sbarnea@gmail.com]
+
+- Fixing #108 : jira __init__ kills version() method. [Sorin Sbarnea]
+
+- V0.24 fixing #107 by killing sessions inside the destructor. [Sorin
+  Sbarnea]
+
+0.23 (2014-05-30)
+-----------------
+
+- V0.23 fixing the broken search. [Sorin Sbarnea]
+
+- Merge branch 'master' of ssh://bitbucket.org/bspeakmon/jira-python.
+  [Sorin Sbarnea]
+
+- Merged in rentouch/jira-python/fixed_get_json_params (pull request
+  #55) [Sorin Sbarnea]
+
+- Fix function calls which are using the "param" argument on the
+  function _get_json(), as param isn't the second argument anymore since
+  the "base" arg was added in eb8be46. [Dominique B]
+
+- Partial fix #46 now waiting for Atlassian to fix their side. [Sorin
+  Sbarnea]
+
+- Fixed #106. [Sorin Sbarnea]
+
+0.22 (2014-04-24)
+-----------------
+
+- #104: added connection errors as recoverable errors: DNS resolve
+  issues, connection refused. [Sorin Sbarnea]
+
+- Pep8 reformatting. [Sorin Sbarnea]
+
+- #104 :retry mechanism. add resilient=True to the server options and it
+  will retry failed requests. [Sorin Sbarnea]
+
+- Merged in SimplicityGuy/jira-python-fixes (pull request #51) [Sorin
+  Sbarnea]
+
+- Merged bspeakmon/jira-python into master. [Robert Wlodarczyk]
+
+- Fixed the last few issues of the GreeHopperResource usage. [Robert
+  Wlodarczyk]
+
+- Fixing issue where GreenHopper was using JIRA's API URL through
+  _get_url. [Robert Wlodarczyk]
+
+- Minor comment cleanup and addition of GreenHopper resources to
+  resource_class_map. [Robert Wlodarczyk]
+
+- Moving GreenHopper over to use GreenHopperResource, updating comments,
+  and fixing a few TODOs. [Robert Wlodarczyk]
+
+- Minor cleanup. [Robert Wlodarczyk]
+
+- Merged in chiemseesurfer/jira-python (pull request #53) [Sorin
+  Sbarnea]
+
+- Add update to Version class to archive versions. [Max Oberberger]
+
+- Merged in jvtrigueros/jira-python/basic-auth-using-post (pull request
+  #54) [Sorin Sbarnea]
+
+- Fixing code formatting as per request. [Jose V. Trigueros]
+
+- Merged in jvtrigueros/jira-python/basic-auth-using-post (pull request
+  #52) [Robert Wlodarczyk]
+
+- When using Basic Authentication, use a POST request. [Jose V.
+  Trigueros]
+
+- Merged in jaimesoriano/jira-python/trust-requests-proxy-selection
+  (pull request #50) [Robert Wlodarczyk]
+
+- Trust proxy selection provided by requests by default. [Jaime Soriano
+  Pastor]
+
+- Merged in SimplicityGuy/jira-python-fixes (pull request #49) [Sorin
+  Sbarnea]
+
+- Missed part of that checkin. [Robert Wlodarczyk]
+
+- Merged bspeakmon/jira-python into master. [Robert Wlodarczyk]
+
+- Fixed two import bugs introduced by previous commit. [Sorin Sbarnea]
+
+- Fixing issue where importing print_ from six tried to override the
+  built in print. This does not work. So, fixed up existing print usage
+  to avoid having to import print_ [Robert Wlodarczyk]
+
+- Merged bspeakmon/jira-python into master. [Robert Wlodarczyk]
+
+- Merged in platinummonkey/jira-python (pull request #45) [Sorin
+  Sbarnea]
+
+- PEP8 Compliance and fixed Python3 support utilizing the `six` library.
+  [Cody Lee]
+
+- Added six as a dependency fro py2-py3 compatibility. [Sorin Sbarnea]
+
+- Merged in freeseacher/jira-python (pull request #44) [Sorin Sbarnea]
+
+- Merged in freeseacher/allow-request-full-search-result-1392721783002
+  (pull request #1) [Aleksey Shirokih]
+
+- Allow request full search result. for work with it like with simple
+  dict. [Aleksey Shirokih]
+
+- Merged in guyroz/jira-python (pull request #46) [Sorin Sbarnea]
+
+- Move sphinx to test_requre from setup_requires. [Guy Rozendorn]
+
+- Merged in SimplicityGuy/jira-python-fixes (pull request #47) [Sorin
+  Sbarnea]
+
+- Fixed issue with deprecated IPython usage. [Robert Wlodarczyk]
+
+- Fixed issue #93, missing newline @ line 29. [Robert Wlodarczyk]
+
+0.21 (2014-02-17)
+-----------------
+
+- Removed tendo as a dependency. [Sorin Sbarnea]
+
+- Minor fixes needed for continous-integration. [Sorin Sbarnea]
+
+- V0.21 adding experimental support for iDalko Grid. [Sorin Sbarnea]
+
+- Fixed release so it does force change of tags instead of failing to
+  push them at the end of the release process. [Sorin Sbarnea]
+
+0.20 (2014-02-11)
+-----------------
+
+- Release v0.20 minor bug fixing mainly, but should fix some pip install
+  failures. [Sorin Sbarnea]
+
+- Merge branch 'master' of ssh://bitbucket.org/bspeakmon/jira-python.
+  [Sorin Sbarnea]
+
+- Merged in scott_weintraub/jira-python (pull request #40) [Sorin
+  Sbarnea]
+
+- Added create_filter(name = None, description = None,
+  jql = None, favourite = None) [Scott Weintraub]
+
+- Merged in davidszotten/jira-python/fix_setup_requires (pull request
+  #41) [Sorin Sbarnea]
+
+- Remove `requests_oauthlib` from `setup_requires` [David Szotten]
+
+- Merged in db_atlass/jira-python/fix_random (pull request #42) [Sorin
+  Sbarnea]
+
+- Use SystemRandom where it is available instead of random. [David
+  Black]
+
+- Merged in jdelic/jira-python/feature/output-auth-url-if-printtokens
+  (pull request #43) [Sorin Sbarnea]
+
+- Output auth_url instead of opening a webbrowser when the user opted to
+  print the tokens. [Jonas Maurus]
+
+- Fixing incompatibility between ipython and geven modules. [Sorin
+  Sbarnea]
+
+0.19 (2014-02-06)
+-----------------
+
+- V0.19 Added get() method that returns attachment content. [Sorin
+  Sbarnea]
+
+- Merged in il_bale/jira-python (pull request #39) [Sorin Sbarnea]
+
+- Add configuration parameter to enable/disable SSL certificate
+  verification. [baleboy]
+
+- Merged in nyetsche/jira-python (pull request #36) [Sorin Sbarnea]
+
+- Add maxResults option to groups() [Matt Lesko]
+
+0.18 (2014-01-21)
+-----------------
+
+- Merge branch 'master' of ssh://bitbucket.org/bspeakmon/jira-python.
+  [Sorin Sbarnea]
+
+- Merged in pnichols104/jira-python (pull request #38) [Sorin Sbarnea]
+
+- Fixed bug in add_user_to_group where find statement always evaluates
+  as True. [Paul Nichols]
+
+- Enabled search_issues() to return all issues by setting
+  maxResults=None. [Sorin Sbarnea]
+
+0.17 (2014-01-14)
+-----------------
+
+- Release 0.17 : added support for comments in work logs. [Sorin
+  Sbarnea]
+
+- Merged in fpierfed/jira-python (pull request #37) [Sorin Sbarnea]
+
+- Added ability to specify a comment text in creating a worklog item.
+  [Francesco Pierfederici]
+
+- Updated README to use the new package name. [Sorin Sbarnea]
+
+0.16 (2013-12-24)
+-----------------
+
+- Renamed the pypi product to jira from jira-python so it does match the
+  package name. [Sorin Sbarnea]
+
+- Configured to use newer xmlrunner that exports the main class
+  properly. [Sorin Sbarnea]
+
+- Added requitements.txt for prepering the test execution. [Sorin
+  Sbarnea]
+
+- Increased memory for test instance, enabled JMX RMI so we can debug it
+  if needed. [Sorin Sbarnea]
+
+- Switched to the renamed xmlrunner, which is patched and under our
+  control. [Sorin Sbarnea]
+
+- Prevented tools from being included into the distribution in order to
+  prevent polution of package namespace. jirashell is for the moment not
+  distributed until we decide where we are going to put it. [Sorin
+  Sbarnea]
+
+- Removed the tests from sdist, not not poluting module namespace
+  anymore. [Sorin Sbarnea]
+
+- Various Python 2.6-3.3 compatibility fixes. [Sorin Sbarnea]
+
+- Release 0.16 adds LICENSE file to archive, optional login verification
+  on instantiation. [Sorin Sbarnea]
+
+- Added license file to the packaged distribution. [Sorin Sbarnea]
+
+- Added optional parameter validate to the constructor that will
+  validate your credential at instantiation time, solving #37. [Sorin
+  Sbarnea]
+
+- Merge branch 'master' of ssh://bitbucket.org/bspeakmon/jira-python.
+  [Sorin Sbarnea]
+
+- Merged in aliles/jira-python (pull request #35) [Sorin Sbarnea]
+
+- Fix warning for implicit close of libmagic. [Aaron Iles]
+
+- Added group_members() method. [Sorin Sbarnea]
+
+0.15 (2013-12-16)
+-----------------
+
+- Added release script and increased version to 0.15. [Sorin Sbarnea]
+
+- Implemented add_user_to_group() and changed the initialization of
+  unitests so it will test if a jira instance is running on 2990 and
+  start it if necessary. Unit tests still failing with ~90/160, but
+  that’s much better than the previous 100% failure. [Sorin Sbarnea]
+
+- Removed distributed option (-n4) form py.test config so it can run
+  even without xdist. [Sorin Sbarnea]
+
+- Added test configs. [Sorin Sbarnea]
+
+- Added ability to auto-start jira test instance from unittests if it is
+  not already running. [Sorin Sbarnea]
+
+- Merge branch 'master' of ssh://bitbucket.org/bspeakmon/jira-python.
+  [Sorin Sbarnea]
+
+- Merged in nferch/jira-python (pull request #34) [Sorin Sbarnea]
+
+- Support Python <= 2.6 sys.version_info. [Nathan Ferch]
+
+- Updated test command to install tox and autopep8 if needed. [Sorin
+  Sbarnea]
+
+- Pep8 fixes. [Sorin Sbarnea]
+
+- 2nd fix for broken py26 due to sys.version. [Sorin Sbarnea]
+
+- Fixed broken py26 due to sys.version. [Sorin Sbarnea]
+
+- Merge branch 'master' of ssh://bitbucket.org/bspeakmon/jira-python.
+  [Sorin Sbarnea]
+
+- Merged in jonromero/jira-python/jonromero/fixes-
+  httpsbitbucketorgbspeakmonjirapyth-1380256994854 (pull request #33)
+  [Sorin Sbarnea]
+
+- Merged in jonromero/jira-python-1/jonromero/handling-old-api-
+  also-1381167726957 (pull request #1) [Jon Romero]
+
+- Minor patch in order to make sure that r_json is defined. [Jon Romero]
+
+- Handling old API also. [Jon Romero]
+
+- Fixes https://bitbucket.org/bspeakmon/jira-python/issue/56/rest-
+  resource-sprints-renamed-to. [Jon Romero]
+
+- Executed autopep8, now part of the test execution. [Sorin Sbarnea]
+
+- Merged in alectolytic/jira-python/py3 (pull request #32) [Sorin
+  Sbarnea]
+
+- [Issue #55] Additional changes for python3 support. [Arun Babu
+  Neelicattu]
+
+- Basic Python 3 port. [Jacek Konieczny]
+
+- Real implementation or delete_user(). [Sorin Sbarnea]
+
+- Implemented delete_user(). [Sorin Sbarnea]
+
+- Implemented add_user() [Sorin Sbarnea]
+
+- Implemented create_project() and delete_project() - tested only on
+  Jira 5.2.11. [Sorin Sbarnea]
+
+- Added rank() method for GreenHopper class, which now allows you to
+  rank one issue before another. [Sorin Sbarnea]
+
+- Added code to deal with failure to update issue because it has no
+  assignee, this can happen when the current assignee is invalid. [Sorin
+  Sbarnea]
+
+- Removed fixed dependency on tlslite fixing #58. [Sorin Sbarnea]
+
+- Merged in mdoar/jira-python-add-labels (pull request #28) [Sorin
+  Sbarnea]
+
+- Issue #52 added modifying labels to the documentation. [Matt Doar]
+
+- Merged in joernsn/jira-python (pull request #29) [Sorin Sbarnea]
+
+- Added support for specifying issue id as int. [Jørn Sandvik Nilsson]
+
+- Fix issue #63. [Markus Wiik]
+
+- Added async support for update command, which would use requests. This
+  is still experimental and triggered only manually so it should not
+  affect normal usage. [Sorin Sbarnea]
+
+- Fixing issue #50 by detecting the correct issue-type and reversing the
+  direction when needed. [Sorin Sbarnea]
+
+- Fixing #49 by auto fixing assignee and reporter if update() fails due
+  them having invalid values. This will work only if you do not specify
+  these fields in the original requests and if you enable this feature
+  by adding autofix='username' as a parameter when you create the JIRA
+  instance. [Sorin Sbarnea]
+
+- Merge branch 'master' of ssh://bitbucket.org/bspeakmon/jira-python.
+  [Sorin Sbarnea]
+
+- Added missing jira params for search-user. [Sorin Sbarnea]
+
+- Merged in jjinux/jira-python (pull request #27) [Sorin Sbarnea]
+
+- Fixed an error in a comment in an example. [Shannon -jj Behrens]
+
+- Added applicationlinks() method. [Sorin Sbarnea]
+
+- Added default headers to the configuration so you can override them
+  for all calls. [Sorin Sbarnea]
+
+- Added jira.backup() that would call backup option in Jira admin.
+  [Sorin Sbarnea]
+
+- Added code for auto-detection and usage of HTTP(S) proxies. Also this
+  would allow you to use a custom proxy if you want. [Sorin Sbarnea]
+
+- Added debug information regarding the load of the config.ini (visible
+  only python logging level is set to DEBUG). [Sorin Sbarnea]
+
+- Merge branch 'master' of ssh://bitbucket.org/bspeakmon/jira-python.
+  [Sorin Sbarnea]
+
+- Merged in frobnic8/jira-python (pull request #26) [Sorin Sbarnea]
+
+- Fixed bug for unloaded resources in Resource.__repr__ [Erskin Cherry]
+
+- Added additional fallback for Resource.__repr__ [Erskin Cherry]
+
+- Merge branch 'master' of ssh://bitbucket.org/bspeakmon/jira-python.
+  [Sorin Sbarnea]
+
+- Merged in frobnic8/jira-python (pull request #25) [Sorin Sbarnea]
+
+- Added better unicode handling for Resource.__str__ [Erskin Cherry]
+
+- Added child support for nested selects to the __str__ method on
+  Resource. [Erskin Cherry]
+
+- Added __str__ and __repr__ support to the basic Resource class.
+  [Erskin Cherry]
+
+- Merged in markeganfuller/jira-python (pull request #23) [Sorin
+  Sbarnea]
+
+- Merged bspeakmon/jira-python into master. [Mark Egan-Fuller]
+
+- Added improved output of error messages for Jira 6.x. [markeganfuller]
+
+- Merged bspeakmon/jira-python into master. [Mark Egan-Fuller]
+
+- Merged bspeakmon/jira-python into master. [Mark Egan-Fuller]
+
+- Merged in kraiz/jira-python/kraiz/be-aware-of-wrong-magic-version-
+  which-ha-1369150687222 (pull request #24) [Sorin Sbarnea]
+
+- Be aware of wrong magic version (which has no keyword argument "mime")
+  [kraiz]
+
+- Merged in agrimm/jira-python/gh-epic (pull request #22) [Sorin
+  Sbarnea]
+
+- Add method for adding issues to epics. [Andy Grimm]
+
+- Added detection for authentication failure in the response. [Sorin
+  Sbarnea]
+
+- Essential fix that will enable you to connect to more than one Jira
+  instance at once, otherwise it will fail as the defaults dictionary
+  was not copied on instantiation. [Sorin Sbarnea]
+
+- Added rename_user() method, current implementation relies on Script
+  Runner plugin. Still, if this is missing it will fail nicely
+  indicating what you have to do. [Sorin Sbarnea]
+
+- Added the option to load the default jira profile specified inside the
+  config.ini. [Sorin Sbarnea]
+
+- Prevented reindex() from throwing exception when reindex operation
+  returns 503 while jira is doing the foreground reindexing. [Sorin
+  Sbarnea]
+
+- Added reindex() for JIRA class. Now you can trigger Jira reindexing
+  using python-jira. Implementation supports force mode and
+  background/foreground mode. [Sorin Sbarnea]
+
+- Merged in sorin/jira-python (pull request #19) [Sorin Sbarnea]
+
+- Switched to SafeConfigParser for config module. [Sorin Sbarnea]
+
+- Added config.py module which allows people to init JIRA with a single
+  command and by keeping credentials to another file. [Sorin Sbarnea]
+
+- Added jira.config module which allows people to load jira credentials
+  from a config file. [Sorin Sbarnea]
+
+- Added sphinx to setup.py so now you can build documentation using
+  `python setup.py build_sphinx` modified:   setup.py. [Sorin Sbarnea]
+
+- Improved documentation regarding transitions, now includes example of
+  setting the resolution field and alternative way to specify
+  parameters. modified:   .gitignore modified:   docs/index.rst. [Sorin
+  Sbarnea]
+
+- Woopsy, deleted the pycrypto stuff on accident. [Ben Speakmon]
+
+0.13 (2013-04-10)
+-----------------
+
+- Add changelog and acknowledgements for 0.13 release. [Ben Speakmon]
+
+- Set version 0.13 for release. [Ben Speakmon]
+
+- Fix GreenHopper object placement (damn it mdoar :) [Ben Speakmon]
+
+- Merged in dvj/jira-python/libmagic-optional (pull request #17) [Ben
+  Speakmon]
+
+- Make python-magic optional. [Doug Johnston]
+
+- Merged in mdoar/jira-gh-python (pull request #16) [Ben Speakmon]
+
+- Fix a comment. [Matt Doar]
+
+- Updated documentation to refer to JIRA. Ensure no TODO appears in
+  docs. [Matt Doar]
+
+- Added class for accessing GreenHopper via REST. Example use script
+  added too. [Matt Doar]
+
+- Added class for accessing GreenHopper via REST. Example use script
+  added too. [Matt Doar]
+
+- Change ordering of parameters for transition_issues to maintain
+  backwards compatibility. [Markus Wiik]
+
+- Add optional comment parameter to transition_issue. [Markus Wiik]
+
+- Add changelog for upcoming release. [Markus Wiik]
+
+- Remove unneeded cookie authentication when using Basic Auth. [Markus
+  Wiik]
+
+- Document new verify parameter. [Markus Wiik]
+
+- Add 'verify' parameter to options dict. [Markus Wiik]
+
+- Document the PyCrypto requirement for OAuth. [Markus Wiik]
+
+- Update docs with the new ResultList return type. [Markus Wiik]
+
+- Add ResultList class for including search metadata. [Markus Wiik]
+
+- Clarify docs regarding add_attachment() [Markus Wiik]
+
+- Merge branch 'master' of bitbucket.org:bspeakmon/jira-python. [Markus
+  Wiik]
+
+- Merged in gdw2/jira-python (pull request #15) [Markus Wiik]
+
+- Fix broken OAuth in jirashell by switching to requests_oauthlib.
+  [Markus Wiik]
+
+- Add requests_oauthlib to dependencies. [Markus Wiik]
+
+- Use requests_oauthlib for OAuth. [Markus Wiik]
+
+- Merged in markeganfuller/jira-python (pull request #8) [Mark Egan-
+  Fuller]
+
+- Merge branch 'master' of bitbucket.org:markeganfuller/jira-python.
+  [markeganfuller]
+
+- Merged bspeakmon/jira-python into master. [Mark Egan-Fuller]
+
+- Fix for empty errorMessages, moved length check to main logic for
+  deciding which error message to use and added check for 'errors' in
+  the response. [markeganfuller]
+
+- Update requests requirement in docs. [Markus Wiik]
+
+- Merge pull request #11. [Markus Wiik]
+
+- Changed requests version in setup.py dependencies. [Diogo de Campos]
+
+- Added content-type to Resource.update. [Diogo de Campos]
+
+- Updating to work with requests-1.1.0. [Diogo de Campos]
+
+- Merged in vassius/jira-python (pull request #12) [Markus Wiik]
+
+- Fix issue #7 and #8. [Markus Wiik]
+
+- Merged in vassius/jira-python/issue-14 (pull request #13) [Markus
+  Wiik]
+
+- Document new parameter. [Markus Wiik]
+
+- Add optional file name parameter to add_attachment() [Markus Wiik]
+
+- Fix issue #14. [Markus Wiik]
+
+- Merged in shawnps/jira-python (pull request #10) [Ben Speakmon]
+
+- Fix project URL in docs. [Shawn Smith]
+
+- Update to new address + contact info. [Ben Speakmon]
+
+- Merged in markeganfuller/jira-python (pull request #6) [Ben Speakmon]
+
+- Added a length check on error messages. This avoids any "IndexError:
+  list index out of range" when an empty list is returned.
+  [markeganfuller]
+
+- Merged in ranman/jira-python (pull request #4) [Ben Speakmon]
+
+- Pep8 fixes. [Randall Hunt]
+
+- Merge branch 'hotfix/authentication' [Randall Hunt]
+
+- Rip off trailing slash on server urls and add auth. [Randall Hunt]
+
+- Update dictionary instead of adding together items. [Randall Hunt]
+
+0.12 (2012-08-06)
+-----------------
+
+- Update docs for release. [Ben Speakmon]
+
+- Bump to version 0.12 for imminent release. [Ben Speakmon]
+
+- Bump to latest version of requests and ipython. Also made ranges open-
+  ended (fixes #2) [Ben Speakmon]
+
+- Hardcode some access tokens for running tests with oauth (I'll move it
+  to a file later) [Ben Speakmon]
+
+- Add option to print oauth tokens as they're received. [Ben Speakmon]
+
+- Move tests and test resources to their own package. [Ben Speakmon]
+
+- Read from a config file and merge it with command line options. [Ben
+  Speakmon]
+
+- Prefer oauth to basic_auth if both exist. [Ben Speakmon]
+
+- - refactor tests to prepare for oauth support. [Ben Speakmon]
+
+- - standardize content-type autodetect. [Ben Speakmon]
+
+- - make tests more forgiving when less-than-exact comparisons are
+  required - fix a few other brokens. [Ben Speakmon]
+
+- - make error message detection more intelligent. [Ben Speakmon]
+
+- - improve autodetection (still not quite right) [Ben Speakmon]
+
+- - auto-add content type to PUT/POST if it's not already there
+  (add_attachment and friends are still broken) [Ben Speakmon]
+
+- - fix broken oauth initialization. [Ben Speakmon]
+
+- - start doc updates. [Ben Speakmon]
+
+0.11 (2012-06-19)
+-----------------
+
+- - fix broken oauth initialization. [Ben Speakmon]
+
+- - add update and delete examples. [Ben Speakmon]
+
+0.10 (2012-06-08)
+-----------------
+
+- Don't need explicit argparse import. [Ben Speakmon]
+
+- Use webbrowser to simplify the authorization process. [Ben Speakmon]
+
+- Use webbrowser to simplify the authorization process. [Ben Speakmon]
+
+- Add OAuth dance support to jirashell. [Ben Speakmon]
+
+- Add OAuth support to client and jirashell. [Ben Speakmon]
+
+- Make raise_on_error more helpful. [Ben Speakmon]
+
+- Add tlslite to dependencies for requests_oauth bump to beta list
+  (oooOOOOoooo) [Ben Speakmon]
+
+- Incorporate private fork of requests-oauth to handle RSA-SHA1 for
+  atlassian oauth. [Ben Speakmon]
+
+- - added -P option for jirashell to read password from prompt. [Ben
+  Speakmon]
+
+- - refactor raise_on_error to exceptions.py - make __str__ value
+  useful. [Ben Speakmon]
+
+0.9 (2012-06-01)
+----------------
+
+- Implement decorators for handling resource arguments in JIRA client
+  calls. [Ben Speakmon]
+
+- Remove Comments and Dashboards resources; specify a better couple of
+  createmeta tests. [Ben Speakmon]
+
+- Update set_application_property() doc. [Ben Speakmon]
+
+- - spiffy up sphinx docs. [Ben Speakmon]
+
+0.8.0 (2012-05-18)
+------------------
+
+- Implement issue.update(), issue.delete() [Ben Speakmon]
+
+- Test version.update() [Ben Speakmon]
+
+- Implement and test role.update() [Ben Speakmon]
+
+- Test worklog.update() [Ben Speakmon]
+
+- Implement and test RemoteLink.update() [Ben Speakmon]
+
+- - test comment.update() [Ben Speakmon]
+
+- - implement Resource.update() - test component.update() [Ben Speakmon]
+
+- Merged in vitaly4uk/jira-python (pull request #2) [Ben Speakmon]
+
+- Package version have been updated. [Vitaly Omelchuk]
+
+- _get_url now use api version. [Vitaly Omelchuk]
+
+- Fix several resource construction bugs; implement delete
+  functionality. [Ben Speakmon]
+
+- Kill unused import. [Ben Speakmon]
+
+- Use standard icon test resource for avatar tests. [Ben Speakmon]
+
+- Factor out set_avatar logic. [Ben Speakmon]
+
+- Implement project avatar upload and selection. [Ben Speakmon]
+
+- Implement user avatar upload and selection. [Ben Speakmon]
+
+- Add missing comment for search_allowed_users_for_issue() [Ben
+  Speakmon]
+
+- Implement add_attachment() [Ben Speakmon]
+
+- Implement transition_issue. [Ben Speakmon]
+
+- Kill missed pass statement. [Ben Speakmon]
+
+- Implement create_issue() [Ben Speakmon]
+
+- - centralize version info. [Ben Speakmon]
+
+- - make python 2.7 requirement explicit. [Ben Speakmon]
+
+- - implement add_remote_link() [Ben Speakmon]
+
+- - implement move_version() [Ben Speakmon]
+
+- - implement create_version() [Ben Speakmon]
+
+- - implement add/remove votes/watchers. [Ben Speakmon]
+
+- - add stubs for add/remove vote and watcher - implement
+  create_issue_link() [Ben Speakmon]
+
+- - implement add_comment() [Ben Speakmon]
+
+- - implement create_component and tests. [Ben Speakmon]
+
+- - add basic test for add_worklog() [Ben Speakmon]
+
+- Merged in gak/jira-python (pull request #1) [Ben Speakmon]
+
+- - add add_worklog method with timeSpent, adjustEstimate et al. [Gerald
+  Kaszuba]
+
+- - add placeholder for add_comment() [Ben Speakmon]
+
+- - add SSL verification if the server url starts with https. [Ben
+  Speakmon]
+
+- - add doc link to readme. [Ben Speakmon]
+
+- - first doc with sphinx pass - use jira-python for name - remove
+  separate module doc pages. [Ben Speakmon]
+
+- - kill docstring warning. [Ben Speakmon]
+
+- - include source path in sphinx sys.path. [Ben Speakmon]
+
+- - add rst autogen for client modules - update conf.py to find modules
+  in source path. [Ben Speakmon]
+
+- - add sphinx doc skeleton. [Ben Speakmon]
+
+0.7.0 (2012-05-03)
+------------------
+
+- - doc exception. [Ben Speakmon]
+
+- - update gitignore. [Ben Speakmon]
+
+- - removed utils; we don't seem to need it - updated ignores. [Ben
+  Speakmon]
+
+- - restructure module. [Ben Speakmon]
+
+- - add docstrings. [Ben Speakmon]
+
+- - fix formatting. [Ben Speakmon]
+
+- - rest of docstrings for jira module - remove options argument from
+  universal find() [Ben Speakmon]
+
+- - start API docstrings. [Ben Speakmon]
+
+0.6.0 (2012-05-03)
+------------------
+
+- - make jirashell a proper module and give it an entry point. [Ben
+  Speakmon]
+
+- - make jirashell a proper module and give it an entry point. [Ben
+  Speakmon]
+
+- - use json from python standard library. [Ben Speakmon]
+
+- - raise JIRAError for _get_json() operations that fail. [Ben Speakmon]
+
+- - improve exceptions - test that invalid find throws proper exception.
+  [Ben Speakmon]
+
+- - eliminate some duplication. [Ben Speakmon]
+
+- - update install instructions. [Ben Speakmon]
+
+0.5.0 (2012-05-01)
+------------------
+
+- - fix path to repo. [Ben Speakmon]
+
+- - add license. [Ben Speakmon]
+
+- - update README. [Ben Speakmon]
+
+- - update README - change project name. [Ben Speakmon]
+
+- - update examples. [Ben Speakmon]
+
+- - move resources to use session - fix warnings. [Ben Speakmon]
+
+- - use requests session to persist cookies/headers - add oauth
+  placeholder. [Ben Speakmon]
+
+- - add cls_for_resource tests - correct total fields value for default
+  test data. [Ben Speakmon]
+
+- - return Resource for unmatched self links. [Ben Speakmon]
+
+- - kill unused import. [Ben Speakmon]
+
+- - fix universal resource loader. [Ben Speakmon]
+
+- - add support for issue remote links. [Ben Speakmon]
+
+- - add setup.py - add README placeholder. [Ben Speakmon]
+
+- - rename private vars. [Ben Speakmon]
+
+- - session/websudo tests. [Ben Speakmon]
+
+- - fix wrong param order in session() [Ben Speakmon]
+
+- - most of the remaining tests. [Ben Speakmon]
+
+- - parameter name standardization - handle passed params correctly.
+  [Ben Speakmon]
+
+- - rename roles() and role() - remove expand param from versions until
+  I can confirm it exists. [Ben Speakmon]
+
+- - correct my_permissions() [Ben Speakmon]
+
+- - more tests. [Ben Speakmon]
+
+- - support all-groups option. [Ben Speakmon]
+
+- - lots more tests. [Ben Speakmon]
+
+- - clean up application_properties() [Ben Speakmon]
+
+- - fix REs for resource matching. [Ben Speakmon]
+
+- - fix wrong var name bug :/ [Ben Speakmon]
+
+- - start tests (YAY) [Ben Speakmon]
+
+- - add expandos - promote customFieldOption to Resource. [Ben Speakmon]
+
+- - clean up _get_json uses - add expand parameters to affected
+  resources. [Ben Speakmon]
+
+- - code cleanup. [Ben Speakmon]
+
+- - recursive resource parsing. [Ben Speakmon]
+
+- - fixed format bug I just introduced :/ [Ben Speakmon]
+
+- - clean up string formatting - remove unneeded paramter in _get_json.
+  [Ben Speakmon]
+
+- - method refactoring - always turn raw json in resources into object
+  attributes. [Ben Speakmon]
+
+- - fix searches - implement rest of reading. [Ben Speakmon]
+
+- - derp. [Ben Speakmon]
+
+- - implement remaining resources - clear up some gets. [Ben Speakmon]
+
+- - always create cookies (this lets us do anonymous access) [Ben
+  Speakmon]
+
+- - add server info to jirashell. [Ben Speakmon]
+
+- - use direct JSON get instead of search resource. [Ben Speakmon]
+
+- - reorganize project structure. [Ben Speakmon]
+
+- - implement rest of non-resource methods - move example use to its own
+  file. [Ben Speakmon]
+
+- Safer check for tuple coercion (thanks to dchambers) [Ben Speakmon]
+
+- - help message. [Ben Speakmon]
+
+- - fix ipython shell. [Ben Speakmon]
+
+- Merge branch 'master' of
+  bitbucket.org:bspeakmon_atlassian/jira5-python. [Ben Speakmon]
+
+- - start console. [Ben Speakmon]
+
+- Merge branch 'master' of
+  ssh://bitbucket.org/bspeakmon_atlassian/jira5-python. [Ben Speakmon]
+
+- Pass (auth) cookies through to resource constructors. [Ben Speakmon]
+
+- - merge util method. [Ben Speakmon]
+
+- - implement a few non-resource client methods. [Ben Speakmon]
+
+- - implement BASIC session (need to save cookies intelligently) [Ben
+  Speakmon]
+
+- - stubbed API. [Ben Speakmon]
+
+- - take **kw in delete() - use new string formatting. [Ben Speakmon]
+
+- Examples using the attribute access from the JSON response. [Ben
+  Speakmon]
+
+- - augment returned object with params of json. [Ben Speakmon]
+
+- Make resource loading more general. [Ben Speakmon]
+
+- - added options param to fine - search returns list of issues. [Ben
+  Speakmon]
+
+- Take a raw param to build issues out of other issues. [Ben Speakmon]
+
+- Change save to update() and take kwargs. [Ben Speakmon]
+
+- Refactor issue method into clearer parts. [Ben Speakmon]
+
+- Implement JQL search. [Ben Speakmon]
+
+- Implement generic find() method and clean up API. [Ben Speakmon]
+
+- - raise on 400-500 errors from server. [Ben Speakmon]
+
+- - more sketches. [Ben Speakmon]
+
+- - actually we can do better. [Ben Speakmon]
+
+- - optionally enable issue finding - move issue resource to separate
+  module - use new-style classes. [Ben Speakmon]
+
+- - checkpoint work on issue-related client. [Ben Speakmon]
+
+

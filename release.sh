@@ -32,7 +32,8 @@ git pull
         #exit 1
     fi
 
-git log --date=short --pretty=format:"%cd %s" > CHANGELOG
+# Use the gitchangelog tool to re-generate automated changelog
+gitchangelog > CHANGELOG
 
 if [ -z ${CI+x} ]; then
     echo "WARN: Please don't run this as a user. This generates a new release for PyPI. Press ^C to exit or Enter to continue."
