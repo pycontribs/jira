@@ -53,6 +53,7 @@ from .resilientsession import ResilientSession, raise_on_error
 from . import __version__
 from .utils import threaded_requests, json_loads, CaseInsensitiveDict
 from .exceptions import JIRAError
+from pkg_resources import parse_version
 
 try:
     from collections import OrderedDict
@@ -322,7 +323,7 @@ class JIRA(object):
             data = requests.get("http://pypi.python.org/pypi/jira/json", timeout=2.001).json()
 
             released_version = data['info']['version']
-            if released_version > __version__:
+            if parse_version(released_version) > parse_version(__version__):
                 warnings.warn(
                     "You are running an outdated version of JIRA Python %s. Current version is %s. Do not file any bugs against older versions." % (
                         __version__, released_version))

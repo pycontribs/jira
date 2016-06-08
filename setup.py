@@ -15,7 +15,7 @@ here = os.path.dirname(__file__)
 if here not in sys.path:
     sys.path.insert(0, here)
 
-__version__ = __import__(NAME).get_version()
+__version__ = '1.0.7'
 
 # this should help getting annoying warnings from inside distutils
 warnings.simplefilter('ignore', UserWarning)
