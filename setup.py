@@ -98,13 +98,13 @@ class Release(Command):
         except ImportError:
             from urllib2 import urlopen
         response = urlopen(
-            "http://pypi.python.org/pypi/%s/json" % NAME)
+            "https://pypi.python.org/pypi/%s/json" % NAME)
         data = json.load(codecs.getreader("utf-8")(response))
         released_version = data['info']['version']
         if released_version == __version__:
             raise RuntimeError(
                 "This version was already released, remove it from PyPi if you want "
-                "to release it again or increase the version number. http://pypi.python.org/pypi/%s/" % NAME)
+                "to release it again or increase the version number. https://pypi.python.org/pypi/%s/" % NAME)
         elif released_version > __version__:
             raise RuntimeError("Cannot release a version (%s) smaller than the PyPI current release (%s)." % (
                 __version__, released_version))
@@ -128,7 +128,7 @@ class PreRelease(Command):
         except ImportError:
             from urllib2 import urlopen
         response = urlopen(
-            "http://pypi.python.org/pypi/%s/json" % NAME)
+            "https://pypi.python.org/pypi/%s/json" % NAME)
         data = json.load(codecs.getreader("utf-8")(response))
         released_version = data['info']['version']
         if released_version >= __version__:

@@ -319,7 +319,7 @@ class JIRA(object):
     def _check_update_(self):
         # check if the current version of the library is outdated
         try:
-            data = requests.get("http://pypi.python.org/pypi/jira/json", timeout=2.001).json()
+            data = requests.get("https://pypi.python.org/pypi/jira/json", timeout=2.001).json()
 
             released_version = data['info']['version']
             if released_version > __version__:

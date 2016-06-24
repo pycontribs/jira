@@ -21,7 +21,7 @@ the critical components of your system at risk.
 
 Source packages are also available at PyPI:
 
-    http://pypi.python.org/pypi/jira/
+    https://pypi.python.org/pypi/jira/
 
 .. _Dependencies:
 
