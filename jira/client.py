@@ -171,7 +171,7 @@ class JIRA(object):
         "resilient": True,
         "async": False,
         "client_cert": None,
-        "check_update": True,
+        "check_update": False,
         "headers": {
             'Cache-Control': 'no-cache',
             # 'Accept': 'application/json;charset=UTF-8',  # default for REST
