@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from jira.utils.version import get_version
+from pkg_resources import get_distribution
 
 
-VERSION = (1, 0, 7, 'alpha', 0)
-
-__version__ = get_version(VERSION)
+__version__ = get_distribution('jira').version
 __author__ = 'bspeakmon@atlassian.com'
 
 from .config import get_jira  # noqa

@@ -49,7 +49,7 @@ git tag -fa -a RELEASE -m "Current RELEASE"
 
 NEW_VERSION="${VERSION%.*}.$((${VERSION##*.}+1))"
 set -ex
-sed -i.bak "s/${VERSION}/${NEW_VERSION}/" jira/version.py
+sed -i.bak "s/${VERSION}/${NEW_VERSION}/" setup.py
 
 git commit -m "Auto-increasing the version number after a release."
 
