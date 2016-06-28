@@ -11,6 +11,9 @@ PYENV_HOME := $(DIR)/.tox/$(PYTHON_VERSION)-$(PLATFORM)/
 clean:
 	find . -name "*.pyc" -delete
 
+package:
+	python setup.py sdist bdist_wheel build_sphinx
+
 install: prepare
 	$(PYENV_HOME)/bin/python setup.py install
 
@@ -41,7 +44,7 @@ test: prepare flake8
 test-all:
 	# tox should not run inside virtualenv because it does create and use multiple virtualenvs
 	pip install -q tox tox-pyenv
-	python -m tox
+	python -m tox --skip-missing-interpreters true
 
 pypi:
 	$(PYENV_HOME)/bin/python setup.py check --restructuredtext --strict
