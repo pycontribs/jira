@@ -265,9 +265,8 @@ class JiraTestManager(object):
                 # self.project_b
                 self.jira_admin.create_project(self.project_b,
                                                self.project_b_name)
-                # except Exception as e:
-                #    logging.warning("Got %s" % e)
-
+                sleep(1)  # keep it here as often JIRA will report the
+                # project as missing even after is created
                 self.project_b_issue1_obj = self.jira_admin.create_issue(project=self.project_b,
                                                                          summary='issue 1 from %s'
                                                                                  % self.project_b,

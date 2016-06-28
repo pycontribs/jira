@@ -46,7 +46,6 @@ class PyTest(TestCommand):
             self.pytest_args.append("--ff")
         except ImportError:
             pass
-        self.pytest_args.append("-s")
 
         if sys.stdout.isatty():
             # when run manually we enable fail fast

@@ -789,7 +789,7 @@ class JIRA(object):
 
         result = {}
         for user in r['users']['items']:
-            result[user['name']] = {'fullname': user['displayName'], 'email': user.get('emailAddress', 'hidden') ,
+            result[user['name']] = {'fullname': user['displayName'], 'email': user.get('emailAddress', 'hidden'),
                                     'active': user['active']}
         return result
 
