@@ -786,7 +786,7 @@ class JIRA(object):
 
         result = {}
         for user in r['users']['items']:
-            result[user['name']] = {'fullname': user['displayName'], 'email': user['emailAddress'],
+            result[user['name']] = {'fullname': user['displayName'], 'email': user.get('emailAddress', 'hidden') ,
                                     'active': user['active']}
         return result
 
@@ -3111,6 +3111,28 @@ class JIRA(object):
             return self._session.put(url, data=json.dumps(data))
         else:
             raise NotImplementedError('No API for ranking issues for agile_rest_path="%s"' %
+                                      self._options['agile_rest_path'])
+
+    def move_to_backlog(self, issue_keys):
+        """
+        Move issues in ``issue_keys`` to the backlog, removing them from all
+        sprints that have not been completed.
+
+        :param issue_keys: the issues to move to the backlog
+        """
+
+        if self._options['agile_rest_path'] == GreenHopperResource.AGILE_BASE_REST_PATH:
+            url = self._get_url('backlog/issue', base=self.AGILE_BASE_URL)
+            payload = {'issues': issue_keys}
+            try:
+                self._session.post(url, data=json.dumps(payload))
+            except JIRAError as e:
+                if e.status_code == 404:
+                    warnings.warn('Status code 404 may mean, that too old JIRA Agile version is installed.'
+                                  ' At least version 6.7.10 is required.')
+                raise
+        else:
+            raise NotImplementedError('No API for moving issues to backlog for agile_rest_path="%s"' %
                                       self._options['agile_rest_path'])
 
 
