@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import logging
 import os
+import runpy
 import sys
 import subprocess
 import warnings
@@ -67,9 +68,10 @@ class PyTest(TestCommand):
     def run_tests(self):
         # before running tests we need to run autopep8
         try:
-            subprocess.check_call(
-                "python -m autopep8 -r --in-place jira/ tests/ examples/",
-                shell=True)
+            saved_argv = sys.argv
+            sys.argv = "-r --in-place jira/ tests/ examples/".split(" ")
+            runpy.run_module('autopep8')
+            sys.argv = saved_argv  # restore sys.argv
         except subprocess.CalledProcessError:
             logging.warning('autopep8 is not installed so '
                             'it will not be run')
@@ -180,10 +182,8 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
         'Operating System :: OS Independent',
-        'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python',
