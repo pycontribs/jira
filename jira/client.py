@@ -189,7 +189,7 @@ class JIRA(object):
     AGILE_BASE_URL = GreenHopperResource.AGILE_BASE_URL
 
     def __init__(self, server=None, options=None, basic_auth=None, oauth=None, jwt=None, kerberos=False,
-                 validate=False, get_server_info=True, async=False, logging=True, max_retries=3):
+                 validate=False, get_server_info=True, async=False, logging=True, max_retries=3, proxies=None):
         """
         Construct a JIRA client instance.
 
@@ -289,6 +289,9 @@ class JIRA(object):
         self._session.headers.update(self._options['headers'])
 
         self._session.max_retries = max_retries
+
+        if proxies:
+            self._session.proxies = proxies
 
         if validate:
             # This will raise an Exception if you are not allowed to login.
