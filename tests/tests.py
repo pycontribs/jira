@@ -114,7 +114,7 @@ class JiraTestManager(object):
     # http://stackoverflow.com/questions/31875/is-there-a-simple-elegant-way-to-define-singletons-in-python/33201#33201
     __shared_state = {}
 
-    def __init__(self, make_defaults=True):
+    def __init__(self):
         self.__dict__ = self.__shared_state
 
         if not self.__dict__:
@@ -205,10 +205,6 @@ class JiraTestManager(object):
                     else:
                         self.jira_normal = JIRA(self.CI_JIRA_URL,
                                                 validate=True, logging=False, max_retries=self.max_retries)
-
-                if not make_defaults:
-                    self.initialized = True
-                    return
 
                 # now we need some data to start with for the tests
 

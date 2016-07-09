@@ -10,13 +10,18 @@ import jira.client
 
 
 @pytest.fixture(scope='module')
-def cl_admin():
-    return JiraTestManager(make_defaults=False).jira_admin
+def test_manager():
+    return JiraTestManager()
 
 
-@pytest.fixture(scope='module')
-def cl_normal():
-    return JiraTestManager(make_defaults=False).jira_normal
+@pytest.fixture()
+def cl_admin(test_manager):
+    return test_manager.jira_admin
+
+
+@pytest.fixture()
+def cl_normal(test_manager):
+    return test_manager.jira_normal
 
 
 @pytest.fixture(scope='function')
