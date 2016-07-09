@@ -2503,48 +2503,50 @@ class JIRA(object):
 
     def delete_project(self, pid):
         """
-        Project can be id, project key or project name. It will return False if it fails.
+        Deletes project from Jira
+
+        :param str pid:     JIRA projectID or Project or slug
+        :returns bool:      True if project was deleted
+        :raises JIRAError:  If project not found or not enough permissions
+        :raises ValueError: If pid parameter is not Project, slug or ProjectID
         """
 
         # allows us to call it with Project objects
         if hasattr(pid, 'id'):
             pid = pid.id
 
-        found = False
+        # Check if pid is a number - then we assume that it is
+        # projectID
         try:
-            if not str(int(pid)) == pid:
-                found = True
+            str(int(pid)) == pid
         except Exception as e:
+            # pid looks like a slug, lets verify that
             r_json = self._get_json('project')
             for e in r_json:
                 if e['key'] == pid or e['name'] == pid:
                     pid = e['id']
-                    found = True
                     break
-            if not found:
-                logging.error("Unable to recognize project `%s`" % pid)
-                return False
+            else:
+                # pid is not a Project
+                # not a projectID and not a slug - we raise error here
+                raise ValueError('Parameter pid="%s" is not a Project, '
+                                 'projectID or slug' % pid)
 
-        uri = '/secure/project/DeleteProject.jspa'
+        uri = '/rest/api/2/project/%s' % pid
         url = self._options['server'] + uri
-        payload = {'pid': pid, 'Delete': 'Delete', 'confirm': 'true'}
-        # try:
-        #     r = self._gain_sudo_session(payload, uri)
-        #     if r.status_code != 200 or not self._check_for_html_error(r.text):
-        #         return False
-        # except JIRAError as e:
-        #     raise JIRAError(0, "You must have global administrator rights to delete projects.")
-        #     return False
+        try:
+            r = self._session.delete(
+                url, headers={'Content-Type': 'application/json'}
+            )
+        except JIRAError as je:
+            if '403' in str(je):
+                raise JIRAError('Not enough permissions to delete project')
+            if '404' in str(je):
+                raise JIRAError('Project not found in Jira')
+            raise je
 
-        r = self._session.post(
-            url, headers=CaseInsensitiveDict({'content-type': 'application/x-www-form-urlencoded'}), data=payload)
-
-        if r.status_code == 200:
-            return self._check_for_html_error(r.text)
-        else:
-            logging.warning(
-                'Got %s response from calling delete_project.' % r.status_code)
-            return r.status_code
+        if r.status_code == 204:
+            return True
 
     def _gain_sudo_session(self, options, destination):
         url = self._options['server'] + '/secure/admin/WebSudoAuthenticate.jspa'
