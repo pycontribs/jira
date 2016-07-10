@@ -315,6 +315,11 @@ class Attachment(Resource):
         r = self._session.get(self.content, stream=True)
         return r.iter_content(chunk_size)
 
+    def delete(self, params=None):
+        result = super(Attachment, self).delete(params=params)
+        if result.status_code == 204:
+            return None
+
 
 class Component(Resource):
 
