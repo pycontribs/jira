@@ -91,13 +91,13 @@ def test_create_issue_with_fieldargs(test_manager, jira_admin, td):
     assert issue.fields.summary == 'Test issue created'
     assert issue.fields.description == 'blahery'
     assert issue.fields.issuetype.name == 'Bug'
-    assert issue.fields.project.key == td['project_b ']
+    assert issue.fields.project.key == td['project_b']
     # self.assertEqual(issue.fields.customfield_10022, 'XSS')
     issue.delete()
 
 
 @not_on_custom_jira_instance
-def test_create_issue_with_fielddict(test_manager, jira_admin):
+def test_create_issue_with_fielddict(test_manager, jira_admin, td):
     fields = {
         'project': {
             'key': td['project_b']
@@ -138,7 +138,7 @@ def test_create_issue_without_prefetch(test_manager, jira_admin, td):
 
 
 @not_on_custom_jira_instance
-def test_update_with_fieldargs(test_manager, jira_admin):
+def test_update_with_fieldargs(test_manager, jira_admin, td):
     issue = jira_admin.create_issue(
         project=td['project_b'],
         summary='Test issue for updating',
