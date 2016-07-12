@@ -2401,11 +2401,11 @@ class JIRA(object):
                 logging.error("Failed to reindex jira, probably a bug.")
                 return False
 
-    def backup(self, filename='backup.zip', cloud=False, attachments=False):
+    def backup(self, filename='backup.zip', attachments=False):
         """
         Will call jira export to backup as zipped xml. Returning with success does not mean that the backup process finished.
         """
-        if cloud:
+        if self.server_info().get('deploymentType') == 'Cloud':
             url = self._options['server'] + '/rest/obm/1.0/runbackup'
             payload = json.dumps({"cbAttachments": attachments})
             self._options['headers']['X-Requested-With'] = 'XMLHttpRequest'
@@ -2423,13 +2423,13 @@ class JIRA(object):
         except Exception as e:
             logging.error("I see %s", e)
 
-    def backup_progress(self, cloud=True):
+    def backup_progress(self):
         """
         Returns status of cloud backup as a dict.
         Is there a way to get progress for Server version?
         """
         epoch_time = int(time.time() * 1000)
-        if cloud:
+        if self.server_info().get('deploymentType') == 'Cloud':
             url = self._options['server'] + '/rest/obm/1.0/getprogress?_=%i' % epoch_time
         else:
             logging.warning(
@@ -2451,40 +2451,49 @@ class JIRA(object):
                 progress[k] = root.get(k)
             return progress
 
-    def backup_complete(self, cloud=True):
+    def backup_complete(self):
         """
         Returns boolean based on 'alternativePercentage' and 'size' returned
         from backup_progress (cloud only)
         """
-        if not cloud:
+        if self.server_info().get('deploymentType') != 'Cloud':
             logging.warning(
                 'This functionality is not available in Server version')
             return None
-        status = self.backup_progress(cloud=cloud)
+        status = self.backup_progress()
         perc_complete = int(re.search(r"\s([0-9]*)\s",
                                       status['alternativePercentage']).group(1))
         file_size = int(status['size'])
         return perc_complete >= 100 and file_size > 0
 
-    def backup_download(self, filename=None, cloud=True):
+    def backup_download(self, filename=None):
         """
         Downloads backup file from WebDAV (cloud only)
         """
-        if not cloud:
+        if self.server_info().get('deploymentType') != 'Cloud':
             logging.warning(
                 'This functionality is not available in Server version')
             return None
-        remote_file = self.backup_progress(cloud=cloud)['fileName']
+        remote_file = self.backup_progress()['fileName']
         local_file = filename or remote_file
         url = self._options['server'] + '/webdav/backupmanager/' + remote_file
         try:
-            r = self._session.get(url, headers=self._options['headers'])
-            with open(local_file, 'bw') as file:
-                file.write(r.content)
+            logging.debug('Writing file to %s' % local_file)
+            with open(local_file, 'wb') as file:
+                try:
+                    resp = self._session.get(url, headers=self._options['headers'], stream=True)
+                except:
+                    raise JIRAError()
+                if not resp.ok:
+                    logging.error("Something went wrong with download: %s" % resp.text)
+                    raise JIRAError(resp.text)
+                for block in resp.iter_content(1024):
+                    file.write(block)
         except JIRAError as je:
-            logging.warning(
-                'Unable to access backup file: %s' % je)
-            return None
+            logging.error('Unable to access remote backup file: %s' % je)
+        except IOError as ioe:
+            logging.error(ioe)
+        return None
 
     def current_user(self):
         if not hasattr(self, '_serverInfo') or 'username' not in self._serverInfo:
