@@ -2401,11 +2401,11 @@ class JIRA(object):
                 logging.error("Failed to reindex jira, probably a bug.")
                 return False
 
-    def backup(self, filename='backup.zip', cloud=False, attachments=False):
+    def backup(self, filename='backup.zip', attachments=False):
         """
         Will call jira export to backup as zipped xml. Returning with success does not mean that the backup process finished.
         """
-        if cloud:
+        if self.server_info().get('deploymentType') == 'Cloud':
             url = self._options['server'] + '/rest/obm/1.0/runbackup'
             payload = json.dumps({"cbAttachments": attachments})
             self._options['headers']['X-Requested-With'] = 'XMLHttpRequest'
@@ -2423,13 +2423,13 @@ class JIRA(object):
         except Exception as e:
             logging.error("I see %s", e)
 
-    def backup_progress(self, cloud=True):
+    def backup_progress(self):
         """
         Returns status of cloud backup as a dict.
         Is there a way to get progress for Server version?
         """
         epoch_time = int(time.time() * 1000)
-        if cloud:
+        if self.server_info().get('deploymentType') == 'Cloud':
             url = self._options['server'] + '/rest/obm/1.0/getprogress?_=%i' % epoch_time
         else:
             logging.warning(
@@ -2451,40 +2451,49 @@ class JIRA(object):
                 progress[k] = root.get(k)
             return progress
 
-    def backup_complete(self, cloud=True):
+    def backup_complete(self):
         """
         Returns boolean based on 'alternativePercentage' and 'size' returned
         from backup_progress (cloud only)
         """
-        if not cloud:
+        if self.server_info().get('deploymentType') != 'Cloud':
             logging.warning(
                 'This functionality is not available in Server version')
             return None
-        status = self.backup_progress(cloud=cloud)
+        status = self.backup_progress()
         perc_complete = int(re.search(r"\s([0-9]*)\s",
                                       status['alternativePercentage']).group(1))
         file_size = int(status['size'])
         return perc_complete >= 100 and file_size > 0
 
-    def backup_download(self, filename=None, cloud=True):
+    def backup_download(self, filename=None):
         """
         Downloads backup file from WebDAV (cloud only)
         """
-        if not cloud:
+        if self.server_info().get('deploymentType') != 'Cloud':
             logging.warning(
                 'This functionality is not available in Server version')
             return None
-        remote_file = self.backup_progress(cloud=cloud)['fileName']
+        remote_file = self.backup_progress()['fileName']
         local_file = filename or remote_file
         url = self._options['server'] + '/webdav/backupmanager/' + remote_file
         try:
-            r = self._session.get(url, headers=self._options['headers'])
-            with open(local_file, 'bw') as file:
-                file.write(r.content)
+            logging.debug('Writing file to %s' % local_file)
+            with open(local_file, 'wb') as file:
+                try:
+                    resp = self._session.get(url, headers=self._options['headers'], stream=True)
+                except:
+                    raise JIRAError()
+                if not resp.ok:
+                    logging.error("Something went wrong with download: %s" % resp.text)
+                    raise JIRAError(resp.text)
+                for block in resp.iter_content(1024):
+                    file.write(block)
         except JIRAError as je:
-            logging.warning(
-                'Unable to access backup file: %s' % je)
-            return None
+            logging.error('Unable to access remote backup file: %s' % je)
+        except IOError as ioe:
+            logging.error(ioe)
+        return None
 
     def current_user(self):
         if not hasattr(self, '_serverInfo') or 'username' not in self._serverInfo:
@@ -2503,48 +2512,50 @@ class JIRA(object):
 
     def delete_project(self, pid):
         """
-        Project can be id, project key or project name. It will return False if it fails.
+        Deletes project from Jira
+
+        :param str pid:     JIRA projectID or Project or slug
+        :returns bool:      True if project was deleted
+        :raises JIRAError:  If project not found or not enough permissions
+        :raises ValueError: If pid parameter is not Project, slug or ProjectID
         """
 
         # allows us to call it with Project objects
         if hasattr(pid, 'id'):
             pid = pid.id
 
-        found = False
+        # Check if pid is a number - then we assume that it is
+        # projectID
         try:
-            if not str(int(pid)) == pid:
-                found = True
+            str(int(pid)) == pid
         except Exception as e:
+            # pid looks like a slug, lets verify that
             r_json = self._get_json('project')
             for e in r_json:
                 if e['key'] == pid or e['name'] == pid:
                     pid = e['id']
-                    found = True
                     break
-            if not found:
-                logging.error("Unable to recognize project `%s`" % pid)
-                return False
+            else:
+                # pid is not a Project
+                # not a projectID and not a slug - we raise error here
+                raise ValueError('Parameter pid="%s" is not a Project, '
+                                 'projectID or slug' % pid)
 
-        uri = '/secure/project/DeleteProject.jspa'
+        uri = '/rest/api/2/project/%s' % pid
         url = self._options['server'] + uri
-        payload = {'pid': pid, 'Delete': 'Delete', 'confirm': 'true'}
-        # try:
-        #     r = self._gain_sudo_session(payload, uri)
-        #     if r.status_code != 200 or not self._check_for_html_error(r.text):
-        #         return False
-        # except JIRAError as e:
-        #     raise JIRAError(0, "You must have global administrator rights to delete projects.")
-        #     return False
+        try:
+            r = self._session.delete(
+                url, headers={'Content-Type': 'application/json'}
+            )
+        except JIRAError as je:
+            if '403' in str(je):
+                raise JIRAError('Not enough permissions to delete project')
+            if '404' in str(je):
+                raise JIRAError('Project not found in Jira')
+            raise je
 
-        r = self._session.post(
-            url, headers=CaseInsensitiveDict({'content-type': 'application/x-www-form-urlencoded'}), data=payload)
-
-        if r.status_code == 200:
-            return self._check_for_html_error(r.text)
-        else:
-            logging.warning(
-                'Got %s response from calling delete_project.' % r.status_code)
-            return r.status_code
+        if r.status_code == 204:
+            return True
 
     def _gain_sudo_session(self, options, destination):
         url = self._options['server'] + '/secure/admin/WebSudoAuthenticate.jspa'
