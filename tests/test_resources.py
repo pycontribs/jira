@@ -1,23 +1,12 @@
 import re
 import pickle
 import pytest
-from tests import JiraTestManager
 from tests import cls_for_resource
 from jira import Role
 from jira import Issue
 from jira import Project
 from jira.resources import Resource
 from jira import JIRAError
-
-
-@pytest.fixture(scope='module')
-def test_manager():
-    return JiraTestManager()
-
-
-@pytest.fixture()
-def jira_admin(test_manager):
-    return test_manager.jira_admin
 
 
 def test_universal_find_existing_resource(test_manager, jira_admin):

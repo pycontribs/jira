@@ -1,18 +1,7 @@
 import pytest
 from time import sleep
-from tests import JiraTestManager
 
 from jira import JIRAError
-
-
-@pytest.fixture(scope='module')
-def test_manager():
-    return JiraTestManager()
-
-
-@pytest.fixture()
-def jira_admin(test_manager):
-    return test_manager.jira_admin
 
 
 def test_application_properties(jira_admin):

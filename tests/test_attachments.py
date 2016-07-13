@@ -1,27 +1,15 @@
 import os
-import pytest
-from tests import JiraTestManager
 from tests import TEST_ATTACH_PATH
 
 
-@pytest.fixture(scope='module')
-def test_manager():
-    return JiraTestManager()
-
-
-@pytest.fixture()
-def jira_admin(test_manager):
-    return test_manager.jira_admin
-
-
-def test_0_attachment_meta(jira_admin):
+def test_attachment_meta(jira_admin):
     meta = jira_admin.attachment_meta()
 
     assert meta['enabled'] is True
     assert int(meta['uploadLimit']) == 10485760
 
 
-def test_1_add_remove_attachment(test_manager, jira_admin):
+def test_add_remove_attachment(test_manager, jira_admin):
     issue = jira_admin.issue(test_manager.project_b_issue1)
     attachment = jira_admin.add_attachment(
         issue, open(TEST_ATTACH_PATH, 'rb'), "new test attachment")

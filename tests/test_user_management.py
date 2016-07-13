@@ -1,17 +1,15 @@
 import pytest
-from tests import JiraTestManager
 from tests import rndpassword
+from tests import not_on_custom_jira_instance
 
 from jira import JIRAError
 
 
 @pytest.fixture(scope='module')
-def test_manager():
-    return JiraTestManager()
-
-
-@pytest.fixture(scope='module')
 def td(test_manager):
+    """
+    Test data for this module
+    """
     return {
         'test_username': 'test_%s' % test_manager.project_a,
         'test_email': 'test_%s@example.com' % test_manager.project_a,
@@ -137,3 +135,15 @@ def test_remove_user_from_group(td, jira_admin):
 
     jira_admin.remove_group(td['test_groupname'])
     jira_admin.delete_user(td['test_username'])
+
+
+@not_on_custom_jira_instance
+def test_groups(jira_admin):
+    groups = jira_admin.groups()
+    assert len(groups) > 0
+
+
+@not_on_custom_jira_instance
+def test_groups_for_users(jira_admin):
+    groups = jira_admin.groups('jira-users')
+    assert len(groups) == 1

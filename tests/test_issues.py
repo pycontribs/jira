@@ -3,7 +3,6 @@ import logging
 import pytest
 from six import integer_types
 
-from tests import JiraTestManager
 from tests import rndstr
 from tests import find_by_key
 from tests import find_by_key_value
@@ -12,22 +11,10 @@ from jira import JIRAError
 
 
 @pytest.fixture(scope='module')
-def test_manager():
-    return JiraTestManager()
-
-
-@pytest.fixture()
-def jira_admin(test_manager):
-    return test_manager.jira_admin
-
-
-@pytest.fixture()
-def jira_normal(test_manager):
-    return test_manager.jira_normal
-
-
-@pytest.fixture(scope='module')
 def td(test_manager):
+    """
+    Test data for this module
+    """
     return {
         'project_b': test_manager.project_b,
         'project_a': test_manager.project_a,

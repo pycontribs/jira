@@ -1,20 +1,9 @@
 import pytest
-from tests import JiraTestManager
 from tests import rndstr
 from jira import JIRAError
 
 
-@pytest.fixture(scope='module')
-def test_manager():
-    return JiraTestManager()
-
-
-@pytest.fixture()
-def jira_admin(test_manager):
-    return test_manager.jira_admin
-
-
-def test_2_create_component(test_manager, jira_admin):
+def test_create_component(test_manager, jira_admin):
     proj = jira_admin.project(test_manager.project_b)
     name = "project-%s-component-%s" % (proj, rndstr())
     component = jira_admin.create_component(
@@ -30,7 +19,7 @@ def test_2_create_component(test_manager, jira_admin):
     component.delete()
 
 
-def test_3_update(test_manager, jira_admin):
+def test_update_component(test_manager, jira_admin):
     try:
         components = jira_admin.project_components(test_manager.project_b)
         for component in components:
@@ -59,7 +48,7 @@ def test_3_update(test_manager, jira_admin):
     component.delete()
 
 
-def test_4_delete(test_manager, jira_admin):
+def test_delete_component(test_manager, jira_admin):
     component = jira_admin.create_component(
         'To be deleted',
         test_manager.project_b,
