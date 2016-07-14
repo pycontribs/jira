@@ -13,7 +13,6 @@ from time import sleep
 
 import py
 import pytest
-from six import print_ as print
 
 if platform.python_version() < '3':
     try:
@@ -246,15 +245,7 @@ class JiraTestManager(object):
                 else:
                     self.jira_admin.delete_project(self.project_b)
 
-                # wait for the project to be deleted
-                for i in range(1, 20):
-                    try:
-                        self.jira_admin.project(self.project_b)
-                    except Exception as e:
-                        print(e)
-                        break
-                    sleep(2)
-
+                sleep(1)
                 # try:
                 self.jira_admin.create_project(self.project_a,
                                                self.project_a_name)
