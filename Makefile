@@ -1,5 +1,5 @@
-all: clean flake8 test pypi docs tag release
-.PHONY: all docs
+all: info clean flake8 test docs upload release
+.PHONY: all docs upload
 
 PACKAGE_NAME=$(shell python setup.py --name)
 PYTHON_VERSION=$(shell python -c "import sys; print('py%s%s' % sys.version_info[0:2])")
@@ -8,8 +8,15 @@ PLATFORM=$(shell uname -s | awk '{print tolower($0)}')
 DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 PYENV_HOME := $(DIR)/.tox/$(PYTHON_VERSION)-$(PLATFORM)/
 
+ifndef GIT_BRANCH
+GIT_BRANCH=$(shell git branch | sed -n '/\* /s///p')
+endif
+
+info:
+	@echo "INFO:	Branch:	$(GIT_BRANCH)"
+
 clean:
-	find . -name "*.pyc" -delete
+	@find . -name "*.pyc" -delete
 
 package:
 	python setup.py sdist bdist_wheel build_sphinx
@@ -33,26 +40,23 @@ $(PYENV_HOME)/bin/activate: requirements*.txt
 
 prepare: venv
 	@echo "INFO:	=== Prearing to run for package:$(PACKAGE_NAME) platform:$(PLATFORM) py:$(PYTHON_VERSION) dir:$(DIR) ==="
+	${HOME}/testspace/testspace config url ${TESTSPACE_TOKEN}@pycontribs.testspace.com/jira/tests
+
+testspace:
+	${HOME}/testspace/testspace publish build/results.xml
 
 flake8:
 	$(PYENV_HOME)/bin/python -m flake8
 	$(PYENV_HOME)/bin/python -m flake8 --install-hook 2>/dev/null || true
 
 test: prepare flake8
-	$(PYENV_HOME)/bin/python setup.py test
+	$(PYENV_HOME)/bin/python setup.py build test build_sphinx upload_docs sdist bdist_wheel check --restructuredtext --strict
 
 test-all:
 	# tox should not run inside virtualenv because it does create and use multiple virtualenvs
 	pip install -q tox tox-pyenv
 	python -m tox --skip-missing-interpreters true
 
-pypi:
-	$(PYENV_HOME)/bin/python setup.py check --restructuredtext --strict
-	$(PYENV_HOME)/bin/python setup.py sdist bdist_wheel upload
-
-pypitest:
-	$(PYENV_HOME)/bin/python setup.py check --restructuredtext --strict
-	$(PYENV_HOME)/bin/python setup.py sdist bdist_wheel upload -r pypi-test
 
 docs:
 	@echo "INFO:	Building the docs"
@@ -66,11 +70,28 @@ docs:
 	# TODO: publish the docs
 
 tag:
-	bumpversion minor
+	bumpversion --feature --no-input
 	git push origin master
 	git push --tags
 
 release:
+ifeq ($(GIT_BRANCH),master)
 	tag
-	pypi
+else
+	upload
 	web
+
+	@echo "INFO:	Skipping release on this branch."
+endif
+
+upload:
+ifeq ($(GIT_BRANCH),develop)
+	@echo "INFO:	Upload package to testpypi.python.org"
+	$(PYENV_HOME)/bin/python setup.py check --restructuredtext --strict
+	$(PYENV_HOME)/bin/python setup.py sdist bdist_wheel upload -r https://testpypi.python.org/pypi
+endif
+ifeq ($(GIT_BRANCH),master)
+	@echo "INFO:	Upload package to pypi.python.org"
+	$(PYENV_HOME)/bin/python setup.py check --restructuredtext --strict
+	$(PYENV_HOME)/bin/python setup.py sdist bdist_wheel upload
+endif

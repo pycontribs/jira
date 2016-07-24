@@ -18,33 +18,33 @@ script:
 - travis_wait python setup.py test
 - export PACKAGE_VERSION=$(python -c "from jira import __version__; print(__version__)")
 after_success:
-  - python travis_after_all.py
-  - export $(cat .to_export_back)
-  - |
-      if [ "$BUILD_LEADER" = "YES" ]; then
-        if [ "$BUILD_AGGREGATE_STATUS" = "others_succeeded" ]; then
-          echo "All jobs succeeded! PUBLISHING..."
-        else
-          echo "Some jobs failed"
-        fi
-      fi
-  - coveralls
-  - travis_wait python setup.py prerelease
-  - requires.io update-site -t ac3bbcca32ae03237a6aae2b02eb9411045489bb -r
-  - python setup.py build_sphinx upload_docs sdist bdist_wheel
+- python travis_after_all.py
+- export $(cat .to_export_back)
+- |
+  if [ "$BUILD_LEADER" = "YES" ]; then
+    if [ "$BUILD_AGGREGATE_STATUS" = "others_succeeded" ]; then
+      echo "All jobs succeeded! PUBLISHING..."
+    else
+      echo "Some jobs failed"
+    fi
+  fi
+- coveralls
+- travis_wait python setup.py prerelease
+- requires.io update-site -t ac3bbcca32ae03237a6aae2b02eb9411045489bb -r
+- make test
 after_failure:
-  - python travis_after_all.py
-  - export $(cat .to_export_back)
-  - |
-      if [ "$BUILD_LEADER" = "YES" ]; then
-        if [ "$BUILD_AGGREGATE_STATUS" = "others_failed" ]; then
-          echo "All jobs failed"
-        else
-          echo "Some jobs failed"
-        fi
-      fi
+- python travis_after_all.py
+- export $(cat .to_export_back)
+- |
+  if [ "$BUILD_LEADER" = "YES" ]; then
+    if [ "$BUILD_AGGREGATE_STATUS" = "others_failed" ]; then
+      echo "All jobs failed"
+    else
+      echo "Some jobs failed"
+    fi
+  fi
 after_script:
-  - echo leader=$BUILD_LEADER status=$BUILD_AGGREGATE_STATUS
+- echo leader=$BUILD_LEADER status=$BUILD_AGGREGATE_STATUS
 branches:
   only:
   - master
@@ -54,33 +54,35 @@ notifications:
   - pycontribs@googlegroups.com
   - sorin.sbarnea@gmail.com
 before_deploy:
-  - echo "before deploy..."
+- echo "before deploy..."
 deploy:
-  - provider: releases
-    api_key:
-      secure: "gr9iOcQjdoAyUAim6FWKzJI9MBaJo9XKfGQGu7wdPXUFhg80Rp6GLJsowP+aU94NjXM1UQlVHDAy627WtjBlLH2SvmVEIIr7+UKBopBYuXG5jJ1m3wOZE+4f1Pqe9bqFc1DxgucqE8qF0sC24fIbNM2ToeyYrxrS6RoL2gRrX2I="
-    file: "dist/jira-$PACKAGE_VERSION.tar.gz"
-    skip_cleanup: true
-    on:
-      condition: "$BUILD_LEADER = YES"
-  - provider: pypi
-    user: sorin
-    password:
-      secure: "E0cjANF7SLBdYrsnWLK8X/xWznqkF0JrP/DVfDazPzUYH6ynFeneyofzNJQPLTLsqe1eKXhuUJ/Sbl+RHFB0ySo/j/7NfYd/9pm8hpUkGCvR09IwtvMLgWKp3k10NWab03o2GOkSJSrLvZofyZBGR40wwu2O9uXPCb2rvucCGbw="
-    distributions: "sdist bdist_wheel"
-    on:
-      condition: "$BUILD_LEADER = YES"
-      branch: master
-  - provider: pypi
-    server: https://testpypi.python.org/pypi
-    user: sorins
-    password:
-      secure: "E0cjANF7SLBdYrsnWLK8X/xWznqkF0JrP/DVfDazPzUYH6ynFeneyofzNJQPLTLsqe1eKXhuUJ/Sbl+RHFB0ySo/j/7NfYd/9pm8hpUkGCvR09IwtvMLgWKp3k10NWab03o2GOkSJSrLvZofyZBGR40wwu2O9uXPCb2rvucCGbw="
-    distributions: "sdist bdist_wheel"
-    on:
-      condition: "$BUILD_LEADER = YES"
-      branch: develop
-
+- provider: releases
+  api_key:
+    secure: gr9iOcQjdoAyUAim6FWKzJI9MBaJo9XKfGQGu7wdPXUFhg80Rp6GLJsowP+aU94NjXM1UQlVHDAy627WtjBlLH2SvmVEIIr7+UKBopBYuXG5jJ1m3wOZE+4f1Pqe9bqFc1DxgucqE8qF0sC24fIbNM2ToeyYrxrS6RoL2gRrX2I=
+  file: dist/jira-$PACKAGE_VERSION.tar.gz
+  skip_cleanup: true
+  on:
+    condition: "$BUILD_LEADER = YES"
+- provider: pypi
+  user: sorin
+  password:
+    secure: E0cjANF7SLBdYrsnWLK8X/xWznqkF0JrP/DVfDazPzUYH6ynFeneyofzNJQPLTLsqe1eKXhuUJ/Sbl+RHFB0ySo/j/7NfYd/9pm8hpUkGCvR09IwtvMLgWKp3k10NWab03o2GOkSJSrLvZofyZBGR40wwu2O9uXPCb2rvucCGbw=
+  distributions: sdist bdist_wheel
+  on:
+    condition: "$BUILD_LEADER = YES"
+    branch: master
+- provider: pypi
+  server: https://testpypi.python.org/pypi
+  user: sorins
+  password:
+    secure: E0cjANF7SLBdYrsnWLK8X/xWznqkF0JrP/DVfDazPzUYH6ynFeneyofzNJQPLTLsqe1eKXhuUJ/Sbl+RHFB0ySo/j/7NfYd/9pm8hpUkGCvR09IwtvMLgWKp3k10NWab03o2GOkSJSrLvZofyZBGR40wwu2O9uXPCb2rvucCGbw=
+  distributions: sdist bdist_wheel
+  on:
+    condition: "$BUILD_LEADER = YES"
+    branch: develop
 after_deploy:
-  - echo "Now we only have to increase the version number, tag the changset and push..."
-  - ./release.sh
+- echo "Now we only have to increase the version number, tag the changset and push..."
+- "./release.sh"
+env:
+  matrix:
+    secure: fuXwQL+KHQ96XkAFl2uQc8eK8dAjrgkup46tck/UGjVpdv1PT/yHmBKrvpFjDa50ueGbtBwTdKAwhyAmYuiZCk2IYHzdvBylCZBBji2FSpaTM59CVwgkVT6tx3HHO83X0mEX6ih9TJvZD5XhX+YUjopnseRXRq3ey3JZJXWN4RM=
