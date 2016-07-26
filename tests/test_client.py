@@ -3,32 +3,16 @@ import sys
 import json
 import pytest
 import getpass
-from tests import JiraTestManager
-from jira import Role, Issue, JIRA, JIRAError, Project  # noqa
+from jira import JIRAError, JIRA
 
 import jira.client
 
 
-@pytest.fixture(scope='module')
-def test_manager():
-    return JiraTestManager()
-
-
-@pytest.fixture()
-def cl_admin(test_manager):
-    return test_manager.jira_admin
-
-
-@pytest.fixture()
-def cl_normal(test_manager):
-    return test_manager.jira_normal
-
-
 @pytest.fixture(scope='function')
-def slug(request, cl_admin):
+def slug(request, jira_admin):
     def remove_by_slug():
         try:
-            cl_admin.delete_project(slug)
+            jira_admin.delete_project(slug)
         except ValueError:
             # Some tests have project already removed, so we stay silent
             pass
@@ -45,12 +29,12 @@ def slug(request, cl_admin):
 
     already_exists = True
     try:
-        proj = cl_admin.project(slug)
+        proj = jira_admin.project(slug)
     except JIRAError:
         already_exists = False
 
     if not already_exists:
-        proj = cl_admin.create_project(slug, project_name)
+        proj = jira_admin.create_project(slug, project_name)
         assert proj
 
     request.addfinalizer(remove_by_slug)
@@ -58,14 +42,14 @@ def slug(request, cl_admin):
     return slug
 
 
-def test_delete_project(cl_admin, slug):
-    assert cl_admin.delete_project(slug)
+def test_delete_project(jira_admin, slug):
+    assert jira_admin.delete_project(slug)
 
 
-def test_delete_inexistant_project(cl_admin):
+def test_delete_inexistant_project(jira_admin):
     slug = 'abogus123'
     with pytest.raises(ValueError) as ex:
-        assert cl_admin.delete_project(slug)
+        assert jira_admin.delete_project(slug)
 
     assert (
         'Parameter pid="%s" is not a Project, projectID or slug' % slug in
@@ -73,11 +57,22 @@ def test_delete_inexistant_project(cl_admin):
     )
 
 
-def test_no_rights_to_delete_project(cl_normal, slug):
+def test_no_rights_to_delete_project(jira_normal, slug):
     with pytest.raises(JIRAError) as ex:
-        assert cl_normal.delete_project(slug)
+        assert jira_normal.delete_project(slug)
 
     assert 'Not enough permissions to delete project' in str(ex.value)
+
+
+def test_session_invalid_login():
+    with pytest.raises(JIRAError) as je:
+        JIRA('https://support.atlassian.com',
+             basic_auth=("xxx", "xxx"),
+             validate=True,
+             logging=False)
+
+    e = je.value
+    assert e.status_code == 401
 
 
 def test_template_list():

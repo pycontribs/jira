@@ -69,7 +69,7 @@ class PyTest(TestCommand):
         # before running tests we need to run autopep8
         try:
             saved_argv = sys.argv
-            sys.argv = "-r --in-place jira/ tests/ examples/".split(" ")
+            sys.argv = "-r --in-place tests/".split(" ")
             runpy.run_module('autopep8')
             sys.argv = saved_argv  # restore sys.argv
         except subprocess.CalledProcessError:
