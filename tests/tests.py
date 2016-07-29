@@ -768,6 +768,16 @@ class IssueTests(unittest.TestCase):
 
         self.assertRaises(JIRAError, issue.update, fields=fields)
 
+    @not_on_custom_jira_instance
+    def test_update_with_notify_false(self):
+        issue = self.jira.create_issue(project=self.project_b,
+                                       summary='Test issue for updating',
+                                       description='Will be updated shortly',
+                                       issuetype={'name': 'Bug'})
+        issue.update(notify=False, description='Now updated, but silently')
+        self.assertEqual(issue.fields.description, 'Now updated, but silently')
+        issue.delete()
+
     def test_delete(self):
         issue = self.jira.create_issue(project=self.project_b,
                                        summary='Test issue created',
