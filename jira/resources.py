@@ -172,7 +172,7 @@ class Resource(object):
         options.update({'path': path})
         return self._base_url.format(**options)
 
-    def update(self, fields=None, async=None, jira=None, **kwargs):
+    def update(self, fields=None, async=None, jira=None, notify=True, **kwargs):
         """
         Update this resource on the server. Keyword arguments are marshalled into a dict before being sent. If this
         resource doesn't support ``PUT``, a :py:exc:`.JIRAError` will be raised; subclasses that specialize this method
@@ -190,8 +190,13 @@ class Resource(object):
 
         data = json.dumps(data)
 
+        if not notify:
+            querystring = "?notifyUsers=false"
+        else:
+            querystring = ""
+
         r = self._session.put(
-            self.self, data=data)
+            self.self + querystring, data=data)
         if 'autofix' in self._options and \
                 r.status_code == 400:
             user = None
@@ -399,7 +404,7 @@ class Issue(Resource):
         if raw:
             self._parse_raw(raw)
 
-    def update(self, fields=None, update=None, async=None, jira=None, **fieldargs):
+    def update(self, fields=None, update=None, async=None, jira=None, notify=True, **fieldargs):
         """
         Update this issue on the server.
 
@@ -448,7 +453,7 @@ class Issue(Resource):
             else:
                 fields_dict[field] = value
 
-        super(Issue, self).update(async=async, jira=jira, fields=data)
+        super(Issue, self).update(async=async, jira=jira, notify=notify, fields=data)
 
     def add_field_value(self, field, value):
         """

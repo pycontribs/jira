@@ -30,6 +30,9 @@ jira.add_comment(issue, 'Comment text')
 issue.update(
     summary="I'm different!", description='Changed the summary to be different.')
 
+# Change the issue without sending updates
+issue.update(notify=False, description='Quiet summary update.')
+
 # You can update the entire labels field like this
 issue.update(labels=['AAA', 'BBB'])
 
