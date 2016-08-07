@@ -16,7 +16,8 @@ install:
 - pip -q install coveralls
 script:
 - travis_wait python setup.py test
-- export PACKAGE_VERSION=$(python -c "from jira import __version__; print(__version__)")
+- export PACKAGE_NAME=$(python setup.py --name)
+- export PACKAGE_VERSION=$(python setup.py --version)
 after_success:
 - python travis_after_all.py
 - export $(cat .to_export_back)
@@ -59,7 +60,7 @@ deploy:
 - provider: releases
   api_key:
     secure: gr9iOcQjdoAyUAim6FWKzJI9MBaJo9XKfGQGu7wdPXUFhg80Rp6GLJsowP+aU94NjXM1UQlVHDAy627WtjBlLH2SvmVEIIr7+UKBopBYuXG5jJ1m3wOZE+4f1Pqe9bqFc1DxgucqE8qF0sC24fIbNM2ToeyYrxrS6RoL2gRrX2I=
-  file: dist/jira-$PACKAGE_VERSION.tar.gz
+  file: dist/$PACKAGE_NAME-$PACKAGE_VERSION.tar.gz
   skip_cleanup: true
   on:
     condition: "$BUILD_LEADER = YES"

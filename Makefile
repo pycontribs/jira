@@ -2,6 +2,7 @@ all: info clean flake8 test docs upload release
 .PHONY: all docs upload info req
 
 PACKAGE_NAME := $(shell python setup.py --name)
+PACKAGE_VERSION := $(shell python setup.py --version)
 PYTHON_PATH := $(shell which python)
 PLATFORM := $(shell uname -s | awk '{print tolower($0)}')
 DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
@@ -16,8 +17,8 @@ GIT_BRANCH=$(shell git branch | sed -n '/\* /s///p')
 endif
 
 info:
+	@echo "INFO:	Building $(PACKAGE_NAME):$(PACKAGE_VERSION) on $(GIT_BRANCH) branch"
 	@echo "INFO:	Python $(PYTHON_VERSION) from $(PYENV_HOME) [$(CONDA)]"
-	@echo "INFO:	Branch:	$(GIT_BRANCH)"
 
 clean:
 	@find . -name "*.pyc" -delete
