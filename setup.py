@@ -1,25 +1,28 @@
 #!/usr/bin/env python
-import logging
-import os
-import runpy
-import sys
-import subprocess
-import warnings
 import codecs
+import os
+import sys
+import warnings
 
-from setuptools import setup, find_packages, Command
-from setuptools.command.test import test as TestCommand
+from pip.req import parse_requirements
+from setuptools import Command, find_packages, setup
 
 NAME = "jira"
 
-here = os.path.dirname(__file__)
-if here not in sys.path:
-    sys.path.insert(0, here)
+base_path = os.path.dirname(__file__)
+if base_path not in sys.path:
+    sys.path.insert(0, base_path)
 
 __version__ = '1.0.7'
 
 # this should help getting annoying warnings from inside distutils
 warnings.simplefilter('ignore', UserWarning)
+
+
+def get_requirements(*path):
+    req_path = os.path.join(*path)
+    reqs = parse_requirements(req_path, session=False)
+    return [str(ir.req) for ir in reqs]
 
 
 def _is_ordereddict_needed():
@@ -31,54 +34,54 @@ def _is_ordereddict_needed():
     return True
 
 
-class PyTest(TestCommand):
-    user_options = [('pytest-args=', 'a', "Arguments to pass to py.test")]
-
-    def initialize_options(self):
-        TestCommand.initialize_options(self)
-        self.pytest_args = []
-
-        logging.basicConfig(format='%(levelname)-10s %(message)s')
-        logging.getLogger("jira").setLevel(logging.INFO)
-
-        # if we have pytest-cache module we enable the test failures first mode
-        try:
-            import pytest_cache  # noqa
-            self.pytest_args.append("--ff")
-        except ImportError:
-            pass
-
-        if sys.stdout.isatty():
-            # when run manually we enable fail fast
-            self.pytest_args.append("--maxfail=1")
-        try:
-            import coveralls  # noqa
-            self.pytest_args.append("--cov=%s" % NAME)
-            self.pytest_args.extend(["--cov-report", "term"])
-            self.pytest_args.extend(["--cov-report", "xml"])
-
-        except ImportError:
-            pass
-
-    def finalize_options(self):
-        TestCommand.finalize_options(self)
-        self.test_args = []
-        self.test_suite = True
-
-    def run_tests(self):
-        # before running tests we need to run autopep8
-        try:
-            saved_argv = sys.argv
-            sys.argv = "-r --in-place jira/ tests/ examples/".split(" ")
-            runpy.run_module('autopep8')
-            sys.argv = saved_argv  # restore sys.argv
-        except subprocess.CalledProcessError:
-            logging.warning('autopep8 is not installed so '
-                            'it will not be run')
-        # import here, cause outside the eggs aren't loaded
-        import pytest
-        errno = pytest.main(self.pytest_args)
-        sys.exit(errno)
+# class PyTest(TestCommand):
+#     user_options = [('pytest-args=', 'a', "Arguments to pass to py.test")]
+#
+#     def initialize_options(self):
+#         TestCommand.initialize_options(self)
+#         self.pytest_args = []
+#
+#         logging.basicConfig(format='%(levelname)-10s %(message)s')
+#         logging.getLogger("jira").setLevel(logging.INFO)
+#
+#         # if we have pytest-cache module we enable the test failures first mode
+#         try:
+#             import pytest_cache  # noqa
+#             self.pytest_args.append("--ff")
+#         except ImportError:
+#             pass
+#
+#         if sys.stdout.isatty():
+#             # when run manually we enable fail fast
+#             self.pytest_args.append("--maxfail=1")
+#         try:
+#             import coveralls  # noqa
+#             self.pytest_args.append("--cov=%s" % NAME)
+#             self.pytest_args.extend(["--cov-report", "term"])
+#             self.pytest_args.extend(["--cov-report", "xml"])
+#
+#         except ImportError:
+#             pass
+#
+#     def finalize_options(self):
+#         TestCommand.finalize_options(self)
+#         self.test_args = []
+#         self.test_suite = True
+#
+#     def run_tests(self):
+#         # before running tests we need to run autopep8
+#         try:
+#             saved_argv = sys.argv
+#             sys.argv = "-r --in-place jira/ tests/ examples/".split(" ")
+#             runpy.run_module('autopep8')
+#             sys.argv = saved_argv  # restore sys.argv
+#         except subprocess.CalledProcessError:
+#             logging.warning('autopep8 is not installed so '
+#                             'it will not be run')
+#         # import here, cause outside the eggs aren't loaded
+#         import pytest
+#         errno = pytest.main(self.pytest_args)
+#         sys.exit(errno)
 
 
 class Release(Command):
@@ -140,7 +143,7 @@ class PreRelease(Command):
 setup(
     name=NAME,
     version=__version__,
-    cmdclass={'test': PyTest, 'release': Release, 'prerelease': PreRelease},
+    cmdclass={'release': Release, 'prerelease': PreRelease},
     packages=find_packages(exclude=['tests', 'tools']),
     include_package_data=True,
 
@@ -149,11 +152,9 @@ setup(
                       'tlslite>=0.4.4',
                       'six>=1.9.0',
                       'requests_toolbelt'] + (['ordereddict'] if _is_ordereddict_needed() else []),
-    tests_require=['pytest', 'tlslite>=0.4.4', 'requests>=2.6.0',
-                   'setuptools', 'pep8', 'autopep8', 'sphinx', 'sphinx_rtd_theme', 'six>=1.9.0',
-                   'pytest-cov', 'pytest-pep8', 'pytest-instafail',
-                   'pytest-xdist',
-                   ],
+
+    setup_requires=['pytest-runner'],
+    tests_require=get_requirements(base_path, 'requirements-dev.txt'),
     extras_require={
         'all': [],
         'magic': ['filemagic>=1.6'],

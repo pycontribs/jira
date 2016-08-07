@@ -1,18 +1,22 @@
 all: info clean flake8 test docs upload release
-.PHONY: all docs upload
+.PHONY: all docs upload info req
 
-PACKAGE_NAME=$(shell python setup.py --name)
-PYTHON_VERSION=$(shell python -c "import sys; print('py%s%s' % sys.version_info[0:2])")
-PYTHON_PATH=$(shell which python)
-PLATFORM=$(shell uname -s | awk '{print tolower($0)}')
-DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+PACKAGE_NAME := $(shell python setup.py --name)
+PYTHON_PATH := $(shell which python)
+PLATFORM := $(shell uname -s | awk '{print tolower($0)}')
+DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+PYTHON_VERSION := $(shell python3 -c "import sys; print('py%s%s' % sys.version_info[0:2] + ('-conda' if 'conda' in sys.version or 'Continuum' in sys.version else ''))")
 PYENV_HOME := $(DIR)/.tox/$(PYTHON_VERSION)-$(PLATFORM)/
+ifneq (,$(findstring conda,$(PYTHON_VERSION)))
+CONDA:=1
+endif
 
 ifndef GIT_BRANCH
 GIT_BRANCH=$(shell git branch | sed -n '/\* /s///p')
 endif
 
 info:
+	@echo "INFO:	Python $(PYTHON_VERSION) from $(PYENV_HOME) [$(CONDA)]"
 	@echo "INFO:	Branch:	$(GIT_BRANCH)"
 
 clean:
@@ -20,6 +24,9 @@ clean:
 
 package:
 	python setup.py sdist bdist_wheel build_sphinx
+
+req:
+	@$(PYENV_HOME)/bin/requires.io update-site -t ac3bbcca32ae03237a6aae2b02eb9411045489bb -r $(PACKAGE_NAME)
 
 install: prepare
 	$(PYENV_HOME)/bin/python setup.py install
@@ -32,10 +39,12 @@ venv: $(PYENV_HOME)/bin/activate
 # virtual environment depends on requriements files
 $(PYENV_HOME)/bin/activate: requirements*.txt
 	@echo "INFO:	(Re)creating virtual environment..."
-	test -d $(PYENV_HOME)/bin/activate || virtualenv --python=$(PYTHON_PATH) --system-site-packages $(PYENV_HOME)
-	$(PYENV_HOME)/bin/pip install -q -r requirements.txt
-	$(PYENV_HOME)/bin/pip install -q -r requirements-opt.txt
-	$(PYENV_HOME)/bin/pip install -q -r requirements-dev.txt
+ifdef CONDA
+	test -e $(PYENV_HOME)/bin/activate || conda create -y --prefix $(PYENV_HOME) pip
+else
+	test -e $(PYENV_HOME)/bin/activate || virtualenv --python=$(PYTHON_PATH) --system-site-packages $(PYENV_HOME)
+endif
+	$(PYENV_HOME)/bin/pip install -q -r requirements.txt -r requirements-opt.txt -r requirements-dev.txt
 	touch $(PYENV_HOME)/bin/activate
 
 prepare: venv
@@ -45,14 +54,17 @@ prepare: venv
 testspace:
 	${HOME}/testspace/testspace publish build/results.xml
 
-flake8:
+flake8: venv
+	@echo "INFO:	flake8"
 	$(PYENV_HOME)/bin/python -m flake8
 	$(PYENV_HOME)/bin/python -m flake8 --install-hook 2>/dev/null || true
 
 test: prepare flake8
+	@echo "INFO:	test"
 	$(PYENV_HOME)/bin/python setup.py build test build_sphinx upload_docs sdist bdist_wheel check --restructuredtext --strict
 
 test-all:
+	@echo "INFO:	test-all (extended/matrix tests)"
 	# tox should not run inside virtualenv because it does create and use multiple virtualenvs
 	pip install -q tox tox-pyenv
 	python -m tox --skip-missing-interpreters true
@@ -74,7 +86,7 @@ tag:
 	git push origin master
 	git push --tags
 
-release:
+release: req
 ifeq ($(GIT_BRANCH),master)
 	tag
 else
