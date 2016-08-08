@@ -9,11 +9,13 @@ python:
 - '3.4'
 - '3.5'
 install:
-- pip -q install ipython || echo "optional skipped"
-- pip -q install pytest-cache || echo "optional skipped"
-- pip -q install unittest2 || echo "optional skipped"
-- pip -q install ordereddict || echo "optional skipped"
-- pip -q install -r requirements.txt -r requirements-dev.txt
+- mkdir -p dist
+- pip -q --log dist/pip.log install ipython || echo "optional skipped"
+- pip -q --log dist/pip.log install pytest-cache || echo "optional skipped"
+- pip -q --log dist/pip.log install unittest2 || echo "optional skipped"
+- pip -q --log dist/pip.log install ordereddict || echo "optional skipped"
+- pip -q --log dist/pip.log install -r requirements.txt -r requirements-dev.txt
+- pwd
 script:
 - travis_wait python setup.py test
 - export PACKAGE_NAME=$(python setup.py --name)
@@ -56,7 +58,6 @@ notifications:
   - sorin.sbarnea@gmail.com
 before_deploy:
 - echo "before deploy..."
-- gitchangelog > dist/CHANGELOG.md
 deploy:
 - provider: releases
   api_key:
@@ -73,6 +74,7 @@ deploy:
   password:
     secure: E0cjANF7SLBdYrsnWLK8X/xWznqkF0JrP/DVfDazPzUYH6ynFeneyofzNJQPLTLsqe1eKXhuUJ/Sbl+RHFB0ySo/j/7NfYd/9pm8hpUkGCvR09IwtvMLgWKp3k10NWab03o2GOkSJSrLvZofyZBGR40wwu2O9uXPCb2rvucCGbw=
   distributions: sdist bdist_wheel
+  skip_cleanup: true
   on:
     tags: false
     condition: "$BUILD_LEADER = YES"
@@ -83,6 +85,7 @@ deploy:
   password:
     secure: E0cjANF7SLBdYrsnWLK8X/xWznqkF0JrP/DVfDazPzUYH6ynFeneyofzNJQPLTLsqe1eKXhuUJ/Sbl+RHFB0ySo/j/7NfYd/9pm8hpUkGCvR09IwtvMLgWKp3k10NWab03o2GOkSJSrLvZofyZBGR40wwu2O9uXPCb2rvucCGbw=
   distributions: sdist bdist_wheel
+  skip_cleanup: true
   on:
     tags: false
     condition: "$BUILD_LEADER = YES"
@@ -91,8 +94,14 @@ after_deploy:
 - echo "Now we only have tag the changeset and push..."
 - git tag $PACKAGE_VERSION -a -m "Generated tag from TravisCI for build $TRAVIS_BUILD_NUMBER on $TRAVIS_BRANCH branch."
 - git push -q https://$TAGPERM@github.com/pycontribs/$PACKAGE_NAME $PACKAGE_VERSION
-
+addons:
+  artifacts:
+    debug: true
+    paths:
+    - dist/*
+    target_paths: $PACKAGE_NAME/$TRAVIS_BRANCH/$TRAVIS_BUILD_NUMBER-$TRAVIS_PYTHON_VERSION
+    working_dir: $TRAVIS_BUILD_DIR
 env:
-  matrix:
-    secure: fuXwQL+KHQ96XkAFl2uQc8eK8dAjrgkup46tck/UGjVpdv1PT/yHmBKrvpFjDa50ueGbtBwTdKAwhyAmYuiZCk2IYHzdvBylCZBBji2FSpaTM59CVwgkVT6tx3HHO83X0mEX6ih9TJvZD5XhX+YUjopnseRXRq3ey3JZJXWN4RM=
-    secure: "pGQGM5YmHvOgaKihOyzb3k6bdqLQnZQ2OXO9QrfXlXwtop3zvZQi80Q+01l230x2psDWlwvqWTknAjAt1w463fYXPwpoSvKVCsLSSbjrf2l56nrDqnoir+n0CBy288+eIdaGEfzcxDiuULeKjlg08zrqjcjLjW0bDbBrlTXsb5U="
+  global:
+  - secure: fuXwQL+KHQ96XkAFl2uQc8eK8dAjrgkup46tck/UGjVpdv1PT/yHmBKrvpFjDa50ueGbtBwTdKAwhyAmYuiZCk2IYHzdvBylCZBBji2FSpaTM59CVwgkVT6tx3HHO83X0mEX6ih9TJvZD5XhX+YUjopnseRXRq3ey3JZJXWN4RM=
+  - secure: "pGQGM5YmHvOgaKihOyzb3k6bdqLQnZQ2OXO9QrfXlXwtop3zvZQi80Q+01l230x2psDWlwvqWTknAjAt1w463fYXPwpoSvKVCsLSSbjrf2l56nrDqnoir+n0CBy288+eIdaGEfzcxDiuULeKjlg08zrqjcjLjW0bDbBrlTXsb5U="
