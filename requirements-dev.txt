@@ -4,6 +4,7 @@ coveralls>=1.1
 docutils>=0.12
 flake8-docstrings
 flake8>=3.0.3
+gitchangelog
 oauthlib
 pep8>=1.7.0
 pytest-cache
@@ -12,14 +13,9 @@ pytest-instafail
 pytest-pep8>=1.0.6
 pytest-xdist>=1.14
 pytest>=2.9.1
-requests>=2.6.0
-requests_oauthlib>=0.6.1
 requires.io
-setuptools
-six>=1.9.0
 sphinx>=1.4.1
 sphinx_rtd_theme
-tlslite>=0.4.4
 tox>=2.3.1
 wheel>=0.24.0
 xmlrunner>=1.7.7

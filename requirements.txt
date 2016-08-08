@@ -1,7 +1,7 @@
-requests>=2.10.0
-requests-oauthlib>=0.6.1
-tlslite>=0.4.4
-six>=1.10.0
-setuptools>=20.10.1
-requests_toolbelt
 ordereddict
+requests-oauthlib>=0.6.1
+requests>=2.10.0
+requests_toolbelt
+setuptools>=20.10.1
+six>=1.10.0
+tlslite>=0.4.4
