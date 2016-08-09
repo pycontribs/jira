@@ -1667,6 +1667,51 @@ class JIRA(object):
 
     # Resolutions
 
+    def add_user_to_role(self, project, role, username):
+        """
+        Add the user ``username`` to the ``role`` in ``project``
+
+        :param project: ID or key of the project to get the role from
+        :param role: ID of the role where the user will be added
+        :param username: The user to add to the role.
+        """
+        data = {}
+        data['user'] = [username]
+        if isinstance(role, Number):
+            role = "%s" % role
+        url = self._get_url('project/' + project + '/role/' + role)
+
+        r = self._session.post(
+            url, data=json.dumps(data))
+        if r.status_code == 200:
+            return True
+        else:
+            logging.warning(
+                'Failed to add user %s to role. Got code: %s' % (username, r.status_code))
+            return r.status_code
+
+    def add_group_to_role(self, project, role, group):
+        """
+        Add the ``group`` to the ``role`` in ``project``
+
+        :param project: ID or key of the project to get the role from
+        :param role: ID of the role where the user will be added
+        :param group: The group to add to the role.
+        """
+        data = {}
+        data['group'] = [group]
+        if isinstance(role, Number):
+            role = "%s" % role
+        url = self._get_url('project/' + project + '/role/' + role)
+
+        r = self._session.post(url, data=json.dumps(data))
+        if r.status_code == 200:
+            return True
+        else:
+            logging.warning(
+                'Failed to add group %s to role. Got code: %s' % (group, r.status_code))
+            return r.status_code
+
     def resolutions(self):
         """Get a list of resolution Resources from the server."""
         r_json = self._get_json('resolution')
