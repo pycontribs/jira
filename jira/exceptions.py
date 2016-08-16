@@ -16,6 +16,11 @@ class JIRAError(Exception):
         self.request = request
         self.response = response
         self.headers = kwargs.get('headers', None)
+        self.log_to_tempfile = False
+        if 'PYJIRA_LOG_TO_TEMPFILE' in os.environ:
+            self.log_to_tempfile = True
+        if 'TRAVIS' in os.environ:
+            self.travis = True
 
     def __str__(self):
         t = "JiraError HTTP %s" % self.status_code
@@ -35,14 +40,21 @@ class JIRAError(Exception):
         if self.response is not None and hasattr(self.response, 'text'):
             details += "\n\tresponse text = %s" % self.response.text
 
-        if JIRAError.log_to_tempfile:
+        # separate logging for Travis makes sense.
+        if self.travis:
+            if self.text:
+                t += "\n\ttext: %s" % self.text
+            t += details
+        # Only log to tempfile if the option is set.
+        elif self.log_to_tempfile:
             fd, file_name = tempfile.mkstemp(suffix='.tmp', prefix='jiraerror-')
             f = open(file_name, "w")
             t += " details: %s" % file_name
             f.write(details)
+        # Otherwise, just return the error as usual
         else:
             if self.text:
                 t += "\n\ttext: %s" % self.text
-            t += details
+            t += "\n\t" + details
 
         return t
