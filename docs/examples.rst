@@ -143,6 +143,10 @@ or with a dict of new field values::
 
     issue.update(fields={'summary': 'new summary', 'description': 'A new summary was added'})
 
+You can suppress notifications::
+
+    issue.update(notify=False, description='A quiet description change was made')
+
 and when you're done with an issue, you can send it to the great hard drive in the sky::
 
     issue.delete()
