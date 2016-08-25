@@ -66,6 +66,10 @@ def raise_on_error(r, verb='???', **kwargs):
     # for debugging weird errors on CI
     if r.status_code not in [200, 201, 202, 204]:
         raise JIRAError(r.status_code, request=request, response=r, **kwargs)
+    if _is_invalid_jra41559_response(r):
+        raise JIRAError(
+            200, "Atlassian's bug https://jira.atlassian.com/browse/JRA-41559",
+            r.url, request=request, response=r, **kwargs)
 
 
 class ResilientSession(Session):
