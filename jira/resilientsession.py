@@ -18,6 +18,16 @@ from .exceptions import JIRAError
 logging.getLogger('jira').addHandler(NullHandler())
 
 
+def _is_invalid_jra41559_response(response):
+    """
+    Detect invalid responses caused by https://jira.atlassian.com/browse/JRA-41559
+    
+    See also https://answers.atlassian.com/questions/11457054/answers/11975162
+    """
+    return response.status_code == 200 and len(response.content) == 0 \
+        and 'X-Seraph-LoginReason' in response.headers \
+        and 'AUTHENTICATED_FAILED' in response.headers['X-Seraph-LoginReason']
+
 def raise_on_error(r, verb='???', **kwargs):
     request = kwargs.get('request', None)
     # headers = kwargs.get('headers', None)
@@ -56,12 +66,6 @@ def raise_on_error(r, verb='???', **kwargs):
     # for debugging weird errors on CI
     if r.status_code not in [200, 201, 202, 204]:
         raise JIRAError(r.status_code, request=request, response=r, **kwargs)
-    # testing for the WTH bug exposed on
-    # https://answers.atlassian.com/questions/11457054/answers/11975162
-    if r.status_code == 200 and len(r.content) == 0 \
-            and 'X-Seraph-LoginReason' in r.headers \
-            and 'AUTHENTICATED_FAILED' in r.headers['X-Seraph-LoginReason']:
-        pass
 
 
 class ResilientSession(Session):
@@ -87,14 +91,12 @@ class ResilientSession(Session):
         if hasattr(response, 'status_code'):
             if response.status_code in [502, 503, 504]:
                 msg = "%s %s" % (response.status_code, response.reason)
-            elif not (response.status_code == 200 and
-                      len(response.content) == 0 and
-                      'X-Seraph-LoginReason' in response.headers and
-                      'AUTHENTICATED_FAILED' in response.headers['X-Seraph-LoginReason']):
-                return False
-            else:
+            elif _is_invalid_jra41559_response(response):
                 msg = "Atlassian's bug https://jira.atlassian.com/browse/JRA-41559"
-
+            else:
+                # This error cannot be retried
+                return False
+    
         # Exponential backoff with full jitter.
         delay = min(60, 10 * 2 ** counter) * random.random()
         logging.warning("Got recoverable error from %s %s, will retry [%s/%s] in %ss. Err: %s" % (
@@ -121,7 +123,7 @@ class ResilientSession(Session):
             try:
                 method = getattr(super(ResilientSession, self), verb.lower())
                 response = method(url, **kwargs)
-                if response.status_code == 200:
+                if response.status_code == 200 and not _is_invalid_jra41559_response(response):
                     return response
             except ConnectionError as e:
                 logging.warning(
