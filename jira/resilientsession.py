@@ -71,8 +71,9 @@ class ResilientSession(Session):
     At this moment it supports: 502, 503, 504
     """
 
-    def __init__(self):
+    def __init__(self, timeout=None):
         self.max_retries = 3
+        self.timeout = timeout
         super(ResilientSession, self).__init__()
 
         # Indicate our preference for JSON to avoid https://bitbucket.org/bspeakmon/jira-python/issue/46 and https://jira.atlassian.com/browse/JRA-38551
@@ -119,7 +120,7 @@ class ResilientSession(Session):
             exception = None
             try:
                 method = getattr(super(ResilientSession, self), verb.lower())
-                response = method(url, **kwargs)
+                response = method(url, timeout=self.timeout, **kwargs)
                 if response.status_code == 200:
                     return response
             except ConnectionError as e:
