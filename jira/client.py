@@ -2122,11 +2122,11 @@ class JIRA(object):
     def _create_kerberos_session(self):
         verify = self._options['verify']
 
-        from requests_kerberos import HTTPKerberosAuth
+        from requests_kerberos import HTTPKerberosAuth, OPTIONAL
 
         self._session = ResilientSession()
         self._session.verify = verify
-        self._session.auth = HTTPKerberosAuth()
+        self._session.auth = HTTPKerberosAuth(mutual_authentication=OPTIONAL)
 
     @staticmethod
     def _timestamp(dt=None):
