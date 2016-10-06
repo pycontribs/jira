@@ -56,17 +56,19 @@ def is_prerelease_branch():
 def run_but_ignore_errors(*args, **kwargs):
     # if git is not installed, or there is not git repo,
     # we use the version as is. We don't want any errors
-    with open(os.devnull, 'w') as devnull:
-        try:
-            return subprocess.check_output(*args, shell=True, stderr=devnull,
-                                           **kwargs)
-        except (subprocess.SubprocessError,
-                FileNotFoundError, OSError):
-            return None
-        except Exception:
-            logger = logging.getLogger(__name__)
-            logger.exception("Unexpected exception")
-            return None
+    try:
+        with open(os.devnull, 'w') as devnull:
+            try:
+                return subprocess.check_output(*args, shell=True, stderr=devnull,
+                                               **kwargs)
+            except (subprocess.SubprocessError, FileNotFoundError, OSError):
+                return None
+            except Exception:
+                logger = logging.getLogger(__name__)
+                logger.exception("Unexpected exception")
+                return None
+    except IOError:
+        return None
 
 
 def get_git_branch():
