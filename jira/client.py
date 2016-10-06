@@ -1737,6 +1737,20 @@ class JIRA(object):
 
         return issues
 
+    def search_for_issues_by_key(self, search_key):
+        '''
+        Get a List of issue matching on search string.
+        Use issuePicker rest API to fetch Issues.
+
+        :param search_key: input from user for the issue to be found
+        :return: JSON response will be returned if issues found; otherwise returns, msg:No match found.
+        '''
+        JIRA_API_ISSUE_SEARCH = "/rest/api/2/issue/picker" \
+                                "?showSubTasks=true&showSubTaskParent=true&currentJQL=&query="
+        search_url = "{}{}{}".format(self._options["server"], JIRA_API_ISSUE_SEARCH, search_key)
+        search_result = self._session.get(search_url)
+        return search_result.json()
+
     # Security levels
     def security_level(self, id):
         """
