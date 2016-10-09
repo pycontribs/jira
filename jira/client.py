@@ -1717,8 +1717,6 @@ class JIRA(object):
 
         search_params = {
             "jql": jql_str,
-            "startAt": startAt,
-            "maxResults": maxResults,
             "validateQuery": validate_query,
             "fields": fields,
             "expand": expand}
