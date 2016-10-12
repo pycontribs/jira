@@ -482,6 +482,13 @@ class Issue(Resource):
     def __eq__(self, other):
         return self.id == other.id
 
+    def __getitem__(self, item):
+        # Grab the JIRA server
+        jira_server = self._session.jira_server
+
+        # Look for the appropriate fields list on the server
+        return getattr(self.fields, jira_server._fields[item])
+
 
 class Comment(Resource):
 

@@ -284,7 +284,7 @@ class JIRA(object):
             self._create_kerberos_session()
         else:
             verify = self._options['verify']
-            self._session = ResilientSession()
+            self._session = ResilientSession(self)
             self._session.verify = verify
         self._session.headers.update(self._options['headers'])
 
@@ -2098,7 +2098,7 @@ class JIRA(object):
     # Utilities
     def _create_http_basic_session(self, username, password):
         verify = self._options['verify']
-        self._session = ResilientSession()
+        self._session = ResilientSession(self)
         self._session.verify = verify
         self._session.auth = (username, password)
         self._session.cert = self._options['client_cert']
@@ -2115,7 +2115,7 @@ class JIRA(object):
             signature_method=SIGNATURE_RSA,
             resource_owner_key=oauth['access_token'],
             resource_owner_secret=oauth['access_token_secret'])
-        self._session = ResilientSession()
+        self._session = ResilientSession(self)
         self._session.verify = verify
         self._session.auth = oauth
 
@@ -2124,7 +2124,7 @@ class JIRA(object):
 
         from requests_kerberos import HTTPKerberosAuth, OPTIONAL
 
-        self._session = ResilientSession()
+        self._session = ResilientSession(self)
         self._session.verify = verify
         self._session.auth = HTTPKerberosAuth(mutual_authentication=OPTIONAL)
 
@@ -2146,7 +2146,7 @@ class JIRA(object):
         jwt_auth.add_field("qsh", QshGenerator(self._options['context_path']))
         for f in jwt['payload'].items():
             jwt_auth.add_field(f[0], f[1])
-        self._session = ResilientSession()
+        self._session = ResilientSession(self)
         self._session.verify = self._options['verify']
         self._session.auth = jwt_auth
 
