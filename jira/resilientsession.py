@@ -72,12 +72,12 @@ class ResilientSession(Session):
     At this moment it supports: 502, 503, 504
     """
 
-    def __init__(self, jira_server=None):
+    def __init__(self, jira_client=None):
         self.max_retries = 3
         super(ResilientSession, self).__init__()
 
         # Store the JIRA server
-        self.jira_server = jira_server
+        self.jira_client = jira_client
 
         # Indicate our preference for JSON to avoid https://bitbucket.org/bspeakmon/jira-python/issue/46 and https://jira.atlassian.com/browse/JRA-38551
         self.headers.update({"Accept": "application/json,*.*;q=0.9"})

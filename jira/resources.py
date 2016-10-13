@@ -484,10 +484,10 @@ class Issue(Resource):
 
     def __getitem__(self, item):
         # Grab the JIRA server
-        jira_server = self._session.jira_server
+        jira_client = self._session.jira_client
 
         # Look for the appropriate fields list on the server
-        return getattr(self.fields, jira_server._fields[item])
+        return getattr(self.fields, jira_client._fields[item])
 
 
 class Comment(Resource):
