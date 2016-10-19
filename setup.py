@@ -45,7 +45,8 @@ def get_metadata(*path):
 
 
 def read(fname):
-    return open(os.path.join(base_path, fname)).read()
+    with open(os.path.join(base_path, fname)) as f:
+        return f.read()
 
 
 def get_requirements(*path):
@@ -160,6 +161,8 @@ def get_requirements(*path):
 #                 "already published ones (PyPi). Increse version to be able to pass prerelease stage.")
 
 if __name__ == '__main__':
+    with open("README.rst") as f:
+        readme = f.read()
 
     setup(
         name=NAME,
@@ -178,7 +181,7 @@ if __name__ == '__main__':
             'console_scripts':
             ['jirashell = jira.jirashell:main']},
 
-        long_description=open("README.rst").read(),
+        long_description=readme,
         provides=[NAME],
         bugtrack_url='https://github.com/pycontribs/jira/issues',
         home_page='https://github.com/pycontribs/jira',
