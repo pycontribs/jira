@@ -320,6 +320,9 @@ class JIRA(object):
                 for name in f['clauseNames']:
                     self._fields[name] = f['id']
 
+        self.field_map = {}
+        self.generate_field_mapper()
+
     def _check_update_(self):
         # check if the current version of the library is outdated
         try:
@@ -3149,6 +3152,34 @@ class JIRA(object):
             raise NotImplementedError('No API for moving issues to backlog for agile_rest_path="%s"' %
                                       self._options['agile_rest_path'])
 
+    def map_custom_python_name(self, customfieldname=None, pythonfieldname=None):
+        python_to_custom = self.field_map
+        custom_to_python = [(v,k) for k,v in python_to_custom]
+
+        try:
+            if customfieldname is not None:
+                return list_lookup(custom_to_python, customfieldname)
+            elif pythonfieldname is not None:
+                return list_lookup(python_to_custom, pythonfieldname)
+            else:
+                raise KeyError("Need to provide a custom field name, or a python field name.")
+        except:
+            if customfieldname is not None:
+                return customfieldname
+            else:
+                return pythonfieldname
+
+    def generate_field_mapper(self):
+        # Process the custom fields
+        customfields = self._fields
+
+        iscustomfield = lambda k,v: not re.match('cf\[\d*\]', k) and re.match('customfield_[\d*]', v)
+
+        # Strip out the invalid identifier characters and the customfield indexing.
+        pythonidents = [(python_identifier(k),v) for k, v in customfields.items()
+                        if iscustomfield(k,v)]
+        self.field_map = pythonidents
+
 
 class GreenHopper(JIRA):
 
@@ -3157,3 +3188,13 @@ class GreenHopper(JIRA):
             "GreenHopper() class is deprecated, just use JIRA() instead.", DeprecationWarning)
         JIRA.__init__(
             self, options=options, basic_auth=basic_auth, oauth=oauth, async=async)
+
+
+def python_identifier(fieldstring):
+    return re.sub('[^0-9a-zA-Z_]', '', fieldstring.replace(' ', '_')).lower()
+
+def list_lookup(lst, key):
+    for k,v in lst:
+        if k == key:
+            return v
+    raise KeyError("key=`{0}` not found".format(key))

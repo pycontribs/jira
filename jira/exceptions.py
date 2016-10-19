@@ -17,6 +17,7 @@ class JIRAError(Exception):
         self.response = response
         self.headers = kwargs.get('headers', None)
         self.log_to_tempfile = False
+        self.travis = False
         if 'PYJIRA_LOG_TO_TEMPFILE' in os.environ:
             self.log_to_tempfile = True
         if 'TRAVIS' in os.environ:
