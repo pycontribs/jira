@@ -6,6 +6,7 @@
 .cache/
 .coverage
 .coverage.*
+.eggs/
 .tox/
 amps-standalone
 build/
