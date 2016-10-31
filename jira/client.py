@@ -361,6 +361,7 @@ class JIRA(object):
     def _fetch_pages(self, item_type, items_key, request_path, startAt=0, maxResults=50, params=None, base=JIRA_BASE_URL):
         """
         Fetches
+
         :param item_type: Type of single item. ResultList of such items will be returned.
         :param items_key: Path to the items in JSON returned from server.
                 Set it to None, if response is an array, and not a JSON object.
@@ -453,8 +454,7 @@ class JIRA(object):
         """
         This will execute all async jobs and wait for them to finish. By default it will run on 10 threads.
 
-        size: number of threads to run on.
-        :return:
+        :param size: number of threads to run on.
         """
         if hasattr(self._session, '_async_jobs'):
             logging.info("Executing async %s jobs found in queue by using %s threads..." % (
@@ -493,6 +493,7 @@ class JIRA(object):
     def applicationlinks(self, cached=True):
         """
         List of application links
+
         :return: json
         """
 
@@ -648,7 +649,7 @@ class JIRA(object):
         :param maxResults: maximum number of dashboards to return.
             If maxResults evaluates as False, it will try to get all items in batches.
 
-        :rtype ResultList
+        :rtype: ResultList
         """
         params = {}
         if filter is not None:
@@ -692,11 +693,10 @@ class JIRA(object):
         """
         Create a new filter and return a filter Resource for it.
 
-        Keyword arguments:
-        name -- name of the new filter
-        description -- useful human readable description of the new filter
-        jql -- query string that defines the filter
-        favourite -- whether to add this filter to the current user's favorites
+        :param name: name of the new filter
+        :param description: useful human readable description of the new filter
+        :param jql: query string that defines the filter
+        :param favourite: whether to add this filter to the current user's favorites
 
         """
         data = {}
@@ -721,11 +721,10 @@ class JIRA(object):
         """
         Updates a filter and return a filter Resource for it.
 
-        Keyword arguments:
-        name -- name of the new filter
-        description -- useful human readable description of the new filter
-        jql -- query string that defines the filter
-        favourite -- whether to add this filter to the current user's favorites
+        :param name: name of the new filter
+        :param description: useful human readable description of the new filter
+        :param jql: query string that defines the filter
+        :param favourite: whether to add this filter to the current user's favorites
 
         """
         filter = self.filter(filter_id)
@@ -796,6 +795,7 @@ class JIRA(object):
     def add_group(self, groupname):
         '''
         Creates a new group in JIRA.
+
         :param groupname: The name of the group you wish to create.
         :return: Boolean - True if succesfull.
         '''
@@ -817,6 +817,7 @@ class JIRA(object):
     def remove_group(self, groupname):
         '''
         Deletes a group from the JIRA instance.
+
         :param groupname: The group to be deleted from the JIRA instance.
         :return: Boolean. Returns True on success.
         '''
@@ -2642,6 +2643,7 @@ class JIRA(object):
                  fullname=None, notify=False, active=True, ignore_existing=False):
         '''
         Creates a new JIRA user
+
         :param username: the username of the new user
         :type username: ``str``
         :param email: email address of the new user
@@ -2688,6 +2690,7 @@ class JIRA(object):
     def add_user_to_group(self, username, group):
         '''
         Adds a user to an existing group.
+
         :param username: Username that will be added to specified group.
         :param group: Group that the user will be added to.
         :return: Boolean, True for success, false for failure.
@@ -2705,9 +2708,9 @@ class JIRA(object):
     def remove_user_from_group(self, username, groupname):
         '''
         Removes a user from a group.
+
         :param username: The user to remove from the group.
         :param groupname: The group that the user will be removed from.
-        :return:
         '''
         url = self._options['server'] + '/rest/api/latest/group/user'
         x = {'groupname': groupname,
@@ -2790,10 +2793,9 @@ class JIRA(object):
         :param state: Filters results to sprints in specified states. Valid values: future, active, closed.
             You can define multiple states separated by commas
 
-        :rtype dict
-        :return (content depends on API version, but always contains id, name, state, startDate and endDate)
-
-        When old GreenHopper private API is used, paging is not enabled,
+        :rtype: dict
+        :return: (content depends on API version, but always contains id, name, state, startDate and endDate)
+            When old GreenHopper private API is used, paging is not enabled,
             and `startAt`, `maxResults` and `state` parameters are ignored.
         """
 
