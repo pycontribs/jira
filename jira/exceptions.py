@@ -51,6 +51,7 @@ class JIRAError(Exception):
             f = open(file_name, "w")
             t += " details: %s" % file_name
             f.write(details)
+            f.close()
         # Otherwise, just return the error as usual
         else:
             if self.text:
