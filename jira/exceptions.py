@@ -48,9 +48,9 @@ class JIRAError(Exception):
         # Only log to tempfile if the option is set.
         elif self.log_to_tempfile:
             fd, file_name = tempfile.mkstemp(suffix='.tmp', prefix='jiraerror-')
-            f = open(file_name, "w")
-            t += " details: %s" % file_name
-            f.write(details)
+            with open(file_name, "w") as f
+                t += " details: %s" % file_name
+                f.write(details)
         # Otherwise, just return the error as usual
         else:
             if self.text:

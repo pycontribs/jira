@@ -2234,7 +2234,8 @@ class JIRA(object):
 
         r = self._session.post(
             url, headers=self._options['headers'], data=payload)
-        open("/tmp/jira_email_user_%s.html" % user, "w").write(r.text)
+        with open("/tmp/jira_email_user_%s.html" % user, "w") as f :
+            f.write(r.text)
 
     def rename_user(self, old_user, new_user):
         """
@@ -2293,8 +2294,8 @@ class JIRA(object):
                     "Reconfigure JIRA and disable XSRF in order to be able call this. See https://developer.atlassian.com/display/JIRADEV/Form+Token+Handling")
                 return False
 
-            open("/tmp/jira_rename_user_%s_to%s.html" %
-                 (old_user, new_user), "w").write(r.content)
+            with open("/tmp/jira_rename_user_%s_to%s.html" % (old_user, new_user), "w") as f:
+                f.write(r.content)
 
             msg = r.status_code
             m = re.search("<span class=\"errMsg\">(.*)<\/span>", r.content)
