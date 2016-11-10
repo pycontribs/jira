@@ -2234,7 +2234,7 @@ class JIRA(object):
 
         r = self._session.post(
             url, headers=self._options['headers'], data=payload)
-        with open("/tmp/jira_email_user_%s.html" % user, "w") as f :
+        with open("/tmp/jira_email_user_%s.html" % user, "w") as f:
             f.write(r.text)
 
     def rename_user(self, old_user, new_user):
@@ -2594,17 +2594,14 @@ class JIRA(object):
         r = self._session.get(url)
         j = json_loads(r)
 
-        template_key = None
+        # https://confluence.atlassian.com/jirakb/creating-a-project-via-rest-based-on-jira-default-schemes-744325852.html
+        template_key = 'com.atlassian.jira-legacy-project-templates:jira-blank-item'
         templates = []
         for template in _get_template_list(j):
             templates.append(template['name'])
             if template['name'] in ['JIRA Classic', 'JIRA Default Schemes', 'Basic software development', template_name]:
                 template_key = template['projectTemplateModuleCompleteKey']
                 break
-
-        if not template_key:
-            raise JIRAError(
-                "Unable to find a suitable project template to use. Found only: %s" % json.dumps(j))
 
         payload = {'name': name,
                    'key': key,

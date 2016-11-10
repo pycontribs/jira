@@ -17,6 +17,7 @@ class JIRAError(Exception):
         self.response = response
         self.headers = kwargs.get('headers', None)
         self.log_to_tempfile = False
+        self.travis = False
         if 'PYJIRA_LOG_TO_TEMPFILE' in os.environ:
             self.log_to_tempfile = True
         if 'TRAVIS' in os.environ:
@@ -48,7 +49,7 @@ class JIRAError(Exception):
         # Only log to tempfile if the option is set.
         elif self.log_to_tempfile:
             fd, file_name = tempfile.mkstemp(suffix='.tmp', prefix='jiraerror-')
-            with open(file_name, "w") as f
+            with open(file_name, "w") as f:
                 t += " details: %s" % file_name
                 f.write(details)
         # Otherwise, just return the error as usual

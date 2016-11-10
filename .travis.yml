@@ -9,11 +9,11 @@ python:
 - '3.4'
 - '3.5'
 install:
-- mkdir -p dist
+- pip --version
+- pip -q --log dist/pip.log install --upgrade pip setuptools py
+- pip --version
 - pip -q --log dist/pip.log install ipython || echo "optional skipped"
 - pip -q --log dist/pip.log install pytest-cache || echo "optional skipped"
-- pip -q --log dist/pip.log install unittest2 || echo "optional skipped"
-- pip -q --log dist/pip.log install ordereddict || echo "optional skipped"
 - pip -q --log dist/pip.log install -r requirements.txt -r requirements-dev.txt
 - pwd
 script:

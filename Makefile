@@ -50,7 +50,7 @@ endif
 
 prepare: venv
 	@echo "INFO:	=== Prearing to run for package:$(PACKAGE_NAME) platform:$(PLATFORM) py:$(PYTHON_VERSION) dir:$(DIR) ==="
-	${HOME}/testspace/testspace config url ${TESTSPACE_TOKEN}@pycontribs.testspace.com/jira/tests
+	if [ -f ${HOME}/testspace/testspace ]; then ${HOME}/testspace/testspace config url ${TESTSPACE_TOKEN}@pycontribs.testspace.com/jira/tests ; fi;
 
 testspace:
 	${HOME}/testspace/testspace publish build/results.xml
@@ -62,7 +62,7 @@ flake8: venv
 
 test: prepare flake8
 	@echo "INFO:	test"
-	$(PYENV_HOME)/bin/python setup.py build test build_sphinx upload_docs sdist bdist_wheel check --restructuredtext --strict
+	$(PYENV_HOME)/bin/python setup.py build test build_sphinx sdist bdist_wheel check --restructuredtext --strict
 
 test-all:
 	@echo "INFO:	test-all (extended/matrix tests)"

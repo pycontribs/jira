@@ -55,7 +55,7 @@ def get_requirements(*path):
     return [str(ir.req) for ir in reqs]
 
 # class PyTest(TestCommand):
-#     user_options = [('pytest-args=', 'a', "Arguments to pass to py.test")]
+#     user_options = [('pytest-args=', 'a', "Arguments to pass to pytest")]
 #
 #     def initialize_options(self):
 #         TestCommand.initialize_options(self)
@@ -177,6 +177,7 @@ if __name__ == '__main__':
             'all': [],
             'magic': ['filemagic>=1.6'],
             'shell': ['ipython>=0.13']},
+        zip_safe=True,
         entry_points={
             'console_scripts':
             ['jirashell = jira.jirashell:main']},

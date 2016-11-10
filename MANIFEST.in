@@ -1,2 +1,5 @@
 include LICENSE README.rst
+include requirements.txt
+include requirements-dev.txt
+include requirements-test.txt
 prune tests

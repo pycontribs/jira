@@ -9,10 +9,9 @@
 .eggs/
 .tox/
 amps-standalone
-build/
 coverage.xml
-dist/
 docs/_build
+docs/build
 encrypt-credentials.sh
 reports
 reports/
@@ -21,3 +20,5 @@ settings.py
 test-quick
 tests/settings.py
 tests/test-reports-*/*
+**/*.log
+/.python-version

@@ -3,6 +3,7 @@ import sys
 import json
 import pytest
 import getpass
+import time
 from tests import JiraTestManager
 from jira import Role, Issue, JIRA, JIRAError, Project  # noqa
 
@@ -59,6 +60,7 @@ def slug(request, cl_admin):
 
 
 def test_delete_project(cl_admin, slug):
+    time.sleep(1)
     assert cl_admin.delete_project(slug)
 
 
