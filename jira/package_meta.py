@@ -5,6 +5,13 @@ import logging
 import os
 import re
 import subprocess
+import sys
+
+if sys.version_info >= (3, 3):
+    SUBPROCESS_ERROR = subprocess.SubprocessError
+else:
+    SUBPROCESS_ERROR = subprocess.CalledProcessError
+
 
 from pkg_resources import parse_version
 
@@ -60,8 +67,7 @@ def run_but_ignore_errors(*args, **kwargs):
         try:
             return subprocess.check_output(*args, shell=True, stderr=devnull,
                                            **kwargs)
-        except (subprocess.SubprocessError,
-                OSError):
+        except (SUBPROCESS_ERROR, OSError):
             return None
         except Exception:
             logger = logging.getLogger(__name__)
