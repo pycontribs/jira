@@ -20,7 +20,7 @@ logging.getLogger('jira').addHandler(NullHandler())
 
 def raise_on_error(r, verb='???', **kwargs):
     request = kwargs.get('request', None)
-    headers = kwargs.get('headers', None)
+    # headers = kwargs.get('headers', None)
 
     if r is None:
         raise JIRAError(None, **kwargs)
@@ -81,7 +81,7 @@ class ResilientSession(Session):
 
     def __recoverable(self, response, url, request, counter=1):
         msg = response
-        if type(response) == ConnectionError:
+        if isinstance(response, ConnectionError):
             logging.warning("Got ConnectionError [%s] errno:%s on %s %s\n%s\%s" % (
                 response, response.errno, request, url, vars(response), response.__dict__))
         if hasattr(response, 'status_code'):

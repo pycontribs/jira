@@ -32,7 +32,8 @@ git pull
         #exit 1
     fi
 
-git log --date=short --pretty=format:"%cd %s" > CHANGELOG
+# Use the gitchangelog tool to re-generate automated changelog
+gitchangelog > CHANGELOG
 
 if [ -z ${CI+x} ]; then
     echo "WARN: Please don't run this as a user. This generates a new release for PyPI. Press ^C to exit or Enter to continue."
@@ -48,12 +49,12 @@ git tag -fa -a RELEASE -m "Current RELEASE"
 
 NEW_VERSION="${VERSION%.*}.$((${VERSION##*.}+1))"
 set -ex
-sed -i.bak "s/${VERSION}/${NEW_VERSION}/" jira/version.py
+sed -i.bak "s/${VERSION}/${NEW_VERSION}/" setup.py
 
 git commit -m "Auto-increasing the version number after a release."
 
 # disables because this is done only by Travis CI from now, which calls this script after that.
-#python setup.py register sdist bdist_wheel build_sphinx upload_docs upload --sign
+#python setup.py register sdist bdist_wheel build_sphinx upload --sign
 
 git push --force origin --tags
 

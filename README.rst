@@ -16,6 +16,9 @@ JIRA Python Library
 
 ------------
 
+.. image:: https://readthedocs.org/projects/jira/badge/?version=latest
+        :target: http://jira.readthedocs.org/en/latest/?badge=latest
+
 .. image:: https://api.travis-ci.org/pycontribs/jira.svg?branch=master
         :target: https://travis-ci.org/pycontribs/jira
 
@@ -30,6 +33,11 @@ JIRA Python Library
 
 .. image:: https://img.shields.io/bountysource/team/pycontribs/activity.svg
         :target: https://www.bountysource.com/teams/pycontribs/issues?tracker_ids=3650997
+
+.. image:: https://requires.io/github/pycontribs/jira/requirements.svg?branch=master
+        :target: https://requires.io/github/pycontribs/jira/requirements/?branch=master
+        :alt: Requirements Status
+
 
 This library eases the use of the JIRA REST API from Python and it has been used in production for years.
 

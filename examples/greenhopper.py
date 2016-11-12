@@ -1,7 +1,5 @@
 # This script shows how to use the client in anonymous mode
 # against jira.atlassian.com.
-from six import print_ as print
-
 from jira.client import GreenHopper
 
 # By default, the client will connect to a JIRA instance started from the Atlassian Plugin SDK
@@ -9,8 +7,7 @@ from jira.client import GreenHopper
 # Override this with the options parameter.
 # GreenHopper is a plugin in a JIRA instance
 options = {
-    'server': 'https://jira.atlassian.com'
-}
+    'server': 'https://jira.atlassian.com'}
 gh = GreenHopper(options)
 
 # Get all boards viewable by anonymous users.

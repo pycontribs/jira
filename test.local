@@ -14,6 +14,5 @@ if [ "$1" = "--tox" ] ; then
     shift
     exec tox "$@"
 else
-    exec python -m py.test --cov-report xml --cov jira --pyargs jira "$@"
+    exec python -m pytest --cov-report xml --cov jira --pyargs jira "$@"
 fi
-

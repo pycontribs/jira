@@ -1,8 +1,11 @@
-requests>=2.6.0
-requests-oauthlib>=0.3.3
-requests-kerberos
-tlslite>=0.4.4
-six>=1.9.0
-setuptools>=0.8.0
+# The order of packages is significant, because pip processes them in the order
+# of appearance. Changing the order has an impact on the overall integration
+# process, which may cause wedges in the gate later.
+
+ordereddict; python_version < '3.1'
+argparse; python_version < '3.2'
+requests-oauthlib>=0.6.1
+requests>=2.10.0
 requests_toolbelt
-ordereddict
+setuptools>=20.10.1
+six>=1.10.0

@@ -1,14 +1,13 @@
 # This script shows how to use the client in anonymous mode
 # against jira.atlassian.com.
-
+import re
 from jira import JIRA
 
 # By default, the client will connect to a JIRA instance started from the Atlassian Plugin SDK
 # (see https://developer.atlassian.com/display/DOCS/Installing+the+Atlassian+Plugin+SDK for details).
 # Override this with the options parameter.
 options = {
-    'server': 'https://jira.atlassian.com'
-}
+    'server': 'https://jira.atlassian.com'}
 jira = JIRA(options)
 
 # Get all projects viewable by anonymous users.
@@ -21,7 +20,6 @@ keys = sorted([project.key for project in projects])[2:5]
 issue = jira.issue('JRA-1330')
 
 # Find all comments made by Atlassians on this issue.
-import re
 atl_comments = [comment for comment in issue.fields.comment.comments
                 if re.search(r'@atlassian.com$', comment.author.emailAddress)]
 
@@ -31,6 +29,9 @@ jira.add_comment(issue, 'Comment text')
 # Change the issue's summary and description.
 issue.update(
     summary="I'm different!", description='Changed the summary to be different.')
+
+# Change the issue without sending updates
+issue.update(notify=False, description='Quiet summary update.')
 
 # You can update the entire labels field like this
 issue.update(labels=['AAA', 'BBB'])
@@ -45,5 +46,5 @@ issue.delete()
 
 # Linking a remote jira issue (needs applinks to be configured to work)
 issue = jira.issue('JRA-1330')
-issue2 = jira2.issue('XX-23')
+issue2 = jira.issue('XX-23')  # could also be another instance
 jira.add_remote_link(issue, issue2)

@@ -1,34 +1,18 @@
 #!/usr/bin/env python
-import logging
+# import codecs
 import os
-import re
 import sys
-import subprocess
 import warnings
-import codecs
 
-from setuptools import setup, find_packages, Command
-from setuptools.command.test import test as TestCommand
+from pip.req import parse_requirements
+from setuptools import find_packages, setup
 
 NAME = "jira"
 
-try:
-    git_version = subprocess.check_output(["git", "describe"]).decode().rstrip()
-    # 1.0.5-1-g06d6b50
-    last_version, increment, changeset = git_version.split('-')
-    version = last_version.split('.')
-    version[-1] = str(int(version[-1])+1)
-    __version__ = "%sdev%s+%s" % (".".join(version), increment, changeset)
+base_path = os.path.dirname(__file__)
+if base_path not in sys.path:
+    sys.path.insert(0, base_path)
 
-except Exception as e:
-    print(e)
-    
-    # Get the version - do not use normal import because it does break coverage
-    base_path = os.path.dirname(__file__)
-    fp = open(os.path.join(base_path, NAME, 'version.py'))
-    __version__ = re.compile(r".*__version__ = '(.*?)'",
-                             re.S).match(fp.read()).group(1)
-    fp.close()
 
 # this should help getting annoying warnings from inside distutils
 warnings.simplefilter('ignore', UserWarning)
@@ -37,171 +21,186 @@ warnings.simplefilter('ignore', UserWarning)
 def _is_ordereddict_needed():
     """ Check if `ordereddict` package really needed """
     try:
-        from collections import OrderedDict
         return False
     except ImportError:
         pass
     return True
 
 
-class PyTest(TestCommand):
-    user_options = [('pytest-args=', 'a', "Arguments to pass to py.test")]
+def get_metadata(*path):
+    fn = os.path.join(base_path, *path)
+    scope = {'__file__': fn}
 
-    def initialize_options(self):
-        TestCommand.initialize_options(self)
-        self.pytest_args = []
+    # We do an exec here to prevent importing any requirements of this package.
+    # Which are imported from anything imported in the __init__ of the package
+    # This still supports dynamic versioning
+    with open(fn) as fo:
+        code = compile(fo.read(), fn, 'exec')
+        exec(code, scope)
 
-        logging.basicConfig(format='%(levelname)-10s %(message)s')
-        logging.getLogger("jira").setLevel(logging.INFO)
+    if 'setup_metadata' in scope:
+        return scope['setup_metadata']
 
-        # if we have pytest-cache module we enable the test failures first mode
-        try:
-            import pytest_cache
-            self.pytest_args.append("--ff")
-        except ImportError:
-            pass
-        self.pytest_args.append("-s")
-
-        if sys.stdout.isatty():
-            # when run manually we enable fail fast
-            self.pytest_args.append("--maxfail=1")
-        try:
-            import coveralls
-            self.pytest_args.append("--cov=%s" % NAME)
-            self.pytest_args.extend(["--cov-report", "term"])
-            self.pytest_args.extend(["--cov-report", "xml"])
-
-        except ImportError:
-            pass
-
-    def finalize_options(self):
-        TestCommand.finalize_options(self)
-        self.test_args = []
-        self.test_suite = True
-
-    def run_tests(self):
-        # before running tests we need to run autopep8
-        try:
-            r = subprocess.check_call(
-                "python -m autopep8 -r --in-place jira/ tests/ examples/",
-                shell=True)
-        except subprocess.CalledProcessError:
-            logging.warning('autopep8 is not installed so '
-                        'it will not be run')
-        # import here, cause outside the eggs aren't loaded
-        import pytest
-        errno = pytest.main(self.pytest_args)
-        sys.exit(errno)
+    raise RuntimeError('Unable to find metadata.')
 
 
-class Release(Command):
-    user_options = []
-
-    def initialize_options(self):
-        # Command.initialize_options(self)
-        pass
-
-    def finalize_options(self):
-        # Command.finalize_options(self)
-        pass
-
-    def run(self):
-        import json
-        try:
-            from urllib.request import urlopen
-        except ImportError:
-            from urllib2 import urlopen
-        response = urlopen(
-            "http://pypi.python.org/pypi/%s/json" % NAME)
-        data = json.load(codecs.getreader("utf-8")(response))
-        released_version = data['info']['version']
-        if released_version == __version__:
-            raise RuntimeError(
-                "This version was already released, remove it from PyPi if you want to release it again or increase the version number. http://pypi.python.org/pypi/%s/" % NAME)
-        elif released_version > __version__:
-            raise RuntimeError("Cannot release a version (%s) smaller than the PyPI current release (%s)." % (
-                __version__, released_version))
+def read(fname):
+    with open(os.path.join(base_path, fname)) as f:
+        return f.read()
 
 
-class PreRelease(Command):
-    user_options = []
+def get_requirements(*path):
+    req_path = os.path.join(*path)
+    reqs = parse_requirements(req_path, session=False)
+    return [str(ir.req) for ir in reqs]
 
-    def initialize_options(self):
-        # Command.initialize_options(self)
-        pass
+# class PyTest(TestCommand):
+#     user_options = [('pytest-args=', 'a', "Arguments to pass to pytest")]
+#
+#     def initialize_options(self):
+#         TestCommand.initialize_options(self)
+#         self.pytest_args = []
+#
+#         logging.basicConfig(format='%(levelname)-10s %(message)s')
+#         logging.getLogger("jira").setLevel(logging.INFO)
+#
+#         # if we have pytest-cache module we enable the test failures first mode
+#         try:
+#             import pytest_cache  # noqa
+#             self.pytest_args.append("--ff")
+#         except ImportError:
+#             pass
+#
+#         if sys.stdout.isatty():
+#             # when run manually we enable fail fast
+#             self.pytest_args.append("--maxfail=1")
+#         try:
+#             import coveralls  # noqa
+#             self.pytest_args.append("--cov=%s" % NAME)
+#             self.pytest_args.extend(["--cov-report", "term"])
+#             self.pytest_args.extend(["--cov-report", "xml"])
+#
+#         except ImportError:
+#             pass
+#
+#     def finalize_options(self):
+#         TestCommand.finalize_options(self)
+#         self.test_args = []
+#         self.test_suite = True
+#
+#     def run_tests(self):
+#         # before running tests we need to run autopep8
+#         try:
+#             saved_argv = sys.argv
+#             sys.argv = "-r --in-place jira/ tests/ examples/".split(" ")
+#             runpy.run_module('autopep8')
+#             sys.argv = saved_argv  # restore sys.argv
+#         except subprocess.CalledProcessError:
+#             logging.warning('autopep8 is not installed so '
+#                             'it will not be run')
+#         # import here, cause outside the eggs aren't loaded
+#         import pytest
+#         errno = pytest.main(self.pytest_args)
+#         sys.exit(errno)
 
-    def finalize_options(self):
-        # Command.finalize_options(self)
-        pass
 
-    def run(self):
-        import json
-        try:
-            from urllib.request import urlopen
-        except ImportError:
-            from urllib2 import urlopen
-        response = urlopen(
-            "http://pypi.python.org/pypi/%s/json" % NAME)
-        data = json.load(codecs.getreader("utf-8")(response))
-        released_version = data['info']['version']
-        if released_version >= __version__:
-            raise RuntimeError(
-                "Current version of the package is equal or lower than the already published ones (PyPi). Increse version to be able to pass prerelease stage.")
+# class Release(Command):
+#     user_options = []
+#
+#     def initialize_options(self):
+#         # Command.initialize_options(self)
+#         pass
+#
+#     def finalize_options(self):
+#         # Command.finalize_options(self)
+#         pass
+#
+#     def run(self):
+#         import json
+#         try:
+#             from urllib.request import urlopen
+#         except ImportError:
+#             from urllib2 import urlopen
+#         response = urlopen(
+#             "https://pypi.python.org/pypi/%s/json" % NAME)
+#         data = json.load(codecs.getreader("utf-8")(response))
+#         released_version = data['info']['version']
+#         if released_version == __version__:
+#             raise RuntimeError(
+#                 "This version was already released, remove it from PyPi if you want "
+#                 "to release it again or increase the version number. https://pypi.python.org/pypi/%s/" % NAME)
+#         elif released_version > __version__:
+#             raise RuntimeError("Cannot release a version (%s) smaller than the PyPI current release (%s)." % (
+#                 __version__, released_version))
+#
+#
+# class PreRelease(Command):
+#     user_options = []
+#
+#     def initialize_options(self):
+#         # Command.initialize_options(self)
+#         pass
+#
+#     def finalize_options(self):
+#         # Command.finalize_options(self)
+#         pass
+#
+#     def run(self):
+#         import json
+#         try:
+#             from urllib.request import urlopen
+#         except ImportError:
+#             from urllib2 import urlopen
+#         response = urlopen(
+#             "https://pypi.python.org/pypi/%s/json" % NAME)
+#         data = json.load(codecs.getreader("utf-8")(response))
+#         released_version = data['info']['version']
+#         if released_version >= __version__:
+#             raise RuntimeError(
+#                 "Current version of the package is equal or lower than the "
+#                 "already published ones (PyPi). Increse version to be able to pass prerelease stage.")
 
+if __name__ == '__main__':
+    with open("README.rst") as f:
+        readme = f.read()
 
-setup(
-    name=NAME,
-    version=__version__,
-    cmdclass={'test': PyTest, 'release': Release, 'prerelease': PreRelease},
-    packages=find_packages(exclude=['tests', 'tools']),
-    include_package_data=True,
+    setup(
+        name=NAME,
+        # cmdclass={'release': Release, 'prerelease': PreRelease},
+        packages=find_packages(exclude=['tests', 'tools']),
+        include_package_data=True,
 
-    install_requires=['requests>=2.6.0',
-                      'requests_oauthlib>=0.3.3',
-                      'tlslite>=0.4.4',
-                      'six>=1.9.0',
-                      'requests_toolbelt'] + (['ordereddict'] if _is_ordereddict_needed() else []),
-    tests_require=['pytest', 'tlslite>=0.4.4', 'requests>=2.6.0',
-                   'setuptools', 'pep8', 'autopep8', 'sphinx', 'sphinx_rtd_theme', 'six>=1.9.0',
-                   'pytest-cov', 'pytest-pep8', 'pytest-instafail',
-                   'pytest-xdist',
-                   ],
-    extras_require={
-        'magic': ['filemagic>=1.6'],
-        'shell': ['ipython>=0.13'],
-    },
-    entry_points={
-        'console_scripts':
-        ['jirashell = jira.jirashell:main'],
-    },
+        install_requires=get_requirements(base_path, 'requirements.txt'),
+        setup_requires=['pytest-runner'],
+        tests_require=get_requirements(base_path, 'requirements-dev.txt'),
+        extras_require={
+            'all': [],
+            'magic': ['filemagic>=1.6'],
+            'shell': ['ipython>=0.13']},
+        zip_safe=True,
+        entry_points={
+            'console_scripts':
+            ['jirashell = jira.jirashell:main']},
 
-    license='BSD',
-    description='Python library for interacting with JIRA via REST APIs.',
-    long_description=open("README.rst").read(),
-    maintainer='Sorin Sbarnea',
-    maintainer_email='sorin.sbarnea@gmail.com',
-    author='Ben Speakmon',
-    author_email='ben.speakmon@gmail.com',
-    provides=[NAME],
-    url='https://github.com/pycontribs/jira',
-    bugtrack_url='https://github.com/pycontribs/jira/issues',
-    home_page='https://github.com/pycontribs/jira',
-    keywords='jira atlassian rest api',
+        long_description=readme,
+        provides=[NAME],
+        bugtrack_url='https://github.com/pycontribs/jira/issues',
+        home_page='https://github.com/pycontribs/jira',
+        keywords='jira atlassian rest api',
 
-    classifiers=[
-        'Development Status :: 5 - Production/Stable',
-        'Environment :: Other Environment',
-        'Intended Audience :: Developers',
-        'License :: OSI Approved :: BSD License',
-        'Operating System :: OS Independent',
-        'Programming Language :: Python :: 2.6',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python',
-        'Topic :: Internet :: WWW/HTTP',
-        'Topic :: Software Development :: Libraries :: Python Modules',
-    ],
-)
+        classifiers=[
+            'Development Status :: 5 - Production/Stable',
+            'Environment :: Other Environment',
+            'Intended Audience :: Developers',
+            'License :: OSI Approved :: BSD License',
+            'Operating System :: OS Independent',
+            'Programming Language :: Python :: 2.7',
+            'Programming Language :: Python :: 3',
+            'Programming Language :: Python :: 3.4',
+            'Programming Language :: Python :: 3.5',
+            'Programming Language :: Python',
+            'Topic :: Internet :: WWW/HTTP',
+            'Topic :: Software Development :: Libraries :: Python Modules'],
+        # All metadata including version numbering is in here
+        **get_metadata(base_path, NAME, 'package_meta.py')
+    )

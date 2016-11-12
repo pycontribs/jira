@@ -1,51 +1,110 @@
-.PHONY: clean install uninstall install_testrig tox test travis flake8 pypi docs web tag release
-clean:
-	find . -name "*.pyc" -delete
+all: info clean flake8 test docs upload release
+.PHONY: all docs upload info req
 
-install:
-	python setup.py install
+PACKAGE_NAME := $(shell python setup.py --name)
+PACKAGE_VERSION := $(shell python setup.py --version)
+PYTHON_PATH := $(shell which python)
+PLATFORM := $(shell uname -s | awk '{print tolower($0)}')
+DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+PYTHON_VERSION := $(shell python3 -c "import sys; print('py%s%s' % sys.version_info[0:2] + ('-conda' if 'conda' in sys.version or 'Continuum' in sys.version else ''))")
+PYENV_HOME := $(DIR)/.tox/$(PYTHON_VERSION)-$(PLATFORM)/
+ifneq (,$(findstring conda,$(PYTHON_VERSION)))
+CONDA:=1
+endif
+
+ifndef GIT_BRANCH
+GIT_BRANCH=$(shell git branch | sed -n '/\* /s///p')
+endif
+
+info:
+	@echo "INFO:	Building $(PACKAGE_NAME):$(PACKAGE_VERSION) on $(GIT_BRANCH) branch"
+	@echo "INFO:	Python $(PYTHON_VERSION) from $(PYENV_HOME) [$(CONDA)]"
+
+clean:
+	@find . -name "*.pyc" -delete
+
+package:
+	python setup.py sdist bdist_wheel build_sphinx
+
+req:
+	@$(PYENV_HOME)/bin/requires.io update-site -t ac3bbcca32ae03237a6aae2b02eb9411045489bb -r $(PACKAGE_NAME)
+
+install: prepare
+	$(PYENV_HOME)/bin/python setup.py install
 
 uninstall:
-	pip uninstall blackhole
+	$(PYENV_HOME)/bin/pip uninstall -y $(PACKAGE_NAME)
 
-install_testrig:
-	pip install --user nose mock
+venv: $(PYENV_HOME)/bin/activate
 
-tox:
-	pip install --user tox detox
-	detox
+# virtual environment depends on requriements files
+$(PYENV_HOME)/bin/activate: requirements*.txt
+	@echo "INFO:	(Re)creating virtual environment..."
+ifdef CONDA
+	test -e $(PYENV_HOME)/bin/activate || conda create -y --prefix $(PYENV_HOME) pip
+else
+	test -e $(PYENV_HOME)/bin/activate || virtualenv --python=$(PYTHON_PATH) --system-site-packages $(PYENV_HOME)
+endif
+	$(PYENV_HOME)/bin/pip install -q -r requirements.txt -r requirements-opt.txt -r requirements-dev.txt
+	touch $(PYENV_HOME)/bin/activate
 
-test: install_testrig
-	nosetests
+prepare: venv
+	@echo "INFO:	=== Prearing to run for package:$(PACKAGE_NAME) platform:$(PLATFORM) py:$(PYTHON_VERSION) dir:$(DIR) ==="
+	if [ -f ${HOME}/testspace/testspace ]; then ${HOME}/testspace/testspace config url ${TESTSPACE_TOKEN}@pycontribs.testspace.com/jira/tests ; fi;
 
-flake8:
-	pip install flake8
-	flake8 blackhole --ignore="F403"
+testspace:
+	${HOME}/testspace/testspace publish build/results.xml
 
-pypi:
-	python setup.py check --restructuredtext --strict
-	#python setup.py sdist upload
-	#python2.6 setup.py bdist_wheel upload
-	python2.7 setup.py bdist_wheel upload
-	#python3.4 setup.py bdist_wheel upload
+flake8: venv
+	@echo "INFO:	flake8"
+	$(PYENV_HOME)/bin/python -m flake8
+	$(PYENV_HOME)/bin/python -m flake8 --install-hook 2>/dev/null || true
 
-pypitest:
-	python setup.py check --restructuredtext --strict
-	python2.7 setup.py bdist_wheel upload
+test: prepare flake8
+	@echo "INFO:	test"
+	$(PYENV_HOME)/bin/python setup.py build test build_sphinx sdist bdist_wheel check --restructuredtext --strict
+
+test-all:
+	@echo "INFO:	test-all (extended/matrix tests)"
+	# tox should not run inside virtualenv because it does create and use multiple virtualenvs
+	pip install -q tox tox-pyenv
+	python -m tox --skip-missing-interpreters true
+
 
 docs:
-	pip install sphinx
-	sphinx-build -b html docs/ docs/build/
-
-web: docs
-	rsync -e "ssh -p 2222" -P -rvz --delete docs/build/ kura@blackhole.io:/var/www/blackhole.io/
+	@echo "INFO:	Building the docs"
+	$(PYENV_HOME)/bin/pip install sphinx
+	$(PYENV_HOME)/bin/python setup.py build_sphinx
+	@mkdir -p docs/build/docset
+	@mkdir -p docs/build/html/docset
+	@DOC2DASH_OPTS=$(shell [ -d "$HOME/Library/Application Support/doc2dash/DocSets" ] && echo '--add-to-global')
+	doc2dash --force --name jira docs/build/html --destination docs/build/docset --icon docs/_static/python-32.png --online-redirect-url https://jira.readthedocs.io/en/stable/ $(DOC2DASH_OPTS)
+	cd docs/build/docset && tar --exclude='.DS_Store' -czf ../html/docset/jira.tgz jira.docset
+	# TODO: publish the docs
 
 tag:
-	bumpversion minor
+	bumpversion --feature --no-input
 	git push origin master
 	git push --tags
 
-release:
+release: req
+ifeq ($(GIT_BRANCH),master)
 	tag
-	pypi
+else
+	upload
 	web
+
+	@echo "INFO:	Skipping release on this branch."
+endif
+
+upload:
+ifeq ($(GIT_BRANCH),develop)
+	@echo "INFO:	Upload package to testpypi.python.org"
+	$(PYENV_HOME)/bin/python setup.py check --restructuredtext --strict
+	$(PYENV_HOME)/bin/python setup.py sdist bdist_wheel upload -r https://testpypi.python.org/pypi
+endif
+ifeq ($(GIT_BRANCH),master)
+	@echo "INFO:	Upload package to pypi.python.org"
+	$(PYENV_HOME)/bin/python setup.py check --restructuredtext --strict
+	$(PYENV_HOME)/bin/python setup.py sdist bdist_wheel upload
+endif

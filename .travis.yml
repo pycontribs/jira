@@ -1,73 +1,107 @@
 language: python
 sudo: false
+matrix:
+  fast_finish: false
 os:
 - linux
 python:
-- '2.6'
 - '2.7'
-- '3.3'
 - '3.4'
 - '3.5'
 install:
-- pip -q install -r requirements.txt
-- pip -q install -r requirements-dev.txt
-- pip -q install ipython || echo "optional skipped"
-- pip -q install pytest-cache || echo "optional skipped"
-- pip -q install unittest2 || echo "optional skipped"
-- pip -q install ordereddict || echo "optional skipped"
-- pip -q install coveralls
+- pip --version
+- pip -q --log dist/pip.log install --upgrade pip setuptools py
+- pip --version
+- pip -q --log dist/pip.log install ipython || echo "optional skipped"
+- pip -q --log dist/pip.log install pytest-cache || echo "optional skipped"
+- pip -q --log dist/pip.log install -r requirements.txt -r requirements-dev.txt
+- pwd
 script:
-- curl --silent -Lo travis_after_all.py https://raw.github.com/pycontribs/travis_after_all/master/travis_after_all.py && travis_wait python setup.py test
-- export PACKAGE_VERSION=$(python -c "from jira.version import __version__; print(__version__)")
+- travis_wait python setup.py test
+- export PACKAGE_NAME=$(python setup.py --name)
+- export PACKAGE_VERSION=$(python setup.py --version)
 after_success:
-  - python travis_after_all.py
-  - export $(cat .to_export_back)
-  - |
-      if [ "$BUILD_LEADER" = "YES" ]; then
-        if [ "$BUILD_AGGREGATE_STATUS" = "others_succeeded" ]; then
-          echo "All jobs succeeded! PUBLISHING..."
-        else
-          echo "Some jobs failed"
-        fi
-      fi
-  - coveralls
-  - travis_wait python setup.py prerelease
-  - python setup.py build_sphinx upload_docs sdist bdist_wheel
+- python travis_after_all.py
+- export $(cat .to_export_back)
+- |
+  if [ "$BUILD_LEADER" = "YES" ]; then
+    if [ "$BUILD_AGGREGATE_STATUS" = "others_succeeded" ]; then
+      echo "All jobs succeeded! PUBLISHING..."
+    else
+      echo "Some jobs failed"
+    fi
+  fi
+- coveralls
+- travis_wait python setup.py prerelease
+- requires.io update-site -t ac3bbcca32ae03237a6aae2b02eb9411045489bb -r
+- make test
 after_failure:
-  - python travis_after_all.py
-  - export $(cat .to_export_back)
-  - |
-      if [ "$BUILD_LEADER" = "YES" ]; then
-        if [ "$BUILD_AGGREGATE_STATUS" = "others_failed" ]; then
-          echo "All jobs failed"
-        else
-          echo "Some jobs failed"
-        fi
-      fi
+- python travis_after_all.py
+- export $(cat .to_export_back)
+- |
+  if [ "$BUILD_LEADER" = "YES" ]; then
+    if [ "$BUILD_AGGREGATE_STATUS" = "others_failed" ]; then
+      echo "All jobs failed"
+    else
+      echo "Some jobs failed"
+    fi
+  fi
 after_script:
-  - echo leader=$BUILD_LEADER status=$BUILD_AGGREGATE_STATUS
+- echo leader=$BUILD_LEADER status=$BUILD_AGGREGATE_STATUS
 branches:
   only:
   - master
+  - develop
 notifications:
-  hipchat: 7d72ba6ba0bf07248f17e0a6a1a899@DevOps
+  email:
+  - pycontribs@googlegroups.com
+  - sorin.sbarnea@gmail.com
 before_deploy:
-  - echo "before deploy..."
+- echo "before deploy..."
 deploy:
-  - provider: releases
-    api_key:
-      - secure: "gr9iOcQjdoAyUAim6FWKzJI9MBaJo9XKfGQGu7wdPXUFhg80Rp6GLJsowP+aU94NjXM1UQlVHDAy627WtjBlLH2SvmVEIIr7+UKBopBYuXG5jJ1m3wOZE+4f1Pqe9bqFc1DxgucqE8qF0sC24fIbNM2ToeyYrxrS6RoL2gRrX2I="
-    file: "dist/jira-$PACKAGE_VERSION.tar.gz"
-    skip_cleanup: true
-    on:
-      condition: "$BUILD_LEADER = YES"
-  - provider: pypi
-    user: sorin
-    password:
-      secure: "E0cjANF7SLBdYrsnWLK8X/xWznqkF0JrP/DVfDazPzUYH6ynFeneyofzNJQPLTLsqe1eKXhuUJ/Sbl+RHFB0ySo/j/7NfYd/9pm8hpUkGCvR09IwtvMLgWKp3k10NWab03o2GOkSJSrLvZofyZBGR40wwu2O9uXPCb2rvucCGbw="
-    distributions: "sdist bdist_wheel"
-    on:
-      condition: "$BUILD_LEADER = YES"
+- provider: releases
+  api_key:
+    secure: gr9iOcQjdoAyUAim6FWKzJI9MBaJo9XKfGQGu7wdPXUFhg80Rp6GLJsowP+aU94NjXM1UQlVHDAy627WtjBlLH2SvmVEIIr7+UKBopBYuXG5jJ1m3wOZE+4f1Pqe9bqFc1DxgucqE8qF0sC24fIbNM2ToeyYrxrS6RoL2gRrX2I=
+  file:
+  - dist/$PACKAGE_NAME-$PACKAGE_VERSION*
+  - dist/CHANGELOG.md
+  skip_cleanup: true
+  on:
+    tags: false
+    condition: "$BUILD_LEADER = YES"
+- provider: pypi
+  user: sorin
+  password:
+    secure: E0cjANF7SLBdYrsnWLK8X/xWznqkF0JrP/DVfDazPzUYH6ynFeneyofzNJQPLTLsqe1eKXhuUJ/Sbl+RHFB0ySo/j/7NfYd/9pm8hpUkGCvR09IwtvMLgWKp3k10NWab03o2GOkSJSrLvZofyZBGR40wwu2O9uXPCb2rvucCGbw=
+  distributions: sdist bdist_wheel
+  skip_cleanup: true
+  on:
+    tags: false
+    condition: "$BUILD_LEADER = YES"
+    branch: master
+- provider: pypi
+  server: https://testpypi.python.org/pypi
+  user: sorins
+  password:
+    secure: E0cjANF7SLBdYrsnWLK8X/xWznqkF0JrP/DVfDazPzUYH6ynFeneyofzNJQPLTLsqe1eKXhuUJ/Sbl+RHFB0ySo/j/7NfYd/9pm8hpUkGCvR09IwtvMLgWKp3k10NWab03o2GOkSJSrLvZofyZBGR40wwu2O9uXPCb2rvucCGbw=
+  distributions: sdist bdist_wheel
+  skip_cleanup: true
+  on:
+    tags: false
+    condition: "$BUILD_LEADER = YES"
+    branch: develop
 after_deploy:
-  - echo "Now we only have to increase the version number, tag the changset and push..."
-  - ./release.sh
+- echo "Now we only have tag the changeset and push..."
+- git tag $PACKAGE_VERSION -a -m "Generated tag from TravisCI for build $TRAVIS_BUILD_NUMBER on $TRAVIS_BRANCH branch."
+- git push -q https://$TAGPERM@github.com/pycontribs/$PACKAGE_NAME $PACKAGE_VERSION
+addons:
+  artifacts:
+    debug: true
+    paths:
+    - dist/*
+    target_paths: $PACKAGE_NAME/$TRAVIS_BRANCH/$TRAVIS_BUILD_NUMBER-$TRAVIS_PYTHON_VERSION
+    working_dir: $TRAVIS_BUILD_DIR
+env:
+  global:
+  - secure: fuXwQL+KHQ96XkAFl2uQc8eK8dAjrgkup46tck/UGjVpdv1PT/yHmBKrvpFjDa50ueGbtBwTdKAwhyAmYuiZCk2IYHzdvBylCZBBji2FSpaTM59CVwgkVT6tx3HHO83X0mEX6ih9TJvZD5XhX+YUjopnseRXRq3ey3JZJXWN4RM=
+  - secure: "pGQGM5YmHvOgaKihOyzb3k6bdqLQnZQ2OXO9QrfXlXwtop3zvZQi80Q+01l230x2psDWlwvqWTknAjAt1w463fYXPwpoSvKVCsLSSbjrf2l56nrDqnoir+n0CBy288+eIdaGEfzcxDiuULeKjlg08zrqjcjLjW0bDbBrlTXsb5U="

@@ -1,18 +1,29 @@
-Sphinx>=1.3
+# The order of packages is significant, because pip processes them in the order
+# of appearance. Changing the order has an impact on the overall integration
+# process, which may cause wedges in the gate later.
+
+py >= 1.4
+
+MarkupSafe>=0.23
 autopep8>=1.2.1
+coveralls>=1.1
+docutils>=0.12
+flake8-docstrings
+flake8>=3.0.3
 oauthlib
-coveralls
-pep8>=1.6.2
-pytest>=2.6.0
-pytest-cov
-pytest-pep8
+pep8>=1.7.0
 pytest-cache
-pytest-xdist
+pytest-cov
 pytest-instafail
-requests_oauthlib>=0.3.3
-tox
-wheel
-xmlrunner>=1.7.5
-yanc
-docutils
-MarkupSafe
+pytest-pep8>=1.0.6
+pytest-xdist>=1.14
+pytest>=2.9.1
+requires.io
+sphinx>=1.4.1
+sphinx_rtd_theme
+tox>=2.3.1
+tox-pyenv
+wheel>=0.24.0
+xmlrunner>=1.7.7
+yanc>=0.3.3
+unittest2; python_version < '3.1'
