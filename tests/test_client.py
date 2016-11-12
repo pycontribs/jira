@@ -1,10 +1,10 @@
-import re
-import sys
+import getpass
 import json
 import pytest
-import getpass
-import time
+import re
+import sys
 from tests import JiraTestManager
+import time
 from jira import Role, Issue, JIRA, JIRAError, Project  # noqa
 
 import jira.client
@@ -61,7 +61,11 @@ def slug(request, cl_admin):
 
 def test_delete_project(cl_admin, slug):
     time.sleep(1)
-    assert cl_admin.delete_project(slug)
+    try:
+        assert cl_admin.delete_project(slug)
+    except Exception as e:
+        e.message += " slug=%s" % slug
+        raise
 
 
 def test_delete_inexistant_project(cl_admin):

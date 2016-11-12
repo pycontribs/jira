@@ -11,10 +11,10 @@ import os
 import sys
 try:
     import configparser
-except:
+except ImportError:
     from six.moves import configparser
 
-from .client import JIRA
+from jira.client import JIRA
 
 
 def get_jira(profile=None, url="http://localhost:2990", username="admin", password="admin", appid=None, autofix=False, verify=True):

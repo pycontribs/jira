@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-import threading
 import json
+import threading
+
 from jira.resilientsession import raise_on_error
 
 

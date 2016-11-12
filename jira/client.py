@@ -17,10 +17,11 @@ import mimetypes
 
 import collections
 import copy
+import json
+import logging
 import os
 import re
 import tempfile
-import logging
 try:  # Python 2.7+
     from logging import NullHandler
 except ImportError:
@@ -28,31 +29,34 @@ except ImportError:
 
         def emit(self, record):
             pass
-import json
-import warnings
-import sys
-import datetime
-import time
-import xml.etree.ElementTree as etree
 import calendar
+import datetime
 import hashlib
 from numbers import Number
 import requests
+import sys
+import time
+import warnings
 
-# noinspection PyUnresolvedReferences
-from six.moves.urllib.parse import urlparse
-from six import iteritems
 from requests.utils import get_netrc_auth
+from six import iteritems
+from six.moves.urllib.parse import urlparse
 # JIRA specific resources
-from .resources import Resource, Issue, Comment, Project, Attachment, Component, Dashboard, Filter, Votes, Watchers, \
-    Worklog, IssueLink, IssueLinkType, IssueType, Priority, Version, Role, Resolution, SecurityLevel, Status, User, \
-    CustomFieldOption, RemoteLink
+from jira.resources import *  # NOQA
+import xml.etree.ElementTree as etree
+
 # GreenHopper specific resources
-from .resources import GreenHopperResource, Board, Sprint
-from .resilientsession import ResilientSession, raise_on_error
-from . import __version__
-from .utils import threaded_requests, json_loads, CaseInsensitiveDict
-from .exceptions import JIRAError
+from jira.exceptions import JIRAError
+from jira.resilientsession import raise_on_error
+from jira.resilientsession import ResilientSession
+from jira.resources import Board
+from jira.resources import GreenHopperResource
+from jira.resources import Sprint
+
+from jira import __version__
+from jira.utils import CaseInsensitiveDict
+from jira.utils import json_loads
+from jira.utils import threaded_requests
 from pkg_resources import parse_version
 
 try:
@@ -61,7 +65,9 @@ except ImportError:
     # noinspection PyUnresolvedReferences
     from ordereddict import OrderedDict
 
-from six import string_types, integer_types
+from six import integer_types
+from six import string_types
+
 # six.moves does not play well with pyinstaller, see https://github.com/pycontribs/jira/issues/38
 # from six.moves import html_parser
 if sys.version_info < (3, 0, 0):
@@ -71,7 +77,7 @@ else:
 try:
     # noinspection PyUnresolvedReferences
     from requests_toolbelt import MultipartEncoder
-except:
+except ImportError:
     pass
 
 try:
@@ -134,7 +140,7 @@ class ResultList(list):
         self.total = _total
 
 
-class QshGenerator:
+class QshGenerator(object):
 
     def __init__(self, context_path):
         self.context_path = context_path
@@ -184,7 +190,7 @@ class JIRA(object):
 
     checked_version = False
 
-    # TODO: remove these two variables and use the ones defined in resources
+    # TODO(ssbarnea): remove these two variables and use the ones defined in resources
     JIRA_BASE_URL = Resource.JIRA_BASE_URL
     AGILE_BASE_URL = GreenHopperResource.AGILE_BASE_URL
 
@@ -313,7 +319,6 @@ class JIRA(object):
             self._check_update_()
             JIRA.checked_version = True
 
-        # TODO: check if this works with non-admin accounts
         self._fields = {}
         for f in self.fields():
             if 'clauseNames' in f:
@@ -349,7 +354,6 @@ class JIRA(object):
                     pass
 
     def _check_for_html_error(self, content):
-        # TODO: Make it return errors when content is a webpage with errors
         # JIRA has the bad habbit of returning errors in pages with 200 and
         # embedding the error in a huge webpage.
         if '<!-- SecurityTokenMissing -->' in content:
@@ -545,7 +549,6 @@ class JIRA(object):
             logging.warning(
                 "%s was not opened in 'rb' mode, attaching file may fail." % attachment.name)
 
-        # TODO: Support attaching multiple files at once?
         url = self._get_url('issue/' + str(issue) + '/attachments')
 
         fname = filename
@@ -1169,7 +1172,6 @@ class JIRA(object):
 
     @translate_resource_args
     def transition_issue(self, issue, transition, fields=None, comment=None, **fieldargs):
-        # TODO: Support update verbs (same as issue.update())
         """
         Perform a transition on an issue.
 
@@ -1188,7 +1190,7 @@ class JIRA(object):
 
         try:
             transitionId = int(transition)
-        except:
+        except Exception:
             # cannot cast to int, so try to find transitionId by name
             transitionId = self.find_transitionid_by_name(issue, transition)
             if transitionId is None:
@@ -1346,7 +1348,7 @@ class JIRA(object):
                               'active': False
                               }
             data['updateAuthor'] = data['author']
-        # TODO: report bug to Atlassian: author and updateAuthor parameters are
+        # report bug to Atlassian: author and updateAuthor parameters are
         # ignored.
         url = self._get_url('issue/{0}/worklog'.format(issue))
         r = self._session.post(url, params=params, data=json.dumps(data))
@@ -1652,7 +1654,7 @@ class JIRA(object):
         """
         roles_dict = self._get_json('project/' + project + '/role')
         return roles_dict
-        # TODO: return on a list of Roles()
+        # TODO(ssbarnea): return a list of Roles()
 
     @translate_resource_args
     def project_role(self, project, id):
@@ -1700,7 +1702,6 @@ class JIRA(object):
         :param json_result: JSON response will be returned when this parameter is set to True.
                 Otherwise, ResultList will be returned.
         """
-        # TODO what to do about the expand, which isn't related to the issues?
         if fields is None:
             fields = []
 
@@ -2107,8 +2108,8 @@ class JIRA(object):
     def _create_oauth_session(self, oauth):
         verify = self._options['verify']
 
-        from requests_oauthlib import OAuth1
         from oauthlib.oauth1 import SIGNATURE_RSA
+        from requests_oauthlib import OAuth1
 
         oauth = OAuth1(
             oauth['consumer_key'],
@@ -2123,7 +2124,8 @@ class JIRA(object):
     def _create_kerberos_session(self):
         verify = self._options['verify']
 
-        from requests_kerberos import HTTPKerberosAuth, OPTIONAL
+        from requests_kerberos import HTTPKerberosAuth
+        from requests_kerberos import OPTIONAL
 
         self._session = ResilientSession()
         self._session.verify = verify
@@ -2264,7 +2266,7 @@ class JIRA(object):
             merge = "true"
             try:
                 self.user(new_user)
-            except:
+            except Exception:
                 merge = "false"
 
             url = self._options['server'] + '/secure/admin/groovy/CannedScriptRunner.jspa#result'
@@ -2442,7 +2444,7 @@ class JIRA(object):
         # This is weird.  I used to get xml, but now I'm getting json
         try:
             return json.loads(r.text)
-        except:
+        except Exception:
             progress = {}
             try:
                 root = etree.fromstring(r.text)
@@ -2484,7 +2486,7 @@ class JIRA(object):
             with open(local_file, 'wb') as file:
                 try:
                     resp = self._session.get(url, headers=self._options['headers'], stream=True)
-                except:
+                except Exception:
                     raise JIRAError()
                 if not resp.ok:
                     logging.error("Something went wrong with download: %s" % resp.text)
@@ -2659,7 +2661,7 @@ class JIRA(object):
         '''
         if not fullname:
             fullname = username
-        # TODO: default the directoryID to the first directory in jira instead
+        # TODO(ssbarnea): default the directoryID to the first directory in jira instead
         # of 1 which is the internal one.
         url = self._options['server'] + '/rest/api/latest/user'
 
@@ -2857,7 +2859,7 @@ class JIRA(object):
         :param board_id: the board retrieving issues from
         :param sprint_id: the sprint retieving issues from
         """
-        # TODO need a better way to provide all the info from the sprintreport
+        # We need a better way to provide all the info from the sprintreport
         # incompletedIssues went to backlog but not it not completed
         # issueKeysAddedDuringSprint used to mark some with a * ?
         # puntedIssues are for scope change?
@@ -2926,7 +2928,7 @@ class JIRA(object):
         return self._get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id),
                               base=self.AGILE_BASE_URL)['contents']['puntedIssuesEstimateSum']['value']
 
-    # TODO: remove sprint_info() method, sprint() method suit the convention more
+    # TODO(ssbarnea): remove sprint_info() method, sprint() method suit the convention more
     def sprint_info(self, board_id, sprint_id):
         """
         Return the information about a sprint.
@@ -2943,9 +2945,9 @@ class JIRA(object):
         sprint.find(id)
         return sprint
 
-    # TODO: remove this as we do have Board.delete()
+    # TODO(ssbarnea): remove this as we do have Board.delete()
     def delete_board(self, id):
-        """ Deletes an agile board. """
+        """Deletes an agile board. """
         board = Board(self._options, self._session, raw={'id': id})
         board.delete()
 
@@ -3078,7 +3080,7 @@ class JIRA(object):
         :param ignore_epics: ignore any issues listed in ``issue_keys`` that are epics
         """
         if self._options['agile_rest_path'] != GreenHopperResource.GREENHOPPER_REST_PATH:
-            # TODO: simulate functionality using issue.update()?
+            # TODO(ssbarnea): simulate functionality using issue.update()?
             raise NotImplementedError('JIRA Agile Public API does not support this request')
 
         data = {}
@@ -3089,7 +3091,7 @@ class JIRA(object):
         return self._session.put(
             url, data=json.dumps(data))
 
-    # TODO: Both GreenHopper and new JIRA Agile API support moving more than one issue.
+    # TODO(ssbarnea): Both GreenHopper and new JIRA Agile API support moving more than one issue.
     def rank(self, issue, next_issue):
         """
         Rank an issue before another using the default Ranking field, the one named 'Rank'.

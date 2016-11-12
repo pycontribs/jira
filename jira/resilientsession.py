@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from requests import Session
-from requests.exceptions import ConnectionError
+import json
 import logging
 try:  # Python 2.7+
     from logging import NullHandler
@@ -11,9 +10,11 @@ except ImportError:
         def emit(self, record):
             pass
 import random
+from requests.exceptions import ConnectionError
+from requests import Session
 import time
-import json
-from .exceptions import JIRAError
+
+from jira.exceptions import JIRAError
 
 logging.getLogger('jira').addHandler(NullHandler())
 

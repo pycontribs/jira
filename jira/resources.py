@@ -5,9 +5,34 @@ from __future__ import print_function
 This module implements the Resource classes that translate JSON from JIRA REST resources
 into usable objects.
 """
+__all__ = (
+    'Resource',
+    'Issue',
+    'Comment',
+    'Project',
+    'Attachment',
+    'Component',
+    'Dashboard',
+    'Filter',
+    'Votes',
+    'Watchers',
+    'Worklog',
+    'IssueLink',
+    'IssueLinkType',
+    'IssueType',
+    'Priority',
+    'Version',
+    'Role',
+    'Resolution',
+    'SecurityLevel',
+    'Status',
+    'User',
+    'CustomFieldOption',
+    'RemoteLink'
+)
 
-import re
 import logging
+import re
 try:  # Python 2.7+
     from logging import NullHandler
 except ImportError:
@@ -17,9 +42,13 @@ except ImportError:
             pass
 import json
 
-from six import iteritems, string_types, text_type
+from six import iteritems
+from six import string_types
+from six import text_type
 
-from .utils import threaded_requests, json_loads, CaseInsensitiveDict
+from jira.utils import CaseInsensitiveDict
+from jira.utils import json_loads
+from jira.utils import threaded_requests
 
 logging.getLogger('jira').addHandler(NullHandler())
 
@@ -376,7 +405,7 @@ class Filter(Resource):
 class Issue(Resource):
     """A JIRA issue."""
 
-    class _IssueFields:
+    class _IssueFields(object):
 
         def __init__(self):
             self.attachment = None
@@ -493,7 +522,6 @@ class Comment(Resource):
             self._parse_raw(raw)
 
     def update(self, fields=None, async=None, jira=None, body='', visibility=None):
-        # TODO: fix the Resource.update() override mess
         data = {}
         if body:
             data['body'] = body

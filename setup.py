@@ -5,7 +5,8 @@ import sys
 import warnings
 
 from pip.req import parse_requirements
-from setuptools import find_packages, setup
+from setuptools import find_packages
+from setuptools import setup
 
 NAME = "jira"
 
@@ -19,7 +20,7 @@ warnings.simplefilter('ignore', UserWarning)
 
 
 def _is_ordereddict_needed():
-    """ Check if `ordereddict` package really needed """
+    """Check if `ordereddict` package really needed """
     try:
         return False
     except ImportError:
