@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""JIRA utils used internally."""
 from __future__ import unicode_literals
 import json
 import threading
@@ -7,9 +8,7 @@ from jira.resilientsession import raise_on_error
 
 
 class CaseInsensitiveDict(dict):
-
-    """
-    A case-insensitive ``dict``-like object.
+    """A case-insensitive ``dict``-like object.
 
     Implements all methods and operations of
     ``collections.MutableMapping`` as well as dict's ``copy``. Also
@@ -29,7 +28,7 @@ class CaseInsensitiveDict(dict):
     For example, ``headers['content-encoding']`` will return the
     value of a ``'Content-Encoding'`` response header, regardless
     of how the header name was originally stored.
-C
+
     If the constructor, ``.update``, or equality comparison
     operations are given keys that have equal ``.lower()``s, the
     behavior is undefined.
@@ -48,6 +47,7 @@ C
         # self.itemlist[key.lower()] = value
 
     def __setitem__(self, key, value):
+        """Overwrite [] implementation."""
         super(CaseInsensitiveDict, self).__setitem__(key.lower(), value)
 
     # def __iter__(self):

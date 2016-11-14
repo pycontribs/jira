@@ -18,8 +18,7 @@ from jira.client import JIRA
 
 
 def get_jira(profile=None, url="http://localhost:2990", username="admin", password="admin", appid=None, autofix=False, verify=True):
-    """
-    Returns a JIRA object by loading the connection details from the `config.ini` file.
+    """Return a JIRA object by loading the connection details from the `config.ini` file.
 
     :param profile: The name of the section from config.ini file that stores server config url/username/password
     :param url: URL of the Jira server
@@ -47,11 +46,10 @@ def get_jira(profile=None, url="http://localhost:2990", username="admin", passwo
         appid=...
         verify=...
 
-
     """
     def findfile(path):
-        """
-        Find the file named path in the sys.path.
+        """Find the file named path in the sys.path.
+
         Returns the full path name if found, None if not found
         """
         paths = ['.', os.path.expanduser('~')]

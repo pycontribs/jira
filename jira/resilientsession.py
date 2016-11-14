@@ -66,9 +66,7 @@ def raise_on_error(r, verb='???', **kwargs):
 
 
 class ResilientSession(Session):
-
-    """
-    This class is supposed to retry requests that do return temporary errors.
+    """This class is supposed to retry requests that do return temporary errors.
 
     At this moment it supports: 502, 503, 504
     """

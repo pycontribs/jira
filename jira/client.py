@@ -43,7 +43,6 @@ from six import iteritems
 from six.moves.urllib.parse import urlparse
 # JIRA specific resources
 from jira.resources import *  # NOQA
-import xml.etree.ElementTree as etree
 
 # GreenHopper specific resources
 from jira.exceptions import JIRAError
@@ -97,10 +96,7 @@ logging.getLogger('jira').addHandler(NullHandler())
 
 
 def translate_resource_args(func):
-    """
-    Decorator that converts Issue and Project resources to their keys when used as arguments.
-    """
-
+    """Decorator that converts Issue and Project resources to their keys when used as arguments."""
     @wraps(func)
     def wrapper(*args, **kwargs):
         arg_list = []
@@ -156,8 +152,7 @@ class QshGenerator(object):
 
 
 class JIRA(object):
-    """
-    User interface to JIRA.
+    """User interface to JIRA.
 
     Clients interact with JIRA by constructing an instance of this object and calling its methods. For addressable
     resources in JIRA -- those with "self" links -- an appropriate subclass of :py:class:`Resource` will be returned
@@ -196,8 +191,7 @@ class JIRA(object):
 
     def __init__(self, server=None, options=None, basic_auth=None, oauth=None, jwt=None, kerberos=False,
                  validate=False, get_server_info=True, async=False, logging=True, max_retries=3, proxies=None):
-        """
-        Construct a JIRA client instance.
+        """Construct a JIRA client instance.
 
         Without any arguments, this client will connect anonymously to the JIRA instance
         started by the Atlassian Plugin SDK from one of the 'atlas-run', ``atlas-debug``,
@@ -326,7 +320,7 @@ class JIRA(object):
                     self._fields[name] = f['id']
 
     def _check_update_(self):
-        # check if the current version of the library is outdated
+        """Check if the current version of the library is outdated."""
         try:
             data = requests.get("https://pypi.python.org/pypi/jira/json", timeout=2.001).json()
 
@@ -341,6 +335,7 @@ class JIRA(object):
             logging.warning(e)
 
     def __del__(self):
+        """Destructor for JIRA instance."""
         session = getattr(self, "_session", None)
         if session is not None:
             if self.sys_version_info < (3, 4, 0):  # workaround for https://github.com/kennethreitz/requests/issues/2303
@@ -363,8 +358,7 @@ class JIRA(object):
         return True
 
     def _fetch_pages(self, item_type, items_key, request_path, startAt=0, maxResults=50, params=None, base=JIRA_BASE_URL):
-        """
-        Fetches
+        """Fetch pages.
 
         :param item_type: Type of single item. ResultList of such items will be returned.
         :param items_key: Path to the items in JSON returned from server.
@@ -378,7 +372,6 @@ class JIRA(object):
         :param base: base URL
         :return: ResultList
         """
-
         page_params = params.copy() if params else {}
         if startAt:
             page_params['startAt'] = startAt
@@ -412,8 +405,12 @@ class JIRA(object):
                     page_params['startAt'] = page_start
                     page_params['maxResults'] = page_size
                     resource = self._get_json(request_path, params=page_params, base=base)
-                    next_items_page = [item_type(self._options, self._session, raw_issue_json) for raw_issue_json in
-                                       (resource[items_key] if items_key else resource)]
+                    try:
+                        next_items_page = [item_type(self._options, self._session, raw_issue_json) for raw_issue_json in
+                                           (resource[items_key] if items_key else resource)]
+                    except KeyError as e:
+                        e.message += " : " + json.dumps(resource)
+                        raise
                     items.extend(next_items_page)
                     page_start += page_size
 
@@ -431,8 +428,7 @@ class JIRA(object):
     # Universal resource loading
 
     def find(self, resource_format, ids=None):
-        """
-        Get a Resource object for any addressable resource on the server.
+        """Find Resource object for any addressable resource on the server.
 
         This method is a universal resource locator for any RESTful resource in JIRA. The
         argument ``resource_format`` is a string of the form ``resource``, ``resource/{0}``,
@@ -455,8 +451,7 @@ class JIRA(object):
         return resource
 
     def async_do(self, size=10):
-        """
-        This will execute all async jobs and wait for them to finish. By default it will run on 10 threads.
+        """Execute all async jobs and wait for them to finish. By default it will run on 10 threads.
 
         :param size: number of threads to run on.
         """
@@ -469,8 +464,7 @@ class JIRA(object):
 
     # non-resource
     def application_properties(self, key=None):
-        """
-        Return the mutable server application properties.
+        """Return the mutable server application properties.
 
         :param key: the single property to return a value for
         """
@@ -480,8 +474,7 @@ class JIRA(object):
         return self._get_json('application-properties', params=params)
 
     def set_application_property(self, key, value):
-        """
-        Set the application property.
+        """Set the application property.
 
         :param key: key of the property to set
         :param value: value to assign to the property
@@ -495,12 +488,10 @@ class JIRA(object):
             url, data=json.dumps(payload))
 
     def applicationlinks(self, cached=True):
-        """
-        List of application links
+        """List of application links.
 
         :return: json
         """
-
         # if cached, return the last result
         if cached and hasattr(self, '_applicationlinks'):
             return self._applicationlinks
@@ -530,8 +521,7 @@ class JIRA(object):
 
     @translate_resource_args
     def add_attachment(self, issue, attachment, filename=None):
-        """
-        Attach an attachment to an issue and returns a Resource for it.
+        """Attach an attachment to an issue and returns a Resource for it.
 
         The client will *not* attempt to open or validate the attachment; it expects a file-like object to be ready
         for its use. The user is still responsible for tidying up (e.g., closing the file, killing the socket, etc.)
@@ -584,8 +574,7 @@ class JIRA(object):
     # Components
 
     def component(self, id):
-        """
-        Get a component Resource from the server.
+        """Get a component Resource from the server.
 
         :param id: ID of the component to get
         """
@@ -594,8 +583,7 @@ class JIRA(object):
     @translate_resource_args
     def create_component(self, name, project, description=None, leadUserName=None, assigneeType=None,
                          isAssigneeTypeValid=False):
-        """
-        Create a component inside a project and return a Resource for it.
+        """Create a component inside a project and return a Resource for it.
 
         :param name: name of the component
         :param project: key of the project to create the component in
@@ -623,8 +611,7 @@ class JIRA(object):
         return component
 
     def component_count_related_issues(self, id):
-        """
-        Get the count of related issues for a component.
+        """Get the count of related issues for a component.
 
         :type id: integer
         :param id: ID of the component to use
@@ -634,8 +621,7 @@ class JIRA(object):
     # Custom field options
 
     def custom_field_option(self, id):
-        """
-        Get a custom field option Resource from the server.
+        """Get a custom field option Resource from the server.
 
         :param id: ID of the custom field to use
         """
@@ -644,8 +630,7 @@ class JIRA(object):
     # Dashboards
 
     def dashboards(self, filter=None, startAt=0, maxResults=20):
-        """
-        Return a ResultList of Dashboard resources and a ``total`` count.
+        """Return a ResultList of Dashboard resources and a ``total`` count.
 
         :param filter: either "favourite" or "my", the type of dashboards to return
         :param startAt: index of the first dashboard to return
@@ -660,8 +645,7 @@ class JIRA(object):
         return self._fetch_pages(Dashboard, 'dashboards', 'dashboard', startAt, maxResults, params)
 
     def dashboard(self, id):
-        """
-        Get a dashboard Resource from the server.
+        """Get a dashboard Resource from the server.
 
         :param id: ID of the dashboard to get.
         """
@@ -677,8 +661,7 @@ class JIRA(object):
     # Filters
 
     def filter(self, id):
-        """
-        Get a filter Resource from the server.
+        """Get a filter Resource from the server.
 
         :param id: ID of the filter to get.
         """
@@ -693,8 +676,7 @@ class JIRA(object):
 
     def create_filter(self, name=None, description=None,
                       jql=None, favourite=None):
-        """
-        Create a new filter and return a filter Resource for it.
+        """Create a new filter and return a filter Resource for it.
 
         :param name: name of the new filter
         :param description: useful human readable description of the new filter
@@ -721,8 +703,7 @@ class JIRA(object):
     def update_filter(self, filter_id,
                       name=None, description=None,
                       jql=None, favourite=None):
-        """
-        Updates a filter and return a filter Resource for it.
+        """Update a filter and return a filter Resource for it.
 
         :param name: name of the new filter
         :param description: useful human readable description of the new filter
@@ -748,8 +729,7 @@ class JIRA(object):
 
     # non-resource
     def groups(self, query=None, exclude=None, maxResults=9999):
-        """
-        Return a list of groups matching the specified criteria.
+        """Return a list of groups matching the specified criteria.
 
         :param query: filter groups by name with this string
         :param exclude: filter out groups by name with this string
@@ -768,9 +748,7 @@ class JIRA(object):
         return sorted(groups)
 
     def group_members(self, group):
-        """
-        Return a hash or users with their information. Requires JIRA 6.0 or will raise NotImplemented.
-        """
+        """Return a hash or users with their information. Requires JIRA 6.0 or will raise NotImplemented."""
         if self._version < (6, 0, 0):
             raise NotImplementedError(
                 "Group members is not implemented in JIRA before version 6.0, upgrade the instance, if possible.")
@@ -796,12 +774,11 @@ class JIRA(object):
         return result
 
     def add_group(self, groupname):
-        '''
-        Creates a new group in JIRA.
+        """Create a new group in JIRA.
 
         :param groupname: The name of the group you wish to create.
         :return: Boolean - True if succesfull.
-        '''
+        """
         url = self._options['server'] + '/rest/api/latest/group'
 
         # implementation based on
@@ -818,13 +795,11 @@ class JIRA(object):
         return True
 
     def remove_group(self, groupname):
-        '''
-        Deletes a group from the JIRA instance.
+        """Delete a group from the JIRA instance.
 
         :param groupname: The group to be deleted from the JIRA instance.
         :return: Boolean. Returns True on success.
-        '''
-
+        """
         # implementation based on
         # https://docs.atlassian.com/jira/REST/ondemand/#d2e5173
         url = self._options['server'] + '/rest/api/latest/group'
@@ -835,14 +810,12 @@ class JIRA(object):
     # Issues
 
     def issue(self, id, fields=None, expand=None):
-        """
-        Get an issue Resource from the server.
+        """Get an issue Resource from the server.
 
         :param id: ID or key of the issue to get
         :param fields: comma-separated string of issue fields to include in the results
         :param expand: extra information to fetch inside each resource
         """
-
         # this allows us to pass Issue objects to issue()
         if isinstance(id, Issue):
             return id
@@ -858,8 +831,7 @@ class JIRA(object):
         return issue
 
     def create_issue(self, fields=None, prefetch=True, **fieldargs):
-        """
-        Create a new issue and return an issue Resource for it.
+        """Create a new issue and return an issue Resource for it.
 
         Each keyword argument (other than the predefined ones) is treated as a field name and the argument's value
         is treated as the intended value for that field -- if the fields argument is used, all other keyword arguments
@@ -872,10 +844,10 @@ class JIRA(object):
         fields in a new issue. This information is available through the 'createmeta' method. Further examples are
         available here: https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Create+Issue
 
-        :param fields: a dict containing field names and the values to use. If present, all other keyword arguments\
-        will be ignored
-        :param prefetch: whether to reload the created issue Resource so that all of its data is present in the value\
-        returned from this method
+        :param fields: a dict containing field names and the values to use. If present, all other keyword arguments
+            will be ignored
+        :param prefetch: whether to reload the created issue Resource so that all of its data is present in the value
+            returned from this method
         """
         data = {}
         if fields is not None:
@@ -909,18 +881,22 @@ class JIRA(object):
             return Issue(self._options, self._session, raw=raw_issue_json)
 
     def createmeta(self, projectKeys=None, projectIds=[], issuetypeIds=None, issuetypeNames=None, expand=None):
-        """
-        Gets the metadata required to create issues, optionally filtered by projects and issue types.
+        """Get the metadata required to create issues, optionally filtered by projects and issue types.
 
-        :param projectKeys: keys of the projects to filter the results with. Can be a single value or a comma-delimited\
-        string. May be combined with projectIds.
-        :param projectIds: IDs of the projects to filter the results with. Can be a single value or a comma-delimited\
-        string. May be combined with projectKeys.
-        :param issuetypeIds: IDs of the issue types to filter the results with. Can be a single value or a\
-        comma-delimited string. May be combined with issuetypeNames.
-        :param issuetypeNames: Names of the issue types to filter the results with. Can be a single value or a\
-        comma-delimited string. May be combined with issuetypeIds.
+        :param projectKeys: keys of the projects to filter the results with.
+            Can be a single value or a comma-delimited string. May be combined
+            with projectIds.
+        :param projectIds: IDs of the projects to filter the results with. Can
+            be a single value or a comma-delimited string. May be combined with
+            projectKeys.
+        :param issuetypeIds: IDs of the issue types to filter the results with.
+            Can be a single value or a comma-delimited string. May be combined
+            with issuetypeNames.
+        :param issuetypeNames: Names of the issue types to filter the results
+            with. Can be a single value or a comma-delimited string. May be
+            combined with issuetypeIds.
         :param expand: extra information to fetch inside each resource.
+
         """
         params = {}
         if projectKeys is not None:
@@ -940,8 +916,7 @@ class JIRA(object):
     # non-resource
     @translate_resource_args
     def assign_issue(self, issue, assignee):
-        """
-        Assign an issue to a user. None will set it to unassigned. -1 will set it to Automatic.
+        """Assign an issue to a user. None will set it to unassigned. -1 will set it to Automatic.
 
         :param issue: the issue to assign
         :param assignee: the user to assign the issue to
@@ -956,8 +931,7 @@ class JIRA(object):
 
     @translate_resource_args
     def comments(self, issue):
-        """
-        Get a list of comment Resources.
+        """Get a list of comment Resources.
 
         :param issue: the issue to get comments from
         """
@@ -969,8 +943,7 @@ class JIRA(object):
 
     @translate_resource_args
     def comment(self, issue, comment):
-        """
-        Get a comment Resource from the server for the specified ID.
+        """Get a comment Resource from the server for the specified ID.
 
         :param issue: ID or key of the issue to get the comment from
         :param comment: ID of the comment to get
@@ -979,15 +952,16 @@ class JIRA(object):
 
     @translate_resource_args
     def add_comment(self, issue, body, visibility=None):
-        """
-        Add a comment from the current authenticated user on the specified issue and return a Resource for it.
+        """Add a comment from the current authenticated user on the specified issue and return a Resource for it.
+
         The issue identifier and comment body are required.
 
         :param issue: ID or key of the issue to add the comment to
         :param body: Text of the comment to add
-        :param visibility: a dict containing two entries: "type" and "value". "type" is 'role' (or 'group' if the JIRA\
-        server has configured comment visibility for groups) and 'value' is the name of the role (or group) to which\
-        viewing of this comment will be restricted.
+        :param visibility: a dict containing two entries: "type" and "value".
+            "type" is 'role' (or 'group' if the JIRA server has configured
+            comment visibility for groups) and 'value' is the name of the role
+            (or group) to which viewing of this comment will be restricted.
         """
         data = {
             'body': body}
@@ -1004,8 +978,7 @@ class JIRA(object):
     # non-resource
     @translate_resource_args
     def editmeta(self, issue):
-        """
-        Get the edit metadata for an issue.
+        """Get the edit metadata for an issue.
 
         :param issue: the issue to get metadata for
         """
@@ -1013,8 +986,7 @@ class JIRA(object):
 
     @translate_resource_args
     def remote_links(self, issue):
-        """
-        Get a list of remote link Resources from an issue.
+        """Get a list of remote link Resources from an issue.
 
         :param issue: the issue to get remote links from
         """
@@ -1025,8 +997,7 @@ class JIRA(object):
 
     @translate_resource_args
     def remote_link(self, issue, id):
-        """
-        Get a remote link Resource from the server.
+        """Get a remote link Resource from the server.
 
         :param issue: the issue holding the remote link
         :param id: ID of the remote link
@@ -1036,9 +1007,9 @@ class JIRA(object):
     # removed the @translate_resource_args because it prevents us from finding
     # information for building a proper link
     def add_remote_link(self, issue, destination, globalId=None, application=None, relationship=None):
-        """
-        Add a remote link from an issue to an external application and returns a remote link Resource
-        for it. ``object`` should be a dict containing at least ``url`` to the linked external URL and
+        """Add a remote link from an issue to an external application and returns a remote link Resource for it.
+
+        ``object`` should be a dict containing at least ``url`` to the linked external URL and
         ``title`` to display for the link inside JIRA.
 
         For definitions of the allowable fields for ``object`` and the keyword arguments ``globalId``, ``application``
@@ -1050,7 +1021,6 @@ class JIRA(object):
         :param application: application information for the link (see the above link for details)
         :param relationship: relationship description for the link (see the above link for details)
         """
-
         try:
             applicationlinks = self.applicationlinks()
         except JIRAError as e:
@@ -1112,21 +1082,20 @@ class JIRA(object):
         return remote_link
 
     def add_simple_link(self, issue, object):
-        """
-        Add a simple remote link from an issue to web resource. This avoids
-        the admin access problems from add_remote_link by just using a simple
-        object and presuming all fields are correct and not requiring more
-        complex ``application`` data.
+        """Add a simple remote link from an issue to web resource.
+
+        This avoids the admin access problems from add_remote_link by just
+            using a simple object and presuming all fields are correct and not
+            requiring more complex ``application`` data.
 
         ``object`` should be a dict containing at least ``url`` to the
-        linked external URL and ``title`` to display for the link inside JIRA.
+            linked external URL and ``title`` to display for the link inside JIRA.
 
         For definitions of the allowable fields for ``object`` , see https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+for+Remote+Issue+Links.
 
         :param issue: the issue to add the remote link to
         :param object: the dictionary used to create remotelink data
         """
-
         data = {"object": object}
         url = self._get_url('issue/' + str(issue) + '/remotelink')
         r = self._session.post(
@@ -1139,8 +1108,7 @@ class JIRA(object):
     # non-resource
     @translate_resource_args
     def transitions(self, issue, id=None, expand=None):
-        """
-        Get a list of the transitions available on the specified issue to the current user.
+        """Get a list of the transitions available on the specified issue to the current user.
 
         :param issue: ID or key of the issue to get the transitions from
         :param id: if present, get only the transition matching this ID
@@ -1154,8 +1122,8 @@ class JIRA(object):
         return self._get_json('issue/' + str(issue) + '/transitions', params=params)['transitions']
 
     def find_transitionid_by_name(self, issue, transition_name):
-        """
-        Get a transitionid available on the specified issue to the current user.
+        """Get a transitionid available on the specified issue to the current user.
+
         Look at https://developer.atlassian.com/static/rest/jira/6.1.html#d2e1074 for json reference
 
         :param issue: ID or key of the issue to get the transitions from
@@ -1172,8 +1140,7 @@ class JIRA(object):
 
     @translate_resource_args
     def transition_issue(self, issue, transition, fields=None, comment=None, **fieldargs):
-        """
-        Perform a transition on an issue.
+        """Perform a transition on an issue.
 
         Each keyword argument (other than the predefined ones) is treated as a field name and the argument's value
         is treated as the intended value for that field -- if the fields argument is used, all other keyword arguments
@@ -1181,11 +1148,11 @@ class JIRA(object):
 
         :param issue: ID or key of the issue to perform the transition on
         :param transition: ID or name of the transition to perform
-        :param comment: *Optional* String to add as comment to the issue when performing the transition.
-        :param fields: a dict containing field names and the values to use. If present, all other keyword arguments\
-        will be ignored
+        :param comment: *Optional* String to add as comment to the issue when
+            performing the transition.
+        :param fields: a dict containing field names and the values to use.
+            If present, all other keyword arguments will be ignored
         """
-
         transitionId = None
 
         try:
@@ -1221,8 +1188,7 @@ class JIRA(object):
 
     @translate_resource_args
     def votes(self, issue):
-        """
-        Get a votes Resource from the server.
+        """Get a votes Resource from the server.
 
         :param issue: ID or key of the issue to get the votes for
         """
@@ -1230,8 +1196,7 @@ class JIRA(object):
 
     @translate_resource_args
     def add_vote(self, issue):
-        """
-        Register a vote for the current authenticated user on an issue.
+        """Register a vote for the current authenticated user on an issue.
 
         :param issue: ID or key of the issue to vote on
         """
@@ -1240,8 +1205,7 @@ class JIRA(object):
 
     @translate_resource_args
     def remove_vote(self, issue):
-        """
-        Remove the current authenticated user's vote from an issue.
+        """Remove the current authenticated user's vote from an issue.
 
         :param issue: ID or key of the issue to unvote on
         """
@@ -1250,8 +1214,7 @@ class JIRA(object):
 
     @translate_resource_args
     def watchers(self, issue):
-        """
-        Get a watchers Resource from the server for an issue.
+        """Get a watchers Resource from the server for an issue.
 
         :param issue: ID or key of the issue to get the watchers for
         """
@@ -1259,8 +1222,7 @@ class JIRA(object):
 
     @translate_resource_args
     def add_watcher(self, issue, watcher):
-        """
-        Add a user to an issue's watchers list.
+        """Add a user to an issue's watchers list.
 
         :param issue: ID or key of the issue affected
         :param watcher: username of the user to add to the watchers list
@@ -1271,8 +1233,7 @@ class JIRA(object):
 
     @translate_resource_args
     def remove_watcher(self, issue, watcher):
-        """
-        Remove a user from an issue's watch list.
+        """Remove a user from an issue's watch list.
 
         :param issue: ID or key of the issue affected
         :param watcher: username of the user to remove from the watchers list
@@ -1284,8 +1245,7 @@ class JIRA(object):
 
     @translate_resource_args
     def worklogs(self, issue):
-        """
-        Get a list of worklog Resources from the server for an issue.
+        """Get a list of worklog Resources from the server for an issue.
 
         :param issue: ID or key of the issue to get worklogs from
         """
@@ -1296,8 +1256,7 @@ class JIRA(object):
 
     @translate_resource_args
     def worklog(self, issue, id):
-        """
-        Get a specific worklog Resource from the server.
+        """Get a specific worklog Resource from the server.
 
         :param issue: ID or key of the issue to get the worklog from
         :param id: ID of the worklog to get
@@ -1307,13 +1266,12 @@ class JIRA(object):
     @translate_resource_args
     def add_worklog(self, issue, timeSpent=None, timeSpentSeconds=None, adjustEstimate=None,
                     newEstimate=None, reduceBy=None, comment=None, started=None, user=None):
-        """
-        Add a new worklog entry on an issue and return a Resource for it.
+        """Add a new worklog entry on an issue and return a Resource for it.
 
         :param issue: the issue to add the worklog to
         :param timeSpent: a worklog entry with this amount of time spent, e.g. "2d"
-        :param adjustEstimate: (optional) allows the user to provide specific instructions to update the remaining\
-        time estimate of the issue. The value can either be ``new``, ``leave``, ``manual`` or ``auto`` (default).
+        :param adjustEstimate: (optional) allows the user to provide specific instructions to update the remaining
+            time estimate of the issue. The value can either be ``new``, ``leave``, ``manual`` or ``auto`` (default).
         :param newEstimate: the new value for the remaining estimate field. e.g. "2d"
         :param reduceBy: the amount to reduce the remaining estimate by e.g. "2d"
         :param started: Moment when the work is logged, if not specified will default to now
@@ -1359,19 +1317,19 @@ class JIRA(object):
 
     @translate_resource_args
     def create_issue_link(self, type, inwardIssue, outwardIssue, comment=None):
-        """
-        Create a link between two issues.
+        """Create a link between two issues.
 
         :param type: the type of link to create
         :param inwardIssue: the issue to link from
         :param outwardIssue: the issue to link to
-        :param comment:  a comment to add to the issues with the link. Should be a dict containing ``body``\
-        and ``visibility`` fields: ``body`` being the text of the comment and ``visibility`` being a dict containing\
-        two entries: ``type`` and ``value``. ``type`` is ``role`` (or ``group`` if the JIRA server has configured\
-        comment visibility for groups) and ``value`` is the name of the role (or group) to which viewing of this\
-        comment will be restricted.
+        :param comment:  a comment to add to the issues with the link. Should be
+            a dict containing ``body`` and ``visibility`` fields: ``body`` being
+            the text of the comment and ``visibility`` being a dict containing
+            two entries: ``type`` and ``value``. ``type`` is ``role`` (or
+            ``group`` if the JIRA server has configured comment visibility for
+            groups) and ``value`` is the name of the role (or group) to which
+            viewing of this comment will be restricted.
         """
-
         # let's see if we have the right issue link 'type' and fix it if needed
         if not hasattr(self, '_cached_issuetypes'):
             self._cached_issue_link_types = self.issue_link_types()
@@ -1401,18 +1359,15 @@ class JIRA(object):
             url, data=json.dumps(data))
 
     def delete_issue_link(self, id):
-        """
-        Delete a link between two issues.
+        """Delete a link between two issues.
 
         :param id: ID of the issue link to delete
         """
-
         url = self._get_url('issueLink') + "/" + id
         return self._session.delete(url)
 
     def issue_link(self, id):
-        """
-        Get an issue link Resource from the server.
+        """Get an issue link Resource from the server.
 
         :param id: ID of the issue link to get
         """
@@ -1428,8 +1383,7 @@ class JIRA(object):
         return link_types
 
     def issue_link_type(self, id):
-        """
-        Get an issue link type Resource from the server.
+        """Get an issue link type Resource from the server.
 
         :param id: ID of the issue link type to get
         """
@@ -1445,8 +1399,7 @@ class JIRA(object):
         return issue_types
 
     def issue_type(self, id):
-        """
-        Get an issue type Resource from the server.
+        """Get an issue type Resource from the server.
 
         :param id: ID of the issue type to get
         """
@@ -1464,8 +1417,7 @@ class JIRA(object):
 
     # non-resource
     def my_permissions(self, projectKey=None, projectId=None, issueKey=None, issueId=None):
-        """
-        Get a dict of all available permissions on the server.
+        """Get a dict of all available permissions on the server.
 
         :param projectKey: limit returned permissions to the specified project
         :param projectId: limit returned permissions to the specified project
@@ -1493,8 +1445,7 @@ class JIRA(object):
         return priorities
 
     def priority(self, id):
-        """
-        Get a priority Resource from the server.
+        """Get a priority Resource from the server.
 
         :param id: ID of the priority to get
         """
@@ -1510,8 +1461,7 @@ class JIRA(object):
         return projects
 
     def project(self, id):
-        """
-        Get a project Resource from the server.
+        """Get a project Resource from the server.
 
         :param id: ID or key of the project to get
         """
@@ -1520,8 +1470,7 @@ class JIRA(object):
     # non-resource
     @translate_resource_args
     def project_avatars(self, project):
-        """
-        Get a dict of all avatars for a project visible to the current authenticated user.
+        """Get a dict of all avatars for a project visible to the current authenticated user.
 
         :param project: ID or key of the project to get avatars for
         """
@@ -1529,29 +1478,30 @@ class JIRA(object):
 
     @translate_resource_args
     def create_temp_project_avatar(self, project, filename, size, avatar_img, contentType=None, auto_confirm=False):
-        """
-        Register an image file as a project avatar. The avatar created is temporary and must be confirmed before it can
-        be used.
+        """Register an image file as a project avatar.
+
+        The avatar created is temporary and must be confirmed before it can
+            be used.
 
         Avatar images are specified by a filename, size, and file object. By default, the client will attempt to
-        autodetect the picture's content type: this mechanism relies on libmagic and will not work out of the box
-        on Windows systems (see http://filemagic.readthedocs.org/en/latest/guide.html for details on how to install
-        support). The ``contentType`` argument can be used to explicitly set the value (note that JIRA will reject any
-        type other than the well-known ones for images, e.g. ``image/jpg``, ``image/png``, etc.)
+            autodetect the picture's content type: this mechanism relies on libmagic and will not work out of the box
+            on Windows systems (see http://filemagic.readthedocs.org/en/latest/guide.html for details on how to install
+            support). The ``contentType`` argument can be used to explicitly set the value (note that JIRA will reject any
+            type other than the well-known ones for images, e.g. ``image/jpg``, ``image/png``, etc.)
 
         This method returns a dict of properties that can be used to crop a subarea of a larger image for use. This
-        dict should be saved and passed to :py:meth:`confirm_project_avatar` to finish the avatar creation process. If\
-        you want to cut out the middleman and confirm the avatar with JIRA's default cropping, pass the 'auto_confirm'\
-        argument with a truthy value and :py:meth:`confirm_project_avatar` will be called for you before this method\
-        returns.
+            dict should be saved and passed to :py:meth:`confirm_project_avatar` to finish the avatar creation process. If
+            you want to cut out the middleman and confirm the avatar with JIRA's default cropping, pass the 'auto_confirm'
+            argument with a truthy value and :py:meth:`confirm_project_avatar` will be called for you before this method
+            returns.
 
         :param project: ID or key of the project to create the avatar in
         :param filename: name of the avatar file
         :param size: size of the avatar file
         :param avatar_img: file-like object holding the avatar
         :param contentType: explicit specification for the avatar image's content-type
-        :param boolean auto_confirm: whether to automatically confirm the temporary avatar by calling\
-        :py:meth:`confirm_project_avatar` with the return value of this method.
+        :param boolean auto_confirm: whether to automatically confirm the temporary avatar by calling
+            :py:meth:`confirm_project_avatar` with the return value of this method.
         """
         size_from_file = os.path.getsize(filename)
         if size != size_from_file:
@@ -1580,8 +1530,7 @@ class JIRA(object):
 
     @translate_resource_args
     def confirm_project_avatar(self, project, cropping_properties):
-        """
-        Confirm the temporary avatar image previously uploaded with the specified cropping.
+        """Confirm the temporary avatar image previously uploaded with the specified cropping.
 
         After a successful registry with :py:meth:`create_temp_project_avatar`, use this method to confirm the avatar
         for use. The final avatar can be a subarea of the uploaded image, which is customized with the
@@ -1600,8 +1549,7 @@ class JIRA(object):
 
     @translate_resource_args
     def set_project_avatar(self, project, avatar):
-        """
-        Set a project's avatar.
+        """Set a project's avatar.
 
         :param project: ID or key of the project to set the avatar on
         :param avatar: ID of the avatar to set
@@ -1611,8 +1559,7 @@ class JIRA(object):
 
     @translate_resource_args
     def delete_project_avatar(self, project, avatar):
-        """
-        Delete a project's avatar.
+        """Delete a project's avatar.
 
         :param project: ID or key of the project to delete the avatar from
         :param avatar: ID of the avater to delete
@@ -1622,8 +1569,7 @@ class JIRA(object):
 
     @translate_resource_args
     def project_components(self, project):
-        """
-        Get a list of component Resources present on a project.
+        """Get a list of component Resources present on a project.
 
         :param project: ID or key of the project to get components from
         """
@@ -1634,8 +1580,7 @@ class JIRA(object):
 
     @translate_resource_args
     def project_versions(self, project):
-        """
-        Get a list of version Resources present on a project.
+        """Get a list of version Resources present on a project.
 
         :param project: ID or key of the project to get versions from
         """
@@ -1647,8 +1592,7 @@ class JIRA(object):
     # non-resource
     @translate_resource_args
     def project_roles(self, project):
-        """
-        Get a dict of role names to resource locations for a project.
+        """Get a dict of role names to resource locations for a project.
 
         :param project: ID or key of the project to get roles from
         """
@@ -1658,8 +1602,7 @@ class JIRA(object):
 
     @translate_resource_args
     def project_role(self, project, id):
-        """
-        Get a role Resource.
+        """Get a role Resource.
 
         :param project: ID or key of the project to get the role from
         :param id: ID of the role to get
@@ -1678,8 +1621,7 @@ class JIRA(object):
         return resolutions
 
     def resolution(self, id):
-        """
-        Get a resolution Resource from the server.
+        """Get a resolution Resource from the server.
 
         :param id: ID of the resolution to get
         """
@@ -1689,8 +1631,7 @@ class JIRA(object):
 
     def search_issues(self, jql_str, startAt=0, maxResults=50, validate_query=True, fields=None, expand=None,
                       json_result=None):
-        """
-        Get a ResultList of issue Resources matching a JQL search string.
+        """Get a ResultList of issue Resources matching a JQL search string.
 
         :param jql_str: the JQL search string to use
         :param startAt: index of the first issue to return
@@ -1741,8 +1682,7 @@ class JIRA(object):
 
     # Security levels
     def security_level(self, id):
-        """
-        Get a security level Resource.
+        """Get a security level Resource.
 
         :param id: ID of the security level to get
         """
@@ -1775,8 +1715,7 @@ class JIRA(object):
         return statuses
 
     def status(self, id):
-        """
-        Get a status Resource from the server.
+        """Get a status Resource from the server.
 
         :param id: ID of the status resource to get
         """
@@ -1785,8 +1724,7 @@ class JIRA(object):
     # Users
 
     def user(self, id, expand=None):
-        """
-        Get a user Resource from the server.
+        """Get a user Resource from the server.
 
         :param id: ID of the user to get
         :param expand: extra information to fetch inside each resource
@@ -1799,8 +1737,7 @@ class JIRA(object):
         return user
 
     def search_assignable_users_for_projects(self, username, projectKeys, startAt=0, maxResults=50):
-        """
-        Get a list of user Resources that match the search string and can be assigned issues for projects.
+        """Get a list of user Resources that match the search string and can be assigned issues for projects.
 
         :param username: a string to match usernames against
         :param projectKeys: comma-separated list of project keys to check for issue assignment permissions
@@ -1815,16 +1752,15 @@ class JIRA(object):
 
     def search_assignable_users_for_issues(self, username, project=None, issueKey=None, expand=None, startAt=0,
                                            maxResults=50):
-        """
-        Get a list of user Resources that match the search string for assigning or creating issues.
+        """Get a list of user Resources that match the search string for assigning or creating issues.
 
         This method is intended to find users that are eligible to create issues in a project or be assigned
         to an existing issue. When searching for eligible creators, specify a project. When searching for eligible
         assignees, specify an issue key.
 
         :param username: a string to match usernames against
-        :param project: filter returned users by permission in this project (expected if a result will be used to \
-        create an issue)
+        :param project: filter returned users by permission in this project (expected if a result will be used to
+            create an issue)
         :param issueKey: filter returned users by this issue (expected if a result will be used to edit this issue)
         :param expand: extra information to fetch inside each resource
         :param startAt: index of the first user to return
@@ -1843,16 +1779,16 @@ class JIRA(object):
 
     # non-resource
     def user_avatars(self, username):
-        """
-        Get a dict of avatars for the specified user.
+        """Get a dict of avatars for the specified user.
 
         :param username: the username to get avatars for
         """
         return self._get_json('user/avatars', params={'username': username})
 
     def create_temp_user_avatar(self, user, filename, size, avatar_img, contentType=None, auto_confirm=False):
-        """
-        Register an image file as a user avatar. The avatar created is temporary and must be confirmed before it can
+        """Register an image file as a user avatar.
+
+        The avatar created is temporary and must be confirmed before it can
         be used.
 
         Avatar images are specified by a filename, size, and file object. By default, the client will attempt to
@@ -1872,8 +1808,8 @@ class JIRA(object):
         :param size: size of the avatar file
         :param avatar_img: file-like object containing the avatar
         :param contentType: explicit specification for the avatar image's content-type
-        :param auto_confirm: whether to automatically confirm the temporary avatar by calling\
-        :py:meth:`confirm_user_avatar` with the return value of this method.
+        :param auto_confirm: whether to automatically confirm the temporary avatar by calling
+            :py:meth:`confirm_user_avatar` with the return value of this method.
         """
         size_from_file = os.path.getsize(filename)
         if size != size_from_file:
@@ -1905,8 +1841,7 @@ class JIRA(object):
             return cropping_properties
 
     def confirm_user_avatar(self, user, cropping_properties):
-        """
-        Confirm the temporary avatar image previously uploaded with the specified cropping.
+        """Confirm the temporary avatar image previously uploaded with the specified cropping.
 
         After a successful registry with :py:meth:`create_temp_user_avatar`, use this method to confirm the avatar for
         use. The final avatar can be a subarea of the uploaded image, which is customized with the
@@ -1924,8 +1859,7 @@ class JIRA(object):
         return json_loads(r)
 
     def set_user_avatar(self, username, avatar):
-        """
-        Set a user's avatar.
+        """Set a user's avatar.
 
         :param username: the user to set the avatar for
         :param avatar: ID of the avatar to set
@@ -1934,8 +1868,7 @@ class JIRA(object):
             {'username': username}, self._get_url('user/avatar'), avatar)
 
     def delete_user_avatar(self, username, avatar):
-        """
-        Delete a user's avatar.
+        """Delete a user's avatar.
 
         :param username: the user to delete the avatar from
         :param avatar: ID of the avatar to remove
@@ -1945,8 +1878,7 @@ class JIRA(object):
         return self._session.delete(url, params=params)
 
     def search_users(self, user, startAt=0, maxResults=50, includeActive=True, includeInactive=False):
-        """
-        Get a list of user Resources that match the specified search string.
+        """Get a list of user Resources that match the specified search string.
 
         :param user: a string to match usernames, name or email against.
         :param startAt: index of the first user to return.
@@ -1962,9 +1894,7 @@ class JIRA(object):
         return self._fetch_pages(User, None, 'user/search', startAt, maxResults, params)
 
     def search_allowed_users_for_issue(self, user, issueKey=None, projectKey=None, startAt=0, maxResults=50):
-        """
-        Get a list of user Resources that match a username string and have browse permission for the issue or
-        project.
+        """Get a list of user Resources that match a username string and have browse permission for the issue or project.
 
         :param user: a string to match usernames against.
         :param issueKey: find users with browse permission for this issue.
@@ -1986,8 +1916,7 @@ class JIRA(object):
     @translate_resource_args
     def create_version(self, name, project, description=None, releaseDate=None, startDate=None, archived=False,
                        released=False):
-        """
-        Create a version in a project and return a Resource for it.
+        """Create a version in a project and return a Resource for it.
 
         :param name: name of the version to create
         :param project: key of the project to create the version in
@@ -2015,14 +1944,14 @@ class JIRA(object):
         return version
 
     def move_version(self, id, after=None, position=None):
-        """
-        Move a version within a project's ordered version list and return a new version Resource for it. One,
-        but not both, of ``after`` and ``position`` must be specified.
+        """Move a version within a project's ordered version list and return a new version Resource for it.
+
+        One, but not both, of ``after`` and ``position`` must be specified.
 
         :param id: ID of the version to move
         :param after: the self attribute of a version to place the specified version after (that is, higher in the list)
-        :param position: the absolute position to move this version to: must be one of ``First``, ``Last``,\
-        ``Earlier``, or ``Later``
+        :param position: the absolute position to move this version to: must be one of ``First``, ``Last``,
+            ``Earlier``, or ``Later``
         """
         data = {}
         if after is not None:
@@ -2038,8 +1967,7 @@ class JIRA(object):
         return version
 
     def version(self, id, expand=None):
-        """
-        Get a version Resource.
+        """Get a version Resource.
 
         :param id: ID of the version to get
         :param expand: extra information to fetch inside each resource
@@ -2052,8 +1980,7 @@ class JIRA(object):
         return version
 
     def version_count_related_issues(self, id):
-        """
-        Get a dict of the counts of issues fixed and affected by a version.
+        """Get a dict of the counts of issues fixed and affected by a version.
 
         :param id: the version to count issues for
         """
@@ -2062,8 +1989,7 @@ class JIRA(object):
         return r_json
 
     def version_count_unresolved_issues(self, id):
-        """
-        Get the number of unresolved issues for a version.
+        """Get the number of unresolved issues for a version.
 
         :param id: ID of the version to count issues for
         """
@@ -2214,9 +2140,7 @@ class JIRA(object):
                 return None
 
     def email_user(self, user, body, title="JIRA Notification"):
-        """
-        TBD:
-        """
+        """(Obsolete) Send an email to an user via CannedScriptRunner."""
         url = self._options['server'] + \
             '/secure/admin/groovy/CannedScriptRunner.jspa'
         payload = {
@@ -2240,13 +2164,11 @@ class JIRA(object):
             f.write(r.text)
 
     def rename_user(self, old_user, new_user):
-        """
-        Rename a JIRA user. Current implementation relies on third party plugin but in the future it may use embedded JIRA functionality.
+        """Rename a JIRA user. Current implementation relies on third party plugin but in the future it may use embedded JIRA functionality.
 
         :param old_user: string with username login
         :param new_user: string with username login
         """
-
         if self._version >= (6, 0, 0):
 
             url = self._options['server'] + '/rest/api/latest/user'
@@ -2336,9 +2258,7 @@ class JIRA(object):
             return False
 
     def deactivate_user(self, username):
-        """
-        Disables/deactivates the user.
-        """
+        """Disable/deactivate the user."""
         if self.server_info().get('deploymentType') == 'Cloud':
             url = self._options['server'] + '/admin/rest/um/1/user/deactivate?username=' + username
             self._options['headers']['Content-Type'] = 'application/json'
@@ -2367,8 +2287,7 @@ class JIRA(object):
             print("Error Deactivating %s: %s" % (username, e))
 
     def reindex(self, force=False, background=True):
-        """
-        Start jira re-indexing. Returns True if reindexing is in progress or not needed, or False.
+        """Start jira re-indexing. Returns True if reindexing is in progress or not needed, or False.
 
         If you call reindex() without any parameters it will perform a backfround reindex only if JIRA thinks it should do it.
 
@@ -2406,9 +2325,7 @@ class JIRA(object):
                 return False
 
     def backup(self, filename='backup.zip', attachments=False):
-        """
-        Will call jira export to backup as zipped xml. Returning with success does not mean that the backup process finished.
-        """
+        """Will call jira export to backup as zipped xml. Returning with success does not mean that the backup process finished."""
         if self.server_info().get('deploymentType') == 'Cloud':
             url = self._options['server'] + '/rest/obm/1.0/runbackup'
             payload = json.dumps({"cbAttachments": attachments})
@@ -2428,8 +2345,8 @@ class JIRA(object):
             logging.error("I see %s", e)
 
     def backup_progress(self):
-        """
-        Returns status of cloud backup as a dict.
+        """Return status of cloud backup as a dict.
+
         Is there a way to get progress for Server version?
         """
         epoch_time = int(time.time() * 1000)
@@ -2445,6 +2362,8 @@ class JIRA(object):
         try:
             return json.loads(r.text)
         except Exception:
+            import defusedxml.ElementTree as etree
+
             progress = {}
             try:
                 root = etree.fromstring(r.text)
@@ -2456,10 +2375,7 @@ class JIRA(object):
             return progress
 
     def backup_complete(self):
-        """
-        Returns boolean based on 'alternativePercentage' and 'size' returned
-        from backup_progress (cloud only)
-        """
+        """Return boolean based on 'alternativePercentage' and 'size' returned from backup_progress (cloud only)."""
         if self.server_info().get('deploymentType') != 'Cloud':
             logging.warning(
                 'This functionality is not available in Server version')
@@ -2471,9 +2387,7 @@ class JIRA(object):
         return perc_complete >= 100 and file_size > 0
 
     def backup_download(self, filename=None):
-        """
-        Downloads backup file from WebDAV (cloud only)
-        """
+        """Download backup file from WebDAV (cloud only)."""
         if self.server_info().get('deploymentType') != 'Cloud':
             logging.warning(
                 'This functionality is not available in Server version')
@@ -2515,15 +2429,13 @@ class JIRA(object):
         return self._serverInfo['username']
 
     def delete_project(self, pid):
-        """
-        Deletes project from Jira
+        """Delete project from Jira.
 
         :param str pid:     JIRA projectID or Project or slug
         :returns bool:      True if project was deleted
         :raises JIRAError:  If project not found or not enough permissions
         :raises ValueError: If pid parameter is not Project, slug or ProjectID
         """
-
         # allows us to call it with Project objects
         if hasattr(pid, 'id'):
             pid = pid.id
@@ -2578,8 +2490,8 @@ class JIRA(object):
             url, headers=CaseInsensitiveDict({'content-type': 'application/x-www-form-urlencoded'}), data=payload)
 
     def create_project(self, key, name=None, assignee=None, type="Software", template_name=None):
-        """
-        Key is mandatory and has to match JIRA project key requirements, usually only 2-10 uppercase characters.
+        """Key is mandatory and has to match JIRA project key requirements, usually only 2-10 uppercase characters.
+
         If name is not specified it will use the key value.
         If assignee is not specified it will use current user.
         Parameter template_name is used to create a project based on one of the existing project templates.
@@ -2641,8 +2553,7 @@ class JIRA(object):
 
     def add_user(self, username, email, directoryId=1, password=None,
                  fullname=None, notify=False, active=True, ignore_existing=False):
-        '''
-        Creates a new JIRA user
+        """Create a new JIRA user.
 
         :param username: the username of the new user
         :type username: ``str``
@@ -2658,7 +2569,7 @@ class JIRA(object):
         :type notify: ``bool``
         :param active: Whether or not to make the new user active upon creation
         :type active: ``bool``
-        '''
+        """
         if not fullname:
             fullname = username
         # TODO(ssbarnea): default the directoryID to the first directory in jira instead
@@ -2688,13 +2599,12 @@ class JIRA(object):
         return True
 
     def add_user_to_group(self, username, group):
-        '''
-        Adds a user to an existing group.
+        """Add a user to an existing group.
 
         :param username: Username that will be added to specified group.
         :param group: Group that the user will be added to.
         :return: Boolean, True for success, false for failure.
-        '''
+        """
         url = self._options['server'] + '/rest/api/latest/group/user'
         x = {'groupname': group}
         y = {'name': username}
@@ -2706,12 +2616,11 @@ class JIRA(object):
         return True
 
     def remove_user_from_group(self, username, groupname):
-        '''
-        Removes a user from a group.
+        """Remove a user from a group.
 
         :param username: The user to remove from the group.
         :param groupname: The group that the user will be removed from.
-        '''
+        """
         url = self._options['server'] + '/rest/api/latest/group/user'
         x = {'groupname': groupname,
              'username': username}
@@ -2749,8 +2658,7 @@ class JIRA(object):
 
     @translate_resource_args
     def boards(self, startAt=0, maxResults=50, type=None, name=None):
-        """
-        Get a list of board resources.
+        """Get a list of board resources.
 
         :param startAt: The starting index of the returned boards. Base index: 0.
         :param maxResults: The maximum number of boards to return per page. Default: 50
@@ -2760,7 +2668,6 @@ class JIRA(object):
 
         When old GreenHopper private API is used, paging is not enabled and all parameters are ignored.
         """
-
         params = {}
         if type:
             params['type'] = type
@@ -2781,8 +2688,7 @@ class JIRA(object):
 
     @translate_resource_args
     def sprints(self, board_id, extended=False, startAt=0, maxResults=50, state=None):
-        """
-        Get a list of sprint GreenHopperResources.
+        """Get a list of sprint GreenHopperResources.
 
         :param board_id: the board to get sprints from
         :param extended: Used only by old GreenHopper API to fetch additional information like
@@ -2798,7 +2704,6 @@ class JIRA(object):
             When old GreenHopper private API is used, paging is not enabled,
             and `startAt`, `maxResults` and `state` parameters are ignored.
         """
-
         params = {}
         if state:
             if isinstance(state, string_types):
@@ -2853,8 +2758,7 @@ class JIRA(object):
         return json_loads(r)
 
     def completed_issues(self, board_id, sprint_id):
-        """
-        Return the completed issues for ``board_id`` and ``sprint_id``.
+        """Return the completed issues for ``board_id`` and ``sprint_id``.
 
         :param board_id: the board retrieving issues from
         :param sprint_id: the sprint retieving issues from
@@ -2875,9 +2779,7 @@ class JIRA(object):
         return issues
 
     def completedIssuesEstimateSum(self, board_id, sprint_id):
-        """
-        Return the total completed points this sprint.
-        """
+        """Return the total completed points this sprint."""
         if self._options['agile_rest_path'] != GreenHopperResource.GREENHOPPER_REST_PATH:
             raise NotImplementedError('JIRA Agile Public API does not support this request')
         warnings.warn('JIRA.completedIssuesEstimateSum uses deprecated API, that is going to be removed'
@@ -2887,9 +2789,7 @@ class JIRA(object):
                               base=self.AGILE_BASE_URL)['contents']['completedIssuesEstimateSum']['value']
 
     def incompleted_issues(self, board_id, sprint_id):
-        """
-        Return the completed issues for the sprint
-        """
+        """Return the completed issues for the sprint."""
         if self._options['agile_rest_path'] != GreenHopperResource.GREENHOPPER_REST_PATH:
             raise NotImplementedError('JIRA Agile Public API does not support this request')
         warnings.warn('JIRA.incompleted_issues uses deprecated API, that is going to be removed'
@@ -2904,16 +2804,12 @@ class JIRA(object):
         return issues
 
     def incompletedIssuesEstimateSum(self, board_id, sprint_id):
-        """
-        Return the total incompleted points this sprint.
-        """
+        """Return the total incompleted points this sprint."""
         return self._get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id),
                               base=self.AGILE_BASE_URL)['contents']['incompletedIssuesEstimateSum']['value']
 
     def removed_issues(self, board_id, sprint_id):
-        """
-        Return the completed issues for the sprint
-        """
+        """Return the completed issues for the sprint."""
         r_json = self._get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id),
                                 base=self.AGILE_BASE_URL)
         issues = [Issue(self._options, self._session, raw_issues_json) for raw_issues_json in
@@ -2922,16 +2818,13 @@ class JIRA(object):
         return issues
 
     def removedIssuesEstimateSum(self, board_id, sprint_id):
-        """
-        Return the total incompleted points this sprint.
-        """
+        """Return the total incompleted points this sprint."""
         return self._get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id),
                               base=self.AGILE_BASE_URL)['contents']['puntedIssuesEstimateSum']['value']
 
     # TODO(ssbarnea): remove sprint_info() method, sprint() method suit the convention more
     def sprint_info(self, board_id, sprint_id):
-        """
-        Return the information about a sprint.
+        """Return the information about a sprint.
 
         :param board_id: the board retrieving issues from. Deprecated and ignored.
         :param sprint_id: the sprint retrieving issues from
@@ -2947,13 +2840,12 @@ class JIRA(object):
 
     # TODO(ssbarnea): remove this as we do have Board.delete()
     def delete_board(self, id):
-        """Deletes an agile board. """
+        """Delete an agile board."""
         board = Board(self._options, self._session, raw={'id': id})
         board.delete()
 
     def create_board(self, name, project_ids, preset="scrum"):
-        """
-        Create a new board for the ``project_ids``.
+        """Create a new board for the ``project_ids``.
 
         :param name: name of the board
         :param project_ids: the projects to create the board in
@@ -2984,13 +2876,11 @@ class JIRA(object):
         return Board(self._options, self._session, raw=raw_issue_json)
 
     def create_sprint(self, name, board_id, startDate=None, endDate=None):
-        """
-        Create a new sprint for the ``board_id``.
+        """Create a new sprint for the ``board_id``.
 
         :param name: name of the sprint
         :param board_id: the board to add the sprint to
         """
-
         payload = {'name': name}
         if startDate:
             payload["startDate"] = startDate
@@ -3027,9 +2917,9 @@ class JIRA(object):
         return Sprint(self._options, self._session, raw=raw_issue_json)
 
     def add_issues_to_sprint(self, sprint_id, issue_keys):
-        """
-        Add the issues in ``issue_keys`` to the ``sprint_id``. The sprint must
-        be started but not completed.
+        """Add the issues in ``issue_keys`` to the ``sprint_id``.
+
+        The sprint must be started but not completed.
 
         If a sprint was completed, then have to also edit the history of the
         issue so that it was added to the sprint before it was completed,
@@ -3042,7 +2932,6 @@ class JIRA(object):
         :param sprint_id: the sprint to add issues to
         :param issue_keys: the issues to add to the sprint
         """
-
         if self._options['agile_rest_path'] == GreenHopperResource.AGILE_BASE_REST_PATH:
             url = self._get_url('sprint/%s/issue' % sprint_id, base=self.AGILE_BASE_URL)
             payload = {'issues': issue_keys}
@@ -3072,8 +2961,7 @@ class JIRA(object):
                                       self._options['agile_rest_path'])
 
     def add_issues_to_epic(self, epic_id, issue_keys, ignore_epics=True):
-        """
-        Add the issues in ``issue_keys`` to the ``epic_id``.
+        """Add the issues in ``issue_keys`` to the ``epic_id``.
 
         :param epic_id: the epic to add issues to
         :param issue_keys: the issues to add to the epic
@@ -3093,8 +2981,7 @@ class JIRA(object):
 
     # TODO(ssbarnea): Both GreenHopper and new JIRA Agile API support moving more than one issue.
     def rank(self, issue, next_issue):
-        """
-        Rank an issue before another using the default Ranking field, the one named 'Rank'.
+        """Rank an issue before another using the default Ranking field, the one named 'Rank'.
 
         :param issue: issue key of the issue to be ranked before the second one.
         :param next_issue: issue key of the second issue.
@@ -3130,13 +3017,10 @@ class JIRA(object):
                                       self._options['agile_rest_path'])
 
     def move_to_backlog(self, issue_keys):
-        """
-        Move issues in ``issue_keys`` to the backlog, removing them from all
-        sprints that have not been completed.
+        """Move issues in ``issue_keys`` to the backlog, removing them from all sprints that have not been completed.
 
         :param issue_keys: the issues to move to the backlog
         """
-
         if self._options['agile_rest_path'] == GreenHopperResource.AGILE_BASE_REST_PATH:
             url = self._get_url('backlog/issue', base=self.AGILE_BASE_URL)
             payload = {'issues': issue_keys}

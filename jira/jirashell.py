@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
-"""
-Starts an interactive JIRA session in an ipython terminal. Script arguments
-support changing the server and a persistent authentication over HTTP BASIC.
+"""Starts an interactive JIRA session in an ipython terminal.
+
+Script arguments support changing the server and a persistent authentication over HTTP BASIC.
 """
 
 try:

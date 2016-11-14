@@ -67,7 +67,7 @@ else:
 
 
 def rndstr():
-    return ''.join(random.sample(string.ascii_letters, 6))
+    return ''.join(random.sample(string.ascii_lowercase, 6))
 
 
 def rndpassword():
@@ -230,17 +230,18 @@ class JiraTestManager(object):
                 """
                 user = re.sub("[^A-Z_]", "", getpass.getuser().upper())
 
+                def hashify(some_string, max_len=8):
+                    return hashlib.md5(some_string.encode('utf-8')).hexdigest()[:8].upper()
+
                 if user == 'TRAVIS' and 'TRAVIS_JOB_NUMBER' in os.environ:
                     # please note that user underline (_) is not suppored by
                     # jira even if is documented as supported.
-                    self.jid = 'T' + hashlib.md5(user + os.environ['TRAVIS_JOB_NUMBER'])[:8]
-
-                    user + os.environ['TRAVIS_JOB_NUMBER'].replace('.', 'V')
+                    self.jid = 'T' + hashify(user + os.environ['TRAVIS_JOB_NUMBER'])
                 else:
                     identifier = user + \
                         chr(ord('A') + sys.version_info[0]) + \
                         chr(ord('A') + sys.version_info[1])
-                    self.jid = 'Z' + hashlib.md5(identifier.encode('utf-8')).hexdigest()[:8].upper()
+                    self.jid = 'Z' + hashify(identifier)
 
                 self.project_a = self.jid + 'A'  # old XSS
                 self.project_a_name = "Test user=%s key=%s A" \
@@ -1805,6 +1806,7 @@ class UserAdministrationTests(unittest.TestCase):
         result = self.jira.delete_user(self.test_username)
         assert result, True
 
+        sleep(1)  # avoiding a zombie
         x = self.jira.search_users(self.test_username)
         self.assertEqual(
             len(x), 0, "Found test user when it should have been deleted. Test Fails.")
@@ -1815,6 +1817,7 @@ class UserAdministrationTests(unittest.TestCase):
         except JIRAError:
             pass
 
+        sleep(1)  # avoid 500 errors like https://travis-ci.org/pycontribs/jira/jobs/176544578#L552
         result = self.jira.add_group(self.test_groupname)
         assert result, True
 
@@ -1826,6 +1829,7 @@ class UserAdministrationTests(unittest.TestCase):
     def test_remove_group(self):
         try:
             self.jira.add_group(self.test_groupname)
+            sleep(1)  # avoid 400: https://travis-ci.org/pycontribs/jira/jobs/176539521#L395
         except JIRAError:
             pass
 

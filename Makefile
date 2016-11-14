@@ -22,6 +22,7 @@ info:
 
 clean:
 	@find . -name "*.pyc" -delete
+	@rm -rf .tox/*-$(PLATFORM) .tox/docs dist/* .tox/dist .tox/log docs/build/*
 
 package:
 	python setup.py sdist bdist_wheel build_sphinx
@@ -30,7 +31,11 @@ req:
 	@$(PYENV_HOME)/bin/requires.io update-site -t ac3bbcca32ae03237a6aae2b02eb9411045489bb -r $(PACKAGE_NAME)
 
 install: prepare
-	$(PYENV_HOME)/bin/python setup.py install
+	$(PYENV_HOME)/bin/pip install .
+
+install-sdk:
+	# https://developer.atlassian.com/docs/getting-started/set-up-the-atlassian-plugin-sdk-and-build-a-project/install-the-atlassian-sdk-on-a-linux-or-mac-system#InstalltheAtlassianSDKonaLinuxorMacsystem-Homebrew
+	which atlas-run-standalone || brew tap atlassian/tap && brew install atlassian/tap/atlassian-plugin-sdk
 
 uninstall:
 	$(PYENV_HOME)/bin/pip uninstall -y $(PACKAGE_NAME)
@@ -63,6 +68,9 @@ flake8: venv
 test: prepare flake8
 	@echo "INFO:	test"
 	$(PYENV_HOME)/bin/python setup.py build test build_sphinx sdist bdist_wheel check --restructuredtext --strict
+
+test-cli:
+	$(PYENV_HOME)/bin/ipython -c "import jira; j = jira.JIRA('https://pycontribs.atlassian.net'); j.server_info()" -i
 
 test-all:
 	@echo "INFO:	test-all (extended/matrix tests)"

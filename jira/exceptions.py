@@ -3,8 +3,8 @@ import tempfile
 
 
 class JIRAError(Exception):
-
     """General error raised for all problems in operation of the client."""
+
     log_to_tempfile = True
     if 'TRAVIS' in os.environ:
         log_to_tempfile = False  # Travis is keeping only the console log.
@@ -24,6 +24,7 @@ class JIRAError(Exception):
             self.travis = True
 
     def __str__(self):
+        """Return a string representation of the error."""
         t = "JiraError HTTP %s" % self.status_code
         if self.url:
             t += " url: %s" % self.url
