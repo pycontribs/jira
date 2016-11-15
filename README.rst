@@ -98,7 +98,7 @@ In additions to all the contributors we would like to thank to these companies:
     :width: 100px
     :target: http://www.navicat.com/
 
-.. image:: http://www.citrix.com/content/citrix/en_us/go/pocketplan/_jcr_content/par/sectionblock_1/sectionPar/contentblock/contentPar/col_control/colPar-1/image.img.jpg/1396300197957.jpg
+.. image:: https://www.citrix.com/content/dam/citrix/en_us/images/logos/citrix/citrix-logo-black.jpg
     :width: 100px
     :target: http://www.citrix.com/
 
