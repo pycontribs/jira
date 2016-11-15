@@ -86,20 +86,16 @@ In additions to all the contributors we would like to thank to these companies:
 
 .. _virtualenv: http://www.virtualenv.org/en/latest/index.html
 
-.. image:: https://www.atlassian.com/dms/wac/images/press/Atlassian-logos/logoAtlassianPNG.png
-   :width: 100px
+.. image:: https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?container=focus&refresh=3600&resize_h=50&url=https://www.atlassian.com/dms/wac/images/press/Atlassian-logos/logoAtlassianPNG.png
    :target: http://www.atlassian.com
 
-.. image:: http://blog.jetbrains.com/pycharm/files/2015/12/PyCharm_400x400_Twitter_logo_white.png
-    :width: 100px
+.. image:: https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?container=focus&refresh=3600&resize_h=50&url=http://blog.jetbrains.com/pycharm/files/2015/12/PyCharm_400x400_Twitter_logo_white.png
     :target: http://www.jetbrains.com/
 
-.. image:: https://upload.wikimedia.org/wikipedia/en/9/90/PremiumSoft_Navicat_Premium_Logo.png
-    :width: 100px
+.. image:: https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?container=focus&refresh=3600&resize_h=50&url=https://upload.wikimedia.org/wikipedia/en/9/90/PremiumSoft_Navicat_Premium_Logo.png
     :target: http://www.navicat.com/
 
-.. image:: https://www.citrix.com/content/dam/citrix/en_us/images/logos/citrix/citrix-logo-black.jpg
-    :width: 100px
+.. image:: https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?container=focus&refresh=3600&resize_h=50&url=https://www.citrix.com/content/dam/citrix/en_us/images/logos/citrix/citrix-logo-black.jpg
     :target: http://www.citrix.com/
 
 .. _navicat: https://www.navicat.com/
