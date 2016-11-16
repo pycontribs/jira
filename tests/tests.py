@@ -258,7 +258,10 @@ class JiraTestManager(object):
                     logging.warning(e)
                     pass
                 else:
-                    self.jira_admin.delete_project(self.project_a)
+                    try:
+                        self.jira_admin.delete_project(self.project_a)
+                    except Exception as e:
+                        pass
 
                 try:
                     self.jira_admin.project(self.project_b)
@@ -266,7 +269,10 @@ class JiraTestManager(object):
                     logging.warning(e)
                     pass
                 else:
-                    self.jira_admin.delete_project(self.project_b)
+                    try:
+                        self.jira_admin.delete_project(self.project_b)
+                    except Exception as e:
+                        pass
 
                 # wait for the project to be deleted
                 for i in range(1, 20):
