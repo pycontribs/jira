@@ -2891,7 +2891,7 @@ class JIRA(object):
         if self._options['agile_rest_path'] != GreenHopperResource.GREENHOPPER_REST_PATH:
             raise NotImplementedError('JIRA Agile Public API does not support this request')
         warnings.warn('JIRA.incompleted_issues uses deprecated API, that is going to be removed'
-                      'on the 1st February 2016',
+                      ' on the 1st February 2016',
                       DeprecationWarning)
         r_json = self._get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id),
                                 base=self.AGILE_BASE_URL)
