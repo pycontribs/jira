@@ -1,22 +1,22 @@
 #!/usr/bin/env python
 from __future__ import print_function
-import os
-import re
-import sys
-import logging
 import getpass
-import random
-import string
+import hashlib
 import inspect
+import logging
+import os
 import pickle
 import platform
-import traceback
+import random
+import re
+import string
+import sys
 from time import sleep
+import traceback
 
 import py
 import pytest
 import requests
-from six import print_ as print
 from six import integer_types
 
 if platform.python_version() < '3':
@@ -54,7 +54,7 @@ try:
     with open(KEY_CERT_FILE, 'r') as cert:
         KEY_CERT_DATA = cert.read()
     OAUTH = True
-except:
+except Exception:
     pass
 
 if 'CI_JIRA_URL' in os.environ:
@@ -67,7 +67,7 @@ else:
 
 
 def rndstr():
-    return ''.join(random.sample(string.ascii_letters, 6))
+    return ''.join(random.sample(string.ascii_lowercase, 6))
 
 
 def rndpassword():
@@ -92,14 +92,14 @@ class Singleton(type):
 
 
 class JiraTestManager(object):
-    """
-    Used to instantiate and populate the JIRA instance with data used by the unit tests.
+    """Used to instantiate and populate the JIRA instance with data used by the unit tests.
 
     Attributes:
         CI_JIRA_ADMIN (str): Admin user account name.
         CI_JIRA_USER (str): Limited user account name.
         max_retries (int): number of retries to perform for recoverable HTTP errors.
     """
+
     # __metaclass__ = Singleton
 
     # __instance = None
@@ -215,19 +215,42 @@ class JiraTestManager(object):
                 # [7-8] python version A=0, B=1,..
                 # [9] A,B -- we may need more than one project
 
-                prefix = 'Z' + (re.sub("[^A-Z]", "",
-                                       getpass.getuser().upper()))[0:6] + \
-                         str(sys.version_info[0]) + \
-                         str(sys.version_info[1])
+                """ `jid` is important for avoiding concurency problems when
+                executing tests in parallel as we have only one test instance.
 
-                self.project_a = prefix + 'A'  # old XSS
+                jid lenght must be less than 9 characters because we may append
+                another one and the JIRA Project key length limit is 10.
+
+                Tests run in parallle:
+                * git branches master or developer, git pr or developers running
+                  tests outside Travis
+                * Travis is using "Travis" username
+
+                https://docs.travis-ci.com/user/environment-variables/
+                """
+                user = re.sub("[^A-Z_]", "", getpass.getuser().upper())
+
+                def hashify(some_string, max_len=8):
+                    return hashlib.md5(some_string.encode('utf-8')).hexdigest()[:8].upper()
+
+                if user == 'TRAVIS' and 'TRAVIS_JOB_NUMBER' in os.environ:
+                    # please note that user underline (_) is not suppored by
+                    # jira even if is documented as supported.
+                    self.jid = 'T' + hashify(user + os.environ['TRAVIS_JOB_NUMBER'])
+                else:
+                    identifier = user + \
+                        chr(ord('A') + sys.version_info[0]) + \
+                        chr(ord('A') + sys.version_info[1])
+                    self.jid = 'Z' + hashify(identifier)
+
+                self.project_a = self.jid + 'A'  # old XSS
                 self.project_a_name = "Test user=%s key=%s A" \
                                       % (getpass.getuser(), self.project_a)
-                self.project_b = prefix + 'B'  # old BULK
+                self.project_b = self.jid + 'B'  # old BULK
                 self.project_b_name = "Test user=%s key=%s B" \
                                       % (getpass.getuser(), self.project_b)
 
-                # TODO: fin a way to prevent SecurityTokenMissing for On Demand
+                # TODO(ssbarnea): find a way to prevent SecurityTokenMissing for On Demand
                 # https://jira.atlassian.com/browse/JRA-39153
                 try:
                     self.jira_admin.project(self.project_a)
@@ -1754,11 +1777,12 @@ class WebsudoTests(unittest.TestCase):
 class UserAdministrationTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = JiraTestManager().jira_admin
-        self.test_username = "test_%s" % JiraTestManager().project_a
+        self.test_manager = JiraTestManager()
+        self.jira = self.test_manager.jira_admin
+        self.test_username = "test_%s" % self.test_manager.project_a
         self.test_email = "%s@example.com" % self.test_username
         self.test_password = rndpassword()
-        self.test_groupname = 'testGroupFor_%s' % JiraTestManager().project_a
+        self.test_groupname = 'testGroupFor_%s' % self.test_manager.project_a
 
     def test_add_and_remove_user(self):
 
@@ -1782,6 +1806,7 @@ class UserAdministrationTests(unittest.TestCase):
         result = self.jira.delete_user(self.test_username)
         assert result, True
 
+        sleep(1)  # avoiding a zombie
         x = self.jira.search_users(self.test_username)
         self.assertEqual(
             len(x), 0, "Found test user when it should have been deleted. Test Fails.")
@@ -1792,6 +1817,7 @@ class UserAdministrationTests(unittest.TestCase):
         except JIRAError:
             pass
 
+        sleep(1)  # avoid 500 errors like https://travis-ci.org/pycontribs/jira/jobs/176544578#L552
         result = self.jira.add_group(self.test_groupname)
         assert result, True
 
@@ -1803,6 +1829,7 @@ class UserAdministrationTests(unittest.TestCase):
     def test_remove_group(self):
         try:
             self.jira.add_group(self.test_groupname)
+            sleep(1)  # avoid 400: https://travis-ci.org/pycontribs/jira/jobs/176539521#L395
         except JIRAError:
             pass
 

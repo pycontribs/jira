@@ -27,7 +27,7 @@ except ImportError:
                   kwd_mark=(object(),),
                   fasttypes=set([int, str, frozenset, type(None)]),
                   sorted=sorted, tuple=tuple, type=type, len=len):
-        'Make a cache key from optionally typed positional and keyword arguments'
+        """Make a cache key from optionally typed positional and keyword arguments."""
         key = args
         if kwds:
             sorted_items = sorted(kwds.items())
@@ -60,7 +60,6 @@ except ImportError:
 
         See:  https://en.wikipedia.org/wiki/Cache_algorithms#Least_Recently_Used
         """
-
         # Users should only access the lru_cache through its public API:
         #       cache_info, cache_clear, and f.__wrapped__
         # The internals of the lru_cache are encapsulated for thread safety and
@@ -151,12 +150,12 @@ except ImportError:
                     return result
 
             def cache_info():
-                """Report cache statistics"""
+                """Report cache statistics."""
                 with lock:
                     return _CacheInfo(stats[HITS], stats[MISSES], maxsize, len(cache))
 
             def cache_clear():
-                """Clear the cache and cache statistics"""
+                """Clear the cache and cache statistics."""
                 with lock:
                     cache.clear()
                     root = nonlocal_root[0]

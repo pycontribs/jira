@@ -16,8 +16,8 @@ JIRA Python Library
 
 ------------
 
-.. image:: https://readthedocs.org/projects/jira/badge/?version=latest
-        :target: http://jira.readthedocs.org/en/latest/?badge=latest
+.. image:: https://readthedocs.org/projects/jira/badge/?version=master
+        :target: http://jira.readthedocs.io
 
 .. image:: https://api.travis-ci.org/pycontribs/jira.svg?branch=master
         :target: https://travis-ci.org/pycontribs/jira
@@ -27,9 +27,6 @@ JIRA Python Library
 
 .. image:: https://img.shields.io/coveralls/pycontribs/jira.svg
         :target: https://coveralls.io/r/pycontribs/jira
-
-.. image:: http://api.flattr.com/button/flattr-badge-large.png
-        :target: https://flattr.com/submit/auto?user_id=sbarnea&url=https://github.com/pycontribs/jira&title=Python%20JIRA&language=&tags=github&category=software
 
 .. image:: https://img.shields.io/bountysource/team/pycontribs/activity.svg
         :target: https://www.bountysource.com/teams/pycontribs/issues?tracker_ids=3650997
