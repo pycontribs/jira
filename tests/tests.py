@@ -14,6 +14,7 @@ import sys
 from time import sleep
 import traceback
 
+from flaky import flaky
 import py
 import pytest
 import requests
@@ -468,15 +469,16 @@ class AttachmentTests(unittest.TestCase):
     @unittest.skip("TBD: investigate failure")
     def test_1_add_remove_attachment(self):
         issue = self.jira.issue(self.issue_1)
-        self.attachment = self.jira.add_attachment(issue, open(TEST_ATTACH_PATH, 'rb'),
-                                                   "new test attachment")
-        new_attachment = self.jira.attachment(self.attachment.id)
+        attachment = self.jira.add_attachment(issue,
+                                              open(TEST_ATTACH_PATH, 'rb'),
+                                              "new test attachment")
+        new_attachment = self.jira.attachment(attachment.id)
         msg = "attachment %s of issue %s" % (new_attachment.__dict__, issue)
         self.assertEqual(
             new_attachment.filename, 'new test attachment', msg=msg)
         self.assertEqual(
             new_attachment.size, os.path.getsize(TEST_ATTACH_PATH), msg=msg)
-        assert self.attachment.delete() is None
+        assert attachment.delete() is None
 
 
 class ComponentTests(unittest.TestCase):
@@ -500,7 +502,7 @@ class ComponentTests(unittest.TestCase):
         self.assertFalse(component.isAssigneeTypeValid)
         component.delete()
 
-    # COmponents field can't be modified from issue.update
+    # Components field can't be modified from issue.update
     #    def test_component_count_related_issues(self):
     #        component = self.jira.create_component('PROJECT_B_TEST',self.project_b, description='test!!',
     #                                               assigneeType='COMPONENT_LEAD', isAssigneeTypeValid=False)
@@ -522,7 +524,7 @@ class ComponentTests(unittest.TestCase):
         except Exception:
             # We ignore errors as this code intends only to prepare for
             # component creation
-            pass
+            raise
 
         name = 'component-' + rndstr()
 
@@ -1806,6 +1808,7 @@ class VersionTests(unittest.TestCase):
         self.assertEqual(version.releaseDate, '2015-03-11')
         version.delete()
 
+    @flaky
     def test_create_version_with_project_obj(self):
         project = self.jira.project(self.project_b)
         version = self.jira.create_version('new version 2', project,
@@ -1933,6 +1936,7 @@ class UserAdministrationTests(unittest.TestCase):
         self.assertEqual(
             len(x), 0, "Found test user when it should have been deleted. Test Fails.")
 
+    @flaky
     def test_add_group(self):
         try:
             self.jira.remove_group(self.test_groupname)
