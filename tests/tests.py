@@ -1241,8 +1241,10 @@ class IssueTests(unittest.TestCase):
 
         # self.jira.rank(self.issue_2, self.issue_1)
 
+        sleep(2)  # avoid https://travis-ci.org/pycontribs/jira/jobs/176561534#L516
         s.delete()
 
+        sleep(2)
         b.delete()
         # self.jira.delete_board(b.id)
 
@@ -1807,9 +1809,9 @@ class VersionTests(unittest.TestCase):
 
     def test_create_version_with_project_obj(self):
         project = self.jira.project(self.project_b)
-        version = self.jira.create_version('new version 1', project,
+        version = self.jira.create_version('new version 2', project,
                                            releaseDate='2015-03-11', description='test version!')
-        self.assertEqual(version.name, 'new version 1')
+        self.assertEqual(version.name, 'new version 2')
         self.assertEqual(version.description, 'test version!')
         self.assertEqual(version.releaseDate, '2015-03-11')
         version.delete()
@@ -1938,7 +1940,7 @@ class UserAdministrationTests(unittest.TestCase):
         except JIRAError:
             pass
 
-        sleep(1)  # avoid 500 errors like https://travis-ci.org/pycontribs/jira/jobs/176544578#L552
+        sleep(2)  # avoid 500 errors like https://travis-ci.org/pycontribs/jira/jobs/176544578#L552
         result = self.jira.add_group(self.test_groupname)
         assert result, True
 
