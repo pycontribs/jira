@@ -79,18 +79,6 @@ def rndpassword():
     return ''.join(random.sample(s, len(s)))
 
 
-class Singleton(type):
-
-    def __init__(cls, name, bases, dict):
-        super(Singleton, cls).__init__(name, bases, dict)
-        cls.instance = None
-
-    def __call__(cls, *args, **kw):
-        if cls.instance is None:
-            cls.instance = super(Singleton, cls).__call__(*args, **kw)
-        return cls.instance
-
-
 class JiraTestManager(object):
     """Used to instantiate and populate the JIRA instance with data used by the unit tests.
 
@@ -100,19 +88,6 @@ class JiraTestManager(object):
         max_retries (int): number of retries to perform for recoverable HTTP errors.
     """
 
-    # __metaclass__ = Singleton
-
-    # __instance = None
-    #
-    # Singleton implementation
-    # def __new__(cls, *args, **kwargs):
-    #     if not cls.__instance:
-    #         cls.__instance = super(JiraTestManager, cls).__new__(
-    #                             cls, *args, **kwargs)
-    #     return cls.__instance
-
-    #  Implementing some kind of Singleton, to prevent test initialization
-    # http://stackoverflow.com/questions/31875/is-there-a-simple-elegant-way-to-define-singletons-in-python/33201#33201
     __shared_state = {}
 
     def __init__(self):
@@ -169,7 +144,6 @@ class JiraTestManager(object):
                         self.jira_admin = JIRA(self.CI_JIRA_URL, validate=True,
                                                logging=False, max_retries=self.max_retries)
                 if self.jira_admin.current_user() != self.CI_JIRA_ADMIN:
-                    # self.jira_admin.
                     self.initialized = 1
                     sys.exit(3)
 
@@ -218,10 +192,10 @@ class JiraTestManager(object):
                 """ `jid` is important for avoiding concurency problems when
                 executing tests in parallel as we have only one test instance.
 
-                jid lenght must be less than 9 characters because we may append
+                jid length must be less than 9 characters because we may append
                 another one and the JIRA Project key length limit is 10.
 
-                Tests run in parallle:
+                Tests run in parallel:
                 * git branches master or developer, git pr or developers running
                   tests outside Travis
                 * Travis is using "Travis" username
@@ -277,16 +251,9 @@ class JiraTestManager(object):
                         break
                     sleep(2)
 
-                # try:
                 self.jira_admin.create_project(self.project_a,
                                                self.project_a_name)
                 self.project_a_id = self.jira_admin.project(self.project_a).id
-                # except Exception as e:
-                #    logging.warning("Got %s" % e)
-                # try:
-                # assert self.jira_admin.create_project(self.project_b,
-                # self.project_b_name) is  True, "Failed to create %s" %
-                # self.project_b
                 self.jira_admin.create_project(self.project_b,
                                                self.project_b_name)
                 sleep(1)  # keep it here as often JIRA will report the
