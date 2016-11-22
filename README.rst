@@ -70,6 +70,14 @@ Usage
 
 See the documentation_ for full details.
 
+Development
+~~~~~~~~~~~
+
+Development happens on GitHub where there are two main branches:
+* `master` - which should contain only released code, ideally tagged
+* `develop` - which is the default branch, used for development.
+* other branches used by developers hopefully using git flow naming scheme: `feature/cool-one`
+
 Credits
 -------
 
