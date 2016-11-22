@@ -2757,52 +2757,6 @@ class JIRA(object):
 
         return json_loads(r)
 
-    def completed_issues(self, board_id, sprint_id):
-        """Return the completed issues for ``board_id`` and ``sprint_id``.
-
-        :param board_id: the board retrieving issues from
-        :param sprint_id: the sprint retieving issues from
-        """
-        # We need a better way to provide all the info from the sprintreport
-        # incompletedIssues went to backlog but not it not completed
-        # issueKeysAddedDuringSprint used to mark some with a * ?
-        # puntedIssues are for scope change?
-
-        if self._options['agile_rest_path'] != GreenHopperResource.GREENHOPPER_REST_PATH:
-            raise NotImplementedError('JIRA Agile Public API does not support this request')
-        warnings.warn('JIRA.completed_issues uses deprecated API, that is going to be removed on the 1st February 2016',
-                      DeprecationWarning)
-        r_json = self._get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id),
-                                base=self.AGILE_BASE_URL)
-        issues = [Issue(self._options, self._session, raw_issues_json) for raw_issues_json in
-                  r_json['contents']['completedIssues']]
-        return issues
-
-    def completedIssuesEstimateSum(self, board_id, sprint_id):
-        """Return the total completed points this sprint."""
-        if self._options['agile_rest_path'] != GreenHopperResource.GREENHOPPER_REST_PATH:
-            raise NotImplementedError('JIRA Agile Public API does not support this request')
-        warnings.warn('JIRA.completedIssuesEstimateSum uses deprecated API, that is going to be removed'
-                      ' on the 1st February 2016',
-                      DeprecationWarning)
-        return self._get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id),
-                              base=self.AGILE_BASE_URL)['contents']['completedIssuesEstimateSum']['value']
-
-    def incompleted_issues(self, board_id, sprint_id):
-        """Return the completed issues for the sprint."""
-        if self._options['agile_rest_path'] != GreenHopperResource.GREENHOPPER_REST_PATH:
-            raise NotImplementedError('JIRA Agile Public API does not support this request')
-        warnings.warn('JIRA.incompleted_issues uses deprecated API, that is going to be removed'
-                      ' on the 1st February 2016',
-                      DeprecationWarning)
-        r_json = self._get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id),
-                                base=self.AGILE_BASE_URL)
-
-        # r_json does not contain 'incompletedIssues' changed to 'issuesNotCompletedInCurrentSprint'
-        issues = [Issue(self._options, self._session, raw_issues_json) for raw_issues_json in
-                  r_json['contents']['issuesNotCompletedInCurrentSprint']]
-        return issues
-
     def incompletedIssuesEstimateSum(self, board_id, sprint_id):
         """Return the total incompleted points this sprint."""
         return self._get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id),
