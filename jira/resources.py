@@ -336,7 +336,7 @@ class Attachment(Resource):
 
     def get(self):
         """Return the file content as a string."""
-        r = self._session.get(self.content, headers={'Accept':'*/*'})
+        r = self._session.get(self.content, headers={'Accept': '*/*'})
         return r.content
 
     def iter_content(self, chunk_size=1024):
@@ -570,6 +570,7 @@ class Watchers(Resource):
 
 
 class TimeTracking(Resource):
+
     def __init__(self, options, session, raw=None):
         Resource.__init__(self, 'issue/{0}/worklog/{1}', options, session)
         self.remainingEstimate = None
