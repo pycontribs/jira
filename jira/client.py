@@ -1666,6 +1666,7 @@ class JIRA(object):
             "fields": fields,
             "expand": expand}
         if json_result:
+            search_params["maxResults"] = maxResults
             if not maxResults:
                 warnings.warn('All issues cannot be fetched at once, when json_result parameter is set', Warning)
             return self._get_json('search', params=search_params)
