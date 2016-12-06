@@ -311,3 +311,15 @@ If you would like to list all available attachment, you can do it with through a
             filename=attachment.filename, size=attachment.size))
         # to read content use `get` method:
         print("Content: '{}'".format(attachment.get()))
+
+
+You can delete attachment by id::
+
+    # Find issues with attachments:
+    query = jira.search_issues(jql_str="attachments is not EMPTY", json_result=True, fields="key, attachment")
+
+    # And remove attachments one by one
+    for i in query['issues']:
+        for a in i['fields']['attachment']:
+            print("For issue {0}, found attach: '{1}' [{2}].".format(i['key'], a['filename'], a['id']))
+            jira.delete_attachment(a['id'])
