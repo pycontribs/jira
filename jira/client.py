@@ -578,6 +578,14 @@ class JIRA(object):
             raise JIRAError("Added empty attachment via %s method?!: r: %s\nattachment: %s" % (method, r, attachment))
         return attachment
 
+    def delete_attachment(self, id):
+        """Delete attachment by id.
+
+        :param id: ID of the attachment to delete
+        """
+        url = self._get_url('attachment/' + str(id))
+        return self._session.delete(url)
+
     # Components
 
     def component(self, id):
