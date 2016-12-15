@@ -885,6 +885,7 @@ def dict2resource(raw, top=None, options=None, session=None):
             setattr(top, i, j)
     return top
 
+
 resource_class_map = {
     # JIRA specific resources
     r'attachment/[^/]+$': Attachment,

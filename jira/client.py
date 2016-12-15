@@ -2084,7 +2084,7 @@ class JIRA(object):
             return Webhook(self._options, self._session, raw=raw_webhook_json)
 
     def webhooks(self, state=None):
-        """Get a list of Webhooks
+        """Get a list of Webhooks.
 
         :param state: Filters results to sprints in specified states. Valid values: enabled, disabled
 
@@ -2092,7 +2092,6 @@ class JIRA(object):
         :return (content may depend on API version, but should contain id, name, state, etc.
           see https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Create+Webhook
         """
-
         params = {}
         if state:
             if isinstance(state, string_types):
