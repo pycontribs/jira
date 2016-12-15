@@ -2028,19 +2028,16 @@ class JIRA(object):
 # Webhook
 
     def webhook(self, id):
-        """
-        Get a webhook Resource from the server.
+        """Get a webhook Resource from the server.
 
         :param id: ID of the webhook to get
         """
         webhook = Webhook(self._options, self._session)
-        params = {}
         webhook.find(id)
         return webhook
 
     def create_webhook(self, fields=None, prefetch=True, **fieldargs):
-        """
-        Create a new webhook and return an webhook Resource for it.
+        """Create a new webhook and return an webhook Resource for it.
 
         Each keyword argument (other than the predefined ones) is treated as a
         field name and the argument's value is treated as the intended value for
@@ -2075,8 +2072,8 @@ class JIRA(object):
         json_data = json.dumps(fieldargs)
         try:
             r = self._session.post(url, data=json_data)
-        except Exception as e:                                                                                                        
-            print("Error Creating webhook with json_data:\n%s\n\n%s" % (json_data, e)) 
+        except Exception as e:
+            print("Error Creating webhook with json_data:\n%s\n\n%s" % (json_data, e))
             return
         raw_webhook_json = json_loads(r)
         if 'name' not in raw_webhook_json:
@@ -2087,15 +2084,13 @@ class JIRA(object):
             return Webhook(self._options, self._session, raw=raw_webhook_json)
 
     def webhooks(self, state=None):
-        """
-        Get a list of Webhooks
+        """Get a list of Webhooks
 
         :param state: Filters results to sprints in specified states. Valid values: enabled, disabled
 
         :rtype list
         :return (content may depend on API version, but should contain id, name, state, etc.
           see https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Create+Webhook
-
         """
 
         params = {}
@@ -2109,9 +2104,7 @@ class JIRA(object):
         return ResultList(webhooks, 0, len(webhooks), len(webhooks), True)
 
     def webhooks_by_name(self):
-        """
-        Get a dict of Webhooks with webhook name as key
-        """
+        """Get a dict of Webhooks with webhook name as key."""
         webhooks = {}
         for h in self.webhooks():
             if h.name not in webhooks:
@@ -2122,9 +2115,7 @@ class JIRA(object):
         return webhooks
 
     def webhooks_by_id(self):
-        """
-        Get a dict of Webhooks with webhook id as key
-        """
+        """Get a dict of Webhooks with webhook id as key."""
         webhooks = {}
         for h in self.webhooks():
             webhooks[h.self.split('/')[-1]] = h.raw
