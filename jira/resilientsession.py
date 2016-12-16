@@ -81,8 +81,9 @@ class ResilientSession(Session):
     def __recoverable(self, response, url, request, counter=1):
         msg = response
         if isinstance(response, ConnectionError):
-            logger.warning("Got ConnectionError [%s] errno:%s on %s %s\n%s\%s" % (
-                response, response.errno, request, url, vars(response), response.__dict__))
+            logger.warning(
+                "Got ConnectionError [%s] errno:%s on %s %s\n%s\%s",
+                response, response.errno, request, url, vars(response), response.__dict__)
         if hasattr(response, 'status_code'):
             if response.status_code in [502, 503, 504]:
                 msg = "%s %s" % (response.status_code, response.reason)
@@ -96,8 +97,9 @@ class ResilientSession(Session):
 
         # Exponential backoff with full jitter.
         delay = min(60, 10 * 2 ** counter) * random.random()
-        logger.warning("Got recoverable error from %s %s, will retry [%s/%s] in %ss. Err: %s" % (
-            request, url, counter, self.max_retries, delay, msg))
+        logger.warning(
+            "Got recoverable error from %s %s, will retry [%s/%s] in %ss. Err: %s",
+            request, url, counter, self.max_retries, delay, msg)
         time.sleep(delay)
         return True
 
@@ -123,8 +125,7 @@ class ResilientSession(Session):
                 if response.status_code == 200:
                     return response
             except ConnectionError as e:
-                logger.warning(
-                    "%s while doing %s %s [%s]" % (e, verb.upper(), url, kwargs))
+                logger.warning("%s while doing %s %s [%s]", e, verb.upper(), url, kwargs)
                 exception = e
             retry_number += 1
 

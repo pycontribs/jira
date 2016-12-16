@@ -460,8 +460,8 @@ class JIRA(object):
         :param size: number of threads to run on.
         """
         if hasattr(self._session, '_async_jobs'):
-            logger.info("Executing async %s jobs found in queue by using %s threads..." % (
-                len(self._session._async_jobs), size))
+            logger.info("Executing async %s jobs found in queue by using %s threads...",
+                        len(self._session._async_jobs), size)
             threaded_requests.map(self._session._async_jobs, size=size)
 
             # Application properties
@@ -540,8 +540,8 @@ class JIRA(object):
         if isinstance(attachment, string_types):
             attachment = open(attachment, "rb")
         if hasattr(attachment, 'read') and hasattr(attachment, 'mode') and attachment.mode != 'rb':
-            logger.warning(
-                "%s was not opened in 'rb' mode, attaching file may fail." % attachment.name)
+            logger.warning("%s was not opened in 'rb' mode, attaching file may fail.",
+                           attachment.name)
 
         url = self._get_url('issue/' + str(issue) + '/attachments')
 
@@ -1194,7 +1194,7 @@ class JIRA(object):
         try:
             r_json = json_loads(r)
         except ValueError as e:
-            logger.error("%s\n%s" % (e, r.text))
+            logger.error("%s\n%s", e, r.text)
             raise e
         return r_json
 
@@ -2107,7 +2107,7 @@ class JIRA(object):
         try:
             r_json = json_loads(r)
         except ValueError as e:
-            logger.error("%s\n%s" % (e, r.text))
+            logger.error("%s\n%s", e, r.text)
             raise e
         return r_json
 
@@ -2148,7 +2148,7 @@ class JIRA(object):
                 return mimetypes.guess_type("f." + imghdr.what(0, buff))[0]
             except (IOError, TypeError):
                 logger.warning("Couldn't detect content type of avatar image"
-                                ". Specify the 'contentType' parameter explicitly.")
+                               ". Specify the 'contentType' parameter explicitly.")
                 return None
 
     def email_user(self, user, body, title="JIRA Notification"):
@@ -2190,7 +2190,7 @@ class JIRA(object):
                 'username': old_user}
 
             # raw displayName
-            logger.debug("renaming %s" % self.user(old_user).emailAddress)
+            logger.debug("renaming %s", self.user(old_user).emailAddress)
 
             r = self._session.put(url, params=params,
                                   data=json.dumps(payload))
@@ -2213,7 +2213,7 @@ class JIRA(object):
                 "RunCanned": "Run"}
 
             # raw displayName
-            logger.debug("renaming %s" % self.user(old_user).emailAddress)
+            logger.debug("renaming %s", self.user(old_user).emailAddress)
 
             r = self._session.post(
                 url, headers=self._options['headers'], data=payload)
@@ -2227,7 +2227,8 @@ class JIRA(object):
 
             if re.compile("XSRF Security Token Missing").search(r.content):
                 logger.fatal(
-                    "Reconfigure JIRA and disable XSRF in order to be able call this. See https://developer.atlassian.com/display/JIRADEV/Form+Token+Handling")
+                    "Reconfigure JIRA and disable XSRF in order to be able call this. "
+                    "See https://developer.atlassian.com/display/JIRADEV/Form+Token+Handling")
                 return False
 
             with open("/tmp/jira_rename_user_%s_to%s.html" % (old_user, new_user), "w") as f:
@@ -2255,7 +2256,8 @@ class JIRA(object):
                 logger.error("User %s does not exists. %s", old_user, e)
                 return msg
 
-            logger.error(msg + '\n' + "User %s does still exists after rename, that's clearly a problem." % old_user)
+            logger.error(msg + "\nUser %s does still exists after rename, that's clearly a problem.",
+                         old_user)
             return False
 
     def delete_user(self, username):
@@ -2293,7 +2295,7 @@ class JIRA(object):
                 return True
             else:
                 logger.warning(
-                    'Got response from deactivating %s: %s' % (username, r.status_code))
+                    'Got response from deactivating %s: %s', username, r.status_code)
                 return r.status_code
         except Exception as e:
             print("Error Deactivating %s: %s" % (username, e))
@@ -2350,8 +2352,7 @@ class JIRA(object):
             if r.status_code == 200:
                 return True
             else:
-                logger.warning(
-                    'Got %s response from calling backup.' % r.status_code)
+                logger.warning('Got %s response from calling backup.', r.status_code)
                 return r.status_code
         except Exception as e:
             logger.error("I see %s", e)
@@ -2365,8 +2366,7 @@ class JIRA(object):
         if self.server_info().get('deploymentType') == 'Cloud':
             url = self._options['server'] + '/rest/obm/1.0/getprogress?_=%i' % epoch_time
         else:
-            logger.warning(
-                'This functionality is not available in Server version')
+            logger.warning('This functionality is not available in Server version')
             return None
         r = self._session.get(
             url, headers=self._options['headers'])
@@ -2380,7 +2380,8 @@ class JIRA(object):
             try:
                 root = etree.fromstring(r.text)
             except etree.ParseError as pe:
-                logger.warning('Unable to find backup info.  You probably need to initiate a new backup. %s' % pe)
+                logger.warning('Unable to find backup info.  '
+                               'You probably need to initiate a new backup. %s', pe)
                 return None
             for k in root.keys():
                 progress[k] = root.get(k)
@@ -2389,8 +2390,7 @@ class JIRA(object):
     def backup_complete(self):
         """Return boolean based on 'alternativePercentage' and 'size' returned from backup_progress (cloud only)."""
         if self.server_info().get('deploymentType') != 'Cloud':
-            logger.warning(
-                'This functionality is not available in Server version')
+            logger.warning('This functionality is not available in Server version')
             return None
         status = self.backup_progress()
         perc_complete = int(re.search(r"\s([0-9]*)\s",
@@ -2401,26 +2401,25 @@ class JIRA(object):
     def backup_download(self, filename=None):
         """Download backup file from WebDAV (cloud only)."""
         if self.server_info().get('deploymentType') != 'Cloud':
-            logger.warning(
-                'This functionality is not available in Server version')
+            logger.warning('This functionality is not available in Server version')
             return None
         remote_file = self.backup_progress()['fileName']
         local_file = filename or remote_file
         url = self._options['server'] + '/webdav/backupmanager/' + remote_file
         try:
-            logger.debug('Writing file to %s' % local_file)
+            logger.debug('Writing file to %s', local_file)
             with open(local_file, 'wb') as file:
                 try:
                     resp = self._session.get(url, headers=self._options['headers'], stream=True)
                 except Exception:
                     raise JIRAError()
                 if not resp.ok:
-                    logger.error("Something went wrong with download: %s" % resp.text)
+                    logger.error("Something went wrong with download: %s", resp.text)
                     raise JIRAError(resp.text)
                 for block in resp.iter_content(1024):
                     file.write(block)
         except JIRAError as je:
-            logger.error('Unable to access remote backup file: %s' % je)
+            logger.error('Unable to access remote backup file: %s', je)
         except IOError as ioe:
             logger.error(ioe)
         return None
