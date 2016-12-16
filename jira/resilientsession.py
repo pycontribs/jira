@@ -16,7 +16,7 @@ import time
 
 from jira.exceptions import JIRAError
 
-logging.getLogger('jira').addHandler(NullHandler())
+logger = logging.getLogger('jira')
 
 
 def raise_on_error(r, verb='???', **kwargs):
@@ -81,7 +81,7 @@ class ResilientSession(Session):
     def __recoverable(self, response, url, request, counter=1):
         msg = response
         if isinstance(response, ConnectionError):
-            logging.warning("Got ConnectionError [%s] errno:%s on %s %s\n%s\%s" % (
+            logger.warning("Got ConnectionError [%s] errno:%s on %s %s\n%s\%s" % (
                 response, response.errno, request, url, vars(response), response.__dict__))
         if hasattr(response, 'status_code'):
             if response.status_code in [502, 503, 504]:
@@ -96,7 +96,7 @@ class ResilientSession(Session):
 
         # Exponential backoff with full jitter.
         delay = min(60, 10 * 2 ** counter) * random.random()
-        logging.warning("Got recoverable error from %s %s, will retry [%s/%s] in %ss. Err: %s" % (
+        logger.warning("Got recoverable error from %s %s, will retry [%s/%s] in %ss. Err: %s" % (
             request, url, counter, self.max_retries, delay, msg))
         time.sleep(delay)
         return True
@@ -123,7 +123,7 @@ class ResilientSession(Session):
                 if response.status_code == 200:
                     return response
             except ConnectionError as e:
-                logging.warning(
+                logger.warning(
                     "%s while doing %s %s [%s]" % (e, verb.upper(), url, kwargs))
                 exception = e
             retry_number += 1

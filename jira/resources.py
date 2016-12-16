@@ -51,7 +51,7 @@ __all__ = (
     'RemoteLink'
 )
 
-logging.getLogger('jira').addHandler(NullHandler())
+logger = logging.getLogger('jira')
 
 
 def get_error_list(r):
@@ -230,17 +230,17 @@ class Resource(object):
                 r.status_code == 400:
             user = None
             error_list = get_error_list(r)
-            logging.error(error_list)
+            logger.error(error_list)
             if "The reporter specified is not a user." in error_list:
                 if 'reporter' not in data['fields']:
-                    logging.warning(
+                    logger.warning(
                         "autofix: setting reporter to '%s' and retrying the update." % self._options['autofix'])
                     data['fields']['reporter'] = {
                         'name': self._options['autofix']}
 
             if "Issues must be assigned." in error_list:
                 if 'assignee' not in data['fields']:
-                    logging.warning("autofix: setting assignee to '%s' for %s and retrying the update." % (
+                    logger.warning("autofix: setting assignee to '%s' for %s and retrying the update." % (
                         self._options['autofix'], self.key))
                     data['fields']['assignee'] = {
                         'name': self._options['autofix']}
@@ -248,11 +248,11 @@ class Resource(object):
                     # so we need to change the assignee before
 
             if "Issue type is a sub-task but parent issue key or id not specified." in error_list:
-                logging.warning(
+                logger.warning(
                     "autofix: trying to fix sub-task without parent by converting to it to bug")
                 data['fields']['issuetype'] = {"name": "Bug"}
             if "The summary is invalid because it contains newline characters." in error_list:
-                logging.warning("autofix: trying to fix newline in summary")
+                logger.warning("autofix: trying to fix newline in summary")
                 data['fields'][
                     'summary'] = self.fields.summary.replace("/n", "")
             for error in error_list:
@@ -271,11 +271,11 @@ class Resource(object):
                         raise NotImplemented()
 
             if user:
-                logging.warning(
+                logger.warning(
                     "Trying to add missing orphan user '%s' in order to complete the previous failed operation." % user)
                 jira.add_user(user, 'noreply@example.com', 10100, active=False)
                 # if 'assignee' not in data['fields']:
-                #    logging.warning("autofix: setting assignee to '%s' and retrying the update." % self._options['autofix'])
+                #    logger.warning("autofix: setting assignee to '%s' and retrying the update." % self._options['autofix'])
                 #    data['fields']['assignee'] = {'name': self._options['autofix']}
             # EXPERIMENTAL --->
             # import grequests
@@ -310,7 +310,7 @@ class Resource(object):
         try:
             j = json_loads(r)
         except ValueError as e:
-            logging.error("%s:\n%s" % (e, r.text))
+            logger.error("%s:\n%s" % (e, r.text))
             raise e
         if path:
             j = j[path]
