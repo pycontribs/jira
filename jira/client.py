@@ -191,7 +191,7 @@ class JIRA(object):
     AGILE_BASE_URL = GreenHopperResource.AGILE_BASE_URL
 
     def __init__(self, server=None, options=None, basic_auth=None, oauth=None, jwt=None, kerberos=False,
-                 validate=False, get_server_info=True, async=False, logging=True, max_retries=3, proxies=None):
+                 validate=False, get_server_info=True, async=False, logging=False, max_retries=3, proxies=None):
         """Construct a JIRA client instance.
 
         Without any arguments, this client will connect anonymously to the JIRA instance
@@ -256,7 +256,10 @@ class JIRA(object):
         if async:
             options['async'] = async
 
-        self.logging = logging
+        if logging:
+            warnings.warn("JIRA.logging is no longer used; Please attach handlers to 'jira' logger",
+                          DeprecationWarning)
+        self.logging = False
 
         self._options = copy.copy(JIRA.DEFAULT_OPTIONS)
 
@@ -2553,11 +2556,9 @@ class JIRA(object):
         f = tempfile.NamedTemporaryFile(
             suffix='.html', prefix='python-jira-error-create-project-', delete=False)
         f.write(r.text)
-
-        if self.logging:
-            logger.error(
-                "Unexpected result while running create project. Server response saved in %s for further investigation [HTTP response=%s]." % (
-                    f.name, r.status_code))
+        logger.error("Unexpected result while running create project. "
+                     "Server response saved in %s for further investigation [HTTP response=%s].",
+                     f.name, r.status_code)
         return False
 
     def add_user(self, username, email, directoryId=1, password=None,
