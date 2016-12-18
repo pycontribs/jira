@@ -130,6 +130,29 @@ Or you can use a dict::
     }
     new_issue = jira.create_issue(fields=issue_dict)
 
+You can even bulk create multiple issues::
+
+    issue_list = [
+    {
+        'project': {'id': 123},
+        'summary': 'First issue of many',
+        'description': 'Look into this one',
+        'issuetype': {'name': 'Bug'},
+    },
+    {
+        'project': {'key': 'FOO'},
+        'summary': 'Second issue',
+        'description': 'Another one',
+        'issuetype': {'name': 'Bug'},
+    },
+    {
+        'project': {'name': 'Bar'},
+        'summary': 'Last issue',
+        'description': 'Final issue of batch.',
+        'issuetype': {'name': 'Bug'},
+    }]
+    issues = jira.create_issues(field_list=issue_dict)
+
 .. note::
     Project, summary, description and issue type are always required when creating issues. Your JIRA may require
     additional fields for creating issues; see the ``jira.createmeta`` method for getting access to that information.
