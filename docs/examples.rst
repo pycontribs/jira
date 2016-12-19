@@ -151,11 +151,16 @@ You can even bulk create multiple issues::
         'description': 'Final issue of batch.',
         'issuetype': {'name': 'Bug'},
     }]
-    issues = jira.create_issues(field_list=issue_dict)
+    issues = jira.create_issues(field_list=issue_list)
 
 .. note::
     Project, summary, description and issue type are always required when creating issues. Your JIRA may require
     additional fields for creating issues; see the ``jira.createmeta`` method for getting access to that information.
+
+.. note::
+    Using bulk create will not throw an exception for a failed issue creation. It will return a list of dicts that
+    each contain a possible error signature if that issue had invalid fields. Successfully created issues will contain
+    the issue object as a value of the ``issue`` key.
 
 You can also update an issue's fields with keyword arguments::
 

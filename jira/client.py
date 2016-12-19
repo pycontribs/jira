@@ -122,15 +122,9 @@ def _get_template_list(data):
 
 
 def _field_worker(fields=None, **fieldargs):
-    data = {}
     if fields is not None:
-        data['fields'] = fields
-    else:
-        fields_dict = {}
-        for field in fieldargs:
-            fields_dict[field] = fieldargs[field]
-        data['fields'] = fields_dict
-    return data
+        return {'fields': fields}
+    return {'fields': fieldargs}
 
 
 class ResultList(list):
@@ -906,6 +900,8 @@ class JIRA(object):
 
         :param field_list: a list of dicts each containing field names and the values to use. Each dict
             is an individual issue to create and is subject to its minimum requirements.
+        :param prefetch: whether to reload the created issue Resource for each created issue so that all
+            of its data is present in the value returned from this method.
         """
         data = {'issueUpdates': []}
         for field_dict in field_list:
@@ -928,15 +924,21 @@ class JIRA(object):
 
         raw_issue_json = json_loads(r)
         issue_list = []
+        errors = {}
         for error in raw_issue_json['errors']:
-            failed_fields = field_list[error['failedElementNumber']]
-            logging.error('Error creating issue with fields: %s\n%s', failed_fields,
-                          error['elementErrors']['errors'])
-        for result in raw_issue_json['issues']:
-            if prefetch:
-                issue_list.append(self.issue(result['key']))
+            errors[error['failedElementNumber']] = error['elementErrors']['errors']
+        for index, fields in enumerate(field_list):
+            if index in errors:
+                issue_list.append({'status': 'Error', 'error': errors[index],
+                                   'issue': None, 'input_fields': fields})
             else:
-                issue_list.append(Issue(self._options, self._session, raw=result))
+                issue = raw_issue_json['issues'].pop(0)
+                if prefetch:
+                    issue = self.issue(issue['key'])
+                else:
+                    issue = Issue(self._options, self._session, raw=issue)
+                issue_list.append({'status': 'Success', 'issue': issue,
+                                   'error': None, 'input_fields': fields})
         return issue_list
 
     def createmeta(self, projectKeys=None, projectIds=[], issuetypeIds=None, issuetypeNames=None, expand=None):
