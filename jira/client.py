@@ -959,7 +959,7 @@ class JIRA(object):
         return self._find_for_resource(Comment, (issue, comment))
 
     @translate_resource_args
-    def add_comment(self, issue, body, visibility=None):
+    def add_comment(self, issue, body, visibility=None, is_internal=False):
         """Add a comment from the current authenticated user on the specified issue and return a Resource for it.
 
         The issue identifier and comment body are required.
@@ -970,15 +970,20 @@ class JIRA(object):
             "type" is 'role' (or 'group' if the JIRA server has configured
             comment visibility for groups) and 'value' is the name of the role
             (or group) to which viewing of this comment will be restricted.
+        :param is_internal: defines whether a comment has to be marked as 'Internal' in Jira Service Desk
         """
         data = {
-            'body': body}
+            'body': body,
+            'properties':[{'key':'sd.public.comment','value':{'internal':is_internal}},]
+        }
+
         if visibility is not None:
             data['visibility'] = visibility
 
         url = self._get_url('issue/' + str(issue) + '/comment')
         r = self._session.post(
-            url, data=json.dumps(data))
+            url, data=json.dumps(data)
+        )
 
         comment = Comment(self._options, self._session, raw=json_loads(r))
         return comment
