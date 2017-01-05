@@ -732,6 +732,121 @@ class IssueTests(unittest.TestCase):
         issue.delete()
 
     @not_on_custom_jira_instance
+    def test_create_issues(self):
+        field_list = [{
+            'project': {
+                'key': self.project_b},
+            'summary': 'Issue created via bulk create #1',
+            'description': "Some new issue for test",
+            'issuetype': {
+                'name': 'Bug'},
+            # 'customfield_10022': 'XSS',
+            'priority': {
+                'name': 'Major'}},
+        {
+            'project': {
+                'key': self.project_a},
+            'issuetype': {
+                'name': 'Bug'},
+            'summary': 'Issue created via bulk create #2',
+            'description': "Another new issue for bulk test",
+            'priority': {
+                'name': 'Major'}}]
+        issues = self.jira.create_issues(field_list=field_list)
+        self.assertEqual(issues[0]['issue'].fields.summary,
+                         'Issue created via bulk create #1')
+        self.assertEqual(issues[0]['issue'].fields.description,
+                         "Some new issue for test")
+        self.assertEqual(issues[0]['issue'].fields.issuetype.name, 'Bug')
+        self.assertEqual(issues[0]['issue'].fields.project.key, self.project_b)
+        self.assertEqual(issues[0]['issue'].fields.priority.name, 'Major')
+        self.assertEqual(issues[1]['issue'].fields.summary,
+                         'Issue created via bulk create #2')
+        self.assertEqual(issues[1]['issue'].fields.description,
+                        "Another new issue for bulk test")
+        self.assertEqual(issues[1]['issue'].fields.issuetype.name, 'Bug')
+        self.assertEqual(issues[1]['issue'].fields.project.key, self.project_a)
+        self.assertEqual(issues[1]['issue'].fields.priority.name, 'Major')
+        for issue in issues:
+            issue['issue'].delete()
+
+    @not_on_custom_jira_instance
+    def test_create_issues_one_failure(self):
+        field_list = [{
+            'project': {
+                'key': self.project_b},
+            'summary': 'Issue created via bulk create #1',
+            'description': "Some new issue for test",
+            'issuetype': {
+                'name': 'Bug'},
+            # 'customfield_10022': 'XSS',
+            'priority': {
+                'name': 'Major'}},
+        {
+            'project': {
+                'key': self.project_a},
+            'issuetype': {
+                'name': 'InvalidIssueType'},
+            'summary': 'This issue will not succeed',
+            'description': "Should not be seen.",
+            'priority': {
+                'name': 'Blah'}},
+        {
+            'project': {
+                'key': self.project_a},
+            'issuetype': {
+                'name': 'Bug'},
+            'summary': 'However, this one will.',
+            'description': "Should be seen.",
+            'priority': {
+                'name': 'Major'}}]
+        issues = self.jira.create_issues(field_list=field_list)
+        self.assertEqual(issues[0]['issue'].fields.summary,
+                         'Issue created via bulk create #1')
+        self.assertEqual(issues[0]['issue'].fields.description,
+                         "Some new issue for test")
+        self.assertEqual(issues[0]['issue'].fields.issuetype.name, 'Bug')
+        self.assertEqual(issues[0]['issue'].fields.project.key, self.project_b)
+        self.assertEqual(issues[0]['issue'].fields.priority.name, 'Major')
+        self.assertEqual(issues[0]['error'], None)
+        self.assertEqual(issues[1]['issue'], None)
+        self.assertEqual(issues[1]['error'], {'issuetype': 'issue type is required'})
+        self.assertEqual(issues[1]['input_fields'], field_list[1])
+        self.assertEqual(issues[2]['issue'].fields.summary,
+                         'However, this one will.')
+        self.assertEqual(issues[2]['issue'].fields.description,
+                         "Should be seen.")
+        self.assertEqual(issues[2]['issue'].fields.issuetype.name, 'Bug')
+        self.assertEqual(issues[2]['issue'].fields.project.key, self.project_a)
+        self.assertEqual(issues[2]['issue'].fields.priority.name, 'Major')
+        self.assertEqual(issues[2]['error'], None)
+        self.assertEqual(len(issues), 3)
+        for issue in issues:
+            if issue['issue'] is not None:
+                issue['issue'].delete()
+
+    @not_on_custom_jira_instance
+    def test_create_issues_without_prefetch(self):
+        field_list= [dict(project=self.project_b,
+                          summary='Test issue created',
+                          description='blahery',
+                          issuetype={'name': 'Bug'}),
+                     dict(project=self.project_a,
+                          summary='Test issue #2',
+                          description='fooery',
+                          issuetype={'name': 'Bug'})]
+        issues = self.jira.create_issues(field_list, prefetch=False)
+
+        assert hasattr(issues[0]['issue'], 'self')
+        assert hasattr(issues[0]['issue'], 'raw')
+        assert hasattr(issues[1]['issue'], 'self')
+        assert hasattr(issues[1]['issue'], 'raw')
+        assert 'fields' not in issues[0]['issue'].raw
+        assert 'fields' not in issues[1]['issue'].raw
+        for issue in issues:
+            issue['issue'].delete()
+
+    @not_on_custom_jira_instance
     def test_update_with_fieldargs(self):
         issue = self.jira.create_issue(project=self.project_b,
                                        summary='Test issue for updating',
