@@ -9,8 +9,8 @@ try:
     import configparser
 except ImportError:
     from six.moves import configparser
-    from six.moves import input
 
+from six.moves import input
 from six.moves.urllib.parse import parse_qsl
 
 import argparse
