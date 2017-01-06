@@ -742,8 +742,7 @@ class IssueTests(unittest.TestCase):
                 'name': 'Bug'},
             # 'customfield_10022': 'XSS',
             'priority': {
-                'name': 'Major'}},
-        {
+                'name': 'Major'}}, {
             'project': {
                 'key': self.project_a},
             'issuetype': {
@@ -763,7 +762,7 @@ class IssueTests(unittest.TestCase):
         self.assertEqual(issues[1]['issue'].fields.summary,
                          'Issue created via bulk create #2')
         self.assertEqual(issues[1]['issue'].fields.description,
-                        "Another new issue for bulk test")
+                         "Another new issue for bulk test")
         self.assertEqual(issues[1]['issue'].fields.issuetype.name, 'Bug')
         self.assertEqual(issues[1]['issue'].fields.project.key, self.project_a)
         self.assertEqual(issues[1]['issue'].fields.priority.name, 'Major')
@@ -781,8 +780,7 @@ class IssueTests(unittest.TestCase):
                 'name': 'Bug'},
             # 'customfield_10022': 'XSS',
             'priority': {
-                'name': 'Major'}},
-        {
+                'name': 'Major'}}, {
             'project': {
                 'key': self.project_a},
             'issuetype': {
@@ -790,8 +788,7 @@ class IssueTests(unittest.TestCase):
             'summary': 'This issue will not succeed',
             'description': "Should not be seen.",
             'priority': {
-                'name': 'Blah'}},
-        {
+                'name': 'Blah'}}, {
             'project': {
                 'key': self.project_a},
             'issuetype': {
@@ -827,14 +824,14 @@ class IssueTests(unittest.TestCase):
 
     @not_on_custom_jira_instance
     def test_create_issues_without_prefetch(self):
-        field_list= [dict(project=self.project_b,
-                          summary='Test issue created',
-                          description='blahery',
-                          issuetype={'name': 'Bug'}),
-                     dict(project=self.project_a,
-                          summary='Test issue #2',
-                          description='fooery',
-                          issuetype={'name': 'Bug'})]
+        field_list = [dict(project=self.project_b,
+                           summary='Test issue created',
+                           description='blahery',
+                           issuetype={'name': 'Bug'}),
+                      dict(project=self.project_a,
+                           summary='Test issue #2',
+                           description='fooery',
+                           issuetype={'name': 'Bug'})]
         issues = self.jira.create_issues(field_list, prefetch=False)
 
         assert hasattr(issues[0]['issue'], 'self')
