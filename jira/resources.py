@@ -48,7 +48,10 @@ __all__ = (
     'Status',
     'User',
     'CustomFieldOption',
-    'RemoteLink'
+    'RemoteLink',
+    'Customer',
+    'ServiceDesk',
+    'RequestType',
 )
 
 logging.getLogger('jira').addHandler(NullHandler())
@@ -818,6 +821,34 @@ class Board(GreenHopperResource):
 
         Resource.delete(self, params)
 
+
+# Service Desk
+
+class Customer(Resource):
+    """A Service Desk customer."""
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(self, 'customer', options, session, '{server}/rest/servicedeskapi/{path}')
+        if raw:
+            self._parse_raw(raw)
+
+
+class ServiceDesk(Resource):
+    """A Service Desk."""
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(self, 'servicedesk/{0}', options, session, '{server}/rest/servicedeskapi/{path}')
+        if raw:
+            self._parse_raw(raw)
+
+
+class RequestType(Resource):
+    """A Service Desk Request Type."""
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(self, 'servicedesk/{0}/requesttype', options, session, '{server}/rest/servicedeskapi/{path}')
+        if raw:
+            self._parse_raw(raw)
 
 # Utilities
 
