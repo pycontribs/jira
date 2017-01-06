@@ -164,10 +164,10 @@ class JiraTestManager(object):
                     if self.CI_JIRA_ADMIN:
                         self.jira_admin = JIRA(self.CI_JIRA_URL, basic_auth=(self.CI_JIRA_ADMIN,
                                                                              self.CI_JIRA_ADMIN_PASSWORD),
-                                               logging=False, validate=True, max_retries=self.max_retries)
+                                               validate=True, max_retries=self.max_retries)
                     else:
                         self.jira_admin = JIRA(self.CI_JIRA_URL, validate=True,
-                                               logging=False, max_retries=self.max_retries)
+                                               max_retries=self.max_retries)
                 if self.jira_admin.current_user() != self.CI_JIRA_ADMIN:
                     # self.jira_admin.
                     self.initialized = 1
@@ -179,16 +179,16 @@ class JiraTestManager(object):
                         'access_token_secret':
                             'K83jBZnjnuVRcfjBflrKyThJa0KSjSs2',
                         'consumer_key': CONSUMER_KEY,
-                        'key_cert': KEY_CERT_DATA}, logging=False, max_retries=self.max_retries)
+                        'key_cert': KEY_CERT_DATA}, max_retries=self.max_retries)
                 else:
                     if self.CI_JIRA_ADMIN:
                         self.jira_sysadmin = JIRA(self.CI_JIRA_URL,
                                                   basic_auth=(self.CI_JIRA_ADMIN,
                                                               self.CI_JIRA_ADMIN_PASSWORD),
-                                                  logging=False, validate=True, max_retries=self.max_retries)
+                                                  validate=True, max_retries=self.max_retries)
                     else:
                         self.jira_sysadmin = JIRA(self.CI_JIRA_URL,
-                                                  logging=False, max_retries=self.max_retries)
+                                                  max_retries=self.max_retries)
 
                 if OAUTH:
                     self.jira_normal = JIRA(oauth={
@@ -202,10 +202,10 @@ class JiraTestManager(object):
                         self.jira_normal = JIRA(self.CI_JIRA_URL,
                                                 basic_auth=(self.CI_JIRA_USER,
                                                             self.CI_JIRA_USER_PASSWORD),
-                                                validate=True, logging=False, max_retries=self.max_retries)
+                                                validate=True, max_retries=self.max_retries)
                     else:
                         self.jira_normal = JIRA(self.CI_JIRA_URL,
-                                                validate=True, logging=False, max_retries=self.max_retries)
+                                                validate=True, max_retries=self.max_retries)
 
                 # now we need some data to start with for the tests
 
@@ -1727,8 +1727,7 @@ class OtherTests(unittest.TestCase):
         try:
             JIRA('https://support.atlassian.com',
                  basic_auth=("xxx", "xxx"),
-                 validate=True,
-                 logging=False)
+                 validate=True)
         except Exception as e:
             self.assertIsInstance(e, JIRAError)
             # 20161010: jira cloud returns 500
@@ -1748,14 +1747,14 @@ class SessionTests(unittest.TestCase):
         self.assertIsNotNone(user.raw['session'])
 
     def test_session_with_no_logged_in_user_raises(self):
-        anon_jira = JIRA('https://support.atlassian.com', logging=False)
+        anon_jira = JIRA('https://support.atlassian.com')
         self.assertRaises(JIRAError, anon_jira.session)
 
     # @pytest.mark.skipif(platform.python_version() < '3', reason='Does not work with Python 2')
     # @not_on_custom_jira_instance  # takes way too long
     def test_session_server_offline(self):
         try:
-            JIRA('https://127.0.0.1:1', logging=False, max_retries=0)
+            JIRA('https://127.0.0.1:1', max_retries=0)
         except Exception as e:
             self.assertIn(type(e), (JIRAError, requests.exceptions.ConnectionError, AttributeError), e)
             return
