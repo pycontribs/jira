@@ -42,7 +42,34 @@ from requests.utils import get_netrc_auth
 from six import iteritems
 from six.moves.urllib.parse import urlparse
 # JIRA specific resources
-from jira.resources import *  # NOQA
+from jira.resources import (
+    Resource,
+    Issue,
+    Comment,
+    Project,
+    Attachment,
+    Component,
+    Dashboard,
+    Filter,
+    Votes,
+    Watchers,
+    Worklog,
+    IssueLink,
+    IssueLinkType,
+    IssueType,
+    Priority,
+    Version,
+    Role,
+    Resolution,
+    SecurityLevel,
+    Status,
+    User,
+    CustomFieldOption,
+    RemoteLink,
+    Customer,
+    ServiceDesk,
+    RequestType,
+)
 
 # GreenHopper specific resources
 from jira.exceptions import JIRAError
