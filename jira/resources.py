@@ -336,7 +336,7 @@ class Attachment(Resource):
 
     def get(self):
         """Return the file content as a string."""
-        r = self._session.get(self.content, headers={'Accept':'*/*'})
+        r = self._session.get(self.content, headers={'Accept': '*/*'})
         return r.content
 
     def iter_content(self, chunk_size=1024):
