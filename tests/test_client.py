@@ -1,12 +1,12 @@
+from flaky import flaky
 import getpass
 import json
 import pytest
-import re
-import sys
+from tests import get_unique_project_name
 from tests import JiraTestManager
 import time
-from jira import Role, Issue, JIRA, JIRAError, Project  # noqa
 
+from jira import Role, Issue, JIRA, JIRAError, Project  # noqa
 import jira.client
 
 
@@ -34,33 +34,32 @@ def slug(request, cl_admin):
             # Some tests have project already removed, so we stay silent
             pass
 
-    prefix = (
-        'T' + (re.sub("[^A-Z]", "", getpass.getuser().upper()))[0:6] +
-        str(sys.version_info[0]) + str(sys.version_info[1])
-    )
+    slug = get_unique_project_name()
 
-    slug = prefix + 'T'
     project_name = (
         "Test user=%s key=%s A" % (getpass.getuser(), slug)
     )
 
-    already_exists = True
     try:
         proj = cl_admin.project(slug)
     except JIRAError:
-        already_exists = False
-
-    if not already_exists:
         proj = cl_admin.create_project(slug, project_name)
-        assert proj
+    assert proj
 
     request.addfinalizer(remove_by_slug)
 
     return slug
 
 
-def test_delete_project(cl_admin, slug):
-    time.sleep(1)
+@flaky
+def test_delete_project(cl_admin, cl_normal, slug):
+    time.sleep(6)  # with <=5s was failing often
+
+    with pytest.raises(JIRAError) as ex:
+        assert cl_normal.delete_project(slug)
+
+    assert 'Not enough permissions to delete project' in str(ex.value)
+
     try:
         assert cl_admin.delete_project(slug)
     except Exception as e:
@@ -77,13 +76,6 @@ def test_delete_inexistant_project(cl_admin):
         'Parameter pid="%s" is not a Project, projectID or slug' % slug in
         str(ex.value)
     )
-
-
-def test_no_rights_to_delete_project(cl_normal, slug):
-    with pytest.raises(JIRAError) as ex:
-        assert cl_normal.delete_project(slug)
-
-    assert 'Not enough permissions to delete project' in str(ex.value)
 
 
 def test_template_list():
