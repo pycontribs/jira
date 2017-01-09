@@ -80,5 +80,5 @@ def json_loads(r):
     if len(r.text):  # r.status_code != 204:
         return json.loads(r.text)
     else:
-        # json.loads() fails with empy bodies
+        # json.loads() fails with empty bodies
         return {}

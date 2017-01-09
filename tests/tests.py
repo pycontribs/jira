@@ -19,6 +19,8 @@ import py
 import pytest
 import requests
 from six import integer_types
+from tenacity import retry
+from tenacity import stop_after_attempt
 
 if platform.python_version() < '3':
     try:
@@ -80,6 +82,26 @@ def rndpassword():
     return ''.join(random.sample(s, len(s)))
 
 
+def hashify(some_string, max_len=8):
+    return hashlib.md5(some_string.encode('utf-8')).hexdigest()[:8].upper()
+
+
+def get_unique_project_name():
+    jid = ""
+    user = re.sub("[^A-Z_]", "", getpass.getuser().upper())
+
+    if user == 'TRAVIS' and 'TRAVIS_JOB_NUMBER' in os.environ:
+        # please note that user underline (_) is not suppored by
+        # jira even if is documented as supported.
+        jid = 'T' + hashify(user + os.environ['TRAVIS_JOB_NUMBER'])
+    else:
+        identifier = user + \
+            chr(ord('A') + sys.version_info[0]) + \
+            chr(ord('A') + sys.version_info[1])
+        jid = 'Z' + hashify(identifier)
+    return jid
+
+
 class Singleton(type):
 
     def __init__(cls, name, bases, dict):
@@ -116,6 +138,7 @@ class JiraTestManager(object):
     # http://stackoverflow.com/questions/31875/is-there-a-simple-elegant-way-to-define-singletons-in-python/33201#33201
     __shared_state = {}
 
+    @retry(stop=stop_after_attempt(2))
     def __init__(self):
         self.__dict__ = self.__shared_state
 
@@ -219,30 +242,18 @@ class JiraTestManager(object):
                 """ `jid` is important for avoiding concurency problems when
                 executing tests in parallel as we have only one test instance.
 
-                jid lenght must be less than 9 characters because we may append
+                jid length must be less than 9 characters because we may append
                 another one and the JIRA Project key length limit is 10.
 
-                Tests run in parallle:
+                Tests run in parallel:
                 * git branches master or developer, git pr or developers running
                   tests outside Travis
                 * Travis is using "Travis" username
 
                 https://docs.travis-ci.com/user/environment-variables/
                 """
-                user = re.sub("[^A-Z_]", "", getpass.getuser().upper())
 
-                def hashify(some_string, max_len=8):
-                    return hashlib.md5(some_string.encode('utf-8')).hexdigest()[:8].upper()
-
-                if user == 'TRAVIS' and 'TRAVIS_JOB_NUMBER' in os.environ:
-                    # please note that user underline (_) is not suppored by
-                    # jira even if is documented as supported.
-                    self.jid = 'T' + hashify(user + os.environ['TRAVIS_JOB_NUMBER'])
-                else:
-                    identifier = user + \
-                        chr(ord('A') + sys.version_info[0]) + \
-                        chr(ord('A') + sys.version_info[1])
-                    self.jid = 'Z' + hashify(identifier)
+                self.jid = get_unique_project_name()
 
                 self.project_a = self.jid + 'A'  # old XSS
                 self.project_a_name = "Test user=%s key=%s A" \
@@ -427,22 +438,19 @@ class ApplicationPropertiesTests(unittest.TestCase):
             key='jira.lf.text.headingcolour')
         self.assertEqual(clone_prefix['value'], '#292929')
 
+    # this may fail when tests are run in parallel until we find a way to avoid it
+    @flaky
     def test_set_application_property(self):
         prop = 'jira.lf.favicon.hires.url'
         valid_value = '/jira-favicon-hires.png'
         invalid_value = '/Tjira-favicon-hires.png'
-        counter = 0
 
-        while self.jira.application_properties(key=prop)['value'] != valid_value and counter < 3:
-            if counter:
-                sleep(10)
-            self.jira.set_application_property(prop, invalid_value)
-            self.assertEqual(self.jira.application_properties(key=prop)['value'],
-                             invalid_value)
-            self.jira.set_application_property(prop, valid_value)
-            self.assertEqual(self.jira.application_properties(key=prop)['value'],
-                             valid_value)
-            counter += 1
+        self.jira.set_application_property(prop, invalid_value)
+        self.assertEqual(self.jira.application_properties(key=prop)['value'],
+                         invalid_value)
+        self.jira.set_application_property(prop, valid_value)
+        self.assertEqual(self.jira.application_properties(key=prop)['value'],
+                         valid_value)
 
     def test_setting_bad_property_raises(self):
         prop = 'random.nonexistent.property'
@@ -1560,8 +1568,9 @@ class SearchTests(unittest.TestCase):
 
     def test_search_issues_startat(self):
         issues = self.jira.search_issues('project=%s' % self.project_b,
-                                         startAt=5770, maxResults=500)
-        self.assertLessEqual(len(issues), 500)
+                                         startAt=2, maxResults=10)
+        self.assertGreaterEqual(len(issues), 1)
+        # we know that project_b should have at least 3 issues
 
     def test_search_issues_field_limiting(self):
         issues = self.jira.search_issues('key=%s' % self.issue,
@@ -1617,7 +1626,9 @@ class StatusTests(unittest.TestCase):
                 found = True
                 break
         self.assertTrue(found, "Status Open with id=1 not found. [%s]" % statuses)
+        self.assertGreater(len(statuses), 0)
 
+    @flaky
     def test_status(self):
         status = self.jira.status('10001')
         self.assertEqual(status.id, '10001')
@@ -1764,6 +1775,7 @@ class UserTests(unittest.TestCase):
         users = self.jira.search_users(self.test_manager.CI_JIRA_USER, maxResults=1)
         self.assertGreaterEqual(1, len(users))
 
+    @flaky
     def test_search_allowed_users_for_issue_by_project(self):
         users = self.jira.search_allowed_users_for_issue(self.test_manager.CI_JIRA_USER,
                                                          projectKey=self.project_a)
@@ -1800,11 +1812,16 @@ class VersionTests(unittest.TestCase):
         self.project_b = JiraTestManager().project_b
 
     def test_create_version(self):
-        version = self.jira.create_version('new version 1', self.project_b,
-                                           releaseDate='2015-03-11', description='test version!')
-        self.assertEqual(version.name, 'new version 1')
-        self.assertEqual(version.description, 'test version!')
-        self.assertEqual(version.releaseDate, '2015-03-11')
+        name = 'new version ' + self.project_b
+        desc = 'test version of ' + self.project_b
+        release_date = '2015-03-11'
+        version = self.jira.create_version(name,
+                                           self.project_b,
+                                           releaseDate=release_date,
+                                           description=desc)
+        self.assertEqual(version.name, name)
+        self.assertEqual(version.description, desc)
+        self.assertEqual(version.releaseDate, release_date)
         version.delete()
 
     @flaky
@@ -1817,6 +1834,7 @@ class VersionTests(unittest.TestCase):
         self.assertEqual(version.releaseDate, '2015-03-11')
         version.delete()
 
+    @flaky
     def test_update(self):
 
         version = self.jira.create_version('new updated version 1',
@@ -1930,8 +1948,14 @@ class UserAdministrationTests(unittest.TestCase):
         result = self.jira.delete_user(self.test_username)
         assert result, True
 
-        sleep(1)  # avoiding a zombie
-        x = self.jira.search_users(self.test_username)
+        x = -1
+        # avoiding a zombie due to Atlassian caching
+        for i in range(10):
+            x = self.jira.search_users(self.test_username)
+            if len(x) == 0:
+                break
+            sleep(1)
+
         self.assertEqual(
             len(x), 0, "Found test user when it should have been deleted. Test Fails.")
 
@@ -1961,7 +1985,13 @@ class UserAdministrationTests(unittest.TestCase):
         result = self.jira.remove_group(self.test_groupname)
         assert result, True
 
-        x = self.jira.groups(query=self.test_groupname)
+        x = -1
+        for i in range(5):
+            x = self.jira.groups(query=self.test_groupname)
+            if x == 0:
+                break
+            sleep(1)
+
         self.assertEqual(len(
             x), 0, 'Found group with name when it should have been deleted. Test Fails.')
 
@@ -1994,16 +2024,25 @@ class UserAdministrationTests(unittest.TestCase):
         try:
             self.jira.add_user(
                 self.test_username, self.test_email, password=self.test_password)
+        except JIRAError:
+            pass
+
+        try:
             self.jira.add_group(self.test_groupname)
+        except JIRAError:
+            pass
+
+        try:
             self.jira.add_user_to_group(
                 self.test_username, self.test_groupname)
-        except JIRAError as e:
-            raise e
+        except JIRAError:
+            pass
 
         result = self.jira.remove_user_from_group(
             self.test_username, self.test_groupname)
         assert result, True
 
+        sleep(2)
         x = self.jira.group_members(self.test_groupname)
         self.assertNotIn(self.test_username, x.keys(), 'Username found in group when it should have been removed. '
                                                        'Test Fails.')

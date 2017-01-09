@@ -383,9 +383,15 @@ class JIRA(object):
             page_params['startAt'] = startAt
         if maxResults:
             page_params['maxResults'] = maxResults
-        resource = self._get_json(request_path, params=page_params, base=base)
-        next_items_page = [item_type(self._options, self._session, raw_issue_json) for raw_issue_json in
-                           (resource[items_key] if items_key else resource)]
+
+        try:
+            resource = self._get_json(request_path, params=page_params, base=base)
+            next_items_page = [item_type(self._options, self._session, raw_issue_json) for raw_issue_json in
+                               (resource[items_key] if items_key else resource)]
+        except KeyError as e:
+            # improving the error text so we know why it happened
+            raise KeyError(str(e) + " : " + json.dumps(resource))
+
         items = next_items_page
 
         if True:  # isinstance(resource, dict):
@@ -411,14 +417,18 @@ class JIRA(object):
                     page_params['startAt'] = page_start
                     page_params['maxResults'] = page_size
                     resource = self._get_json(request_path, params=page_params, base=base)
-                    try:
-                        next_items_page = [item_type(self._options, self._session, raw_issue_json) for raw_issue_json in
-                                           (resource[items_key] if items_key else resource)]
-                    except KeyError as e:
-                        e.message += " : " + json.dumps(resource)
-                        raise
-                    items.extend(next_items_page)
-                    page_start += page_size
+                    if resource:
+                        try:
+                            next_items_page = [item_type(self._options, self._session, raw_issue_json) for raw_issue_json in
+                                               (resource[items_key] if items_key else resource)]
+                        except KeyError as e:
+                            # improving the error text so we know why it happened
+                            raise KeyError(str(e) + " : " + json.dumps(resource))
+                        items.extend(next_items_page)
+                        page_start += page_size
+                    else:
+                        # if resource is an empty dictionary we assume no-results
+                        break
 
             return ResultList(items, start_at_from_response, max_results_from_response, total, is_last)
         else:
@@ -881,7 +891,7 @@ class JIRA(object):
 
         raw_issue_json = json_loads(r)
         if 'key' not in raw_issue_json:
-            raise JIRAError(r.status_code, request=r)
+            raise JIRAError(r.status_code, response=r, url=url, text=json.dumps(data))
         if prefetch:
             return self.issue(raw_issue_json['key'])
         else:
@@ -1995,6 +2005,7 @@ class JIRA(object):
         r = self._session.post(
             url, data=json.dumps(data))
 
+        time.sleep(1)
         version = Version(self._options, self._session, raw=json_loads(r))
         return version
 

@@ -8,6 +8,7 @@ into usable objects.
 
 import logging
 import re
+import time
 try:  # Python 2.7+
     from logging import NullHandler
 except ImportError:
@@ -288,6 +289,9 @@ class Resource(object):
                 r = self._session.put(
                     self.self, data=json.dumps(data))
 
+        # TODO(ssbarnea): compare loaded data in order to verify if resource was updated indeed
+        # we had random test failures (probably) due to caching
+        time.sleep(3)
         self._load(self.self)
 
     def delete(self, params=None):
@@ -318,6 +322,8 @@ class Resource(object):
 
     def _parse_raw(self, raw):
         self.raw = raw
+        if not raw:
+            raise NotImplementedError("We cannot instantiate empty resources: %s" % raw)
         dict2resource(raw, self, self._options, self._session)
 
     def _default_headers(self, user_headers):
@@ -823,7 +829,7 @@ class Board(GreenHopperResource):
 
 
 def dict2resource(raw, top=None, options=None, session=None):
-    """Convert a ditionary into a Jira Resource object.
+    """Convert a dictionary into a Jira Resource object.
 
     Recursively walks a dict structure, transforming the properties into attributes
     on a new ``Resource`` object of the appropriate type (if a ``self`` link is present)
