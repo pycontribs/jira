@@ -14,10 +14,13 @@ import sys
 from time import sleep
 import traceback
 
+from flaky import flaky
 import py
 import pytest
 import requests
 from six import integer_types
+from tenacity import retry
+from tenacity import stop_after_attempt
 
 if platform.python_version() < '3':
     try:
@@ -79,6 +82,26 @@ def rndpassword():
     return ''.join(random.sample(s, len(s)))
 
 
+def hashify(some_string, max_len=8):
+    return hashlib.md5(some_string.encode('utf-8')).hexdigest()[:8].upper()
+
+
+def get_unique_project_name():
+    jid = ""
+    user = re.sub("[^A-Z_]", "", getpass.getuser().upper())
+
+    if user == 'TRAVIS' and 'TRAVIS_JOB_NUMBER' in os.environ:
+        # please note that user underline (_) is not suppored by
+        # jira even if is documented as supported.
+        jid = 'T' + hashify(user + os.environ['TRAVIS_JOB_NUMBER'])
+    else:
+        identifier = user + \
+            chr(ord('A') + sys.version_info[0]) + \
+            chr(ord('A') + sys.version_info[1])
+        jid = 'Z' + hashify(identifier)
+    return jid
+
+
 class Singleton(type):
 
     def __init__(cls, name, bases, dict):
@@ -115,6 +138,7 @@ class JiraTestManager(object):
     # http://stackoverflow.com/questions/31875/is-there-a-simple-elegant-way-to-define-singletons-in-python/33201#33201
     __shared_state = {}
 
+    @retry(stop=stop_after_attempt(2))
     def __init__(self):
         self.__dict__ = self.__shared_state
 
@@ -218,30 +242,18 @@ class JiraTestManager(object):
                 """ `jid` is important for avoiding concurency problems when
                 executing tests in parallel as we have only one test instance.
 
-                jid lenght must be less than 9 characters because we may append
+                jid length must be less than 9 characters because we may append
                 another one and the JIRA Project key length limit is 10.
 
-                Tests run in parallle:
+                Tests run in parallel:
                 * git branches master or developer, git pr or developers running
                   tests outside Travis
                 * Travis is using "Travis" username
 
                 https://docs.travis-ci.com/user/environment-variables/
                 """
-                user = re.sub("[^A-Z_]", "", getpass.getuser().upper())
 
-                def hashify(some_string, max_len=8):
-                    return hashlib.md5(some_string.encode('utf-8')).hexdigest()[:8].upper()
-
-                if user == 'TRAVIS' and 'TRAVIS_JOB_NUMBER' in os.environ:
-                    # please note that user underline (_) is not suppored by
-                    # jira even if is documented as supported.
-                    self.jid = 'T' + hashify(user + os.environ['TRAVIS_JOB_NUMBER'])
-                else:
-                    identifier = user + \
-                        chr(ord('A') + sys.version_info[0]) + \
-                        chr(ord('A') + sys.version_info[1])
-                    self.jid = 'Z' + hashify(identifier)
+                self.jid = get_unique_project_name()
 
                 self.project_a = self.jid + 'A'  # old XSS
                 self.project_a_name = "Test user=%s key=%s A" \
@@ -258,7 +270,10 @@ class JiraTestManager(object):
                     logging.warning(e)
                     pass
                 else:
-                    self.jira_admin.delete_project(self.project_a)
+                    try:
+                        self.jira_admin.delete_project(self.project_a)
+                    except Exception as e:
+                        pass
 
                 try:
                     self.jira_admin.project(self.project_b)
@@ -266,7 +281,10 @@ class JiraTestManager(object):
                     logging.warning(e)
                     pass
                 else:
-                    self.jira_admin.delete_project(self.project_b)
+                    try:
+                        self.jira_admin.delete_project(self.project_b)
+                    except Exception as e:
+                        pass
 
                 # wait for the project to be deleted
                 for i in range(1, 20):
@@ -420,22 +438,19 @@ class ApplicationPropertiesTests(unittest.TestCase):
             key='jira.lf.text.headingcolour')
         self.assertEqual(clone_prefix['value'], '#292929')
 
+    # this may fail when tests are run in parallel until we find a way to avoid it
+    @flaky
     def test_set_application_property(self):
         prop = 'jira.lf.favicon.hires.url'
         valid_value = '/jira-favicon-hires.png'
         invalid_value = '/Tjira-favicon-hires.png'
-        counter = 0
 
-        while self.jira.application_properties(key=prop)['value'] != valid_value and counter < 3:
-            if counter:
-                sleep(10)
-            self.jira.set_application_property(prop, invalid_value)
-            self.assertEqual(self.jira.application_properties(key=prop)['value'],
-                             invalid_value)
-            self.jira.set_application_property(prop, valid_value)
-            self.assertEqual(self.jira.application_properties(key=prop)['value'],
-                             valid_value)
-            counter += 1
+        self.jira.set_application_property(prop, invalid_value)
+        self.assertEqual(self.jira.application_properties(key=prop)['value'],
+                         invalid_value)
+        self.jira.set_application_property(prop, valid_value)
+        self.assertEqual(self.jira.application_properties(key=prop)['value'],
+                         valid_value)
 
     def test_setting_bad_property_raises(self):
         prop = 'random.nonexistent.property'
@@ -460,15 +475,16 @@ class AttachmentTests(unittest.TestCase):
     @unittest.skip("TBD: investigate failure")
     def test_1_add_remove_attachment(self):
         issue = self.jira.issue(self.issue_1)
-        self.attachment = self.jira.add_attachment(issue, open(TEST_ATTACH_PATH, 'rb'),
-                                                   "new test attachment")
-        new_attachment = self.jira.attachment(self.attachment.id)
+        attachment = self.jira.add_attachment(issue,
+                                              open(TEST_ATTACH_PATH, 'rb'),
+                                              "new test attachment")
+        new_attachment = self.jira.attachment(attachment.id)
         msg = "attachment %s of issue %s" % (new_attachment.__dict__, issue)
         self.assertEqual(
             new_attachment.filename, 'new test attachment', msg=msg)
         self.assertEqual(
             new_attachment.size, os.path.getsize(TEST_ATTACH_PATH), msg=msg)
-        assert self.attachment.delete() is None
+        assert attachment.delete() is None
 
 
 class ComponentTests(unittest.TestCase):
@@ -492,7 +508,7 @@ class ComponentTests(unittest.TestCase):
         self.assertFalse(component.isAssigneeTypeValid)
         component.delete()
 
-    # COmponents field can't be modified from issue.update
+    # Components field can't be modified from issue.update
     #    def test_component_count_related_issues(self):
     #        component = self.jira.create_component('PROJECT_B_TEST',self.project_b, description='test!!',
     #                                               assigneeType='COMPONENT_LEAD', isAssigneeTypeValid=False)
@@ -514,7 +530,7 @@ class ComponentTests(unittest.TestCase):
         except Exception:
             # We ignore errors as this code intends only to prepare for
             # component creation
-            pass
+            raise
 
         name = 'component-' + rndstr()
 
@@ -743,7 +759,7 @@ class IssueTests(unittest.TestCase):
             # 'customfield_10022': 'XSS',
             'priority': {
                 'name': 'Major'}},
-        {
+            {
             'project': {
                 'key': self.project_a},
             'issuetype': {
@@ -763,7 +779,7 @@ class IssueTests(unittest.TestCase):
         self.assertEqual(issues[1]['issue'].fields.summary,
                          'Issue created via bulk create #2')
         self.assertEqual(issues[1]['issue'].fields.description,
-                        "Another new issue for bulk test")
+                         "Another new issue for bulk test")
         self.assertEqual(issues[1]['issue'].fields.issuetype.name, 'Bug')
         self.assertEqual(issues[1]['issue'].fields.project.key, self.project_a)
         self.assertEqual(issues[1]['issue'].fields.priority.name, 'Major')
@@ -782,24 +798,22 @@ class IssueTests(unittest.TestCase):
             # 'customfield_10022': 'XSS',
             'priority': {
                 'name': 'Major'}},
-        {
-            'project': {
+            {'project': {
                 'key': self.project_a},
-            'issuetype': {
-                'name': 'InvalidIssueType'},
-            'summary': 'This issue will not succeed',
-            'description': "Should not be seen.",
-            'priority': {
+                'issuetype': {
+                    'name': 'InvalidIssueType'},
+                'summary': 'This issue will not succeed',
+                'description': "Should not be seen.",
+                'priority': {
                 'name': 'Blah'}},
-        {
-            'project': {
+            {'project': {
                 'key': self.project_a},
-            'issuetype': {
-                'name': 'Bug'},
-            'summary': 'However, this one will.',
-            'description': "Should be seen.",
-            'priority': {
-                'name': 'Major'}}]
+                'issuetype': {
+                    'name': 'Bug'},
+                'summary': 'However, this one will.',
+                'description': "Should be seen.",
+                'priority': {
+                    'name': 'Major'}}]
         issues = self.jira.create_issues(field_list=field_list)
         self.assertEqual(issues[0]['issue'].fields.summary,
                          'Issue created via bulk create #1')
@@ -827,14 +841,14 @@ class IssueTests(unittest.TestCase):
 
     @not_on_custom_jira_instance
     def test_create_issues_without_prefetch(self):
-        field_list= [dict(project=self.project_b,
-                          summary='Test issue created',
-                          description='blahery',
-                          issuetype={'name': 'Bug'}),
-                     dict(project=self.project_a,
-                          summary='Test issue #2',
-                          description='fooery',
-                          issuetype={'name': 'Bug'})]
+        field_list = [dict(project=self.project_b,
+                           summary='Test issue created',
+                           description='blahery',
+                           issuetype={'name': 'Bug'}),
+                      dict(project=self.project_a,
+                           summary='Test issue #2',
+                           description='fooery',
+                           issuetype={'name': 'Bug'})]
         issues = self.jira.create_issues(field_list, prefetch=False)
 
         assert hasattr(issues[0]['issue'], 'self')
@@ -1235,8 +1249,10 @@ class IssueTests(unittest.TestCase):
 
         # self.jira.rank(self.issue_2, self.issue_1)
 
+        sleep(2)  # avoid https://travis-ci.org/pycontribs/jira/jobs/176561534#L516
         s.delete()
 
+        sleep(2)
         b.delete()
         # self.jira.delete_board(b.id)
 
@@ -1552,8 +1568,9 @@ class SearchTests(unittest.TestCase):
 
     def test_search_issues_startat(self):
         issues = self.jira.search_issues('project=%s' % self.project_b,
-                                         startAt=5770, maxResults=500)
-        self.assertLessEqual(len(issues), 500)
+                                         startAt=2, maxResults=10)
+        self.assertGreaterEqual(len(issues), 1)
+        # we know that project_b should have at least 3 issues
 
     def test_search_issues_field_limiting(self):
         issues = self.jira.search_issues('key=%s' % self.issue,
@@ -1609,7 +1626,9 @@ class StatusTests(unittest.TestCase):
                 found = True
                 break
         self.assertTrue(found, "Status Open with id=1 not found. [%s]" % statuses)
+        self.assertGreater(len(statuses), 0)
 
+    @flaky
     def test_status(self):
         status = self.jira.status('10001')
         self.assertEqual(status.id, '10001')
@@ -1756,6 +1775,7 @@ class UserTests(unittest.TestCase):
         users = self.jira.search_users(self.test_manager.CI_JIRA_USER, maxResults=1)
         self.assertGreaterEqual(1, len(users))
 
+    @flaky
     def test_search_allowed_users_for_issue_by_project(self):
         users = self.jira.search_allowed_users_for_issue(self.test_manager.CI_JIRA_USER,
                                                          projectKey=self.project_a)
@@ -1792,22 +1812,29 @@ class VersionTests(unittest.TestCase):
         self.project_b = JiraTestManager().project_b
 
     def test_create_version(self):
-        version = self.jira.create_version('new version 1', self.project_b,
-                                           releaseDate='2015-03-11', description='test version!')
-        self.assertEqual(version.name, 'new version 1')
-        self.assertEqual(version.description, 'test version!')
-        self.assertEqual(version.releaseDate, '2015-03-11')
+        name = 'new version ' + self.project_b
+        desc = 'test version of ' + self.project_b
+        release_date = '2015-03-11'
+        version = self.jira.create_version(name,
+                                           self.project_b,
+                                           releaseDate=release_date,
+                                           description=desc)
+        self.assertEqual(version.name, name)
+        self.assertEqual(version.description, desc)
+        self.assertEqual(version.releaseDate, release_date)
         version.delete()
 
+    @flaky
     def test_create_version_with_project_obj(self):
         project = self.jira.project(self.project_b)
-        version = self.jira.create_version('new version 1', project,
+        version = self.jira.create_version('new version 2', project,
                                            releaseDate='2015-03-11', description='test version!')
-        self.assertEqual(version.name, 'new version 1')
+        self.assertEqual(version.name, 'new version 2')
         self.assertEqual(version.description, 'test version!')
         self.assertEqual(version.releaseDate, '2015-03-11')
         version.delete()
 
+    @flaky
     def test_update(self):
 
         version = self.jira.create_version('new updated version 1',
@@ -1921,18 +1948,25 @@ class UserAdministrationTests(unittest.TestCase):
         result = self.jira.delete_user(self.test_username)
         assert result, True
 
-        sleep(1)  # avoiding a zombie
-        x = self.jira.search_users(self.test_username)
+        x = -1
+        # avoiding a zombie due to Atlassian caching
+        for i in range(10):
+            x = self.jira.search_users(self.test_username)
+            if len(x) == 0:
+                break
+            sleep(1)
+
         self.assertEqual(
             len(x), 0, "Found test user when it should have been deleted. Test Fails.")
 
+    @flaky
     def test_add_group(self):
         try:
             self.jira.remove_group(self.test_groupname)
         except JIRAError:
             pass
 
-        sleep(1)  # avoid 500 errors like https://travis-ci.org/pycontribs/jira/jobs/176544578#L552
+        sleep(2)  # avoid 500 errors like https://travis-ci.org/pycontribs/jira/jobs/176544578#L552
         result = self.jira.add_group(self.test_groupname)
         assert result, True
 
@@ -1951,7 +1985,13 @@ class UserAdministrationTests(unittest.TestCase):
         result = self.jira.remove_group(self.test_groupname)
         assert result, True
 
-        x = self.jira.groups(query=self.test_groupname)
+        x = -1
+        for i in range(5):
+            x = self.jira.groups(query=self.test_groupname)
+            if x == 0:
+                break
+            sleep(1)
+
         self.assertEqual(len(
             x), 0, 'Found group with name when it should have been deleted. Test Fails.')
 
@@ -1984,16 +2024,25 @@ class UserAdministrationTests(unittest.TestCase):
         try:
             self.jira.add_user(
                 self.test_username, self.test_email, password=self.test_password)
+        except JIRAError:
+            pass
+
+        try:
             self.jira.add_group(self.test_groupname)
+        except JIRAError:
+            pass
+
+        try:
             self.jira.add_user_to_group(
                 self.test_username, self.test_groupname)
-        except JIRAError as e:
-            raise e
+        except JIRAError:
+            pass
 
         result = self.jira.remove_user_from_group(
             self.test_username, self.test_groupname)
         assert result, True
 
+        sleep(2)
         x = self.jira.group_members(self.test_groupname)
         self.assertNotIn(self.test_username, x.keys(), 'Username found in group when it should have been removed. '
                                                        'Test Fails.')

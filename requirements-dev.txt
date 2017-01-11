@@ -4,7 +4,7 @@
 
 py >= 1.4
 
-hacking
+hacking>=0.13
 MarkupSafe>=0.23
 coveralls>=1.1
 docutils>=0.12
@@ -23,4 +23,4 @@ wheel>=0.24.0
 xmlrunner>=1.7.7
 yanc>=0.3.3
 unittest2; python_version < '3.1'
-doc2dash
+flaky
