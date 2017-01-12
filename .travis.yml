@@ -9,15 +9,10 @@ python:
 - '3.4'
 - '3.5'
 install:
+- pip -q --log dist/pip.log install --upgrade pip setuptools tox-travis py
 - pip --version
-- pip -q --log dist/pip.log install --upgrade pip setuptools py
-- pip --version
-- pip -q --log dist/pip.log install ipython || echo "optional skipped"
-- pip -q --log dist/pip.log install pytest-cache || echo "optional skipped"
-- pip -q --log dist/pip.log install -r requirements.txt -r requirements-dev.txt
-- pwd
 script:
-- python setup.py test
+- tox
 - export PACKAGE_NAME=$(python setup.py --name)
 - export PACKAGE_VERSION=$(python setup.py --version)
 after_success:
@@ -32,7 +27,7 @@ after_success:
     fi
   fi
 - coveralls
-- travis_wait python setup.py prerelease
+- travis_wait python setup.py sdist prerelease
 - requires.io update-site -t ac3bbcca32ae03237a6aae2b02eb9411045489bb -r
 after_failure:
 - python travis_after_all.py
