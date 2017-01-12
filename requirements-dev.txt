@@ -24,3 +24,4 @@ xmlrunner>=1.7.7
 yanc>=0.3.3
 unittest2; python_version < '3.1'
 flaky
+tenacity
