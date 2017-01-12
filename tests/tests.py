@@ -2023,6 +2023,7 @@ class UserAdministrationTests(unittest.TestCase):
             x), 0, 'Found group with name when it should have been deleted. Test Fails.')
 
     @not_on_custom_jira_instance
+    @pytest.mark.xfail(reason="query may return empty list: https://travis-ci.org/pycontribs/jira/jobs/191274505#L520")
     def test_add_user_to_group(self):
         try:
             self.jira.add_user(
