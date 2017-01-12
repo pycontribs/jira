@@ -371,6 +371,7 @@ def find_by_name(seq, name):
             return seq_item
 
 
+@flaky
 class UniversalResourceTests(unittest.TestCase):
 
     def setUp(self):
@@ -406,6 +407,7 @@ class UniversalResourceTests(unittest.TestCase):
         self.assertTrue(resource == unpickled_instance)
 
 
+@flaky
 class ResourceTests(unittest.TestCase):
 
     def setUp(self):
@@ -424,6 +426,7 @@ class ResourceTests(unittest.TestCase):
                 webhooks/1.0/webhook/1'), Webhook)
 
 
+@flaky
 class ApplicationPropertiesTests(unittest.TestCase):
 
     def setUp(self):
@@ -460,6 +463,7 @@ class ApplicationPropertiesTests(unittest.TestCase):
                           '666')
 
 
+@flaky
 class AttachmentTests(unittest.TestCase):
 
     def setUp(self):
@@ -489,6 +493,7 @@ class AttachmentTests(unittest.TestCase):
         assert attachment.delete() is None
 
 
+@flaky
 class ComponentTests(unittest.TestCase):
 
     def setUp(self):
@@ -555,6 +560,7 @@ class ComponentTests(unittest.TestCase):
         self.assertRaises(JIRAError, self.jira.component, myid)
 
 
+@flaky
 class CustomFieldOptionTests(unittest.TestCase):
 
     def setUp(self):
@@ -567,6 +573,7 @@ class CustomFieldOptionTests(unittest.TestCase):
 
 
 @not_on_custom_jira_instance
+@flaky
 class DashboardTests(unittest.TestCase):
 
     def setUp(self):
@@ -596,6 +603,7 @@ class DashboardTests(unittest.TestCase):
 
 
 @not_on_custom_jira_instance
+@flaky
 class FieldsTests(unittest.TestCase):
 
     def setUp(self):
@@ -606,6 +614,7 @@ class FieldsTests(unittest.TestCase):
         self.assertGreater(len(fields), 10)
 
 
+@flaky
 class FilterTests(unittest.TestCase):
 
     def setUp(self):
@@ -639,6 +648,7 @@ class FilterTests(unittest.TestCase):
 
 
 @not_on_custom_jira_instance
+@flaky
 class GroupsTest(unittest.TestCase):
 
     def setUp(self):
@@ -654,6 +664,7 @@ class GroupsTest(unittest.TestCase):
         self.assertGreater(len(groups), 0)
 
 
+@flaky
 class IssueTests(unittest.TestCase):
 
     def setUp(self):
@@ -1314,6 +1325,7 @@ class IssueTests(unittest.TestCase):
         self.assertEqual(issue.fields.timetracking.remainingEstimate, "3h")
 
 
+@flaky
 class IssueLinkTests(unittest.TestCase):
 
     def setUp(self):
@@ -1350,6 +1362,7 @@ class IssueLinkTests(unittest.TestCase):
         self.assertEqual(link_type.name, self.link_types[0].name)
 
 
+@flaky
 class MyPermissionsTests(unittest.TestCase):
 
     def setUp(self):
@@ -1375,6 +1388,7 @@ class MyPermissionsTests(unittest.TestCase):
         self.assertGreaterEqual(len(perms['permissions']), 10)
 
 
+@flaky
 class PrioritiesTests(unittest.TestCase):
 
     def setUp(self):
@@ -1391,6 +1405,7 @@ class PrioritiesTests(unittest.TestCase):
         self.assertEqual(priority.name, 'Critical')
 
 
+@flaky
 class ProjectTests(unittest.TestCase):
 
     def setUp(self):
@@ -1533,6 +1548,7 @@ class ProjectTests(unittest.TestCase):
 
 
 @not_on_custom_jira_instance
+@flaky
 class ResolutionTests(unittest.TestCase):
 
     def setUp(self):
@@ -1548,6 +1564,7 @@ class ResolutionTests(unittest.TestCase):
         self.assertEqual(resolution.name, 'Won\'t Fix')
 
 
+@flaky
 class SearchTests(unittest.TestCase):
 
     def setUp(self):
@@ -1592,6 +1609,7 @@ class SearchTests(unittest.TestCase):
 
 
 @unittest.skip("Skipped due to https://jira.atlassian.com/browse/JRA-59619")
+@flaky
 class SecurityLevelTests(unittest.TestCase):
 
     def setUp(self):
@@ -1603,6 +1621,7 @@ class SecurityLevelTests(unittest.TestCase):
         self.assertEqual(sec_level.id, '10000')
 
 
+@flaky
 class ServerInfoTests(unittest.TestCase):
 
     def setUp(self):
@@ -1614,6 +1633,7 @@ class ServerInfoTests(unittest.TestCase):
         self.assertIn('version', server_info)
 
 
+@flaky
 class StatusTests(unittest.TestCase):
 
     def setUp(self):
@@ -1636,6 +1656,7 @@ class StatusTests(unittest.TestCase):
         self.assertEqual(status.name, 'Done')
 
 
+@flaky
 class UserTests(unittest.TestCase):
 
     def setUp(self):
@@ -1806,6 +1827,7 @@ class UserTests(unittest.TestCase):
         self.assertEqual(len(users_set), 1)
 
 
+@flaky
 class VersionTests(unittest.TestCase):
 
     def setUp(self):
@@ -1864,6 +1886,7 @@ class VersionTests(unittest.TestCase):
         pass
 
 
+@flaky
 class OtherTests(unittest.TestCase):
 
     def test_session_invalid_login(self):
@@ -1881,6 +1904,7 @@ class OtherTests(unittest.TestCase):
         assert False
 
 
+@flaky
 class SessionTests(unittest.TestCase):
 
     def setUp(self):
@@ -1905,6 +1929,7 @@ class SessionTests(unittest.TestCase):
         self.assertTrue(False, "Instantiation of invalid JIRA instance succeeded.")
 
 
+@flaky
 class WebsudoTests(unittest.TestCase):
 
     def setUp(self):
@@ -1917,6 +1942,7 @@ class WebsudoTests(unittest.TestCase):
     #    self.assertRaises(ConnectionError, JIRA)
 
 
+@flaky
 class UserAdministrationTests(unittest.TestCase):
 
     def setUp(self):
