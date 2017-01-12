@@ -339,6 +339,7 @@ class JIRA(object):
                 )
                 raise JIRAError("Can not log in with %s" % str(auth_method))
 
+        self.deploymentType = None
         if get_server_info:
             # We need version in order to know what API calls are available or not
             si = self.server_info()
@@ -347,6 +348,7 @@ class JIRA(object):
             except Exception as e:
                 logging.error("invalid server_info: %s", si)
                 raise e
+            self.deploymentType = si.get('deploymentType')
         else:
             self._version = (0, 0, 0)
 
@@ -2319,11 +2321,14 @@ class JIRA(object):
         return webhooks
 
     # Websudo
-
     def kill_websudo(self):
-        """Destroy the user's current WebSudo session."""
-        url = self._options['server'] + '/rest/auth/1/websudo'
-        return self._session.delete(url)
+        """Destroy the user's current WebSudo session.
+
+        Works only for non-cloud deployments, for others does nothing.
+        """
+        if self.deploymentType != 'Cloud':
+            url = self._options['server'] + '/rest/auth/1/websudo'
+            return self._session.delete(url)
 
     # Utilities
     def _create_http_basic_session(self, username, password, timeout=None):
@@ -2561,7 +2566,7 @@ class JIRA(object):
 
     def deactivate_user(self, username):
         """Disable/deactivate the user."""
-        if self.server_info().get('deploymentType') == 'Cloud':
+        if self.deploymentType == 'Cloud':
             url = self._options['server'] + '/admin/rest/um/1/user/deactivate?username=' + username
             self._options['headers']['Content-Type'] = 'application/json'
             userInfo = {}
@@ -2628,7 +2633,7 @@ class JIRA(object):
 
     def backup(self, filename='backup.zip', attachments=False):
         """Will call jira export to backup as zipped xml. Returning with success does not mean that the backup process finished."""
-        if self.server_info().get('deploymentType') == 'Cloud':
+        if self.deploymentType == 'Cloud':
             url = self._options['server'] + '/rest/obm/1.0/runbackup'
             payload = json.dumps({"cbAttachments": attachments})
             self._options['headers']['X-Requested-With'] = 'XMLHttpRequest'
@@ -2652,7 +2657,7 @@ class JIRA(object):
         Is there a way to get progress for Server version?
         """
         epoch_time = int(time.time() * 1000)
-        if self.server_info().get('deploymentType') == 'Cloud':
+        if self.deploymentType == 'Cloud':
             url = self._options['server'] + '/rest/obm/1.0/getprogress?_=%i' % epoch_time
         else:
             logging.warning(
@@ -2678,7 +2683,7 @@ class JIRA(object):
 
     def backup_complete(self):
         """Return boolean based on 'alternativePercentage' and 'size' returned from backup_progress (cloud only)."""
-        if self.server_info().get('deploymentType') != 'Cloud':
+        if self.deploymentType != 'Cloud':
             logging.warning(
                 'This functionality is not available in Server version')
             return None
@@ -2690,7 +2695,7 @@ class JIRA(object):
 
     def backup_download(self, filename=None):
         """Download backup file from WebDAV (cloud only)."""
-        if self.server_info().get('deploymentType') != 'Cloud':
+        if self.deploymentType != 'Cloud':
             logging.warning(
                 'This functionality is not available in Server version')
             return None
