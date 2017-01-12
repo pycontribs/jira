@@ -2910,7 +2910,7 @@ class JIRA(object):
 
         :param username: Username that will be added to specified group.
         :param group: Group that the user will be added to.
-        :return: Boolean, True for success, false for failure.
+        :return: json response from Jira server for success or a value that evaluates as False in case of failure.
         """
         url = self._options['server'] + '/rest/api/latest/group/user'
         x = {'groupname': group}
@@ -2918,9 +2918,11 @@ class JIRA(object):
 
         payload = json.dumps(y)
 
-        self._session.post(url, params=x, data=payload)
-
-        return True
+        r = json_loads(self._session.post(url, params=x, data=payload))
+        if 'name' not in r or r['name'] != group:
+            return False
+        else:
+            return r
 
     def remove_user_from_group(self, username, groupname):
         """Remove a user from a group.
