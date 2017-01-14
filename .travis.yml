@@ -10,12 +10,14 @@ python:
 - '3.5'
 - '3.6'
 install:
-- pip -q --log dist/pip.log install --upgrade pip setuptools tox-travis py
+- pip -q --log dist/pip.log install --upgrade pip setuptools tox-travis py wheel
+- python setup.py install bdist_wheel
+- pip install ./dist/jira-*.whl
 - pip --version
 script:
-- tox
 - export PACKAGE_NAME=$(python setup.py --name)
 - export PACKAGE_VERSION=$(python setup.py --version)
+- tox --installpkg ./dist/jira-*.whl --travis-after
 after_success:
 - python travis_after_all.py
 - export $(cat .to_export_back)
@@ -63,7 +65,8 @@ deploy:
   skip_cleanup: true
   on:
     tags: false
-    condition: "$BUILD_LEADER = YES"
+    python: 2.7
+    condition: $TOXENV != docs
 - provider: pypi
   user: sorin
   password:
@@ -72,7 +75,8 @@ deploy:
   skip_cleanup: true
   on:
     tags: false
-    condition: "$BUILD_LEADER = YES"
+    python: 2.7
+    condition: $TOXENV != docs
     branch: master
 - provider: pypi
   server: https://testpypi.python.org/pypi
@@ -83,7 +87,8 @@ deploy:
   skip_cleanup: true
   on:
     tags: false
-    condition: "$BUILD_LEADER = YES"
+    python: 2.7
+    condition: $TOXENV != docs
     branch: develop
 after_deploy:
 - echo "Now we only have tag the changeset and push..."
