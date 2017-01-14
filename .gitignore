@@ -24,3 +24,4 @@ tests/test-reports-*/*
 /.python-version
 /CHANGELOG
 /AUTHORS
+/tests/build

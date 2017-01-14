@@ -122,6 +122,12 @@ def _get_template_list(data):
     return template_list
 
 
+def _field_worker(fields=None, **fieldargs):
+    if fields is not None:
+        return {'fields': fields}
+    return {'fields': fieldargs}
+
+
 class ResultList(list):
 
     def __init__(self, iterable=None, _startAt=None, _maxResults=None, _total=None, _isLast=None):
@@ -297,6 +303,7 @@ class JIRA(object):
             # It's better to fail faster than later.
             self.session()
 
+        self.deploymentType = None
         if get_server_info:
             # We need version in order to know what API calls are available or not
             si = self.server_info()
@@ -305,6 +312,7 @@ class JIRA(object):
             except Exception as e:
                 logger.error("invalid server_info: %s", si)
                 raise e
+            self.deploymentType = si.get('deploymentType')
         else:
             self._version = (0, 0, 0)
 
@@ -376,9 +384,15 @@ class JIRA(object):
             page_params['startAt'] = startAt
         if maxResults:
             page_params['maxResults'] = maxResults
-        resource = self._get_json(request_path, params=page_params, base=base)
-        next_items_page = [item_type(self._options, self._session, raw_issue_json) for raw_issue_json in
-                           (resource[items_key] if items_key else resource)]
+
+        try:
+            resource = self._get_json(request_path, params=page_params, base=base)
+            next_items_page = [item_type(self._options, self._session, raw_issue_json) for raw_issue_json in
+                               (resource[items_key] if items_key else resource)]
+        except KeyError as e:
+            # improving the error text so we know why it happened
+            raise KeyError(str(e) + " : " + json.dumps(resource))
+
         items = next_items_page
 
         if True:  # isinstance(resource, dict):
@@ -404,14 +418,18 @@ class JIRA(object):
                     page_params['startAt'] = page_start
                     page_params['maxResults'] = page_size
                     resource = self._get_json(request_path, params=page_params, base=base)
-                    try:
-                        next_items_page = [item_type(self._options, self._session, raw_issue_json) for raw_issue_json in
-                                           (resource[items_key] if items_key else resource)]
-                    except KeyError as e:
-                        e.message += " : " + json.dumps(resource)
-                        raise
-                    items.extend(next_items_page)
-                    page_start += page_size
+                    if resource:
+                        try:
+                            next_items_page = [item_type(self._options, self._session, raw_issue_json) for raw_issue_json in
+                                               (resource[items_key] if items_key else resource)]
+                        except KeyError as e:
+                            # improving the error text so we know why it happened
+                            raise KeyError(str(e) + " : " + json.dumps(resource))
+                        items.extend(next_items_page)
+                        page_start += page_size
+                    else:
+                        # if resource is an empty dictionary we assume no-results
+                        break
 
             return ResultList(items, start_at_from_response, max_results_from_response, total, is_last)
         else:
@@ -856,14 +874,7 @@ class JIRA(object):
         :param prefetch: whether to reload the created issue Resource so that all of its data is present in the value
             returned from this method
         """
-        data = {}
-        if fields is not None:
-            data['fields'] = fields
-        else:
-            fields_dict = {}
-            for field in fieldargs:
-                fields_dict[field] = fieldargs[field]
-            data['fields'] = fields_dict
+        data = _field_worker(fields, **fieldargs)
 
         p = data['fields']['project']
 
@@ -881,11 +892,59 @@ class JIRA(object):
 
         raw_issue_json = json_loads(r)
         if 'key' not in raw_issue_json:
-            raise JIRAError(r.status_code, request=r)
+            raise JIRAError(r.status_code, response=r, url=url, text=json.dumps(data))
         if prefetch:
             return self.issue(raw_issue_json['key'])
         else:
             return Issue(self._options, self._session, raw=raw_issue_json)
+
+    def create_issues(self, field_list, prefetch=True):
+        """Bulk create new issues and return an issue Resource for each successfully created issue.
+
+        See `create_issue` documentation for field information.
+
+        :param field_list: a list of dicts each containing field names and the values to use. Each dict
+            is an individual issue to create and is subject to its minimum requirements.
+        :param prefetch: whether to reload the created issue Resource for each created issue so that all
+            of its data is present in the value returned from this method.
+        """
+        data = {'issueUpdates': []}
+        for field_dict in field_list:
+            issue_data = _field_worker(field_dict)
+            p = issue_data['fields']['project']
+
+            if isinstance(p, string_types) or isinstance(p, integer_types):
+                issue_data['fields']['project'] = {'id': self.project(p).id}
+
+            p = issue_data['fields']['issuetype']
+            if isinstance(p, integer_types):
+                issue_data['fields']['issuetype'] = {'id': p}
+            if isinstance(p, string_types) or isinstance(p, integer_types):
+                issue_data['fields']['issuetype'] = {'id': self.issue_type_by_name(p).id}
+
+            data['issueUpdates'].append(issue_data)
+
+        url = self._get_url('issue/bulk')
+        r = self._session.post(url, data=json.dumps(data))
+
+        raw_issue_json = json_loads(r)
+        issue_list = []
+        errors = {}
+        for error in raw_issue_json['errors']:
+            errors[error['failedElementNumber']] = error['elementErrors']['errors']
+        for index, fields in enumerate(field_list):
+            if index in errors:
+                issue_list.append({'status': 'Error', 'error': errors[index],
+                                   'issue': None, 'input_fields': fields})
+            else:
+                issue = raw_issue_json['issues'].pop(0)
+                if prefetch:
+                    issue = self.issue(issue['key'])
+                else:
+                    issue = Issue(self._options, self._session, raw=issue)
+                issue_list.append({'status': 'Success', 'issue': issue,
+                                   'error': None, 'input_fields': fields})
+        return issue_list
 
     def createmeta(self, projectKeys=None, projectIds=[], issuetypeIds=None, issuetypeNames=None, expand=None):
         """Get the metadata required to create issues, optionally filtered by projects and issue types.
@@ -1947,6 +2006,7 @@ class JIRA(object):
         r = self._session.post(
             url, data=json.dumps(data))
 
+        time.sleep(1)
         version = Version(self._options, self._session, raw=json_loads(r))
         return version
 
@@ -2024,11 +2084,14 @@ class JIRA(object):
         return self._session.delete(url)
 
     # Websudo
-
     def kill_websudo(self):
-        """Destroy the user's current WebSudo session."""
-        url = self._options['server'] + '/rest/auth/1/websudo'
-        return self._session.delete(url)
+        """Destroy the user's current WebSudo session.
+
+        Works only for non-cloud deployments, for others does nothing.
+        """
+        if self.deploymentType != 'Cloud':
+            url = self._options['server'] + '/rest/auth/1/websudo'
+            return self._session.delete(url)
 
     # Utilities
     def _create_http_basic_session(self, username, password):
@@ -2268,7 +2331,7 @@ class JIRA(object):
 
     def deactivate_user(self, username):
         """Disable/deactivate the user."""
-        if self.server_info().get('deploymentType') == 'Cloud':
+        if self.deploymentType == 'Cloud':
             url = self._options['server'] + '/admin/rest/um/1/user/deactivate?username=' + username
             self._options['headers']['Content-Type'] = 'application/json'
             userInfo = {}
@@ -2335,7 +2398,7 @@ class JIRA(object):
 
     def backup(self, filename='backup.zip', attachments=False):
         """Will call jira export to backup as zipped xml. Returning with success does not mean that the backup process finished."""
-        if self.server_info().get('deploymentType') == 'Cloud':
+        if self.deploymentType == 'Cloud':
             url = self._options['server'] + '/rest/obm/1.0/runbackup'
             payload = json.dumps({"cbAttachments": attachments})
             self._options['headers']['X-Requested-With'] = 'XMLHttpRequest'
@@ -2358,7 +2421,7 @@ class JIRA(object):
         Is there a way to get progress for Server version?
         """
         epoch_time = int(time.time() * 1000)
-        if self.server_info().get('deploymentType') == 'Cloud':
+        if self.deploymentType == 'Cloud':
             url = self._options['server'] + '/rest/obm/1.0/getprogress?_=%i' % epoch_time
         else:
             logger.warning('This functionality is not available in Server version')
@@ -2384,8 +2447,9 @@ class JIRA(object):
 
     def backup_complete(self):
         """Return boolean based on 'alternativePercentage' and 'size' returned from backup_progress (cloud only)."""
-        if self.server_info().get('deploymentType') != 'Cloud':
-            logger.warning('This functionality is not available in Server version')
+        if self.deploymentType != 'Cloud':
+            logger.warning(
+                'This functionality is not available in Server version')
             return None
         status = self.backup_progress()
         perc_complete = int(re.search(r"\s([0-9]*)\s",
@@ -2395,8 +2459,9 @@ class JIRA(object):
 
     def backup_download(self, filename=None):
         """Download backup file from WebDAV (cloud only)."""
-        if self.server_info().get('deploymentType') != 'Cloud':
-            logger.warning('This functionality is not available in Server version')
+        if self.deploymentType != 'Cloud':
+            logger.warning(
+                'This functionality is not available in Server version')
             return None
         remote_file = self.backup_progress()['fileName']
         local_file = filename or remote_file
