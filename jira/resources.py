@@ -759,7 +759,7 @@ class Version(Resource):
         if moveAffectedIssuesTo is not None:
             params['moveAffectedIssuesTo'] = moveAffectedIssuesTo
 
-        super(Version, self).delete(params)
+        return super(Version, self).delete(params)
 
     def update(self, **args):
         """Update this project version from the server. It is prior used to archive versions."""
