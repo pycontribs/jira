@@ -85,7 +85,8 @@ class ResilientSession(Session):
             logging.warning("Got ConnectionError [%s] errno:%s on %s %s\n%s\%s" % (
                 response, response.errno, request, url, vars(response), response.__dict__))
         if hasattr(response, 'status_code'):
-            if response.status_code in [502, 503, 504]:
+            if response.status_code in [502, 503, 504, 401]:
+                # 401 UNAUTHORIZED still randomly returned by Atlassian Cloud as of 2017-01-16
                 msg = "%s %s" % (response.status_code, response.reason)
             elif not (response.status_code == 200 and
                       len(response.content) == 0 and
