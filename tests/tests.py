@@ -316,8 +316,13 @@ class JiraTestManager(object):
                 # assert self.jira_admin.create_project(self.project_b,
                 # self.project_b_name) is  True, "Failed to create %s" %
                 # self.project_b
-                self.jira_admin.create_project(self.project_b,
-                                               self.project_b_name)
+
+                try:
+                    self.jira_admin.create_project(self.project_b,
+                                                   self.project_b_name)
+                except Exception:
+                    # we care only for the project to exist
+                    pass
                 sleep(1)  # keep it here as often JIRA will report the
                 # project as missing even after is created
                 self.project_b_issue1_obj = self.jira_admin.create_issue(project=self.project_b,
@@ -342,6 +347,9 @@ class JiraTestManager(object):
                 logging.exception("Basic test setup failed")
                 self.initialized = 1
                 py.test.exit("FATAL: %s\n%s" % (e, traceback.format_exc()))
+
+            if not hasattr(self, 'jira_normal') or not hasattr(self, 'jira_admin'):
+                py.test.exit("FATAL: WTF!?")
 
             self.initialized = 1
 
@@ -678,7 +686,7 @@ class IssueTests(unittest.TestCase):
     def setUp(self):
         self.test_manager = JiraTestManager()
         self.jira = JiraTestManager().jira_admin
-        self.jira_normal = self.test_manager.jira_normal
+        self.jira_normal = JiraTestManager().jira_normal
         self.project_b = self.test_manager.project_b
         self.project_a = self.test_manager.project_a
         self.issue_1 = self.test_manager.project_b_issue1
@@ -1840,6 +1848,7 @@ class UserTests(unittest.TestCase):
 class VersionTests(unittest.TestCase):
 
     def setUp(self):
+        self.manager = JiraTestManager()
         self.jira = JiraTestManager().jira_admin
         self.project_b = JiraTestManager().project_b
 
@@ -1867,7 +1876,7 @@ class VersionTests(unittest.TestCase):
         version.delete()
 
     @flaky
-    def test_update(self):
+    def test_update_version(self):
 
         version = self.jira.create_version('new updated version 1',
                                            self.project_b, releaseDate='2015-03-11',
@@ -1883,16 +1892,16 @@ class VersionTests(unittest.TestCase):
 
         version.delete()
 
-    def test_delete(self):
-        version = self.jira.create_version('To be deleted', self.project_b,
+    def test_delete_version(self):
+        version_str = "test_delete_version:" + self.manager.jid
+        version = self.jira.create_version(version_str, self.project_b,
                                            releaseDate='2015-03-11',
                                            description='not long for this world')
-        myid = version.id
         version.delete()
-        self.assertRaises(JIRAError, self.jira.version, myid)
+        self.assertRaises(JIRAError, self.jira.version, version.id)
 
-    def test_version_expandos(self):
-        pass
+    # def test_version_expandos(self):
+    #     pass
 
 
 @flaky
