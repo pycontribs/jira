@@ -291,7 +291,7 @@ class Resource(object):
 
         # TODO(ssbarnea): compare loaded data in order to verify if resource was updated indeed
         # we had random test failures (probably) due to caching
-        time.sleep(3)
+        time.sleep(4)
         self._load(self.self)
 
     def delete(self, params=None):
@@ -755,7 +755,7 @@ class Version(Resource):
         if moveAffectedIssuesTo is not None:
             params['moveAffectedIssuesTo'] = moveAffectedIssuesTo
 
-        super(Version, self).delete(params)
+        return super(Version, self).delete(params)
 
     def update(self, **args):
         """Update this project version from the server. It is prior used to archive versions."""
