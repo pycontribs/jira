@@ -45,10 +45,6 @@ after_failure:
   fi
 after_script:
 - echo leader=$BUILD_LEADER status=$BUILD_AGGREGATE_STATUS
-branches:
-  only:
-  - master
-  - develop
 notifications:
   email:
   - pycontribs@googlegroups.com
