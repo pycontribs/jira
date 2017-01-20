@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from requests import Session
-from requests.exceptions import ConnectionError
+import json
 import logging
 try:  # Python 2.7+
     from logging import NullHandler
@@ -11,9 +10,11 @@ except ImportError:
         def emit(self, record):
             pass
 import random
+from requests.exceptions import ConnectionError
+from requests import Session
 import time
-import json
-from .exceptions import JIRAError
+
+from jira.exceptions import JIRAError
 
 logging.getLogger('jira').addHandler(NullHandler())
 
@@ -65,9 +66,7 @@ def raise_on_error(r, verb='???', **kwargs):
 
 
 class ResilientSession(Session):
-
-    """
-    This class is supposed to retry requests that do return temporary errors.
+    """This class is supposed to retry requests that do return temporary errors.
 
     At this moment it supports: 502, 503, 504
     """
@@ -85,7 +84,8 @@ class ResilientSession(Session):
             logging.warning("Got ConnectionError [%s] errno:%s on %s %s\n%s\%s" % (
                 response, response.errno, request, url, vars(response), response.__dict__))
         if hasattr(response, 'status_code'):
-            if response.status_code in [502, 503, 504]:
+            if response.status_code in [502, 503, 504, 401]:
+                # 401 UNAUTHORIZED still randomly returned by Atlassian Cloud as of 2017-01-16
                 msg = "%s %s" % (response.status_code, response.reason)
             elif not (response.status_code == 200 and
                       len(response.content) == 0 and

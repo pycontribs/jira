@@ -6,8 +6,9 @@ This module implements the Resource classes that translate JSON from JIRA REST r
 into usable objects.
 """
 
-import re
 import logging
+import re
+import time
 try:  # Python 2.7+
     from logging import NullHandler
 except ImportError:
@@ -17,9 +18,39 @@ except ImportError:
             pass
 import json
 
-from six import iteritems, string_types, text_type
+from six import iteritems
+from six import string_types
+from six import text_type
 
-from .utils import threaded_requests, json_loads, CaseInsensitiveDict
+from jira.utils import CaseInsensitiveDict
+from jira.utils import json_loads
+from jira.utils import threaded_requests
+
+__all__ = (
+    'Resource',
+    'Issue',
+    'Comment',
+    'Project',
+    'Attachment',
+    'Component',
+    'Dashboard',
+    'Filter',
+    'Votes',
+    'Watchers',
+    'Worklog',
+    'IssueLink',
+    'IssueLinkType',
+    'IssueType',
+    'Priority',
+    'Version',
+    'Role',
+    'Resolution',
+    'SecurityLevel',
+    'Status',
+    'User',
+    'CustomFieldOption',
+    'RemoteLink'
+)
 
 logging.getLogger('jira').addHandler(NullHandler())
 
@@ -54,9 +85,7 @@ def get_error_list(r):
 
 
 class Resource(object):
-
-    """
-    Models a URL-addressable resource in the JIRA REST API.
+    """Models a URL-addressable resource in the JIRA REST API.
 
     All Resource objects provide the following:
     ``find()`` -- get a resource from the server and load it into the current object
@@ -97,7 +126,7 @@ class Resource(object):
         self.raw = None
 
     def __str__(self):
-        # Return the first value we find that is likely to be human readable.
+        """Return the first value we find that is likely to be human readable."""
         if self.raw:
             for name in self._READABLE_IDS:
                 if name in self.raw:
@@ -111,7 +140,7 @@ class Resource(object):
         return repr(self)
 
     def __repr__(self):
-        # Identify the class and include any and all relevant values.
+        """Identify the class and include any and all relevant values."""
         names = []
         if self.raw:
             for name in self._READABLE_IDS:
@@ -123,7 +152,7 @@ class Resource(object):
         return '<JIRA %s: %s>' % (self.__class__.__name__, ', '.join(names))
 
     def __getattr__(self, item):
-        # this should make Project.key and similar to work
+        """Allow access of attributes via names."""
         try:
             return self[item]
         except Exception as e:
@@ -173,8 +202,9 @@ class Resource(object):
         return self._base_url.format(**options)
 
     def update(self, fields=None, async=None, jira=None, notify=True, **kwargs):
-        """
-        Update this resource on the server. Keyword arguments are marshalled into a dict before being sent. If this
+        """Update this resource on the server.
+
+        Keyword arguments are marshalled into a dict before being sent. If this
         resource doesn't support ``PUT``, a :py:exc:`.JIRAError` will be raised; subclasses that specialize this method
         will only raise errors in case of user error.
 
@@ -259,15 +289,18 @@ class Resource(object):
                 r = self._session.put(
                     self.self, data=json.dumps(data))
 
+        # TODO(ssbarnea): compare loaded data in order to verify if resource was updated indeed
+        # we had random test failures (probably) due to caching
+        time.sleep(4)
         self._load(self.self)
 
     def delete(self, params=None):
-        """
-        Delete this resource from the server, passing the specified query parameters. If this resource doesn't support
-        ``DELETE``, a :py:exc:`.JIRAError` will be raised; subclasses that specialize this method will only raise errors
+        """Delete this resource from the server, passing the specified query parameters.
+
+        If this resource doesn't support ``DELETE``, a :py:exc:`.JIRAError`
+        will be raised; subclasses that specialize this method will only raise errors
         in case of user error.
         """
-
         if self._options['async']:
             if not hasattr(self._session, '_async_jobs'):
                 self._session._async_jobs = set()
@@ -289,6 +322,8 @@ class Resource(object):
 
     def _parse_raw(self, raw):
         self.raw = raw
+        if not raw:
+            raise NotImplementedError("We cannot instantiate empty resources: %s" % raw)
         dict2resource(raw, self, self._options, self._session)
 
     def _default_headers(self, user_headers):
@@ -298,7 +333,6 @@ class Resource(object):
 
 
 class Attachment(Resource):
-
     """An issue attachment."""
 
     def __init__(self, options, session, raw=None):
@@ -307,22 +341,17 @@ class Attachment(Resource):
             self._parse_raw(raw)
 
     def get(self):
-        """
-        Returns the file content as a string.
-        """
-        r = self._session.get(self.content)
+        """Return the file content as a string."""
+        r = self._session.get(self.content, headers={'Accept': '*/*'})
         return r.content
 
     def iter_content(self, chunk_size=1024):
-        """
-        Returns the file content as an iterable stream.
-        """
+        """Return the file content as an iterable stream."""
         r = self._session.get(self.content, stream=True)
         return r.iter_content(chunk_size)
 
 
 class Component(Resource):
-
     """A project component."""
 
     def __init__(self, options, session, raw=None):
@@ -331,8 +360,7 @@ class Component(Resource):
             self._parse_raw(raw)
 
     def delete(self, moveIssuesTo=None):
-        """
-        Delete this component from the server.
+        """Delete this component from the server.
 
         :param moveIssuesTo: the name of the component to which to move any issues this component is applied
         """
@@ -344,7 +372,6 @@ class Component(Resource):
 
 
 class CustomFieldOption(Resource):
-
     """An existing option for a custom issue field."""
 
     def __init__(self, options, session, raw=None):
@@ -354,7 +381,6 @@ class CustomFieldOption(Resource):
 
 
 class Dashboard(Resource):
-
     """A JIRA dashboard."""
 
     def __init__(self, options, session, raw=None):
@@ -364,7 +390,6 @@ class Dashboard(Resource):
 
 
 class Filter(Resource):
-
     """An issue navigator filter."""
 
     def __init__(self, options, session, raw=None):
@@ -376,7 +401,7 @@ class Filter(Resource):
 class Issue(Resource):
     """A JIRA issue."""
 
-    class _IssueFields:
+    class _IssueFields(object):
 
         def __init__(self):
             self.attachment = None
@@ -405,8 +430,7 @@ class Issue(Resource):
             self._parse_raw(raw)
 
     def update(self, fields=None, update=None, async=None, jira=None, notify=True, **fieldargs):
-        """
-        Update this issue on the server.
+        """Update this issue on the server.
 
         Each keyword argument (other than the predefined ones) is treated as a field name and the argument's value
         is treated as the intended value for that field -- if the fields argument is used, all other keyword arguments
@@ -456,35 +480,32 @@ class Issue(Resource):
         super(Issue, self).update(async=async, jira=jira, notify=notify, fields=data)
 
     def add_field_value(self, field, value):
-        """
-        Add a value to a field that supports multiple values, without resetting the existing values.
+        """Add a value to a field that supports multiple values, without resetting the existing values.
 
         This should work with: labels, multiple checkbox lists, multiple select
         """
         super(Issue, self).update(fields={"update": {field: [{"add": value}]}})
 
     def delete(self, deleteSubtasks=False):
-        """
-        Delete this issue from the server.
+        """Delete this issue from the server.
 
         :param deleteSubtasks: if the issue has subtasks, this argument must be set to true for the call to succeed.
         """
         super(Issue, self).delete(params={'deleteSubtasks': deleteSubtasks})
 
     def permalink(self):
-        """
-        Gets the URL of the issue, the browsable one not the REST one.
+        """Get the URL of the issue, the browsable one not the REST one.
 
         :return: URL of the issue
         """
         return "%s/browse/%s" % (self._options['server'], self.key)
 
     def __eq__(self, other):
+        """Comparison method."""
         return self.id == other.id
 
 
 class Comment(Resource):
-
     """An issue comment."""
 
     def __init__(self, options, session, raw=None):
@@ -493,7 +514,6 @@ class Comment(Resource):
             self._parse_raw(raw)
 
     def update(self, fields=None, async=None, jira=None, body='', visibility=None):
-        # TODO: fix the Resource.update() override mess
         data = {}
         if body:
             data['body'] = body
@@ -503,7 +523,6 @@ class Comment(Resource):
 
 
 class RemoteLink(Resource):
-
     """A link to a remote application from an issue."""
 
     def __init__(self, options, session, raw=None):
@@ -512,8 +531,7 @@ class RemoteLink(Resource):
             self._parse_raw(raw)
 
     def update(self, object, globalId=None, application=None, relationship=None):
-        """
-        Update a RemoteLink. 'object' is required and should be
+        """Update a RemoteLink. 'object' is required.
 
         For definitions of the allowable fields for 'object' and the keyword arguments 'globalId', 'application' and
         'relationship', see https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+for+Remote+Issue+Links.
@@ -536,7 +554,6 @@ class RemoteLink(Resource):
 
 
 class Votes(Resource):
-
     """Vote information on an issue."""
 
     def __init__(self, options, session, raw=None):
@@ -546,7 +563,6 @@ class Votes(Resource):
 
 
 class Watchers(Resource):
-
     """Watcher information on an issue."""
 
     def __init__(self, options, session, raw=None):
@@ -555,14 +571,11 @@ class Watchers(Resource):
             self._parse_raw(raw)
 
     def delete(self, username):
-        """
-        Remove the specified user from the watchers list.
-        """
+        """Remove the specified user from the watchers list."""
         super(Watchers, self).delete(params={'username': username})
 
 
 class TimeTracking(Resource):
-
     def __init__(self, options, session, raw=None):
         Resource.__init__(self, 'issue/{0}/worklog/{1}', options, session)
         self.remainingEstimate = None
@@ -571,7 +584,6 @@ class TimeTracking(Resource):
 
 
 class Worklog(Resource):
-
     """Worklog on an issue."""
 
     def __init__(self, options, session, raw=None):
@@ -580,11 +592,11 @@ class Worklog(Resource):
             self._parse_raw(raw)
 
     def delete(self, adjustEstimate=None, newEstimate=None, increaseBy=None):
-        """
-        Delete this worklog entry from its associated issue.
+        """Delete this worklog entry from its associated issue.
 
-        :param adjustEstimate: one of ``new``, ``leave``, ``manual`` or ``auto``. ``auto`` is the default and adjusts\
-        the estimate automatically. ``leave`` leaves the estimate unchanged by this deletion.
+        :param adjustEstimate: one of ``new``, ``leave``, ``manual`` or ``auto``.
+            ``auto`` is the default and adjusts the estimate automatically.
+            ``leave`` leaves the estimate unchanged by this deletion.
         :param newEstimate: combined with ``adjustEstimate=new``, set the estimate to this value
         :param increaseBy: combined with ``adjustEstimate=manual``, increase the remaining estimate by this amount
         """
@@ -600,7 +612,6 @@ class Worklog(Resource):
 
 
 class IssueLink(Resource):
-
     """Link between two issues."""
 
     def __init__(self, options, session, raw=None):
@@ -610,7 +621,6 @@ class IssueLink(Resource):
 
 
 class IssueLinkType(Resource):
-
     """Type of link between two issues."""
 
     def __init__(self, options, session, raw=None):
@@ -620,7 +630,6 @@ class IssueLinkType(Resource):
 
 
 class IssueType(Resource):
-
     """Type of an issue."""
 
     def __init__(self, options, session, raw=None):
@@ -630,7 +639,6 @@ class IssueType(Resource):
 
 
 class Priority(Resource):
-
     """Priority that can be set on an issue."""
 
     def __init__(self, options, session, raw=None):
@@ -640,7 +648,6 @@ class Priority(Resource):
 
 
 class Project(Resource):
-
     """A JIRA project."""
 
     def __init__(self, options, session, raw=None):
@@ -650,7 +657,6 @@ class Project(Resource):
 
 
 class Role(Resource):
-
     """A role inside a project."""
 
     def __init__(self, options, session, raw=None):
@@ -659,8 +665,7 @@ class Role(Resource):
             self._parse_raw(raw)
 
     def update(self, users=None, groups=None):
-        """
-        Add the specified users or groups to this project role. One of ``users`` or ``groups`` must be specified.
+        """Add the specified users or groups to this project role. One of ``users`` or ``groups`` must be specified.
 
         :param users: a user or users to add to the role
         :type users: string, list or tuple
@@ -682,7 +687,6 @@ class Role(Resource):
 
 
 class Resolution(Resource):
-
     """A resolution for an issue."""
 
     def __init__(self, options, session, raw=None):
@@ -692,7 +696,6 @@ class Resolution(Resource):
 
 
 class SecurityLevel(Resource):
-
     """A security level for an issue or project."""
 
     def __init__(self, options, session, raw=None):
@@ -702,7 +705,6 @@ class SecurityLevel(Resource):
 
 
 class Status(Resource):
-
     """Status for an issue."""
 
     def __init__(self, options, session, raw=None):
@@ -712,7 +714,6 @@ class Status(Resource):
 
 
 class User(Resource):
-
     """A JIRA user."""
 
     def __init__(self, options, session, raw=None):
@@ -721,14 +722,15 @@ class User(Resource):
             self._parse_raw(raw)
 
     def __hash__(self):
+        """Hash carculation."""
         return hash(str(self.name))
 
     def __eq__(self, other):
+        """Comparison."""
         return str(self.name) == str(other.name)
 
 
 class Version(Resource):
-
     """A version of a project."""
 
     def __init__(self, options, session, raw=None):
@@ -737,14 +739,15 @@ class Version(Resource):
             self._parse_raw(raw)
 
     def delete(self, moveFixIssuesTo=None, moveAffectedIssuesTo=None):
-        """
-        Delete this project version from the server. If neither of the arguments are specified, the version is
-        removed from all issues it is attached to.
+        """Delete this project version from the server.
 
-        :param moveFixIssuesTo: in issues for which this version is a fix version, add this argument version to the fix\
-        version list
-        :param moveAffectedIssuesTo: in issues for which this version is an affected version, add this argument version\
-        to the affected version list
+        If neither of the arguments are specified, the version is
+            removed from all issues it is attached to.
+
+        :param moveFixIssuesTo: in issues for which this version is a fix
+            version, add this argument version to the fix version list
+        :param moveAffectedIssuesTo: in issues for which this version is an
+            affected version, add this argument version to the affected version list
         """
         params = {}
         if moveFixIssuesTo is not None:
@@ -752,13 +755,10 @@ class Version(Resource):
         if moveAffectedIssuesTo is not None:
             params['moveAffectedIssuesTo'] = moveAffectedIssuesTo
 
-        super(Version, self).delete(params)
+        return super(Version, self).delete(params)
 
     def update(self, **args):
-        """
-        Update this project version from the server. It is prior used to archive
-        versions
-        """
+        """Update this project version from the server. It is prior used to archive versions."""
         data = {}
         for field in args:
             data[field] = args[field]
@@ -766,6 +766,7 @@ class Version(Resource):
         super(Version, self).update(**data)
 
     def __eq__(self, other):
+        """Comparison."""
         return self.id == other.id and self.name == other.name
 
 
@@ -773,7 +774,6 @@ class Version(Resource):
 
 
 class GreenHopperResource(Resource):
-
     """A generic GreenHopper resource."""
 
     AGILE_BASE_URL = '{server}/rest/{agile_rest_path}/{agile_rest_api_version}/{path}'
@@ -797,7 +797,6 @@ class GreenHopperResource(Resource):
 
 
 class Sprint(GreenHopperResource):
-
     """A GreenHopper sprint."""
 
     def __init__(self, options, session, raw=None):
@@ -813,7 +812,6 @@ class Sprint(GreenHopperResource):
 
 
 class Board(GreenHopperResource):
-
     """A GreenHopper board."""
 
     def __init__(self, options, session, raw=None):
@@ -831,7 +829,8 @@ class Board(GreenHopperResource):
 
 
 def dict2resource(raw, top=None, options=None, session=None):
-    """
+    """Convert a dictionary into a Jira Resource object.
+
     Recursively walks a dict structure, transforming the properties into attributes
     on a new ``Resource`` object of the appropriate type (if a ``self`` link is present)
     or a ``PropertyHolder`` object (if no ``self`` link is present).

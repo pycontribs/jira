@@ -8,7 +8,7 @@ from jira.utils.lru_cache import lru_cache
 
 
 def get_version(version=None):
-    "Returns a PEP 440-compliant version number from VERSION."
+    """Return a PEP 440-compliant version number from VERSION."""
     version = get_complete_version(version)
 
     # Now build the two parts of the version number:
@@ -32,15 +32,16 @@ def get_version(version=None):
 
 
 def get_main_version(version=None):
-    "Returns main version (X.Y[.Z]) from VERSION."
+    """Return main version (X.Y[.Z]) from VERSION."""
     version = get_complete_version(version)
     parts = 2 if version[2] == 0 else 3
     return '.'.join(str(x) for x in version[:parts])
 
 
 def get_complete_version(version=None):
-    """Returns a tuple of the jira version. If version argument is non-empty,
-    then checks for correctness of the tuple provided.
+    """Return a tuple of the jira version.
+
+    If version argument is non-empty, then checks for correctness of the tuple provided.
     """
     if version is None:
         from jira import VERSION as version
@@ -61,7 +62,7 @@ def get_docs_version(version=None):
 
 @lru_cache()
 def get_git_changeset():
-    """Returns a numeric identifier of the latest git changeset.
+    """Return a numeric identifier of the latest git changeset.
 
     The result is the UTC timestamp of the changeset in YYYYMMDDHHMMSS format.
     This value isn't guaranteed to be unique, but collisions are very unlikely,

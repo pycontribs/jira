@@ -1,28 +1,29 @@
 #!/usr/bin/env python
 
-"""
-Starts an interactive JIRA session in an ipython terminal. Script arguments
-support changing the server and a persistent authentication over HTTP BASIC.
+"""Starts an interactive JIRA session in an ipython terminal.
+
+Script arguments support changing the server and a persistent authentication over HTTP BASIC.
 """
 
 try:
     import configparser
-except:
+except ImportError:
     from six.moves import configparser
-    from six.moves import input
 
+from six.moves import input
 from six.moves.urllib.parse import parse_qsl
 
 import argparse
 from getpass import getpass
-from sys import exit
+from jira import __version__
+from jira import JIRA
+from oauthlib.oauth1 import SIGNATURE_RSA
 import os
 import requests
-from oauthlib.oauth1 import SIGNATURE_RSA
 from requests_oauthlib import OAuth1
+from sys import exit
 
 import webbrowser
-from jira import JIRA, __version__
 
 CONFIG_PATH = os.path.join(
     os.path.expanduser('~'), '.jira-python', 'jirashell.ini')
