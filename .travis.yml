@@ -17,6 +17,7 @@ install:
 script:
 - export PACKAGE_NAME=$(python setup.py --name)
 - export PACKAGE_VERSION=$(python setup.py --version)
+- python setup.py --version
 - tox --installpkg ./dist/jira-*.whl --travis-after
 after_success:
 - python travis_after_all.py
