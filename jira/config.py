@@ -17,6 +17,9 @@ except ImportError:
 from jira.client import JIRA
 
 
+logger = logging.getLogger('jira')
+
+
 def get_jira(profile=None, url="http://localhost:2990", username="admin", password="admin", appid=None, autofix=False, verify=True):
     """Return a JIRA object by loading the connection details from the `config.ini` file.
 
@@ -64,7 +67,7 @@ def get_jira(profile=None, url="http://localhost:2990", username="admin", passwo
 
     config_file = findfile('config.ini')
     if config_file:
-        logging.debug("Found %s config file" % config_file)
+        logger.debug("Found %s config file" % config_file)
 
     if not profile:
         if config_file:
