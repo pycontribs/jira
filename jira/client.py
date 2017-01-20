@@ -197,7 +197,7 @@ class JIRA(object):
     AGILE_BASE_URL = GreenHopperResource.AGILE_BASE_URL
 
     def __init__(self, server=None, options=None, basic_auth=None, oauth=None, jwt=None, kerberos=False,
-                 validate=False, get_server_info=True, async=False, max_retries=3, proxies=None):
+                 validate=False, get_server_info=True, async=False, max_retries=3, proxies=None, **kwargs):
         """Construct a JIRA client instance.
 
         Without any arguments, this client will connect anonymously to the JIRA instance
@@ -2377,7 +2377,7 @@ class JIRA(object):
 
         r = self._session.get(url, headers=self._options['headers'])
         if r.status_code == 503:
-            # log.warning("JIRA returned 503, this could mean that a full reindex is in progress.")
+            # logger.warning("JIRA returned 503, this could mean that a full reindex is in progress.")
             return 503
 
         if not r.text.find("To perform the re-index now, please go to the") and force is False:
