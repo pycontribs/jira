@@ -25,8 +25,8 @@ JIRA Python Library
 .. image:: https://img.shields.io/pypi/status/jira.svg
         :target: https://pypi.python.org/pypi/jira/
 
-.. image:: https://img.shields.io/coveralls/pycontribs/jira.svg
-        :target: https://coveralls.io/r/pycontribs/jira
+.. image:: https://codecov.io/gh/pycontribs/jira/branch/develop/graph/badge.svg
+        :target: https://codecov.io/gh/pycontribs/jira
 
 .. image:: https://img.shields.io/bountysource/team/pycontribs/activity.svg
         :target: https://www.bountysource.com/teams/pycontribs/issues?tracker_ids=3650997
