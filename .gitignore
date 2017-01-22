@@ -23,5 +23,6 @@ tests/test-reports-*/*
 **/*.log
 /.python-version
 /CHANGELOG
+/ChangeLog
 /AUTHORS
 /tests/build
