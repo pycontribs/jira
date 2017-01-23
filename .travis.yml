@@ -23,6 +23,7 @@ script:
 - pip uninstall -y jira && easy_install ./dist/jira-*.tar.gz
 after_success:
 - coveralls
+- bash <(curl -s https://codecov.io/bash)
 - requires.io update-site -t ac3bbcca32ae03237a6aae2b02eb9411045489bb -r
 notifications:
   email:
