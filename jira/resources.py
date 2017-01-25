@@ -215,6 +215,12 @@ class Resource(object):
 
         data = {}
         if fields is not None:
+            if 'fields' in fields.keys():
+                issuefields = fields['fields']
+                # Update with the reverse mapping
+                issuefields = dict([(self._session.jira_client.map_custom_python_name(pythonfieldname=k), v)
+                                   for k, v in issuefields.items()])
+                fields['fields'] = issuefields
             data.update(fields)
         data.update(kwargs)
 
@@ -503,6 +509,13 @@ class Issue(Resource):
     def __eq__(self, other):
         """Comparison method."""
         return self.id == other.id
+
+    def __getitem__(self, item):
+        # Grab the JIRA server
+        jira_client = self._session.jira_client
+
+        # Look for the appropriate fields list on the server
+        return getattr(self.fields, jira_client._fields[item])
 
 
 class Comment(Resource):
@@ -847,6 +860,8 @@ def dict2resource(raw, top=None, options=None, session=None):
             elif i == 'timetracking':
                 setattr(top, 'timetracking', TimeTracking(options, session, j))
             else:
+                if i == 'fields' and session is not None:
+                    j = dict([(session.jira_client.map_custom_python_name(customfieldname=k), v) for k, v in j.items()])
                 setattr(
                     top, i, dict2resource(j, options=options, session=session))
         elif isinstance(j, seqs):

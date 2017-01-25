@@ -290,7 +290,7 @@ class JIRA(object):
             self._create_kerberos_session()
         else:
             verify = self._options['verify']
-            self._session = ResilientSession()
+            self._session = ResilientSession(self)
             self._session.verify = verify
         self._session.headers.update(self._options['headers'])
 
@@ -326,6 +326,9 @@ class JIRA(object):
             if 'clauseNames' in f:
                 for name in f['clauseNames']:
                     self._fields[name] = f['id']
+
+        self.field_map = {}
+        self.generate_field_mapper()
 
     def _check_update_(self):
         """Check if the current version of the library is outdated."""
@@ -2097,7 +2100,7 @@ class JIRA(object):
     # Utilities
     def _create_http_basic_session(self, username, password):
         verify = self._options['verify']
-        self._session = ResilientSession()
+        self._session = ResilientSession(self)
         self._session.verify = verify
         self._session.auth = (username, password)
         self._session.cert = self._options['client_cert']
@@ -2114,7 +2117,7 @@ class JIRA(object):
             signature_method=SIGNATURE_RSA,
             resource_owner_key=oauth['access_token'],
             resource_owner_secret=oauth['access_token_secret'])
-        self._session = ResilientSession()
+        self._session = ResilientSession(self)
         self._session.verify = verify
         self._session.auth = oauth
 
@@ -2124,7 +2127,7 @@ class JIRA(object):
         from requests_kerberos import HTTPKerberosAuth
         from requests_kerberos import OPTIONAL
 
-        self._session = ResilientSession()
+        self._session = ResilientSession(self)
         self._session.verify = verify
         self._session.auth = HTTPKerberosAuth(mutual_authentication=OPTIONAL)
 
@@ -2146,7 +2149,7 @@ class JIRA(object):
         jwt_auth.add_field("qsh", QshGenerator(self._options['context_path']))
         for f in jwt['payload'].items():
             jwt_auth.add_field(f[0], f[1])
-        self._session = ResilientSession()
+        self._session = ResilientSession(self)
         self._session.verify = self._options['verify']
         self._session.auth = jwt_auth
 
@@ -3062,6 +3065,34 @@ class JIRA(object):
             raise NotImplementedError('No API for moving issues to backlog for agile_rest_path="%s"' %
                                       self._options['agile_rest_path'])
 
+    def map_custom_python_name(self, customfieldname=None, pythonfieldname=None):
+        python_to_custom = self.field_map
+        custom_to_python = [(v,k) for k,v in python_to_custom]
+
+        try:
+            if customfieldname is not None:
+                return list_lookup(custom_to_python, customfieldname)
+            elif pythonfieldname is not None:
+                return list_lookup(python_to_custom, pythonfieldname)
+            else:
+                raise KeyError("Need to provide a custom field name, or a python field name.")
+        except:
+            if customfieldname is not None:
+                return customfieldname
+            else:
+                return pythonfieldname
+
+    def generate_field_mapper(self):
+        # Process the custom fields
+        customfields = self._fields
+
+        iscustomfield = lambda k,v: not re.match('cf\[\d*\]', k) and re.match('customfield_[\d*]', v)
+
+        # Strip out the invalid identifier characters and the customfield indexing.
+        pythonidents = [(python_identifier(k),v) for k, v in customfields.items()
+                        if iscustomfield(k,v)]
+        self.field_map = pythonidents
+
 
 class GreenHopper(JIRA):
 
@@ -3070,3 +3101,13 @@ class GreenHopper(JIRA):
             "GreenHopper() class is deprecated, just use JIRA() instead.", DeprecationWarning)
         JIRA.__init__(
             self, options=options, basic_auth=basic_auth, oauth=oauth, async=async)
+
+
+def python_identifier(fieldstring):
+    return re.sub('[^0-9a-zA-Z_]', '', fieldstring.replace(' ', '_')).lower()
+
+def list_lookup(lst, key):
+    for k,v in lst:
+        if k == key:
+            return v
+    raise KeyError("key=`{0}` not found".format(key))
