@@ -304,7 +304,12 @@ class JIRA(object):
         if validate:
             # This will raise an Exception if you are not allowed to login.
             # It's better to fail faster than later.
-            self.session()
+            user = self.session()
+            if user.raw is None:
+                auth_method = (
+                    oauth or basic_auth or jwt or kerberos or "anonymous"
+                )
+                raise JIRAError("Can not log in with %s" % str(auth_method))
 
         self.deploymentType = None
         if get_server_info:
