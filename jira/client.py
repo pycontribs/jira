@@ -196,7 +196,8 @@ class JIRA(object):
     AGILE_BASE_URL = GreenHopperResource.AGILE_BASE_URL
 
     def __init__(self, server=None, options=None, basic_auth=None, oauth=None, jwt=None, kerberos=False,
-                 validate=False, get_server_info=True, async=False, logging=True, max_retries=3, proxies=None):
+                 validate=False, get_server_info=True, async=False, logging=True, max_retries=3, proxies=None,
+                 timeout=None):
         """Construct a JIRA client instance.
 
         Without any arguments, this client will connect anonymously to the JIRA instance
@@ -241,6 +242,7 @@ class JIRA(object):
         :param get_server_info: If true it will fetch server version info first to determine if some API calls
             are available.
         :param async: To enable async requests for those actions where we implemented it, like issue update() or delete().
+        :param timeout: Set a read/connect timeout for the underlying calls to JIRA (default: None)
         Obviously this means that you cannot rely on the return code when this is enabled.
         """
         # force a copy of the tuple to be used in __del__() because
@@ -280,17 +282,17 @@ class JIRA(object):
         self._try_magic()
 
         if oauth:
-            self._create_oauth_session(oauth)
+            self._create_oauth_session(oauth, timeout)
         elif basic_auth:
-            self._create_http_basic_session(*basic_auth)
+            self._create_http_basic_session(*basic_auth, timeout=timeout)
             self._session.headers.update(self._options['headers'])
         elif jwt:
-            self._create_jwt_session(jwt)
+            self._create_jwt_session(jwt, timeout)
         elif kerberos:
-            self._create_kerberos_session()
+            self._create_kerberos_session(timeout)
         else:
             verify = self._options['verify']
-            self._session = ResilientSession()
+            self._session = ResilientSession(timeout=timeout)
             self._session.verify = verify
         self._session.headers.update(self._options['headers'])
 
@@ -2095,14 +2097,14 @@ class JIRA(object):
             return self._session.delete(url)
 
     # Utilities
-    def _create_http_basic_session(self, username, password):
+    def _create_http_basic_session(self, username, password, timeout=None):
         verify = self._options['verify']
-        self._session = ResilientSession()
+        self._session = ResilientSession(timeout=timeout)
         self._session.verify = verify
         self._session.auth = (username, password)
         self._session.cert = self._options['client_cert']
 
-    def _create_oauth_session(self, oauth):
+    def _create_oauth_session(self, oauth, timeout):
         verify = self._options['verify']
 
         from oauthlib.oauth1 import SIGNATURE_RSA
@@ -2114,17 +2116,17 @@ class JIRA(object):
             signature_method=SIGNATURE_RSA,
             resource_owner_key=oauth['access_token'],
             resource_owner_secret=oauth['access_token_secret'])
-        self._session = ResilientSession()
+        self._session = ResilientSession(timeout)
         self._session.verify = verify
         self._session.auth = oauth
 
-    def _create_kerberos_session(self):
+    def _create_kerberos_session(self, timeout):
         verify = self._options['verify']
 
         from requests_kerberos import HTTPKerberosAuth
         from requests_kerberos import OPTIONAL
 
-        self._session = ResilientSession()
+        self._session = ResilientSession(timeout=timeout)
         self._session.verify = verify
         self._session.auth = HTTPKerberosAuth(mutual_authentication=OPTIONAL)
 
@@ -2135,7 +2137,7 @@ class JIRA(object):
             t += dt
         return calendar.timegm(t.timetuple())
 
-    def _create_jwt_session(self, jwt):
+    def _create_jwt_session(self, jwt, timeout):
         try:
             jwt_auth = JWTAuth(jwt['secret'], alg='HS256')
         except NameError as e:
@@ -2146,7 +2148,7 @@ class JIRA(object):
         jwt_auth.add_field("qsh", QshGenerator(self._options['context_path']))
         for f in jwt['payload'].items():
             jwt_auth.add_field(f[0], f[1])
-        self._session = ResilientSession()
+        self._session = ResilientSession(timeout=timeout)
         self._session.verify = self._options['verify']
         self._session.auth = jwt_auth
 
