@@ -2097,6 +2097,13 @@ class UserAdministrationTests(unittest.TestCase):
         self.jira.delete_user(self.test_username)
 
 
+class JiraShellTests(unittest.TestCase):
+
+    def test_jirashell_command_exists(self):
+        result = os.system('jirashell --help')
+        self.assertEqual(result, 0)
+
+
 if __name__ == '__main__':
 
     # when running tests we expect various errors and we don't want to display them by default
