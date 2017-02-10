@@ -1,0 +1,25 @@
+machine:
+  post:
+    - pyenv global 2.7.13 3.4.5 3.5.2 3.6.0
+  environment:
+    TOX_PY27: '2.7.13'
+    TOX_PY34: '3.4.5'
+    TOX_PY35: '3.5.2'
+    TOX_PY34: '3.6.0'
+checkout:
+  post:
+dependencies:
+  override:
+    - pip -V
+    - pip install detox tox tox-pyenv setuptools>=20.10.1
+    - pyenv local $TOX_PY27 $TOX_PY34 $TOX_PY35 $TOX_PY36
+    - pip freeze
+    - pip install tenacity
+test:
+  override:
+    - tox -v --recreate
+general:
+  artifacts:
+    - "dist/"
+    - "build/results.xml"
+    - "coverage.xml"
