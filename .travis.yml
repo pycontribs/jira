@@ -9,6 +9,10 @@ python:
 - '3.4'
 - '3.5'
 - '3.6'
+branches:
+  only:
+    - master
+    - develop
 install:
 - pip -q --log dist/pip.log install --upgrade pip setuptools tox-travis py wheel
 - python setup.py sdist bdist_wheel install
