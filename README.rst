@@ -2,7 +2,7 @@
 JIRA Python Library
 ===================
 
-.. image:: https://img.shields.io/pypi/pyversions/jira.svg
+.. image:: https://img.shields.io/pypi/v/jira.svg
         :target: https://pypi.python.org/pypi/jira/
 
 .. image:: https://img.shields.io/pypi/l/jira.svg
