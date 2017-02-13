@@ -1166,21 +1166,22 @@ class IssueTests(unittest.TestCase):
     def test_transitioning(self):
         # we check with both issue-as-string or issue-as-object
         transitions = []
+        msg = "Unexpected data for issue '%s'" % self.issue_2
         for issue in [self.issue_2, self.jira.issue(self.issue_2)]:
             transitions = self.jira.transitions(issue)
-            self.assertTrue(transitions)
-            self.assertTrue('id' in transitions[0])
-            self.assertTrue('name' in transitions[0])
+            self.assertTrue(transitions, msg=msg)
+            self.assertTrue('id' in transitions[0], msg=msg)
+            self.assertTrue('name' in transitions[0], msg=msg)
 
-        self.assertTrue(transitions, msg="Expecting at least one transition")
+        self.assertTrue(transitions, msg=msg)
         # we test getting a single transition
         transition = self.jira.transitions(self.issue_2, transitions[0]['id'])[0]
-        self.assertDictEqual(transition, transitions[0])
+        self.assertDictEqual(transition, transitions[0], msg=msg)
 
         # we test the expand of fields
         transition = self.jira.transitions(self.issue_2, transitions[0]['id'],
                                            expand='transitions.fields')[0]
-        self.assertTrue('fields' in transition)
+        self.assertTrue('fields' in transition, msg=msg)
 
         # Testing of transition with field assignment is disabled now because default workflows do not have it.
 
@@ -1686,7 +1687,6 @@ class UserTests(unittest.TestCase):
     def test_user(self):
         user = self.jira.user(self.test_manager.CI_JIRA_ADMIN)
         self.assertEqual(user.name, self.test_manager.CI_JIRA_ADMIN)
-        self.assertRegex(user.emailAddress, '.*@example.com')
 
     @pytest.mark.xfail(reason='query returns empty list')
     def test_search_assignable_users_for_projects(self):
