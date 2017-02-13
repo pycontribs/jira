@@ -30,15 +30,19 @@ notifications:
   - pycontribs@googlegroups.com
   - sorin.sbarnea@gmail.com
 deploy:
+
+deploy:
 - provider: releases
   api_key:
-    secure: gr9iOcQjdoAyUAim6FWKzJI9MBaJo9XKfGQGu7wdPXUFhg80Rp6GLJsowP+aU94NjXM1UQlVHDAy627WtjBlLH2SvmVEIIr7+UKBopBYuXG5jJ1m3wOZE+4f1Pqe9bqFc1DxgucqE8qF0sC24fIbNM2ToeyYrxrS6RoL2gRrX2I=
+    secure: G19YtkGAX0aJ1oyd/7eRj1KYdsmAkjkfU2UISvsjh/68ec1+9qtPpN7BbkFYZYMjSx0BtS0SEEA7Vdl4F9DI9Zzqahbj7WzDLFe9/4aZKM/ztfKWR6CNAYaMazAKS5W7r9pPkBBDIIJ9zCqvV7FRzjewEpfTwFzwUdY+IpxEsAM=
   file:
-  - dist/$PACKAGE_NAME-$PACKAGE_VERSION*
+  - dist/$PACKAGE_NAME-$PACKAGE_VERSION.tar.gz
+  - dist/$PACKAGE_NAME-$PACKAGE_VERSION-py2.py3-none-any.whl
   - ChangeLog
   skip_cleanup: true
   on:
-    tags: false
+    repo: pycontribs/jira
+    tags: true
     python: 2.7
     condition: $TOXENV != docs
 - provider: pypi
