@@ -1703,7 +1703,7 @@ class JIRA(object):
 
     # Search
 
-    def search_issues(self, jql_str, startAt=0, maxResults=50, validate_query=True, fields=None, expand=None,
+    def search_issues(self, jql_str, startAt=0, maxResults=None, validate_query=True, fields=None, expand=None,
                       json_result=None):
         """Get a ResultList of issue Resources matching a JQL search string.
 
