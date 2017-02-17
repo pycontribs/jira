@@ -1149,8 +1149,15 @@ class JIRA(object):
         """
         data = {
             'body': body,
-            'properties':[{'key':'sd.public.comment','value':{'internal':is_internal}},]
         }
+
+        if is_internal:
+            data.update({
+                'properties': [
+                    {'key': 'sd.public.comment',
+                     'value': {'internal': is_internal}}
+                ]
+            })
 
         if visibility is not None:
             data['visibility'] = visibility
