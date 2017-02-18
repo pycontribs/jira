@@ -299,7 +299,6 @@ class JiraTestManager(object):
                     try:
                         self.jira_admin.project(self.project_b)
                     except Exception as e:
-                        print(e)
                         break
                     sleep(2)
 
@@ -2095,6 +2094,52 @@ class UserAdministrationTests(unittest.TestCase):
 
         self.jira.remove_group(self.test_groupname)
         self.jira.delete_user(self.test_username)
+
+
+@flaky
+class ServiceDeskTests(unittest.TestCase):
+
+    def setUp(self):
+        self.test_manager = JiraTestManager()
+        self.jira = self.test_manager.jira_admin
+        self.test_fullname = "TestCustomerFullName %s" % self.test_manager.project_a
+        self.test_email = "test_customer_%s@example.com" % self.test_manager.project_a
+        self.test_organization_name = "test_organization_%s" % self.test_manager.project_a
+
+    def test_create_and_delete_customer(self):
+        try:
+            self.jira.delete_user(self.test_email)
+        except JIRAError:
+            pass
+
+        customer = self.jira.create_customer(self.test_email, self.test_fullname)
+        assert customer.emailAddress, self.test_email
+        assert customer.displayName, self.test_fullname
+
+        result = self.jira.delete_user(self.test_email)
+        assert result, True
+
+        x = -1
+        # avoiding a zombie due to Atlassian caching
+        for i in range(10):
+            x = self.jira.search_users(self.test_email)
+            if len(x) == 0:
+                break
+            sleep(1)
+
+        self.assertEqual(len(x), 0, "Found test user when it should have been deleted. Test Fails.")
+
+    def test_get_servicedesk_info(self):
+        result = self.jira.servicedesk_info()
+        self.assertNotEquals(result, False)
+
+    def test_create_and_delete_organization(self):
+        organization = self.jira.create_organization(self.test_organization_name)
+        assert organization.name, self.test_organization_name
+
+        result = self.jira.delete_organization(organization.id)
+        assert result, True
+
 
 
 class JiraShellTests(unittest.TestCase):

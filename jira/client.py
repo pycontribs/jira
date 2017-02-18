@@ -2709,6 +2709,42 @@ class JIRA(object):
 
         return True
 
+    def create_customer(self, email, fullname):
+        """Creates a customer that is not associated with a service desk project. """
+        url = self._options['server'] + '/rest/servicedeskapi/customer'
+        headers = {'X-ExperimentalApi': 'opt-in'}
+        r = self._session.post(url, headers=headers, data=json.dumps({'email': email, 'fullName': fullname}))
+        if r.status_code != 201:
+            raise JIRAError(r.status_code, request=r)
+        return Customer(self._options, self._session, raw=json_loads(r))
+
+    def servicedesk_info(self):
+        """Returns runtime information about JIRA Service Desk. """
+        url = self._options['server'] + '/rest/servicedeskapi/info'
+        headers = {'X-ExperimentalApi': 'opt-in'}
+        r = self._session.get(url, headers=headers)
+        if r.status_code != 200:
+            raise JIRAError(r.status_code, request=r)
+        return ServiceDeskInfo(self._options, self._session, raw=json_loads(r))
+
+    def create_organization(self, name):
+        """Creates an organization """
+        url = self._options['server'] + '/rest/servicedeskapi/organization'
+        headers = {'X-ExperimentalApi': 'opt-in'}
+        r = self._session.post(url, headers=headers, data=json.dumps({'name': name}))
+        if r.status_code != 201:
+            raise JIRAError(r.status_code, request=r)
+        return Organization(self._options, self._session, raw=json_loads(r))
+
+    def delete_organization(self, organization_id):
+        """Delete organization """
+        url = self._options['server'] + '/rest/servicedeskapi/organization/%i' % int(organization_id)
+        headers = {'X-ExperimentalApi': 'opt-in'}
+        r = self._session.delete(url, headers=headers)
+        if r.status_code != 204:
+            raise JIRAError(r.status_code, request=r)
+        return True
+
     # Experimental
     # Experimental support for iDalko Grid, expect API to change as it's using private APIs currently
     # https://support.idalko.com/browse/IGRID-1017

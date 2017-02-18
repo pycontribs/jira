@@ -49,7 +49,10 @@ __all__ = (
     'Status',
     'User',
     'CustomFieldOption',
-    'RemoteLink'
+    'RemoteLink',
+    'Customer',
+    'ServiceDeskInfo',
+    'Organization'
 )
 
 logging.getLogger('jira').addHandler(NullHandler())
@@ -823,6 +826,36 @@ class Board(GreenHopperResource):
             raise NotImplementedError('JIRA Agile Public API does not support Board removal')
 
         Resource.delete(self, params)
+
+
+# Service Desk
+
+
+class Customer(Resource):
+    """This resource represents a customer user account. """
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(self, 'customer', options, session, '{server}/rest/servicedeskapi/{path}')
+        if raw:
+            self._parse_raw(raw)
+
+
+class ServiceDeskInfo(Resource):
+    """This resource represents the JIRA Service Desk application. """
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(self, 'info', options, session, '{server}/rest/servicedeskapi/{path}')
+        if raw:
+            self._parse_raw(raw)
+
+
+class Organization(Resource):
+    """This resource represents an organization in Service Desk. """
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(self, 'organization', options, session, '{server}/rest/servicedeskapi/{path}')
+        if raw:
+            self._parse_raw(raw)
 
 
 # Utilities
