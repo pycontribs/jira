@@ -858,6 +858,15 @@ class Organization(Resource):
             self._parse_raw(raw)
 
 
+class Request(Resource):
+    """This resource represents an organization in Service Desk. """
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(self, 'organization/{0}', options, session, '{server}/rest/servicedeskapi/{path}')
+        if raw:
+            self._parse_raw(raw)
+
+
 # Utilities
 
 

@@ -110,6 +110,12 @@ def get_unique_project_name():
     return jid
 
 
+jira_servicedesk = pytest.mark.skipif((lambda: requests.get((os.environ['CI_JIRA_URL'] if 'CI_JIRA_URL' in os.environ
+                                                            else 'https://pycontribs.atlassian.net') +
+                                                                 '/rest/servicedeskapi/info').status_code != 200)(),
+                                      reason="JIRA Service Desk application is not available.")
+
+
 class Singleton(type):
 
     def __init__(cls, name, bases, dict):
@@ -2097,6 +2103,7 @@ class UserAdministrationTests(unittest.TestCase):
 
 
 @flaky
+@jira_servicedesk
 class ServiceDeskTests(unittest.TestCase):
 
     def setUp(self):
@@ -2106,7 +2113,8 @@ class ServiceDeskTests(unittest.TestCase):
         self.test_email_a = "test_customer_%s@example.com" % self.test_manager.project_a
         self.test_fullname_b = "TestCustomerFullName %s" % self.test_manager.project_b
         self.test_email_b = "test_customer_%s@example.com" % self.test_manager.project_b
-        self.test_organization_name = "test_organization_%s" % self.test_manager.project_a
+        self.test_organization_name_a = "test_organization_%s" % self.test_manager.project_a
+        self.test_organization_name_b = "test_organization_%s" % self.test_manager.project_b
 
     def test_create_and_delete_customer(self):
         try:
@@ -2126,26 +2134,26 @@ class ServiceDeskTests(unittest.TestCase):
         self.assertNotEquals(result, False)
 
     def test_create_and_delete_organization(self):
-        organization = self.jira.create_organization(self.test_organization_name)
-        self.assertEquals(organization.name, self.test_organization_name)
+        organization = self.jira.create_organization(self.test_organization_name_a)
+        self.assertEquals(organization.name, self.test_organization_name_a)
 
         result = self.jira.delete_organization(organization.id)
         assert result, True
 
     def test_get_organization(self):
-        organization = self.jira.create_organization(self.test_organization_name)
-        self.assertEquals(organization.name, self.test_organization_name)
+        organization = self.jira.create_organization(self.test_organization_name_a)
+        self.assertEquals(organization.name, self.test_organization_name_a)
 
         result = self.jira.organization(organization.id)
         self.assertEquals(result.id, organization.id)
-        self.assertEquals(result.name, self.test_organization_name)
+        self.assertEquals(result.name, self.test_organization_name_a)
 
         result = self.jira.delete_organization(organization.id)
         assert result, True
 
     def test_add_users_to_organization(self):
-        organization = self.jira.create_organization(self.test_organization_name)
-        self.assertEquals(organization.name, self.test_organization_name)
+        organization = self.jira.create_organization(self.test_organization_name_a)
+        self.assertEquals(organization.name, self.test_organization_name_a)
 
         try:
             self.jira.delete_user(self.test_email_a)
@@ -2178,8 +2186,8 @@ class ServiceDeskTests(unittest.TestCase):
         assert result, True
 
     def test_remove_users_from_organization(self):
-        organization = self.jira.create_organization(self.test_organization_name)
-        self.assertEquals(organization.name, self.test_organization_name)
+        organization = self.jira.create_organization(self.test_organization_name_a)
+        self.assertEquals(organization.name, self.test_organization_name_a)
 
         try:
             self.jira.delete_user(self.test_email_a)
@@ -2215,17 +2223,14 @@ class ServiceDeskTests(unittest.TestCase):
         assert result, True
 
     def test_get_organizations(self):
-        organization_a = self.jira.create_organization(self.test_organization_name + '_a')
-        self.assertEquals(organization_a.name, self.test_organization_name + '_a')
+        organization_a = self.jira.create_organization(self.test_organization_name_a)
+        self.assertEquals(organization_a.name, self.test_organization_name_a)
 
-        organization_b = self.jira.create_organization(self.test_organization_name + '_b')
-        self.assertEquals(organization_b.name, self.test_organization_name + '_b')
+        organization_b = self.jira.create_organization(self.test_organization_name_b)
+        self.assertEquals(organization_b.name, self.test_organization_name_b)
 
-        organization_c = self.jira.create_organization(self.test_organization_name + '_c')
-        self.assertEquals(organization_c.name, self.test_organization_name + '_c')
-
-        organizations = self.jira.organizations(0, 2)
-        self.assertEquals(len(organizations), 2)
+        organizations = self.jira.organizations(0, 1)
+        self.assertEquals(len(organizations), 1)
 
         result = self.jira.delete_organization(organization_a.id)
         assert result, True
@@ -2233,12 +2238,9 @@ class ServiceDeskTests(unittest.TestCase):
         result = self.jira.delete_organization(organization_b.id)
         assert result, True
 
-        result = self.jira.delete_organization(organization_c.id)
-        assert result, True
-
     def test_get_users_in_organization(self):
-        organization = self.jira.create_organization(self.test_organization_name)
-        self.assertEquals(organization.name, self.test_organization_name)
+        organization = self.jira.create_organization(self.test_organization_name_a)
+        self.assertEquals(organization.name, self.test_organization_name_a)
 
         try:
             self.jira.delete_user(self.test_email_a)
