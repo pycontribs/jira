@@ -311,7 +311,7 @@ class JiraTestManager(object):
                 try:
                     self.jira_admin.create_project(self.project_a,
                                                    self.project_a_name)
-                except Exception as e:
+                except Exception:
                     # we care only for the project to exist
                     pass
                 self.project_a_id = self.jira_admin.project(self.project_a).id
@@ -2316,9 +2316,15 @@ class ServiceDeskTests(unittest.TestCase):
         self.assertEquals(request_types[0].name, request_type_by_name.name)
 
     def test_create_and_delete_customer_request(self):
+        servicedesks = self.jira.servicedesks()
+        self.assertGreater(len(servicedesks), 0)
+
+        request_types = self.jira.request_types(servicedesks[0].id)
+        self.assertGreater(len(request_types), 0)
+
         fields = {
-            "serviceDeskId": 1,
-            "requestTypeId": "Get IT help",
+            "serviceDeskId": servicedesks[0].id,
+            "requestTypeId": request_types[0].id,
             "raiseOnBehalfOf": self.test_manager.CI_JIRA_USER,
             "requestFieldValues": {
                 "summary": "Request summary",

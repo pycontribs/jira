@@ -2880,10 +2880,6 @@ class JIRA(object):
         :param prefetch: reload Issue and return it
         :return: Issue
         """
-
-        if isinstance(fields['requestTypeId'], string_types):
-            fields['requestTypeId'] = self.request_type_by_name(fields['serviceDeskId'], fields['requestTypeId']).id
-
         url = self._options['server'] + '/rest/servicedeskapi/request'
         headers = CaseInsensitiveDict({'X-ExperimentalApi': 'opt-in'})
         result = self._session.post(url, headers=headers, data=json.dumps(fields))
