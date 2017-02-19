@@ -187,7 +187,7 @@ class Resource(object):
     #     self._parse_raw(raw_pickled)
     #
 
-    def find(self, id, params=None):
+    def find(self, id, params=None, headers=CaseInsensitiveDict()):
 
         if params is None:
             params = {}
@@ -197,7 +197,7 @@ class Resource(object):
         else:
             path = self._resource.format(id)
         url = self._get_url(path)
-        self._load(url, params=params)
+        self._load(url, params=params, headers=headers)
 
     def _get_url(self, path):
         options = self._options.copy()
@@ -853,7 +853,7 @@ class Organization(Resource):
     """This resource represents an organization in Service Desk. """
 
     def __init__(self, options, session, raw=None):
-        Resource.__init__(self, 'organization', options, session, '{server}/rest/servicedeskapi/{path}')
+        Resource.__init__(self, 'organization/{0}', options, session, '{server}/rest/servicedeskapi/{path}')
         if raw:
             self._parse_raw(raw)
 
