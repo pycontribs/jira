@@ -311,7 +311,7 @@ class JiraTestManager(object):
                 try:
                     self.jira_admin.create_project(self.project_a,
                                                    self.project_a_name)
-                except Exception:
+                except Exception as e:
                     # we care only for the project to exist
                     pass
                 self.project_a_id = self.jira_admin.project(self.project_a).id
@@ -2275,8 +2275,58 @@ class ServiceDeskTests(unittest.TestCase):
         result = self.jira.delete_organization(organization.id)
         assert result, True
 
+    def test_servicedesks(self):
+        servicedesks = self.jira.servicedesks()
+        self.assertGreater(len(servicedesks), 0)
+
+    def test_servicedesk(self):
+        servicedesks = self.jira.servicedesks()
+        self.assertGreater(len(servicedesks), 0)
+
+        servicedesk = self.jira.servicedesk(servicedesks[0].id)
+        self.assertEquals(servicedesk.id, servicedesks[0].id)
+
+    def test_request_types(self):
+        servicedesks = self.jira.servicedesks()
+        self.assertGreater(len(servicedesks), 0)
+
+        request_types = self.jira.request_types(servicedesks[0].id)
+        self.assertGreater(len(request_types), 0)
+
+    def test_request_type(self):
+        servicedesks = self.jira.servicedesks()
+        self.assertGreater(len(servicedesks), 0)
+
+        request_types = self.jira.request_types(servicedesks[0].id)
+        self.assertGreater(len(request_types), 0)
+
+        request_type = self.jira.request_type(servicedesks[0].id, request_types[0].id)
+        self.assertEquals(request_type.id, request_types[0].id)
+        self.assertEquals(request_type.name, request_types[0].name)
+
+    def test_request_type_by_name(self):
+        servicedesks = self.jira.servicedesks()
+        self.assertGreater(len(servicedesks), 0)
+
+        request_types = self.jira.request_types(servicedesks[0].id)
+        self.assertGreater(len(request_types), 0)
+
+        request_type_by_name = self.jira.request_type_by_name(servicedesks[0].id, request_types[0].name)
+        self.assertEquals(request_types[0].id, request_type_by_name.id)
+        self.assertEquals(request_types[0].name, request_type_by_name.name)
+
     def test_create_and_delete_customer_request(self):
-        pass
+        fields = {
+            "serviceDeskId": 1,
+            "requestTypeId": "Get IT help",
+            "raiseOnBehalfOf": self.test_manager.CI_JIRA_USER,
+            "requestFieldValues": {
+                "summary": "Request summary",
+                "description": "Request description"
+            }
+        }
+        issue = self.jira.create_request(fields)
+        issue.delete()
 
     def test_get_my_customer_request(self):
         pass

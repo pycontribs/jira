@@ -51,8 +51,10 @@ __all__ = (
     'CustomFieldOption',
     'RemoteLink',
     'Customer',
-    'ServiceDeskInfo',
-    'Organization'
+    'ServicedeskInfo',
+    'Organization',
+    'Servicedesk',
+    'RequestType'
 )
 
 logging.getLogger('jira').addHandler(NullHandler())
@@ -831,7 +833,7 @@ class Board(GreenHopperResource):
 # Service Desk
 
 
-class Customer(Resource):
+class Customer(User):
     """This resource represents a customer user account. """
 
     def __init__(self, options, session, raw=None):
@@ -840,7 +842,7 @@ class Customer(Resource):
             self._parse_raw(raw)
 
 
-class ServiceDeskInfo(Resource):
+class ServicedeskInfo(Resource):
     """This resource represents the JIRA Service Desk application. """
 
     def __init__(self, options, session, raw=None):
@@ -858,11 +860,21 @@ class Organization(Resource):
             self._parse_raw(raw)
 
 
-class Request(Resource):
-    """This resource represents an organization in Service Desk. """
+class Servicedesk(Resource):
+    """This resource represents an Servicedesk. """
 
     def __init__(self, options, session, raw=None):
-        Resource.__init__(self, 'organization/{0}', options, session, '{server}/rest/servicedeskapi/{path}')
+        Resource.__init__(self, 'servicedesk/{0}', options, session, '{server}/rest/servicedeskapi/{path}')
+        if raw:
+            self._parse_raw(raw)
+
+
+class RequestType(Resource):
+    """This resource represents an RequestType. """
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(self, 'servicedesk/{0}/requesttype/{1}', options, session,
+                          '{server}/rest/servicedeskapi/{path}')
         if raw:
             self._parse_raw(raw)
 
