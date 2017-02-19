@@ -110,10 +110,15 @@ def get_unique_project_name():
     return jid
 
 
-jira_servicedesk = pytest.mark.skipif((lambda: requests.get((os.environ['CI_JIRA_URL'] if 'CI_JIRA_URL' in os.environ
-                                                            else 'https://pycontribs.atlassian.net') +
-                                                                 '/rest/servicedeskapi/info').status_code != 200)(),
-                                      reason="JIRA Service Desk application is not available.")
+def jira_servicedesk_detection():
+    if 'CI_JIRA_URL' in os.environ:
+        url = os.environ['CI_JIRA_URL']
+    else:
+        url = 'https://pycontribs.atlassian.net'
+    url += '/rest/servicedeskapi/info'
+    return requests.get(url).status_code != 200
+
+jira_servicedesk = pytest.mark.skipif(jira_servicedesk_detection(), reason="JIRA Service Desk is not available.")
 
 
 class Singleton(type):
