@@ -223,7 +223,8 @@ class JIRA(object):
     AGILE_BASE_URL = GreenHopperResource.AGILE_BASE_URL
 
     def __init__(self, server=None, options=None, basic_auth=None, oauth=None, jwt=None, kerberos=False,
-                 validate=False, get_server_info=True, async=False, logging=True, max_retries=3, proxies=None):
+                 validate=False, get_server_info=True, async=False, logging=True, max_retries=3, proxies=None,
+                 timeout=None):
         """Construct a JIRA client instance.
 
         Without any arguments, this client will connect anonymously to the JIRA instance
@@ -268,6 +269,7 @@ class JIRA(object):
         :param get_server_info: If true it will fetch server version info first to determine if some API calls
             are available.
         :param async: To enable async requests for those actions where we implemented it, like issue update() or delete().
+        :param timeout: Set a read/connect timeout for the underlying calls to JIRA (default: None)
         Obviously this means that you cannot rely on the return code when this is enabled.
         """
         # force a copy of the tuple to be used in __del__() because
@@ -307,17 +309,17 @@ class JIRA(object):
         self._try_magic()
 
         if oauth:
-            self._create_oauth_session(oauth)
+            self._create_oauth_session(oauth, timeout)
         elif basic_auth:
-            self._create_http_basic_session(*basic_auth)
+            self._create_http_basic_session(*basic_auth, timeout=timeout)
             self._session.headers.update(self._options['headers'])
         elif jwt:
-            self._create_jwt_session(jwt)
+            self._create_jwt_session(jwt, timeout)
         elif kerberos:
-            self._create_kerberos_session()
+            self._create_kerberos_session(timeout)
         else:
             verify = self._options['verify']
-            self._session = ResilientSession()
+            self._session = ResilientSession(timeout=timeout)
             self._session.verify = verify
         self._session.headers.update(self._options['headers'])
 
@@ -329,8 +331,14 @@ class JIRA(object):
         if validate:
             # This will raise an Exception if you are not allowed to login.
             # It's better to fail faster than later.
-            self.session()
+            user = self.session()
+            if user.raw is None:
+                auth_method = (
+                    oauth or basic_auth or jwt or kerberos or "anonymous"
+                )
+                raise JIRAError("Can not log in with %s" % str(auth_method))
 
+        self.deploymentType = None
         if get_server_info:
             # We need version in order to know what API calls are available or not
             si = self.server_info()
@@ -339,6 +347,7 @@ class JIRA(object):
             except Exception as e:
                 logging.error("invalid server_info: %s", si)
                 raise e
+            self.deploymentType = si.get('deploymentType')
         else:
             self._version = (0, 0, 0)
 
@@ -410,9 +419,15 @@ class JIRA(object):
             page_params['startAt'] = startAt
         if maxResults:
             page_params['maxResults'] = maxResults
-        resource = self._get_json(request_path, params=page_params, base=base)
-        next_items_page = [item_type(self._options, self._session, raw_issue_json) for raw_issue_json in
-                           (resource[items_key] if items_key else resource)]
+
+        try:
+            resource = self._get_json(request_path, params=page_params, base=base)
+            next_items_page = [item_type(self._options, self._session, raw_issue_json) for raw_issue_json in
+                               (resource[items_key] if items_key else resource)]
+        except KeyError as e:
+            # improving the error text so we know why it happened
+            raise KeyError(str(e) + " : " + json.dumps(resource))
+
         items = next_items_page
 
         if True:  # isinstance(resource, dict):
@@ -438,14 +453,18 @@ class JIRA(object):
                     page_params['startAt'] = page_start
                     page_params['maxResults'] = page_size
                     resource = self._get_json(request_path, params=page_params, base=base)
-                    try:
-                        next_items_page = [item_type(self._options, self._session, raw_issue_json) for raw_issue_json in
-                                           (resource[items_key] if items_key else resource)]
-                    except KeyError as e:
-                        e.message += " : " + json.dumps(resource)
-                        raise
-                    items.extend(next_items_page)
-                    page_start += page_size
+                    if resource:
+                        try:
+                            next_items_page = [item_type(self._options, self._session, raw_issue_json) for raw_issue_json in
+                                               (resource[items_key] if items_key else resource)]
+                        except KeyError as e:
+                            # improving the error text so we know why it happened
+                            raise KeyError(str(e) + " : " + json.dumps(resource))
+                        items.extend(next_items_page)
+                        page_start += page_size
+                    else:
+                        # if resource is an empty dictionary we assume no-results
+                        break
 
             return ResultList(items, start_at_from_response, max_results_from_response, total, is_last)
         else:
@@ -908,7 +927,7 @@ class JIRA(object):
 
         raw_issue_json = json_loads(r)
         if 'key' not in raw_issue_json:
-            raise JIRAError(r.status_code, request=r)
+            raise JIRAError(r.status_code, response=r, url=url, text=json.dumps(data))
         if prefetch:
             return self.issue(raw_issue_json['key'])
         else:
@@ -2137,6 +2156,7 @@ class JIRA(object):
         r = self._session.post(
             url, data=json.dumps(data))
 
+        time.sleep(1)
         version = Version(self._options, self._session, raw=json_loads(r))
         return version
 
@@ -2214,21 +2234,24 @@ class JIRA(object):
         return self._session.delete(url)
 
     # Websudo
-
     def kill_websudo(self):
-        """Destroy the user's current WebSudo session."""
-        url = self._options['server'] + '/rest/auth/1/websudo'
-        return self._session.delete(url)
+        """Destroy the user's current WebSudo session.
+
+        Works only for non-cloud deployments, for others does nothing.
+        """
+        if self.deploymentType != 'Cloud':
+            url = self._options['server'] + '/rest/auth/1/websudo'
+            return self._session.delete(url)
 
     # Utilities
-    def _create_http_basic_session(self, username, password):
+    def _create_http_basic_session(self, username, password, timeout=None):
         verify = self._options['verify']
-        self._session = ResilientSession()
+        self._session = ResilientSession(timeout=timeout)
         self._session.verify = verify
         self._session.auth = (username, password)
         self._session.cert = self._options['client_cert']
 
-    def _create_oauth_session(self, oauth):
+    def _create_oauth_session(self, oauth, timeout):
         verify = self._options['verify']
 
         from oauthlib.oauth1 import SIGNATURE_RSA
@@ -2240,17 +2263,17 @@ class JIRA(object):
             signature_method=SIGNATURE_RSA,
             resource_owner_key=oauth['access_token'],
             resource_owner_secret=oauth['access_token_secret'])
-        self._session = ResilientSession()
+        self._session = ResilientSession(timeout)
         self._session.verify = verify
         self._session.auth = oauth
 
-    def _create_kerberos_session(self):
+    def _create_kerberos_session(self, timeout):
         verify = self._options['verify']
 
         from requests_kerberos import HTTPKerberosAuth
         from requests_kerberos import OPTIONAL
 
-        self._session = ResilientSession()
+        self._session = ResilientSession(timeout=timeout)
         self._session.verify = verify
         self._session.auth = HTTPKerberosAuth(mutual_authentication=OPTIONAL)
 
@@ -2261,7 +2284,7 @@ class JIRA(object):
             t += dt
         return calendar.timegm(t.timetuple())
 
-    def _create_jwt_session(self, jwt):
+    def _create_jwt_session(self, jwt, timeout):
         try:
             jwt_auth = JWTAuth(jwt['secret'], alg='HS256')
         except NameError as e:
@@ -2272,7 +2295,7 @@ class JIRA(object):
         jwt_auth.add_field("qsh", QshGenerator(self._options['context_path']))
         for f in jwt['payload'].items():
             jwt_auth.add_field(f[0], f[1])
-        self._session = ResilientSession()
+        self._session = ResilientSession(timeout=timeout)
         self._session.verify = self._options['verify']
         self._session.auth = jwt_auth
 
@@ -2456,7 +2479,7 @@ class JIRA(object):
 
     def deactivate_user(self, username):
         """Disable/deactivate the user."""
-        if self.server_info().get('deploymentType') == 'Cloud':
+        if self.deploymentType == 'Cloud':
             url = self._options['server'] + '/admin/rest/um/1/user/deactivate?username=' + username
             self._options['headers']['Content-Type'] = 'application/json'
             userInfo = {}
@@ -2523,7 +2546,7 @@ class JIRA(object):
 
     def backup(self, filename='backup.zip', attachments=False):
         """Will call jira export to backup as zipped xml. Returning with success does not mean that the backup process finished."""
-        if self.server_info().get('deploymentType') == 'Cloud':
+        if self.deploymentType == 'Cloud':
             url = self._options['server'] + '/rest/obm/1.0/runbackup'
             payload = json.dumps({"cbAttachments": attachments})
             self._options['headers']['X-Requested-With'] = 'XMLHttpRequest'
@@ -2547,7 +2570,7 @@ class JIRA(object):
         Is there a way to get progress for Server version?
         """
         epoch_time = int(time.time() * 1000)
-        if self.server_info().get('deploymentType') == 'Cloud':
+        if self.deploymentType == 'Cloud':
             url = self._options['server'] + '/rest/obm/1.0/getprogress?_=%i' % epoch_time
         else:
             logging.warning(
@@ -2573,7 +2596,7 @@ class JIRA(object):
 
     def backup_complete(self):
         """Return boolean based on 'alternativePercentage' and 'size' returned from backup_progress (cloud only)."""
-        if self.server_info().get('deploymentType') != 'Cloud':
+        if self.deploymentType != 'Cloud':
             logging.warning(
                 'This functionality is not available in Server version')
             return None
@@ -2585,7 +2608,7 @@ class JIRA(object):
 
     def backup_download(self, filename=None):
         """Download backup file from WebDAV (cloud only)."""
-        if self.server_info().get('deploymentType') != 'Cloud':
+        if self.deploymentType != 'Cloud':
             logging.warning(
                 'This functionality is not available in Server version')
             return None
@@ -2800,7 +2823,7 @@ class JIRA(object):
 
         :param username: Username that will be added to specified group.
         :param group: Group that the user will be added to.
-        :return: Boolean, True for success, false for failure.
+        :return: json response from Jira server for success or a value that evaluates as False in case of failure.
         """
         url = self._options['server'] + '/rest/api/latest/group/user'
         x = {'groupname': group}
@@ -2808,9 +2831,11 @@ class JIRA(object):
 
         payload = json.dumps(y)
 
-        self._session.post(url, params=x, data=payload)
-
-        return True
+        r = json_loads(self._session.post(url, params=x, data=payload))
+        if 'name' not in r or r['name'] != group:
+            return False
+        else:
+            return r
 
     def remove_user_from_group(self, username, groupname):
         """Remove a user from a group.

@@ -54,6 +54,11 @@ endif
 	touch $(PYENV_HOME)/bin/activate
 
 prepare: venv
+	pyenv install -s 2.7.13
+	pyenv install -s 3.4.5
+	pyenv install -s 3.5.2
+	pyenv install -s 3.6.0
+	pyenv local 2.7.13 3.4.5 3.5.2 3.6.0
 	@echo "INFO:	=== Prearing to run for package:$(PACKAGE_NAME) platform:$(PLATFORM) py:$(PYTHON_VERSION) dir:$(DIR) ==="
 	if [ -f ${HOME}/testspace/testspace ]; then ${HOME}/testspace/testspace config url ${TESTSPACE_TOKEN}@pycontribs.testspace.com/jira/tests ; fi;
 
@@ -85,10 +90,11 @@ docs:
 	$(PYENV_HOME)/bin/python setup.py build_sphinx
 	@mkdir -p docs/build/docset
 	@mkdir -p docs/build/html/docset
-	@DOC2DASH_OPTS=$(shell [ -d "$HOME/Library/Application Support/doc2dash/DocSets" ] && echo '--add-to-global')
-	doc2dash --force --name jira docs/build/html --destination docs/build/docset --icon docs/_static/python-32.png --online-redirect-url https://jira.readthedocs.io/en/stable/ $(DOC2DASH_OPTS)
-	cd docs/build/docset && tar --exclude='.DS_Store' -czf ../html/docset/jira.tgz jira.docset
-	# TODO: publish the docs
+# cannot put doc2dash into requirements.txt file because is using pinned requirements
+#	@DOC2DASH_OPTS=$(shell [ -d "$HOME/Library/Application Support/doc2dash/DocSets" ] && echo '--add-to-global')
+#	doc2dash --force --name jira docs/build/html --destination docs/build/docset --icon docs/_static/python-32.png --online-redirect-url https://jira.readthedocs.io/en/stable/ $(DOC2DASH_OPTS)
+#	cd docs/build/docset && tar --exclude='.DS_Store' -czf ../html/docset/jira.tgz jira.docset
+#	# TODO: publish the docs
 
 tag:
 	bumpversion --feature --no-input
