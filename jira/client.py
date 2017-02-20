@@ -982,6 +982,15 @@ class JIRA(object):
                                    'error': None, 'input_fields': fields})
         return issue_list
 
+    def supports_service_desk(self):
+        url = self._options['server'] + '/rest/servicedeskapi/info'
+        headers = {'X-ExperimentalApi': 'opt-in'}
+        try:
+            r = self._session.get(url, headers=headers)
+            return r.status_code == 200
+        except JIRAError:
+            return False
+
     def create_customer(self, email, displayName):
         """Create a new customer and return an issue Resource for it.
         """
