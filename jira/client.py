@@ -992,8 +992,7 @@ class JIRA(object):
             return False
 
     def create_customer(self, email, displayName):
-        """Create a new customer and return an issue Resource for it.
-        """
+        """Create a new customer and return an issue Resource for it."""
         url = self._options['server'] + '/rest/servicedeskapi/customer'
         headers = {'X-ExperimentalApi': 'opt-in'}
         r = self._session.post(url, headers=headers, data=json.dumps({
