@@ -49,7 +49,12 @@ __all__ = (
     'Status',
     'User',
     'CustomFieldOption',
-    'RemoteLink'
+    'RemoteLink',
+    'Customer',
+    'ServicedeskInfo',
+    'Organization',
+    'Servicedesk',
+    'RequestType'
 )
 
 logging.getLogger('jira').addHandler(NullHandler())
@@ -184,7 +189,7 @@ class Resource(object):
     #     self._parse_raw(raw_pickled)
     #
 
-    def find(self, id, params=None):
+    def find(self, id, params=None, headers=CaseInsensitiveDict()):
 
         if params is None:
             params = {}
@@ -194,7 +199,7 @@ class Resource(object):
         else:
             path = self._resource.format(id)
         url = self._get_url(path)
-        self._load(url, params=params)
+        self._load(url, params=params, headers=headers)
 
     def _get_url(self, path):
         options = self._options.copy()
@@ -823,6 +828,55 @@ class Board(GreenHopperResource):
             raise NotImplementedError('JIRA Agile Public API does not support Board removal')
 
         Resource.delete(self, params)
+
+
+# Service Desk
+
+
+class Customer(User):
+    """This resource represents a customer user account. """
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(self, 'customer', options, session, '{server}/rest/servicedeskapi/{path}')
+        if raw:
+            self._parse_raw(raw)
+
+
+class ServicedeskInfo(Resource):
+    """This resource represents the JIRA Service Desk application. """
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(self, 'info', options, session, '{server}/rest/servicedeskapi/{path}')
+        if raw:
+            self._parse_raw(raw)
+
+
+class Organization(Resource):
+    """This resource represents an organization in Service Desk. """
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(self, 'organization/{0}', options, session, '{server}/rest/servicedeskapi/{path}')
+        if raw:
+            self._parse_raw(raw)
+
+
+class Servicedesk(Resource):
+    """This resource represents an Servicedesk. """
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(self, 'servicedesk/{0}', options, session, '{server}/rest/servicedeskapi/{path}')
+        if raw:
+            self._parse_raw(raw)
+
+
+class RequestType(Resource):
+    """This resource represents an RequestType. """
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(self, 'servicedesk/{0}/requesttype/{1}', options, session,
+                          '{server}/rest/servicedeskapi/{path}')
+        if raw:
+            self._parse_raw(raw)
 
 
 # Utilities

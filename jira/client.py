@@ -372,7 +372,7 @@ class JIRA(object):
             return False
         return True
 
-    def _fetch_pages(self, item_type, items_key, request_path, startAt=0, maxResults=50, params=None, base=JIRA_BASE_URL):
+    def _fetch_pages(self, item_type, items_key, request_path, startAt=0, maxResults=50, params=None, headers=CaseInsensitiveDict(), base=JIRA_BASE_URL):
         """Fetch pages.
 
         :param item_type: Type of single item. ResultList of such items will be returned.
@@ -394,7 +394,7 @@ class JIRA(object):
             page_params['maxResults'] = maxResults
 
         try:
-            resource = self._get_json(request_path, params=page_params, base=base)
+            resource = self._get_json(request_path, params=page_params, headers=headers, base=base)
             next_items_page = [item_type(self._options, self._session, raw_issue_json) for raw_issue_json in
                                (resource[items_key] if items_key else resource)]
         except KeyError as e:
@@ -425,7 +425,7 @@ class JIRA(object):
                 while not is_last and (total is None or page_start < total) and len(next_items_page) == page_size:
                     page_params['startAt'] = page_start
                     page_params['maxResults'] = page_size
-                    resource = self._get_json(request_path, params=page_params, base=base)
+                    resource = self._get_json(request_path, params=page_params, headers=headers, base=base)
                     if resource:
                         try:
                             next_items_page = [item_type(self._options, self._session, raw_issue_json) for raw_issue_json in
@@ -2167,9 +2167,9 @@ class JIRA(object):
         options.update({'path': path})
         return base.format(**options)
 
-    def _get_json(self, path, params=None, base=JIRA_BASE_URL):
+    def _get_json(self, path, params=None, headers=CaseInsensitiveDict(), base=JIRA_BASE_URL):
         url = self._get_url(path, base)
-        r = self._session.get(url, params=params)
+        r = self._session.get(url, params=params, headers=headers)
         try:
             r_json = json_loads(r)
         except ValueError as e:
@@ -2708,6 +2708,224 @@ class JIRA(object):
         self._session.delete(url, params=x)
 
         return True
+
+    # Service Desk
+
+    def create_customer(self, email, fullname):
+        """Creates a customer that is not associated with a service desk project.
+
+        :param email: email of the user (customer) to create
+        :param fullname: user full name
+        :return Customer
+        """
+        url = self._options['server'] + '/rest/servicedeskapi/customer'
+        headers = {'X-ExperimentalApi': 'opt-in'}
+        result = self._session.post(url, headers=headers, data=json.dumps({'email': email, 'fullName': fullname}))
+        if result.status_code != 201:
+            raise JIRAError(result.status_code, request=result)
+        return Customer(self._options, self._session, raw=json_loads(result))
+
+    def servicedesk_info(self):
+        """Returns runtime information about JIRA Service Desk.
+
+        :return ServicedeskInfo
+        """
+        url = self._options['server'] + '/rest/servicedeskapi/info'
+        result = self._session.get(url)
+        if result.status_code != 200:
+            raise JIRAError(result.status_code, request=result)
+        return ServicedeskInfo(self._options, self._session, raw=json_loads(result))
+
+    def create_organization(self, name):
+        """Creates an organization
+
+        :param name: name of the organization to create
+        :return Organization
+        """
+        url = self._options['server'] + '/rest/servicedeskapi/organization'
+        headers = {'X-ExperimentalApi': 'opt-in'}
+        result = self._session.post(url, headers=headers, data=json.dumps({'name': name}))
+        if result.status_code != 201:
+            raise JIRAError(result.status_code, request=result)
+        return Organization(self._options, self._session, raw=json_loads(result))
+
+    def delete_organization(self, organization_id):
+        """Delete organization
+
+        :param organization_id: ID of the organization to delete
+        :return boolean
+        """
+        url = self._options['server'] + '/rest/servicedeskapi/organization/%i' % int(organization_id)
+        headers = {'X-ExperimentalApi': 'opt-in'}
+        result = self._session.delete(url, headers=headers)
+        if result.status_code != 204:
+            raise JIRAError(result.status_code, request=result)
+        return True
+
+    def organization(self, id):
+        """Get an organization for a given organization ID
+
+        :param id: ID of the organization to get
+        :return Organization
+        """
+        headers = CaseInsensitiveDict({'X-ExperimentalApi': 'opt-in'})
+        organization = Organization(self._options, self._session)
+        organization.find(id, headers=headers)
+        return organization
+
+    def organizations(self, start=0, limit=50):
+        """Returns a list of organizations in the JIRA instance.
+           If the user is not an agent, the resource returns a list of organizations the user is a member of.
+
+        :param start: index of the first organization to return.
+        :param limit: maximum number of organizations to return.
+                      If limit evaluates as False, it will try to get all items in batches.
+        :return list of Organization resources
+        """
+        params = {'start': start, 'limit': limit}
+        headers = CaseInsensitiveDict({'X-ExperimentalApi': 'opt-in'})
+        base = self._options['server'] + '/rest/servicedeskapi/organization'
+        return self._fetch_pages(Organization,
+                                 'values',
+                                 'organization',
+                                 params=params,
+                                 headers=headers,
+                                 base=base)
+
+    def add_users_to_organization(self, organization_id, usernames):
+        """Add users to organization
+
+        :param organization_id: organization ID
+        :param usernames: list with usernames
+        :return boolean
+        """
+        url = self._options['server'] + '/rest/servicedeskapi/organization/%i/user' % int(organization_id)
+        headers = {'X-ExperimentalApi': 'opt-in'}
+        params = {}
+        if isinstance(usernames, list):
+            params['usernames'] = usernames
+        else:
+            params['usernames'] = [usernames]
+        result = self._session.post(url, headers=headers, data=json.dumps(params))
+        if result.status_code != 204:
+            raise JIRAError(result.status_code, request=result)
+        return True
+
+    def remove_users_from_organization(self, organization_id, usernames):
+        """Remove users from organization
+
+        :param organization_id: organization ID
+        :param usernames: list with usernames
+        :return boolean
+        """
+        url = self._options['server'] + '/rest/servicedeskapi/organization/%i/user' % int(organization_id)
+        headers = {'X-ExperimentalApi': 'opt-in'}
+        params = {}
+        if isinstance(usernames, list):
+            params['usernames'] = usernames
+        else:
+            params['usernames'] = [usernames]
+        result = self._session.delete(url, headers=headers, data=json.dumps(params))
+        if result.status_code != 204:
+            raise JIRAError(result.status_code, request=result)
+        return True
+
+    def get_users_from_organization(self, organization_id, start=0, limit=50):
+        """Returns a list of users in organization.
+
+        :param organization_id: organization ID
+        :param start: index of the first user to return.
+        :param limit: maximum number of organizations to return.
+                      If limit evaluates as False, it will try to get all items in batches.
+        """
+        params = {'start': start, 'limit': limit}
+        headers = CaseInsensitiveDict({'X-ExperimentalApi': 'opt-in'})
+        base = self._options['server'] + '/rest/servicedeskapi/organization/%i/user' % int(organization_id)
+        return self._fetch_pages(User,
+                                 'values',
+                                 None,
+                                 params=params,
+                                 headers=headers,
+                                 base=base)
+
+    def servicedesks(self, start=0, limit=50):
+        """Returns a list of servicedesks
+
+        :param start: index of the first servicedesk to return.
+        :param limit: maximum number of servicedesks to return.
+                      If limit evaluates as False, it will try to get all items in batches.
+        """
+        params = {'start': start, 'limit': limit}
+        base = self._options['server'] + '/rest/servicedeskapi/servicedesk'
+        return self._fetch_pages(Servicedesk,
+                                 'values',
+                                 None,
+                                 params=params,
+                                 base=base)
+
+    def servicedesk(self, id):
+        """Returns the service desk for a given service desk Id.
+
+        :param id: servicedesk ID
+        :return: Servicedesk
+        """
+        servicedesk = Servicedesk(self._options, self._session)
+        servicedesk.find(id)
+        return servicedesk
+
+    def create_request(self, fields, prefetch=True):
+        """Creates a customer request in a service desk. The service desk and request type are required.
+
+        :param fields: list of Issue fields
+        :param prefetch: reload Issue and return it
+        :return: Issue
+        """
+        url = self._options['server'] + '/rest/servicedeskapi/request'
+        headers = CaseInsensitiveDict({'X-ExperimentalApi': 'opt-in'})
+        result = self._session.post(url, headers=headers, data=json.dumps(fields))
+        raw_issue_json = json_loads(result)
+        if 'issueKey' not in raw_issue_json:
+            raise JIRAError(result.status_code, request=result)
+        if prefetch:
+            return self.issue(raw_issue_json['issueKey'])
+        else:
+            return Issue(self._options, self._session, raw=raw_issue_json)
+
+    def request_types(self, servicedesk_id, start=0, limit=50):
+        """Returns all request types from a service desk, for a given service desk Id.
+
+        :param servicedesk_id: servicedesk ID
+        :param start: index of the first user to return.
+        :param limit: maximum number of organizations to return.
+                      If limit evaluates as False, it will try to get all items in batches.
+        :return: list of RequestType resources
+        """
+        params = {'start': start, 'limit': limit}
+        base = self._options['server'] + '/rest/servicedeskapi/servicedesk/%i/requesttype' % int(servicedesk_id)
+        return self._fetch_pages(RequestType,
+                                 'values',
+                                 None,
+                                 params=params,
+                                 base=base)
+
+    def request_type(self, servicedesk_id, id):
+        """Returns a request type for a given request type Id.
+
+        :param servicedesk_id: servicedesk ID
+        :param id: request type ID
+        :return: RequestType
+        """
+        request_type = RequestType(self._options, self._session)
+        request_type.find((servicedesk_id, id))
+        return request_type
+
+    def request_type_by_name(self, servicedesk_id, name):
+        request_types = self.request_types(servicedesk_id)
+        try:
+            request_type = [rt for rt in request_types if rt.name == name][0]
+        except IndexError:
+            raise KeyError("Request type '%s' is unknown." % name)
+        return request_type
 
     # Experimental
     # Experimental support for iDalko Grid, expect API to change as it's using private APIs currently

@@ -110,6 +110,17 @@ def get_unique_project_name():
     return jid
 
 
+def jira_servicedesk_detection():
+    if 'CI_JIRA_URL' in os.environ:
+        url = os.environ['CI_JIRA_URL']
+    else:
+        url = 'https://pycontribs.atlassian.net'
+    url += '/rest/servicedeskapi/info'
+    return requests.get(url).status_code != 200
+
+jira_servicedesk = pytest.mark.skipif(jira_servicedesk_detection(), reason="JIRA Service Desk is not available.")
+
+
 class Singleton(type):
 
     def __init__(cls, name, bases, dict):
@@ -299,7 +310,6 @@ class JiraTestManager(object):
                     try:
                         self.jira_admin.project(self.project_b)
                     except Exception as e:
-                        print(e)
                         break
                     sleep(2)
 
@@ -2095,6 +2105,260 @@ class UserAdministrationTests(unittest.TestCase):
 
         self.jira.remove_group(self.test_groupname)
         self.jira.delete_user(self.test_username)
+
+
+@flaky
+@jira_servicedesk
+class ServiceDeskTests(unittest.TestCase):
+
+    def setUp(self):
+        self.test_manager = JiraTestManager()
+        self.jira = self.test_manager.jira_admin
+        self.test_fullname_a = "TestCustomerFullName %s" % self.test_manager.project_a
+        self.test_email_a = "test_customer_%s@example.com" % self.test_manager.project_a
+        self.test_fullname_b = "TestCustomerFullName %s" % self.test_manager.project_b
+        self.test_email_b = "test_customer_%s@example.com" % self.test_manager.project_b
+        self.test_organization_name_a = "test_organization_%s" % self.test_manager.project_a
+        self.test_organization_name_b = "test_organization_%s" % self.test_manager.project_b
+
+    def test_create_and_delete_customer(self):
+        try:
+            self.jira.delete_user(self.test_email_a)
+        except JIRAError:
+            pass
+
+        customer = self.jira.create_customer(self.test_email_a, self.test_fullname_a)
+        self.assertEqual(customer.emailAddress, self.test_email_a)
+        self.assertEqual(customer.displayName, self.test_fullname_a)
+
+        result = self.jira.delete_user(self.test_email_a)
+        assert result, True
+
+    def test_get_servicedesk_info(self):
+        result = self.jira.servicedesk_info()
+        self.assertNotEquals(result, False)
+
+    def test_create_and_delete_organization(self):
+        organization = self.jira.create_organization(self.test_organization_name_a)
+        self.assertEqual(organization.name, self.test_organization_name_a)
+
+        result = self.jira.delete_organization(organization.id)
+        assert result, True
+
+    def test_get_organization(self):
+        organization = self.jira.create_organization(self.test_organization_name_a)
+        self.assertEqual(organization.name, self.test_organization_name_a)
+
+        result = self.jira.organization(organization.id)
+        self.assertEqual(result.id, organization.id)
+        self.assertEqual(result.name, self.test_organization_name_a)
+
+        result = self.jira.delete_organization(organization.id)
+        assert result, True
+
+    def test_add_users_to_organization(self):
+        organization = self.jira.create_organization(self.test_organization_name_a)
+        self.assertEqual(organization.name, self.test_organization_name_a)
+
+        try:
+            self.jira.delete_user(self.test_email_a)
+        except JIRAError:
+            pass
+
+        try:
+            self.jira.delete_user(self.test_email_b)
+        except JIRAError:
+            pass
+
+        customer_a = self.jira.create_customer(self.test_email_a, self.test_fullname_a)
+        self.assertEqual(customer_a.emailAddress, self.test_email_a)
+        self.assertEqual(customer_a.displayName, self.test_fullname_a)
+
+        customer_b = self.jira.create_customer(self.test_email_b, self.test_fullname_b)
+        self.assertEqual(customer_b.emailAddress, self.test_email_b)
+        self.assertEqual(customer_b.displayName, self.test_fullname_b)
+
+        result = self.jira.add_users_to_organization(organization.id, [self.test_email_a, self.test_email_b])
+        assert result, True
+
+        result = self.jira.delete_user(self.test_email_a)
+        assert result, True
+
+        result = self.jira.delete_user(self.test_email_b)
+        assert result, True
+
+        result = self.jira.delete_organization(organization.id)
+        assert result, True
+
+    def test_remove_users_from_organization(self):
+        organization = self.jira.create_organization(self.test_organization_name_a)
+        self.assertEqual(organization.name, self.test_organization_name_a)
+
+        try:
+            self.jira.delete_user(self.test_email_a)
+        except JIRAError:
+            pass
+
+        try:
+            self.jira.delete_user(self.test_email_b)
+        except JIRAError:
+            pass
+
+        customer_a = self.jira.create_customer(self.test_email_a, self.test_fullname_a)
+        self.assertEqual(customer_a.emailAddress, self.test_email_a)
+        self.assertEqual(customer_a.displayName, self.test_fullname_a)
+
+        customer_b = self.jira.create_customer(self.test_email_b, self.test_fullname_b)
+        self.assertEqual(customer_b.emailAddress, self.test_email_b)
+        self.assertEqual(customer_b.displayName, self.test_fullname_b)
+
+        result = self.jira.add_users_to_organization(organization.id, [self.test_email_a, self.test_email_b])
+        assert result, True
+
+        result = self.jira.remove_users_from_organization(organization.id, [self.test_email_a, self.test_email_b])
+        assert result, True
+
+        result = self.jira.delete_user(self.test_email_a)
+        assert result, True
+
+        result = self.jira.delete_user(self.test_email_b)
+        assert result, True
+
+        result = self.jira.delete_organization(organization.id)
+        assert result, True
+
+    def test_get_organizations(self):
+        organization_a = self.jira.create_organization(self.test_organization_name_a)
+        self.assertEqual(organization_a.name, self.test_organization_name_a)
+
+        organization_b = self.jira.create_organization(self.test_organization_name_b)
+        self.assertEqual(organization_b.name, self.test_organization_name_b)
+
+        organizations = self.jira.organizations(0, 1)
+        self.assertEqual(len(organizations), 1)
+
+        result = self.jira.delete_organization(organization_a.id)
+        assert result, True
+
+        result = self.jira.delete_organization(organization_b.id)
+        assert result, True
+
+    def test_get_users_in_organization(self):
+        organization = self.jira.create_organization(self.test_organization_name_a)
+        self.assertEqual(organization.name, self.test_organization_name_a)
+
+        try:
+            self.jira.delete_user(self.test_email_a)
+        except JIRAError:
+            pass
+
+        try:
+            self.jira.delete_user(self.test_email_b)
+        except JIRAError:
+            pass
+
+        customer_a = self.jira.create_customer(self.test_email_a, self.test_fullname_a)
+        self.assertEqual(customer_a.emailAddress, self.test_email_a)
+        self.assertEqual(customer_a.displayName, self.test_fullname_a)
+
+        customer_b = self.jira.create_customer(self.test_email_b, self.test_fullname_b)
+        self.assertEqual(customer_b.emailAddress, self.test_email_b)
+        self.assertEqual(customer_b.displayName, self.test_fullname_b)
+
+        result = self.jira.add_users_to_organization(organization.id, [self.test_email_a, self.test_email_b])
+        assert result, True
+
+        result = self.jira.get_users_from_organization(organization.id)
+        self.assertEqual(len(result), 2)
+
+        result = self.jira.delete_user(self.test_email_a)
+        assert result, True
+
+        result = self.jira.delete_user(self.test_email_b)
+        assert result, True
+
+        result = self.jira.delete_organization(organization.id)
+        assert result, True
+
+    def test_servicedesks(self):
+        servicedesks = self.jira.servicedesks()
+        self.assertGreater(len(servicedesks), 0)
+
+    def test_servicedesk(self):
+        servicedesks = self.jira.servicedesks()
+        self.assertGreater(len(servicedesks), 0)
+
+        servicedesk = self.jira.servicedesk(servicedesks[0].id)
+        self.assertEqual(servicedesk.id, servicedesks[0].id)
+
+    def test_request_types(self):
+        servicedesks = self.jira.servicedesks()
+        self.assertGreater(len(servicedesks), 0)
+
+        request_types = self.jira.request_types(servicedesks[0].id)
+        self.assertGreater(len(request_types), 0)
+
+    def test_request_type(self):
+        servicedesks = self.jira.servicedesks()
+        self.assertGreater(len(servicedesks), 0)
+
+        request_types = self.jira.request_types(servicedesks[0].id)
+        self.assertGreater(len(request_types), 0)
+
+        request_type = self.jira.request_type(servicedesks[0].id, request_types[0].id)
+        self.assertEqual(request_type.id, request_types[0].id)
+        self.assertEqual(request_type.name, request_types[0].name)
+
+    def test_request_type_by_name(self):
+        servicedesks = self.jira.servicedesks()
+        self.assertGreater(len(servicedesks), 0)
+
+        request_types = self.jira.request_types(servicedesks[0].id)
+        self.assertGreater(len(request_types), 0)
+
+        request_type_by_name = self.jira.request_type_by_name(servicedesks[0].id, request_types[0].name)
+        self.assertEqual(request_types[0].id, request_type_by_name.id)
+        self.assertEqual(request_types[0].name, request_type_by_name.name)
+
+    def test_create_and_delete_customer_request(self):
+        servicedesks = self.jira.servicedesks()
+        self.assertGreater(len(servicedesks), 0)
+
+        request_types = self.jira.request_types(servicedesks[0].id)
+        self.assertGreater(len(request_types), 0)
+
+        fields = {
+            "serviceDeskId": servicedesks[0].id,
+            "requestTypeId": request_types[0].id,
+            "raiseOnBehalfOf": self.test_manager.CI_JIRA_USER,
+            "requestFieldValues": {
+                "summary": "Request summary",
+                "description": "Request description"
+            }
+        }
+        issue = self.jira.create_request(fields)
+        issue.delete()
+
+    def test_get_my_customer_request(self):
+        pass
+
+    def test_get_customer_request_by_key_and_id(self):
+        pass
+
+    def test_attach_temporary_file(self):
+        pass
+
+    def test_create_attachment(self):
+        pass
+
+    def test_create_request_comment(self):
+        pass
+
+    def test_get_request_comments(self):
+        pass
+
+    def test_get_request_comment_by_id(self):
+        pass
 
 
 class JiraShellTests(unittest.TestCase):
