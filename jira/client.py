@@ -2830,12 +2830,17 @@ class JIRA(object):
         r = self._session.get(url)
         j = json_loads(r)
 
+        possible_templates = ['JIRA Classic', 'JIRA Default Schemes', 'Basic software development']
+
+        if template_name is not None:
+            possible_templates = [template_name]
+
         # https://confluence.atlassian.com/jirakb/creating-a-project-via-rest-based-on-jira-default-schemes-744325852.html
         template_key = 'com.atlassian.jira-legacy-project-templates:jira-blank-item'
         templates = []
         for template in _get_template_list(j):
             templates.append(template['name'])
-            if template['name'] in ['JIRA Classic', 'JIRA Default Schemes', 'Basic software development', template_name]:
+            if template['name'] in possible_templates:
                 template_key = template['projectTemplateModuleCompleteKey']
                 break
 
