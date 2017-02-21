@@ -2128,8 +2128,8 @@ class ServiceDeskTests(unittest.TestCase):
             pass
 
         customer = self.jira.create_customer(self.test_email_a, self.test_fullname_a)
-        self.assertEquals(customer.emailAddress, self.test_email_a)
-        self.assertEquals(customer.displayName, self.test_fullname_a)
+        self.assertEqual(customer.emailAddress, self.test_email_a)
+        self.assertEqual(customer.displayName, self.test_fullname_a)
 
         result = self.jira.delete_user(self.test_email_a)
         assert result, True
@@ -2140,25 +2140,25 @@ class ServiceDeskTests(unittest.TestCase):
 
     def test_create_and_delete_organization(self):
         organization = self.jira.create_organization(self.test_organization_name_a)
-        self.assertEquals(organization.name, self.test_organization_name_a)
+        self.assertEqual(organization.name, self.test_organization_name_a)
 
         result = self.jira.delete_organization(organization.id)
         assert result, True
 
     def test_get_organization(self):
         organization = self.jira.create_organization(self.test_organization_name_a)
-        self.assertEquals(organization.name, self.test_organization_name_a)
+        self.assertEqual(organization.name, self.test_organization_name_a)
 
         result = self.jira.organization(organization.id)
-        self.assertEquals(result.id, organization.id)
-        self.assertEquals(result.name, self.test_organization_name_a)
+        self.assertEqual(result.id, organization.id)
+        self.assertEqual(result.name, self.test_organization_name_a)
 
         result = self.jira.delete_organization(organization.id)
         assert result, True
 
     def test_add_users_to_organization(self):
         organization = self.jira.create_organization(self.test_organization_name_a)
-        self.assertEquals(organization.name, self.test_organization_name_a)
+        self.assertEqual(organization.name, self.test_organization_name_a)
 
         try:
             self.jira.delete_user(self.test_email_a)
@@ -2171,12 +2171,12 @@ class ServiceDeskTests(unittest.TestCase):
             pass
 
         customer_a = self.jira.create_customer(self.test_email_a, self.test_fullname_a)
-        self.assertEquals(customer_a.emailAddress, self.test_email_a)
-        self.assertEquals(customer_a.displayName, self.test_fullname_a)
+        self.assertEqual(customer_a.emailAddress, self.test_email_a)
+        self.assertEqual(customer_a.displayName, self.test_fullname_a)
 
         customer_b = self.jira.create_customer(self.test_email_b, self.test_fullname_b)
-        self.assertEquals(customer_b.emailAddress, self.test_email_b)
-        self.assertEquals(customer_b.displayName, self.test_fullname_b)
+        self.assertEqual(customer_b.emailAddress, self.test_email_b)
+        self.assertEqual(customer_b.displayName, self.test_fullname_b)
 
         result = self.jira.add_users_to_organization(organization.id, [self.test_email_a, self.test_email_b])
         assert result, True
@@ -2192,7 +2192,7 @@ class ServiceDeskTests(unittest.TestCase):
 
     def test_remove_users_from_organization(self):
         organization = self.jira.create_organization(self.test_organization_name_a)
-        self.assertEquals(organization.name, self.test_organization_name_a)
+        self.assertEqual(organization.name, self.test_organization_name_a)
 
         try:
             self.jira.delete_user(self.test_email_a)
@@ -2205,12 +2205,12 @@ class ServiceDeskTests(unittest.TestCase):
             pass
 
         customer_a = self.jira.create_customer(self.test_email_a, self.test_fullname_a)
-        self.assertEquals(customer_a.emailAddress, self.test_email_a)
-        self.assertEquals(customer_a.displayName, self.test_fullname_a)
+        self.assertEqual(customer_a.emailAddress, self.test_email_a)
+        self.assertEqual(customer_a.displayName, self.test_fullname_a)
 
         customer_b = self.jira.create_customer(self.test_email_b, self.test_fullname_b)
-        self.assertEquals(customer_b.emailAddress, self.test_email_b)
-        self.assertEquals(customer_b.displayName, self.test_fullname_b)
+        self.assertEqual(customer_b.emailAddress, self.test_email_b)
+        self.assertEqual(customer_b.displayName, self.test_fullname_b)
 
         result = self.jira.add_users_to_organization(organization.id, [self.test_email_a, self.test_email_b])
         assert result, True
@@ -2229,13 +2229,13 @@ class ServiceDeskTests(unittest.TestCase):
 
     def test_get_organizations(self):
         organization_a = self.jira.create_organization(self.test_organization_name_a)
-        self.assertEquals(organization_a.name, self.test_organization_name_a)
+        self.assertEqual(organization_a.name, self.test_organization_name_a)
 
         organization_b = self.jira.create_organization(self.test_organization_name_b)
-        self.assertEquals(organization_b.name, self.test_organization_name_b)
+        self.assertEqual(organization_b.name, self.test_organization_name_b)
 
         organizations = self.jira.organizations(0, 1)
-        self.assertEquals(len(organizations), 1)
+        self.assertEqual(len(organizations), 1)
 
         result = self.jira.delete_organization(organization_a.id)
         assert result, True
@@ -2245,7 +2245,7 @@ class ServiceDeskTests(unittest.TestCase):
 
     def test_get_users_in_organization(self):
         organization = self.jira.create_organization(self.test_organization_name_a)
-        self.assertEquals(organization.name, self.test_organization_name_a)
+        self.assertEqual(organization.name, self.test_organization_name_a)
 
         try:
             self.jira.delete_user(self.test_email_a)
@@ -2258,18 +2258,18 @@ class ServiceDeskTests(unittest.TestCase):
             pass
 
         customer_a = self.jira.create_customer(self.test_email_a, self.test_fullname_a)
-        self.assertEquals(customer_a.emailAddress, self.test_email_a)
-        self.assertEquals(customer_a.displayName, self.test_fullname_a)
+        self.assertEqual(customer_a.emailAddress, self.test_email_a)
+        self.assertEqual(customer_a.displayName, self.test_fullname_a)
 
         customer_b = self.jira.create_customer(self.test_email_b, self.test_fullname_b)
-        self.assertEquals(customer_b.emailAddress, self.test_email_b)
-        self.assertEquals(customer_b.displayName, self.test_fullname_b)
+        self.assertEqual(customer_b.emailAddress, self.test_email_b)
+        self.assertEqual(customer_b.displayName, self.test_fullname_b)
 
         result = self.jira.add_users_to_organization(organization.id, [self.test_email_a, self.test_email_b])
         assert result, True
 
         result = self.jira.get_users_from_organization(organization.id)
-        self.assertEquals(len(result), 2)
+        self.assertEqual(len(result), 2)
 
         result = self.jira.delete_user(self.test_email_a)
         assert result, True
@@ -2289,7 +2289,7 @@ class ServiceDeskTests(unittest.TestCase):
         self.assertGreater(len(servicedesks), 0)
 
         servicedesk = self.jira.servicedesk(servicedesks[0].id)
-        self.assertEquals(servicedesk.id, servicedesks[0].id)
+        self.assertEqual(servicedesk.id, servicedesks[0].id)
 
     def test_request_types(self):
         servicedesks = self.jira.servicedesks()
@@ -2306,8 +2306,8 @@ class ServiceDeskTests(unittest.TestCase):
         self.assertGreater(len(request_types), 0)
 
         request_type = self.jira.request_type(servicedesks[0].id, request_types[0].id)
-        self.assertEquals(request_type.id, request_types[0].id)
-        self.assertEquals(request_type.name, request_types[0].name)
+        self.assertEqual(request_type.id, request_types[0].id)
+        self.assertEqual(request_type.name, request_types[0].name)
 
     def test_request_type_by_name(self):
         servicedesks = self.jira.servicedesks()
@@ -2317,8 +2317,8 @@ class ServiceDeskTests(unittest.TestCase):
         self.assertGreater(len(request_types), 0)
 
         request_type_by_name = self.jira.request_type_by_name(servicedesks[0].id, request_types[0].name)
-        self.assertEquals(request_types[0].id, request_type_by_name.id)
-        self.assertEquals(request_types[0].name, request_type_by_name.name)
+        self.assertEqual(request_types[0].id, request_type_by_name.id)
+        self.assertEqual(request_types[0].name, request_type_by_name.name)
 
     def test_create_and_delete_customer_request(self):
         servicedesks = self.jira.servicedesks()
