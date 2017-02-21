@@ -2109,12 +2109,10 @@ class JiraServiceDeskTests(unittest.TestCase):
         self.jira = JiraTestManager().jira_admin
         self.test_manager = JiraTestManager()
 
-    @not_on_custom_jira_instance
-    def test_supports_service_desk(self):
-        self.assertTrue(self.jira.supports_service_desk())
-
-    @not_on_custom_jira_instance
     def test_create_customer_request(self):
+        if not self.jira.supports_service_desk():
+            pytest.skip('Skipping Service Desk not enabled')
+
         try:
             self.jira.create_project('TESTSD', template_name='IT Service Desk')
         except JIRAError:
