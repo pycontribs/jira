@@ -2103,6 +2103,34 @@ class JiraShellTests(unittest.TestCase):
         self.assertEqual(result, 0)
 
 
+class JiraServiceDeskTests(unittest.TestCase):
+
+    def setUp(self):
+        self.jira = JiraTestManager().jira_admin
+        self.test_manager = JiraTestManager()
+
+    @not_on_custom_jira_instance
+    def test_supports_service_desk(self):
+        self.assertTrue(self.jira.supports_service_desk())
+
+    @not_on_custom_jira_instance
+    def test_create_customer_request(self):
+        service_desk = self.jira.service_desks()[0]
+        request_type = self.jira.request_types(service_desk)[0]
+
+        request = self.jira.create_customer_request(dict(
+            serviceDeskId=service_desk,
+            requestTypeId=request_type,
+            requestFieldValues=dict(
+                summary='Ticket title here',
+                description='Ticket body here'
+            )
+        ))
+
+        self.assertEqual(request.fields.summary, 'Ticket title here')
+        self.assertEqual(request.fields.description, 'Ticket body here')
+
+
 if __name__ == '__main__':
 
     # when running tests we expect various errors and we don't want to display them by default
