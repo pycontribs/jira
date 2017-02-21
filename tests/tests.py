@@ -2121,8 +2121,8 @@ class JiraServiceDeskTests(unittest.TestCase):
         request_type = self.jira.request_types(service_desk)[0]
 
         request = self.jira.create_customer_request(dict(
-            serviceDeskId=service_desk.id,
-            requestTypeId=request_type.id,
+            serviceDeskId=int(service_desk.id),
+            requestTypeId=int(request_type.id),
             requestFieldValues=dict(
                 summary='Ticket title here',
                 description='Ticket body here'
