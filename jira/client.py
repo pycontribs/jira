@@ -42,34 +42,32 @@ from requests.utils import get_netrc_auth
 from six import iteritems
 from six.moves.urllib.parse import urlparse
 # JIRA specific resources
-from jira.resources import (
-    Resource,
-    Issue,
-    Comment,
-    Project,
-    Attachment,
-    Component,
-    Dashboard,
-    Filter,
-    Votes,
-    Watchers,
-    Worklog,
-    IssueLink,
-    IssueLinkType,
-    IssueType,
-    Priority,
-    Version,
-    Role,
-    Resolution,
-    SecurityLevel,
-    Status,
-    User,
-    CustomFieldOption,
-    RemoteLink,
-    Customer,
-    ServiceDesk,
-    RequestType,
-)
+from jira.resources import Resource
+from jira.resources import Issue
+from jira.resources import Comment
+from jira.resources import Project
+from jira.resources import Attachment
+from jira.resources import Component
+from jira.resources import Dashboard
+from jira.resources import Filter
+from jira.resources import Votes
+from jira.resources import Watchers
+from jira.resources import Worklog
+from jira.resources import IssueLink
+from jira.resources import IssueLinkType
+from jira.resources import IssueType
+from jira.resources import Priority
+from jira.resources import Version
+from jira.resources import Role
+from jira.resources import Resolution
+from jira.resources import SecurityLevel
+from jira.resources import Status
+from jira.resources import User
+from jira.resources import CustomFieldOption
+from jira.resources import RemoteLink
+from jira.resources import Customer
+from jira.resources import ServiceDesk
+from jira.resources import RequestType
 
 # GreenHopper specific resources
 from jira.exceptions import JIRAError
