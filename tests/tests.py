@@ -2115,6 +2115,10 @@ class JiraServiceDeskTests(unittest.TestCase):
 
     @not_on_custom_jira_instance
     def test_create_customer_request(self):
+        try:
+            self.jira.create_project('TESTSD', template_name='IT Service Desk')
+        except JIRAError:
+            pass
         service_desk = self.jira.service_desks()[0]
         request_type = self.jira.request_types(service_desk)[0]
 
