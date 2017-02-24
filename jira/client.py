@@ -218,8 +218,9 @@ class JIRA(object):
         :param basic_auth: A tuple of username and password to use when establishing a session via HTTP BASIC
         authentication.
         :param oauth: A dict of properties for OAuth authentication. The following properties are required:
-            * access_token -- OAuth access token for the user
-            * access_token_secret -- OAuth access token secret to sign with the key
+            * user -- impersonate named or default user if present, otherwise use access token fields)
+            * access_token -- OAuth access token for the user (only if not impersonating)
+            * access_token_secret -- OAuth access token secret to sign with the key (only if not impersonating)
             * consumer_key -- key of the OAuth application link defined in JIRA
             * key_cert -- private key file to sign requests with (should be the pair of the public key supplied to
             JIRA in the OAuth application link)
@@ -274,7 +275,10 @@ class JIRA(object):
         self._try_magic()
 
         if oauth:
-            self._create_oauth_session(oauth)
+            if 'user' in oauth:
+                self._create_oauth_impersonation_session(oauth)
+            else:
+                self._create_oauth_session(oauth)
         elif basic_auth:
             self._create_http_basic_session(*basic_auth)
             self._session.headers.update(self._options['headers'])
@@ -2102,6 +2106,48 @@ class JIRA(object):
         self._session.verify = verify
         self._session.auth = (username, password)
         self._session.cert = self._options['client_cert']
+
+    def _create_oauth_impersonation_session(self, oauth):
+        from oauthlib.oauth1 import Client, SIGNATURE_RSA, SIGNATURE_TYPE_QUERY
+        from oauthlib.common import Request
+        from requests_oauthlib import OAuth1
+
+        class ImpersonationSession(ResilientSession):
+
+            # An empty oauth_token parameter is required, but the
+            # oauthlib.oauth1.Client class uses the following test:
+            #
+            #    if self.resource_owner_key:
+            #        params.append(('oauth_token', self.resource_owner_key))
+
+            class EmptyKey(unicode):
+
+                def __nonzero__(self):
+                    return True
+
+            def __init__(self, user,
+                         client_key=None, rsa_key=None, verify=True):
+
+                super(ImpersonationSession, self).__init__()
+                self.__user = user
+
+                self.verify = verify
+                self.auth = OAuth1(
+                    client_key,
+                    rsa_key=rsa_key,
+                    signature_method=SIGNATURE_RSA,
+                    signature_type=SIGNATURE_TYPE_QUERY,
+                    resource_owner_key=self.EmptyKey())
+
+            def prepare_request(self, rq):
+                rq.params['user_id'] = self.__user
+                return super(ImpersonationSession, self).prepare_request(rq)
+
+        self._session = ImpersonationSession(
+            oauth['user'],
+            client_key=oauth['consumer_key'],
+            rsa_key=oauth['key_cert'],
+            verify=self._options['verify'])
 
     def _create_oauth_session(self, oauth):
         verify = self._options['verify']
