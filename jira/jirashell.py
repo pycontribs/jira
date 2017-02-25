@@ -141,7 +141,7 @@ def process_command_line():
 
     basic_auth_group = parser.add_argument_group('BASIC auth options')
     basic_auth_group.add_argument('-u', '--username',
-                                  help='The username to connect to this JIRA instance with.')
+                                  help='The username to connect to this JIRA instance with. Optionally used for OAuth impersonation.')
     basic_auth_group.add_argument('-p', '--password',
                                   help='The password associated with this user.')
     basic_auth_group.add_argument('-P', '--prompt-for-password', action='store_true',
@@ -210,6 +210,12 @@ def process_command_line():
             'access_token_secret': args.access_token_secret,
             'consumer_key': args.consumer_key,
             'key_cert': key_cert_data}
+    elif args.key_cert:
+        oauth = {
+            'oauth_dance': False,
+            'user': args.username or None,
+            'consumer_key': args.consumer_key,
+            'key_cert': key_cert_data}
 
     return options, basic_auth, oauth
 
@@ -242,8 +248,10 @@ def main():
     if oauth.get('oauth_dance') is True:
         oauth = oauth_dance(
             options['server'], oauth['consumer_key'], oauth['key_cert'], oauth['print_tokens'], options['verify'])
-    elif not all((oauth.get('access_token'), oauth.get('access_token_secret'),
-                  oauth.get('consumer_key'), oauth.get('key_cert'))):
+    elif not (all((oauth.get('access_token'), oauth.get('access_token_secret'),
+                   oauth.get('consumer_key'), oauth.get('key_cert'))) or
+              all(('user' in oauth,
+                   oauth.get('consumer_key'), oauth.get('key_cert')))):
         oauth = None
 
     jira = JIRA(options=options, basic_auth=basic_auth, oauth=oauth)
