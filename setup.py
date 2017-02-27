@@ -30,6 +30,7 @@ class PyTest(TestCommand):
         errno = pytest.main(self.pytest_args)
         sys.exit(errno)
 
+
 setuptools.setup(
     setup_requires=['pbr>=1.9', 'setuptools>=17.1', 'pytest-runner'],
     pbr=True,
