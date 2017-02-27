@@ -5,10 +5,10 @@ matrix:
 os:
 - linux
 python:
-- '2.7'
-- '3.4'
+#- '2.7'
+# - '3.4'
 - '3.5'
-- '3.6'
+# - '3.6'
 install:
 - pip -q --log dist/pip.log install --upgrade pip setuptools tox-travis py wheel
 - python setup.py sdist bdist_wheel install
@@ -25,10 +25,10 @@ after_success:
 - coveralls
 - bash <(curl -s https://codecov.io/bash)
 - requires.io update-site -t ac3bbcca32ae03237a6aae2b02eb9411045489bb -r
-notifications:
-  email:
-  - pycontribs@googlegroups.com
-  - sorin.sbarnea@gmail.com
+#notifications:
+#  email:
+#  - pycontribs@googlegroups.com
+#  - sorin.sbarnea@gmail.com
 deploy:
 - provider: releases
   api_key:
