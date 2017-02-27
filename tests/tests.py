@@ -789,7 +789,8 @@ class IssueTests(unittest.TestCase):
                 'name': 'Bug'},
             # 'customfield_10022': 'XSS',
             'priority': {
-                'name': 'Major'}}, {
+                'name': 'Major'}},
+            {
             'project': {
                 'key': self.project_a},
             'issuetype': {
@@ -827,23 +828,23 @@ class IssueTests(unittest.TestCase):
                 'name': 'Bug'},
             # 'customfield_10022': 'XSS',
             'priority': {
-                'name': 'Major'}}, {
-            'project': {
+                'name': 'Major'}},
+            {'project': {
                 'key': self.project_a},
-            'issuetype': {
-                'name': 'InvalidIssueType'},
-            'summary': 'This issue will not succeed',
-            'description': "Should not be seen.",
-            'priority': {
-                'name': 'Blah'}}, {
-            'project': {
+                'issuetype': {
+                    'name': 'InvalidIssueType'},
+                'summary': 'This issue will not succeed',
+                'description': "Should not be seen.",
+                'priority': {
+                'name': 'Blah'}},
+            {'project': {
                 'key': self.project_a},
-            'issuetype': {
-                'name': 'Bug'},
-            'summary': 'However, this one will.',
-            'description': "Should be seen.",
-            'priority': {
-                'name': 'Major'}}]
+                'issuetype': {
+                    'name': 'Bug'},
+                'summary': 'However, this one will.',
+                'description': "Should be seen.",
+                'priority': {
+                    'name': 'Major'}}]
         issues = self.jira.create_issues(field_list=field_list)
         self.assertEqual(issues[0]['issue'].fields.summary,
                          'Issue created via bulk create #1')
