@@ -2239,7 +2239,7 @@ class JIRA(object):
         """Destroy the session of the current authenticated user."""
         url = self._options['server'] + '/rest/auth/latest/session'
         return self._session.delete(url)
- 
+
 # Webhook
 
     def webhook(self, id):
