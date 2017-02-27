@@ -2868,8 +2868,7 @@ class JIRA(object):
         return organization
 
     def organizations(self, start=0, limit=50):
-        """Returns a list of organizations in the JIRA instance. If the user is not an agent, the resource returns a
-        list of organizations the user is a member of.
+        """Returns a list of organizations in the JIRA instance. If the user is not an agent, the resource returns a list of organizations the user is a member of.
 
         :param start: index of the first organization to return.
         :param limit: maximum number of organizations to return. If limit evaluates as False, it will try to get all
