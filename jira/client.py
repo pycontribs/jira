@@ -41,16 +41,41 @@ import warnings
 from requests.utils import get_netrc_auth
 from six import iteritems
 from six.moves.urllib.parse import urlparse
-# JIRA specific resources
-from jira.resources import *  # NOQA
 
 # GreenHopper specific resources
 from jira.exceptions import JIRAError
 from jira.resilientsession import raise_on_error
 from jira.resilientsession import ResilientSession
+# JIRA specific resources
+from jira.resources import Attachment
 from jira.resources import Board
+from jira.resources import Comment
+from jira.resources import Component
+from jira.resources import Customer
+from jira.resources import CustomFieldOption
+from jira.resources import Dashboard
+from jira.resources import Filter
 from jira.resources import GreenHopperResource
+from jira.resources import Issue
+from jira.resources import IssueLink
+from jira.resources import IssueLinkType
+from jira.resources import IssueType
+from jira.resources import Priority
+from jira.resources import Project
+from jira.resources import RemoteLink
+from jira.resources import RequestType
+from jira.resources import Resolution
+from jira.resources import Resource
+from jira.resources import Role
+from jira.resources import SecurityLevel
+from jira.resources import ServiceDesk
 from jira.resources import Sprint
+from jira.resources import Status
+from jira.resources import User
+from jira.resources import Version
+from jira.resources import Votes
+from jira.resources import Watchers
+from jira.resources import Worklog
 
 from jira import __version__
 from jira.utils import CaseInsensitiveDict
@@ -119,6 +144,12 @@ def _get_template_list(data):
         for group in data['projectTemplatesGroupedByType']:
             template_list.extend(group['projectTemplates'])
     return template_list
+
+
+def _field_worker(fields=None, **fieldargs):
+    if fields is not None:
+        return {'fields': fields}
+    return {'fields': fieldargs}
 
 
 class ResultList(list):
@@ -190,7 +221,8 @@ class JIRA(object):
     AGILE_BASE_URL = GreenHopperResource.AGILE_BASE_URL
 
     def __init__(self, server=None, options=None, basic_auth=None, oauth=None, jwt=None, kerberos=False,
-                 validate=False, get_server_info=True, async=False, logging=True, max_retries=3, proxies=None):
+                 validate=False, get_server_info=True, async=False, logging=True, max_retries=3, proxies=None,
+                 timeout=None):
         """Construct a JIRA client instance.
 
         Without any arguments, this client will connect anonymously to the JIRA instance
@@ -235,6 +267,7 @@ class JIRA(object):
         :param get_server_info: If true it will fetch server version info first to determine if some API calls
             are available.
         :param async: To enable async requests for those actions where we implemented it, like issue update() or delete().
+        :param timeout: Set a read/connect timeout for the underlying calls to JIRA (default: None)
         Obviously this means that you cannot rely on the return code when this is enabled.
         """
         # force a copy of the tuple to be used in __del__() because
@@ -274,17 +307,17 @@ class JIRA(object):
         self._try_magic()
 
         if oauth:
-            self._create_oauth_session(oauth)
+            self._create_oauth_session(oauth, timeout)
         elif basic_auth:
-            self._create_http_basic_session(*basic_auth)
+            self._create_http_basic_session(*basic_auth, timeout=timeout)
             self._session.headers.update(self._options['headers'])
         elif jwt:
-            self._create_jwt_session(jwt)
+            self._create_jwt_session(jwt, timeout)
         elif kerberos:
-            self._create_kerberos_session()
+            self._create_kerberos_session(timeout)
         else:
             verify = self._options['verify']
-            self._session = ResilientSession()
+            self._session = ResilientSession(timeout=timeout)
             self._session.verify = verify
         self._session.headers.update(self._options['headers'])
 
@@ -296,8 +329,14 @@ class JIRA(object):
         if validate:
             # This will raise an Exception if you are not allowed to login.
             # It's better to fail faster than later.
-            self.session()
+            user = self.session()
+            if user.raw is None:
+                auth_method = (
+                    oauth or basic_auth or jwt or kerberos or "anonymous"
+                )
+                raise JIRAError("Can not log in with %s" % str(auth_method))
 
+        self.deploymentType = None
         if get_server_info:
             # We need version in order to know what API calls are available or not
             si = self.server_info()
@@ -306,6 +345,7 @@ class JIRA(object):
             except Exception as e:
                 logging.error("invalid server_info: %s", si)
                 raise e
+            self.deploymentType = si.get('deploymentType')
         else:
             self._version = (0, 0, 0)
 
@@ -377,15 +417,21 @@ class JIRA(object):
             page_params['startAt'] = startAt
         if maxResults:
             page_params['maxResults'] = maxResults
-        resource = self._get_json(request_path, params=page_params, base=base)
-        next_items_page = [item_type(self._options, self._session, raw_issue_json) for raw_issue_json in
-                           (resource[items_key] if items_key else resource)]
+
+        try:
+            resource = self._get_json(request_path, params=page_params, base=base)
+            next_items_page = [item_type(self._options, self._session, raw_issue_json) for raw_issue_json in
+                               (resource[items_key] if items_key else resource)]
+        except KeyError as e:
+            # improving the error text so we know why it happened
+            raise KeyError(str(e) + " : " + json.dumps(resource))
+
         items = next_items_page
 
         if True:  # isinstance(resource, dict):
 
             if isinstance(resource, dict):
-                total = resource.get('total', 1)
+                total = resource.get('total')
                 # 'isLast' is the optional key added to responses in JIRA Agile 6.7.6. So far not used in basic JIRA API.
                 is_last = resource.get('isLast', True)
                 start_at_from_response = resource.get('startAt', 0)
@@ -405,14 +451,18 @@ class JIRA(object):
                     page_params['startAt'] = page_start
                     page_params['maxResults'] = page_size
                     resource = self._get_json(request_path, params=page_params, base=base)
-                    try:
-                        next_items_page = [item_type(self._options, self._session, raw_issue_json) for raw_issue_json in
-                                           (resource[items_key] if items_key else resource)]
-                    except KeyError as e:
-                        e.message += " : " + json.dumps(resource)
-                        raise
-                    items.extend(next_items_page)
-                    page_start += page_size
+                    if resource:
+                        try:
+                            next_items_page = [item_type(self._options, self._session, raw_issue_json) for raw_issue_json in
+                                               (resource[items_key] if items_key else resource)]
+                        except KeyError as e:
+                            # improving the error text so we know why it happened
+                            raise KeyError(str(e) + " : " + json.dumps(resource))
+                        items.extend(next_items_page)
+                        page_start += page_size
+                    else:
+                        # if resource is an empty dictionary we assume no-results
+                        break
 
             return ResultList(items, start_at_from_response, max_results_from_response, total, is_last)
         else:
@@ -570,6 +620,14 @@ class JIRA(object):
         if attachment.size == 0:
             raise JIRAError("Added empty attachment via %s method?!: r: %s\nattachment: %s" % (method, r, attachment))
         return attachment
+
+    def delete_attachment(self, id):
+        """Delete attachment by id.
+
+        :param id: ID of the attachment to delete
+        """
+        url = self._get_url('attachment/' + str(id))
+        return self._session.delete(url)
 
     # Components
 
@@ -849,14 +907,7 @@ class JIRA(object):
         :param prefetch: whether to reload the created issue Resource so that all of its data is present in the value
             returned from this method
         """
-        data = {}
-        if fields is not None:
-            data['fields'] = fields
-        else:
-            fields_dict = {}
-            for field in fieldargs:
-                fields_dict[field] = fieldargs[field]
-            data['fields'] = fields_dict
+        data = _field_worker(fields, **fieldargs)
 
         p = data['fields']['project']
 
@@ -874,9 +925,147 @@ class JIRA(object):
 
         raw_issue_json = json_loads(r)
         if 'key' not in raw_issue_json:
-            raise JIRAError(r.status_code, request=r)
+            raise JIRAError(r.status_code, response=r, url=url, text=json.dumps(data))
         if prefetch:
             return self.issue(raw_issue_json['key'])
+        else:
+            return Issue(self._options, self._session, raw=raw_issue_json)
+
+    def create_issues(self, field_list, prefetch=True):
+        """Bulk create new issues and return an issue Resource for each successfully created issue.
+
+        See `create_issue` documentation for field information.
+
+        :param field_list: a list of dicts each containing field names and the values to use. Each dict
+            is an individual issue to create and is subject to its minimum requirements.
+        :param prefetch: whether to reload the created issue Resource for each created issue so that all
+            of its data is present in the value returned from this method.
+        """
+        data = {'issueUpdates': []}
+        for field_dict in field_list:
+            issue_data = _field_worker(field_dict)
+            p = issue_data['fields']['project']
+
+            if isinstance(p, string_types) or isinstance(p, integer_types):
+                issue_data['fields']['project'] = {'id': self.project(p).id}
+
+            p = issue_data['fields']['issuetype']
+            if isinstance(p, integer_types):
+                issue_data['fields']['issuetype'] = {'id': p}
+            if isinstance(p, string_types) or isinstance(p, integer_types):
+                issue_data['fields']['issuetype'] = {'id': self.issue_type_by_name(p).id}
+
+            data['issueUpdates'].append(issue_data)
+
+        url = self._get_url('issue/bulk')
+        r = self._session.post(url, data=json.dumps(data))
+
+        raw_issue_json = json_loads(r)
+        issue_list = []
+        errors = {}
+        for error in raw_issue_json['errors']:
+            errors[error['failedElementNumber']] = error['elementErrors']['errors']
+        for index, fields in enumerate(field_list):
+            if index in errors:
+                issue_list.append({'status': 'Error', 'error': errors[index],
+                                   'issue': None, 'input_fields': fields})
+            else:
+                issue = raw_issue_json['issues'].pop(0)
+                if prefetch:
+                    issue = self.issue(issue['key'])
+                else:
+                    issue = Issue(self._options, self._session, raw=issue)
+                issue_list.append({'status': 'Success', 'issue': issue,
+                                   'error': None, 'input_fields': fields})
+        return issue_list
+
+    def supports_service_desk(self):
+        url = self._options['server'] + '/rest/servicedeskapi/info'
+        headers = {'X-ExperimentalApi': 'opt-in'}
+        try:
+            r = self._session.get(url, headers=headers)
+            return r.status_code == 200
+        except JIRAError:
+            return False
+
+    def create_customer(self, email, displayName):
+        """Create a new customer and return an issue Resource for it."""
+        url = self._options['server'] + '/rest/servicedeskapi/customer'
+        headers = {'X-ExperimentalApi': 'opt-in'}
+        r = self._session.post(url, headers=headers, data=json.dumps({
+            'email': email,
+            'displayName': displayName
+        }))
+
+        raw_customer_json = json_loads(r)
+
+        if r.status_code != 201:
+            raise JIRAError(r.status_code, request=r)
+        return Customer(self._options, self._session, raw=raw_customer_json)
+
+    def service_desks(self):
+        """Get a list of ServiceDesk Resources from the server visible to the current authenticated user."""
+        url = self._options['server'] + '/rest/servicedeskapi/servicedesk'
+        headers = {'X-ExperimentalApi': 'opt-in'}
+        r_json = json_loads(self._session.get(url, headers=headers))
+        projects = [ServiceDesk(self._options, self._session, raw_project_json)
+                    for raw_project_json in r_json['values']]
+        return projects
+
+    def service_desk(self, id):
+        """Get a Service Desk Resource from the server.
+
+        :param id: ID or key of the Service Desk to get
+        """
+        return self._find_for_resource(ServiceDesk, id)
+
+    def create_customer_request(self, fields=None, prefetch=True, **fieldargs):
+        """Create a new customer request and return an issue Resource for it.
+
+        Each keyword argument (other than the predefined ones) is treated as a field name and the argument's value
+        is treated as the intended value for that field -- if the fields argument is used, all other keyword arguments
+        will be ignored.
+
+        By default, the client will immediately reload the issue Resource created by this method in order to return
+        a complete Issue object to the caller; this behavior can be controlled through the 'prefetch' argument.
+
+        JIRA projects may contain many different issue types. Some issue screens have different requirements for
+        fields in a new issue. This information is available through the 'createmeta' method. Further examples are
+        available here: https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Create+Issue
+
+        :param fields: a dict containing field names and the values to use. If present, all other keyword arguments
+            will be ignored
+        :param prefetch: whether to reload the created issue Resource so that all of its data is present in the value
+            returned from this method
+        """
+        data = fields
+
+        p = data['serviceDeskId']
+        service_desk = None
+
+        if isinstance(p, string_types) or isinstance(p, integer_types):
+            service_desk = self.service_desk(p)
+        elif isinstance(p, ServiceDesk):
+            service_desk = p
+
+        data['serviceDeskId'] = service_desk.id
+
+        p = data['requestTypeId']
+        if isinstance(p, integer_types):
+            data['requestTypeId'] = p
+        elif isinstance(p, string_types):
+            data['requestTypeId'] = self.request_type_by_name(
+                service_desk, p).id
+
+        url = self._options['server'] + '/rest/servicedeskapi/request'
+        headers = {'X-ExperimentalApi': 'opt-in'}
+        r = self._session.post(url, headers=headers, data=json.dumps(data))
+
+        raw_issue_json = json_loads(r)
+        if 'issueKey' not in raw_issue_json:
+            raise JIRAError(r.status_code, request=r)
+        if prefetch:
+            return self.issue(raw_issue_json['issueKey'])
         else:
             return Issue(self._options, self._session, raw=raw_issue_json)
 
@@ -951,7 +1140,7 @@ class JIRA(object):
         return self._find_for_resource(Comment, (issue, comment))
 
     @translate_resource_args
-    def add_comment(self, issue, body, visibility=None):
+    def add_comment(self, issue, body, visibility=None, is_internal=False):
         """Add a comment from the current authenticated user on the specified issue and return a Resource for it.
 
         The issue identifier and comment body are required.
@@ -962,15 +1151,27 @@ class JIRA(object):
             "type" is 'role' (or 'group' if the JIRA server has configured
             comment visibility for groups) and 'value' is the name of the role
             (or group) to which viewing of this comment will be restricted.
+        :param is_internal: defines whether a comment has to be marked as 'Internal' in Jira Service Desk
         """
         data = {
-            'body': body}
+            'body': body,
+        }
+
+        if is_internal:
+            data.update({
+                'properties': [
+                    {'key': 'sd.public.comment',
+                     'value': {'internal': is_internal}}
+                ]
+            })
+
         if visibility is not None:
             data['visibility'] = visibility
 
         url = self._get_url('issue/' + str(issue) + '/comment')
         r = self._session.post(
-            url, data=json.dumps(data))
+            url, data=json.dumps(data)
+        )
 
         comment = Comment(self._options, self._session, raw=json_loads(r))
         return comment
@@ -1413,6 +1614,27 @@ class JIRA(object):
             raise KeyError("Issue type '%s' is unknown." % name)
         return issue_type
 
+    def request_types(self, service_desk):
+        if hasattr(service_desk, 'id'):
+            service_desk = service_desk.id
+        url = (self._options['server'] +
+               '/rest/servicedeskapi/servicedesk/%s/requesttype'
+               % service_desk)
+        headers = {'X-ExperimentalApi': 'opt-in'}
+        r_json = json_loads(self._session.get(url, headers=headers))
+        request_types = [
+            RequestType(self._options, self._session, raw_type_json)
+            for raw_type_json in r_json['values']]
+        return request_types
+
+    def request_type_by_name(self, service_desk, name):
+        request_types = self.request_types(service_desk)
+        try:
+            request_type = [rt for rt in request_types if rt.name == name][0]
+        except IndexError:
+            raise KeyError("Request type '%s' is unknown." % name)
+        return request_type
+
     # User permissions
 
     # non-resource
@@ -1661,11 +1883,11 @@ class JIRA(object):
         search_params = {
             "jql": jql_str,
             "startAt": startAt,
-            "maxResults": maxResults,
             "validateQuery": validate_query,
             "fields": fields,
             "expand": expand}
         if json_result:
+            search_params["maxResults"] = maxResults
             if not maxResults:
                 warnings.warn('All issues cannot be fetched at once, when json_result parameter is set', Warning)
             return self._get_json('search', params=search_params)
@@ -1675,7 +1897,7 @@ class JIRA(object):
         if untranslate:
             for i in issues:
                 for k, v in iteritems(untranslate):
-                    if k in i.raw['fields']:
+                    if k in i.raw.get('fields', {}):
                         i.raw['fields'][v] = i.raw['fields'][k]
 
         return issues
@@ -1940,6 +2162,7 @@ class JIRA(object):
         r = self._session.post(
             url, data=json.dumps(data))
 
+        time.sleep(1)
         version = Version(self._options, self._session, raw=json_loads(r))
         return version
 
@@ -2017,21 +2240,24 @@ class JIRA(object):
         return self._session.delete(url)
 
     # Websudo
-
     def kill_websudo(self):
-        """Destroy the user's current WebSudo session."""
-        url = self._options['server'] + '/rest/auth/1/websudo'
-        return self._session.delete(url)
+        """Destroy the user's current WebSudo session.
+
+        Works only for non-cloud deployments, for others does nothing.
+        """
+        if self.deploymentType != 'Cloud':
+            url = self._options['server'] + '/rest/auth/1/websudo'
+            return self._session.delete(url)
 
     # Utilities
-    def _create_http_basic_session(self, username, password):
+    def _create_http_basic_session(self, username, password, timeout=None):
         verify = self._options['verify']
-        self._session = ResilientSession()
+        self._session = ResilientSession(timeout=timeout)
         self._session.verify = verify
         self._session.auth = (username, password)
         self._session.cert = self._options['client_cert']
 
-    def _create_oauth_session(self, oauth):
+    def _create_oauth_session(self, oauth, timeout):
         verify = self._options['verify']
 
         from oauthlib.oauth1 import SIGNATURE_RSA
@@ -2043,17 +2269,17 @@ class JIRA(object):
             signature_method=SIGNATURE_RSA,
             resource_owner_key=oauth['access_token'],
             resource_owner_secret=oauth['access_token_secret'])
-        self._session = ResilientSession()
+        self._session = ResilientSession(timeout)
         self._session.verify = verify
         self._session.auth = oauth
 
-    def _create_kerberos_session(self):
+    def _create_kerberos_session(self, timeout):
         verify = self._options['verify']
 
         from requests_kerberos import HTTPKerberosAuth
         from requests_kerberos import OPTIONAL
 
-        self._session = ResilientSession()
+        self._session = ResilientSession(timeout=timeout)
         self._session.verify = verify
         self._session.auth = HTTPKerberosAuth(mutual_authentication=OPTIONAL)
 
@@ -2064,7 +2290,7 @@ class JIRA(object):
             t += dt
         return calendar.timegm(t.timetuple())
 
-    def _create_jwt_session(self, jwt):
+    def _create_jwt_session(self, jwt, timeout):
         try:
             jwt_auth = JWTAuth(jwt['secret'], alg='HS256')
         except NameError as e:
@@ -2075,7 +2301,7 @@ class JIRA(object):
         jwt_auth.add_field("qsh", QshGenerator(self._options['context_path']))
         for f in jwt['payload'].items():
             jwt_auth.add_field(f[0], f[1])
-        self._session = ResilientSession()
+        self._session = ResilientSession(timeout=timeout)
         self._session.verify = self._options['verify']
         self._session.auth = jwt_auth
 
@@ -2259,7 +2485,7 @@ class JIRA(object):
 
     def deactivate_user(self, username):
         """Disable/deactivate the user."""
-        if self.server_info().get('deploymentType') == 'Cloud':
+        if self.deploymentType == 'Cloud':
             url = self._options['server'] + '/admin/rest/um/1/user/deactivate?username=' + username
             self._options['headers']['Content-Type'] = 'application/json'
             userInfo = {}
@@ -2326,7 +2552,7 @@ class JIRA(object):
 
     def backup(self, filename='backup.zip', attachments=False):
         """Will call jira export to backup as zipped xml. Returning with success does not mean that the backup process finished."""
-        if self.server_info().get('deploymentType') == 'Cloud':
+        if self.deploymentType == 'Cloud':
             url = self._options['server'] + '/rest/obm/1.0/runbackup'
             payload = json.dumps({"cbAttachments": attachments})
             self._options['headers']['X-Requested-With'] = 'XMLHttpRequest'
@@ -2350,7 +2576,7 @@ class JIRA(object):
         Is there a way to get progress for Server version?
         """
         epoch_time = int(time.time() * 1000)
-        if self.server_info().get('deploymentType') == 'Cloud':
+        if self.deploymentType == 'Cloud':
             url = self._options['server'] + '/rest/obm/1.0/getprogress?_=%i' % epoch_time
         else:
             logging.warning(
@@ -2376,7 +2602,7 @@ class JIRA(object):
 
     def backup_complete(self):
         """Return boolean based on 'alternativePercentage' and 'size' returned from backup_progress (cloud only)."""
-        if self.server_info().get('deploymentType') != 'Cloud':
+        if self.deploymentType != 'Cloud':
             logging.warning(
                 'This functionality is not available in Server version')
             return None
@@ -2388,7 +2614,7 @@ class JIRA(object):
 
     def backup_download(self, filename=None):
         """Download backup file from WebDAV (cloud only)."""
-        if self.server_info().get('deploymentType') != 'Cloud':
+        if self.deploymentType != 'Cloud':
             logging.warning(
                 'This functionality is not available in Server version')
             return None
@@ -2508,12 +2734,17 @@ class JIRA(object):
         r = self._session.get(url)
         j = json_loads(r)
 
+        possible_templates = ['JIRA Classic', 'JIRA Default Schemes', 'Basic software development']
+
+        if template_name is not None:
+            possible_templates = [template_name]
+
         # https://confluence.atlassian.com/jirakb/creating-a-project-via-rest-based-on-jira-default-schemes-744325852.html
         template_key = 'com.atlassian.jira-legacy-project-templates:jira-blank-item'
         templates = []
         for template in _get_template_list(j):
             templates.append(template['name'])
-            if template['name'] in ['JIRA Classic', 'JIRA Default Schemes', 'Basic software development', template_name]:
+            if template['name'] in possible_templates:
                 template_key = template['projectTemplateModuleCompleteKey']
                 break
 
@@ -2603,7 +2834,7 @@ class JIRA(object):
 
         :param username: Username that will be added to specified group.
         :param group: Group that the user will be added to.
-        :return: Boolean, True for success, false for failure.
+        :return: json response from Jira server for success or a value that evaluates as False in case of failure.
         """
         url = self._options['server'] + '/rest/api/latest/group/user'
         x = {'groupname': group}
@@ -2611,9 +2842,11 @@ class JIRA(object):
 
         payload = json.dumps(y)
 
-        self._session.post(url, params=x, data=payload)
-
-        return True
+        r = json_loads(self._session.post(url, params=x, data=payload))
+        if 'name' not in r or r['name'] != group:
+            return False
+        else:
+            return r
 
     def remove_user_from_group(self, username, groupname):
         """Remove a user from a group.
@@ -2756,52 +2989,6 @@ class JIRA(object):
             url, data=json.dumps(payload))
 
         return json_loads(r)
-
-    def completed_issues(self, board_id, sprint_id):
-        """Return the completed issues for ``board_id`` and ``sprint_id``.
-
-        :param board_id: the board retrieving issues from
-        :param sprint_id: the sprint retieving issues from
-        """
-        # We need a better way to provide all the info from the sprintreport
-        # incompletedIssues went to backlog but not it not completed
-        # issueKeysAddedDuringSprint used to mark some with a * ?
-        # puntedIssues are for scope change?
-
-        if self._options['agile_rest_path'] != GreenHopperResource.GREENHOPPER_REST_PATH:
-            raise NotImplementedError('JIRA Agile Public API does not support this request')
-        warnings.warn('JIRA.completed_issues uses deprecated API, that is going to be removed on the 1st February 2016',
-                      DeprecationWarning)
-        r_json = self._get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id),
-                                base=self.AGILE_BASE_URL)
-        issues = [Issue(self._options, self._session, raw_issues_json) for raw_issues_json in
-                  r_json['contents']['completedIssues']]
-        return issues
-
-    def completedIssuesEstimateSum(self, board_id, sprint_id):
-        """Return the total completed points this sprint."""
-        if self._options['agile_rest_path'] != GreenHopperResource.GREENHOPPER_REST_PATH:
-            raise NotImplementedError('JIRA Agile Public API does not support this request')
-        warnings.warn('JIRA.completedIssuesEstimateSum uses deprecated API, that is going to be removed'
-                      ' on the 1st February 2016',
-                      DeprecationWarning)
-        return self._get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id),
-                              base=self.AGILE_BASE_URL)['contents']['completedIssuesEstimateSum']['value']
-
-    def incompleted_issues(self, board_id, sprint_id):
-        """Return the completed issues for the sprint."""
-        if self._options['agile_rest_path'] != GreenHopperResource.GREENHOPPER_REST_PATH:
-            raise NotImplementedError('JIRA Agile Public API does not support this request')
-        warnings.warn('JIRA.incompleted_issues uses deprecated API, that is going to be removed'
-                      ' on the 1st February 2016',
-                      DeprecationWarning)
-        r_json = self._get_json('rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s' % (board_id, sprint_id),
-                                base=self.AGILE_BASE_URL)
-
-        # r_json does not contain 'incompletedIssues' changed to 'issuesNotCompletedInCurrentSprint'
-        issues = [Issue(self._options, self._session, raw_issues_json) for raw_issues_json in
-                  r_json['contents']['issuesNotCompletedInCurrentSprint']]
-        return issues
 
     def incompletedIssuesEstimateSum(self, board_id, sprint_id):
         """Return the total incompleted points this sprint."""

@@ -8,6 +8,7 @@ into usable objects.
 
 import logging
 import re
+import time
 try:  # Python 2.7+
     from logging import NullHandler
 except ImportError:
@@ -48,7 +49,10 @@ __all__ = (
     'Status',
     'User',
     'CustomFieldOption',
-    'RemoteLink'
+    'RemoteLink',
+    'Customer',
+    'ServiceDesk',
+    'RequestType',
 )
 
 logging.getLogger('jira').addHandler(NullHandler())
@@ -288,6 +292,9 @@ class Resource(object):
                 r = self._session.put(
                     self.self, data=json.dumps(data))
 
+        # TODO(ssbarnea): compare loaded data in order to verify if resource was updated indeed
+        # we had random test failures (probably) due to caching
+        time.sleep(4)
         self._load(self.self)
 
     def delete(self, params=None):
@@ -318,6 +325,8 @@ class Resource(object):
 
     def _parse_raw(self, raw):
         self.raw = raw
+        if not raw:
+            raise NotImplementedError("We cannot instantiate empty resources: %s" % raw)
         dict2resource(raw, self, self._options, self._session)
 
     def _default_headers(self, user_headers):
@@ -336,7 +345,7 @@ class Attachment(Resource):
 
     def get(self):
         """Return the file content as a string."""
-        r = self._session.get(self.content)
+        r = self._session.get(self.content, headers={'Accept': '*/*'})
         return r.content
 
     def iter_content(self, chunk_size=1024):
@@ -749,7 +758,7 @@ class Version(Resource):
         if moveAffectedIssuesTo is not None:
             params['moveAffectedIssuesTo'] = moveAffectedIssuesTo
 
-        super(Version, self).delete(params)
+        return super(Version, self).delete(params)
 
     def update(self, **args):
         """Update this project version from the server. It is prior used to archive versions."""
@@ -819,11 +828,39 @@ class Board(GreenHopperResource):
         Resource.delete(self, params)
 
 
+# Service Desk
+
+class Customer(Resource):
+    """A Service Desk customer."""
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(self, 'customer', options, session, '{server}/rest/servicedeskapi/{path}')
+        if raw:
+            self._parse_raw(raw)
+
+
+class ServiceDesk(Resource):
+    """A Service Desk."""
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(self, 'servicedesk/{0}', options, session, '{server}/rest/servicedeskapi/{path}')
+        if raw:
+            self._parse_raw(raw)
+
+
+class RequestType(Resource):
+    """A Service Desk Request Type."""
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(self, 'servicedesk/{0}/requesttype', options, session, '{server}/rest/servicedeskapi/{path}')
+        if raw:
+            self._parse_raw(raw)
+
 # Utilities
 
 
 def dict2resource(raw, top=None, options=None, session=None):
-    """Convert a ditionary into a Jira Resource object.
+    """Convert a dictionary into a Jira Resource object.
 
     Recursively walks a dict structure, transforming the properties into attributes
     on a new ``Resource`` object of the appropriate type (if a ``self`` link is present)
