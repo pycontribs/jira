@@ -773,6 +773,31 @@ class Version(Resource):
         """Comparison."""
         return self.id == other.id and self.name == other.name
 
+class Webhook(Resource):
+    """A JIRA webhook."""
+
+    WEBHOOK_BASE_URL = '{server}/rest/webhooks/{agile_rest_api_version}/{path}'
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(self, 'webhook/{0}', options, session, self.WEBHOOK_BASE_URL)
+        if raw:
+            self._parse_raw(raw)
+
+    def enable(self):
+        """
+        Enable this webhook on the server.
+        """
+        super(Webhook, self).update(enabled=True)
+
+    def disable(self):
+        """
+        Disable this webhook on the server.
+        """
+        super(Webhook, self).update(enabled=False)
+
+    def __eq__(self, other):
+        return self.self == other.self
+
 
 class Webhook(Resource):
     """A JIRA webhook."""
