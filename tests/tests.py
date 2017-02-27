@@ -280,6 +280,9 @@ class JiraTestManager(object):
                 self.project_b = self.jid + 'B'  # old BULK
                 self.project_b_name = "Test user=%s key=%s B" \
                                       % (getpass.getuser(), self.project_b)
+                self.project_c = self.jid + 'C'  # For Service Desk
+                self.project_c_name = "Test user=%s key=%s C" \
+                                      % (getpass.getuser(), self.project_c)
 
                 # TODO(ssbarnea): find a way to prevent SecurityTokenMissing for On Demand
                 # https://jira.atlassian.com/browse/JRA-39153
@@ -302,6 +305,17 @@ class JiraTestManager(object):
                 else:
                     try:
                         self.jira_admin.delete_project(self.project_b)
+                    except Exception as e:
+                        pass
+
+                try:
+                    self.jira_admin.project(self.project_c)
+                except Exception as e:
+                    logging.warning(e)
+                    pass
+                else:
+                    try:
+                        self.jira_admin.delete_project(self.project_c)
                     except Exception as e:
                         pass
 
@@ -333,6 +347,15 @@ class JiraTestManager(object):
                 except Exception:
                     # we care only for the project to exist
                     pass
+
+                # Create project for Jira Service Desk
+                try:
+                    self.jira_admin.create_project(self.project_c,
+                                                   self.project_c_name,
+                                                   template_name='IT Service Desk')
+                except Exception:
+                    pass
+
                 sleep(1)  # keep it here as often JIRA will report the
                 # project as missing even after is created
                 self.project_b_issue1_obj = self.jira_admin.create_issue(project=self.project_b,
@@ -2328,15 +2351,19 @@ class ServiceDeskTests(unittest.TestCase):
         self.assertGreater(len(request_types), 0)
 
         fields = {
-            "serviceDeskId": service_desks[0].id,
-            "requestTypeId": request_types[0].id,
+            "serviceDeskId": int(service_desks[0].id),
+            "requestTypeId": int(request_types[0].id),
             "raiseOnBehalfOf": self.test_manager.CI_JIRA_USER,
             "requestFieldValues": {
                 "summary": "Request summary",
                 "description": "Request description"
             }
         }
-        issue = self.jira.create_request(fields)
+        issue = self.jira.create_customer_request(fields)
+
+        self.assertEqual(issue.fields.summary, "Request summary")
+        self.assertEqual(issue.fields.description, "Request description")
+
         issue.delete()
 
     def test_get_my_customer_request(self):
@@ -2351,51 +2378,12 @@ class ServiceDeskTests(unittest.TestCase):
     def test_create_attachment(self):
         pass
 
-    def test_create_request_comment(self):
-        pass
-
-    def test_get_request_comments(self):
-        pass
-
-    def test_get_request_comment_by_id(self):
-        pass
-
 
 class JiraShellTests(unittest.TestCase):
 
     def test_jirashell_command_exists(self):
         result = os.system('jirashell --help')
         self.assertEqual(result, 0)
-
-
-# class JiraServiceDeskTests(unittest.TestCase):
-#
-#     def setUp(self):
-#         self.jira = JiraTestManager().jira_admin
-#         self.test_manager = JiraTestManager()
-#
-#     def test_create_customer_request(self):
-#         if not self.jira.supports_service_desk():
-#             pytest.skip('Skipping Service Desk not enabled')
-#
-#         try:
-#             self.jira.create_project('TESTSD', template_name='IT Service Desk')
-#         except JIRAError:
-#             pass
-#         service_desk = self.jira.service_desks()[0]
-#         request_type = self.jira.request_types(service_desk)[0]
-#
-#         request = self.jira.create_customer_request(dict(
-#             serviceDeskId=service_desk.id,
-#             requestTypeId=int(request_type.id),
-#             requestFieldValues=dict(
-#                 summary='Ticket title here',
-#                 description='Ticket body here'
-#             )
-#         ))
-#
-#         self.assertEqual(request.fields.summary, 'Ticket title here')
-#         self.assertEqual(request.fields.description, 'Ticket body here')
 
 
 if __name__ == '__main__':

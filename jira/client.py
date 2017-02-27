@@ -2755,56 +2755,6 @@ class JIRA(object):
 
     # Service Desk
 
-    def create_customer_request(self, fields=None, prefetch=True, **fieldargs):
-        """Create a new customer request and return an issue Resource for it.
-
-        Each keyword argument (other than the predefined ones) is treated as a field name and the argument's value
-        is treated as the intended value for that field -- if the fields argument is used, all other keyword arguments
-        will be ignored.
-
-        By default, the client will immediately reload the issue Resource created by this method in order to return
-        a complete Issue object to the caller; this behavior can be controlled through the 'prefetch' argument.
-
-        JIRA projects may contain many different issue types. Some issue screens have different requirements for
-        fields in a new issue. This information is available through the 'createmeta' method. Further examples are
-        available here: https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Create+Issue
-
-        :param fields: a dict containing field names and the values to use. If present, all other keyword arguments
-            will be ignored
-        :param prefetch: whether to reload the created issue Resource so that all of its data is present in the value
-            returned from this method
-        """
-        data = fields
-
-        p = data['serviceDeskId']
-        service_desk = None
-
-        if isinstance(p, string_types) or isinstance(p, integer_types):
-            service_desk = self.service_desk(p)
-        elif isinstance(p, ServiceDesk):
-            service_desk = p
-
-        data['serviceDeskId'] = service_desk.id
-
-        p = data['requestTypeId']
-        if isinstance(p, integer_types):
-            data['requestTypeId'] = p
-        elif isinstance(p, string_types):
-            data['requestTypeId'] = self.request_type_by_name(
-                service_desk, p).id
-
-        url = self._options['server'] + '/rest/servicedeskapi/request'
-        headers = {'X-ExperimentalApi': 'opt-in'}
-        r = self._session.post(url, headers=headers, data=json.dumps(data))
-
-        raw_issue_json = json_loads(r)
-        if 'issueKey' not in raw_issue_json:
-            raise JIRAError(r.status_code, request=r)
-        if prefetch:
-            return self.issue(raw_issue_json['issueKey'])
-        else:
-            return Issue(self._options, self._session, raw=raw_issue_json)
-
     def create_customer(self, email, fullname):
         """Creates a customer that is not associated with a service desk project.
 
@@ -2868,7 +2818,9 @@ class JIRA(object):
         return organization
 
     def organizations(self, start=0, limit=50):
-        """Returns a list of organizations in the JIRA instance. If the user is not an agent, the resource returns a list of organizations the user is a member of.
+        """Returns a list of organizations in the JIRA instance.
+
+        If the user is not an agent, the resource returns a list of organizations the user is a member of.
 
         :param start: index of the first organization to return.
         :param limit: maximum number of organizations to return. If limit evaluates as False, it will try to get all
@@ -2966,19 +2918,39 @@ class JIRA(object):
         service_desk.find(id)
         return service_desk
 
-    def create_request(self, fields, prefetch=True):
-        """Creates a customer request in a service desk. The service desk and request type are required.
+    def create_customer_request(self, fields=None, prefetch=True, **fieldargs):
+        """Create a new customer request and return an issue Resource for it.
 
-        :param fields: list of Issue fields
-        :param prefetch: reload Issue and return it
-        :return: Issue
+        Each keyword argument (other than the predefined ones) is treated as a field name and the argument's value
+        is treated as the intended value for that field -- if the fields argument is used, all other keyword arguments
+        will be ignored.
+
+        By default, the client will immediately reload the issue Resource created by this method in order to return
+        a complete Issue object to the caller; this behavior can be controlled through the 'prefetch' argument.
+
+        JIRA projects may contain many different issue types. Some issue screens have different requirements for
+        fields in a new issue. This information is available through the 'createmeta' method. Further examples are
+        available here: https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Create+Issue
+
+        :param fields: a dict containing field names and the values to use. If present, all other keyword arguments
+            will be ignored
+        :param prefetch: whether to reload the created issue Resource so that all of its data is present in the value
+            returned from this method
         """
+
+        if isinstance(fields['serviceDeskId'], ServiceDesk):
+            fields['serviceDeskId'] = fields['serviceDeskId'].id
+
+        if isinstance(fields['requestTypeId'], string_types):
+            fields['requestTypeId'] = self.request_type_by_name(fields['serviceDeskId'], fields['requestTypeId']).id
+
         url = self._options['server'] + '/rest/servicedeskapi/request'
-        headers = CaseInsensitiveDict({'X-ExperimentalApi': 'opt-in'})
-        result = self._session.post(url, headers=headers, data=json.dumps(fields))
-        raw_issue_json = json_loads(result)
+        headers = {'X-ExperimentalApi': 'opt-in'}
+        r = self._session.post(url, headers=headers, data=json.dumps(fields))
+
+        raw_issue_json = json_loads(r)
         if 'issueKey' not in raw_issue_json:
-            raise JIRAError(result.status_code, request=result)
+            raise JIRAError(r.status_code, request=r)
         if prefetch:
             return self.issue(raw_issue_json['issueKey'])
         else:
