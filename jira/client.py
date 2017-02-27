@@ -2337,7 +2337,6 @@ class JIRA(object):
             webhooks[h.self.split('/')[-1]] = h.raw
         return webhooks
 
-
     # Websudo
     def kill_websudo(self):
         """Destroy the user's current WebSudo session.

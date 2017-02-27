@@ -773,6 +773,7 @@ class Version(Resource):
         """Comparison."""
         return self.id == other.id and self.name == other.name
 
+
 class Webhook(Resource):
     """A JIRA webhook."""
 
