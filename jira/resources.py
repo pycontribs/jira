@@ -773,6 +773,7 @@ class Version(Resource):
         """Comparison."""
         return self.id == other.id and self.name == other.name
 
+
 class Webhook(Resource):
     """A JIRA webhook."""
 
@@ -784,18 +785,15 @@ class Webhook(Resource):
             self._parse_raw(raw)
 
     def enable(self):
-        """
-        Enable this webhook on the server.
-        """
+        """Enable this webhook on the server."""
         super(Webhook, self).update(enabled=True)
 
     def disable(self):
-        """
-        Disable this webhook on the server.
-        """
+        """Disable this webhook on the server."""
         super(Webhook, self).update(enabled=False)
 
     def __eq__(self, other):
+        """Tests equality of webhooks based on URL of hook (not endpoint)."""
         return self.self == other.self
 
 

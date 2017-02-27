@@ -2305,6 +2305,7 @@ class JIRA(object):
 
         :rtype list
         :return (content may depend on API version, but should contain id, name, state, etc.
+
         see https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Create+Webhook
         """
         params = {}
