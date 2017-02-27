@@ -75,6 +75,7 @@ from jira.resources import User
 from jira.resources import Version
 from jira.resources import Votes
 from jira.resources import Watchers
+from jira.resources import Webhook
 from jira.resources import Worklog
 
 from jira import __version__
