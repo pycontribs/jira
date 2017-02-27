@@ -15,6 +15,7 @@ from jira.client import Project  # noqa: E402
 from jira.client import Role  # noqa: E402
 from jira.client import User  # noqa: E402
 from jira.client import Watchers  # noqa: E402
+from jira.client import Webhook  # noqa: E402
 from jira.client import Worklog  # noqa: E402
 from jira.config import get_jira  # noqa: E402
 from jira.exceptions import JIRAError  # noqa: E402
@@ -31,6 +32,7 @@ __all__ = (
     'User',
     'version_info',
     'Watchers',
+    'Webhook',
     'Worklog',
     'get_jira'
 )
