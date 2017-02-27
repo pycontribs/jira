@@ -2755,7 +2755,6 @@ class JIRA(object):
 
     # Service Desk
 
-
     def create_customer_request(self, fields=None, prefetch=True, **fieldargs):
         """Create a new customer request and return an issue Resource for it.
 

@@ -2135,8 +2135,8 @@ class ServiceDeskTests(unittest.TestCase):
         assert result, True
 
     def test_get_servicedesk_info(self):
-        result = self.jira.servicedesk_info()
-        self.assertNotEquals(result, False)
+        result = self.jira.service_desk_info()
+        self.assertNotEqual(result, False)
 
     def test_create_and_delete_organization(self):
         organization = self.jira.create_organization(self.test_organization_name_a)
