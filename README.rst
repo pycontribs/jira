@@ -37,6 +37,7 @@ JIRA Python Library
 
 
 Temporary: Fork build status:
+
 .. image:: https://api.travis-ci.org/igor-pavlenko/jira.svg?branch=develop
         :target: https://travis-ci.org/igor-pavlenko/jira
 
