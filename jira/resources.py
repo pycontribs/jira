@@ -51,9 +51,9 @@ __all__ = (
     'CustomFieldOption',
     'RemoteLink',
     'Customer',
-    'ServicedeskInfo',
+    'ServiceDeskInfo',
     'Organization',
-    'Servicedesk',
+    'ServiceDesk',
     'RequestType'
 )
 
@@ -842,7 +842,7 @@ class Customer(User):
             self._parse_raw(raw)
 
 
-class ServicedeskInfo(Resource):
+class ServiceDeskInfo(Resource):
     """This resource represents the JIRA Service Desk application. """
 
     def __init__(self, options, session, raw=None):
@@ -860,8 +860,8 @@ class Organization(Resource):
             self._parse_raw(raw)
 
 
-class Servicedesk(Resource):
-    """This resource represents an Servicedesk. """
+class ServiceDesk(Resource):
+    """A Service Desk."""
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(self, 'servicedesk/{0}', options, session, '{server}/rest/servicedeskapi/{path}')

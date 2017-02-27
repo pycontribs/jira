@@ -41,16 +41,43 @@ import warnings
 from requests.utils import get_netrc_auth
 from six import iteritems
 from six.moves.urllib.parse import urlparse
-# JIRA specific resources
-from jira.resources import *  # NOQA
 
 # GreenHopper specific resources
 from jira.exceptions import JIRAError
 from jira.resilientsession import raise_on_error
 from jira.resilientsession import ResilientSession
+# JIRA specific resources
+from jira.resources import Attachment
 from jira.resources import Board
+from jira.resources import Comment
+from jira.resources import Component
+from jira.resources import Customer
+from jira.resources import CustomFieldOption
+from jira.resources import Dashboard
+from jira.resources import Filter
 from jira.resources import GreenHopperResource
+from jira.resources import Issue
+from jira.resources import IssueLink
+from jira.resources import IssueLinkType
+from jira.resources import IssueType
+from jira.resources import Organization
+from jira.resources import Priority
+from jira.resources import Project
+from jira.resources import RemoteLink
+from jira.resources import RequestType
+from jira.resources import Resolution
+from jira.resources import Resource
+from jira.resources import Role
+from jira.resources import SecurityLevel
+from jira.resources import ServiceDesk
+from jira.resources import ServiceDeskInfo
 from jira.resources import Sprint
+from jira.resources import Status
+from jira.resources import User
+from jira.resources import Version
+from jira.resources import Votes
+from jira.resources import Watchers
+from jira.resources import Worklog
 
 from jira import __version__
 from jira.utils import CaseInsensitiveDict
@@ -1025,7 +1052,7 @@ class JIRA(object):
         return self._find_for_resource(Comment, (issue, comment))
 
     @translate_resource_args
-    def add_comment(self, issue, body, visibility=None):
+    def add_comment(self, issue, body, visibility=None, is_internal=False):
         """Add a comment from the current authenticated user on the specified issue and return a Resource for it.
 
         The issue identifier and comment body are required.
@@ -1036,15 +1063,27 @@ class JIRA(object):
             "type" is 'role' (or 'group' if the JIRA server has configured
             comment visibility for groups) and 'value' is the name of the role
             (or group) to which viewing of this comment will be restricted.
+        :param is_internal: defines whether a comment has to be marked as 'Internal' in Jira Service Desk
         """
         data = {
-            'body': body}
+            'body': body,
+        }
+
+        if is_internal:
+            data.update({
+                'properties': [
+                    {'key': 'sd.public.comment',
+                     'value': {'internal': is_internal}}
+                ]
+            })
+
         if visibility is not None:
             data['visibility'] = visibility
 
         url = self._get_url('issue/' + str(issue) + '/comment')
         r = self._session.post(
-            url, data=json.dumps(data))
+            url, data=json.dumps(data)
+        )
 
         comment = Comment(self._options, self._session, raw=json_loads(r))
         return comment
@@ -2586,12 +2625,17 @@ class JIRA(object):
         r = self._session.get(url)
         j = json_loads(r)
 
+        possible_templates = ['JIRA Classic', 'JIRA Default Schemes', 'Basic software development']
+
+        if template_name is not None:
+            possible_templates = [template_name]
+
         # https://confluence.atlassian.com/jirakb/creating-a-project-via-rest-based-on-jira-default-schemes-744325852.html
         template_key = 'com.atlassian.jira-legacy-project-templates:jira-blank-item'
         templates = []
         for template in _get_template_list(j):
             templates.append(template['name'])
-            if template['name'] in ['JIRA Classic', 'JIRA Default Schemes', 'Basic software development', template_name]:
+            if template['name'] in possible_templates:
                 template_key = template['projectTemplateModuleCompleteKey']
                 break
 
@@ -2711,6 +2755,57 @@ class JIRA(object):
 
     # Service Desk
 
+
+    def create_customer_request(self, fields=None, prefetch=True, **fieldargs):
+        """Create a new customer request and return an issue Resource for it.
+
+        Each keyword argument (other than the predefined ones) is treated as a field name and the argument's value
+        is treated as the intended value for that field -- if the fields argument is used, all other keyword arguments
+        will be ignored.
+
+        By default, the client will immediately reload the issue Resource created by this method in order to return
+        a complete Issue object to the caller; this behavior can be controlled through the 'prefetch' argument.
+
+        JIRA projects may contain many different issue types. Some issue screens have different requirements for
+        fields in a new issue. This information is available through the 'createmeta' method. Further examples are
+        available here: https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Create+Issue
+
+        :param fields: a dict containing field names and the values to use. If present, all other keyword arguments
+            will be ignored
+        :param prefetch: whether to reload the created issue Resource so that all of its data is present in the value
+            returned from this method
+        """
+        data = fields
+
+        p = data['serviceDeskId']
+        service_desk = None
+
+        if isinstance(p, string_types) or isinstance(p, integer_types):
+            service_desk = self.service_desk(p)
+        elif isinstance(p, ServiceDesk):
+            service_desk = p
+
+        data['serviceDeskId'] = service_desk.id
+
+        p = data['requestTypeId']
+        if isinstance(p, integer_types):
+            data['requestTypeId'] = p
+        elif isinstance(p, string_types):
+            data['requestTypeId'] = self.request_type_by_name(
+                service_desk, p).id
+
+        url = self._options['server'] + '/rest/servicedeskapi/request'
+        headers = {'X-ExperimentalApi': 'opt-in'}
+        r = self._session.post(url, headers=headers, data=json.dumps(data))
+
+        raw_issue_json = json_loads(r)
+        if 'issueKey' not in raw_issue_json:
+            raise JIRAError(r.status_code, request=r)
+        if prefetch:
+            return self.issue(raw_issue_json['issueKey'])
+        else:
+            return Issue(self._options, self._session, raw=raw_issue_json)
+
     def create_customer(self, email, fullname):
         """Creates a customer that is not associated with a service desk project.
 
@@ -2725,16 +2820,16 @@ class JIRA(object):
             raise JIRAError(result.status_code, request=result)
         return Customer(self._options, self._session, raw=json_loads(result))
 
-    def servicedesk_info(self):
+    def service_desk_info(self):
         """Returns runtime information about JIRA Service Desk.
 
-        :return ServicedeskInfo
+        :return ServiceDeskInfo
         """
         url = self._options['server'] + '/rest/servicedeskapi/info'
         result = self._session.get(url)
         if result.status_code != 200:
             raise JIRAError(result.status_code, request=result)
-        return ServicedeskInfo(self._options, self._session, raw=json_loads(result))
+        return ServiceDeskInfo(self._options, self._session, raw=json_loads(result))
 
     def create_organization(self, name):
         """Creates an organization
@@ -2848,8 +2943,8 @@ class JIRA(object):
                                  headers=headers,
                                  base=base)
 
-    def servicedesks(self, start=0, limit=50):
-        """Returns a list of servicedesks
+    def service_desks(self, start=0, limit=50):
+        """Get a list of ServiceDesk Resources from the server visible to the current authenticated user.
 
         :param start: index of the first servicedesk to return.
         :param limit: maximum number of servicedesks to return.
@@ -2857,21 +2952,21 @@ class JIRA(object):
         """
         params = {'start': start, 'limit': limit}
         base = self._options['server'] + '/rest/servicedeskapi/servicedesk'
-        return self._fetch_pages(Servicedesk,
+        return self._fetch_pages(ServiceDesk,
                                  'values',
                                  None,
                                  params=params,
                                  base=base)
 
-    def servicedesk(self, id):
+    def service_desk(self, id):
         """Returns the service desk for a given service desk Id.
 
         :param id: servicedesk ID
         :return: Servicedesk
         """
-        servicedesk = Servicedesk(self._options, self._session)
-        servicedesk.find(id)
-        return servicedesk
+        service_desk = ServiceDesk(self._options, self._session)
+        service_desk.find(id)
+        return service_desk
 
     def create_request(self, fields, prefetch=True):
         """Creates a customer request in a service desk. The service desk and request type are required.
@@ -2891,36 +2986,38 @@ class JIRA(object):
         else:
             return Issue(self._options, self._session, raw=raw_issue_json)
 
-    def request_types(self, servicedesk_id, start=0, limit=50):
+    def request_types(self, service_desk, start=0, limit=50):
         """Returns all request types from a service desk, for a given service desk Id.
 
-        :param servicedesk_id: servicedesk ID
+        :param service_desk_id: servicedesk ID
         :param start: index of the first user to return.
         :param limit: maximum number of organizations to return.
                       If limit evaluates as False, it will try to get all items in batches.
         :return: list of RequestType resources
         """
+        if hasattr(service_desk, 'id'):
+            service_desk = service_desk.id
         params = {'start': start, 'limit': limit}
-        base = self._options['server'] + '/rest/servicedeskapi/servicedesk/%i/requesttype' % int(servicedesk_id)
+        base = self._options['server'] + '/rest/servicedeskapi/servicedesk/%i/requesttype' % int(service_desk)
         return self._fetch_pages(RequestType,
                                  'values',
                                  None,
                                  params=params,
                                  base=base)
 
-    def request_type(self, servicedesk_id, id):
+    def request_type(self, service_desk_id, id):
         """Returns a request type for a given request type Id.
 
-        :param servicedesk_id: servicedesk ID
+        :param service_desk_id: servicedesk ID
         :param id: request type ID
         :return: RequestType
         """
         request_type = RequestType(self._options, self._session)
-        request_type.find((servicedesk_id, id))
+        request_type.find((service_desk_id, id))
         return request_type
 
-    def request_type_by_name(self, servicedesk_id, name):
-        request_types = self.request_types(servicedesk_id)
+    def request_type_by_name(self, service_desk_id, name):
+        request_types = self.request_types(service_desk_id)
         try:
             request_type = [rt for rt in request_types if rt.name == name][0]
         except IndexError:

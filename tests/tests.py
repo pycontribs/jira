@@ -2280,55 +2280,55 @@ class ServiceDeskTests(unittest.TestCase):
         result = self.jira.delete_organization(organization.id)
         assert result, True
 
-    def test_servicedesks(self):
-        servicedesks = self.jira.servicedesks()
-        self.assertGreater(len(servicedesks), 0)
+    def test_service_desks(self):
+        service_desks = self.jira.service_desks()
+        self.assertGreater(len(service_desks), 0)
 
-    def test_servicedesk(self):
-        servicedesks = self.jira.servicedesks()
-        self.assertGreater(len(servicedesks), 0)
+    def test_service_desk(self):
+        service_desks = self.jira.service_desks()
+        self.assertGreater(len(service_desks), 0)
 
-        servicedesk = self.jira.servicedesk(servicedesks[0].id)
-        self.assertEqual(servicedesk.id, servicedesks[0].id)
+        service_desk = self.jira.service_desk(service_desks[0].id)
+        self.assertEqual(service_desk.id, service_desks[0].id)
 
     def test_request_types(self):
-        servicedesks = self.jira.servicedesks()
-        self.assertGreater(len(servicedesks), 0)
+        service_desks = self.jira.service_desks()
+        self.assertGreater(len(service_desks), 0)
 
-        request_types = self.jira.request_types(servicedesks[0].id)
+        request_types = self.jira.request_types(service_desks[0].id)
         self.assertGreater(len(request_types), 0)
 
     def test_request_type(self):
-        servicedesks = self.jira.servicedesks()
-        self.assertGreater(len(servicedesks), 0)
+        service_desks = self.jira.service_desks()
+        self.assertGreater(len(service_desks), 0)
 
-        request_types = self.jira.request_types(servicedesks[0].id)
+        request_types = self.jira.request_types(service_desks[0].id)
         self.assertGreater(len(request_types), 0)
 
-        request_type = self.jira.request_type(servicedesks[0].id, request_types[0].id)
+        request_type = self.jira.request_type(service_desks[0].id, request_types[0].id)
         self.assertEqual(request_type.id, request_types[0].id)
         self.assertEqual(request_type.name, request_types[0].name)
 
     def test_request_type_by_name(self):
-        servicedesks = self.jira.servicedesks()
-        self.assertGreater(len(servicedesks), 0)
+        service_desks = self.jira.service_desks()
+        self.assertGreater(len(service_desks), 0)
 
-        request_types = self.jira.request_types(servicedesks[0].id)
+        request_types = self.jira.request_types(service_desks[0].id)
         self.assertGreater(len(request_types), 0)
 
-        request_type_by_name = self.jira.request_type_by_name(servicedesks[0].id, request_types[0].name)
+        request_type_by_name = self.jira.request_type_by_name(service_desks[0].id, request_types[0].name)
         self.assertEqual(request_types[0].id, request_type_by_name.id)
         self.assertEqual(request_types[0].name, request_type_by_name.name)
 
     def test_create_and_delete_customer_request(self):
-        servicedesks = self.jira.servicedesks()
-        self.assertGreater(len(servicedesks), 0)
+        service_desks = self.jira.service_desks()
+        self.assertGreater(len(service_desks), 0)
 
-        request_types = self.jira.request_types(servicedesks[0].id)
+        request_types = self.jira.request_types(service_desks[0].id)
         self.assertGreater(len(request_types), 0)
 
         fields = {
-            "serviceDeskId": servicedesks[0].id,
+            "serviceDeskId": service_desks[0].id,
             "requestTypeId": request_types[0].id,
             "raiseOnBehalfOf": self.test_manager.CI_JIRA_USER,
             "requestFieldValues": {
@@ -2366,6 +2366,36 @@ class JiraShellTests(unittest.TestCase):
     def test_jirashell_command_exists(self):
         result = os.system('jirashell --help')
         self.assertEqual(result, 0)
+
+
+# class JiraServiceDeskTests(unittest.TestCase):
+#
+#     def setUp(self):
+#         self.jira = JiraTestManager().jira_admin
+#         self.test_manager = JiraTestManager()
+#
+#     def test_create_customer_request(self):
+#         if not self.jira.supports_service_desk():
+#             pytest.skip('Skipping Service Desk not enabled')
+#
+#         try:
+#             self.jira.create_project('TESTSD', template_name='IT Service Desk')
+#         except JIRAError:
+#             pass
+#         service_desk = self.jira.service_desks()[0]
+#         request_type = self.jira.request_types(service_desk)[0]
+#
+#         request = self.jira.create_customer_request(dict(
+#             serviceDeskId=service_desk.id,
+#             requestTypeId=int(request_type.id),
+#             requestFieldValues=dict(
+#                 summary='Ticket title here',
+#                 description='Ticket body here'
+#             )
+#         ))
+#
+#         self.assertEqual(request.fields.summary, 'Ticket title here')
+#         self.assertEqual(request.fields.description, 'Ticket body here')
 
 
 if __name__ == '__main__':
