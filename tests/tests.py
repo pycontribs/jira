@@ -2104,6 +2104,36 @@ class JiraShellTests(unittest.TestCase):
         self.assertEqual(result, 0)
 
 
+class JiraServiceDeskTests(unittest.TestCase):
+
+    def setUp(self):
+        self.jira = JiraTestManager().jira_admin
+        self.test_manager = JiraTestManager()
+
+    def test_create_customer_request(self):
+        if not self.jira.supports_service_desk():
+            pytest.skip('Skipping Service Desk not enabled')
+
+        try:
+            self.jira.create_project('TESTSD', template_name='IT Service Desk')
+        except JIRAError:
+            pass
+        service_desk = self.jira.service_desks()[0]
+        request_type = self.jira.request_types(service_desk)[0]
+
+        request = self.jira.create_customer_request(dict(
+            serviceDeskId=service_desk.id,
+            requestTypeId=int(request_type.id),
+            requestFieldValues=dict(
+                summary='Ticket title here',
+                description='Ticket body here'
+            )
+        ))
+
+        self.assertEqual(request.fields.summary, 'Ticket title here')
+        self.assertEqual(request.fields.description, 'Ticket body here')
+
+
 if __name__ == '__main__':
 
     # when running tests we expect various errors and we don't want to display them by default
