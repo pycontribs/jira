@@ -2674,7 +2674,7 @@ class JIRA(object):
         return False
 
     def add_user(self, username, email, directoryId=1, password=None,
-                 fullname=None, notify=False, active=True, ignore_existing=False):
+                 fullname=None, notify=False, active=True, application_keys = None, ignore_existing=False):
         """Create a new JIRA user.
 
         :param username: the username of the new user
@@ -2709,7 +2709,8 @@ class JIRA(object):
             x['password'] = password
         if notify:
             x['notification'] = 'True'
-
+        if application_keys is not None:
+            x['applicationKeys'] = application_keys
         payload = json.dumps(x)
         try:
             self._session.post(url, data=payload)
