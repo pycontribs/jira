@@ -879,6 +879,30 @@ class RequestType(Resource):
             self._parse_raw(raw)
 
 
+class Request(Resource):
+    """A JIRA Service Desk customer request (issue)."""
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(self, 'request/{0}', options, session,
+                          '{server}/rest/servicedeskapi/{path}')
+        if raw:
+            self._parse_raw(raw)
+
+    def _parse_raw(self, raw):
+        self.raw = raw
+        if not raw:
+            raise NotImplementedError("We cannot instantiate empty resources: %s" % raw)
+
+        raw['id'] = raw['issueId']
+        raw['key'] = raw['issueKey']
+        raw['fields'] = {}
+        for val in raw['requestFieldValues']:
+            raw['fields'][val['fieldId']] = val['value']
+        del raw['issueId']
+        del raw['issueKey']
+        del raw['requestFieldValues']
+        dict2resource(raw, self, self._options, self._session)
+
 # Utilities
 
 

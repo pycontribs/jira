@@ -64,6 +64,7 @@ from jira.resources import Organization
 from jira.resources import Priority
 from jira.resources import Project
 from jira.resources import RemoteLink
+from jira.resources import Request
 from jira.resources import RequestType
 from jira.resources import Resolution
 from jira.resources import Resource
@@ -980,6 +981,22 @@ class JIRA(object):
                 issue_list.append({'status': 'Success', 'issue': issue,
                                    'error': None, 'input_fields': fields})
         return issue_list
+
+    def delete_issue(self, id):
+        """Delete Issue.
+
+        :param id: issue Id or Key or Issue object.
+        :return: Boolean. Returns True on success.
+        """
+
+        if isinstance(id, Issue):
+            id = Issue.id
+
+        url = self._options['server'] + '/rest/api/2/issue/%s' % id
+        result = self._session.delete(url)
+        if result.status_code != 204:
+            raise JIRAError(result.status_code, request=result)
+        return True
 
     def createmeta(self, projectKeys=None, projectIds=[], issuetypeIds=None, issuetypeNames=None, expand=None):
         """Get the metadata required to create issues, optionally filtered by projects and issue types.
@@ -2920,7 +2937,9 @@ class JIRA(object):
         return service_desk
 
     def create_customer_request(self, fields=None, prefetch=True, **fieldargs):
-        """Create a new customer request and return an issue Resource for it.
+        """ Deprecated method. Use "create_request" instead.
+
+        Create a new customer request and return an issue Resource for it.
 
         Each keyword argument (other than the predefined ones) is treated as a field name and the argument's value
         is treated as the intended value for that field -- if the fields argument is used, all other keyword arguments
@@ -2957,10 +2976,96 @@ class JIRA(object):
         else:
             return Issue(self._options, self._session, raw=raw_issue_json)
 
+    def create_request(self, fields=None, prefetch=True, **fieldargs):
+        """Create a new customer request and return an issue Resource for it.
+
+        Each keyword argument (other than the predefined ones) is treated as a field name and the argument's value
+        is treated as the intended value for that field -- if the fields argument is used, all other keyword arguments
+        will be ignored.
+
+        By default, the client will immediately reload the issue Resource created by this method in order to return
+        a complete Issue object to the caller; this behavior can be controlled through the 'prefetch' argument.
+
+        JIRA projects may contain many different issue types. Some issue screens have different requirements for
+        fields in a new issue. This information is available through the 'createmeta' method. Further examples are
+        available here: https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Create+Issue
+
+        :param fields: a dict containing field names and the values to use. If present, all other keyword arguments
+            will be ignored
+        :param prefetch: whether to reload the created issue Resource so that all of its data is present in the value
+            returned from this method
+        :return: Request
+        """
+
+        if isinstance(fields['serviceDeskId'], ServiceDesk):
+            fields['serviceDeskId'] = fields['serviceDeskId'].id
+
+        if isinstance(fields['requestTypeId'], string_types):
+            fields['requestTypeId'] = self.request_type_by_name(fields['serviceDeskId'], fields['requestTypeId']).id
+
+        url = self._options['server'] + '/rest/servicedeskapi/request'
+        headers = {'X-ExperimentalApi': 'opt-in'}
+        r = self._session.post(url, headers=headers, data=json.dumps(fields))
+
+        raw_issue_json = json_loads(r)
+        if 'issueId' not in raw_issue_json:
+            raise JIRAError(r.status_code, request=r)
+        if prefetch:
+            return self.request(raw_issue_json['issueId'])
+        else:
+            return Request(self._options, self._session, raw=raw_issue_json)
+
+    def request(self, id, expand=None):
+        """Get an issue Resource from the server.
+
+        :param id: ID or key of the customer request (issue) to get
+        :param expand: This is a multi-value parameter indicating which properties of the customer request to expand:
+            serviceDesk - Return additional details for each service desk in the response.
+            requestType - Return additional details for each request type in the response.
+            participant - Return the participant details, if any, for each customer request in the response.
+            sla - Return the SLA information on the given request.
+            status - Return the status transitions, in chronological order, for each customer request in the response.
+        """
+        params = {}
+        if expand is not None:
+            params['expand'] = expand
+
+        request = Request(self._options, self._session)
+        request.find(id, params=params)
+        return request
+
+    def my_customer_requests(self,
+                             search_term=None,
+                             request_ownership=None,
+                             request_status=None,
+                             service_desk_id=None,
+                             request_type_id=None,
+                             expand=None,
+                             start=0, limit=50):
+        params = {'start': start, 'limit': limit}
+        if isinstance(search_term, string_types):
+            params['searchTerm'] = search_term
+        if isinstance(request_ownership, string_types):
+            params['requestOwnership'] = request_ownership
+        if isinstance(request_status, string_types):
+            params['requestStatus'] = request_status
+        if isinstance(service_desk_id, integer_types):
+            params['serviceDeskId'] = service_desk_id
+        if isinstance(request_type_id, integer_types):
+            params['requestTypeId'] = request_type_id
+        if isinstance(expand, string_types):
+            params['expand'] = expand
+        base = self._options['server'] + '/rest/servicedeskapi/request'
+        return self._fetch_pages(Request,
+                                 'values',
+                                 None,
+                                 params=params,
+                                 base=base)
+
     def request_types(self, service_desk, start=0, limit=50):
         """Returns all request types from a service desk, for a given service desk Id.
 
-        :param service_desk_id: servicedesk ID
+        :param service_desk: servicedesk ID or servicedesk object
         :param start: index of the first user to return.
         :param limit: maximum number of organizations to return.
                       If limit evaluates as False, it will try to get all items in batches.
