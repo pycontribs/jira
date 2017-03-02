@@ -2691,7 +2691,7 @@ class JIRA(object):
         return False
 
     def add_user(self, username, email, directoryId=1, password=None,
-                 fullname=None, notify=False, active=True, application_keys = None, ignore_existing=False):
+                 fullname=None, notify=False, active=True, application_keys=None, ignore_existing=False):
         """Create a new JIRA user.
 
         :param username: the username of the new user
@@ -2937,9 +2937,9 @@ class JIRA(object):
         return service_desk
 
     def create_customer_request(self, fields=None, prefetch=True, **fieldargs):
-        """ Deprecated method. Use "create_request" instead.
+        """Create a new customer request and return an issue Resource for it.
 
-        Create a new customer request and return an issue Resource for it.
+        Deprecated method. Use "create_request" instead.
 
         Each keyword argument (other than the predefined ones) is treated as a field name and the argument's value
         is treated as the intended value for that field -- if the fields argument is used, all other keyword arguments
@@ -2957,6 +2957,8 @@ class JIRA(object):
         :param prefetch: whether to reload the created issue Resource so that all of its data is present in the value
             returned from this method
         """
+
+        warnings.warn("Use 'create_request' method instead", DeprecationWarning)
 
         if isinstance(fields['serviceDeskId'], ServiceDesk):
             fields['serviceDeskId'] = fields['serviceDeskId'].id
@@ -3025,6 +3027,7 @@ class JIRA(object):
             participant - Return the participant details, if any, for each customer request in the response.
             sla - Return the SLA information on the given request.
             status - Return the status transitions, in chronological order, for each customer request in the response.
+        :return: list of Request resources
         """
         params = {}
         if expand is not None:

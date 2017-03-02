@@ -21,7 +21,6 @@ import requests
 from six import integer_types
 from tenacity import retry
 from tenacity import stop_after_attempt
-from jira.exceptions import JIRAError
 
 # _non_parallel is used to prevent some tests from failing due to concurrency
 # issues because detox, Travis or Jenkins can run test in parallel for multiple
@@ -2498,6 +2497,41 @@ class ServiceDeskTests(unittest.TestCase):
 
         self.jira.delete_issue(request1.id)
         self.jira.delete_issue(request2.id)
+
+    def test_create_request_comment(self):
+        pass
+
+    def test_request_comments(self):
+        pass
+
+    def test_request_comment_by_id(self):
+        pass
+
+    def test_create_attachement(self):
+        pass
+
+    def test_attach_temporary_file(self):
+        pass
+
+    def test_create_customer_request(self):
+        try:
+            self.jira.create_project('TESTSD', template_name='IT Service Desk')
+        except JIRAError:
+            pass
+        service_desk = self.jira.service_desks()[0]
+        request_type = self.jira.request_types(service_desk)[0]
+
+        request = self.jira.create_customer_request(dict(
+            serviceDeskId=service_desk.id,
+            requestTypeId=int(request_type.id),
+            requestFieldValues=dict(
+                summary='Ticket title here',
+                description='Ticket body here'
+            )
+        ))
+
+        self.assertEqual(request.fields.summary, 'Ticket title here')
+        self.assertEqual(request.fields.description, 'Ticket body here')
 
 
 class JiraShellTests(unittest.TestCase):
