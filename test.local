@@ -3,8 +3,8 @@
 # Settings for using the Vagrant VM from atlassian
 # (see https://developer.atlassian.com/static/connect/docs/latest/developing/developing-locally.html)
 # a user "jira_user" with password "jira" needs to be created manually
-#export CI_JIRA_URL="http://localhost:2990/jira"
-export CI_JIRA_URL="http://localhost:8080"
+export CI_JIRA_URL="http://localhost:2990/jira"
+#export CI_JIRA_URL="http://localhost:8080"
 export CI_JIRA_ADMIN="admin"
 export CI_JIRA_ADMIN_PASSWORD="admin"
 export CI_JIRA_USER=jira_user
