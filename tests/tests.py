@@ -354,7 +354,6 @@ class JiraTestManager(object):
                                                    self.project_c_name,
                                                    template_name='IT Service Desk')
                 except Exception:
-                    logging.warning(e)
                     pass
 
                 sleep(1)  # keep it here as often JIRA will report the
