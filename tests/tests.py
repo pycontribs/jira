@@ -2375,12 +2375,12 @@ class ServiceDeskTests(unittest.TestCase):
         }
         request = self.jira.create_request(fields, prefetch=True)
 
+        self.jira.delete_issue(request.id)
+
         self.assertIsNotNone(request.id)
         self.assertIsNotNone(request.key)
         self.assertEqual(request.fields.summary, "Request summary")
         self.assertEqual(request.fields.description, "Request description")
-
-        self.jira.delete_issue(request.id)
 
     def test_create_and_delete_customer_request_without_prefetch(self):
         service_desks = self.jira.service_desks()
@@ -2400,12 +2400,12 @@ class ServiceDeskTests(unittest.TestCase):
         }
         request = self.jira.create_request(fields, prefetch=False)
 
+        self.jira.delete_issue(request.id)
+
         self.assertIsNotNone(request.id)
         self.assertIsNotNone(request.key)
         self.assertEqual(request.fields.summary, "Request summary")
         self.assertEqual(request.fields.description, "Request description")
-
-        self.jira.delete_issue(request.id)
 
     def test_get_customer_request_by_key_or_id(self):
         service_desks = self.jira.service_desks()
@@ -2436,12 +2436,12 @@ class ServiceDeskTests(unittest.TestCase):
         expand = 'serviceDesk,requestType,participant,sla,status'
         request_by_id = self.jira.request(request.id, expand=expand)
 
+        self.jira.delete_issue(request.id)
+
         self.assertEqual(request.id, request_by_id.id)
         self.assertEqual(request.key, request_by_id.key)
         self.assertEqual(request_by_id.fields.summary, "Request summary")
         self.assertEqual(request_by_id.fields.description, "Request description")
-
-        self.jira.delete_issue(request.id)
 
     def test_get_my_customer_requests(self):
         service_desks = self.jira.service_desks()
@@ -2492,10 +2492,10 @@ class ServiceDeskTests(unittest.TestCase):
             if i.id in requests:
                 count += 1
 
-        self.assertEqual(count, 0)
-
         self.jira.delete_issue(request1.id)
         self.jira.delete_issue(request2.id)
+
+        self.assertEqual(count, 0)
 
     def test_create_request_comment(self):
         pass
@@ -2506,11 +2506,46 @@ class ServiceDeskTests(unittest.TestCase):
     def test_request_comment_by_id(self):
         pass
 
-    def test_create_attachement(self):
-        pass
+    def test_create_attachment(self):
+        service_desks = self.jira.service_desks()
+        self.assertGreater(len(service_desks), 0)
+
+        request_types = self.jira.request_types(service_desks[0].id)
+        self.assertGreater(len(request_types), 0)
+
+        fields = {
+            "serviceDeskId": int(service_desks[0].id),
+            "requestTypeId": int(request_types[0].id),
+            "raiseOnBehalfOf": self.test_manager.CI_JIRA_USER,
+            "requestFieldValues": {
+                "summary": "Request summary",
+                "description": "Request description"
+            }
+        }
+        request = self.jira.create_request(fields)
+
+        tmp_attachment = self.jira.attach_temporary_file(service_desks[0].id, open(TEST_ICON_PATH, 'rb'), "test.png")
+
+        self.assertEqual(len(tmp_attachment.temporaryAttachments), 1)
+        self.assertEqual(tmp_attachment.temporaryAttachments[0].fileName, 'test.png')
+
+        request_attachment = self.jira.servicedesk_attachment(request.id, tmp_attachment, is_public=False,
+                                                              comment='Comment text')
+
+        self.jira.delete_issue(request.id)
+
+        self.assertEqual(request_attachment.comment.body, 'Comment text\n\n!test.png|thumbnail!')
+        self.assertEqual(request_attachment.attachments[0].filename, 'test.png')
+        self.assertGreater(request_attachment.attachments[0].size, 0)
 
     def test_attach_temporary_file(self):
-        pass
+        service_desks = self.jira.service_desks()
+        self.assertGreater(len(service_desks), 0)
+
+        tmp_attachment = self.jira.attach_temporary_file(service_desks[0].id, open(TEST_ICON_PATH, 'rb'), "test.png")
+
+        self.assertEqual(len(tmp_attachment.temporaryAttachments), 1)
+        self.assertEqual(tmp_attachment.temporaryAttachments[0].fileName, 'test.png')
 
     def test_create_customer_request(self):
         try:

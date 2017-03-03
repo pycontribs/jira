@@ -65,6 +65,8 @@ from jira.resources import Priority
 from jira.resources import Project
 from jira.resources import RemoteLink
 from jira.resources import Request
+from jira.resources import RequestAttachment
+from jira.resources import RequestTemporaryAttachment
 from jira.resources import RequestType
 from jira.resources import Resolution
 from jira.resources import Resource
@@ -2805,7 +2807,7 @@ class JIRA(object):
         :return Organization
         """
         url = self._options['server'] + '/rest/servicedeskapi/organization'
-        headers = {'X-ExperimentalApi': 'opt-in'}
+        headers = CaseInsensitiveDict({'X-ExperimentalApi': 'opt-in'})
         result = self._session.post(url, headers=headers, data=json.dumps({'name': name}))
         if result.status_code != 201:
             raise JIRAError(result.status_code, request=result)
@@ -2818,7 +2820,7 @@ class JIRA(object):
         :return boolean
         """
         url = self._options['server'] + '/rest/servicedeskapi/organization/%i' % int(organization_id)
-        headers = {'X-ExperimentalApi': 'opt-in'}
+        headers = CaseInsensitiveDict({'X-ExperimentalApi': 'opt-in'})
         result = self._session.delete(url, headers=headers)
         if result.status_code != 204:
             raise JIRAError(result.status_code, request=result)
@@ -2863,7 +2865,7 @@ class JIRA(object):
         :return boolean
         """
         url = self._options['server'] + '/rest/servicedeskapi/organization/%i/user' % int(organization_id)
-        headers = {'X-ExperimentalApi': 'opt-in'}
+        headers = CaseInsensitiveDict({'X-ExperimentalApi': 'opt-in'})
         params = {}
         if isinstance(usernames, list):
             params['usernames'] = usernames
@@ -2882,7 +2884,7 @@ class JIRA(object):
         :return boolean
         """
         url = self._options['server'] + '/rest/servicedeskapi/organization/%i/user' % int(organization_id)
-        headers = {'X-ExperimentalApi': 'opt-in'}
+        headers = CaseInsensitiveDict({'X-ExperimentalApi': 'opt-in'})
         params = {}
         if isinstance(usernames, list):
             params['usernames'] = usernames
@@ -2967,12 +2969,12 @@ class JIRA(object):
             fields['requestTypeId'] = self.request_type_by_name(fields['serviceDeskId'], fields['requestTypeId']).id
 
         url = self._options['server'] + '/rest/servicedeskapi/request'
-        headers = {'X-ExperimentalApi': 'opt-in'}
-        r = self._session.post(url, headers=headers, data=json.dumps(fields))
+        headers = CaseInsensitiveDict({'X-ExperimentalApi': 'opt-in'})
+        result = self._session.post(url, headers=headers, data=json.dumps(fields))
 
-        raw_issue_json = json_loads(r)
+        raw_issue_json = json_loads(result)
         if 'issueKey' not in raw_issue_json:
-            raise JIRAError(r.status_code, request=r)
+            raise JIRAError(result.status_code, request=result)
         if prefetch:
             return self.issue(raw_issue_json['issueKey'])
         else:
@@ -3006,12 +3008,12 @@ class JIRA(object):
             fields['requestTypeId'] = self.request_type_by_name(fields['serviceDeskId'], fields['requestTypeId']).id
 
         url = self._options['server'] + '/rest/servicedeskapi/request'
-        headers = {'X-ExperimentalApi': 'opt-in'}
-        r = self._session.post(url, headers=headers, data=json.dumps(fields))
+        headers = CaseInsensitiveDict({'X-ExperimentalApi': 'opt-in'})
+        result = self._session.post(url, headers=headers, data=json.dumps(fields))
 
-        raw_issue_json = json_loads(r)
+        raw_issue_json = json_loads(result)
         if 'issueId' not in raw_issue_json:
-            raise JIRAError(r.status_code, request=r)
+            raise JIRAError(result.status_code, request=result)
         if prefetch:
             return self.request(raw_issue_json['issueId'])
         else:
@@ -3045,6 +3047,34 @@ class JIRA(object):
                              request_type_id=None,
                              expand=None,
                              start=0, limit=50):
+        """Returns all customer requests for the user that is executing the query.
+
+        :param search_term: (string) Filters results to customer requests where the issue summary matches the
+        searchTerm. You can use wildcards in the searchTerm.
+        :param request_ownership: (string) Filters results to customer requests where the user is the creator
+        and/or participant:
+            - OWNED_REQUESTS - Only return customer requests where the user is the creator.
+            - PARTICIPATED_REQUESTS - Only return customer requests where the user is a participant.
+            - ALL_REQUESTS - Return customer requests where the user is the creator or a participant.
+        :param request_status: (string) Filters results to customer requests that are resolved, unresolved,
+        or either of the two:
+            - CLOSED_REQUESTS - Only return customer requests that are resolved.
+            - OPEN_REQUESTS - Only return customer requests that are unresolved.
+            - ALL_REQUESTS - Returns customer requests that are either resolved or unresolved.
+        :param service_desk_id: (int) Filters results to customer requests from a specific service desk.
+        :param request_type_id: (int) Filters results to customer requests of a specific request type.
+        You must also specify the serviceDeskID for the service desk that the request type belongs to.
+        :param expand: (string) This is a multi-value parameter indicating which properties of the customer request
+        to expand:
+            - serviceDesk - Return additional details for each service desk in the response.
+            - requestType - Return additional details for each request type in the response.
+            - participant - Return the participant details, if any, for each customer request in the response.
+            - sla - Return the SLA information on the given request.
+            - status - Return the status transitions, in chronological order, for each customer request in the response.
+        :param start: (int) The starting index of the returned objects. Base index: 0.
+        :param limit: (int) The maximum number of items to return per page. Default: 50.
+        :return: list of Request resources
+        """
         params = {'start': start, 'limit': limit}
         if isinstance(search_term, string_types):
             params['searchTerm'] = search_term
@@ -3064,6 +3094,67 @@ class JIRA(object):
                                  None,
                                  params=params,
                                  base=base)
+
+    def servicedesk_attachment(self, request_id, attachment, is_public=True, comment=None):
+        """Add attachment (from RequestTemporaryAttachment) to request
+
+        :param request_id: request ID or KEY
+        :param attachment: RequestTemporaryAttachment
+        :param is_public: public or internal comment
+        :param comment: comment text
+        :return: RequestAttachment
+        """
+        url = self._options['server'] + '/rest/servicedeskapi/request/%s/attachment' % str(request_id)
+        headers = CaseInsensitiveDict({'X-ExperimentalApi': 'opt-in'})
+        params = {
+            'temporaryAttachmentIds': [attachment.temporaryAttachments[0].temporaryAttachmentId],
+            'public': is_public,
+        }
+        if comment is not None:
+            params['additionalComment'] = {
+                'body': comment
+            }
+
+        result = self._session.post(url, headers=headers, data=json.dumps(params))
+
+        raw_json = json_loads(result)
+        if result.status_code != 201:
+            raise JIRAError(result.status_code, request=result)
+        return RequestAttachment(self._options, self._session, raw=raw_json)
+
+    def attach_temporary_file(self, service_desk_id, attachment, filename=None):
+        """Create temporary attachment file
+
+        :param service_desk_id: servicedesk ID
+        :param attachment: file
+        :param filename: optional file name
+        :return: RequestTemporaryAttachment
+        """
+        if isinstance(attachment, string_types):
+            attachment = open(attachment, "rb")
+        elif hasattr(attachment, 'read') and hasattr(attachment, 'mode') and attachment.mode != 'rb':
+            logging.warning("%s was not opened in 'rb' mode, attaching file may fail." % attachment.name)
+
+        url = self._options['server'] + '/rest/servicedeskapi/servicedesk/%i/attachTemporaryFile' % int(service_desk_id)
+
+        fname = filename
+        if not fname:
+            fname = os.path.basename(attachment.name)
+
+        def file_stream():
+            return MultipartEncoder(fields={'file': (fname, attachment, 'application/octet-stream')})
+        m = file_stream()
+
+        headers = CaseInsensitiveDict({
+            'content-type': m.content_type,
+            'X-Atlassian-Token': 'nocheck',
+            'X-ExperimentalApi': 'opt-in'
+        })
+        result = self._session.post(url, data=m, headers=headers, retry_data=file_stream)
+
+        if result.status_code != 201:
+            raise JIRAError(result.status_code, request=result)
+        return RequestTemporaryAttachment(self._options, self._session, raw=json_loads(result))
 
     def request_types(self, service_desk, start=0, limit=50):
         """Returns all request types from a service desk, for a given service desk Id.
@@ -3096,6 +3187,12 @@ class JIRA(object):
         return request_type
 
     def request_type_by_name(self, service_desk_id, name):
+        """Return request type id by it name
+
+        :param service_desk_id: servicedesk ID
+        :param name: request type name
+        :return: RequestType
+        """
         request_types = self.request_types(service_desk_id)
         try:
             request_type = [rt for rt in request_types if rt.name == name][0]

@@ -54,6 +54,8 @@ __all__ = (
     'ServiceDeskInfo',
     'Organization',
     'ServiceDesk',
+    'RequestAttachment',
+    'RequestTemporaryAttachment',
     'RequestType'
 )
 
@@ -865,6 +867,25 @@ class ServiceDesk(Resource):
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(self, 'servicedesk/{0}', options, session, '{server}/rest/servicedeskapi/{path}')
+        if raw:
+            self._parse_raw(raw)
+
+
+class RequestTemporaryAttachment(Resource):
+    """A Service Desk temporary attachment."""
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(self, 'request/{0}/attachment', options, session, '{server}/rest/servicedeskapi/{path}')
+        if raw:
+            self._parse_raw(raw)
+
+
+class RequestAttachment(Resource):
+    """A Service Desk attachment."""
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(self, 'servicedesk/{0}/attachTemporaryFile', options, session,
+                          '{server}/rest/servicedeskapi/{path}')
         if raw:
             self._parse_raw(raw)
 
