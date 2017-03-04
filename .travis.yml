@@ -12,15 +12,15 @@ python:
 install:
 - pip -q --log dist/pip.log install --upgrade pip setuptools tox-travis py wheel
 - python setup.py sdist bdist_wheel install
-- pip install ./dist/jira-*.whl
+- pip install ./dist/*.whl
 - pip --version
 script:
 - export PACKAGE_NAME=$(python setup.py --name)
 - export PACKAGE_VERSION=$(python setup.py --version)
 - python setup.py --version
-- tox --installpkg ./dist/jira-*.whl --travis-after
+- tox --installpkg ./dist/*.whl --travis-after
 # validates that the build source distribution is installable using the old easy_install
-- pip uninstall -y jira && easy_install ./dist/jira-*.tar.gz
+- pip uninstall -y $PACKAGE_NAME && easy_install ./dist/$PACKAGE_NAME-*.tar.gz
 after_success:
 - coveralls
 - bash <(curl -s https://codecov.io/bash)
@@ -29,8 +29,6 @@ notifications:
   email:
   - pycontribs@googlegroups.com
   - sorin.sbarnea@gmail.com
-deploy:
-
 deploy:
 - provider: releases
   api_key:

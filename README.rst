@@ -8,11 +8,11 @@ JIRA Python Library
 .. image:: https://img.shields.io/pypi/l/jira.svg
         :target: https://pypi.python.org/pypi/jira/
 
-.. image:: https://img.shields.io/pypi/dm/jira.svg
+.. image:: https://img.shields.io/pypi/wheel/jira.svg
         :target: https://pypi.python.org/pypi/jira/
 
-.. image:: https://img.shields.io/pypi/wheel/Django.svg
-        :target: https://pypi.python.org/pypi/jira/
+.. image:: https://img.shields.io/codeclimate/issues/github/pycontribs/jira.svg
+        :target: https://github.com/pycontribs/jira/issues
 
 ------------
 
@@ -21,9 +21,6 @@ JIRA Python Library
 
 .. image:: https://api.travis-ci.org/pycontribs/jira.svg?branch=master
         :target: https://travis-ci.org/pycontribs/jira
-
-.. image:: https://img.shields.io/pypi/status/jira.svg
-        :target: https://pypi.python.org/pypi/jira/
 
 .. image:: https://codecov.io/gh/pycontribs/jira/branch/develop/graph/badge.svg
         :target: https://codecov.io/gh/pycontribs/jira
@@ -98,11 +95,10 @@ Credits
 
 In additions to all the contributors we would like to thank to these companies:
 
-* Atlassian_ for developing such a powerful issue tracker and for providing a free on-demand JIRA_ instance that we can use for continous integration testing.
+* Atlassian_ for developing such a powerful issue tracker and for providing a free on-demand JIRA_ instance that we can use for continuous integration testing.
 * JetBrains_ for providing us with free licenses of PyCharm_
-* Travis_ for hosting our continous integration
+* Travis_ for hosting our continuous integration
 * Navicat_ for providing us free licenses of their powerful database client GUI tools.
-* Citrix_ for providing maintenance of the library.
 
 .. _Atlassian: https://www.atlassian.com/
 .. _JIRA: https://pycontribs.atlassian.net
@@ -110,7 +106,6 @@ In additions to all the contributors we would like to thank to these companies:
 .. _PyCharm: http://www.jetbrains.com/pycharm/
 .. _Travis: https://travis-ci.org/
 .. _navicat: https://www.navicat.com/
-.. _Citrix: http://www.citrix.com/
 
 .. image:: https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?container=focus&refresh=3600&resize_h=50&url=https://www.atlassian.com/dms/wac/images/press/Atlassian-logos/logoAtlassianPNG.png
    :target: http://www.atlassian.com
@@ -120,6 +115,3 @@ In additions to all the contributors we would like to thank to these companies:
 
 .. image:: https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?container=focus&refresh=3600&resize_h=50&url=https://upload.wikimedia.org/wikipedia/en/9/90/PremiumSoft_Navicat_Premium_Logo.png
     :target: http://www.navicat.com/
-
-.. image:: https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?container=focus&refresh=3600&resize_h=50&url=https://www.citrix.com/content/dam/citrix/en_us/images/logos/citrix/citrix-logo-black.jpg
-    :target: http://www.citrix.com/
