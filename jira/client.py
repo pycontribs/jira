@@ -2715,7 +2715,7 @@ class JIRA(object):
         return self._session.post(
             url, headers=CaseInsensitiveDict({'content-type': 'application/x-www-form-urlencoded'}), data=payload)
 
-    def create_project(self, key, name=None, assignee=None, type="Software", template_name=None):
+    def create_project(self, key, name=None, assignee=None, type="Basic software development", template_name=None):
         """Key is mandatory and has to match JIRA project key requirements, usually only 2-10 uppercase characters.
 
         If name is not specified it will use the key value.
