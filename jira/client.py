@@ -111,16 +111,6 @@ def translate_resource_args(func):
     return wrapper
 
 
-def _get_template_list(data):
-    template_list = []
-    if 'projectTemplates' in data:
-        template_list = data['projectTemplates']
-    elif 'projectTemplatesGroupedByType' in data:
-        for group in data['projectTemplatesGroupedByType']:
-            template_list.extend(group['projectTemplates'])
-    return template_list
-
-
 def _field_worker(fields=None, **fieldargs):
     if fields is not None:
         return {'fields': fields}
@@ -1541,6 +1531,21 @@ class JIRA(object):
         """
         return self._find_for_resource(Project, id)
 
+    def project_templates(self):
+        """Returns a list of available project templates."""
+
+        url = self._options['server'] + '/rest/project-templates/latest/templates'
+
+        r = self._session.get(url)
+        data = json_loads(r)
+        template_list = []
+        if 'projectTemplates' in data:
+            template_list = data['projectTemplates']
+        elif 'projectTemplatesGroupedByType' in data:
+            for group in data['projectTemplatesGroupedByType']:
+                template_list.extend(group['projectTemplates'])
+        return template_list
+
     # non-resource
     @translate_resource_args
     def project_avatars(self, project):
@@ -2567,7 +2572,7 @@ class JIRA(object):
         return self._session.post(
             url, headers=CaseInsensitiveDict({'content-type': 'application/x-www-form-urlencoded'}), data=payload)
 
-    def create_project(self, key, name=None, assignee=None, type="Software", template_name=None):
+    def create_project(self, key, name=None, assignee=None, type="Basic software development", template_name=None):
         """Key is mandatory and has to match JIRA project key requirements, usually only 2-10 uppercase characters.
 
         If name is not specified it will use the key value.
@@ -2580,20 +2585,23 @@ class JIRA(object):
             assignee = self.current_user()
         if name is None:
             name = key
-        url = self._options['server'] + \
-            '/rest/project-templates/latest/templates'
-
-        r = self._session.get(url)
-        j = json_loads(r)
 
         # https://confluence.atlassian.com/jirakb/creating-a-project-via-rest-based-on-jira-default-schemes-744325852.html
-        template_key = 'com.atlassian.jira-legacy-project-templates:jira-blank-item'
-        templates = []
-        for template in _get_template_list(j):
-            templates.append(template['name'])
-            if template['name'] in ['JIRA Classic', 'JIRA Default Schemes', 'Basic software development', template_name]:
-                template_key = template['projectTemplateModuleCompleteKey']
-                break
+        jira_templates = self.project_templates()
+        template_key = None
+        if not template_name:
+            template_key = jira_templates[0]['projectTemplateModuleCompleteKey']
+            logging.debug("Template name not specified so we will use first template: '%s'" % jira_templates[0]['name'])
+            # 'com.pyxis.greenhopper.jira:basic-software-development-template'
+        else:
+
+            for template in jira_templates:
+                if template_name == template['name']:
+                    template_key = template['projectTemplateModuleCompleteKey']
+                    break
+            if not template_key:
+                templates = ', '.join([i['name'] for i in jira_templates])
+                raise JIRAError("template_name parameter is not among available JIRA templates list: %s" % templates)
 
         payload = {'name': name,
                    'key': key,
@@ -2601,17 +2609,16 @@ class JIRA(object):
                    # 'projectTemplate': 'com.atlassian.jira-core-project-templates:jira-issuetracking',
                    # 'permissionScheme': '',
                    'projectTemplateWebItemKey': template_key,
-                   'projectTemplateModuleKey': template_key,
+                   #    'projectTemplateModuleKey': template_key,
                    'lead': assignee,
                    # 'assigneeType': '2',
                    }
 
-        if self._version[0] > 6:
-            # JIRA versions before 7 will throw an error if we specify type parameter
-            payload['type'] = type
-
         headers = CaseInsensitiveDict(
             {'Content-Type': 'application/x-www-form-urlencoded'})
+
+        url = self._options['server'] + \
+            '/rest/project-templates/latest/templates'
 
         r = self._session.post(url, data=payload, headers=headers)
 

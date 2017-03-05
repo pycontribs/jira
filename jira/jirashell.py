@@ -256,6 +256,7 @@ def main():
     ipshell("*** JIRA shell active; client is in 'jira'."
             ' Press Ctrl-D to exit.')
 
+
 if __name__ == '__main__':
     status = main()
     exit(status)
