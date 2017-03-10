@@ -803,7 +803,7 @@ class JIRA(object):
         result = {}
         for user in r['users']['items']:
             result[user['name']] = {'fullname': user['displayName'], 'email': user.get('emailAddress', 'hidden'),
-                                    'active': user['active']}
+                                    'active': user['active'], 'key': user['key']}
         return result
 
     def add_group(self, groupname):
