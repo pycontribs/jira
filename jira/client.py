@@ -3095,6 +3095,28 @@ class JIRA(object):
                                  params=params,
                                  base=base)
 
+    def request_comments(self, issue, public=None, internal=None, start=0, limit=50):
+        """Returns all comments on a customer request, for a given request Id/key.
+
+        :param issue: ID or key of the customer request (issue)
+        :param public: Specifies whether to return public comments or not. Default: True.
+        :param internal: Specifies whether to return internal comments or not. Default: true.
+        :param start: (int) The starting index of the returned objects. Base index: 0.
+        :param limit: (int) The maximum number of items to return per page. Default: 50.
+        :return:
+        """
+        params = {'start': start, 'limit': limit}
+        if isinstance(public, bool):
+            params['public'] = public
+        if isinstance(internal, bool):
+            params['internal'] = internal
+        base = self._options['server'] + '/rest/servicedeskapi/request/%s/comment' % str(issue)
+        return self._fetch_pages(Comment,
+                                 'values',
+                                 None,
+                                 params=params,
+                                 base=base)
+
     def servicedesk_attachment(self, request_id, attachment, is_public=True, comment=None):
         """Add attachment (from RequestTemporaryAttachment) to request
 

@@ -2487,9 +2487,9 @@ class ServiceDeskTests(unittest.TestCase):
                                                 service_desk_id=int(service_desks[0].id),
                                                 request_type_id=int(request_types[0].id))
         count = 0
-        requests = (request1.id, request2.id)
+        requests_list = (request1.id, request2.id)
         for i in result:
-            if i.id in requests:
+            if i.id in requests_list:
                 count += 1
 
         self.jira.delete_issue(request1.id)
@@ -2497,14 +2497,44 @@ class ServiceDeskTests(unittest.TestCase):
 
         self.assertEqual(count, 0)
 
-    def test_create_request_comment(self):
-        pass
-
     def test_request_comments(self):
-        pass
+        service_desks = self.jira.service_desks()
+        self.assertGreater(len(service_desks), 0)
 
-    def test_request_comment_by_id(self):
-        pass
+        request_types = self.jira.request_types(service_desks[0].id)
+        self.assertGreater(len(request_types), 0)
+
+        fields = {
+            "serviceDeskId": int(service_desks[0].id),
+            "requestTypeId": int(request_types[0].id),
+            "raiseOnBehalfOf": self.test_manager.CI_JIRA_USER,
+            "requestFieldValues": {
+                "summary": "Request summary",
+                "description": "Request description"
+            }
+        }
+        request = self.jira.create_request(fields, prefetch=False)
+
+        self.jira.add_comment(request.id, "Public comment 1", is_internal=False)
+        self.jira.add_comment(request.id, "Internal comment 1", is_internal=True)
+        self.jira.add_comment(request.id, "Public comment 2", is_internal=False)
+        self.jira.add_comment(request.id, "Public comment 3", is_internal=False)
+
+        public_comments = self.jira.request_comments(request.id, public=True, internal=False)
+        internal_comments = self.jira.request_comments(request.id, public=False, internal=True)
+        all_comments = self.jira.request_comments(request.id)
+
+        self.assertEqual(len(public_comments), 3)
+        self.assertEqual(len(internal_comments), 1)
+        self.assertEqual(len(all_comments), 4)
+
+        for comment in public_comments:
+            self.assertEqual(comment.public, True)
+
+        for comment in internal_comments:
+            self.assertEqual(comment.public, False)
+
+        self.jira.delete_issue(request.id)
 
     def test_create_attachment(self):
         service_desks = self.jira.service_desks()
