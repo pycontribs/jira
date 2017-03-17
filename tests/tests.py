@@ -2574,7 +2574,6 @@ class ServiceDeskTests(unittest.TestCase):
 
         request_attachment = self.jira.servicedesk_attachment(request.id, tmp_attachment, is_public=False,
                                                               comment='Comment text')
-
         self.jira.delete_issue(request.id)
 
         self.assertEqual(request_attachment.comment.body, 'Comment text\n\n!test.png|thumbnail!')
