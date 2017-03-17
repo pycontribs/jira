@@ -1734,8 +1734,9 @@ class UserTests(unittest.TestCase):
         user = self.jira.user(self.test_manager.CI_JIRA_ADMIN)
 
         self.assertEqual(user.name, self.test_manager.CI_JIRA_ADMIN)
-        # email now is: ci-admin@ssbarnea.33mail.com, so regex doesn't work
-        #self.assertRegex(user.emailAddress, '.*@example.com')
+        """email now is: ci-admin@ssbarnea.33mail.com, so regex doesn't work
+        self.assertRegex(user.emailAddress, '.*@example.com')
+        """
 
     @pytest.mark.xfail(reason='query returns empty list')
     def test_search_assignable_users_for_projects(self):
