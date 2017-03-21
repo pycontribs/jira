@@ -2980,13 +2980,23 @@ class JIRA(object):
         if endDate:
             payload['endDate'] = endDate
         if state:
-            if self._options['agile_rest_path'] != GreenHopperResource.GREENHOPPER_REST_PATH:
-                raise NotImplementedError('Public JIRA API does not support state update')
+            if self._options['agile_rest_path'] == GreenHopperResource.AGILE_EXPERIMENTAL_REST_PATH:
+                raise NotImplementedError('Experimental JIRA API does not support state update')
             payload['state'] = state
 
         url = self._get_url('sprint/%s' % id, base=self.AGILE_BASE_URL)
-        r = self._session.put(
-            url, data=json.dumps(payload))
+
+        if self._options['agile_rest_path'] == GreenHopperResource.GREENHOPPER_REST_PATH:
+            r = self._session.put(url, data=json.dumps(payload))
+
+        else:
+            try:
+                r = self._session.post(url, data=json.dumps(payload))
+            except JIRAError as e:
+                if e.status_code == 404:
+                    warnings.warn('Status code 404 may mean, that too old JIRA Agile version is installed.'
+                                  ' At least version 6.7.10 is required.')
+                raise
 
         return json_loads(r)
 
