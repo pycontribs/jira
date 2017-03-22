@@ -798,6 +798,8 @@ class IssueTests(unittest.TestCase):
             'priority': {
                 'name': 'Major'}}]
         issues = self.jira.create_issues(field_list=field_list)
+        self.assertEqual(len(issues), 2)
+        self.assertIsNotNone(issues[0]['issue'], "the first issue has not been created")
         self.assertEqual(issues[0]['issue'].fields.summary,
                          'Issue created via bulk create #1')
         self.assertEqual(issues[0]['issue'].fields.description,
@@ -805,6 +807,7 @@ class IssueTests(unittest.TestCase):
         self.assertEqual(issues[0]['issue'].fields.issuetype.name, 'Bug')
         self.assertEqual(issues[0]['issue'].fields.project.key, self.project_b)
         self.assertEqual(issues[0]['issue'].fields.priority.name, 'Major')
+        self.assertIsNotNone(issues[1]['issue'], "the second issue has not been created")
         self.assertEqual(issues[1]['issue'].fields.summary,
                          'Issue created via bulk create #2')
         self.assertEqual(issues[1]['issue'].fields.description,

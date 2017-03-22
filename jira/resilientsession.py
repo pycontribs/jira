@@ -44,7 +44,8 @@ def raise_on_error(r, verb='???', **kwargs):
                         error = errorMessages[0]
                     else:
                         error = errorMessages
-                elif 'errors' in response and len(response['errors']) > 0:
+                # Catching only 'errors' that are dict. See https://github.com/pycontribs/jira/issues/350
+                elif 'errors' in response and len(response['errors']) > 0 and isinstance(response['errors'], dict):
                     # JIRA 6.x error messages are found in this array.
                     error_list = response['errors'].values()
                     error = ", ".join(error_list)
