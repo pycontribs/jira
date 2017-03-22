@@ -2578,7 +2578,7 @@ class ServiceDeskTests(unittest.TestCase):
 
         self.assertEqual(request_attachment.comment.body, 'Comment text\n\n!test.png|thumbnail!')
 
-        if request_attachment.attachments.values:
+        if hasattr(request_attachment.attachments, 'values'):
             # For Jira Servicedesk Cloud
             self.assertGreater(len(request_attachment.attachments.values), 0)
             self.assertEqual(request_attachment.attachments.values[0].filename, 'test.png')
