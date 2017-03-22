@@ -184,6 +184,7 @@ class JiraTestManager(object):
                 else:
                     self.CI_JIRA_USER_PASSWORD = 'sd4s3dgec5fhg4tfsds3434'
 
+                self.CI_JIRA_ADMIN_EMAIL_DOMAINE_NAME = os.environ.get('CI_JIRA_ADMIN_EMAIL_DOMAINE_NAME', 'ssbarnea.33mail.com')
                 self.CI_JIRA_ISSUE = os.environ.get('CI_JIRA_ISSUE', 'Bug')
 
                 if OAUTH:
@@ -1689,7 +1690,7 @@ class UserTests(unittest.TestCase):
     def test_user(self):
         user = self.jira.user(self.test_manager.CI_JIRA_ADMIN)
         self.assertEqual(user.name, self.test_manager.CI_JIRA_ADMIN)
-        self.assertRegex(user.emailAddress, '.*@example.com')
+        self.assertRegex(user.emailAddress, '.*@%s' % (self.test_manager.CI_JIRA_ADMIN_EMAIL_DOMAINE_NAME))
 
     @pytest.mark.xfail(reason='query returns empty list')
     def test_search_assignable_users_for_projects(self):
@@ -1910,6 +1911,8 @@ class VersionTests(unittest.TestCase):
 @flaky
 class OtherTests(unittest.TestCase):
 
+    @unittest.skip('Skipping until decided whether 403 is a valid response status. '
+                   'See https://github.com/pycontribs/jira/issues/366')
     def test_session_invalid_login(self):
         try:
             JIRA('https://support.atlassian.com',
@@ -1936,8 +1939,8 @@ class SessionTests(unittest.TestCase):
         self.assertIsNotNone(user.raw['session'])
 
     def test_session_with_no_logged_in_user_raises(self):
-        anon_jira = JIRA('https://support.atlassian.com', logging=False)
-        self.assertRaises(JIRAError, anon_jira.session)
+        with self.assertRaises(JIRAError):
+            JIRA('https://support.atlassian.com', logging=False)
 
     # @pytest.mark.skipif(platform.python_version() < '3', reason='Does not work with Python 2')
     # @not_on_custom_jira_instance  # takes way too long
