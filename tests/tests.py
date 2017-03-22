@@ -2577,8 +2577,17 @@ class ServiceDeskTests(unittest.TestCase):
         self.jira.delete_issue(request.id)
 
         self.assertEqual(request_attachment.comment.body, 'Comment text\n\n!test.png|thumbnail!')
-        self.assertEqual(request_attachment.attachments[0].filename, 'test.png')
-        self.assertGreater(request_attachment.attachments[0].size, 0)
+
+        if request_attachment.attachments.values:
+            # For Jira Servicedesk Cloud
+            self.assertGreater(len(request_attachment.attachments.values), 0)
+            self.assertEqual(request_attachment.attachments.values[0].filename, 'test.png')
+            self.assertGreater(request_attachment.attachments.values[0].size, 0)
+        else:
+            # For Jira Servicedesk Server
+            self.assertGreater(len(request_attachment.attachments), 0)
+            self.assertEqual(request_attachment.attachments[0].filename, 'test.png')
+            self.assertGreater(request_attachment.attachments[0].size, 0)
 
     def test_attach_temporary_file(self):
         service_desks = self.jira.service_desks()
