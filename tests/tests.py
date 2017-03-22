@@ -1172,11 +1172,10 @@ class IssueTests(unittest.TestCase):
         transitions = []
         for issue in [self.issue_2, self.jira.issue(self.issue_2)]:
             transitions = self.jira.transitions(issue)
-            self.assertTrue(transitions)
-            self.assertTrue('id' in transitions[0])
-            self.assertTrue('name' in transitions[0])
+            self.assertTrue(transitions, msg="Expecting at least one transition but had none for issue %s" % issue)
+            self.assertIn('id', transitions[0])
+            self.assertIn('name', transitions[0])
 
-        self.assertTrue(transitions, msg="Expecting at least one transition")
         # we test getting a single transition
         transition = self.jira.transitions(self.issue_2, transitions[0]['id'])[0]
         self.assertDictEqual(transition, transitions[0])
@@ -1184,7 +1183,7 @@ class IssueTests(unittest.TestCase):
         # we test the expand of fields
         transition = self.jira.transitions(self.issue_2, transitions[0]['id'],
                                            expand='transitions.fields')[0]
-        self.assertTrue('fields' in transition)
+        self.assertIn('fields', transition)
 
         # Testing of transition with field assignment is disabled now because default workflows do not have it.
 
