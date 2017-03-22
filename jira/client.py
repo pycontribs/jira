@@ -967,7 +967,6 @@ class JIRA(object):
                 raw_issue_json = json.loads(je.response.text)
             else:
                 raise
-        print(raw_issue_json)
         issue_list = []
         errors = {}
         for error in raw_issue_json['errors']:
