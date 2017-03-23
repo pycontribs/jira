@@ -2528,10 +2528,10 @@ class ServiceDeskTests(unittest.TestCase):
         }
         request = self.jira.create_request(fields, prefetch=False)
 
-        self.jira.add_comment(request.id, "Public comment 1", is_internal=False)
-        self.jira.add_comment(request.id, "Internal comment 1", is_internal=True)
-        self.jira.add_comment(request.id, "Public comment 2", is_internal=False)
-        self.jira.add_comment(request.id, "Public comment 3", is_internal=False)
+        self.jira.add_comment(request.id, "Public comment #1", is_internal=False)
+        self.jira.add_comment(request.id, "Internal comment #1", is_internal=True)
+        self.jira.add_comment(request.id, "Public comment #2", is_internal=False)
+        self.jira.add_comment(request.id, "Public comment #3", is_internal=False)
         sleep(1)
         public_comments = self.jira.request_comments(request.id, public=True, internal=False)
         internal_comments = self.jira.request_comments(request.id, public=False, internal=True)
