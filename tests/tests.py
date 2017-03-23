@@ -184,7 +184,7 @@ class JiraTestManager(object):
                 else:
                     self.CI_JIRA_USER_PASSWORD = 'sd4s3dgec5fhg4tfsds3434'
 
-                self.CI_JIRA_ADMIN_EMAIL_DOMAINE_NAME = os.environ.get('CI_JIRA_ADMIN_EMAIL_DOMAINE_NAME', 'ssbarnea.33mail.com')
+                self.CI_JIRA_ADMIN_EMAIL_DOMAIN_NAME = os.environ.get('CI_JIRA_ADMIN_EMAIL_DOMAIN_NAME', 'ssbarnea.33mail.com')
                 self.CI_JIRA_ISSUE = os.environ.get('CI_JIRA_ISSUE', 'Bug')
 
                 if OAUTH:
@@ -1689,7 +1689,7 @@ class UserTests(unittest.TestCase):
     def test_user(self):
         user = self.jira.user(self.test_manager.CI_JIRA_ADMIN)
         self.assertEqual(user.name, self.test_manager.CI_JIRA_ADMIN)
-        self.assertRegex(user.emailAddress, '.*@%s' % (self.test_manager.CI_JIRA_ADMIN_EMAIL_DOMAINE_NAME))
+        self.assertRegex(user.emailAddress, '.*@%s' % (self.test_manager.CI_JIRA_ADMIN_EMAIL_DOMAIN_NAME))
 
     @pytest.mark.xfail(reason='query returns empty list')
     def test_search_assignable_users_for_projects(self):
