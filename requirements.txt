@@ -11,3 +11,4 @@ requests_toolbelt
 setuptools>=20.10.1
 six>=1.10.0
 defusedxml
+ipython>=4.0.0
