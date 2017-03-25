@@ -110,6 +110,26 @@ def get_unique_project_name():
     return jid
 
 
+def resilient_jira_call(obj, method_name, parameters, max_tries=5, wait_time_before_retry=1):
+    attempts = 1
+    while True:
+        try:
+            result = getattr(obj, method_name)(parameters)
+            return result
+        except JIRAError as e:
+            if attempts < max_tries:
+                logging.warning("Calling %s.%s(%s) failed on attempt %s/%s" % obj, method_name, p, attempts,
+                                max_tries)
+                attempts += 1
+                pass
+            else:
+                logging.warning(
+                    "Calling %s.%s(%s) failed on attempt %s/%s => last attempt, raising exception" % obj,
+                    method_name, p, attempts, max_tries)
+                raise
+        sleep(wait_time_before_retry)
+
+
 class Singleton(type):
 
     def __init__(cls, name, bases, dict):
@@ -2037,7 +2057,7 @@ class UserAdministrationTests(unittest.TestCase):
         except JIRAError:
             pass
 
-        result = self.jira.remove_group(self.test_groupname)
+        result = resilient_jira_call(self.jira, 'remove_group', [self.test_groupname])
         assert result, True
 
         x = -1
