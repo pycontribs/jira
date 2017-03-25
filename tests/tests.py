@@ -1170,6 +1170,7 @@ class IssueTests(unittest.TestCase):
     def test_transitioning(self):
         # we check with both issue-as-string or issue-as-object
         transitions = []
+        # Creating issue instead of using existing one to prevent https://github.com/pycontribs/jira/issues/366
         issue_obj = self.jira.create_issue(project=self.project_b,
                                            summary='Test issue for transitions', description='Transitions testing',
                                            issuetype=self.test_manager.CI_JIRA_ISSUE)
@@ -1187,6 +1188,7 @@ class IssueTests(unittest.TestCase):
         transition = self.jira.transitions(issue_obj.key, transitions[0]['id'],
                                            expand='transitions.fields')[0]
         self.assertIn('fields', transition)
+        issue_obj.delete()
 
         # Testing of transition with field assignment is disabled now because default workflows do not have it.
 
