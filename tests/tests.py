@@ -116,16 +116,16 @@ def resilient_jira_call(obj, method_name, parameters, max_tries=5, wait_time_bef
         try:
             result = getattr(obj, method_name)(parameters)
             return result
-        except JIRAError as e:
+        except JIRAError:
             if attempts < max_tries:
-                logging.warning("Calling %s.%s(%s) failed on attempt %s/%s" % obj, method_name, p, attempts,
+                logging.warning("Calling %s.%s(%s) failed on attempt %s/%s" % obj, method_name, parameters, attempts,
                                 max_tries)
                 attempts += 1
                 pass
             else:
                 logging.warning(
                     "Calling %s.%s(%s) failed on attempt %s/%s => last attempt, raising exception" % obj,
-                    method_name, p, attempts, max_tries)
+                    method_name, parameters, attempts, max_tries)
                 raise
         sleep(wait_time_before_retry)
 
@@ -2054,6 +2054,7 @@ class UserAdministrationTests(unittest.TestCase):
         try:
             self.jira.add_group(self.test_groupname)
             sleep(1)  # avoid 400: https://travis-ci.org/pycontribs/jira/jobs/176539521#L395
+        # TODO: check whether it is really wise to pass on all and any JIRAError regardless of status code...
         except JIRAError:
             pass
 
