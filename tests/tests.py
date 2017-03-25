@@ -1170,18 +1170,21 @@ class IssueTests(unittest.TestCase):
     def test_transitioning(self):
         # we check with both issue-as-string or issue-as-object
         transitions = []
-        for issue in [self.issue_2, self.jira.issue(self.issue_2)]:
+        issue_obj = self.jira.create_issue(project=self.project_b,
+                                           summary='Test issue for transitions', description='Transitions testing',
+                                           issuetype=self.test_manager.CI_JIRA_ISSUE)
+        for issue in [issue_obj, issue_obj.key]:
             transitions = self.jira.transitions(issue)
             self.assertTrue(transitions, msg="Expecting at least one transition but had none for issue %s" % issue)
             self.assertIn('id', transitions[0])
             self.assertIn('name', transitions[0])
 
         # we test getting a single transition
-        transition = self.jira.transitions(self.issue_2, transitions[0]['id'])[0]
+        transition = self.jira.transitions(issue_obj.key, transitions[0]['id'])[0]
         self.assertDictEqual(transition, transitions[0])
 
         # we test the expand of fields
-        transition = self.jira.transitions(self.issue_2, transitions[0]['id'],
+        transition = self.jira.transitions(issue_obj.key, transitions[0]['id'],
                                            expand='transitions.fields')[0]
         self.assertIn('fields', transition)
 
