@@ -111,7 +111,8 @@ def get_unique_project_name():
 
 
 def resilient_jira_call(obj, method_name, parameters, max_tries=5, wait_time_before_retry=1):
-    """
+    """Tries several JIRA calls before giving up on JIRAError to counter JIRA Cloud slowness
+
     Sometimes, the JIRA cloud instance called during the tests reacts too slowly and it does not have time performing
     actions that have been requested. Hence the expected data is not found.
     This methods performs several tries before giving up and raising the returned JIRAError.
