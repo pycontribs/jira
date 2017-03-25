@@ -298,9 +298,11 @@ class JiraTestManager(object):
                 self.jid = get_unique_project_name()
 
                 self.project_a = self.jid + 'A'  # old XSS
+                print('>>>>>>>> Project A is %r' % self.project_a)
                 self.project_a_name = "Test user=%s key=%s A" \
                                       % (getpass.getuser(), self.project_a)
                 self.project_b = self.jid + 'B'  # old BULK
+                print('>>>>>>>> Project B is %r' % self.project_b)
                 self.project_b_name = "Test user=%s key=%s B" \
                                       % (getpass.getuser(), self.project_b)
 
