@@ -111,6 +111,18 @@ def get_unique_project_name():
 
 
 def resilient_jira_call(obj, method_name, parameters, max_tries=5, wait_time_before_retry=1):
+    """
+    Sometimes, the JIRA cloud instance called during the tests reacts too slowly and it does not have time performing
+    actions that have been requested. Hence the expected data is not found.
+    This methods performs several tries before giving up and raising the returned JIRAError.
+
+    :param obj: instance on which to call the method
+    :param method_name: method to be called
+    :param parameters: list of parameters to pass to the method call
+    :param max_tries: max number of retries if call fails
+    :param wait_time_before_retry: wait time between call
+    :return: result of the method call
+    """
     attempts = 1
     while True:
         try:
@@ -2054,7 +2066,7 @@ class UserAdministrationTests(unittest.TestCase):
         try:
             self.jira.add_group(self.test_groupname)
             sleep(1)  # avoid 400: https://travis-ci.org/pycontribs/jira/jobs/176539521#L395
-        # TODO: check whether it is really wise to pass on all and any JIRAError regardless of status code...
+        # TODO(esciara): check whether it is really wise to pass on all and any JIRAError regardless of status code...
         except JIRAError:
             pass
 
