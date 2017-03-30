@@ -50,8 +50,8 @@ if cmd_folder not in sys.path:
     sys.path.insert(0, cmd_folder)
 
 import jira  # noqa
-from jira import Role, Issue, JIRA, JIRAError, Project  # noqa
-from jira.resources import Resource, cls_for_resource   # noqa
+from jira import Role, Issue, JIRA, JIRAError, Project, Webhook  # noqa
+from jira.resources import Resource, cls_for_resource, Webhook   # noqa
 
 TEST_ROOT = os.path.dirname(__file__)
 TEST_ICON_PATH = os.path.join(TEST_ROOT, 'icon.png')
@@ -441,6 +441,8 @@ class ResourceTests(unittest.TestCase):
                 api/latest/project/IMG/role/10002'), Role)
         self.assertEqual(cls_for_resource('http://customized-jira.com/rest/\
                 plugin-resource/4.5/json/getMyObject'), Resource)
+        self.assertEqual(cls_for_resource('http://imaginary-jira.com/rest/\
+                webhooks/1.0/webhook/1'), Webhook)
 
 
 @flaky
@@ -787,8 +789,7 @@ class IssueTests(unittest.TestCase):
                 'name': 'Bug'},
             # 'customfield_10022': 'XSS',
             'priority': {
-                'name': 'Major'}},
-            {
+                'name': 'Major'}}, {
             'project': {
                 'key': self.project_a},
             'issuetype': {
@@ -826,23 +827,23 @@ class IssueTests(unittest.TestCase):
                 'name': 'Bug'},
             # 'customfield_10022': 'XSS',
             'priority': {
-                'name': 'Major'}},
-            {'project': {
+                'name': 'Major'}}, {
+            'project': {
                 'key': self.project_a},
-                'issuetype': {
-                    'name': 'InvalidIssueType'},
-                'summary': 'This issue will not succeed',
-                'description': "Should not be seen.",
-                'priority': {
-                'name': 'Blah'}},
-            {'project': {
+            'issuetype': {
+                'name': 'InvalidIssueType'},
+            'summary': 'This issue will not succeed',
+            'description': "Should not be seen.",
+            'priority': {
+                'name': 'Blah'}}, {
+            'project': {
                 'key': self.project_a},
-                'issuetype': {
-                    'name': 'Bug'},
-                'summary': 'However, this one will.',
-                'description': "Should be seen.",
-                'priority': {
-                    'name': 'Major'}}]
+            'issuetype': {
+                'name': 'Bug'},
+            'summary': 'However, this one will.',
+            'description': "Should be seen.",
+            'priority': {
+                'name': 'Major'}}]
         issues = self.jira.create_issues(field_list=field_list)
         self.assertEqual(issues[0]['issue'].fields.summary,
                          'Issue created via bulk create #1')
