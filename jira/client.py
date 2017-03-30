@@ -433,7 +433,7 @@ class JIRA(object):
             if isinstance(resource, dict):
                 total = resource.get('total')
                 # 'isLast' is the optional key added to responses in JIRA Agile 6.7.6. So far not used in basic JIRA API.
-                is_last = resource.get('isLast', True)
+                is_last = resource.get('isLast', False)
                 start_at_from_response = resource.get('startAt', 0)
                 max_results_from_response = resource.get('maxResults', 1)
             else:
