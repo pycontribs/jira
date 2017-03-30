@@ -579,6 +579,7 @@ class Watchers(Resource):
 
 
 class TimeTracking(Resource):
+
     def __init__(self, options, session, raw=None):
         Resource.__init__(self, 'issue/{0}/worklog/{1}', options, session)
         self.remainingEstimate = None

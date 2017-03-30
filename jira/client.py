@@ -709,6 +709,32 @@ class JIRA(object):
         """
         return self._find_for_resource(Dashboard, id)
 
+    # Dev-status
+
+    def dev_status(self, issue, dataType='repository'):
+        """Access JIRA's internal "dev-status" endpoint
+
+        :param issue: either an actual issue, or an issue id
+        :param dataType: either "repository" or "pullrequest"
+
+        :rtype: dict
+        """
+
+        if isinstance(issue, Issue):
+            issue_id = issue.id
+        else:
+            issue_id = issue
+
+        base = '{server}/rest/{path}'
+        path = 'dev-status/1.0/issue/detail'
+        params = {
+            'issueId': issue_id,
+            'applicationType': 'github',
+            'dataType': dataType
+        }
+
+        return self._get_json(path=path, params=params, base=base)
+
     # Fields
 
     # non-resource
