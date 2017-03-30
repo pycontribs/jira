@@ -343,7 +343,8 @@ class JIRA(object):
             try:
                 self._version = tuple(si['versionNumbers'])
             except Exception as e:
-                logging.error("invalid server_info: %s", si)
+                # The global logging module is hidden by parameter of __init__
+                sys.modules['logging'].error("invalid server_info: %s", si)
                 raise e
             self.deploymentType = si.get('deploymentType')
         else:
