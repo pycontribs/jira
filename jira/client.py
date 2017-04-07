@@ -222,7 +222,7 @@ class JIRA(object):
 
     def __init__(self, server=None, options=None, basic_auth=None, oauth=None, jwt=None, kerberos=False,
                  validate=False, get_server_info=True, async=False, logging=True, max_retries=3, proxies=None,
-                 timeout=None):
+                 timeout=None, session=None):
         """Construct a JIRA client instance.
 
         Without any arguments, this client will connect anonymously to the JIRA instance
@@ -255,6 +255,11 @@ class JIRA(object):
             * consumer_key -- key of the OAuth application link defined in JIRA
             * key_cert -- private key file to sign requests with (should be the pair of the public key supplied to
             JIRA in the OAuth application link)
+        :param session: A tuple of session name and value as provided by
+            * ``sess = jira.session()``
+              ``session_tuple = (sess.name, sess.value)``
+            * ``jira.resources.PropertyHolder`` objects with ``.name`` and ``.value`` attributes will work here too
+              eg, ``another_object = JIRA(server='blah', session=jira.session().session)``
         :param kerberos: If true it will enable Kerberos authentication.
         :param jwt: A dict of properties for JWT authentication supported by Atlassian Connect. The following
             properties are required:
@@ -308,9 +313,11 @@ class JIRA(object):
 
         if oauth:
             self._create_oauth_session(oauth, timeout)
+        elif session:
+            self._create_cookie_based_session(session, timeout)
         elif basic_auth:
             self._create_http_basic_session(*basic_auth, timeout=timeout)
-            self._session.headers.update(self._options['headers'])
+            self._session.headers.update(self._options['headers']) ## XXX: dup?
         elif jwt:
             self._create_jwt_session(jwt, timeout)
         elif kerberos:
@@ -2255,6 +2262,18 @@ class JIRA(object):
         self._session = ResilientSession(timeout=timeout)
         self._session.verify = verify
         self._session.auth = (username, password)
+        self._session.cert = self._options['client_cert']
+
+    def _create_cookie_based_session(self, session, timeout=None):
+        verify = self._options['verify']
+        self._session = ResilientSession(timeout=timeout)
+        self._session.verify = verify
+        if hasattr(session,'name') and hasattr(session,'value'):
+            self._session.cookies[ session.name ] = session.value
+        elif isinstance(session, (tuple,list)) and len(session) == 2:
+            self._session.cookies[ session[0] ] =  session[1]
+        else:
+            raise Exception("session not understood")
         self._session.cert = self._options['client_cert']
 
     def _create_oauth_session(self, oauth, timeout):
