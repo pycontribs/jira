@@ -317,7 +317,7 @@ class JIRA(object):
             self._create_cookie_based_session(session, timeout)
         elif basic_auth:
             self._create_http_basic_session(*basic_auth, timeout=timeout)
-            self._session.headers.update(self._options['headers']) ## XXX: dup?
+            self._session.headers.update(self._options['headers'])  # XXX: dup?
         elif jwt:
             self._create_jwt_session(jwt, timeout)
         elif kerberos:
@@ -2268,10 +2268,10 @@ class JIRA(object):
         verify = self._options['verify']
         self._session = ResilientSession(timeout=timeout)
         self._session.verify = verify
-        if hasattr(session,'name') and hasattr(session,'value'):
-            self._session.cookies[ session.name ] = session.value
-        elif isinstance(session, (tuple,list)) and len(session) == 2:
-            self._session.cookies[ session[0] ] =  session[1]
+        if hasattr(session, 'name') and hasattr(session, 'value'):
+            self._session.cookies[session.name] = session.value
+        elif isinstance(session, (tuple, list)) and len(session) == 2:
+            self._session.cookies[session[0]] = session[1]
         else:
             raise Exception("session not understood")
         self._session.cert = self._options['client_cert']
