@@ -840,6 +840,11 @@ def dict2resource(raw, top=None, options=None, session=None):
 
     seqs = tuple, list, set, frozenset
     for i, j in iteritems(raw):
+        try:
+            str(i)
+        except UnicodeEncodeError:
+            continue
+
         if isinstance(j, dict):
             if 'self' in j:
                 resource = cls_for_resource(j['self'])(options, session, j)
