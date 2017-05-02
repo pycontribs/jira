@@ -2,9 +2,10 @@ from flaky import flaky
 import getpass
 import json
 import pytest
-from tests import get_unique_project_name
-from tests import JiraTestManager
 import time
+
+from tests.jira_test_manager import get_unique_project_name
+from tests.jira_test_manager import JiraTestManager
 
 from jira import Role, Issue, JIRA, JIRAError, Project  # noqa
 import jira.client
