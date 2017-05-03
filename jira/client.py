@@ -3167,15 +3167,16 @@ class JIRA(object):
             url, data=json.dumps(data))
 
     # TODO(ssbarnea): Both GreenHopper and new JIRA Agile API support moving more than one issue.
-    def rank(self, issue, next_issue):
-        """Rank an issue before another using the default Ranking field, the one named 'Rank'.
+    def rank(self, issue, next_issue, rank_field_name='Rank'):
+        """Rank an issue before another using the ``rank_field_name``.
 
         :param issue: issue key of the issue to be ranked before the second one.
         :param next_issue: issue key of the second issue.
+        :param rank_field_name: the name of the Ranking field to rank on
         """
         if not self._rank:
             for field in self.fields():
-                if field['name'] == 'Rank':
+                if field['name'].lower() == rank_field_name.lower():
                     if field['schema']['custom'] == "com.pyxis.greenhopper.jira:gh-lexo-rank":
                         self._rank = field['schema']['customId']
                         break
