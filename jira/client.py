@@ -209,7 +209,7 @@ class JiraCookieAuth(AuthBase):
         return self.send_request(original_request)
 
     def update_cookies(self, original_request):
-        # Cookie header needs needs first to be deleted for the header to be updated using
+        # Cookie header needs first to be deleted for the header to be updated using
         # the prepare_cookies method. See request.PrepareRequest.prepare_cookies
         if 'Cookie' in original_request.headers:
             del original_request.headers['Cookie']
