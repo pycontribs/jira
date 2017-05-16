@@ -195,6 +195,7 @@ class JIRA(object):
 
     DEFAULT_OPTIONS = {
         "server": "http://localhost:2990/jira",
+        "auth_url": '/rest/auth/1/session',
         "context_path": "/",
         "rest_path": "api",
         "rest_api_version": "2",
@@ -2222,7 +2223,7 @@ class JIRA(object):
 
     def session(self):
         """Get a dict of the current authenticated user's session information."""
-        url = '{server}/rest/auth/1/session'.format(**self._options)
+        url = '{server}{auth_url}'.format(**self._options)
 
         if isinstance(self._session.auth, tuple):
             authentication_data = {
