@@ -134,6 +134,8 @@ def process_command_line():
                             help='The JIRA instance to connect to, including context path.')
     jira_group.add_argument('-r', '--rest-path',
                             help='The root path of the REST API to use.')
+    jira_group.add_argument('--auth-url',
+                            help='Path to URL to auth against.')
     jira_group.add_argument('-v', '--rest-api-version',
                             help='The version of the API under the specified name.')
 
@@ -174,6 +176,9 @@ def process_command_line():
 
     if args.rest_path:
         options['rest_path'] = args.rest_path
+
+    if args.auth_url:
+        options['auth_url'] = args.auth_url
 
     if args.rest_api_version:
         options['rest_api_version'] = args.rest_api_version
