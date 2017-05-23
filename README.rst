@@ -66,6 +66,10 @@ You can also try ``pip install --user --upgrade jira`` which will install or
 upgrade jira to your user directory. Or maybe you ARE using a virtualenv_
 right?
 
+By default only the basic library dependencies are installed, so if you want
+to use the ``cli`` tool or other optional dependencies do perform a full
+installation using ``pip install jira[opt,cli,testing]``
+
 .. _virtualenv: http://www.virtualenv.org/en/latest/index.html
 
 
