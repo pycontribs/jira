@@ -32,7 +32,7 @@ class PyTest(TestCommand):
 
 
 setuptools.setup(
-    setup_requires=['pbr>=1.9', 'setuptools>=17.1', 'pytest-runner'],
+    setup_requires=['pbr>=3.0.0', 'setuptools>=17.1', 'pytest-runner'],
     pbr=True,
     cmdclass={'test': PyTest},
     test_suite='tests')
