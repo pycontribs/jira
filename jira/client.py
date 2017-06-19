@@ -310,7 +310,6 @@ class JIRA(object):
             self._create_oauth_session(oauth, timeout)
         elif basic_auth:
             self._create_http_basic_session(*basic_auth, timeout=timeout)
-            self._session.headers.update(self._options['headers'])
         elif jwt:
             self._create_jwt_session(jwt, timeout)
         elif kerberos:
