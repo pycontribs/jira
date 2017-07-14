@@ -1,5 +1,5 @@
-all: info clean lint test docs upload release
-.PHONY: all docs upload info req
+all: info clean lint test docs dist upload release
+.PHONY: all docs upload info req dist
 
 PACKAGE_NAME := $(shell python setup.py --name)
 PACKAGE_VERSION := $(shell python setup.py --version)
@@ -18,7 +18,7 @@ info:
 
 clean:
 	@find . -name "*.pyc" -delete
-	@rm -rf .tox/*-$(PLATFORM) .tox/docs dist/* .tox/dist .tox/log docs/build/*
+	@rm -rf .tox dist/* docs/build/*
 
 package:
 	python setup.py sdist bdist_wheel build_sphinx
@@ -35,6 +35,9 @@ install-sdk:
 
 uninstall:
 	$(PREFIX)pip uninstall -y $(PACKAGE_NAME)
+
+dist:
+	$(PREFIX)python setup.py sdist bdist_wheel
 
 prepare:
 	@pyenv install -s 2.7.13
