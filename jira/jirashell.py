@@ -147,6 +147,9 @@ def process_command_line():
                                   help='The password associated with this user.')
     basic_auth_group.add_argument('-P', '--prompt-for-password', action='store_true',
                                   help='Prompt for the password at the command line.')
+    cookiestxt_group = parser.add_argument_group('cookies.txt options')
+    cookiestxt_group.add_argument('-c', '--cookiestxt',
+                                  help='The path to a cookies.txt file')
 
     oauth_group = parser.add_argument_group('OAuth options')
     oauth_group.add_argument('-od', '--oauth-dance', action='store_true',
@@ -196,6 +199,9 @@ def process_command_line():
     if args.key_cert:
         with open(args.key_cert, 'r') as key_cert_file:
             key_cert_data = key_cert_file.read()
+
+    if args.cookiestxt:
+        options['cookiestxt'] = args.cookiestxt
 
     oauth = {}
     if args.oauth_dance:
@@ -247,7 +253,12 @@ def main():
                   oauth.get('consumer_key'), oauth.get('key_cert'))):
         oauth = None
 
-    jira = JIRA(options=options, basic_auth=basic_auth, oauth=oauth)
+    if 'cookiestxt' in options:
+        cookiestxt = options['cookiestxt']
+    else:
+        cookiestxt = None
+
+    jira = JIRA(options=options, basic_auth=basic_auth, oauth=oauth, cookiestxt=cookiestxt)
 
     from IPython.frontend.terminal.embed import InteractiveShellEmbed
 

@@ -220,7 +220,7 @@ class JIRA(object):
     JIRA_BASE_URL = Resource.JIRA_BASE_URL
     AGILE_BASE_URL = GreenHopperResource.AGILE_BASE_URL
 
-    def __init__(self, server=None, options=None, basic_auth=None, oauth=None, jwt=None, kerberos=False,
+    def __init__(self, server=None, options=None, basic_auth=None, oauth=None, jwt=None, cookiestxt=None, kerberos=False,
                  validate=False, get_server_info=True, async=False, logging=True, max_retries=3, proxies=None,
                  timeout=None):
         """Construct a JIRA client instance.
@@ -262,6 +262,7 @@ class JIRA(object):
             (see https://developer.atlassian.com/static/connect/docs/latest/modules/lifecycle.html for details)
             * payload -- dict of fields to be inserted in the JWT payload, e.g. 'iss'
             Example jwt structure: ``{'secret': SHARED_SECRET, 'payload': {'iss': PLUGIN_KEY}}``
+        :param cookiestxt: A path to a cookies.txt used for authentication
         :param validate: If true it will validate your credentials first. Remember that if you are accesing JIRA
             as anononymous it will fail to instanciate.
         :param get_server_info: If true it will fetch server version info first to determine if some API calls
@@ -315,6 +316,8 @@ class JIRA(object):
             self._create_jwt_session(jwt, timeout)
         elif kerberos:
             self._create_kerberos_session(timeout)
+        elif cookiestxt:
+            self._create_cookiestxt_session(cookiestxt, timeout)
         else:
             verify = self._options['verify']
             self._session = ResilientSession(timeout=timeout)
@@ -2282,6 +2285,18 @@ class JIRA(object):
         self._session = ResilientSession(timeout=timeout)
         self._session.verify = verify
         self._session.auth = HTTPKerberosAuth(mutual_authentication=OPTIONAL)
+
+    def _create_cookiestxt_session(self, cookiestxt, timeout):
+        verify = self._options['verify']
+
+        from cookiestxt import MozillaCookieJar
+
+        self._session = ResilientSession(timeout=timeout)
+        self._session.verify = verify
+        cj = MozillaCookieJar(cookiestxt)
+        cj.load(ignore_discard=True, ignore_expires=True)
+        for cookie in cj:
+            self._session.cookies.set_cookie(cookie)
 
     @staticmethod
     def _timestamp(dt=None):
