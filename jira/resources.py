@@ -223,13 +223,12 @@ class Resource(object):
 
         data = json.dumps(data)
 
+        querydict = {}
         if not notify:
-            querystring = "?notifyUsers=false"
-        else:
-            querystring = ""
+            querydict['notifyUsers'] = 'false'
 
         r = self._session.put(
-            self.self + querystring, data=data)
+            self.self, params=querydict, data=data)
         if 'autofix' in self._options and \
                 r.status_code == 400:
             user = None
