@@ -5,7 +5,7 @@ The client is an open source project under the BSD license. Contributions of any
 
 https://github.com/pycontribs/jira/
 
-If you find a bug or have an idea for a useful feature, file it at that bitbucket project. Extra points for source
+If you find a bug or have an idea for a useful feature, file it at the GitHub project. Extra points for source
 code patches -- fork and send a pull request.
 
 Discussion and support
