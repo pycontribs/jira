@@ -204,7 +204,7 @@ class Resource(object):
         options.update({'path': path})
         return self._base_url.format(**options)
 
-    def update(self, fields=None, async=None, jira=None, notify=True, **kwargs):
+    def update(self, fields=None, async=None, jira=None, notify=True, overrideScreenSecurity=False, overrideEditableFlag=False, **kwargs):
         """Update this resource on the server.
 
         Keyword arguments are marshalled into a dict before being sent. If this
@@ -226,6 +226,12 @@ class Resource(object):
         querydict = {}
         if not notify:
             querydict['notifyUsers'] = 'false'
+
+        if overrideScreenSecurity:
+            querydict['overrideScreenSecurity'] = 'true'
+
+        if overrideEditableFlag:
+            querydict['overrideEditableFlag'] = 'true'
 
         r = self._session.put(
             self.self, params=querydict, data=data)
@@ -431,7 +437,7 @@ class Issue(Resource):
         if raw:
             self._parse_raw(raw)
 
-    def update(self, fields=None, update=None, async=None, jira=None, notify=True, **fieldargs):
+    def update(self, fields=None, update=None, async=None, jira=None, notify=True, overrideScreenSecurity=False, overrideEditableFlag=False, **fieldargs):
         """Update this issue on the server.
 
         Each keyword argument (other than the predefined ones) is treated as a field name and the argument's value
@@ -479,7 +485,7 @@ class Issue(Resource):
             else:
                 fields_dict[field] = value
 
-        super(Issue, self).update(async=async, jira=jira, notify=notify, fields=data)
+        super(Issue, self).update(async=async, jira=jira, notify=notify, overrideScreenSecurity=overrideScreenSecurity, overrideEditableFlag=overrideEditableFlag, fields=data)
 
     def add_field_value(self, field, value):
         """Add a value to a field that supports multiple values, without resetting the existing values.
