@@ -445,11 +445,14 @@ class Issue(Resource):
 
         :param fields: a dict containing field names and the values to use
         :param update: a dict containing update operations to apply
+        :param notify: query parameter notifyUsers. If true send the email with notification that the issue was updated
+                       to users that watch it. Admin or project admin permissions are required to disable the notification.
         :param fieldargs: keyword arguments will generally be merged into fields, except lists,
                           which will be merged into updates
 
         :type fields: dict
         :type update: dict
+
         """
         data = {}
         if fields is not None:
