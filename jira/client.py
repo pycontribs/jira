@@ -1818,8 +1818,16 @@ class JIRA(object):
 
         :param project: ID or key of the project to get roles from
         """
-        roles_dict = self._get_json('project/' + project + '/role')
-        return roles_dict
+        path = 'project/' + project + '/role'
+        _rolesdict = self._get_json(path)
+        rolesdict ={}
+
+        for k,v in _rolesdict.items():
+            tmp = {}
+            tmp['id'] = v.split("/")[-1]
+            tmp['url'] = v
+            rolesdict[k] = tmp
+        return rolesdict
         # TODO(ssbarnea): return a list of Roles()
 
     @translate_resource_args
