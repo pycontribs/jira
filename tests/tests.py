@@ -1062,6 +1062,12 @@ class IssueTests(unittest.TestCase):
         # self.assertEqual(comment.visibility.value, 'Administrators')
         comment.delete()
 
+    def test_update_comment_with_notify_false(self):
+        comment = self.jira.add_comment(self.issue_3, 'updating soon!')
+        comment.update(body='updated silently!', notify=False)
+        self.assertEqual(comment.body, 'updated silently!')
+        comment.delete()
+
     def test_editmeta(self):
         for i in (self.issue_1, self.issue_2):
             meta = self.jira.editmeta(i)
