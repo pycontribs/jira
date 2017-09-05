@@ -51,8 +51,12 @@ __all__ = (
     'CustomFieldOption',
     'RemoteLink',
     'Customer',
+    'ServiceDeskInfo',
+    'Organization',
     'ServiceDesk',
-    'RequestType',
+    'RequestAttachment',
+    'RequestTemporaryAttachment',
+    'RequestType'
 )
 
 logging.getLogger('jira').addHandler(NullHandler())
@@ -187,7 +191,7 @@ class Resource(object):
     #     self._parse_raw(raw_pickled)
     #
 
-    def find(self, id, params=None):
+    def find(self, id, params=None, headers=CaseInsensitiveDict()):
 
         if params is None:
             params = {}
@@ -197,7 +201,7 @@ class Resource(object):
         else:
             path = self._resource.format(id)
         url = self._get_url(path)
-        self._load(url, params=params)
+        self._load(url, params=params, headers=headers)
 
     def _get_url(self, path):
         options = self._options.copy()
@@ -847,11 +851,30 @@ class Board(GreenHopperResource):
 
 # Service Desk
 
-class Customer(Resource):
-    """A Service Desk customer."""
+
+class Customer(User):
+    """This resource represents a customer user account. """
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(self, 'customer', options, session, '{server}/rest/servicedeskapi/{path}')
+        if raw:
+            self._parse_raw(raw)
+
+
+class ServiceDeskInfo(Resource):
+    """This resource represents the JIRA Service Desk application. """
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(self, 'info', options, session, '{server}/rest/servicedeskapi/{path}')
+        if raw:
+            self._parse_raw(raw)
+
+
+class Organization(Resource):
+    """This resource represents an organization in Service Desk. """
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(self, 'organization/{0}', options, session, '{server}/rest/servicedeskapi/{path}')
         if raw:
             self._parse_raw(raw)
 
@@ -865,13 +888,58 @@ class ServiceDesk(Resource):
             self._parse_raw(raw)
 
 
-class RequestType(Resource):
-    """A Service Desk Request Type."""
+class RequestTemporaryAttachment(Resource):
+    """A Service Desk temporary attachment."""
 
     def __init__(self, options, session, raw=None):
-        Resource.__init__(self, 'servicedesk/{0}/requesttype', options, session, '{server}/rest/servicedeskapi/{path}')
+        Resource.__init__(self, 'request/{0}/attachment', options, session, '{server}/rest/servicedeskapi/{path}')
         if raw:
             self._parse_raw(raw)
+
+
+class RequestAttachment(Resource):
+    """A Service Desk attachment."""
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(self, 'servicedesk/{0}/attachTemporaryFile', options, session,
+                          '{server}/rest/servicedeskapi/{path}')
+        if raw:
+            self._parse_raw(raw)
+
+
+class RequestType(Resource):
+    """This resource represents an RequestType. """
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(self, 'servicedesk/{0}/requesttype/{1}', options, session,
+                          '{server}/rest/servicedeskapi/{path}')
+        if raw:
+            self._parse_raw(raw)
+
+
+class Request(Resource):
+    """A JIRA Service Desk customer request (issue)."""
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(self, 'request/{0}', options, session,
+                          '{server}/rest/servicedeskapi/{path}')
+        if raw:
+            self._parse_raw(raw)
+
+    def _parse_raw(self, raw):
+        self.raw = raw
+        if not raw:
+            raise NotImplementedError("We cannot instantiate empty resources: %s" % raw)
+
+        raw['id'] = raw['issueId']
+        raw['key'] = raw['issueKey']
+        raw['fields'] = {}
+        for val in raw['requestFieldValues']:
+            raw['fields'][val['fieldId']] = val['value']
+        del raw['issueId']
+        del raw['issueKey']
+        del raw['requestFieldValues']
+        dict2resource(raw, self, self._options, self._session)
 
 # Utilities
 
