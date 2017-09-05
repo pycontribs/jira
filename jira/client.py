@@ -376,8 +376,12 @@ class JIRA(object):
 
     def __del__(self):
         """Destructor for JIRA instance."""
+        self.close()
+
+    def close(self):
         session = getattr(self, "_session", None)
         if session is not None:
+            self._session = None
             if self.sys_version_info < (3, 4, 0):  # workaround for https://github.com/kennethreitz/requests/issues/2303
                 try:
                     session.close()
