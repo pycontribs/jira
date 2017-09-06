@@ -222,7 +222,7 @@ class JIRA(object):
 
     def __init__(self, server=None, options=None, basic_auth=None, oauth=None, jwt=None, kerberos=False,
                  validate=False, get_server_info=True, async=False, logging=True, max_retries=3, proxies=None,
-                 timeout=None):
+                 timeout=None, verify=True):
         """Construct a JIRA client instance.
 
         Without any arguments, this client will connect anonymously to the JIRA instance
@@ -311,6 +311,7 @@ class JIRA(object):
         elif basic_auth:
             self._create_http_basic_session(*basic_auth, timeout=timeout)
             self._session.headers.update(self._options['headers'])
+            self._session.verify = verify
         elif jwt:
             self._create_jwt_session(jwt, timeout)
         elif kerberos:
