@@ -46,12 +46,12 @@ from six.moves.urllib.parse import urlparse
 from jira.exceptions import JIRAError
 from jira.resilientsession import raise_on_error
 from jira.resilientsession import ResilientSession
+
 # JIRA specific resources
 from jira.resources import Attachment
 from jira.resources import Board
 from jira.resources import Comment
 from jira.resources import Component
-from jira.resources import Customer
 from jira.resources import CustomFieldOption
 from jira.resources import Dashboard
 from jira.resources import Filter
@@ -63,12 +63,10 @@ from jira.resources import IssueType
 from jira.resources import Priority
 from jira.resources import Project
 from jira.resources import RemoteLink
-from jira.resources import RequestType
 from jira.resources import Resolution
 from jira.resources import Resource
 from jira.resources import Role
 from jira.resources import SecurityLevel
-from jira.resources import ServiceDesk
 from jira.resources import Sprint
 from jira.resources import Status
 from jira.resources import User
@@ -76,6 +74,8 @@ from jira.resources import Version
 from jira.resources import Votes
 from jira.resources import Watchers
 from jira.resources import Worklog
+
+from jira.service_desk import JiraServiceDesk
 
 from jira import __version__
 from jira.utils import CaseInsensitiveDict
@@ -358,6 +358,7 @@ class JIRA(object):
             if 'clauseNames' in f:
                 for name in f['clauseNames']:
                     self._fields[name] = f['id']
+        self.desk = JiraServiceDesk(self)
 
     def _check_update_(self):
         """Check if the current version of the library is outdated."""
@@ -401,7 +402,7 @@ class JIRA(object):
             return False
         return True
 
-    def _fetch_pages(self, item_type, items_key, request_path, startAt=0, maxResults=50, params=None, base=JIRA_BASE_URL):
+    def _fetch_pages(self, item_type, items_key, request_path, startAt=0, maxResults=50, params=None, headers=CaseInsensitiveDict(), base=JIRA_BASE_URL):
         """Fetch pages.
 
         :param item_type: Type of single item. ResultList of such items will be returned.
@@ -423,7 +424,7 @@ class JIRA(object):
             page_params['maxResults'] = maxResults
 
         try:
-            resource = self._get_json(request_path, params=page_params, base=base)
+            resource = self._get_json(request_path, params=page_params, headers=headers, base=base)
             next_items_page = [item_type(self._options, self._session, raw_issue_json) for raw_issue_json in
                                (resource[items_key] if items_key else resource)]
         except KeyError as e:
@@ -454,7 +455,7 @@ class JIRA(object):
                 while not is_last and (total is None or page_start < total) and len(next_items_page) == page_size:
                     page_params['startAt'] = page_start
                     page_params['maxResults'] = page_size
-                    resource = self._get_json(request_path, params=page_params, base=base)
+                    resource = self._get_json(request_path, params=page_params, headers=headers, base=base)
                     if resource:
                         try:
                             next_items_page = [item_type(self._options, self._session, raw_issue_json) for raw_issue_json in
@@ -983,95 +984,21 @@ class JIRA(object):
                                    'error': None, 'input_fields': fields})
         return issue_list
 
-    def supports_service_desk(self):
-        url = self._options['server'] + '/rest/servicedeskapi/info'
-        headers = {'X-ExperimentalApi': 'opt-in'}
-        try:
-            r = self._session.get(url, headers=headers)
-            return r.status_code == 200
-        except JIRAError:
-            return False
+    def delete_issue(self, id):
+        """Delete Issue.
 
-    def create_customer(self, email, displayName):
-        """Create a new customer and return an issue Resource for it."""
-        url = self._options['server'] + '/rest/servicedeskapi/customer'
-        headers = {'X-ExperimentalApi': 'opt-in'}
-        r = self._session.post(url, headers=headers, data=json.dumps({
-            'email': email,
-            'displayName': displayName
-        }))
-
-        raw_customer_json = json_loads(r)
-
-        if r.status_code != 201:
-            raise JIRAError(r.status_code, request=r)
-        return Customer(self._options, self._session, raw=raw_customer_json)
-
-    def service_desks(self):
-        """Get a list of ServiceDesk Resources from the server visible to the current authenticated user."""
-        url = self._options['server'] + '/rest/servicedeskapi/servicedesk'
-        headers = {'X-ExperimentalApi': 'opt-in'}
-        r_json = json_loads(self._session.get(url, headers=headers))
-        projects = [ServiceDesk(self._options, self._session, raw_project_json)
-                    for raw_project_json in r_json['values']]
-        return projects
-
-    def service_desk(self, id):
-        """Get a Service Desk Resource from the server.
-
-        :param id: ID or key of the Service Desk to get
+        :param id: issue Id or Key or Issue object.
+        :return: Boolean. Returns True on success.
         """
-        return self._find_for_resource(ServiceDesk, id)
 
-    def create_customer_request(self, fields=None, prefetch=True, **fieldargs):
-        """Create a new customer request and return an issue Resource for it.
+        if isinstance(id, Issue):
+            id = Issue.id
 
-        Each keyword argument (other than the predefined ones) is treated as a field name and the argument's value
-        is treated as the intended value for that field -- if the fields argument is used, all other keyword arguments
-        will be ignored.
-
-        By default, the client will immediately reload the issue Resource created by this method in order to return
-        a complete Issue object to the caller; this behavior can be controlled through the 'prefetch' argument.
-
-        JIRA projects may contain many different issue types. Some issue screens have different requirements for
-        fields in a new issue. This information is available through the 'createmeta' method. Further examples are
-        available here: https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Create+Issue
-
-        :param fields: a dict containing field names and the values to use. If present, all other keyword arguments
-            will be ignored
-        :param prefetch: whether to reload the created issue Resource so that all of its data is present in the value
-            returned from this method
-        """
-        data = fields
-
-        p = data['serviceDeskId']
-        service_desk = None
-
-        if isinstance(p, string_types) or isinstance(p, integer_types):
-            service_desk = self.service_desk(p)
-        elif isinstance(p, ServiceDesk):
-            service_desk = p
-
-        data['serviceDeskId'] = service_desk.id
-
-        p = data['requestTypeId']
-        if isinstance(p, integer_types):
-            data['requestTypeId'] = p
-        elif isinstance(p, string_types):
-            data['requestTypeId'] = self.request_type_by_name(
-                service_desk, p).id
-
-        url = self._options['server'] + '/rest/servicedeskapi/request'
-        headers = {'X-ExperimentalApi': 'opt-in'}
-        r = self._session.post(url, headers=headers, data=json.dumps(data))
-
-        raw_issue_json = json_loads(r)
-        if 'issueKey' not in raw_issue_json:
-            raise JIRAError(r.status_code, request=r)
-        if prefetch:
-            return self.issue(raw_issue_json['issueKey'])
-        else:
-            return Issue(self._options, self._session, raw=raw_issue_json)
+        url = self._options['server'] + '/rest/api/2/issue/%s' % id
+        result = self._session.delete(url)
+        if result.status_code != 204:
+            raise JIRAError(result.status_code, request=result)
+        return True
 
     def createmeta(self, projectKeys=None, projectIds=[], issuetypeIds=None, issuetypeNames=None, expand=None):
         """Get the metadata required to create issues, optionally filtered by projects and issue types.
@@ -1617,27 +1544,6 @@ class JIRA(object):
         except IndexError:
             raise KeyError("Issue type '%s' is unknown." % name)
         return issue_type
-
-    def request_types(self, service_desk):
-        if hasattr(service_desk, 'id'):
-            service_desk = service_desk.id
-        url = (self._options['server'] +
-               '/rest/servicedeskapi/servicedesk/%s/requesttype'
-               % service_desk)
-        headers = {'X-ExperimentalApi': 'opt-in'}
-        r_json = json_loads(self._session.get(url, headers=headers))
-        request_types = [
-            RequestType(self._options, self._session, raw_type_json)
-            for raw_type_json in r_json['values']]
-        return request_types
-
-    def request_type_by_name(self, service_desk, name):
-        request_types = self.request_types(service_desk)
-        try:
-            request_type = [rt for rt in request_types if rt.name == name][0]
-        except IndexError:
-            raise KeyError("Request type '%s' is unknown." % name)
-        return request_type
 
     # User permissions
 
@@ -2327,9 +2233,9 @@ class JIRA(object):
         options.update({'path': path})
         return base.format(**options)
 
-    def _get_json(self, path, params=None, base=JIRA_BASE_URL):
+    def _get_json(self, path, params=None, headers=CaseInsensitiveDict(), base=JIRA_BASE_URL):
         url = self._get_url(path, base)
-        r = self._session.get(url, params=params)
+        r = self._session.get(url, params=params, headers=headers)
         try:
             r_json = json_loads(r)
         except ValueError as e:
@@ -2795,7 +2701,7 @@ class JIRA(object):
         return False
 
     def add_user(self, username, email, directoryId=1, password=None,
-                 fullname=None, notify=False, active=True, ignore_existing=False):
+                 fullname=None, notify=False, active=True, application_keys=None, ignore_existing=False):
         """Create a new JIRA user.
 
         :param username: the username of the new user
@@ -2830,6 +2736,8 @@ class JIRA(object):
             x['password'] = password
         if notify:
             x['notification'] = 'True'
+        if application_keys is not None:
+            x['applicationKeys'] = application_keys
 
         payload = json.dumps(x)
         try:
