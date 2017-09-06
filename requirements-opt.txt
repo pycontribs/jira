@@ -5,4 +5,5 @@
 PyJWT
 requests_jwt
 requests_kerberos
+cookiestxt
 filemagic>=1.6
