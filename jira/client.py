@@ -2657,8 +2657,6 @@ class JIRA(object):
             # We can't use our existing session here - this endpoint is fragile and objects to extra headers
             try:
                 r = requests.post(url, headers={'Cookie': self.authCookie, 'Content-Type': 'application/json'}, data={})
-                import pprint
-                pprint.pprint(r.request.__dict__)
                 if r.status_code == 200:
                     return True
                 else:
@@ -2666,7 +2664,8 @@ class JIRA(object):
                         'Got response from deactivating %s: %s' % (username, r.status_code))
                     return r.status_code
             except urllib2.HTTPError as e:
-                print("Error Deactivating %s: %s" % (username, e))
+                logging.error(
+                        "Error Deactivating %s: %s" % (username, e))
         else:
             url = self._options['server'] + '/secure/admin/user/EditUser.jspa'
             self._options['headers']['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8'
@@ -2688,7 +2687,8 @@ class JIRA(object):
                         'Got response from deactivating %s: %s' % (username, r.status_code))
                     return r.status_code
             except Exception as e:
-                print("Error Deactivating %s: %s" % (username, e))
+                logging.error(
+                        "Error Deactivating %s: %s" % (username, e))
 
     def reindex(self, force=False, background=True):
         """Start jira re-indexing. Returns True if reindexing is in progress or not needed, or False.
