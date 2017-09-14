@@ -6,3 +6,4 @@ PyJWT
 requests_jwt
 requests_kerberos
 filemagic>=1.6
+flake8
