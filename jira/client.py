@@ -81,6 +81,7 @@ from jira.resources import User
 from jira.resources import Version
 from jira.resources import Votes
 from jira.resources import Watchers
+from jira.resources import Webhook
 from jira.resources import Worklog
 
 from jira import __version__
@@ -334,6 +335,7 @@ class JIRA(object):
     # TODO(ssbarnea): remove these two variables and use the ones defined in resources
     JIRA_BASE_URL = Resource.JIRA_BASE_URL
     AGILE_BASE_URL = GreenHopperResource.AGILE_BASE_URL
+    WEBHOOK_BASE_URL = Webhook.WEBHOOK_BASE_URL
 
     def __init__(self, server=None, options=None, basic_auth=None, oauth=None, jwt=None, kerberos=False, kerberos_options=None,
                  validate=False, get_server_info=True, async_=False, async_workers=5, logging=True, max_retries=3, proxies=None,
@@ -2467,6 +2469,96 @@ class JIRA(object):
         """Destroy the session of the current authenticated user."""
         url = self._options['server'] + '/rest/auth/latest/session'
         return self._session.delete(url)
+
+    # Webhook
+
+    def webhook(self, id):
+        """Get a webhook Resource from the server.
+
+        :param id: ID of the webhook to get
+        """
+        webhook = Webhook(self._options, self._session)
+        webhook.find(id)
+        return webhook
+
+    def create_webhook(self, fields=None, prefetch=True, **fieldargs):
+        """Create a new webhook and return an webhook Resource for it.
+
+        Each keyword argument (other than the predefined ones) is treated as a
+        field name and the argument's value is treated as the intended value for
+        that field -- if the fields argument is used, all other keyword arguments
+        will be ignored.
+
+        By default, the client will immediately reload the webhook Resource
+        created by this method in order to return a complete Webhook object to
+        the caller; this behavior can be controlled through the 'prefetch' argument.
+
+        JIRA projects may contain many different webhook types. Some webhook
+        screens have different requirements for fields in a new webhook. This
+        information is available through the 'createmeta' method. Further examples are
+        available here:
+        https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Create+Webhook
+
+        :param fields: a dict containing field names and the values to use.
+                       If present, all other keyword arguments will be ignored
+        :param prefetch: whether to reload the created webhook Resource so that
+                         all of its data is present in the value returned from this method
+        """
+        data = {}
+        if fields is not None:
+            data['fields'] = fields
+        else:
+            fields_dict = {}
+            for field in fieldargs:
+                fields_dict[field] = fieldargs[field]
+            data['fields'] = fields_dict
+
+        url = self._get_url('webhook', base=self.WEBHOOK_BASE_URL)
+
+        try:
+            r = self._session.post(url, data=fieldargs)
+        except Exception as e:
+            msg = "Error Creating webhook with JSON data:\n%s\n\n%s" % (fieldargs, e)
+            logging.error(msg)
+            raise Exception(msg)
+        raw_webhook_json = json_loads(r)
+        if 'name' not in raw_webhook_json:
+            raise JIRAError(r.status_code, request=r)
+        if prefetch:
+            return self.webhook(raw_webhook_json['self'].split('/')[-1])
+        else:
+            return Webhook(self._options, self._session, raw=raw_webhook_json)
+
+    def webhooks(self):
+        """Get a list of Webhooks.
+
+        :rtype list
+        :return (content may depend on API version, but should contain id, name, state, etc.
+
+        see https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Create+Webhook
+        """
+
+        r_json = self._get_json('webhook', base=self.WEBHOOK_BASE_URL)
+        webhooks = [Webhook(self._options, self._session, webhook_json) for webhook_json in r_json]
+        return ResultList(webhooks, 0, len(webhooks), len(webhooks), True)
+
+    def webhooks_by_name(self):
+        """Get a dict of Webhooks with webhook name as key."""
+        webhooks = {}
+        for h in self.webhooks():
+            if h.name not in webhooks:
+                webhooks[h.name] = h.raw
+            else:
+                raise (Exception(
+                    "Fatal error, duplicate Webhook Name (%s) found on server." % (h.name)))
+        return webhooks
+
+    def webhooks_by_id(self):
+        """Get a dict of Webhooks with webhook id as key."""
+        webhooks = {}
+        for h in self.webhooks():
+            webhooks[h.self.split('/')[-1]] = h.raw
+        return webhooks
 
     # Websudo
     def kill_websudo(self):

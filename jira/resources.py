@@ -54,6 +54,7 @@ __all__ = (
     'Customer',
     'ServiceDesk',
     'RequestType',
+    'Webhook'
 )
 
 logging.getLogger('jira').addHandler(NullHandler())
@@ -906,6 +907,29 @@ class Version(Resource):
         return self.id == other.id and self.name == other.name
 
 
+class Webhook(Resource):
+    """A JIRA webhook."""
+
+    WEBHOOK_BASE_URL = '{server}/rest/webhooks/{agile_rest_api_version}/{path}'
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(self, 'webhook/{0}', options, session, self.WEBHOOK_BASE_URL)
+        if raw:
+            self._parse_raw(raw)
+
+    def enable(self):
+        """Enable this webhook on the server."""
+        super(Webhook, self).update(enabled=True)
+
+    def disable(self):
+        """Disable this webhook on the server."""
+        super(Webhook, self).update(enabled=False)
+
+    def __eq__(self, other):
+        """Tests equality of webhooks based on URL of hook (not endpoint)."""
+        return self.self == other.self
+
+
 # GreenHopper
 
 
@@ -1057,6 +1081,7 @@ resource_class_map = {
     r'user\?username.+$': User,
     r'group\?groupname.+$': Group,
     r'version/[^/]+$': Version,
+    r'webhook/[^/]+$': Webhook,
     # GreenHopper specific resources
     r'sprints/[^/]+$': Sprint,
     r'views/[^/]+$': Board}
