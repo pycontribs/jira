@@ -45,18 +45,27 @@ install: prepare
 install-sdk:
 ifeq ($(PLATFORM), darwin)
 	which atlas-run-standalone || brew tap atlassian/tap && brew install atlassian/tap/atlassian-plugin-sdk
-else ifneq ($(wildcard /etc/debian_version),)
-	sudo sh -c 'echo "deb https://sdkrepo.atlassian.com/debian/ stable contrib" >/etc/apt/sources.list.d/atlassian_development.list'
-	sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys B07804338C015B73
-	sudo apt-get install apt-transport-https
-	sudo apt-get update
-	sudo apt-get install atlassian-plugin-sdk
-else ifneq ($(wildcard /etc/redhat-release),)
-	curl https://marketplace.atlassian.com/download/plugins/atlassian-plugin-sdk-rpm/version/42380 -o /tmp/atlassian-plugin-sdk.noarch.rpm
-	sudo yum -y install /tmp/atlassian-plugin-sdk.noarch.rpm
-	rm /tmp/atlassian-plugin-sdk.noarch.rpm
-else
-        @echo "Error: Cannot determine package manager to use to install atlassian-sdk"
+else ifeq ($(PLATFORM), linux)
+  ifneq ($(USER), root)
+	@echo "Install of Atlassian SDK must be run as root (or with sudo)"
+	exit 1
+  endif
+  ifneq ($(wildcard /etc/debian_version),)
+	sh -c 'echo "deb https://sdkrepo.atlassian.com/debian/ stable contrib" >/etc/apt/sources.list.d/atlassian_development.list'
+	apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys B07804338C015B73
+	apt-get install apt-transport-https
+	apt-get update
+	apt-get install atlassian-plugin-sdk
+  else ifneq ($(wildcard /etc/redhat-release),)
+	tmp_dir=$(mktemp -d)
+	curl https://marketplace.atlassian.com/download/plugins/atlassian-plugin-sdk-rpm/version/42380 -o ${tmp_dir}/atlassian-plugin-sdk.noarch.rpm
+	yum -y install ${tmp_dir}/atlassian-plugin-sdk.noarch.rpm
+	rm -rf ${tmp_dir}
+  else
+	@echo "Error: Cannot determine package manager to use to install atlassian-sdk.  Please see:"
+	@echo "https://developer.atlassian.com/docs/getting-started/set-up-the-atlassian-plugin-sdk-and-build-a-project/install-the-atlassian-sdk-on-a-linux-or-mac-system"
+	exit 1
+  endif
 endif
 
 uninstall:
