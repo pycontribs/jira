@@ -7,3 +7,4 @@ flaky
 tenacity
 versionbump
 requires.io
+wheel
