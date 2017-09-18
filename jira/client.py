@@ -1826,9 +1826,9 @@ class JIRA(object):
         """
         path = 'project/' + project + '/role'
         _rolesdict = self._get_json(path)
-        rolesdict ={}
+        rolesdict = {}
 
-        for k,v in _rolesdict.items():
+        for k, v in _rolesdict.items():
             tmp = {}
             tmp['id'] = v.split("/")[-1]
             tmp['url'] = v
@@ -2311,21 +2311,14 @@ class JIRA(object):
         else:
             return Webhook(self._options, self._session, raw=raw_webhook_json)
 
-    def webhooks(self, state=None):
+    def webhooks(self):
         """Get a list of Webhooks.
-
-        :param state: Filters results to sprints in specified states. Valid values: enabled, disabled
 
         :rtype list
         :return (content may depend on API version, but should contain id, name, state, etc.
 
         see https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Create+Webhook
         """
-        params = {}
-        if state:
-            if isinstance(state, string_types):
-                state = state.split(",")
-            params['state'] = state
 
         r_json = self._get_json('webhook', base=self.WEBHOOK_BASE_URL)
         webhooks = [Webhook(self._options, self._session, webhook_json) for webhook_json in r_json]
@@ -2339,7 +2332,7 @@ class JIRA(object):
                 webhooks[h.name] = h.raw
             else:
                 raise (Exception(
-                    "Fatal error, duplicate Webhook Name (%s) found on server." % (s.name)))
+                    "Fatal error, duplicate Webhook Name (%s) found on server." % (h.name)))
         return webhooks
 
     def webhooks_by_id(self):
@@ -2348,7 +2341,6 @@ class JIRA(object):
         for h in self.webhooks():
             webhooks[h.self.split('/')[-1]] = h.raw
         return webhooks
-
 
     # Websudo
     def kill_websudo(self):
