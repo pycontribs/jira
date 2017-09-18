@@ -690,6 +690,7 @@ class Role(Resource):
 
     def add_user(self, users=None, groups=None):
         """Add by berlinsaint 2017/08/16
+
            Add the specified users or groups to this project role. One of ``users`` or ``groups`` must be specified.
 
         :param users: a user or users to add to the role
@@ -703,8 +704,9 @@ class Role(Resource):
             groups = (groups,)
 
         data = {
-            'user':users}
+            'user': users}
         self._session.post(self.self, data=json.dumps(data))
+
 
 class Resolution(Resource):
     """A resolution for an issue."""

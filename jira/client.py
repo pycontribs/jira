@@ -1824,9 +1824,9 @@ class JIRA(object):
         """
         path = 'project/' + project + '/role'
         _rolesdict = self._get_json(path)
-        rolesdict ={}
+        rolesdict = {}
 
-        for k,v in _rolesdict.items():
+        for k, v in _rolesdict.items():
             tmp = {}
             tmp['id'] = v.split("/")[-1]
             tmp['url'] = v
