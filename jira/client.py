@@ -397,6 +397,12 @@ class JIRA(object):
             return False
         return True
 
+    def _get_sprint_field_id(self):
+        sprint_field_name = "Sprint"
+        sprint_field_id = [f['schema']['customId'] for f in self.fields()
+                           if f['name'] == sprint_field_name][0]
+        return sprint_field_id
+
     def _fetch_pages(self, item_type, items_key, request_path, startAt=0, maxResults=50, params=None, base=JIRA_BASE_URL):
         """Fetch pages.
 
@@ -3134,10 +3140,7 @@ class JIRA(object):
             # issue.update() to perform this operation
             # Workaround based on https://answers.atlassian.com/questions/277651/jira-agile-rest-api-example
 
-            # Get the customFieldId for "Sprint"
-            sprint_field_name = "Sprint"
-            sprint_field_id = [f['schema']['customId'] for f in self.fields()
-                               if f['name'] == sprint_field_name][0]
+            sprint_field_id = self._get_sprint_field_id()
 
             data = {'idOrKeys': issue_keys, 'customFieldId': sprint_field_id,
                     'sprintId': sprint_id, 'addToBacklog': False}
@@ -3218,6 +3221,17 @@ class JIRA(object):
                     warnings.warn('Status code 404 may mean, that too old JIRA Agile version is installed.'
                                   ' At least version 6.7.10 is required.')
                 raise
+        elif self._options['agile_rest_path'] == GreenHopperResource.GREENHOPPER_REST_PATH:
+            # In old, private API the function does not exist anymore and we need to use
+            # issue.update() to perform this operation
+            # Workaround based on https://answers.atlassian.com/questions/277651/jira-agile-rest-api-example
+
+            sprint_field_id = self._get_sprint_field_id()
+
+            data = {'idOrKeys': issue_keys, 'customFieldId': sprint_field_id,
+                    'addToBacklog': True}
+            url = self._get_url('sprint/rank', base=self.AGILE_BASE_URL)
+            return self._session.put(url, data=json.dumps(data))
         else:
             raise NotImplementedError('No API for moving issues to backlog for agile_rest_path="%s"' %
                                       self._options['agile_rest_path'])
