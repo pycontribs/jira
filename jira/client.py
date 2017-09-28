@@ -334,7 +334,7 @@ class JIRA(object):
 
     def __init__(self, server=None, options=None, basic_auth=None, oauth=None, jwt=None, kerberos=False, kerberos_options=None,
                  validate=False, get_server_info=True, async=False, logging=True, max_retries=3, proxies=None,
-                 timeout=None, auth=None):
+                 timeout=None, auth=None, cookies=None):
         """Construct a JIRA client instance.
 
         Without any arguments, this client will connect anonymously to the JIRA instance
@@ -444,6 +444,9 @@ class JIRA(object):
 
         if proxies:
             self._session.proxies = proxies
+
+        if cookies and hasattr(self._session, 'cookies'):
+            self._session.cookies.update(cookies)
 
         if validate:
             # This will raise an Exception if you are not allowed to login.
