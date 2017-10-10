@@ -1344,7 +1344,7 @@ class JIRA(object):
         return id
 
     @translate_resource_args
-    def transition_issue(self, issue, transition, fields=None, comment=None, **fieldargs):
+    def transition_issue(self, issue, transition, fields=None, comment=None, worklog=None, **fieldargs):
         """Perform a transition on an issue.
 
         Each keyword argument (other than the predefined ones) is treated as a field name and the argument's value
@@ -1373,6 +1373,8 @@ class JIRA(object):
                 'id': transitionId}}
         if comment:
             data['update'] = {'comment': [{'add': {'body': comment}}]}
+        if worklog:
+            data['update'] = {'worklog': [{'add': {'timeSpent': worklog}}]}
         if fields is not None:
             data['fields'] = fields
         else:
