@@ -268,6 +268,7 @@ class JIRA(object):
         * verify -- Verify SSL certs. Defaults to ``True``.
         * client_cert -- a tuple of (cert,key) for the requests library for client side SSL
         * check_update -- Check whether using the newest python-jira library version.
+        * cookies -- A dict of custom cookies that are sent in all requests to the server.
 
     :param basic_auth: A tuple of username and password to use when establishing a session via HTTP BASIC
         authentication.
@@ -439,6 +440,9 @@ class JIRA(object):
             self._session = ResilientSession(timeout=timeout)
             self._session.verify = verify
         self._session.headers.update(self._options['headers'])
+
+        if 'cookies' in self._options:
+            self._session.cookies.update(self._options['cookies'])
 
         self._session.max_retries = max_retries
 
