@@ -2573,7 +2573,7 @@ class JIRA(object):
     def backup(self, filename='backup.zip', attachments=False):
         """Will call jira export to backup as zipped xml. Returning with success does not mean that the backup process finished."""
         if self.deploymentType == 'Cloud':
-            url = self._options['server'] + '/rest/obm/1.0/runbackup'
+            url = self._options['server'] + '/rest/backup/1/export/runbackup'
             payload = json.dumps({"cbAttachments": attachments})
             self._options['headers']['X-Requested-With'] = 'XMLHttpRequest'
         else:
