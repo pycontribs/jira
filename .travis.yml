@@ -36,7 +36,6 @@ deploy:
   file:
   - dist/$PACKAGE_NAME-$PACKAGE_VERSION.tar.gz
   - dist/$PACKAGE_NAME-$PACKAGE_VERSION-py2.py3-none-any.whl
-  - ChangeLog
   skip_cleanup: true
   on:
     repo: pycontribs/jira
