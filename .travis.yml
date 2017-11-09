@@ -17,6 +17,7 @@ install:
 script:
 - export PACKAGE_NAME=$(python setup.py --name)
 - export PACKAGE_VERSION=$(python setup.py --version)
+- env
 - python setup.py --version
 - tox --installpkg ./dist/*.whl --travis-after
 # validates that the build source distribution is installable using the old easy_install
@@ -36,7 +37,6 @@ deploy:
   file:
   - dist/$PACKAGE_NAME-$PACKAGE_VERSION.tar.gz
   - dist/$PACKAGE_NAME-$PACKAGE_VERSION-py2.py3-none-any.whl
-  - ChangeLog
   skip_cleanup: true
   on:
     repo: pycontribs/jira
