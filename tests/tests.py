@@ -97,10 +97,9 @@ def hashify(some_string, max_len=8):
 def get_unique_project_name():
     jid = ""
     user = re.sub("[^A-Z_]", "", getpass.getuser().upper())
-
     if user == 'TRAVIS' and 'TRAVIS_JOB_NUMBER' in os.environ:
-        # please note that user underline (_) is not suppored by
-        # jira even if is documented as supported.
+        # please note that user underline (_) is not supported by
+        # JIRA even if it is documented as supported.
         jid = 'T' + hashify(user + os.environ['TRAVIS_JOB_NUMBER'])
     else:
         identifier = user + \
