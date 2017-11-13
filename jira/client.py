@@ -42,6 +42,8 @@ from requests.utils import get_netrc_auth
 from six import iteritems
 from six.moves.urllib.parse import urlparse
 
+# Auth Backends
+from jira.cookieauth import JIRACookieAuth
 # GreenHopper specific resources
 from jira.exceptions import JIRAError
 from jira.resilientsession import raise_on_error
@@ -220,7 +222,7 @@ class JIRA(object):
     JIRA_BASE_URL = Resource.JIRA_BASE_URL
     AGILE_BASE_URL = GreenHopperResource.AGILE_BASE_URL
 
-    def __init__(self, server=None, options=None, basic_auth=None, oauth=None, jwt=None, kerberos=False,
+    def __init__(self, server=None, options=None, cookie_auth=None, basic_auth=None, oauth=None, jwt=None, kerberos=False,
                  validate=False, get_server_info=True, async=False, logging=True, max_retries=3, proxies=None,
                  timeout=None):
         """Construct a JIRA client instance.
@@ -249,6 +251,8 @@ class JIRA(object):
             * check_update -- Check whether using the newest python-jira library version.
         :param basic_auth: A tuple of username and password to use when establishing a session via HTTP BASIC
         authentication.
+        :param cookie_auth: A tuple of username and password to use when establishing a session using
+        Cookie-based authentication
         :param oauth: A dict of properties for OAuth authentication. The following properties are required:
             * access_token -- OAuth access token for the user
             * access_token_secret -- OAuth access token secret to sign with the key
@@ -308,6 +312,8 @@ class JIRA(object):
 
         if oauth:
             self._create_oauth_session(oauth, timeout)
+        elif cookie_auth:
+            self._create_cookie_auth_session(*cookie_auth, timeout=timeout)
         elif basic_auth:
             self._create_http_basic_session(*basic_auth, timeout=timeout)
             self._session.headers.update(self._options['headers'])
@@ -332,7 +338,7 @@ class JIRA(object):
             user = self.session()
             if user.raw is None:
                 auth_method = (
-                    oauth or basic_auth or jwt or kerberos or "anonymous"
+                    cookie_auth or oauth or basic_auth or jwt or kerberos or "anonymous"
                 )
                 raise JIRAError("Can not log in with %s" % str(auth_method))
 
@@ -2270,6 +2276,13 @@ class JIRA(object):
             return self._session.delete(url)
 
     # Utilities
+    def _create_cookie_auth_session(self, username, password, timeout=None):
+        verify = self._options['verify']
+        self._session = ResilientSession(timeout=timeout)
+        self._session.verify = verify
+        self._session.cert = self._options['client_cert']
+        self._session.auth =  JIRACookieAuth(username, password)
+
     def _create_http_basic_session(self, username, password, timeout=None):
         verify = self._options['verify']
         self._session = ResilientSession(timeout=timeout)
