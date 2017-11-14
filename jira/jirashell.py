@@ -182,6 +182,9 @@ def process_command_line():
     kerberos_group = parser.add_argument_group('Kerberos options')
     kerberos_group.add_argument('--use-kerberos-auth', action='store_true',
                                 help='Use kerberos auth')
+    kerberos_group.add_argument('--mutual-authentication',
+                                choices=['OPTIONAL', 'DISABLED'],
+                                help='Mutual authentication')
     args = parser.parse_args()
 
     options = {}
@@ -234,6 +237,9 @@ def process_command_line():
     kerberos_auth = {
         'use_kerberos': args.use_kerberos_auth
     }
+
+    if args.mutual_authentication:
+        kerberos_auth['mutual_authentication'] = args.mutual_authentication
 
     return options, basic_auth, oauth, kerberos_auth
 
