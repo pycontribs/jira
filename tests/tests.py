@@ -305,7 +305,8 @@ class JiraTestManager(object):
 
                 try:
                     self.jira_admin.create_project(self.project_a,
-                                                   self.project_a_name)
+                                                   self.project_a_name,
+                                                   template_name='Scrum software development')
                 except Exception:
                     # we care only for the project to exist
                     pass
@@ -319,7 +320,8 @@ class JiraTestManager(object):
 
                 try:
                     self.jira_admin.create_project(self.project_b,
-                                                   self.project_b_name)
+                                                   self.project_b_name,
+                                                   template_name='Scrum software development')
                 except Exception:
                     # we care only for the project to exist
                     pass
