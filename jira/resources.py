@@ -1000,7 +1000,7 @@ def dict2resource(raw, top=None, options=None, session=None):
     or a ``PropertyHolder`` object (if no ``self`` link is present).
     """
     if top is None:
-        top = type(str('PropertyHolder'), (object,), raw)
+        top = PropertyHolder(raw)
 
     seqs = tuple, list, set, frozenset
     for i, j in iteritems(raw):
@@ -1078,3 +1078,8 @@ def cls_for_resource(resource_literal):
     else:
         # Generic Resource cannot directly be used b/c of different constructor signature
         return UnknownResource
+
+
+class PropertyHolder(object):
+    def __init__(self, raw):
+        __bases__ = raw  # noqa
