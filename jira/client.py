@@ -2483,6 +2483,13 @@ class JIRA(object):
         from requests_kerberos import HTTPKerberosAuth
         from requests_kerberos import OPTIONAL
 
+        mutual_authentication = OPTIONAL
+        if kerberos_options.get('mutual_authentication') == 'DISABLED':
+            mutual_authentication = DISABLED
+        else:
+            raise ValueError("Unknown value for mutual_authentication: %s" %
+                             kerberos_options['mutual_authentication'])
+
         if kerberos_options.get('mutual_authentication', 'OPTIONAL') == 'OPTIONAL':
             mutual_authentication = OPTIONAL
         elif kerberos_options.get('mutual_authentication') == 'DISABLED':
