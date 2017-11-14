@@ -675,6 +675,7 @@ class Role(Resource):
         :param groups: a group or groups to add to the role
         :type groups: string, list or tuple
         """
+
         if users is not None and isinstance(users, string_types):
             users = (users,)
         if groups is not None and isinstance(groups, string_types):
@@ -772,6 +773,7 @@ class Version(Resource):
         :param moveAffectedIssuesTo: in issues for which this version is an
             affected version, add this argument version to the affected version list
         """
+
         params = {}
         if moveFixIssuesTo is not None:
             params['moveFixIssuesTo'] = moveFixIssuesTo
@@ -886,6 +888,7 @@ def dict2resource(raw, top=None, options=None, session=None):
     on a new ``Resource`` object of the appropriate type (if a ``self`` link is present)
     or a ``PropertyHolder`` object (if no ``self`` link is present).
     """
+
     if top is None:
         top = type(str('PropertyHolder'), (object,), raw)
 
