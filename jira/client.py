@@ -221,7 +221,7 @@ class JIRA(object):
     JIRA_BASE_URL = Resource.JIRA_BASE_URL
     AGILE_BASE_URL = GreenHopperResource.AGILE_BASE_URL
 
-    def __init__(self, server=None, options=None, basic_auth=None, oauth=None, jwt=None, kerberos=False,
+    def __init__(self, server=None, options=None, basic_auth=None, oauth=None, jwt=None, kerberos=False, kerberos_options=None,
                  validate=False, get_server_info=True, async=False, logging=True, max_retries=3, proxies=None,
                  timeout=None):
         """Construct a JIRA client instance.
@@ -257,6 +257,9 @@ class JIRA(object):
             * key_cert -- private key file to sign requests with (should be the pair of the public key supplied to
             JIRA in the OAuth application link)
         :param kerberos: If true it will enable Kerberos authentication.
+        :param kerberos_options: A dict of properties for Kerberos authentication. The following properties are possible:
+            * mutual_authentication -- string DISABLED or OPTIONAL.
+            Example kerberos_options structure: ``{'mutual_authentication': 'DISABLED'}``
         :param jwt: A dict of properties for JWT authentication supported by Atlassian Connect. The following
             properties are required:
             * secret -- shared secret as delivered during 'installed' lifecycle event
@@ -315,7 +318,7 @@ class JIRA(object):
         elif jwt:
             self._create_jwt_session(jwt, timeout)
         elif kerberos:
-            self._create_kerberos_session(timeout)
+            self._create_kerberos_session(timeout, kerberos_options=kerberos_options)
         else:
             verify = self._options['verify']
             self._session = ResilientSession(timeout=timeout)
@@ -2294,15 +2297,24 @@ class JIRA(object):
         self._session.verify = verify
         self._session.auth = oauth
 
-    def _create_kerberos_session(self, timeout):
+    def _create_kerberos_session(self, timeout, kerberos_options=None):
         verify = self._options['verify']
+        if kerberos_options is None:
+            kerberos_options = {}
 
         from requests_kerberos import HTTPKerberosAuth
-        from requests_kerberos import OPTIONAL
+        from requests_kerberos import OPTIONAL, DISABLED
+
+        mutual_authentication = OPTIONAL
+        if kerberos_options.get('mutual_authentication') == 'DISABLED':
+            mutual_authentication = DISABLED
+        else:
+            raise ValueError("Unknown value for mutual_authentication: %s" %
+                             kerberos_options['mutual_authentication'])
 
         self._session = ResilientSession(timeout=timeout)
         self._session.verify = verify
-        self._session.auth = HTTPKerberosAuth(mutual_authentication=OPTIONAL)
+        self._session.auth = HTTPKerberosAuth(mutual_authentication=mutual_authentication)
 
     @staticmethod
     def _timestamp(dt=None):
