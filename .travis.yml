@@ -11,6 +11,7 @@ python:
 - '3.6'
 install:
 - pip -q --log dist/pip.log install --upgrade pip setuptools tox-travis py wheel
+- touch ChangeLog
 - python setup.py sdist bdist_wheel install
 - pip install ./dist/*.whl
 - pip --version
