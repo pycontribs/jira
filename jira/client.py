@@ -2302,8 +2302,9 @@ class JIRA(object):
         if kerberos_options is None:
             kerberos_options = {}
 
+        from requests_kerberos import DISABLED
         from requests_kerberos import HTTPKerberosAuth
-        from requests_kerberos import OPTIONAL, DISABLED
+        from requests_kerberos import OPTIONAL
 
         mutual_authentication = OPTIONAL
         if kerberos_options.get('mutual_authentication') == 'DISABLED':
