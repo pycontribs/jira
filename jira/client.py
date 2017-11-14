@@ -2959,8 +2959,6 @@ class JIRA(object):
         """
         params = {}
         if state:
-            if isinstance(state, string_types):
-                state = state.split(",")
             params['state'] = state
 
         if self._options['agile_rest_path'] == GreenHopperResource.GREENHOPPER_REST_PATH:
