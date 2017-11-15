@@ -1688,7 +1688,7 @@ class UserTests(unittest.TestCase):
     def test_user(self):
         user = self.jira.user(self.test_manager.CI_JIRA_ADMIN)
         self.assertEqual(user.name, self.test_manager.CI_JIRA_ADMIN)
-        self.assertRegex(user.emailAddress, '.*@example.com')
+        self.assertRegex(user.emailAddress, '^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
 
     @pytest.mark.xfail(reason='query returns empty list')
     def test_search_assignable_users_for_projects(self):
