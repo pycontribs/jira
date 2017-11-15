@@ -1911,14 +1911,14 @@ class OtherTests(unittest.TestCase):
 
     def test_session_invalid_login(self):
         try:
-            JIRA('https://support.atlassian.com',
+            JIRA('https://jira.atlassian.com',
                  basic_auth=("xxx", "xxx"),
                  validate=True,
                  logging=False)
         except Exception as e:
             self.assertIsInstance(e, JIRAError)
             # 20161010: jira cloud returns 500
-            assert e.status_code in (401, 500)
+            assert e.status_code in (401, 500, 403)
             str(JIRAError)  # to see that this does not raise an exception
             return
         assert False
@@ -1935,7 +1935,7 @@ class SessionTests(unittest.TestCase):
         self.assertIsNotNone(user.raw['session'])
 
     def test_session_with_no_logged_in_user_raises(self):
-        anon_jira = JIRA('https://support.atlassian.com', logging=False)
+        anon_jira = JIRA('https://jira.atlassian.com', logging=False)
         self.assertRaises(JIRAError, anon_jira.session)
 
     # @pytest.mark.skipif(platform.python_version() < '3', reason='Does not work with Python 2')
