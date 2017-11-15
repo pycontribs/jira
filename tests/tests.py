@@ -899,10 +899,10 @@ class IssueTests(unittest.TestCase):
                                        issuetype={'name': 'Bug'})
         # customfield_10022='XSS')
         issue.update(summary='Updated summary', description='Now updated',
-                     issuetype={'name': 'Improvement'})
+                     issuetype={'name': 'Story'})
         self.assertEqual(issue.fields.summary, 'Updated summary')
         self.assertEqual(issue.fields.description, 'Now updated')
-        self.assertEqual(issue.fields.issuetype.name, 'Improvement')
+        self.assertEqual(issue.fields.issuetype.name, 'Story')
         # self.assertEqual(issue.fields.customfield_10022, 'XSS')
         self.assertEqual(issue.fields.project.key, self.project_b)
         issue.delete()
@@ -916,14 +916,14 @@ class IssueTests(unittest.TestCase):
             'summary': 'Issue is updated',
             'description': "it sure is",
             'issuetype': {
-                'name': 'Improvement'},
+                'name': 'Story'},
             # 'customfield_10022': 'DOC',
             'priority': {
                 'name': 'Major'}}
         issue.update(fields=fields)
         self.assertEqual(issue.fields.summary, 'Issue is updated')
         self.assertEqual(issue.fields.description, 'it sure is')
-        self.assertEqual(issue.fields.issuetype.name, 'Improvement')
+        self.assertEqual(issue.fields.issuetype.name, 'Story')
         # self.assertEqual(issue.fields.customfield_10022, 'DOC')
         self.assertEqual(issue.fields.priority.name, 'Major')
         issue.delete()
@@ -988,7 +988,7 @@ class IssueTests(unittest.TestCase):
     @not_on_custom_jira_instance
     def test_createmeta_filter_by_projectkeys_and_name(self):
         meta = self.jira.createmeta(projectKeys=(self.project_a,
-                                                 self.project_b), issuetypeNames='Improvement')
+                                                 self.project_b), issuetypeNames='Story')
         self.assertEqual(len(meta['projects']), 2)
         for project in meta['projects']:
             self.assertEqual(len(project['issuetypes']), 1)
