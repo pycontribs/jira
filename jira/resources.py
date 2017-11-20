@@ -842,7 +842,12 @@ def dict2resource(raw, top=None, options=None, session=None):
     for i, j in iteritems(raw):
         if isinstance(j, dict):
             if 'self' in j:
-                resource = cls_for_resource(j['self'])(options, session, j)
+                cls = cls_for_resource(j['self'])
+                if cls is Resource:
+                    resource = cls(None, options, session)
+                    resource._parse_raw(j)
+                else:
+                    resource = cls(options, session, j)
                 setattr(top, i, resource)
             elif i == 'timetracking':
                 setattr(top, 'timetracking', TimeTracking(options, session, j))
@@ -854,8 +859,12 @@ def dict2resource(raw, top=None, options=None, session=None):
             for seq_elem in j:
                 if isinstance(seq_elem, dict):
                     if 'self' in seq_elem:
-                        resource = cls_for_resource(seq_elem['self'])(
-                            options, session, seq_elem)
+                        cls = cls_for_resource(seq_elem['self'])
+                        if cls is Resource:
+                            resource = cls(None, options, session)
+                            resource._parse_raw(seq_elem)
+                        else:
+                            resource = cls(options, session, seq_elem)
                         seq_list.append(resource)
                     else:
                         seq_list.append(
