@@ -2,12 +2,13 @@
 Contributing
 ************
 
-The client is an open source project under the BSD license. Contributions of any kind are welcome!
+The client is an open source project under the BSD license. 
+Contributions of any kind are welcome!
 
 https://github.com/pycontribs/jira/
 
-If you find a bug or have an idea for a useful feature, file it at the GitHub project. Extra points for source
-code patches -- fork and send a pull request.
+If you find a bug or have an idea for a useful feature, file it at the GitHub
+project. Extra points for source code patches -- fork and send a pull request.
 
 
 Discussion and support
@@ -15,8 +16,8 @@ Discussion and support
 
 We encourage all who wish to discuss by using https://community.atlassian.com/t5/tag/jira-python/tg-p
 
-Keep in mind to use the jira-python tag when you add a new question. This will assure that the project maintainers
-will get notified about your question.
+Keep in mind to use the jira-python tag when you add a new question. This will
+assure that the project maintainers will get notified about your question.
 
 
 Contributing Code
@@ -32,6 +33,22 @@ Contributing Code
     * A test case that demonstrates the previous flaw that now passes with the included patch.
     * Documentation for those changes to a public API
 
+
+Testing
+*******
+
+To test code run::
+
+    make test-all
+
+This will run the code in a virtual environment, and will test across the
+versions of python which are installed. It will also install tox if it is
+not already installed.
+
+Alternatively if you do not have make you can always run::
+
+    pip install tox
+    tox
 
 Issues and Feature Requests
 ***************************
