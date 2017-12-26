@@ -6,6 +6,7 @@ This module implements the Resource classes that translate JSON from JIRA REST r
 into usable objects.
 """
 
+import datetime
 import logging
 import re
 import time
@@ -19,6 +20,7 @@ except ImportError:
 import json
 
 from six import iteritems
+from six.moves.urllib.parse import urljoin
 from six import string_types
 from six import text_type
 
@@ -876,6 +878,43 @@ class RequestType(Resource):
         if raw:
             self._parse_raw(raw)
 
+
+# Plugins
+
+
+# FIXME this is not a real resource
+class _PluginResource(Resource):
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(self, 'invalid', options, session)
+        if raw:
+            self._parse_raw(raw)
+
+
+class PluginLicense(_PluginResource):
+    # We need to use __getattribute__ instead of __getattr__ as for __getattr__
+    # the parent implementation is preferred
+    def __getattribute__(self, item):
+        val = super(_PluginResource, self).__getattribute__(item)
+
+        # convert date integers to datetime objects
+        if item.endswith('Date') and isinstance(val, int):
+            seconds, milliseconds = divmod(val, 1000)
+            return \
+                datetime.datetime.fromtimestamp(seconds) \
+                + datetime.timedelta(milliseconds=milliseconds)
+        else:
+            return val
+
+
+class Plugin(_PluginResource):
+    def resolve(self):
+        r_json = get_plugin_resource(self, None, self.raw['links']['self'])
+        return type(self)(self._options, self._session, r_json)
+
+    def license(self):
+        r_json = get_plugin_resource(self, None, self.raw['links']['self'] + '/license')
+        return PluginLicense(self._options, self._session, r_json)
+
 # Utilities
 
 
@@ -954,3 +993,13 @@ def cls_for_resource(resource_literal):
     else:
         # Generic Resource without specialized update/delete behavior
         return Resource
+
+
+def get_plugin_resource(self, path='', link=None):
+    server = self._options['server']
+    if link is None:
+        url = server + '/rest/plugins/1.0/' + path
+    else:
+        url = urljoin(server, link)
+    r = self._session.get(url, headers={'Accept': '*'})
+    return r.json()

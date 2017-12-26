@@ -60,6 +60,7 @@ from jira.resources import Issue
 from jira.resources import IssueLink
 from jira.resources import IssueLinkType
 from jira.resources import IssueType
+from jira.resources import Plugin
 from jira.resources import Priority
 from jira.resources import Project
 from jira.resources import RemoteLink
@@ -76,6 +77,8 @@ from jira.resources import Version
 from jira.resources import Votes
 from jira.resources import Watchers
 from jira.resources import Worklog
+
+from jira.resources import get_plugin_resource
 
 from jira import __version__
 from jira.utils import CaseInsensitiveDict
@@ -3263,6 +3266,19 @@ class JIRA(object):
         else:
             raise NotImplementedError('No API for moving issues to backlog for agile_rest_path="%s"' %
                                       self._options['agile_rest_path'])
+
+    def plugins(self):
+        r_json = get_plugin_resource(self)
+        return [
+            Plugin(self._options, self._session, raw_plugin_json)
+            for raw_plugin_json in r_json['plugins']
+        ]
+
+    def plugin(self, key):
+        if not key.endswith('-key'):
+            key = key + '-key'
+        r_json = get_plugin_resource(self, key)
+        return Plugin(self._options, self._session, r_json)
 
 
 class GreenHopper(JIRA):
