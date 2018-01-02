@@ -254,7 +254,12 @@ def main():
 
     jira = JIRA(options=options, basic_auth=basic_auth, oauth=oauth)
 
-    from IPython.frontend.terminal.embed import InteractiveShellEmbed
+    import IPython
+    # The top-level `frontend` package has been deprecated since IPython 1.0.
+    if IPython.version_info[0] >= 1:
+        from IPython.terminal.embed import InteractiveShellEmbed
+    else:
+        from IPython.frontend.terminal.embed import InteractiveShellEmbed
 
     ipshell = InteractiveShellEmbed(
         banner1='<JIRA Shell ' + __version__ + ' (' + jira.client_info() + ')>')
