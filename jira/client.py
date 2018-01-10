@@ -2333,7 +2333,7 @@ class JIRA(object):
             logging.error("JWT authentication requires requests_jwt")
             raise e
         jwt_auth.set_header_format('JWT %s')
-        
+
         jwt_auth.add_field("iat", lambda req: JIRA._timestamp())
         jwt_auth.add_field("exp", lambda req: JIRA._timestamp(datetime.timedelta(minutes=3)))
         jwt_auth.add_field("qsh", QshGenerator(self._options['context_path']))
