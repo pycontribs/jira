@@ -223,7 +223,7 @@ class JIRA(object):
 
     def __init__(self, server=None, options=None, basic_auth=None, oauth=None, jwt=None, kerberos=False, kerberos_options=None,
                  validate=False, get_server_info=True, async=False, logging=True, max_retries=3, proxies=None,
-                 timeout=None):
+                 timeout=None, cookies=None):
         """Construct a JIRA client instance.
 
         Without any arguments, this client will connect anonymously to the JIRA instance
@@ -326,6 +326,12 @@ class JIRA(object):
         self._session.headers.update(self._options['headers'])
 
         self._session.max_retries = max_retries
+
+        # Set initial cookies for the session
+        if cookies is not None and type(cookies) is list:
+            for cookie in cookies:
+                if cookie is not None and type(cookie) is dict:
+                    self._session.cookies.set(**cookie)
 
         if proxies:
             self._session.proxies = proxies
