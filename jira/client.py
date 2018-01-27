@@ -41,16 +41,41 @@ import warnings
 from requests.utils import get_netrc_auth
 from six import iteritems
 from six.moves.urllib.parse import urlparse
-# JIRA specific resources
-from jira.resources import *  # NOQA
 
 # GreenHopper specific resources
 from jira.exceptions import JIRAError
 from jira.resilientsession import raise_on_error
 from jira.resilientsession import ResilientSession
+# JIRA specific resources
+from jira.resources import Attachment
 from jira.resources import Board
+from jira.resources import Comment
+from jira.resources import Component
+from jira.resources import Customer
+from jira.resources import CustomFieldOption
+from jira.resources import Dashboard
+from jira.resources import Filter
 from jira.resources import GreenHopperResource
+from jira.resources import Issue
+from jira.resources import IssueLink
+from jira.resources import IssueLinkType
+from jira.resources import IssueType
+from jira.resources import Priority
+from jira.resources import Project
+from jira.resources import RemoteLink
+from jira.resources import RequestType
+from jira.resources import Resolution
+from jira.resources import Resource
+from jira.resources import Role
+from jira.resources import SecurityLevel
+from jira.resources import ServiceDesk
 from jira.resources import Sprint
+from jira.resources import Status
+from jira.resources import User
+from jira.resources import Version
+from jira.resources import Votes
+from jira.resources import Watchers
+from jira.resources import Worklog
 
 from jira import __version__
 from jira.utils import CaseInsensitiveDict
@@ -170,6 +195,7 @@ class JIRA(object):
 
     DEFAULT_OPTIONS = {
         "server": "http://localhost:2990/jira",
+        "auth_url": '/rest/auth/1/session',
         "context_path": "/",
         "rest_path": "api",
         "rest_api_version": "2",
@@ -195,7 +221,7 @@ class JIRA(object):
     JIRA_BASE_URL = Resource.JIRA_BASE_URL
     AGILE_BASE_URL = GreenHopperResource.AGILE_BASE_URL
 
-    def __init__(self, server=None, options=None, basic_auth=None, oauth=None, jwt=None, kerberos=False,
+    def __init__(self, server=None, options=None, basic_auth=None, oauth=None, jwt=None, kerberos=False, kerberos_options=None,
                  validate=False, get_server_info=True, async=False, logging=True, max_retries=3, proxies=None,
                  timeout=None):
         """Construct a JIRA client instance.
@@ -231,6 +257,9 @@ class JIRA(object):
             * key_cert -- private key file to sign requests with (should be the pair of the public key supplied to
             JIRA in the OAuth application link)
         :param kerberos: If true it will enable Kerberos authentication.
+        :param kerberos_options: A dict of properties for Kerberos authentication. The following properties are possible:
+            * mutual_authentication -- string DISABLED or OPTIONAL.
+            Example kerberos_options structure: ``{'mutual_authentication': 'DISABLED'}``
         :param jwt: A dict of properties for JWT authentication supported by Atlassian Connect. The following
             properties are required:
             * secret -- shared secret as delivered during 'installed' lifecycle event
@@ -289,7 +318,7 @@ class JIRA(object):
         elif jwt:
             self._create_jwt_session(jwt, timeout)
         elif kerberos:
-            self._create_kerberos_session(timeout)
+            self._create_kerberos_session(timeout, kerberos_options=kerberos_options)
         else:
             verify = self._options['verify']
             self._session = ResilientSession(timeout=timeout)
@@ -351,8 +380,12 @@ class JIRA(object):
 
     def __del__(self):
         """Destructor for JIRA instance."""
+        self.close()
+
+    def close(self):
         session = getattr(self, "_session", None)
         if session is not None:
+            self._session = None
             if self.sys_version_info < (3, 4, 0):  # workaround for https://github.com/kennethreitz/requests/issues/2303
                 try:
                     session.close()
@@ -371,6 +404,12 @@ class JIRA(object):
             raise JIRAError("SecurityTokenMissing: %s" % content)
             return False
         return True
+
+    def _get_sprint_field_id(self):
+        sprint_field_name = "Sprint"
+        sprint_field_id = [f['schema']['customId'] for f in self.fields()
+                           if f['name'] == sprint_field_name][0]
+        return sprint_field_id
 
     def _fetch_pages(self, item_type, items_key, request_path, startAt=0, maxResults=50, params=None, base=JIRA_BASE_URL):
         """Fetch pages.
@@ -408,7 +447,7 @@ class JIRA(object):
             if isinstance(resource, dict):
                 total = resource.get('total')
                 # 'isLast' is the optional key added to responses in JIRA Agile 6.7.6. So far not used in basic JIRA API.
-                is_last = resource.get('isLast', True)
+                is_last = resource.get('isLast', False)
                 start_at_from_response = resource.get('startAt', 0)
                 max_results_from_response = resource.get('maxResults', 1)
             else:
@@ -954,6 +993,96 @@ class JIRA(object):
                                    'error': None, 'input_fields': fields})
         return issue_list
 
+    def supports_service_desk(self):
+        url = self._options['server'] + '/rest/servicedeskapi/info'
+        headers = {'X-ExperimentalApi': 'opt-in'}
+        try:
+            r = self._session.get(url, headers=headers)
+            return r.status_code == 200
+        except JIRAError:
+            return False
+
+    def create_customer(self, email, displayName):
+        """Create a new customer and return an issue Resource for it."""
+        url = self._options['server'] + '/rest/servicedeskapi/customer'
+        headers = {'X-ExperimentalApi': 'opt-in'}
+        r = self._session.post(url, headers=headers, data=json.dumps({
+            'email': email,
+            'displayName': displayName
+        }))
+
+        raw_customer_json = json_loads(r)
+
+        if r.status_code != 201:
+            raise JIRAError(r.status_code, request=r)
+        return Customer(self._options, self._session, raw=raw_customer_json)
+
+    def service_desks(self):
+        """Get a list of ServiceDesk Resources from the server visible to the current authenticated user."""
+        url = self._options['server'] + '/rest/servicedeskapi/servicedesk'
+        headers = {'X-ExperimentalApi': 'opt-in'}
+        r_json = json_loads(self._session.get(url, headers=headers))
+        projects = [ServiceDesk(self._options, self._session, raw_project_json)
+                    for raw_project_json in r_json['values']]
+        return projects
+
+    def service_desk(self, id):
+        """Get a Service Desk Resource from the server.
+
+        :param id: ID or key of the Service Desk to get
+        """
+        return self._find_for_resource(ServiceDesk, id)
+
+    def create_customer_request(self, fields=None, prefetch=True, **fieldargs):
+        """Create a new customer request and return an issue Resource for it.
+
+        Each keyword argument (other than the predefined ones) is treated as a field name and the argument's value
+        is treated as the intended value for that field -- if the fields argument is used, all other keyword arguments
+        will be ignored.
+
+        By default, the client will immediately reload the issue Resource created by this method in order to return
+        a complete Issue object to the caller; this behavior can be controlled through the 'prefetch' argument.
+
+        JIRA projects may contain many different issue types. Some issue screens have different requirements for
+        fields in a new issue. This information is available through the 'createmeta' method. Further examples are
+        available here: https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Create+Issue
+
+        :param fields: a dict containing field names and the values to use. If present, all other keyword arguments
+            will be ignored
+        :param prefetch: whether to reload the created issue Resource so that all of its data is present in the value
+            returned from this method
+        """
+        data = fields
+
+        p = data['serviceDeskId']
+        service_desk = None
+
+        if isinstance(p, string_types) or isinstance(p, integer_types):
+            service_desk = self.service_desk(p)
+        elif isinstance(p, ServiceDesk):
+            service_desk = p
+
+        data['serviceDeskId'] = service_desk.id
+
+        p = data['requestTypeId']
+        if isinstance(p, integer_types):
+            data['requestTypeId'] = p
+        elif isinstance(p, string_types):
+            data['requestTypeId'] = self.request_type_by_name(
+                service_desk, p).id
+
+        url = self._options['server'] + '/rest/servicedeskapi/request'
+        headers = {'X-ExperimentalApi': 'opt-in'}
+        r = self._session.post(url, headers=headers, data=json.dumps(data))
+
+        raw_issue_json = json_loads(r)
+        if 'issueKey' not in raw_issue_json:
+            raise JIRAError(r.status_code, request=r)
+        if prefetch:
+            return self.issue(raw_issue_json['issueKey'])
+        else:
+            return Issue(self._options, self._session, raw=raw_issue_json)
+
     def createmeta(self, projectKeys=None, projectIds=[], issuetypeIds=None, issuetypeNames=None, expand=None):
         """Get the metadata required to create issues, optionally filtered by projects and issue types.
 
@@ -1025,7 +1154,7 @@ class JIRA(object):
         return self._find_for_resource(Comment, (issue, comment))
 
     @translate_resource_args
-    def add_comment(self, issue, body, visibility=None):
+    def add_comment(self, issue, body, visibility=None, is_internal=False):
         """Add a comment from the current authenticated user on the specified issue and return a Resource for it.
 
         The issue identifier and comment body are required.
@@ -1036,15 +1165,27 @@ class JIRA(object):
             "type" is 'role' (or 'group' if the JIRA server has configured
             comment visibility for groups) and 'value' is the name of the role
             (or group) to which viewing of this comment will be restricted.
+        :param is_internal: defines whether a comment has to be marked as 'Internal' in Jira Service Desk
         """
         data = {
-            'body': body}
+            'body': body,
+        }
+
+        if is_internal:
+            data.update({
+                'properties': [
+                    {'key': 'sd.public.comment',
+                     'value': {'internal': is_internal}}
+                ]
+            })
+
         if visibility is not None:
             data['visibility'] = visibility
 
         url = self._get_url('issue/' + str(issue) + '/comment')
         r = self._session.post(
-            url, data=json.dumps(data))
+            url, data=json.dumps(data)
+        )
 
         comment = Comment(self._options, self._session, raw=json_loads(r))
         return comment
@@ -1213,7 +1354,7 @@ class JIRA(object):
         return id
 
     @translate_resource_args
-    def transition_issue(self, issue, transition, fields=None, comment=None, **fieldargs):
+    def transition_issue(self, issue, transition, fields=None, comment=None, worklog=None, **fieldargs):
         """Perform a transition on an issue.
 
         Each keyword argument (other than the predefined ones) is treated as a field name and the argument's value
@@ -1242,6 +1383,8 @@ class JIRA(object):
                 'id': transitionId}}
         if comment:
             data['update'] = {'comment': [{'add': {'body': comment}}]}
+        if worklog:
+            data['update'] = {'worklog': [{'add': {'timeSpent': worklog}}]}
         if fields is not None:
             data['fields'] = fields
         else:
@@ -1487,6 +1630,27 @@ class JIRA(object):
             raise KeyError("Issue type '%s' is unknown." % name)
         return issue_type
 
+    def request_types(self, service_desk):
+        if hasattr(service_desk, 'id'):
+            service_desk = service_desk.id
+        url = (self._options['server'] +
+               '/rest/servicedeskapi/servicedesk/%s/requesttype'
+               % service_desk)
+        headers = {'X-ExperimentalApi': 'opt-in'}
+        r_json = json_loads(self._session.get(url, headers=headers))
+        request_types = [
+            RequestType(self._options, self._session, raw_type_json)
+            for raw_type_json in r_json['values']]
+        return request_types
+
+    def request_type_by_name(self, service_desk, name):
+        request_types = self.request_types(service_desk)
+        try:
+            request_type = [rt for rt in request_types if rt.name == name][0]
+        except IndexError:
+            raise KeyError("Request type '%s' is unknown." % name)
+        return request_type
+
     # User permissions
 
     # non-resource
@@ -1670,8 +1834,16 @@ class JIRA(object):
 
         :param project: ID or key of the project to get roles from
         """
-        roles_dict = self._get_json('project/' + project + '/role')
-        return roles_dict
+        path = 'project/' + project + '/role'
+        _rolesdict = self._get_json(path)
+        rolesdict = {}
+
+        for k, v in _rolesdict.items():
+            tmp = {}
+            tmp['id'] = v.split("/")[-1]
+            tmp['url'] = v
+            rolesdict[k] = tmp
+        return rolesdict
         # TODO(ssbarnea): return a list of Roles()
 
     @translate_resource_args
@@ -2074,7 +2246,7 @@ class JIRA(object):
 
     def session(self):
         """Get a dict of the current authenticated user's session information."""
-        url = '{server}/rest/auth/1/session'.format(**self._options)
+        url = '{server}{auth_url}'.format(**self._options)
 
         if isinstance(self._session.auth, tuple):
             authentication_data = {
@@ -2125,15 +2297,26 @@ class JIRA(object):
         self._session.verify = verify
         self._session.auth = oauth
 
-    def _create_kerberos_session(self, timeout):
+    def _create_kerberos_session(self, timeout, kerberos_options=None):
         verify = self._options['verify']
+        if kerberos_options is None:
+            kerberos_options = {}
 
+        from requests_kerberos import DISABLED
         from requests_kerberos import HTTPKerberosAuth
         from requests_kerberos import OPTIONAL
 
+        if kerberos_options.get('mutual_authentication', 'OPTIONAL') == 'OPTIONAL':
+            mutual_authentication = OPTIONAL
+        elif kerberos_options.get('mutual_authentication') == 'DISABLED':
+            mutual_authentication = DISABLED
+        else:
+            raise ValueError("Unknown value for mutual_authentication: %s" %
+                             kerberos_options['mutual_authentication'])
+
         self._session = ResilientSession(timeout=timeout)
         self._session.verify = verify
-        self._session.auth = HTTPKerberosAuth(mutual_authentication=OPTIONAL)
+        self._session.auth = HTTPKerberosAuth(mutual_authentication=mutual_authentication)
 
     @staticmethod
     def _timestamp(dt=None):
@@ -2405,7 +2588,7 @@ class JIRA(object):
     def backup(self, filename='backup.zip', attachments=False):
         """Will call jira export to backup as zipped xml. Returning with success does not mean that the backup process finished."""
         if self.deploymentType == 'Cloud':
-            url = self._options['server'] + '/rest/obm/1.0/runbackup'
+            url = self._options['server'] + '/rest/backup/1/export/runbackup'
             payload = json.dumps({"cbAttachments": attachments})
             self._options['headers']['X-Requested-With'] = 'XMLHttpRequest'
         else:
@@ -2586,12 +2769,17 @@ class JIRA(object):
         r = self._session.get(url)
         j = json_loads(r)
 
+        possible_templates = ['JIRA Classic', 'JIRA Default Schemes', 'Basic software development']
+
+        if template_name is not None:
+            possible_templates = [template_name]
+
         # https://confluence.atlassian.com/jirakb/creating-a-project-via-rest-based-on-jira-default-schemes-744325852.html
         template_key = 'com.atlassian.jira-legacy-project-templates:jira-blank-item'
         templates = []
         for template in _get_template_list(j):
             templates.append(template['name'])
-            if template['name'] in ['JIRA Classic', 'JIRA Default Schemes', 'Basic software development', template_name]:
+            if template['name'] in possible_templates:
                 template_key = template['projectTemplateModuleCompleteKey']
                 break
 
@@ -2981,10 +3169,7 @@ class JIRA(object):
             # issue.update() to perform this operation
             # Workaround based on https://answers.atlassian.com/questions/277651/jira-agile-rest-api-example
 
-            # Get the customFieldId for "Sprint"
-            sprint_field_name = "Sprint"
-            sprint_field_id = [f['schema']['customId'] for f in self.fields()
-                               if f['name'] == sprint_field_name][0]
+            sprint_field_id = self._get_sprint_field_id()
 
             data = {'idOrKeys': issue_keys, 'customFieldId': sprint_field_id,
                     'sprintId': sprint_id, 'addToBacklog': False}
@@ -3065,6 +3250,17 @@ class JIRA(object):
                     warnings.warn('Status code 404 may mean, that too old JIRA Agile version is installed.'
                                   ' At least version 6.7.10 is required.')
                 raise
+        elif self._options['agile_rest_path'] == GreenHopperResource.GREENHOPPER_REST_PATH:
+            # In old, private API the function does not exist anymore and we need to use
+            # issue.update() to perform this operation
+            # Workaround based on https://answers.atlassian.com/questions/277651/jira-agile-rest-api-example
+
+            sprint_field_id = self._get_sprint_field_id()
+
+            data = {'idOrKeys': issue_keys, 'customFieldId': sprint_field_id,
+                    'addToBacklog': True}
+            url = self._get_url('sprint/rank', base=self.AGILE_BASE_URL)
+            return self._session.put(url, data=json.dumps(data))
         else:
             raise NotImplementedError('No API for moving issues to backlog for agile_rest_path="%s"' %
                                       self._options['agile_rest_path'])
