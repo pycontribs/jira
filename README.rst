@@ -58,7 +58,7 @@ Feeling impatient? I like your style.
 
 
 Installation
-~~~~~~~~~~~~
+------------
 
 Download and install using ``pip install jira`` or ``easy_install jira``
 
@@ -74,7 +74,7 @@ installation using ``pip install jira[opt,cli,testing]``
 
 
 Usage
-~~~~~
+-----
 
 See the documentation_ for full details.
 
@@ -82,7 +82,7 @@ See the documentation_ for full details.
 
 
 Development
-~~~~~~~~~~~
+-----------
 
 Development takes place on GitHub_, where the git-flow_ branch structure is used:
 
