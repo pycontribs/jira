@@ -176,10 +176,12 @@ class QshGenerator(object):
         parse_result = urlparse(req.url)
 
         path = parse_result.path[len(self.context_path):] if len(self.context_path) > 1 else parse_result.path
-        query = '&'.join(sorted(parse_result.query.split("&")))
+        # Per Atlassian docs, use %20 for whitespace when generating qsh for URL
+        # https://developer.atlassian.com/cloud/jira/platform/understanding-jwt/#qsh
+        query = '&'.join(sorted(parse_result.query.split("&"))).replace('+', '%20')
         qsh = '%(method)s&%(path)s&%(query)s' % {'method': req.method.upper(), 'path': path, 'query': query}
 
-        return hashlib.sha256(qsh).hexdigest()
+        return hashlib.sha256(qsh.encode('utf-8')).hexdigest()
 
 
 class JIRA(object):
@@ -2331,6 +2333,8 @@ class JIRA(object):
         except NameError as e:
             logging.error("JWT authentication requires requests_jwt")
             raise e
+        jwt_auth.set_header_format('JWT %s')
+
         jwt_auth.add_field("iat", lambda req: JIRA._timestamp())
         jwt_auth.add_field("exp", lambda req: JIRA._timestamp(datetime.timedelta(minutes=3)))
         jwt_auth.add_field("qsh", QshGenerator(self._options['context_path']))
