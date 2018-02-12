@@ -3,6 +3,8 @@
 from __future__ import unicode_literals
 from __future__ import print_function
 
+from requests.auth import AuthBase
+
 """
 This module implements a friendly (well, friendlier) interface between the raw JSON
 responses from JIRA and the Resource/dict abstractions provided by this library. Users
@@ -184,6 +186,55 @@ class QshGenerator(object):
         return hashlib.sha256(qsh.encode('utf-8')).hexdigest()
 
 
+class JiraCookieAuth(AuthBase):
+    """Jira Cookie Authentication
+
+    Allows using cookie authentication as described by
+    https://developer.atlassian.com/jiradev/jira-apis/jira-rest-apis/jira-rest-api-tutorials/jira-rest-api-example-cookie-based-authentication
+
+    """
+
+    def __init__(self, session, _get_session, auth):
+        self._session = session
+        self._get_session = _get_session
+        self.__auth = auth
+
+    def handle_401(self, response, **kwargs):
+        if response.status_code != 401:
+            return response
+        self.init_session()
+        response = self.process_original_request(response.request.copy())
+        return response
+
+    def process_original_request(self, original_request):
+        self.update_cookies(original_request)
+        return self.send_request(original_request)
+
+    def update_cookies(self, original_request):
+        # Cookie header needs first to be deleted for the header to be updated using
+        # the prepare_cookies method. See request.PrepareRequest.prepare_cookies
+        if 'Cookie' in original_request.headers:
+            del original_request.headers['Cookie']
+        original_request.prepare_cookies(self.cookies)
+
+    def init_session(self):
+        self.start_session()
+
+    def __call__(self, request):
+        request.register_hook('response', self.handle_401)
+        return request
+
+    def send_request(self, request):
+        return self._session.send(request)
+
+    @property
+    def cookies(self):
+        return self._session.cookies
+
+    def start_session(self):
+        self._get_session(self.__auth)
+
+
 class JIRA(object):
     """User interface to JIRA.
 
@@ -283,7 +334,7 @@ class JIRA(object):
 
     def __init__(self, server=None, options=None, basic_auth=None, oauth=None, jwt=None, kerberos=False, kerberos_options=None,
                  validate=False, get_server_info=True, async=False, logging=True, max_retries=3, proxies=None,
-                 timeout=None):
+                 timeout=None, auth=None):
         """Construct a JIRA client instance."""
 
         # force a copy of the tuple to be used in __del__() because
@@ -331,6 +382,9 @@ class JIRA(object):
             self._create_jwt_session(jwt, timeout)
         elif kerberos:
             self._create_kerberos_session(timeout, kerberos_options=kerberos_options)
+        elif auth:
+            self._create_cookie_auth(auth, timeout)
+            validate = True  # always log in for cookie based auth, as we need a first request to be logged in
         else:
             verify = self._options['verify']
             self._session = ResilientSession(timeout=timeout)
@@ -345,10 +399,10 @@ class JIRA(object):
         if validate:
             # This will raise an Exception if you are not allowed to login.
             # It's better to fail faster than later.
-            user = self.session()
+            user = self.session(auth)
             if user.raw is None:
                 auth_method = (
-                    oauth or basic_auth or jwt or kerberos or "anonymous"
+                    oauth or basic_auth or jwt or kerberos or auth or "anonymous"
                 )
                 raise JIRAError("Can not log in with %s" % str(auth_method))
 
@@ -374,6 +428,12 @@ class JIRA(object):
             if 'clauseNames' in f:
                 for name in f['clauseNames']:
                     self._fields[name] = f['id']
+
+    def _create_cookie_auth(self, auth, timeout):
+        self._session = ResilientSession(timeout=timeout)
+        self._session.auth = JiraCookieAuth(self._session, self.session, auth)
+        self._session.verify = self._options['verify']
+        self._session.cert = self._options['client_cert']
 
     def _check_update_(self):
         """Check if the current version of the library is outdated."""
@@ -444,8 +504,8 @@ class JIRA(object):
         if maxResults:
             page_params['maxResults'] = maxResults
 
+        resource = self._get_json(request_path, params=page_params, base=base)
         try:
-            resource = self._get_json(request_path, params=page_params, base=base)
             next_items_page = [item_type(self._options, self._session, raw_issue_json) for raw_issue_json in
                                (resource[items_key] if items_key else resource)]
         except KeyError as e:
@@ -2256,13 +2316,15 @@ class JIRA(object):
 
     # Session authentication
 
-    def session(self):
+    def session(self, auth=None):
         """Get a dict of the current authenticated user's session information."""
         url = '{server}{auth_url}'.format(**self._options)
 
-        if isinstance(self._session.auth, tuple):
-            authentication_data = {
-                'username': self._session.auth[0], 'password': self._session.auth[1]}
+        if isinstance(self._session.auth, tuple) or auth:
+            if not auth:
+                auth = self._session.auth
+            username, password = auth
+            authentication_data = {'username': username, 'password': password}
             r = self._session.post(url, data=json.dumps(authentication_data))
         else:
             r = self._session.get(url)
