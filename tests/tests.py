@@ -279,7 +279,7 @@ class JiraTestManager(object):
 
                 self.jira_admin.create_project(self.project_a,
                                                self.project_a_name,
-                                               template_name='Scrum software development')  
+                                               template_name='Scrum software development')
                 self.project_a_id = self.jira_admin.project(self.project_a).id
                 self.jira_admin.create_project(self.project_b,
                                                self.project_b_name,
