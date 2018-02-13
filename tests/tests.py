@@ -110,6 +110,39 @@ def get_unique_project_name():
     return jid
 
 
+def resilient_jira_call(obj, method_name, parameters, max_tries=5, wait_time_before_retry=1):
+    """Tries several JIRA calls before giving up on JIRAError to counter JIRA Cloud slowness
+
+    Sometimes, the JIRA cloud instance called during the tests reacts too slowly and it does not have time performing
+    actions that have been requested. Hence the expected data is not found.
+    This methods performs several tries before giving up and raising the returned JIRAError.
+
+    :param obj: instance on which to call the method
+    :param method_name: method to be called
+    :param parameters: list of parameters to pass to the method call
+    :param max_tries: max number of retries if call fails
+    :param wait_time_before_retry: wait time between call
+    :return: result of the method call
+    """
+    attempts = 1
+    while True:
+        try:
+            result = getattr(obj, method_name)(parameters)
+            return result
+        except JIRAError:
+            if attempts < max_tries:
+                logging.warning("Calling %s.%s(%s) failed on attempt %s/%s" % obj, method_name, parameters, attempts,
+                                max_tries)
+                attempts += 1
+                pass
+            else:
+                logging.warning(
+                    "Calling %s.%s(%s) failed on attempt %s/%s => last attempt, raising exception" % obj,
+                    method_name, parameters, attempts, max_tries)
+                raise
+        sleep(wait_time_before_retry)
+
+
 class Singleton(type):
 
     def __init__(cls, name, bases, dict):
@@ -184,6 +217,7 @@ class JiraTestManager(object):
                 else:
                     self.CI_JIRA_USER_PASSWORD = 'sd4s3dgec5fhg4tfsds3434'
 
+                self.CI_JIRA_ADMIN_EMAIL_DOMAIN_NAME = os.environ.get('CI_JIRA_ADMIN_EMAIL_DOMAIN_NAME', 'ssbarnea.33mail.com')
                 self.CI_JIRA_ISSUE = os.environ.get('CI_JIRA_ISSUE', 'Bug')
 
                 if OAUTH:
@@ -264,9 +298,11 @@ class JiraTestManager(object):
                 self.jid = get_unique_project_name()
 
                 self.project_a = self.jid + 'A'  # old XSS
+                print('>>>>>>>> Project A is %r' % self.project_a)
                 self.project_a_name = "Test user=%s key=%s A" \
                                       % (getpass.getuser(), self.project_a)
                 self.project_b = self.jid + 'B'  # old BULK
+                print('>>>>>>>> Project B is %r' % self.project_b)
                 self.project_b_name = "Test user=%s key=%s B" \
                                       % (getpass.getuser(), self.project_b)
 
@@ -800,6 +836,8 @@ class IssueTests(unittest.TestCase):
             'priority': {
                 'name': 'Major'}}]
         issues = self.jira.create_issues(field_list=field_list)
+        self.assertEqual(len(issues), 2)
+        self.assertIsNotNone(issues[0]['issue'], "the first issue has not been created")
         self.assertEqual(issues[0]['issue'].fields.summary,
                          'Issue created via bulk create #1')
         self.assertEqual(issues[0]['issue'].fields.description,
@@ -807,6 +845,7 @@ class IssueTests(unittest.TestCase):
         self.assertEqual(issues[0]['issue'].fields.issuetype.name, 'Bug')
         self.assertEqual(issues[0]['issue'].fields.project.key, self.project_b)
         self.assertEqual(issues[0]['issue'].fields.priority.name, 'Major')
+        self.assertIsNotNone(issues[1]['issue'], "the second issue has not been created")
         self.assertEqual(issues[1]['issue'].fields.summary,
                          'Issue created via bulk create #2')
         self.assertEqual(issues[1]['issue'].fields.description,
@@ -1168,21 +1207,25 @@ class IssueTests(unittest.TestCase):
     def test_transitioning(self):
         # we check with both issue-as-string or issue-as-object
         transitions = []
-        for issue in [self.issue_2, self.jira.issue(self.issue_2)]:
+        # Creating issue instead of using existing one to prevent https://github.com/pycontribs/jira/issues/366
+        issue_obj = self.jira.create_issue(project=self.project_b,
+                                           summary='Test issue for transitions', description='Transitions testing',
+                                           issuetype=self.test_manager.CI_JIRA_ISSUE)
+        for issue in [issue_obj, issue_obj.key]:
             transitions = self.jira.transitions(issue)
-            self.assertTrue(transitions)
-            self.assertTrue('id' in transitions[0])
-            self.assertTrue('name' in transitions[0])
+            self.assertTrue(transitions, msg="Expecting at least one transition but had none for issue %s" % issue)
+            self.assertIn('id', transitions[0])
+            self.assertIn('name', transitions[0])
 
-        self.assertTrue(transitions, msg="Expecting at least one transition")
         # we test getting a single transition
-        transition = self.jira.transitions(self.issue_2, transitions[0]['id'])[0]
+        transition = self.jira.transitions(issue_obj.key, transitions[0]['id'])[0]
         self.assertDictEqual(transition, transitions[0])
 
         # we test the expand of fields
-        transition = self.jira.transitions(self.issue_2, transitions[0]['id'],
+        transition = self.jira.transitions(issue_obj.key, transitions[0]['id'],
                                            expand='transitions.fields')[0]
-        self.assertTrue('fields' in transition)
+        self.assertIn('fields', transition)
+        issue_obj.delete()
 
         # Testing of transition with field assignment is disabled now because default workflows do not have it.
 
@@ -1688,7 +1731,7 @@ class UserTests(unittest.TestCase):
     def test_user(self):
         user = self.jira.user(self.test_manager.CI_JIRA_ADMIN)
         self.assertEqual(user.name, self.test_manager.CI_JIRA_ADMIN)
-        self.assertRegex(user.emailAddress, '.*@example.com')
+        self.assertRegex(user.emailAddress, '.*@%s' % (self.test_manager.CI_JIRA_ADMIN_EMAIL_DOMAIN_NAME))
 
     @pytest.mark.xfail(reason='query returns empty list')
     def test_search_assignable_users_for_projects(self):
@@ -1909,6 +1952,8 @@ class VersionTests(unittest.TestCase):
 @flaky
 class OtherTests(unittest.TestCase):
 
+    @unittest.skip('Skipping until decided whether 403 is a valid response status. '
+                   'See https://github.com/pycontribs/jira/issues/366')
     def test_session_invalid_login(self):
         try:
             JIRA('https://support.atlassian.com',
@@ -1935,8 +1980,8 @@ class SessionTests(unittest.TestCase):
         self.assertIsNotNone(user.raw['session'])
 
     def test_session_with_no_logged_in_user_raises(self):
-        anon_jira = JIRA('https://support.atlassian.com', logging=False)
-        self.assertRaises(JIRAError, anon_jira.session)
+        with self.assertRaises(JIRAError):
+            JIRA('https://support.atlassian.com', logging=False)
 
     # @pytest.mark.skipif(platform.python_version() < '3', reason='Does not work with Python 2')
     # @not_on_custom_jira_instance  # takes way too long
@@ -2026,10 +2071,11 @@ class UserAdministrationTests(unittest.TestCase):
         try:
             self.jira.add_group(self.test_groupname)
             sleep(1)  # avoid 400: https://travis-ci.org/pycontribs/jira/jobs/176539521#L395
+        # TODO(esciara): check whether it is really wise to pass on all and any JIRAError regardless of status code...
         except JIRAError:
             pass
 
-        result = self.jira.remove_group(self.test_groupname)
+        result = resilient_jira_call(self.jira, 'remove_group', [self.test_groupname])
         assert result, True
 
         x = -1

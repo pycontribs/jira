@@ -1044,9 +1044,15 @@ class JIRA(object):
             data['issueUpdates'].append(issue_data)
 
         url = self._get_url('issue/bulk')
-        r = self._session.post(url, data=json.dumps(data))
-
-        raw_issue_json = json_loads(r)
+        try:
+            r = self._session.post(url, data=json.dumps(data))
+            raw_issue_json = json_loads(r)
+        # Catching case where none of the issues has been created. See https://github.com/pycontribs/jira/issues/350
+        except JIRAError as je:
+            if je.status_code == 400:
+                raw_issue_json = json.loads(je.response.text)
+            else:
+                raise
         issue_list = []
         errors = {}
         for error in raw_issue_json['errors']:
