@@ -44,6 +44,16 @@ authentication. These sessions will apply to all subsequent calls to the JIRA ob
 
 The library is able to load the credentials from inside the ~/.netrc file, so put them there instead of keeping them in your source code.
 
+Cookie Based Authentication
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Pass a tuple of (username, password) to the ``auth`` constructor argument::
+
+    authed_jira = JIRA(auth=('username', 'password'))
+
+Using this method, authentication happens during then initialization of the object. If the authentication is successful,
+the retrieved session cookie will be used in future requests. Upon cookie expiration, authentication will happen again transparently.
+
 HTTP BASIC
 ^^^^^^^^^^
 
@@ -90,6 +100,10 @@ Kerberos
 To enable Kerberos auth, set ``kerberos=True``::
 
     authed_jira = JIRA(kerberos=True)
+
+To pass additional options to Kerberos auth use dict ``kerberos_options``, e.g.::
+
+    authed_jira = JIRA(kerberos=True, kerberos_options={'mutual_authentication': 'DISABLED'})
 
 .. _jirashell-label:
 
