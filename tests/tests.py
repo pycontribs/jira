@@ -859,10 +859,10 @@ class IssueTests(unittest.TestCase):
                                        issuetype={'name': 'Bug'})
         # customfield_10022='XSS')
         issue.update(summary='Updated summary', description='Now updated',
-                     issuetype={'name': 'Improvement'})
+                     issuetype={'name': 'Story'})
         self.assertEqual(issue.fields.summary, 'Updated summary')
         self.assertEqual(issue.fields.description, 'Now updated')
-        self.assertEqual(issue.fields.issuetype.name, 'Improvement')
+        self.assertEqual(issue.fields.issuetype.name, 'Story')
         # self.assertEqual(issue.fields.customfield_10022, 'XSS')
         self.assertEqual(issue.fields.project.key, self.project_b)
         issue.delete()
@@ -876,14 +876,14 @@ class IssueTests(unittest.TestCase):
             'summary': 'Issue is updated',
             'description': "it sure is",
             'issuetype': {
-                'name': 'Improvement'},
+                'name': 'Story'},
             # 'customfield_10022': 'DOC',
             'priority': {
                 'name': 'Major'}}
         issue.update(fields=fields)
         self.assertEqual(issue.fields.summary, 'Issue is updated')
         self.assertEqual(issue.fields.description, 'it sure is')
-        self.assertEqual(issue.fields.issuetype.name, 'Improvement')
+        self.assertEqual(issue.fields.issuetype.name, 'Story')
         # self.assertEqual(issue.fields.customfield_10022, 'DOC')
         self.assertEqual(issue.fields.priority.name, 'Major')
         issue.delete()
@@ -948,7 +948,7 @@ class IssueTests(unittest.TestCase):
     @not_on_custom_jira_instance
     def test_createmeta_filter_by_projectkeys_and_name(self):
         meta = self.jira.createmeta(projectKeys=(self.project_a,
-                                                 self.project_b), issuetypeNames='Improvement')
+                                                 self.project_b), issuetypeNames='Story')
         self.assertEqual(len(meta['projects']), 2)
         for project in meta['projects']:
             self.assertEqual(len(project['issuetypes']), 1)
@@ -1648,7 +1648,7 @@ class UserTests(unittest.TestCase):
     def test_user(self):
         user = self.jira.user(self.test_manager.CI_JIRA_ADMIN)
         self.assertEqual(user.name, self.test_manager.CI_JIRA_ADMIN)
-        self.assertRegex(user.emailAddress, '.*@example.com')
+        self.assertRegex(user.emailAddress, '^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
 
     @pytest.mark.xfail(reason='query returns empty list')
     def test_search_assignable_users_for_projects(self):
@@ -1871,14 +1871,14 @@ class OtherTests(unittest.TestCase):
 
     def test_session_invalid_login(self):
         try:
-            JIRA('https://support.atlassian.com',
+            JIRA('https://jira.atlassian.com',
                  basic_auth=("xxx", "xxx"),
                  validate=True,
                  logging=False)
         except Exception as e:
             self.assertIsInstance(e, JIRAError)
             # 20161010: jira cloud returns 500
-            assert e.status_code in (401, 500)
+            assert e.status_code in (401, 500, 403)
             str(JIRAError)  # to see that this does not raise an exception
             return
         assert False
@@ -1895,7 +1895,7 @@ class SessionTests(unittest.TestCase):
         self.assertIsNotNone(user.raw['session'])
 
     def test_session_with_no_logged_in_user_raises(self):
-        anon_jira = JIRA('https://support.atlassian.com', logging=False)
+        anon_jira = JIRA('https://jira.atlassian.com', logging=False)
         self.assertRaises(JIRAError, anon_jira.session)
 
     # @pytest.mark.skipif(platform.python_version() < '3', reason='Does not work with Python 2')
