@@ -236,8 +236,8 @@ to quickly find the issues you want::
     oh_crap = jira.search_issues('assignee = currentUser() and due < endOfWeek() order by priority desc', maxResults=5)
 
     # Summaries of my last 3 reported issues
-    for ithIssue in jira.search_issues('reporter = currentUser() order by created desc', maxResults=3):
-      print ( str(ithIssue.key), ' ', ithIssue.fields.summary)
+    for issue in jira.search_issues('reporter = currentUser() order by created desc', maxResults=3):
+        print(issue.key, ' ', issue.fields.summary)
 
 Comments
 --------
