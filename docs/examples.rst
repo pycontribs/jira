@@ -237,7 +237,7 @@ to quickly find the issues you want::
 
     # Summaries of my last 3 reported issues
     for issue in jira.search_issues('reporter = currentUser() order by created desc', maxResults=3):
-        print(issue.key, ' ', issue.fields.summary)
+        print('{}: {}'.format(issue.key, issue.fields.summary))
 
 Comments
 --------
