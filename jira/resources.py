@@ -447,6 +447,9 @@ class Issue(Resource):
 
         :param update: a dict containing update operations to apply
 
+        :param notify: query parameter notifyUsers. If true send the email with notification that the issue was updated
+        to users that watch it. Admin or project admin permissions are required to disable the notification.
+
         keyword arguments will generally be merged into fields, except lists, which will be merged into updates
         """
         data = {}
