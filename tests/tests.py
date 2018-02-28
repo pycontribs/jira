@@ -1032,7 +1032,6 @@ class IssueTests(unittest.TestCase):
             self.assertTrue('comment' in meta['fields'])
             self.assertTrue('components' in meta['fields'])
             self.assertTrue('description' in meta['fields'])
-            self.assertTrue('duedate' in meta['fields'])
             self.assertTrue('environment' in meta['fields'])
             self.assertTrue('fixVersions' in meta['fields'])
             self.assertTrue('issuelinks' in meta['fields'])
