@@ -228,7 +228,7 @@ Searching
 
 Leverage the power of `JQL <https://confluence.atlassian.com/display/JIRA/Advanced+Searching>`_
 to quickly find the issues you want::
-
+    # Search returns first 50 results, `maxResults` must be set to exceed this
     issues_in_proj = jira.search_issues('project=PROJ')
     all_proj_issues_but_mine = jira.search_issues('project=PROJ and assignee != currentUser()')
 
@@ -278,7 +278,7 @@ Then perform a transition on an issue::
     jira.transition_issue(issue, '5', assignee={'name': 'pm_user'}, resolution={'id': '3'})
 
     # The above line is equivalent to:
-    jira.transition_issue(issue, '5', fields: {'assignee':{'name': 'pm_user'}, 'resolution':{'id': '3'}})
+    jira.transition_issue(issue, '5', fields={'assignee':{'name': 'pm_user'}, 'resolution':{'id': '3'}})
 
 Projects
 --------
