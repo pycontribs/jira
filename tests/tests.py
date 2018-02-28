@@ -1037,6 +1037,7 @@ class IssueTests(unittest.TestCase):
             self.assertTrue('issuelinks' in meta['fields'])
             self.assertTrue('issuetype' in meta['fields'])
             self.assertTrue('labels' in meta['fields'])
+            self.assertTrue('summary' in meta['fields'])
             self.assertTrue('versions' in meta['fields'])
 
     # Nothing from remote link works
