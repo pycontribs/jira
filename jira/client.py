@@ -2597,9 +2597,28 @@ class JIRA(object):
     def deactivate_user(self, username):
         """Disable/deactivate the user."""
         if self.deploymentType == 'Cloud':
-            url = self._options['server'] + '/admin/rest/um/1/user/deactivate?username=' + username
-            self._options['headers']['Content-Type'] = 'application/json'
-            userInfo = {}
+            # Disabling users now needs cookie auth in the Cloud - see https://jira.atlassian.com/browse/ID-6230
+            if 'authCookie' not in vars(self):
+                user = self.session()
+                if user.raw is None:
+                    auth_method = (
+                        oauth or basic_auth or jwt or kerberos or "anonymous"
+                    )
+                    raise JIRAError("Can not log in with %s" % str(auth_method))
+                self.authCookie = '%s=%s' % (user.raw['session']['name'], user.raw['session']['value'])
+            url = self._options['server'] + '/admin/rest/um/1/user/deactivate?username=%s' % (username)
+            # We can't use our existing session here - this endpoint is fragile and objects to extra headers
+            try:
+                r = requests.post(url, headers={'Cookie': self.authCookie, 'Content-Type': 'application/json'}, data={})
+                if r.status_code == 200:
+                    return True
+                else:
+                    logging.warning(
+                        'Got response from deactivating %s: %s' % (username, r.status_code))
+                    return r.status_code
+            except urllib2.HTTPError as e:
+                logging.error(
+                        "Error Deactivating %s: %s" % (username, e))
         else:
             url = self._options['server'] + '/secure/admin/user/EditUser.jspa'
             self._options['headers']['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8'
@@ -2612,16 +2631,17 @@ class JIRA(object):
                 'email': user.emailAddress,
                 'editName': user.name
             }
-        try:
-            r = self._session.post(url, headers=self._options['headers'], data=userInfo)
-            if r.status_code == 200:
-                return True
-            else:
-                logging.warning(
-                    'Got response from deactivating %s: %s' % (username, r.status_code))
-                return r.status_code
-        except Exception as e:
-            print("Error Deactivating %s: %s" % (username, e))
+            try:
+                r = self._session.post(url, headers=self._options['headers'], data=userInfo)
+                if r.status_code == 200:
+                    return True
+                else:
+                    logging.warning(
+                        'Got response from deactivating %s: %s' % (username, r.status_code))
+                    return r.status_code
+            except Exception as e:
+                logging.error(
+                        "Error Deactivating %s: %s" % (username, e))
 
     def reindex(self, force=False, background=True):
         """Start jira re-indexing. Returns True if reindexing is in progress or not needed, or False.
