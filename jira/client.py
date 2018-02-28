@@ -762,6 +762,14 @@ class JIRA(object):
         """
         return self._get_json('component/' + id + '/relatedIssueCounts')['issueCount']
 
+    def delete_component(self, id):
+        """Delete component by id.
+        
+        :param id: ID of the component to use
+        """
+        url = self._get_url('component/' + str(id))
+        return self._session.delete(url)
+
     # Custom field options
 
     def custom_field_option(self, id):
