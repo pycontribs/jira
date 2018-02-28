@@ -3274,6 +3274,21 @@ class JIRA(object):
         return self._session.put(
             url, data=json.dumps(data))
 
+    def remove_from_epic(self, issue_keys):
+        """Add the issues in ``issue_keys`` to the ``epic_id``.
+        :param issue_keys: the issues to remove from the epic. 
+        """
+        if self._options['agile_rest_path'] != GreenHopperResource.GREENHOPPER_REST_PATH:
+            # TODO(ssbarnea): simulate functionality using issue.update()?
+            raise NotImplementedError('JIRA Agile Public API does not support this request')
+
+        data = {}
+        data['issueKeys'] = issue_keys
+        url = self._get_url('epics/remove', base=self.AGILE_BASE_URL)
+        return self._session.put(
+            url, data=json.dumps(data))    
+    
+    
     # TODO(ssbarnea): Both GreenHopper and new JIRA Agile API support moving more than one issue.
     def rank(self, issue, next_issue):
         """Rank an issue before another using the default Ranking field, the one named 'Rank'.
