@@ -1677,7 +1677,7 @@ class JIRA(object):
 
         if started is not None:
             # based on REST Browser it needs: "2014-06-03T08:21:01.273+0000"
-            data['started'] = started.strftime("%Y-%m-%dT%H:%M:%S.000%z")
+            data['started'] = started.strftime("%Y-%m-%dT%H:%M:%S.000+0000%z")
         if user is not None:
             data['author'] = {"name": user,
                               'self': self.JIRA_BASE_URL + '/rest/api/latest/user?username=' + user,
