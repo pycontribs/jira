@@ -787,8 +787,7 @@ class IssueTests(unittest.TestCase):
                 'name': 'Bug'},
             # 'customfield_10022': 'XSS',
             'priority': {
-                'name': 'Major'}},
-            {
+                'name': 'Major'}}, {
             'project': {
                 'key': self.project_a},
             'issuetype': {
