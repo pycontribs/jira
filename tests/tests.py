@@ -1968,7 +1968,8 @@ class UserAdministrationTests(unittest.TestCase):
 
     def test_add_and_remove_user(self):
         if self._should_skip_for_pycontribs_instance():
-            self._log_skip_pycontribs_instance_warning('test_add_and_remove_user')
+            self._log_skip_pycontribs_instance_warning(
+                'test_add_and_remove_user')
             return
         try:
             self.jira.delete_user(self.test_username)
