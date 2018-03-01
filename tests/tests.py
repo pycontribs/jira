@@ -1982,6 +1982,9 @@ class UserAdministrationTests(unittest.TestCase):
         self.jira.remove_group(self.test_groupname)
 
     def test_remove_group(self):
+        if self._should_skip_for_pycontribs_instance():
+            self._log_skip_pycontribs_instance_warning('test_remove_group')
+            return
         try:
             self.jira.add_group(self.test_groupname)
             sleep(1)  # avoid 400: https://travis-ci.org/pycontribs/jira/jobs/176539521#L395
@@ -2028,6 +2031,10 @@ class UserAdministrationTests(unittest.TestCase):
         self.jira.delete_user(self.test_username)
 
     def test_remove_user_from_group(self):
+        if self._should_skip_for_pycontribs_instance():
+            self._log_skip_pycontribs_instance_warning(
+                'test_remove_user_from_group')
+            return
         try:
             self.jira.add_user(
                 self.test_username, self.test_email, password=self.test_password)
