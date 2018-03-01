@@ -1963,6 +1963,7 @@ class AsyncTests(unittest.TestCase):
                          async=True, validate=False, get_server_info=False)
 
     def test_fetch_pages(self):
+        """Tests that the JIRA._fetch_pages method works as expected. """
         params = {"startAt": 0}
         total = 26
         expected_results = []
@@ -1992,6 +1993,7 @@ class AsyncTests(unittest.TestCase):
 
 
 def _create_issue_result_json(issue_id, summary, key, **kwargs):
+    """Returns a minimal json object for an issue. """
     return {
         'id': '%s' % issue_id,
         'summary': summary,
@@ -2002,6 +2004,7 @@ def _create_issue_result_json(issue_id, summary, key, **kwargs):
 
 
 def _create_issue_search_results_json(issues, **kwargs):
+    """Returns a minimal json object for Jira issue search results. """
     return {
         'startAt': kwargs.get('start_at', 0),
         'maxResults': kwargs.get('max_results', 50),
