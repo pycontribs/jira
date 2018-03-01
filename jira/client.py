@@ -2550,30 +2550,6 @@ class JIRA(object):
                                 ". Specify the 'contentType' parameter explicitly.")
                 return None
 
-    def email_user(self, user, body, title="JIRA Notification"):
-        """(Obsolete) Send an email to an user via CannedScriptRunner."""
-        url = self._options['server'] + \
-            '/secure/admin/groovy/CannedScriptRunner.jspa'
-        payload = {
-            'cannedScript': 'com.onresolve.jira.groovy.canned.workflow.postfunctions.SendCustomEmail',
-            'cannedScriptArgs_FIELD_CONDITION': '',
-            'cannedScriptArgs_FIELD_EMAIL_TEMPLATE': body,
-            'cannedScriptArgs_FIELD_EMAIL_SUBJECT_TEMPLATE': title,
-            'cannedScriptArgs_FIELD_EMAIL_FORMAT': 'TEXT',
-            'cannedScriptArgs_FIELD_TO_ADDRESSES': self.user(user).emailAddress,
-            'cannedScriptArgs_FIELD_TO_USER_FIELDS': '',
-            'cannedScriptArgs_FIELD_INCLUDE_ATTACHMENTS': 'FIELD_INCLUDE_ATTACHMENTS_NONE',
-            'cannedScriptArgs_FIELD_FROM': '',
-            'cannedScriptArgs_FIELD_PREVIEW_ISSUE': '',
-            'cannedScript': 'com.onresolve.jira.groovy.canned.workflow.postfunctions.SendCustomEmail',
-            'id': '',
-            'Preview': 'Preview'}
-
-        r = self._session.post(
-            url, headers=self._options['headers'], data=payload)
-        with open("/tmp/jira_email_user_%s.html" % user, "w") as f:
-            f.write(r.text)
-
     def rename_user(self, old_user, new_user):
         """Rename a JIRA user.
 
