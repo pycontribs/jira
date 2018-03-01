@@ -980,7 +980,7 @@ class IssueTests(unittest.TestCase):
         self.assertEqual(len(meta['projects']), 2)
         for project in meta['projects']:
             self.assertEqual(len(project['issuetypes']),
-                               len(for_lookup_common_issue_ids))
+                             len(for_lookup_common_issue_ids))
 
     def test_createmeta_expando(self):
         # limit to SCR project so the call returns promptly
@@ -1060,7 +1060,6 @@ class IssueTests(unittest.TestCase):
             meta_field_set = set(meta['fields'].keys())
             self.assertEqual(meta_field_set.intersection(expected_fields),
                              expected_fields)
-
 
     # Nothing from remote link works
     #    def test_remote_links(self):
@@ -1964,7 +1963,8 @@ class UserAdministrationTests(unittest.TestCase):
 
     def _should_skip_for_pycontribs_instance(self):
         return self.test_manager.CI_JIRA_ADMIN == 'ci-admin' and (
-                self.test_manager.CI_JIRA_URL == "https://pycontribs.atlassian.net")
+            self.test_manager.CI_JIRA_URL ==
+            "https://pycontribs.atlassian.net")
 
     def test_add_and_remove_user(self):
         if self._should_skip_for_pycontribs_instance():
