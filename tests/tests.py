@@ -1956,7 +1956,15 @@ class UserAdministrationTests(unittest.TestCase):
         self.test_groupname = 'testGroupFor_%s' % self.test_manager.project_a
 
     def test_add_and_remove_user(self):
-
+        if self.test_manager.CI_JIRA_ADMIN == 'ci-admin' and (
+                self.test_manager.CI_JIRA_URL ==
+                "https://pycontribs.atlassian.net"):
+            logging.warning('The current jira admin user for  '
+                            'https://pycontribs.atlassian.net lacks '
+                            'permission to modify users. Therefore, '
+                            'the test_add_and_remove_user test has been '
+                            'skipped.')
+            return
         try:
             self.jira.delete_user(self.test_username)
         except JIRAError:
