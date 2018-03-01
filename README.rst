@@ -111,11 +111,11 @@ In additions to all the contributors we would like to thank to these companies:
 .. _Travis: https://travis-ci.org/
 .. _navicat: https://www.navicat.com/
 
-.. image:: https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?container=focus&refresh=3600&resize_h=50&url=https://www.atlassian.com/dms/wac/images/press/Atlassian-logos/logoAtlassianPNG.png
+.. image:: https://github.com/pycontribs/resources/raw/master/logos/x64/logo-atlassian.png
    :target: http://www.atlassian.com
 
-.. image:: https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?container=focus&refresh=3600&resize_h=50&url=http://blog.jetbrains.com/pycharm/files/2015/12/PyCharm_400x400_Twitter_logo_white.png
+.. image:: https://raw.githubusercontent.com/pycontribs/resources/master/logos/x64/logo-pycharm.png
     :target: http://www.jetbrains.com/
 
-.. image:: https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?container=focus&refresh=3600&resize_h=50&url=https://upload.wikimedia.org/wikipedia/en/9/90/PremiumSoft_Navicat_Premium_Logo.png
+.. image:: https://raw.githubusercontent.com/pycontribs/resources/master/logos/x64/logo-navicat.png
     :target: http://www.navicat.com/
