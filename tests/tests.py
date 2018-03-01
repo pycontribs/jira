@@ -1955,15 +1955,20 @@ class UserAdministrationTests(unittest.TestCase):
         self.test_password = rndpassword()
         self.test_groupname = 'testGroupFor_%s' % self.test_manager.project_a
 
+    def _log_skip_pycontribs_instance_warning(self, test_name):
+        logging.warning('The current jira admin user for  '
+                        'https://pycontribs.atlassian.net lacks '
+                        'permission to modify users. Therefore, '
+                        'the %s test has been '
+                        'skipped.', test_name)
+
+    def _should_skip_for_pycontribs_instance(self):
+        return self.test_manager.CI_JIRA_ADMIN == 'ci-admin' and (
+                self.test_manager.CI_JIRA_URL == "https://pycontribs.atlassian.net")
+
     def test_add_and_remove_user(self):
-        if self.test_manager.CI_JIRA_ADMIN == 'ci-admin' and (
-                self.test_manager.CI_JIRA_URL ==
-                "https://pycontribs.atlassian.net"):
-            logging.warning('The current jira admin user for  '
-                            'https://pycontribs.atlassian.net lacks '
-                            'permission to modify users. Therefore, '
-                            'the test_add_and_remove_user test has been '
-                            'skipped.')
+        if self._should_skip_for_pycontribs_instance():
+            self._log_skip_pycontribs_instance_warning('test_add_and_remove_user')
             return
         try:
             self.jira.delete_user(self.test_username)
