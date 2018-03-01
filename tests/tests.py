@@ -1954,12 +1954,10 @@ class UserAdministrationTests(unittest.TestCase):
         self.test_password = rndpassword()
         self.test_groupname = 'testGroupFor_%s' % self.test_manager.project_a
 
-    def _log_skip_pycontribs_instance_warning(self, test_name):
-        logging.warning('The current jira admin user for  '
-                        'https://pycontribs.atlassian.net lacks '
-                        'permission to modify users. Therefore, '
-                        'the %s test has been '
-                        'skipped.', test_name)
+    def _skip_pycontribs_instance(self):
+        pytest.skip('The current ci jira admin user for '
+                    'https://pycontribs.atlassian.net lacks '
+                    'permission to modify users.')
 
     def _should_skip_for_pycontribs_instance(self):
         return self.test_manager.CI_JIRA_ADMIN == 'ci-admin' and (
@@ -1968,9 +1966,7 @@ class UserAdministrationTests(unittest.TestCase):
 
     def test_add_and_remove_user(self):
         if self._should_skip_for_pycontribs_instance():
-            self._log_skip_pycontribs_instance_warning(
-                'test_add_and_remove_user')
-            return
+            self._skip_pycontribs_instance()
         try:
             self.jira.delete_user(self.test_username)
         except JIRAError:
@@ -2004,6 +2000,8 @@ class UserAdministrationTests(unittest.TestCase):
 
     @flaky
     def test_add_group(self):
+        if self._should_skip_for_pycontribs_instance():
+            self._skip_pycontribs_instance()
         try:
             self.jira.remove_group(self.test_groupname)
         except JIRAError:
@@ -2020,8 +2018,7 @@ class UserAdministrationTests(unittest.TestCase):
 
     def test_remove_group(self):
         if self._should_skip_for_pycontribs_instance():
-            self._log_skip_pycontribs_instance_warning('test_remove_group')
-            return
+            self._skip_pycontribs_instance()
         try:
             self.jira.add_group(self.test_groupname)
             sleep(1)  # avoid 400: https://travis-ci.org/pycontribs/jira/jobs/176539521#L395
@@ -2069,9 +2066,7 @@ class UserAdministrationTests(unittest.TestCase):
 
     def test_remove_user_from_group(self):
         if self._should_skip_for_pycontribs_instance():
-            self._log_skip_pycontribs_instance_warning(
-                'test_remove_user_from_group')
-            return
+            self._skip_pycontribs_instance()
         try:
             self.jira.add_user(
                 self.test_username, self.test_email, password=self.test_password)
