@@ -688,6 +688,23 @@ class Role(Resource):
 
         super(Role, self).update(**data)
 
+    def add_user(self, users=None, groups=None):
+        """Add by berlinsaint 2017/08/16
+           Add the specified users or groups to this project role. One of ``users`` or ``groups`` must be specified.
+
+        :param users: a user or users to add to the role
+        :type users: string, list or tuple
+        :param groups: a group or groups to add to the role
+        :type groups: string, list or tuple
+        """
+        if users is not None and isinstance(users, string_types):
+            users = (users,)
+        if groups is not None and isinstance(groups, string_types):
+            groups = (groups,)
+
+        data = {
+            'user':users}
+        self._session.post(self.self, data=json.dumps(data))
 
 class Resolution(Resource):
     """A resolution for an issue."""
