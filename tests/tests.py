@@ -2067,6 +2067,10 @@ class UserAdministrationTests(unittest.TestCase):
         self.jira.delete_user(self.test_username)
 
     def test_remove_user_from_group(self):
+        if self._should_skip_for_pycontribs_instance():
+            self._log_skip_pycontribs_instance_warning(
+                'test_remove_user_from_group')
+            return
         try:
             self.jira.add_user(
                 self.test_username, self.test_email, password=self.test_password)
