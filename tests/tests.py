@@ -957,11 +957,29 @@ class IssueTests(unittest.TestCase):
         projects = self.jira.projects()
         proja = find_by_key_value(projects, self.project_a)
         projb = find_by_key_value(projects, self.project_b)
+        issue_type_ids = dict()
+        full_meta = self.jira.createmeta(projectIds=(proja.id, projb.id))
+        for project in full_meta['projects']:
+            for issue_t in project['issuetypes']:
+                issue_t_id = issue_t['id']
+                val = issue_type_ids.get(issue_t_id)
+                if val is None:
+                    issue_type_ids[issue_t_id] = []
+                issue_type_ids[issue_t_id].append([project['id']])
+        common_issue_ids = []
+        for key, val in issue_type_ids.items():
+            if len(val) == 2:
+                common_issue_ids.append(key)
+        self.assertNotEqual(len(common_issue_ids), 0)
+        for_lookup_common_issue_ids = common_issue_ids
+        if len(common_issue_ids) > 2:
+            for_lookup_common_issue_ids = common_issue_ids[:-1]
         meta = self.jira.createmeta(projectIds=(proja.id, projb.id),
-                                    issuetypeIds=('3', '4', '5'))
+                                    issuetypeIds=for_lookup_common_issue_ids)
         self.assertEqual(len(meta['projects']), 2)
         for project in meta['projects']:
-            self.assertEqual(len(project['issuetypes']), 3)
+            self.assertEqual(len(project['issuetypes']),
+                             len(for_lookup_common_issue_ids))
 
     def test_createmeta_expando(self):
         # limit to SCR project so the call returns promptly
