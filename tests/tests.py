@@ -276,14 +276,25 @@ class JiraTestManager(object):
                         break
                     sleep(2)
 
-                self.jira_admin.create_project(self.project_a,
-                                               self.project_a_name,
-                                               template_name='Scrum software development')
+                try:
+                    self.jira_admin.create_project(self.project_a,
+                                                   self.project_a_name,
+                                                   template_name='Scrum software development')
+                except Exception:
+                    # we care only for the project to exist
+                    pass
                 self.project_a_id = self.jira_admin.project(self.project_a).id
                 self.jira_admin.create_project(self.project_b,
                                                self.project_b_name,
                                                template_name='Scrum software development')
 
+                try:
+                    self.jira_admin.create_project(self.project_b,
+                                                   self.project_b_name,
+                                                   template_name='Scrum software development')
+                except Exception:
+                    # we care only for the project to exist
+                    pass
                 sleep(1)  # keep it here as often JIRA will report the
                 # project as missing even after is created
                 self.project_b_issue1_obj = self.jira_admin.create_issue(project=self.project_b,
@@ -748,8 +759,7 @@ class IssueTests(unittest.TestCase):
                 'name': 'Bug'},
             # 'customfield_10022': 'XSS',
             'priority': {
-                'name': 'Major'}},
-            {
+                'name': 'Major'}}, {
             'project': {
                 'key': self.project_a},
             'issuetype': {

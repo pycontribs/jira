@@ -94,13 +94,16 @@ else
 endif
 
 upload:
+	rm -f dist/*
 ifeq ($(GIT_BRANCH),develop)
 	@echo "INFO:	Upload package to testpypi.python.org"
 	$(PREFIX)python setup.py check --restructuredtext --strict
 	$(PREFIX)python setup.py sdist bdist_wheel upload -r https://testpypi.python.org/pypi
+	$(PREFIX)twine upload dist/*
 endif
 ifeq ($(GIT_BRANCH),master)
 	@echo "INFO:	Upload package to pypi.python.org"
 	$(PREFIX)python setup.py check --restructuredtext --strict
 	$(PREFIX)python setup.py sdist bdist_wheel upload
+	$(PREFIX)twine upload dist/*
 endif
