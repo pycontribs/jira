@@ -552,6 +552,8 @@ class JIRA(object):
             page_params['startAt'] = startAt
         if maxResults:
             page_params['maxResults'] = maxResults
+        else:
+            page_params['maxResults'] = 50
 
         resource = self._get_json(request_path, params=page_params, base=base)
         try:
@@ -573,16 +575,16 @@ class JIRA(object):
                 max_results_from_response = resource.get('maxResults', 1)
             else:
                 # if is a list
-                total = 1
-                is_last = True
+                total = None
+                is_last = len(resource) < page_params['maxResults']
                 start_at_from_response = 0
-                max_results_from_response = 1
+                max_results_from_response = len(items)
 
             # If maxResults evaluates as False, get all items in batches
             if not maxResults:
-                page_size = max_results_from_response or len(items)
+                page_size = max_results_from_response
                 page_start = (startAt or start_at_from_response or 0) + page_size
-                while not is_last and (total is None or page_start < total) and len(next_items_page) == page_size:
+                while not is_last and (total is None or page_start < total) and len(next_items_page) == page_params['maxResults']:
                     page_params['startAt'] = page_start
                     page_params['maxResults'] = page_size
                     resource = self._get_json(request_path, params=page_params, base=base)
