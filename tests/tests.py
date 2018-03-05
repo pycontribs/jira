@@ -1052,20 +1052,23 @@ class IssueTests(unittest.TestCase):
         comment.delete()
 
     def test_editmeta(self):
+        expected_fields = {'assignee',
+                           'attachment',
+                           'comment',
+                           'components',
+                           'description',
+                           'environment',
+                           'fixVersions',
+                           'issuelinks',
+                           'labels',
+                           'summary',
+                           'versions'
+                           }
         for i in (self.issue_1, self.issue_2):
             meta = self.jira.editmeta(i)
-            self.assertTrue('assignee' in meta['fields'])
-            self.assertTrue('attachment' in meta['fields'])
-            self.assertTrue('comment' in meta['fields'])
-            self.assertTrue('components' in meta['fields'])
-            self.assertTrue('description' in meta['fields'])
-            self.assertTrue('duedate' in meta['fields'])
-            self.assertTrue('environment' in meta['fields'])
-            self.assertTrue('fixVersions' in meta['fields'])
-            self.assertTrue('issuelinks' in meta['fields'])
-            self.assertTrue('issuetype' in meta['fields'])
-            self.assertTrue('labels' in meta['fields'])
-            self.assertTrue('versions' in meta['fields'])
+            meta_field_set = set(meta['fields'].keys())
+            self.assertEqual(meta_field_set.intersection(expected_fields),
+                             expected_fields)
 
     # Nothing from remote link works
     #    def test_remote_links(self):
