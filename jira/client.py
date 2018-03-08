@@ -3191,13 +3191,18 @@ class JIRA(object):
         board = Board(self._options, self._session, raw={'id': id})
         board.delete()
 
-    def create_board(self, name, project_ids, preset="scrum"):
+    def create_board(self, name, project_ids, preset="scrum",
+                     location_type='user', location_id=None):
         """Create a new board for the ``project_ids``.
 
         :param name: name of the board
         :param project_ids: the projects to create the board in
         :param preset: what preset to use for this board
         :type preset: 'kanban', 'scrum', 'diy'
+        :param location_type: the location type. Available in cloud.
+        :type location_type: 'user', 'project'
+        :param location_id: the id of project that the board should be
+            located under. Ommit this for a 'user' location_type. Available in cloud.
         """
         if self._options['agile_rest_path'] != GreenHopperResource.GREENHOPPER_REST_PATH:
             raise NotImplementedError('JIRA Agile Public API does not support this request')
@@ -3214,6 +3219,9 @@ class JIRA(object):
             project_ids = project_ids.split(',')
         payload['projectIds'] = project_ids
         payload['preset'] = preset
+        if self.deploymentType == 'Cloud':
+            payload['locationType'] = location_type
+            payload['locationId'] = location_id
         url = self._get_url(
             'rapidview/create/presets', base=self.AGILE_BASE_URL)
         r = self._session.post(
