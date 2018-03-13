@@ -1,0 +1,10 @@
+-r requirements.txt
+-r requirements-opt.txt
+flake8
+pytest
+pytest-cov
+flaky
+tenacity
+versionbump
+requires.io
+wheel
