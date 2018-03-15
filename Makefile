@@ -99,7 +99,7 @@ ifeq ($(GIT_BRANCH),develop)
 	@echo "INFO:	Upload package to testpypi.python.org"
 	$(PREFIX)python setup.py check --restructuredtext --strict
 	$(PREFIX)python setup.py sdist bdist_wheel
-	$(PREFIX)twine upload dist/*
+	$(PREFIX)twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 endif
 ifeq ($(GIT_BRANCH),master)
 	@echo "INFO:	Upload package to pypi.python.org"
