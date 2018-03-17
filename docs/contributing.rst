@@ -72,24 +72,25 @@ Issues and Feature Requests
   * If possible, create a pull request with a (failing) test case demonstrating
     what's wrong. This makes the process for fixing bugs quicker & gets issues
     resolved sooner.
-  * Here is an template::
+  * Here is an template
+    ::
 
-    Description: <SUMMARIZE ISSUE>
+        Description: <SUMMARIZE ISSUE>
 
-    Python Intepreter: <VERSION>
-    jira-python: <VERSION>
-    OS: <OPERATING SYSTEM>
-    IPython (Optional): <VERSION>
-    Other Dependencies:
+        Python Intepreter: <VERSION>
+        jira-python: <VERSION>
+        OS: <OPERATING SYSTEM>
+        IPython (Optional): <VERSION>
+        Other Dependencies:
 
-    Steps To Reproduce:
-        1. <STEP>
-        2. <STEP>
-        3. <STEP>
-        ...
+        Steps To Reproduce:
+            1. <STEP>
+            2. <STEP>
+            3. <STEP>
+            ...
 
-    Stack Trace:
-        <TRACE>
+        Stack Trace:
+            <TRACE>
 
 
 Issues

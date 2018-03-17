@@ -30,3 +30,4 @@ tests/test-reports-*/*
 /ChangeLog
 /AUTHORS
 /tests/build
+/.pytest_cache
