@@ -11,7 +11,7 @@ JIRA Python Library
 .. image:: https://img.shields.io/pypi/wheel/jira.svg
         :target: https://pypi.python.org/pypi/jira/
 
-.. image:: https://img.shields.io/codeclimate/issues/github/pycontribs/jira.svg
+.. image:: https://img.shields.io/github/issues/pycontribs/jira.svg
         :target: https://github.com/pycontribs/jira/issues
 
 ------------
