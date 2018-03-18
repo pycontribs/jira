@@ -44,6 +44,16 @@ authentication. These sessions will apply to all subsequent calls to the JIRA ob
 
 The library is able to load the credentials from inside the ~/.netrc file, so put them there instead of keeping them in your source code.
 
+Cookie Based Authentication
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Pass a tuple of (username, password) to the ``auth`` constructor argument::
+
+    authed_jira = JIRA(auth=('username', 'password'))
+
+Using this method, authentication happens during then initialization of the object. If the authentication is successful,
+the retrieved session cookie will be used in future requests. Upon cookie expiration, authentication will happen again transparently.
+
 HTTP BASIC
 ^^^^^^^^^^
 
@@ -227,7 +237,8 @@ to quickly find the issues you want::
     oh_crap = jira.search_issues('assignee = currentUser() and due < endOfWeek() order by priority desc', maxResults=5)
 
     # Summaries of my last 3 reported issues
-    print [issue.fields.summary for issue in jira.search_issues('reporter = currentUser() order by created desc', maxResults=3)]
+    for issue in jira.search_issues('reporter = currentUser() order by created desc', maxResults=3):
+        print('{}: {}'.format(issue.key, issue.fields.summary))
 
 Comments
 --------

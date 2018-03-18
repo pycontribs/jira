@@ -97,10 +97,9 @@ def hashify(some_string, max_len=8):
 def get_unique_project_name():
     jid = ""
     user = re.sub("[^A-Z_]", "", getpass.getuser().upper())
-
     if user == 'TRAVIS' and 'TRAVIS_JOB_NUMBER' in os.environ:
-        # please note that user underline (_) is not suppored by
-        # jira even if is documented as supported.
+        # please note that user underline (_) is not supported by
+        # JIRA even if it is documented as supported.
         jid = 'T' + hashify(user + os.environ['TRAVIS_JOB_NUMBER'])
     else:
         identifier = user + \
@@ -108,18 +107,6 @@ def get_unique_project_name():
             chr(ord('A') + sys.version_info[1])
         jid = 'Z' + hashify(identifier)
     return jid
-
-
-class Singleton(type):
-
-    def __init__(cls, name, bases, dict):
-        super(Singleton, cls).__init__(name, bases, dict)
-        cls.instance = None
-
-    def __call__(cls, *args, **kw):
-        if cls.instance is None:
-            cls.instance = super(Singleton, cls).__call__(*args, **kw)
-        return cls.instance
 
 
 class JiraTestManager(object):
@@ -131,19 +118,6 @@ class JiraTestManager(object):
         max_retries (int): number of retries to perform for recoverable HTTP errors.
     """
 
-    # __metaclass__ = Singleton
-
-    # __instance = None
-    #
-    # Singleton implementation
-    # def __new__(cls, *args, **kwargs):
-    #     if not cls.__instance:
-    #         cls.__instance = super(JiraTestManager, cls).__new__(
-    #                             cls, *args, **kwargs)
-    #     return cls.__instance
-
-    #  Implementing some kind of Singleton, to prevent test initialization
-    # http://stackoverflow.com/questions/31875/is-there-a-simple-elegant-way-to-define-singletons-in-python/33201#33201
     __shared_state = {}
 
     @retry(stop=stop_after_attempt(2))
@@ -201,7 +175,6 @@ class JiraTestManager(object):
                         self.jira_admin = JIRA(self.CI_JIRA_URL, validate=True,
                                                logging=False, max_retries=self.max_retries)
                 if self.jira_admin.current_user() != self.CI_JIRA_ADMIN:
-                    # self.jira_admin.
                     self.initialized = 1
                     sys.exit(3)
 
@@ -311,12 +284,9 @@ class JiraTestManager(object):
                     # we care only for the project to exist
                     pass
                 self.project_a_id = self.jira_admin.project(self.project_a).id
-                # except Exception as e:
-                #    logging.warning("Got %s" % e)
-                # try:
-                # assert self.jira_admin.create_project(self.project_b,
-                # self.project_b_name) is  True, "Failed to create %s" %
-                # self.project_b
+                self.jira_admin.create_project(self.project_b,
+                                               self.project_b_name,
+                                               template_name='Scrum software development')
 
                 try:
                     self.jira_admin.create_project(self.project_b,
@@ -898,10 +868,10 @@ class IssueTests(unittest.TestCase):
                                        issuetype={'name': 'Bug'})
         # customfield_10022='XSS')
         issue.update(summary='Updated summary', description='Now updated',
-                     issuetype={'name': 'Improvement'})
+                     issuetype={'name': 'Story'})
         self.assertEqual(issue.fields.summary, 'Updated summary')
         self.assertEqual(issue.fields.description, 'Now updated')
-        self.assertEqual(issue.fields.issuetype.name, 'Improvement')
+        self.assertEqual(issue.fields.issuetype.name, 'Story')
         # self.assertEqual(issue.fields.customfield_10022, 'XSS')
         self.assertEqual(issue.fields.project.key, self.project_b)
         issue.delete()
@@ -915,14 +885,14 @@ class IssueTests(unittest.TestCase):
             'summary': 'Issue is updated',
             'description': "it sure is",
             'issuetype': {
-                'name': 'Improvement'},
+                'name': 'Story'},
             # 'customfield_10022': 'DOC',
             'priority': {
                 'name': 'Major'}}
         issue.update(fields=fields)
         self.assertEqual(issue.fields.summary, 'Issue is updated')
         self.assertEqual(issue.fields.description, 'it sure is')
-        self.assertEqual(issue.fields.issuetype.name, 'Improvement')
+        self.assertEqual(issue.fields.issuetype.name, 'Story')
         # self.assertEqual(issue.fields.customfield_10022, 'DOC')
         self.assertEqual(issue.fields.priority.name, 'Major')
         issue.delete()
@@ -987,7 +957,7 @@ class IssueTests(unittest.TestCase):
     @not_on_custom_jira_instance
     def test_createmeta_filter_by_projectkeys_and_name(self):
         meta = self.jira.createmeta(projectKeys=(self.project_a,
-                                                 self.project_b), issuetypeNames='Improvement')
+                                                 self.project_b), issuetypeNames='Story')
         self.assertEqual(len(meta['projects']), 2)
         for project in meta['projects']:
             self.assertEqual(len(project['issuetypes']), 1)
@@ -997,11 +967,29 @@ class IssueTests(unittest.TestCase):
         projects = self.jira.projects()
         proja = find_by_key_value(projects, self.project_a)
         projb = find_by_key_value(projects, self.project_b)
+        issue_type_ids = dict()
+        full_meta = self.jira.createmeta(projectIds=(proja.id, projb.id))
+        for project in full_meta['projects']:
+            for issue_t in project['issuetypes']:
+                issue_t_id = issue_t['id']
+                val = issue_type_ids.get(issue_t_id)
+                if val is None:
+                    issue_type_ids[issue_t_id] = []
+                issue_type_ids[issue_t_id].append([project['id']])
+        common_issue_ids = []
+        for key, val in issue_type_ids.items():
+            if len(val) == 2:
+                common_issue_ids.append(key)
+        self.assertNotEqual(len(common_issue_ids), 0)
+        for_lookup_common_issue_ids = common_issue_ids
+        if len(common_issue_ids) > 2:
+            for_lookup_common_issue_ids = common_issue_ids[:-1]
         meta = self.jira.createmeta(projectIds=(proja.id, projb.id),
-                                    issuetypeIds=('3', '4', '5'))
+                                    issuetypeIds=for_lookup_common_issue_ids)
         self.assertEqual(len(meta['projects']), 2)
         for project in meta['projects']:
-            self.assertEqual(len(project['issuetypes']), 3)
+            self.assertEqual(len(project['issuetypes']),
+                             len(for_lookup_common_issue_ids))
 
     def test_createmeta_expando(self):
         # limit to SCR project so the call returns promptly
@@ -1064,20 +1052,23 @@ class IssueTests(unittest.TestCase):
         comment.delete()
 
     def test_editmeta(self):
+        expected_fields = {'assignee',
+                           'attachment',
+                           'comment',
+                           'components',
+                           'description',
+                           'environment',
+                           'fixVersions',
+                           'issuelinks',
+                           'labels',
+                           'summary',
+                           'versions'
+                           }
         for i in (self.issue_1, self.issue_2):
             meta = self.jira.editmeta(i)
-            self.assertTrue('assignee' in meta['fields'])
-            self.assertTrue('attachment' in meta['fields'])
-            self.assertTrue('comment' in meta['fields'])
-            self.assertTrue('components' in meta['fields'])
-            self.assertTrue('description' in meta['fields'])
-            self.assertTrue('duedate' in meta['fields'])
-            self.assertTrue('environment' in meta['fields'])
-            self.assertTrue('fixVersions' in meta['fields'])
-            self.assertTrue('issuelinks' in meta['fields'])
-            self.assertTrue('issuetype' in meta['fields'])
-            self.assertTrue('labels' in meta['fields'])
-            self.assertTrue('versions' in meta['fields'])
+            meta_field_set = set(meta['fields'].keys())
+            self.assertEqual(meta_field_set.intersection(expected_fields),
+                             expected_fields)
 
     # Nothing from remote link works
     #    def test_remote_links(self):
@@ -1687,7 +1678,7 @@ class UserTests(unittest.TestCase):
     def test_user(self):
         user = self.jira.user(self.test_manager.CI_JIRA_ADMIN)
         self.assertEqual(user.name, self.test_manager.CI_JIRA_ADMIN)
-        self.assertRegex(user.emailAddress, '.*@example.com')
+        self.assertRegex(user.emailAddress, '^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
 
     @pytest.mark.xfail(reason='query returns empty list')
     def test_search_assignable_users_for_projects(self):
@@ -1910,14 +1901,14 @@ class OtherTests(unittest.TestCase):
 
     def test_session_invalid_login(self):
         try:
-            JIRA('https://support.atlassian.com',
+            JIRA('https://jira.atlassian.com',
                  basic_auth=("xxx", "xxx"),
                  validate=True,
                  logging=False)
         except Exception as e:
             self.assertIsInstance(e, JIRAError)
             # 20161010: jira cloud returns 500
-            assert e.status_code in (401, 500)
+            assert e.status_code in (401, 500, 403)
             str(JIRAError)  # to see that this does not raise an exception
             return
         assert False
@@ -1934,7 +1925,7 @@ class SessionTests(unittest.TestCase):
         self.assertIsNotNone(user.raw['session'])
 
     def test_session_with_no_logged_in_user_raises(self):
-        anon_jira = JIRA('https://support.atlassian.com', logging=False)
+        anon_jira = JIRA('https://jira.atlassian.com', logging=False)
         self.assertRaises(JIRAError, anon_jira.session)
 
     # @pytest.mark.skipif(platform.python_version() < '3', reason='Does not work with Python 2')
@@ -1972,8 +1963,19 @@ class UserAdministrationTests(unittest.TestCase):
         self.test_password = rndpassword()
         self.test_groupname = 'testGroupFor_%s' % self.test_manager.project_a
 
-    def test_add_and_remove_user(self):
+    def _skip_pycontribs_instance(self):
+        pytest.skip('The current ci jira admin user for '
+                    'https://pycontribs.atlassian.net lacks '
+                    'permission to modify users.')
 
+    def _should_skip_for_pycontribs_instance(self):
+        return self.test_manager.CI_JIRA_ADMIN == 'ci-admin' and (
+            self.test_manager.CI_JIRA_URL ==
+            "https://pycontribs.atlassian.net")
+
+    def test_add_and_remove_user(self):
+        if self._should_skip_for_pycontribs_instance():
+            self._skip_pycontribs_instance()
         try:
             self.jira.delete_user(self.test_username)
         except JIRAError:
@@ -2007,6 +2009,8 @@ class UserAdministrationTests(unittest.TestCase):
 
     @flaky
     def test_add_group(self):
+        if self._should_skip_for_pycontribs_instance():
+            self._skip_pycontribs_instance()
         try:
             self.jira.remove_group(self.test_groupname)
         except JIRAError:
@@ -2022,6 +2026,8 @@ class UserAdministrationTests(unittest.TestCase):
         self.jira.remove_group(self.test_groupname)
 
     def test_remove_group(self):
+        if self._should_skip_for_pycontribs_instance():
+            self._skip_pycontribs_instance()
         try:
             self.jira.add_group(self.test_groupname)
             sleep(1)  # avoid 400: https://travis-ci.org/pycontribs/jira/jobs/176539521#L395
@@ -2068,6 +2074,8 @@ class UserAdministrationTests(unittest.TestCase):
         self.jira.delete_user(self.test_username)
 
     def test_remove_user_from_group(self):
+        if self._should_skip_for_pycontribs_instance():
+            self._skip_pycontribs_instance()
         try:
             self.jira.add_user(
                 self.test_username, self.test_email, password=self.test_password)

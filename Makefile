@@ -7,7 +7,7 @@ PYTHON_PATH := $(shell which python)
 PLATFORM := $(shell uname -s | awk '{print tolower($$0)}')
 DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 PYTHON_VERSION := $(shell python3 -c "import sys; print('py%s%s' % sys.version_info[0:2] + ('-conda' if 'conda' in sys.version or 'Continuum' in sys.version else ''))")
-PREFIX=
+PREFIX=""
 ifndef GIT_BRANCH
 GIT_BRANCH=$(shell git branch | sed -n '/\* /s///p')
 endif
@@ -101,7 +101,7 @@ ifeq ($(GIT_BRANCH),develop)
 	@echo "INFO:	Upload package to testpypi.python.org"
 	$(PREFIX)python setup.py check --restructuredtext --strict
 	$(PREFIX)python setup.py sdist bdist_wheel
-	$(PREFIX)twine upload dist/*
+	$(PREFIX)twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 endif
 ifeq ($(GIT_BRANCH),master)
 	@echo "INFO:	Upload package to pypi.python.org"

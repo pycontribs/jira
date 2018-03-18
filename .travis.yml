@@ -1,16 +1,22 @@
 language: python
 sudo: false
+cache: 
+  directories:
+  - $HOME/.cache/pip
+  - $HOME/.m2
 matrix:
   fast_finish: false
 os:
 - linux
+jdk:
+  - openjdk8
 python:
 - '2.7'
 - '3.4'
 - '3.5'
 - '3.6'
 install:
-- pip -q --log dist/pip.log install --upgrade pip setuptools tox-travis py wheel
+- pip -q --log pip.log install --upgrade pip setuptools tox-travis py wheel
 - touch ChangeLog
 - python setup.py sdist bdist_wheel install
 - pip install ./dist/*.whl
@@ -56,7 +62,7 @@ deploy:
     condition: $TOXENV != docs
     branch: master
 - provider: pypi
-  server: https://testpypi.python.org/pypi
+  server: https://test.pypi.org/legacy/
   user: sorins
   password:
     secure: E0cjANF7SLBdYrsnWLK8X/xWznqkF0JrP/DVfDazPzUYH6ynFeneyofzNJQPLTLsqe1eKXhuUJ/Sbl+RHFB0ySo/j/7NfYd/9pm8hpUkGCvR09IwtvMLgWKp3k10NWab03o2GOkSJSrLvZofyZBGR40wwu2O9uXPCb2rvucCGbw=
