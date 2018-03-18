@@ -45,9 +45,9 @@ deploy:
     python: 2.7
     condition: $TOXENV != docs
 - provider: pypi
-  user: sorin
+  user: pycontribs
   password:
-    secure: E0cjANF7SLBdYrsnWLK8X/xWznqkF0JrP/DVfDazPzUYH6ynFeneyofzNJQPLTLsqe1eKXhuUJ/Sbl+RHFB0ySo/j/7NfYd/9pm8hpUkGCvR09IwtvMLgWKp3k10NWab03o2GOkSJSrLvZofyZBGR40wwu2O9uXPCb2rvucCGbw=
+    secure: "CmBFcxAT3IAWpnqe9eFmfHfbPBvayGMNLC+P+9KKUGaf+k7vnIYB11vNNCYUrm/jVOR12szWAcGoUQMkUQrWcrShEidsYENOdreJnasZp0I+2uMbMFw1v2Mn7Kyiilv1q/m1G05cH3ls863SBIxOARoN/Ce24vhVgg3BO+GpoP8="
   distributions: sdist bdist_wheel
   skip_cleanup: true
   on:
@@ -57,9 +57,9 @@ deploy:
     branch: master
 - provider: pypi
   server: https://test.pypi.org/legacy/
-  user: sorins
+  user: ssbarnea
   password:
-    secure: E0cjANF7SLBdYrsnWLK8X/xWznqkF0JrP/DVfDazPzUYH6ynFeneyofzNJQPLTLsqe1eKXhuUJ/Sbl+RHFB0ySo/j/7NfYd/9pm8hpUkGCvR09IwtvMLgWKp3k10NWab03o2GOkSJSrLvZofyZBGR40wwu2O9uXPCb2rvucCGbw=
+    secure: "FR8vDM2tWsT1ApQFfbbDO4B6tKZcRGzdRO2or2p8fY5uDEKbIa/SSJaIeaRluHbcxB6cedI1gJ5oCl2+kF0Km9LZqpT+mU4/StiWBBTHj/WmbBTXEROC28JuY6PzGJ+MYySFfLErRWqZZX6XxBzbNebDfdj6Gt8cQZXpvWr/1JA="
   distributions: sdist bdist_wheel
   skip_cleanup: true
   on:
