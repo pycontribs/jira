@@ -1,16 +1,22 @@
 language: python
 sudo: false
+cache: 
+  directories:
+  - $HOME/.cache/pip
+  - $HOME/.m2
 matrix:
   fast_finish: false
 os:
 - linux
+jdk:
+  - openjdk8
 python:
 - '2.7'
 - '3.4'
 - '3.5'
 - '3.6'
 install:
-- pip -q --log dist/pip.log install --upgrade pip setuptools tox-travis py wheel
+- pip -q --log pip.log install --upgrade pip setuptools tox-travis py wheel
 - touch ChangeLog
 - python setup.py sdist bdist_wheel install
 - pip install ./dist/*.whl
