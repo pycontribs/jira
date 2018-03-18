@@ -178,10 +178,12 @@ class QshGenerator(object):
         parse_result = urlparse(req.url)
 
         path = parse_result.path[len(self.context_path):] if len(self.context_path) > 1 else parse_result.path
-        query = '&'.join(sorted(parse_result.query.split("&")))
+        # Per Atlassian docs, use %20 for whitespace when generating qsh for URL
+        # https://developer.atlassian.com/cloud/jira/platform/understanding-jwt/#qsh
+        query = '&'.join(sorted(parse_result.query.split("&"))).replace('+', '%20')
         qsh = '%(method)s&%(path)s&%(query)s' % {'method': req.method.upper(), 'path': path, 'query': query}
 
-        return hashlib.sha256(qsh).hexdigest()
+        return hashlib.sha256(qsh.encode('utf-8')).hexdigest()
 
 
 class JiraCookieAuth(AuthBase):
@@ -242,6 +244,64 @@ class JIRA(object):
     of the form ``issue.fields.summary`` will be resolved into the proper lookups to return the JSON value at that
     mapping. Methods that do not return resources will return a dict constructed from the JSON response or a scalar
     value; see each method's documentation for details on what that method returns.
+
+    Without any arguments, this client will connect anonymously to the JIRA instance
+    started by the Atlassian Plugin SDK from one of the 'atlas-run', ``atlas-debug``,
+    or ``atlas-run-standalone`` commands. By default, this instance runs at
+    ``http://localhost:2990/jira``. The ``options`` argument can be used to set the JIRA instance to use.
+
+    Authentication is handled with the ``basic_auth`` argument. If authentication is supplied (and is
+    accepted by JIRA), the client will remember it for subsequent requests.
+
+    For quick command line access to a server, see the ``jirashell`` script included with this distribution.
+
+    The easiest way to instantiate is using ``j = JIRA("https://jira.atlasian.com")``
+
+    :param options: Specify the server and properties this client will use. Use a dict with any
+        of the following properties:
+
+        * server -- the server address and context path to use. Defaults to ``http://localhost:2990/jira``.
+        * rest_path -- the root REST path to use. Defaults to ``api``, where the JIRA REST resources live.
+        * rest_api_version -- the version of the REST resources under rest_path to use. Defaults to ``2``.
+        * agile_rest_path - the REST path to use for JIRA Agile requests. Defaults to ``greenhopper`` (old, private
+                API). Check `GreenHopperResource` for other supported values.
+        * verify -- Verify SSL certs. Defaults to ``True``.
+        * client_cert -- a tuple of (cert,key) for the requests library for client side SSL
+        * check_update -- Check whether using the newest python-jira library version.
+
+    :param basic_auth: A tuple of username and password to use when establishing a session via HTTP BASIC
+        authentication.
+    :param oauth: A dict of properties for OAuth authentication. The following properties are required:
+
+        * access_token -- OAuth access token for the user
+        * access_token_secret -- OAuth access token secret to sign with the key
+        * consumer_key -- key of the OAuth application link defined in JIRA
+        * key_cert -- private key file to sign requests with (should be the pair of the public key supplied to
+          JIRA in the OAuth application link)
+
+    :param kerberos: If true it will enable Kerberos authentication.
+    :param kerberos_options: A dict of properties for Kerberos authentication. The following properties are possible:
+
+        * mutual_authentication -- string DISABLED or OPTIONAL.
+
+        Example kerberos_options structure: ``{'mutual_authentication': 'DISABLED'}``
+
+    :param jwt: A dict of properties for JWT authentication supported by Atlassian Connect. The following
+        properties are required:
+
+        * secret -- shared secret as delivered during 'installed' lifecycle event
+          (see https://developer.atlassian.com/static/connect/docs/latest/modules/lifecycle.html for details)
+        * payload -- dict of fields to be inserted in the JWT payload, e.g. 'iss'
+
+        Example jwt structure: ``{'secret': SHARED_SECRET, 'payload': {'iss': PLUGIN_KEY}}``
+
+    :param validate: If true it will validate your credentials first. Remember that if you are accesing JIRA
+        as anononymous it will fail to instanciate.
+    :param get_server_info: If true it will fetch server version info first to determine if some API calls
+        are available.
+    :param async: To enable async requests for those actions where we implemented it, like issue update() or delete().
+    :param timeout: Set a read/connect timeout for the underlying calls to JIRA (default: None)
+        Obviously this means that you cannot rely on the return code when this is enabled.
     """
 
     DEFAULT_OPTIONS = {
@@ -324,6 +384,7 @@ class JIRA(object):
         :param async: To enable async requests for those actions where we implemented it, like issue update() or delete().
         :param timeout: Set a read/connect timeout for the underlying calls to JIRA (default: None)
         Obviously this means that you cannot rely on the return code when this is enabled.
+        :param auth: Set a cookie auth token if this is required.
         """
         # force a copy of the tuple to be used in __del__() because
         # sys.version_info could have already been deleted in __del__()
@@ -2393,6 +2454,8 @@ class JIRA(object):
         except NameError as e:
             logging.error("JWT authentication requires requests_jwt")
             raise e
+        jwt_auth.set_header_format('JWT %s')
+
         jwt_auth.add_field("iat", lambda req: JIRA._timestamp())
         jwt_auth.add_field("exp", lambda req: JIRA._timestamp(datetime.timedelta(minutes=3)))
         jwt_auth.add_field("qsh", QshGenerator(self._options['context_path']))
@@ -3128,13 +3191,18 @@ class JIRA(object):
         board = Board(self._options, self._session, raw={'id': id})
         board.delete()
 
-    def create_board(self, name, project_ids, preset="scrum"):
+    def create_board(self, name, project_ids, preset="scrum",
+                     location_type='user', location_id=None):
         """Create a new board for the ``project_ids``.
 
         :param name: name of the board
         :param project_ids: the projects to create the board in
         :param preset: what preset to use for this board
         :type preset: 'kanban', 'scrum', 'diy'
+        :param location_type: the location type. Available in cloud.
+        :type location_type: 'user', 'project'
+        :param location_id: the id of project that the board should be
+            located under. Ommit this for a 'user' location_type. Available in cloud.
         """
         if self._options['agile_rest_path'] != GreenHopperResource.GREENHOPPER_REST_PATH:
             raise NotImplementedError('JIRA Agile Public API does not support this request')
@@ -3151,6 +3219,9 @@ class JIRA(object):
             project_ids = project_ids.split(',')
         payload['projectIds'] = project_ids
         payload['preset'] = preset
+        if self.deploymentType == 'Cloud':
+            payload['locationType'] = location_type
+            payload['locationId'] = location_id
         url = self._get_url(
             'rapidview/create/presets', base=self.AGILE_BASE_URL)
         r = self._session.post(
