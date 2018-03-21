@@ -29,6 +29,18 @@ CONFIG_PATH = os.path.join(
     os.path.expanduser('~'), '.jira-python', 'jirashell.ini')
 
 
+class StoreDictKeyPair(argparse.Action):
+    '''Stores dictionalry key pairs with format key1=value1,key2=value2
+    into value namespace'''
+    def __call__(self, parser, namespace, values, option_string=None):
+        tmp_dict = {}
+        for kv in values.split(","):
+            k, v = kv.split("=")
+            tmp_dict[k] = v
+        values = tmp_dict
+        setattr(namespace, self.dest, values)
+
+
 def oauth_dance(server, consumer_key, key_cert_data, print_tokens=False, verify=None):
     if verify is None:
         verify = server.startswith('https')
@@ -142,6 +154,11 @@ def process_command_line():
     jira_group.add_argument('--no-verify', action='store_true',
                             help='do not verify the ssl certificate')
 
+    jira_group.add_argument('--headers',
+                            action=StoreDictKeyPair,
+                            metavar="HEADER1=VAL1,HEADER2=VAL2...",
+                            help='The headers to connect to this Jira instance.')
+
     basic_auth_group = parser.add_argument_group('BASIC auth options')
     basic_auth_group.add_argument('-u', '--username',
                                   help='The username to connect to this JIRA instance with.')
@@ -182,6 +199,9 @@ def process_command_line():
 
     if args.rest_api_version:
         options['rest_api_version'] = args.rest_api_version
+
+    if args.headers:
+        options['headers'] = args.headers
 
     options['verify'] = True
     if args.no_verify:
