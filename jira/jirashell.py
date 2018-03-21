@@ -157,7 +157,7 @@ def process_command_line():
     jira_group.add_argument('--headers',
                             action=StoreDictKeyPair,
                             metavar="HEADER1=VAL1,HEADER2=VAL2...",
-                            help='The headers to connect to this Jira instance.')
+                            help='Custom headers to connect to this Jira instance.')
 
     basic_auth_group = parser.add_argument_group('BASIC auth options')
     basic_auth_group.add_argument('-u', '--username',
