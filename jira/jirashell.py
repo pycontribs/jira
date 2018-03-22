@@ -30,8 +30,7 @@ CONFIG_PATH = os.path.join(
 
 
 class StoreDictKeyPair(argparse.Action):
-    '''Stores dictionalry key pairs with format key1=value1,key2=value2
-    into value namespace'''
+    '''Stores dictionalry key pairs with format key1=value1,key2=value2 into value namespace'''
     def __call__(self, parser, namespace, values, option_string=None):
         tmp_dict = {}
         for kv in values.split(","):
