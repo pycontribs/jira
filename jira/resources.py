@@ -42,6 +42,7 @@ __all__ = (
     'IssueLinkType',
     'IssueType',
     'Priority',
+    'ProjectCategory',
     'Version',
     'Role',
     'Resolution',
@@ -658,6 +659,14 @@ class Project(Resource):
         if raw:
             self._parse_raw(raw)
 
+class ProjectCategory(Resource):
+    """Project Category for a project"""
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(self, 'projectCategory/{0}', options, session)
+        if raw:
+            self._parse_raw(raw)
+
 
 class Role(Resource):
     """A role inside a project."""
@@ -938,6 +947,7 @@ resource_class_map = {
     r'issuetype/[^/]+$': IssueType,
     r'priority/[^/]+$': Priority,
     r'project/[^/]+$': Project,
+    r'projectCategory/[^/]+/projectCategory/[^/]+$': ProjectCategory,
     r'project/[^/]+/role/[^/]+$': Role,
     r'resolution/[^/]+$': Resolution,
     r'securitylevel/[^/]+$': SecurityLevel,
