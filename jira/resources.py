@@ -432,6 +432,14 @@ class Issue(Resource):
         if raw:
             self._parse_raw(raw)
 
+    def __hash__(self):
+        """Hash calculation."""
+        return hash(str(self.key))
+
+    def __eq__(self, other):
+        """Comparison."""
+        return str(self.key) == str(other.key)
+
     def update(self, fields=None, update=None, async=None, jira=None, notify=True, **fieldargs):
         """Update this issue on the server.
 
