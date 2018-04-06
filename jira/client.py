@@ -551,6 +551,13 @@ class JIRA(object):
         :param base: base URL
         :return: ResultList
         """
+        async_class = None
+        if self._options['async']:
+            try:
+                from requests_futures.sessions import FuturesSession
+                async_class = FuturesSession
+            except ImportError:
+                pass
         page_params = params.copy() if params else {}
         if startAt:
             page_params['startAt'] = startAt
@@ -558,13 +565,8 @@ class JIRA(object):
             page_params['maxResults'] = maxResults
 
         resource = self._get_json(request_path, params=page_params, base=base)
-        try:
-            next_items_page = [item_type(self._options, self._session, raw_issue_json) for raw_issue_json in
-                               (resource[items_key] if items_key else resource)]
-        except KeyError as e:
-            # improving the error text so we know why it happened
-            raise KeyError(str(e) + " : " + json.dumps(resource))
-
+        next_items_page = self._get_items_from_page(item_type, items_key,
+                                                    resource)
         items = next_items_page
 
         if True:  # isinstance(resource, dict):
@@ -586,17 +588,33 @@ class JIRA(object):
             if not maxResults:
                 page_size = max_results_from_response or len(items)
                 page_start = (startAt or start_at_from_response or 0) + page_size
-                while not is_last and (total is None or page_start < total) and len(next_items_page) == page_size:
+                if async_class is not None and not is_last and (
+                        total is not None and len(items) < total):
+                    async_fetches = []
+                    future_session = async_class(session=self._session)
+                    for start_index in range(page_start, total, page_size):
+                        page_params = params.copy()
+                        page_params['startAt'] = start_index
+                        page_params['maxResults'] = page_size
+                        url = self._get_url(request_path)
+                        r = future_session.get(url, params=page_params)
+                        async_fetches.append(r)
+                    for future in async_fetches:
+                        response = future.result()
+                        resource = json_loads(response)
+                        if resource:
+                            next_items_page = self._get_items_from_page(
+                                item_type, items_key, resource)
+                            items.extend(next_items_page)
+                while async_class is None and not is_last and (
+                    total is None or page_start < total) and len(
+                        next_items_page) == page_size:
                     page_params['startAt'] = page_start
                     page_params['maxResults'] = page_size
                     resource = self._get_json(request_path, params=page_params, base=base)
                     if resource:
-                        try:
-                            next_items_page = [item_type(self._options, self._session, raw_issue_json) for raw_issue_json in
-                                               (resource[items_key] if items_key else resource)]
-                        except KeyError as e:
-                            # improving the error text so we know why it happened
-                            raise KeyError(str(e) + " : " + json.dumps(resource))
+                        next_items_page = self._get_items_from_page(
+                            item_type, items_key, resource)
                         items.extend(next_items_page)
                         page_start += page_size
                     else:
@@ -607,6 +625,14 @@ class JIRA(object):
         else:
             # it seams that search_users can return a list() containing a single user!
             return ResultList([item_type(self._options, self._session, resource)], 0, 1, 1, True)
+
+    def _get_items_from_page(self, item_type, items_key, resource):
+        try:
+            return [item_type(self._options, self._session, raw_issue_json) for raw_issue_json in
+                    (resource[items_key] if items_key else resource)]
+        except KeyError as e:
+            # improving the error text so we know why it happened
+            raise KeyError(str(e) + " : " + json.dumps(resource))
 
     # Information about this client
 

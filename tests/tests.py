@@ -30,7 +30,7 @@ from tenacity import stop_after_attempt
 _non_parallel = True
 if platform.python_version() < '3':
     _non_parallel = False
-
+    import mock
     try:
         import unittest2 as unittest
     except ImportError:
@@ -43,6 +43,11 @@ if platform.python_version() < '3':
         import unittest2 as unittest
 else:
     import unittest
+    try:
+        from unittest import mock
+    except ImportError:
+        import mock
+
 
 cmd_folder = os.path.abspath(os.path.join(os.path.split(inspect.getfile(
     inspect.currentframe()))[0], ".."))
@@ -1591,6 +1596,18 @@ class SearchTests(unittest.TestCase):
         for issue in issues:
             self.assertTrue(issue.key.startswith(self.project_b))
 
+    def test_search_issues_async(self):
+        original_val = self.jira._options['async']
+        try:
+            self.jira._options['async'] = True
+            issues = self.jira.search_issues('project=%s' % self.project_b,
+                                             maxResults=False)
+            self.assertEqual(len(issues), issues.total)
+            for issue in issues:
+                self.assertTrue(issue.key.startswith(self.project_b))
+        finally:
+            self.jira._options['async'] = original_val
+
     def test_search_issues_maxresults(self):
         issues = self.jira.search_issues('project=%s' % self.project_b,
                                          maxResults=10)
@@ -1940,6 +1957,64 @@ class SessionTests(unittest.TestCase):
             self.assertIn(type(e), (JIRAError, requests.exceptions.ConnectionError, AttributeError), e)
             return
         self.assertTrue(False, "Instantiation of invalid JIRA instance succeeded.")
+
+
+class AsyncTests(unittest.TestCase):
+
+    def setUp(self):
+        self.jira = JIRA('https://jira.atlassian.com', logging=False,
+                         async=True, validate=False, get_server_info=False)
+
+    def test_fetch_pages(self):
+        """Tests that the JIRA._fetch_pages method works as expected. """
+        params = {"startAt": 0}
+        total = 26
+        expected_results = []
+        for i in range(0, total):
+            result = _create_issue_result_json(
+                i, 'summary %s' % i, key='KEY-%s' % i)
+            expected_results.append(result)
+        result_one = _create_issue_search_results_json(
+            expected_results[:10], max_results=10, total=total)
+        result_two = _create_issue_search_results_json(
+            expected_results[10:20], max_results=10, total=total)
+        result_three = _create_issue_search_results_json(
+            expected_results[20:], max_results=6, total=total)
+        mock_session = mock.Mock(name='mock_session')
+        responses = mock.Mock(name='responses')
+        responses.content = '_filler_'
+        responses.json.side_effect = [result_one, result_two, result_three]
+        responses.status_code = 200
+        mock_session.request.return_value = responses
+        mock_session.get.return_value = responses
+        self.jira._session.close()
+        self.jira._session = mock_session
+        items = self.jira._fetch_pages(Issue, 'issues', 'search', 0, False, params)
+        self.assertEqual(len(items), total)
+        self.assertEqual(
+            set(item.key for item in items),
+            set(expected_r['key'] for expected_r in expected_results))
+
+
+def _create_issue_result_json(issue_id, summary, key, **kwargs):
+    """Returns a minimal json object for an issue. """
+    return {
+        'id': '%s' % issue_id,
+        'summary': summary,
+        'key': key,
+        'self': kwargs.get('self', 'http://example.com/%s' %
+                           issue_id),
+    }
+
+
+def _create_issue_search_results_json(issues, **kwargs):
+    """Returns a minimal json object for Jira issue search results. """
+    return {
+        'startAt': kwargs.get('start_at', 0),
+        'maxResults': kwargs.get('max_results', 50),
+        'total': kwargs.get('total', len(issues)),
+        'issues': issues,
+    }
 
 
 @flaky
