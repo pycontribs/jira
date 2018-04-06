@@ -2483,7 +2483,10 @@ class JIRA(object):
 
     def _get_json(self, path, params=None, base=JIRA_BASE_URL):
         url = self._get_url(path, base)
-        r = self._session.get(url, params=params)
+        if params and 'jql' in params:
+            r = self._session.post(url, json=params)
+        else:
+            r = self._session.get(url, params=params)
         try:
             r_json = json_loads(r)
         except ValueError as e:
