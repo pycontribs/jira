@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """JIRA utils used internally."""
 from __future__ import unicode_literals
-import json
 import threading
 
 from jira.resilientsession import raise_on_error
@@ -77,8 +76,10 @@ def threaded_requests(requests):
 
 def json_loads(r):
     raise_on_error(r)
-    if len(r.text):  # r.status_code != 204:
-        return json.loads(r.text)
-    else:
+    try:
+        return r.json()
+    except ValueError:
         # json.loads() fails with empty bodies
-        return {}
+        if not r.text:
+            return {}
+        raise
