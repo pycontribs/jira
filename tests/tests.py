@@ -2010,6 +2010,15 @@ class UserAdministrationTests(unittest.TestCase):
         self.assertEqual(
             len(x), 0, "Found test user when it should have been deleted. Test Fails.")
 
+        # test creating users with no application access (used for Service Desk)
+        result = self.jira.add_user(
+            self.test_username, self.test_email, password=self.test_password,
+            applicationKey=[])
+        assert result, True
+
+        result = self.jira.delete_user(self.test_username)
+        assert result, True
+
     @flaky
     def test_add_group(self):
         if self._should_skip_for_pycontribs_instance():
