@@ -2013,7 +2013,7 @@ class UserAdministrationTests(unittest.TestCase):
         # test creating users with no application access (used for Service Desk)
         result = self.jira.add_user(
             self.test_username, self.test_email, password=self.test_password,
-            applicationKey=[])
+            applicationKeys=[])
         assert result, True
 
         result = self.jira.delete_user(self.test_username)
