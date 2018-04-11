@@ -69,7 +69,7 @@ deploy:
     skip_cleanup: true
     on:
       tags: false
-      branch: develop
+      branch: master
       repo: pycontribs/jira
   - provider: releases
     api_key:
@@ -82,6 +82,7 @@ deploy:
     on:
       tags: true
       repo: pycontribs/jira
+      branch: master
 env:
   global:
   - secure: fuXwQL+KHQ96XkAFl2uQc8eK8dAjrgkup46tck/UGjVpdv1PT/yHmBKrvpFjDa50ueGbtBwTdKAwhyAmYuiZCk2IYHzdvBylCZBBji2FSpaTM59CVwgkVT6tx3HHO83X0mEX6ih9TJvZD5XhX+YUjopnseRXRq3ey3JZJXWN4RM=
