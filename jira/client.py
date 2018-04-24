@@ -1677,7 +1677,7 @@ class JIRA(object):
             data['author'] = {"name": user,
                               'self': self.JIRA_BASE_URL + '/rest/api/latest/user?username=' + user,
                               'displayName': user,
-                              'active': False
+                              'active': True
                               }
             data['updateAuthor'] = data['author']
         # report bug to Atlassian: author and updateAuthor parameters are
