@@ -296,8 +296,8 @@ class JIRA(object):
 
         Example jwt structure: ``{'secret': SHARED_SECRET, 'payload': {'iss': PLUGIN_KEY}}``
 
-    :param validate: If true it will validate your credentials first. Remember that if you are accesing JIRA
-        as anononymous it will fail to instanciate.
+    :param validate: If true it will validate your credentials first. Remember that if you are accessing JIRA
+        as anonymous it will fail to instantiate.
     :param get_server_info: If true it will fetch server version info first to determine if some API calls
         are available.
     :param async: To enable async requests for those actions where we implemented it, like issue update() or delete().
@@ -378,8 +378,8 @@ class JIRA(object):
             (see https://developer.atlassian.com/static/connect/docs/latest/modules/lifecycle.html for details)
             * payload -- dict of fields to be inserted in the JWT payload, e.g. 'iss'
             Example jwt structure: ``{'secret': SHARED_SECRET, 'payload': {'iss': PLUGIN_KEY}}``
-        :param validate: If true it will validate your credentials first. Remember that if you are accesing JIRA
-            as anononymous it will fail to instanciate.
+        :param validate: If true it will validate your credentials first. Remember that if you are accessing JIRA
+            as anonymous it will fail to instantiate.
         :param get_server_info: If true it will fetch server version info first to determine if some API calls
             are available.
         :param async: To enable async requests for those actions where we implemented it, like issue update() or delete().
@@ -522,7 +522,7 @@ class JIRA(object):
                     pass
 
     def _check_for_html_error(self, content):
-        # JIRA has the bad habbit of returning errors in pages with 200 and
+        # JIRA has the bad habit of returning errors in pages with 200 and
         # embedding the error in a huge webpage.
         if '<!-- SecurityTokenMissing -->' in content:
             logging.warning("Got SecurityTokenMissing")
@@ -645,7 +645,7 @@ class JIRA(object):
     def find(self, resource_format, ids=None):
         """Find Resource object for any addressable resource on the server.
 
-        This method is a universal resource locator for any RESTful resource in JIRA. The
+        This method is a universal resource locator for any REST-ful resource in JIRA. The
         argument ``resource_format`` is a string of the form ``resource``, ``resource/{0}``,
         ``resource/{0}/sub``, ``resource/{0}/sub/{1}``, etc. The format placeholders will be
         populated from the ``ids`` argument if present. The existing authentication session
@@ -744,7 +744,7 @@ class JIRA(object):
         :param issue: the issue to attach the attachment to
         :param attachment: file-like object to attach to the issue, also works if it is a string with the filename.
         :param filename: optional name for the attached file. If omitted, the file object's ``name`` attribute
-            is used. If you aquired the file-like object by any other method than ``open()``, make sure
+            is used. If you acquired the file-like object by any other method than ``open()``, make sure
             that a name is specified in one way or the other.
         :rtype: an Attachment Resource
         """
@@ -1581,7 +1581,7 @@ class JIRA(object):
     def remove_vote(self, issue):
         """Remove the current authenticated user's vote from an issue.
 
-        :param issue: ID or key of the issue to unvote on
+        :param issue: ID or key of the issue to remove vote on
         """
         url = self._get_url('issue/' + str(issue) + '/votes')
         self._session.delete(url)
@@ -1711,7 +1711,7 @@ class JIRA(object):
         if type not in self._cached_issue_link_types:
             for lt in self._cached_issue_link_types:
                 if lt.outward == type:
-                    # we are smart to figure it out what he ment
+                    # we are smart to figure it out what he meant
                     type = lt.name
                     break
                 elif lt.inward == type:
@@ -1957,7 +1957,7 @@ class JIRA(object):
         """Delete a project's avatar.
 
         :param project: ID or key of the project to delete the avatar from
-        :param avatar: ID of the avater to delete
+        :param avatar: ID of the avatar to delete
         """
         url = self._get_url('project/' + project + '/avatar/' + avatar)
         return self._session.delete(url)
@@ -2711,10 +2711,10 @@ class JIRA(object):
     def reindex(self, force=False, background=True):
         """Start jira re-indexing. Returns True if reindexing is in progress or not needed, or False.
 
-        If you call reindex() without any parameters it will perform a backfround reindex only if JIRA thinks it should do it.
+        If you call reindex() without any parameters it will perform a background reindex only if JIRA thinks it should do it.
 
-        :param force: reindex even if JIRA doesn'tt say this is needed, False by default.
-        :param background: reindex inde background, slower but does not impact the users, defaults to True.
+        :param force: reindex even if JIRA doesn't say this is needed, False by default.
+        :param background: reindex in background, slower but does not impact the users, defaults to True.
         """
         # /secure/admin/IndexAdmin.jspa
         # /secure/admin/jira/IndexProgress.jspa?taskId=1
@@ -3242,7 +3242,7 @@ class JIRA(object):
         :param location_type: the location type. Available in cloud.
         :type location_type: 'user', 'project'
         :param location_id: the id of project that the board should be
-            located under. Ommit this for a 'user' location_type. Available in cloud.
+            located under. Omit this for a 'user' location_type. Available in cloud.
         """
         if self._options['agile_rest_path'] != GreenHopperResource.GREENHOPPER_REST_PATH:
             raise NotImplementedError('JIRA Agile Public API does not support this request')
@@ -3399,7 +3399,6 @@ class JIRA(object):
                                   ' At least version 6.7.10 is required.')
                 raise
         elif self._options['agile_rest_path'] == GreenHopperResource.GREENHOPPER_REST_PATH:
-            # {"issueKeys":["ANERDS-102"],"rankBeforeKey":"ANERDS-94","rankAfterKey":"ANERDS-7","customFieldId":11431}
             data = {
                 "issueKeys": [issue], "rankBeforeKey": next_issue, "customFieldId": self._rank}
             url = self._get_url('rank', base=self.AGILE_BASE_URL)

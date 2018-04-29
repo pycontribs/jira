@@ -87,7 +87,7 @@ def rndstr():
 
 
 def rndpassword():
-    # generates a password of lengh 14
+    # generates a password of length 14
     s = ''.join(random.sample(string.ascii_uppercase, 5)) + \
         ''.join(random.sample(string.ascii_lowercase, 5)) + \
         ''.join(random.sample(string.digits, 2)) + \
@@ -441,7 +441,7 @@ class ApplicationPropertiesTests(unittest.TestCase):
     def test_set_application_property(self):
         prop = 'jira.lf.favicon.hires.url'
         valid_value = '/jira-favicon-hires.png'
-        invalid_value = '/Tjira-favicon-hires.png'
+        invalid_value = '/invalid-jira-favicon-hires.png'
 
         self.jira.set_application_property(prop, invalid_value)
         self.assertEqual(self.jira.application_properties(key=prop)['value'],
@@ -699,7 +699,7 @@ class IssueTests(unittest.TestCase):
         self.assertTrue(issue1 == issues[0])
         self.assertFalse(issue2 == issues[0])
 
-    def test_issue_expandos(self):
+    def test_issue_expand(self):
         issue = self.jira.issue(self.issue_1, expand='editmeta,schema')
         self.assertTrue(hasattr(issue, 'editmeta'))
         self.assertTrue(hasattr(issue, 'schema'))
@@ -709,10 +709,10 @@ class IssueTests(unittest.TestCase):
     @not_on_custom_jira_instance
     def test_create_issue_with_fieldargs(self):
         issue = self.jira.create_issue(project=self.project_b,
-                                       summary='Test issue created', description='blahery',
+                                       summary='Test issue created', description='foo description',
                                        issuetype={'name': 'Bug'})  # customfield_10022='XSS'
         self.assertEqual(issue.fields.summary, 'Test issue created')
-        self.assertEqual(issue.fields.description, 'blahery')
+        self.assertEqual(issue.fields.description, 'some details')
         self.assertEqual(issue.fields.issuetype.name, 'Bug')
         self.assertEqual(issue.fields.project.key, self.project_b)
         # self.assertEqual(issue.fields.customfield_10022, 'XSS')
@@ -745,7 +745,7 @@ class IssueTests(unittest.TestCase):
         issue = self.jira.create_issue(prefetch=False,
                                        project=self.project_b,
                                        summary='Test issue created',
-                                       description='blahery', issuetype={'name': 'Bug'}
+                                       description='some details', issuetype={'name': 'Bug'}
                                        )  # customfield_10022='XSS'
 
         assert hasattr(issue, 'self')
@@ -851,11 +851,11 @@ class IssueTests(unittest.TestCase):
     def test_create_issues_without_prefetch(self):
         field_list = [dict(project=self.project_b,
                            summary='Test issue created',
-                           description='blahery',
+                           description='some details',
                            issuetype={'name': 'Bug'}),
                       dict(project=self.project_a,
                            summary='Test issue #2',
-                           description='fooery',
+                           description='foo description',
                            issuetype={'name': 'Bug'})]
         issues = self.jira.create_issues(field_list, prefetch=False)
 
@@ -951,9 +951,9 @@ class IssueTests(unittest.TestCase):
     @not_on_custom_jira_instance
     def test_createmeta(self):
         meta = self.jira.createmeta()
-        ztravisdeb_proj = find_by_key(meta['projects'], self.project_b)
+        proj = find_by_key(meta['projects'], self.project_b)
         # we assume that this project should allow at least one issue type
-        self.assertGreaterEqual(len(ztravisdeb_proj['issuetypes']), 1)
+        self.assertGreaterEqual(len(proj['issuetypes']), 1)
 
     @not_on_custom_jira_instance
     def test_createmeta_filter_by_projectkey_and_name(self):
@@ -999,7 +999,7 @@ class IssueTests(unittest.TestCase):
             self.assertEqual(len(project['issuetypes']),
                              len(for_lookup_common_issue_ids))
 
-    def test_createmeta_expando(self):
+    def test_createmeta_expand(self):
         # limit to SCR project so the call returns promptly
         meta = self.jira.createmeta(projectKeys=self.project_b,
                                     expand='projects.issuetypes.fields')
@@ -1146,12 +1146,12 @@ class IssueTests(unittest.TestCase):
     #                                         application={'name': 'far too silly', 'type': 'sketch'}, relationship='mousebending')
     # creation response doesn't include full remote link info, so we fetch it again using the new internal ID
     #        link = self.jira.remote_link('BULK-3', link.id)
-    #        link.update(object={'url': 'http://yahoo.com', 'title': 'yahooery'}, globalId='python-test:updated.id',
+    #        link.update(object={'url': 'http://yahoo.com', 'title': 'yahoo stuff'}, globalId='python-test:updated.id',
     #                    relationship='cheesing')
     #        self.assertEqual(link.globalId, 'python-test:updated.id')
     #        self.assertEqual(link.relationship, 'cheesing')
     #        self.assertEqual(link.object.url, 'http://yahoo.com')
-    #        self.assertEqual(link.object.title, 'yahooery')
+    #        self.assertEqual(link.object.title, 'yahoo stuff')
     #        link.delete()
     #
     #    @unittest.skip("temporary disabled")
@@ -1359,7 +1359,7 @@ class IssueLinkTests(unittest.TestCase):
                                                   JiraTestManager().project_b_issue1,
                                                   JiraTestManager().project_b_issue2)
 
-    def test_create_issue_link_with_issue_objs(self):
+    def test_create_issue_link_with_issue_obj(self):
         inwardissue = self.manager.jira_admin.issue(
             JiraTestManager().project_b_issue1)
         self.assertIsNotNone(inwardissue)
@@ -1627,7 +1627,7 @@ class SearchTests(unittest.TestCase):
         self.assertFalse(hasattr(issues[0].fields, 'reporter'))
         self.assertFalse(hasattr(issues[0].fields, 'progress'))
 
-    def test_search_issues_expandos(self):
+    def test_search_issues_expand(self):
         issues = self.jira.search_issues('key=%s' % self.issue,
                                          expand='changelog')
         # self.assertTrue(hasattr(issues[0], 'names'))
@@ -1911,9 +1911,6 @@ class VersionTests(unittest.TestCase):
                                            description='not long for this world')
         version.delete()
         self.assertRaises(JIRAError, self.jira.version, version.id)
-
-    # def test_version_expandos(self):
-    #     pass
 
 
 @flaky

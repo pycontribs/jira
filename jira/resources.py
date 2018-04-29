@@ -282,7 +282,6 @@ class Resource(object):
                 #    logging.warning("autofix: setting assignee to '%s' and retrying the update." % self._options['autofix'])
                 #    data['fields']['assignee'] = {'name': self._options['autofix']}
             # EXPERIMENTAL --->
-            # import grequests
             if async:
                 if not hasattr(self._session, '_async_jobs'):
                     self._session._async_jobs = set()
@@ -331,7 +330,7 @@ class Resource(object):
 
     def _default_headers(self, user_headers):
         # result = dict(user_headers)
-        # esult['accept'] = 'application/json'
+        # result['accept'] = 'application/json'
         return CaseInsensitiveDict(self._options['headers'].items() + user_headers.items())
 
 
@@ -746,7 +745,7 @@ class User(Resource):
             self._parse_raw(raw)
 
     def __hash__(self):
-        """Hash carculation."""
+        """Hash calculation."""
         return hash(str(self.name))
 
     def __eq__(self, other):
