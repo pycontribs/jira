@@ -21,7 +21,7 @@ class CaseInsensitiveDict(dict):
 
         cid = CaseInsensitiveDict()
         cid['Accept'] = 'application/json'
-        cid['aCCEPT'] == 'application/json'  # True
+        cid['accept'] == 'application/json'  # True
         list(cid) == ['Accept']  # True
 
     For example, ``headers['content-encoding']`` will return the

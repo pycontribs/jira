@@ -77,7 +77,7 @@ Issues and Feature Requests
 
         Description: <SUMMARIZE ISSUE>
 
-        Python Intepreter: <VERSION>
+        Python Interpreter: <VERSION>
         jira-python: <VERSION>
         OS: <OPERATING SYSTEM>
         IPython (Optional): <VERSION>
