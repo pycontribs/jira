@@ -471,7 +471,6 @@ class AttachmentTests(unittest.TestCase):
         self.assertTrue(meta['enabled'])
         self.assertEqual(meta['uploadLimit'], 10485760)
 
-    @unittest.skip("TBD: investigate failure")
     def test_1_add_remove_attachment(self):
         issue = self.jira.issue(self.issue_1)
         attachment = self.jira.add_attachment(issue,
@@ -483,7 +482,8 @@ class AttachmentTests(unittest.TestCase):
             new_attachment.filename, 'new test attachment', msg=msg)
         self.assertEqual(
             new_attachment.size, os.path.getsize(TEST_ATTACH_PATH), msg=msg)
-        assert attachment.delete() is None
+        # JIRA returns a HTTP 204 upon successful deletion
+        self.assertEqual(attachment.delete().status_code, 204)
 
 
 @flaky
