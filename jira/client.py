@@ -3129,10 +3129,16 @@ class JIRA(object):
             New JIRA Agile API always returns this information without a need for additional requests.
         :param startAt: the index of the first sprint to return (0 based)
         :param maxResults: the maximum number of sprints to return
-        :param state: Filters results to sprints in specified states. Valid values: future, active, closed.
+        :param state: Filters results to sprints in specified states. Valid values: `future`, `active`, `closed`.
             You can define multiple states separated by commas
 
-        :rtype: dict
+        :type board_id: int
+        :type extended: bool
+        :type startAt: int
+        :type maxResults: int
+        :type state: str
+
+        :rtype: list of :class:`~jira.resources.Sprint`
         :return: (content depends on API version, but always contains id, name, state, startDate and endDate)
             When old GreenHopper private API is used, paging is not enabled,
             and `startAt`, `maxResults` and `state` parameters are ignored.
