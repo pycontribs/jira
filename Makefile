@@ -70,7 +70,7 @@ test-all:
 
 docs:
 	@echo "INFO:	Building the docs"
-	$(PREFIX)pip install sphinx
+	$(PREFIX)pip install sphinx sphinx_rtd_theme
 	$(PREFIX)python setup.py build_sphinx
 	@mkdir -p docs/build/docset
 	@mkdir -p docs/build/html/docset
