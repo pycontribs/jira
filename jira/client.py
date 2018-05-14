@@ -2497,12 +2497,14 @@ class JIRA(object):
         screens have different requirements for fields in a new webhook. This
         information is available through the 'createmeta' method. Further examples are
         available here:
-        https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Create+Webhook
+        https://developer.atlassian.com/server/jira/platform/webhooks/
 
         :param fields: a dict containing field names and the values to use.
                        If present, all other keyword arguments will be ignored
-        :param prefetch: whether to reload the created webhook Resource so that
-                         all of its data is present in the value returned from this method
+        :type fields: Dict[str,str]
+        :param prefetch: whether to reload the created webhook Resource so that all of its
+                         data is present in the value returned from this method. (Default: True)
+        :type prefetch: bool
         """
         data = {}
         if fields is not None:
@@ -2516,7 +2518,7 @@ class JIRA(object):
         url = self._get_url('webhook', base=self.WEBHOOK_BASE_URL)
 
         try:
-            r = self._session.post(url, data=fieldargs)
+            r = self._session.post(url, data=data['fields'])
         except Exception as e:
             msg = "Error Creating webhook with JSON data:\n%s\n\n%s" % (fieldargs, e)
             logging.error(msg)

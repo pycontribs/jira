@@ -1950,6 +1950,41 @@ class VersionTests(unittest.TestCase):
 
 
 @flaky
+class WebhookTests(unittest.TestCase):
+    @flaky
+    def setUp(self):
+        self.test_manager = JiraTestManager()
+        self.jira = JiraTestManager().jira_admin
+        self.project_b = self.test_manager.project_b
+        self.hook1_name = 'hook1' + self.project_b
+        self.hook1 = self.jira.create_webhook(name=self.hook1_name, url='http://post.example.com/fake', project=self.project_b)
+
+    def test_get_webhook_by_id(self):
+        retrieved = self.jira.webhook(self.hook1.raw['self'].split('/')[-1])
+        self.assertEqual(self.hook1, retrieved)
+
+    def test_list_webhooks(self):
+        hook_list = self.jira.webhooks()
+        self.assertGreaterEqual(len(hook_list), 1)
+
+    def test_get_webhooks_dict_by_name(self):
+        with self.assertRaises(Exception):  # noqa
+            self.jira.webhooks_by_name()
+
+    def test_get_webhooks_dict_by_id(self):
+        hook_dict = self.jira.webhooks_by_id()
+        self.assertIsNotNone(hook_dict.get(self.hook1.raw['self'].split('/')[-1]))
+
+    def test_create_delete_webhook(self):
+        hook = self.jira.create_webhook(name='createHook' + self.project_b, url='http://post.example.com/fake', assignee='test@example.com')
+        self.assertIsNotNone(hook)
+        hook.delete()
+
+    def tearDown(self):
+        self.hook1.delete()
+
+
+@flaky
 class OtherTests(unittest.TestCase):
 
     def test_session_invalid_login(self):
