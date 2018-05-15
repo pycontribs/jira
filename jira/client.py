@@ -3227,6 +3227,14 @@ class JIRA(object):
         return sprint.raw
 
     def sprint(self, id):
+        """Return the information about a sprint.
+
+        :param sprint_id: the sprint retrieving issues from
+
+        :type sprint_id: int
+
+        :rtype: :class:`~jira.resources.Sprint`
+        """
         sprint = Sprint(self._options, self._session)
         sprint.find(id)
         return sprint
