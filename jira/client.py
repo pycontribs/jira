@@ -1278,8 +1278,13 @@ class JIRA(object):
     def assign_issue(self, issue, assignee):
         """Assign an issue to a user. None will set it to unassigned. -1 will set it to Automatic.
 
-        :param issue: the issue to assign
+        :param issue: the issue ID or key to assign
         :param assignee: the user to assign the issue to
+
+        :type issue: int or str
+        :type assignee: str
+
+        :rtype: bool
         """
         url = self._options['server'] + \
             '/rest/api/latest/issue/' + str(issue) + '/assignee'
