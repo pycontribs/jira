@@ -2034,17 +2034,26 @@ class JIRA(object):
 
     def search_issues(self, jql_str, startAt=0, maxResults=50, validate_query=True, fields=None, expand=None,
                       json_result=None):
-        """Get a ResultList of issue Resources matching a JQL search string.
+        """Get a :class:`~jira.client.ResultList` of issue Resources matching a JQL search string.
 
         :param jql_str: the JQL search string to use
         :param startAt: index of the first issue to return
         :param maxResults: maximum number of issues to return. Total number of results
-            is available in the ``total`` attribute of the returned ResultList.
+            is available in the ``total`` attribute of the returned :class:`~jira.client.ResultList`.
             If maxResults evaluates as False, it will try to get all issues in batches.
         :param fields: comma-separated string of issue fields to include in the results
         :param expand: extra information to fetch inside each resource
         :param json_result: JSON response will be returned when this parameter is set to True.
-                Otherwise, ResultList will be returned.
+                Otherwise, :class:`~jira.client.ResultList` will be returned.
+
+        :type jql_str: str
+        :type startAt: int
+        :type maxResults: int
+        :type fields: str
+        :type expand: str
+        :type json_result: bool
+
+        :rtype: dict or :class:`~jira.client.ResultList`
         """
         if fields is None:
             fields = []
