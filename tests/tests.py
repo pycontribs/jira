@@ -552,6 +552,13 @@ class ComponentTests(unittest.TestCase):
         component.delete()
         self.assertRaises(JIRAError, self.jira.component, myid)
 
+    def test_delete_component_by_id(self):
+        component = self.jira.create_component('To be deleted',
+                                               self.project_b, description='not long for this world')
+        myid = component.id
+        self.jira.delete_component(myid)
+        self.assertRaises(JIRAError, self.jira.component, myid)
+
 
 @flaky
 class CustomFieldOptionTests(unittest.TestCase):
