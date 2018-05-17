@@ -11,6 +11,11 @@ JIRA
 
 .. autoclass:: JIRA
 
+Issue
+========
+
+.. autoclass:: Issue
+
 Priority
 ========
 
