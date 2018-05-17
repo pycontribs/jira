@@ -3349,6 +3349,9 @@ class JIRA(object):
 
         :param sprint_id: the sprint to add issues to
         :param issue_keys: the issues to add to the sprint
+
+        :type sprint_id: int
+        :type issue_keys: list of str
         """
         if self._options['agile_rest_path'] == GreenHopperResource.AGILE_BASE_REST_PATH:
             url = self._get_url('sprint/%s/issue' % sprint_id, base=self.AGILE_BASE_URL)
