@@ -127,3 +127,31 @@ def test_template_list():
     assert [t['name'] for t in template_list] == ["Scrum software development", "Kanban software development", "Basic software development",
                                                   "Basic Service Desk", "IT Service Desk", "Task management", "Project management",
                                                   "Process management"]
+
+
+def test_result_list():
+    iterable = [2, 3]
+    startAt = 0
+    maxResults = 50
+    total = 2
+
+    results = jira.client.ResultList(iterable, startAt, maxResults, total)
+
+    for idx, result in enumerate(results):
+        assert results[idx] == iterable[idx]
+
+    assert next(results) == iterable[0]
+    assert next(results) == iterable[1]
+
+    with pytest.raises(StopIteration):
+        next(results)
+
+
+def test_result_list_if_empty():
+    results = jira.client.ResultList()
+
+    for r in results:
+        raise AssertionError("`results` should be empty")
+
+    with pytest.raises(StopIteration):
+        next(results)
