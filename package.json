@@ -1,0 +1,16 @@
+{
+  "name": "python-jira",
+  "version": "0.0.1",
+  "scripts": {
+    "spell": "npm -s run spell-files && npm -s run spell-commit",
+    "spell-commit": "git log -1 --pretty=%B > .git/commit.msg && cspell .git/commit.msg",
+    "spell-files": "git ls-files | xargs cspell --unique"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pycontribs/jira.git"
+  },
+  "dependencies": {
+    "cspell": "^2.1.12"
+  }
+}

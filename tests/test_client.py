@@ -68,7 +68,7 @@ def test_delete_project(cl_admin, cl_normal, slug):
         raise
 
 
-def test_delete_inexistant_project(cl_admin):
+def test_delete_inexistent_project(cl_admin):
     slug = 'abogus123'
     with pytest.raises(ValueError) as ex:
         assert cl_admin.delete_project(slug)

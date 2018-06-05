@@ -31,3 +31,5 @@ tests/test-reports-*/*
 /AUTHORS
 /tests/build
 /.pytest_cache
+/.vscode
+/node_modules
