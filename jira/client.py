@@ -85,11 +85,7 @@ from jira.utils import json_loads
 from jira.utils import threaded_requests
 from pkg_resources import parse_version
 
-try:
-    from collections import OrderedDict
-except ImportError:
-    # noinspection PyUnresolvedReferences
-    from ordereddict import OrderedDict
+from collections import OrderedDict
 
 from six import integer_types
 from six import string_types
