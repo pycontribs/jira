@@ -56,7 +56,7 @@ if cmd_folder not in sys.path:
 
 import jira  # noqa
 from jira import Role, Issue, JIRA, JIRAError, Project  # noqa
-from jira.resources import Resource, cls_for_resource   # noqa
+from jira.resources import Resource, cls_for_resource, UserGroup, UnknownResource  # noqa
 
 TEST_ROOT = os.path.dirname(__file__)
 TEST_ICON_PATH = os.path.join(TEST_ROOT, 'icon.png')
@@ -417,7 +417,9 @@ class ResourceTests(unittest.TestCase):
         self.assertEqual(cls_for_resource('http://imaginary-jira.com/rest/\
                 api/latest/project/IMG/role/10002'), Role)
         self.assertEqual(cls_for_resource('http://customized-jira.com/rest/\
-                plugin-resource/4.5/json/getMyObject'), Resource)
+                plugin-resource/4.5/json/getMyObject'), UnknownResource)
+        self.assertEqual(cls_for_resource('http://customized-jira.com/rest/\
+                group?groupname=bla'), UserGroup)
 
 
 @flaky
