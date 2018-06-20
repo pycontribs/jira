@@ -2,7 +2,7 @@
 Contributing
 ************
 
-The client is an open source project under the BSD license. 
+The client is an open source project under the BSD license.
 Contributions of any kind are welcome!
 
 https://github.com/pycontribs/jira/
