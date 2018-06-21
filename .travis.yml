@@ -20,7 +20,6 @@ before_install:
 notifications:
   email:
     - pycontribs@googlegroups.com
-    - sorin.sbarnea@gmail.com
 jobs:
   include:
     - stage: lint
