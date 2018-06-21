@@ -84,14 +84,11 @@ See the documentation_ for full details.
 Development
 -----------
 
-Development takes place on GitHub_, where the git-flow_ branch structure is used:
+Development takes place on GitHub_:
 
-* ``master`` - contains the latest released code.
-* ``develop`` - (default branch) is used for development of the next release.
-* ``feature/XXX`` - feature branches are used for development of new features before they are merged to ``develop``.
+* ``master`` - (default branch) contains the primary development stream. Tags will be used to show latests releases.
 
 .. _GitHub: https://github.com/pycontribs/jira
-.. _git-flow: http://nvie.com/posts/a-successful-git-branching-model/
 
 Setup
 =====
