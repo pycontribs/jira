@@ -86,7 +86,7 @@ Development
 
 Development takes place on GitHub_:
 
-* ``master`` - (default branch) contains the primary development stream. Tags will be used to show latests releases.
+* ``master`` - (default branch) contains the primary development stream. Tags will be used to show latest releases.
 
 .. _GitHub: https://github.com/pycontribs/jira
 
