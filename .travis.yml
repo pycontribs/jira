@@ -4,6 +4,7 @@ cache:
   - pip
   - directories:
       - "node_modules"
+      - $HOME/.cache
 sudo: false
 os:
   - linux
@@ -13,6 +14,9 @@ stages:
   - test
   - deploy
 script:
+before_install:
+  - pip install -U pip
+  - pip install -U setuptools
 notifications:
   email:
     - pycontribs@googlegroups.com
