@@ -15,7 +15,7 @@ stages:
   - deploy
 script:
 before_install:
-  - pip install -U pip
+  - sudo pip install -U pip
   - pip check || true
 notifications:
   email:
