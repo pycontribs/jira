@@ -5,7 +5,7 @@ cache:
   - directories:
       - "node_modules"
       - $HOME/.cache
-sudo: false
+sudo: true
 os:
   - linux
 stages:
@@ -15,46 +15,46 @@ stages:
   - deploy
 script:
 before_install:
-  - pip install -U pip
-  - pip install -U setuptools
+  - sudo pip install -U pip
+  - pip check || true
 notifications:
   email:
     - pycontribs@googlegroups.com
-    - sorin.sbarnea@gmail.com
 jobs:
   include:
     - stage: lint
-      script:
-        - pip install --user --upgrade pre-commit && python -m pre_commit run
+      script: 
+        - python -m tox
         - npm install && npm run spell
+      env: TOXENV=lint
       language: nodejs
       node_js:
         - "8"
     - stage: docs
-      script: pip install -q tox-travis && python -m tox
+      script: python -m tox
       python: 2.7
       env: TOXENV=docs
     - stage: test
-      script: pip install -q tox-travis && python -m tox
+      script: python -m tox
       python: 2.7
       env: TOXENV=py27
       after_success:
         - bash <(curl -s https://codecov.io/bash) -e TOX_ENV
         - requires.io update-site -t ac3bbcca32ae03237a6aae2b02eb9411045489bb -r
     - stage: test
-      script: pip install -q tox-travis && python -m tox
+      script: python -m tox
       python: 3.4
       env: TOXENV=py34
       after_success:
         - bash <(curl -s https://codecov.io/bash) -e TOX_ENV
     - stage: test
-      script: pip install -q tox-travis && python -m tox
+      script: python -m tox
       python: 3.5
       env: TOXENV=py35
       after_success:
         - bash <(curl -s https://codecov.io/bash) -e TOX_ENV
     - stage: test
-      script: pip install -q tox-travis && python -m tox
+      script: python -m tox
       python: 3.6
       env: TOXENV=py36 PYTHON='3.6' PYENV_VERSION='system'
       after_success:
