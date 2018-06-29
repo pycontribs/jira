@@ -5,7 +5,7 @@ cache:
   - directories:
       - "node_modules"
       - $HOME/.cache
-sudo: true
+sudo: false
 os:
   - linux
 stages:
@@ -14,48 +14,49 @@ stages:
   - test
   - deploy
 script:
-before_install:
-  - sudo pip install -U pip
-  - pip check || true
+  before_install:
+    - env pip3 install tox
+    - env pip3 check || true
 notifications:
   email:
     - pycontribs@googlegroups.com
 jobs:
   include:
     - stage: lint
-      script: 
+      script:
         - python -m tox
         - npm install && npm run spell
       env: TOXENV=lint
       language: nodejs
+      python: "3.6"
       node_js:
         - "8"
     - stage: docs
       script: python -m tox
-      python: 2.7
+      python: "3.6"
       env: TOXENV=docs
     - stage: test
       script: python -m tox
-      python: 2.7
+      python: "2.7"
       env: TOXENV=py27
       after_success:
         - bash <(curl -s https://codecov.io/bash) -e TOX_ENV
         - requires.io update-site -t ac3bbcca32ae03237a6aae2b02eb9411045489bb -r
     - stage: test
       script: python -m tox
-      python: 3.4
+      python: "3.4"
       env: TOXENV=py34
       after_success:
         - bash <(curl -s https://codecov.io/bash) -e TOX_ENV
     - stage: test
       script: python -m tox
-      python: 3.5
+      python: "3.5"
       env: TOXENV=py35
       after_success:
         - bash <(curl -s https://codecov.io/bash) -e TOX_ENV
     - stage: test
       script: python -m tox
-      python: 3.6
+      python: "3.6"
       env: TOXENV=py36 PYTHON='3.6' PYENV_VERSION='system'
       after_success:
         - bash <(curl -s https://codecov.io/bash) -e TOX_ENV
