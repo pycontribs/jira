@@ -10,7 +10,7 @@ A clear and concise description of what the bug is.
 **To Reproduce**
 Steps to reproduce the behavior:
 ```
-Code block 
+Code block
 ```
 1. Any additional steps or considerations that happen before or after.
 
