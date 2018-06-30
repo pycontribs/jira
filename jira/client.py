@@ -2889,7 +2889,7 @@ class JIRA(object):
             possible_templates = [template_name]
 
         # https://confluence.atlassian.com/jirakb/creating-a-project-via-rest-based-on-jira-default-schemes-744325852.html
-        template_key = 'com.atlassian.jira-legacy-project-templates:jira-blank-item'
+        template_key = 'com.pyxis.greenhopper.jira:gh-kanban-template'
         templates = []
         for template in _get_template_list(j):
             templates.append(template['name'])
