@@ -75,17 +75,6 @@ deploy:
       tags: true
       branch: master
       repo: pycontribs/jira
-  - provider: pypi
-    server: https://test.pypi.org/legacy/
-    user: ssbarnea
-    password:
-      secure: "FR8vDM2tWsT1ApQFfbbDO4B6tKZcRGzdRO2or2p8fY5uDEKbIa/SSJaIeaRluHbcxB6cedI1gJ5oCl2+kF0Km9LZqpT+mU4/StiWBBTHj/WmbBTXEROC28JuY6PzGJ+MYySFfLErRWqZZX6XxBzbNebDfdj6Gt8cQZXpvWr/1JA="
-    distributions: sdist bdist_wheel
-    skip_cleanup: true
-    on:
-      tags: false
-      branch: master
-      repo: pycontribs/jira
   - provider: releases
     api_key:
       secure: G19YtkGAX0aJ1oyd/7eRj1KYdsmAkjkfU2UISvsjh/68ec1+9qtPpN7BbkFYZYMjSx0BtS0SEEA7Vdl4F9DI9Zzqahbj7WzDLFe9/4aZKM/ztfKWR6CNAYaMazAKS5W7r9pPkBBDIIJ9zCqvV7FRzjewEpfTwFzwUdY+IpxEsAM=
