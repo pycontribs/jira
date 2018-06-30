@@ -991,9 +991,11 @@ class JIRA(object):
 
         result = {}
         for user in r['users']['items']:
-            result[user['name']] = {'fullname': user['displayName'], 'email': user.get('emailAddress', 'hidden'),
-                                    'active': user['active']}
-        return result
+            result[user['key']] = {'name': user['name'],
+                                   'fullname': user['displayName'],
+                                   'email': user.get('emailAddress', 'hidden'),
+                                   'active': user['active']}
+        return OrderedDict(sorted(result.items(), key=lambda t: t[0]))
 
     def add_group(self, groupname):
         """Create a new group in JIRA.
