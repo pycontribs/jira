@@ -14,7 +14,7 @@ else
     exit 1
 fi
 
-echo "INFO: Checking that all changes are commited and pushed"
+echo "INFO: Checking that all changes are committed and pushed"
 git pull
 
 #git diff

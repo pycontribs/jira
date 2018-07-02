@@ -261,10 +261,10 @@ def main():
     else:
         from IPython.frontend.terminal.embed import InteractiveShellEmbed
 
-    ipshell = InteractiveShellEmbed(
+    ip_shell = InteractiveShellEmbed(
         banner1='<JIRA Shell ' + __version__ + ' (' + jira.client_info() + ')>')
-    ipshell("*** JIRA shell active; client is in 'jira'."
-            ' Press Ctrl-D to exit.')
+    ip_shell("*** JIRA shell active; client is in 'jira'."
+             ' Press Ctrl-D to exit.')
 
 
 if __name__ == '__main__':

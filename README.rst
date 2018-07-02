@@ -84,20 +84,34 @@ See the documentation_ for full details.
 Development
 -----------
 
-Development takes place on GitHub_, where the git-flow_ branch structure is used:
+Development takes place on GitHub_:
 
-* ``master`` - contains the latest released code.
-* ``develop`` - (default branch) is used for development of the next release.
-* ``feature/XXX`` - feature branches are used for development of new features before they are merged to ``develop``.
+* ``master`` - (default branch) contains the primary development stream. Tags will be used to show latest releases.
 
 .. _GitHub: https://github.com/pycontribs/jira
-.. _git-flow: http://nvie.com/posts/a-successful-git-branching-model/
+
+Setup
+=====
+* Fork_ repo
+* Keep it sync_'ed while you are developing
+* Install pyenv_
+* Install Atlassian Server for testing
+  - make install-sdk
+* pip install requirements-dev.txt
+* Start up Jira Server
+  - atlas-run-standalone
+* Test your changes
+  - make test
+
+.. _Fork: https://help.github.com/articles/fork-a-repo/
+.. _sync: https://help.github.com/articles/syncing-a-fork/
+.. _pyenv: https://amaral.northwestern.edu/resources/guides/pyenv-tutorial
 
 
 Credits
 -------
 
-In additions to all the contributors we would like to thank to these companies:
+In addition to all the contributors we would like to thank to these companies:
 
 * Atlassian_ for developing such a powerful issue tracker and for providing a free on-demand JIRA_ instance that we can use for continuous integration testing.
 * JetBrains_ for providing us with free licenses of PyCharm_

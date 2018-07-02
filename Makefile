@@ -5,9 +5,18 @@ PACKAGE_NAME := $(shell python setup.py --name)
 PACKAGE_VERSION := $(shell python setup.py --version)
 PYTHON_PATH := $(shell which python)
 PLATFORM := $(shell uname -s | awk '{print tolower($$0)}')
-DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+ifeq ($(PLATFORM), darwin)
+	DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+else
+	DIR := $(shell dirname $(realpath $(MAKEFILE_LIST)))
+endif
 PYTHON_VERSION := $(shell python3 -c "import sys; print('py%s%s' % sys.version_info[0:2] + ('-conda' if 'conda' in sys.version or 'Continuum' in sys.version else ''))")
-PREFIX=""
+ifneq (,$(findstring conda, $(PYTHON_VERSION)))
+	#CONDA := $(shell conda info --envs | grep '*' | awk '{print $$1}')
+	CONDA := $(CONDA_DEFAULT_ENV)
+endif
+
+PREFIX := ""
 ifndef GIT_BRANCH
 GIT_BRANCH=$(shell git branch | sed -n '/\* /s///p')
 endif
@@ -32,9 +41,32 @@ hooks:
 install: prepare
 	$(PREFIX)pip install .
 
+# https://developer.atlassian.com/docs/getting-started/set-up-the-atlassian-plugin-sdk-and-build-a-project/install-the-atlassian-sdk-on-a-linux-or-mac-system#InstalltheAtlassianSDKonaLinuxorMacsystem-Homebrew
 install-sdk:
-	# https://developer.atlassian.com/docs/getting-started/set-up-the-atlassian-plugin-sdk-and-build-a-project/install-the-atlassian-sdk-on-a-linux-or-mac-system#InstalltheAtlassianSDKonaLinuxorMacsystem-Homebrew
+ifeq ($(PLATFORM), darwin)
 	which atlas-run-standalone || brew tap atlassian/tap && brew install atlassian/tap/atlassian-plugin-sdk
+else ifeq ($(PLATFORM), linux)
+  ifneq ($(USER), root)
+	@echo "Install of Atlassian SDK must be run as root (or with sudo)"
+	exit 1
+  endif
+  ifneq ($(wildcard /etc/debian_version),)
+	sh -c 'echo "deb https://sdkrepo.atlassian.com/debian/ stable contrib" >/etc/apt/sources.list.d/atlassian_development.list'
+	apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys B07804338C015B73
+	apt-get install apt-transport-https
+	apt-get update
+	apt-get install atlassian-plugin-sdk
+  else ifneq ($(wildcard /etc/redhat-release),)
+	tmp_dir=$(mktemp -d)
+	curl https://marketplace.atlassian.com/download/plugins/atlassian-plugin-sdk-rpm/version/42380 -o ${tmp_dir}/atlassian-plugin-sdk.noarch.rpm
+	yum -y install ${tmp_dir}/atlassian-plugin-sdk.noarch.rpm
+	rm -rf ${tmp_dir}
+  else
+	@echo "Error: Cannot determine package manager to use to install atlassian-sdk.  Please see:"
+	@echo "https://developer.atlassian.com/docs/getting-started/set-up-the-atlassian-plugin-sdk-and-build-a-project/install-the-atlassian-sdk-on-a-linux-or-mac-system"
+	exit 1
+  endif
+endif
 
 uninstall:
 	$(PREFIX)pip uninstall -y $(PACKAGE_NAME)
@@ -48,7 +80,7 @@ prepare:
 	@pyenv install -s 3.5.2
 	@pyenv install -s 3.6.0
 	@pyenv local 2.7.13 3.4.5 3.5.2 3.6.0
-	@echo "INFO:	=== Prearing to run for package:$(PACKAGE_NAME) platform:$(PLATFORM) py:$(PYTHON_VERSION) dir:$(DIR) ==="
+	@echo "INFO:	=== Preparing to run for package:$(PACKAGE_NAME) platform:$(PLATFORM) py:$(PYTHON_VERSION) dir:$(DIR) ==="
 	#if [ -f ${HOME}/testspace/testspace ]; then ${HOME}/testspace/testspace config url ${TESTSPACE_TOKEN}@pycontribs.testspace.com/jira/tests ; fi;
 
 testspace:
@@ -70,7 +102,7 @@ test-all:
 
 docs:
 	@echo "INFO:	Building the docs"
-	$(PREFIX)pip install sphinx
+	$(PREFIX)pip install sphinx sphinx_rtd_theme
 	$(PREFIX)python setup.py build_sphinx
 	@mkdir -p docs/build/docset
 	@mkdir -p docs/build/html/docset

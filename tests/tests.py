@@ -30,7 +30,7 @@ from tenacity import stop_after_attempt
 _non_parallel = True
 if platform.python_version() < '3':
     _non_parallel = False
-
+    import mock
     try:
         import unittest2 as unittest
     except ImportError:
@@ -43,6 +43,11 @@ if platform.python_version() < '3':
         import unittest2 as unittest
 else:
     import unittest
+    try:
+        from unittest import mock
+    except ImportError:
+        import mock
+
 
 cmd_folder = os.path.abspath(os.path.join(os.path.split(inspect.getfile(
     inspect.currentframe()))[0], ".."))
@@ -82,7 +87,7 @@ def rndstr():
 
 
 def rndpassword():
-    # generates a password of lengh 14
+    # generates a password of length 14
     s = ''.join(random.sample(string.ascii_uppercase, 5)) + \
         ''.join(random.sample(string.ascii_lowercase, 5)) + \
         ''.join(random.sample(string.digits, 2)) + \
@@ -436,7 +441,7 @@ class ApplicationPropertiesTests(unittest.TestCase):
     def test_set_application_property(self):
         prop = 'jira.lf.favicon.hires.url'
         valid_value = '/jira-favicon-hires.png'
-        invalid_value = '/Tjira-favicon-hires.png'
+        invalid_value = '/invalid-jira-favicon-hires.png'
 
         self.jira.set_application_property(prop, invalid_value)
         self.assertEqual(self.jira.application_properties(key=prop)['value'],
@@ -466,7 +471,6 @@ class AttachmentTests(unittest.TestCase):
         self.assertTrue(meta['enabled'])
         self.assertEqual(meta['uploadLimit'], 10485760)
 
-    @unittest.skip("TBD: investigate failure")
     def test_1_add_remove_attachment(self):
         issue = self.jira.issue(self.issue_1)
         attachment = self.jira.add_attachment(issue,
@@ -478,7 +482,8 @@ class AttachmentTests(unittest.TestCase):
             new_attachment.filename, 'new test attachment', msg=msg)
         self.assertEqual(
             new_attachment.size, os.path.getsize(TEST_ATTACH_PATH), msg=msg)
-        assert attachment.delete() is None
+        # JIRA returns a HTTP 204 upon successful deletion
+        self.assertEqual(attachment.delete().status_code, 204)
 
 
 @flaky
@@ -545,6 +550,13 @@ class ComponentTests(unittest.TestCase):
                                                self.project_b, description='not long for this world')
         myid = component.id
         component.delete()
+        self.assertRaises(JIRAError, self.jira.component, myid)
+
+    def test_delete_component_by_id(self):
+        component = self.jira.create_component('To be deleted',
+                                               self.project_b, description='not long for this world')
+        myid = component.id
+        self.jira.delete_component(myid)
         self.assertRaises(JIRAError, self.jira.component, myid)
 
 
@@ -694,7 +706,7 @@ class IssueTests(unittest.TestCase):
         self.assertTrue(issue1 == issues[0])
         self.assertFalse(issue2 == issues[0])
 
-    def test_issue_expandos(self):
+    def test_issue_expand(self):
         issue = self.jira.issue(self.issue_1, expand='editmeta,schema')
         self.assertTrue(hasattr(issue, 'editmeta'))
         self.assertTrue(hasattr(issue, 'schema'))
@@ -704,10 +716,10 @@ class IssueTests(unittest.TestCase):
     @not_on_custom_jira_instance
     def test_create_issue_with_fieldargs(self):
         issue = self.jira.create_issue(project=self.project_b,
-                                       summary='Test issue created', description='blahery',
+                                       summary='Test issue created', description='foo description',
                                        issuetype={'name': 'Bug'})  # customfield_10022='XSS'
         self.assertEqual(issue.fields.summary, 'Test issue created')
-        self.assertEqual(issue.fields.description, 'blahery')
+        self.assertEqual(issue.fields.description, 'foo description')
         self.assertEqual(issue.fields.issuetype.name, 'Bug')
         self.assertEqual(issue.fields.project.key, self.project_b)
         # self.assertEqual(issue.fields.customfield_10022, 'XSS')
@@ -740,7 +752,7 @@ class IssueTests(unittest.TestCase):
         issue = self.jira.create_issue(prefetch=False,
                                        project=self.project_b,
                                        summary='Test issue created',
-                                       description='blahery', issuetype={'name': 'Bug'}
+                                       description='some details', issuetype={'name': 'Bug'}
                                        )  # customfield_10022='XSS'
 
         assert hasattr(issue, 'self')
@@ -846,11 +858,11 @@ class IssueTests(unittest.TestCase):
     def test_create_issues_without_prefetch(self):
         field_list = [dict(project=self.project_b,
                            summary='Test issue created',
-                           description='blahery',
+                           description='some details',
                            issuetype={'name': 'Bug'}),
                       dict(project=self.project_a,
                            summary='Test issue #2',
-                           description='fooery',
+                           description='foo description',
                            issuetype={'name': 'Bug'})]
         issues = self.jira.create_issues(field_list, prefetch=False)
 
@@ -946,9 +958,9 @@ class IssueTests(unittest.TestCase):
     @not_on_custom_jira_instance
     def test_createmeta(self):
         meta = self.jira.createmeta()
-        ztravisdeb_proj = find_by_key(meta['projects'], self.project_b)
+        proj = find_by_key(meta['projects'], self.project_b)
         # we assume that this project should allow at least one issue type
-        self.assertGreaterEqual(len(ztravisdeb_proj['issuetypes']), 1)
+        self.assertGreaterEqual(len(proj['issuetypes']), 1)
 
     @not_on_custom_jira_instance
     def test_createmeta_filter_by_projectkey_and_name(self):
@@ -994,7 +1006,7 @@ class IssueTests(unittest.TestCase):
             self.assertEqual(len(project['issuetypes']),
                              len(for_lookup_common_issue_ids))
 
-    def test_createmeta_expando(self):
+    def test_createmeta_expand(self):
         # limit to SCR project so the call returns promptly
         meta = self.jira.createmeta(projectKeys=self.project_b,
                                     expand='projects.issuetypes.fields')
@@ -1141,12 +1153,12 @@ class IssueTests(unittest.TestCase):
     #                                         application={'name': 'far too silly', 'type': 'sketch'}, relationship='mousebending')
     # creation response doesn't include full remote link info, so we fetch it again using the new internal ID
     #        link = self.jira.remote_link('BULK-3', link.id)
-    #        link.update(object={'url': 'http://yahoo.com', 'title': 'yahooery'}, globalId='python-test:updated.id',
+    #        link.update(object={'url': 'http://yahoo.com', 'title': 'yahoo stuff'}, globalId='python-test:updated.id',
     #                    relationship='cheesing')
     #        self.assertEqual(link.globalId, 'python-test:updated.id')
     #        self.assertEqual(link.relationship, 'cheesing')
     #        self.assertEqual(link.object.url, 'http://yahoo.com')
-    #        self.assertEqual(link.object.title, 'yahooery')
+    #        self.assertEqual(link.object.title, 'yahoo stuff')
     #        link.delete()
     #
     #    @unittest.skip("temporary disabled")
@@ -1354,7 +1366,7 @@ class IssueLinkTests(unittest.TestCase):
                                                   JiraTestManager().project_b_issue1,
                                                   JiraTestManager().project_b_issue2)
 
-    def test_create_issue_link_with_issue_objs(self):
+    def test_create_issue_link_with_issue_obj(self):
         inwardissue = self.manager.jira_admin.issue(
             JiraTestManager().project_b_issue1)
         self.assertIsNotNone(inwardissue)
@@ -1591,6 +1603,18 @@ class SearchTests(unittest.TestCase):
         for issue in issues:
             self.assertTrue(issue.key.startswith(self.project_b))
 
+    def test_search_issues_async(self):
+        original_val = self.jira._options['async']
+        try:
+            self.jira._options['async'] = True
+            issues = self.jira.search_issues('project=%s' % self.project_b,
+                                             maxResults=False)
+            self.assertEqual(len(issues), issues.total)
+            for issue in issues:
+                self.assertTrue(issue.key.startswith(self.project_b))
+        finally:
+            self.jira._options['async'] = original_val
+
     def test_search_issues_maxresults(self):
         issues = self.jira.search_issues('project=%s' % self.project_b,
                                          maxResults=10)
@@ -1610,7 +1634,7 @@ class SearchTests(unittest.TestCase):
         self.assertFalse(hasattr(issues[0].fields, 'reporter'))
         self.assertFalse(hasattr(issues[0].fields, 'progress'))
 
-    def test_search_issues_expandos(self):
+    def test_search_issues_expand(self):
         issues = self.jira.search_issues('key=%s' % self.issue,
                                          expand='changelog')
         # self.assertTrue(hasattr(issues[0], 'names'))
@@ -1895,9 +1919,6 @@ class VersionTests(unittest.TestCase):
         version.delete()
         self.assertRaises(JIRAError, self.jira.version, version.id)
 
-    # def test_version_expandos(self):
-    #     pass
-
 
 @flaky
 class OtherTests(unittest.TestCase):
@@ -1940,6 +1961,64 @@ class SessionTests(unittest.TestCase):
             self.assertIn(type(e), (JIRAError, requests.exceptions.ConnectionError, AttributeError), e)
             return
         self.assertTrue(False, "Instantiation of invalid JIRA instance succeeded.")
+
+
+class AsyncTests(unittest.TestCase):
+
+    def setUp(self):
+        self.jira = JIRA('https://jira.atlassian.com', logging=False,
+                         async=True, validate=False, get_server_info=False)
+
+    def test_fetch_pages(self):
+        """Tests that the JIRA._fetch_pages method works as expected. """
+        params = {"startAt": 0}
+        total = 26
+        expected_results = []
+        for i in range(0, total):
+            result = _create_issue_result_json(
+                i, 'summary %s' % i, key='KEY-%s' % i)
+            expected_results.append(result)
+        result_one = _create_issue_search_results_json(
+            expected_results[:10], max_results=10, total=total)
+        result_two = _create_issue_search_results_json(
+            expected_results[10:20], max_results=10, total=total)
+        result_three = _create_issue_search_results_json(
+            expected_results[20:], max_results=6, total=total)
+        mock_session = mock.Mock(name='mock_session')
+        responses = mock.Mock(name='responses')
+        responses.content = '_filler_'
+        responses.json.side_effect = [result_one, result_two, result_three]
+        responses.status_code = 200
+        mock_session.request.return_value = responses
+        mock_session.get.return_value = responses
+        self.jira._session.close()
+        self.jira._session = mock_session
+        items = self.jira._fetch_pages(Issue, 'issues', 'search', 0, False, params)
+        self.assertEqual(len(items), total)
+        self.assertEqual(
+            set(item.key for item in items),
+            set(expected_r['key'] for expected_r in expected_results))
+
+
+def _create_issue_result_json(issue_id, summary, key, **kwargs):
+    """Returns a minimal json object for an issue. """
+    return {
+        'id': '%s' % issue_id,
+        'summary': summary,
+        'key': key,
+        'self': kwargs.get('self', 'http://example.com/%s' %
+                           issue_id),
+    }
+
+
+def _create_issue_search_results_json(issues, **kwargs):
+    """Returns a minimal json object for Jira issue search results. """
+    return {
+        'startAt': kwargs.get('start_at', 0),
+        'maxResults': kwargs.get('max_results', 50),
+        'total': kwargs.get('total', len(issues)),
+        'issues': issues,
+    }
 
 
 @flaky
@@ -2009,6 +2088,15 @@ class UserAdministrationTests(unittest.TestCase):
 
         self.assertEqual(
             len(x), 0, "Found test user when it should have been deleted. Test Fails.")
+
+        # test creating users with no application access (used for Service Desk)
+        result = self.jira.add_user(
+            self.test_username, self.test_email, password=self.test_password,
+            application_keys=['jira-software'])
+        assert result, True
+
+        result = self.jira.delete_user(self.test_username)
+        assert result, True
 
     @flaky
     def test_add_group(self):

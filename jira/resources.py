@@ -282,7 +282,6 @@ class Resource(object):
                 #    logging.warning("autofix: setting assignee to '%s' and retrying the update." % self._options['autofix'])
                 #    data['fields']['assignee'] = {'name': self._options['autofix']}
             # EXPERIMENTAL --->
-            # import grequests
             if async:
                 if not hasattr(self._session, '_async_jobs'):
                     self._session._async_jobs = set()
@@ -331,7 +330,7 @@ class Resource(object):
 
     def _default_headers(self, user_headers):
         # result = dict(user_headers)
-        # esult['accept'] = 'application/json'
+        # result['accept'] = 'application/json'
         return CaseInsensitiveDict(self._options['headers'].items() + user_headers.items())
 
 
@@ -424,11 +423,11 @@ class Issue(Resource):
         Resource.__init__(self, 'issue/{0}', options, session)
 
         self.fields = None
-        """ :type : Issue._IssueFields """
+        """ :type: :class:`~Issue._IssueFields` """
         self.id = None
-        """ :type : int """
+        """ :type: int """
         self.key = None
-        """ :type : str """
+        """ :type: str """
         if raw:
             self._parse_raw(raw)
 
@@ -444,10 +443,12 @@ class Issue(Resource):
         are available here: https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Edit+issues
 
         :param fields: a dict containing field names and the values to use
-
         :param update: a dict containing update operations to apply
+        :param fieldargs: keyword arguments will generally be merged into fields, except lists,
+                          which will be merged into updates
 
-        keyword arguments will generally be merged into fields, except lists, which will be merged into updates
+        :type fields: dict
+        :type update: dict
         """
         data = {}
         if fields is not None:
@@ -486,6 +487,11 @@ class Issue(Resource):
         """Add a value to a field that supports multiple values, without resetting the existing values.
 
         This should work with: labels, multiple checkbox lists, multiple select
+
+        :param field: The field name
+        :param value: The field's value
+
+        :type field: str
         """
         super(Issue, self).update(fields={"update": {field: [{"add": value}]}})
 
@@ -493,6 +499,8 @@ class Issue(Resource):
         """Delete this issue from the server.
 
         :param deleteSubtasks: if the issue has subtasks, this argument must be set to true for the call to succeed.
+
+        :type deleteSubtasks: bool
         """
         super(Issue, self).delete(params={'deleteSubtasks': deleteSubtasks})
 
@@ -500,6 +508,8 @@ class Issue(Resource):
         """Get the URL of the issue, the browsable one not the REST one.
 
         :return: URL of the issue
+
+        :rtype: str
         """
         return "%s/browse/%s" % (self._options['server'], self.key)
 
@@ -746,7 +756,7 @@ class User(Resource):
             self._parse_raw(raw)
 
     def __hash__(self):
-        """Hash carculation."""
+        """Hash calculation."""
         return hash(str(self.name))
 
     def __eq__(self, other):
