@@ -49,7 +49,7 @@ Cookie Based Authentication
 
 Pass a tuple of (username, password) to the ``auth`` constructor argument::
 
-    authed_jira = JIRA(auth=('username', 'password'))
+    auth_jira = JIRA(auth=('username', 'password'))
 
 Using this method, authentication happens during then initialization of the object. If the authentication is successful,
 the retrieved session cookie will be used in future requests. Upon cookie expiration, authentication will happen again transparently.
@@ -59,7 +59,7 @@ HTTP BASIC
 
 Pass a tuple of (username, password) to the ``basic_auth`` constructor argument::
 
-    authed_jira = JIRA(basic_auth=('username', 'password'))
+    auth_jira = JIRA(basic_auth=('username', 'password'))
 
 OAuth
 ^^^^^
@@ -72,12 +72,12 @@ Pass a dict of OAuth properties to the ``oauth`` constructor argument::
         key_cert_data = key_cert_file.read()
 
     oauth_dict = {
-        'access_token': 'd87f3hajglkjh89a97f8',
-        'access_token_secret': 'a9f8ag0ehaljkhgeds90',
+        'access_token': 'foo',
+        'access_token_secret': 'bar',
         'consumer_key': 'jira-oauth-consumer',
         'key_cert': key_cert_data
     }
-    authed_jira = JIRA(oauth=oauth_dict)
+    auth_jira = JIRA(oauth=oauth_dict)
 
 .. note ::
     The OAuth access tokens must be obtained and authorized ahead of time through the standard OAuth dance. For
@@ -99,11 +99,11 @@ Kerberos
 
 To enable Kerberos auth, set ``kerberos=True``::
 
-    authed_jira = JIRA(kerberos=True)
+    auth_jira = JIRA(kerberos=True)
 
 To pass additional options to Kerberos auth use dict ``kerberos_options``, e.g.::
 
-    authed_jira = JIRA(kerberos=True, kerberos_options={'mutual_authentication': 'DISABLED'})
+    auth_jira = JIRA(kerberos=True, kerberos_options={'mutual_authentication': 'DISABLED'})
 
 .. _jirashell-label:
 
@@ -292,7 +292,7 @@ Also, just like issue objects, project objects are augmented with their fields::
 
     jra = jira.project('JRA')
     print(jra.name)                 # 'JIRA'
-    print(jra.lead.displayName)     # 'Paul Slade [Atlassian]'
+    print(jra.lead.displayName)     # 'John Doe [ACME Inc.]'
 
 It's no trouble to get the components, versions or roles either (assuming you have permission)::
 

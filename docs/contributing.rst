@@ -2,7 +2,7 @@
 Contributing
 ************
 
-The client is an open source project under the BSD license. 
+The client is an open source project under the BSD license.
 Contributions of any kind are welcome!
 
 https://github.com/pycontribs/jira/
@@ -77,7 +77,7 @@ Issues and Feature Requests
 
         Description: <SUMMARIZE ISSUE>
 
-        Python Intepreter: <VERSION>
+        Python Interpreter: <VERSION>
         jira-python: <VERSION>
         OS: <OPERATING SYSTEM>
         IPython (Optional): <VERSION>

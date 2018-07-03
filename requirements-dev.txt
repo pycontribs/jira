@@ -6,12 +6,16 @@ hacking>=0.13
 MarkupSafe>=0.23
 mock; python_version<'3.3'
 oauthlib
+pre-commit
 py >= 1.4
 pytest-cache
 pytest-cov
 pytest-instafail
 pytest-xdist>=1.14
 pytest>=2.9.1
+PyYAML>=3.12,<4; python_version<'3.7'
+# this file is needed by readthedocs.org so don't move them in another place
+PyYAML>=4.2b2; python_version>='3.7'
 requires.io
 tenacity
 tox-pyenv

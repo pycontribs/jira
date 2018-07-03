@@ -1,0 +1,31 @@
+---
+extends: default
+
+rules:
+  braces: {max-spaces-inside: 1, level: error}
+  brackets: {max-spaces-inside: 1, level: error}
+  colons: {max-spaces-after: -1, level: error}
+  commas: {max-spaces-after: -1, level: error}
+  comments: disable
+  comments-indentation: disable
+  document-start: disable
+  empty-lines: {max: 3, level: error}
+  hyphens: {level: error}
+  indentation:
+    indent-sequences: consistent
+    # spaces: consistent
+    ignore: |
+      /jobs/DFG
+    # TODO: slowly fix reduce ignore pattern while fixing the errors
+  key-duplicates: enable
+  line-length:
+    max: 270
+    allow-non-breakable-words: true
+    allow-non-breakable-inline-mappings: true
+  new-line-at-end-of-file: disable
+  new-lines: {type: unix}
+  trailing-spaces: disable
+  truthy: disable
+
+ignore:
+  .tox

@@ -85,21 +85,12 @@ from jira.utils import json_loads
 from jira.utils import threaded_requests
 from pkg_resources import parse_version
 
-try:
-    from collections import OrderedDict
-except ImportError:
-    # noinspection PyUnresolvedReferences
-    from ordereddict import OrderedDict
+from collections import OrderedDict
 
 from six import integer_types
 from six import string_types
 
 # six.moves does not play well with pyinstaller, see https://github.com/pycontribs/jira/issues/38
-# from six.moves import html_parser
-if sys.version_info < (3, 0, 0):
-    import HTMLParser as html_parser
-else:
-    import html.parser as html_parser
 try:
     # noinspection PyUnresolvedReferences
     from requests_toolbelt import MultipartEncoder
@@ -267,7 +258,7 @@ class JIRA(object):
 
     For quick command line access to a server, see the ``jirashell`` script included with this distribution.
 
-    The easiest way to instantiate is using ``j = JIRA("https://jira.atlasian.com")``
+    The easiest way to instantiate is using ``j = JIRA("https://jira.atlassian.com")``
 
     :param options: Specify the server and properties this client will use. Use a dict with any
         of the following properties:
@@ -308,11 +299,11 @@ class JIRA(object):
 
         Example jwt structure: ``{'secret': SHARED_SECRET, 'payload': {'iss': PLUGIN_KEY}}``
 
-    :param validate: If true it will validate your credentials first. Remember that if you are accesing JIRA
-        as anononymous it will fail to instanciate.
+    :param validate: If true it will validate your credentials first. Remember that if you are accessing JIRA
+        as anonymous it will fail to instantiate.
     :param get_server_info: If true it will fetch server version info first to determine if some API calls
         are available.
-    :param async: To enable async requests for those actions where we implemented it, like issue update() or delete().
+    :param async_: To enable asynchronous requests for those actions where we implemented it, like issue update() or delete().
     :param timeout: Set a read/connect timeout for the underlying calls to JIRA (default: None)
         Obviously this means that you cannot rely on the return code when this is enabled.
     """
@@ -346,7 +337,7 @@ class JIRA(object):
     AGILE_BASE_URL = GreenHopperResource.AGILE_BASE_URL
 
     def __init__(self, server=None, options=None, basic_auth=None, oauth=None, jwt=None, kerberos=False, kerberos_options=None,
-                 validate=False, get_server_info=True, async=False, logging=True, max_retries=3, proxies=None,
+                 validate=False, get_server_info=True, async_=False, logging=True, max_retries=3, proxies=None,
                  timeout=None, auth=None):
         """Construct a JIRA client instance.
 
@@ -390,11 +381,11 @@ class JIRA(object):
             (see https://developer.atlassian.com/static/connect/docs/latest/modules/lifecycle.html for details)
             * payload -- dict of fields to be inserted in the JWT payload, e.g. 'iss'
             Example jwt structure: ``{'secret': SHARED_SECRET, 'payload': {'iss': PLUGIN_KEY}}``
-        :param validate: If true it will validate your credentials first. Remember that if you are accesing JIRA
-            as anononymous it will fail to instanciate.
+        :param validate: If true it will validate your credentials first. Remember that if you are accessing JIRA
+            as anonymous it will fail to instantiate.
         :param get_server_info: If true it will fetch server version info first to determine if some API calls
             are available.
-        :param async: To enable async requests for those actions where we implemented it, like issue update() or delete().
+        :param async_: To enable async requests for those actions where we implemented it, like issue update() or delete().
         :param timeout: Set a read/connect timeout for the underlying calls to JIRA (default: None)
         Obviously this means that you cannot rely on the return code when this is enabled.
         :param auth: Set a cookie auth token if this is required.
@@ -414,8 +405,8 @@ class JIRA(object):
 
         if server:
             options['server'] = server
-        if async:
-            options['async'] = async
+        if async_:
+            options['async'] = async_
 
         self.logging = logging
 
@@ -534,7 +525,7 @@ class JIRA(object):
                     pass
 
     def _check_for_html_error(self, content):
-        # JIRA has the bad habbit of returning errors in pages with 200 and
+        # JIRA has the bad habit of returning errors in pages with 200 and
         # embedding the error in a huge webpage.
         if '<!-- SecurityTokenMissing -->' in content:
             logging.warning("Got SecurityTokenMissing")
@@ -657,7 +648,7 @@ class JIRA(object):
     def find(self, resource_format, ids=None):
         """Find Resource object for any addressable resource on the server.
 
-        This method is a universal resource locator for any RESTful resource in JIRA. The
+        This method is a universal resource locator for any REST-ful resource in JIRA. The
         argument ``resource_format`` is a string of the form ``resource``, ``resource/{0}``,
         ``resource/{0}/sub``, ``resource/{0}/sub/{1}``, etc. The format placeholders will be
         populated from the ``ids`` argument if present. The existing authentication session
@@ -678,12 +669,12 @@ class JIRA(object):
         return resource
 
     def async_do(self, size=10):
-        """Execute all async jobs and wait for them to finish. By default it will run on 10 threads.
+        """Execute all asynchronous jobs and wait for them to finish. By default it will run on 10 threads.
 
         :param size: number of threads to run on.
         """
         if hasattr(self._session, '_async_jobs'):
-            logging.info("Executing async %s jobs found in queue by using %s threads..." % (
+            logging.info("Executing asynchronous %s jobs found in queue by using %s threads..." % (
                 len(self._session._async_jobs), size))
             threaded_requests.map(self._session._async_jobs, size=size)
 
@@ -756,7 +747,7 @@ class JIRA(object):
         :param issue: the issue to attach the attachment to
         :param attachment: file-like object to attach to the issue, also works if it is a string with the filename.
         :param filename: optional name for the attached file. If omitted, the file object's ``name`` attribute
-            is used. If you aquired the file-like object by any other method than ``open()``, make sure
+            is used. If you acquired the file-like object by any other method than ``open()``, make sure
             that a name is specified in one way or the other.
         :rtype: an Attachment Resource
         """
@@ -852,6 +843,14 @@ class JIRA(object):
         :param id: ID of the component to use
         """
         return self._get_json('component/' + id + '/relatedIssueCounts')['issueCount']
+
+    def delete_component(self, id):
+        """Delete component by id.
+
+        :param id: ID of the component to use
+        """
+        url = self._get_url('component/' + str(id))
+        return self._session.delete(url)
 
     # Custom field options
 
@@ -1004,15 +1003,17 @@ class JIRA(object):
 
         result = {}
         for user in r['users']['items']:
-            result[user['name']] = {'fullname': user['displayName'], 'email': user.get('emailAddress', 'hidden'),
-                                    'active': user['active']}
-        return result
+            result[user['key']] = {'name': user['name'],
+                                   'fullname': user['displayName'],
+                                   'email': user.get('emailAddress', 'hidden'),
+                                   'active': user['active']}
+        return OrderedDict(sorted(result.items(), key=lambda t: t[0]))
 
     def add_group(self, groupname):
         """Create a new group in JIRA.
 
         :param groupname: The name of the group you wish to create.
-        :return: Boolean - True if succesfull.
+        :return: Boolean - True if successful.
         """
         url = self._options['server'] + '/rest/api/latest/group'
 
@@ -1598,7 +1599,7 @@ class JIRA(object):
     def remove_vote(self, issue):
         """Remove the current authenticated user's vote from an issue.
 
-        :param issue: ID or key of the issue to unvote on
+        :param issue: ID or key of the issue to remove vote on
         """
         url = self._get_url('issue/' + str(issue) + '/votes')
         self._session.delete(url)
@@ -1728,7 +1729,7 @@ class JIRA(object):
         if type not in self._cached_issue_link_types:
             for lt in self._cached_issue_link_types:
                 if lt.outward == type:
-                    # we are smart to figure it out what he ment
+                    # we are smart to figure it out what he meant
                     type = lt.name
                     break
                 elif lt.inward == type:
@@ -1974,7 +1975,7 @@ class JIRA(object):
         """Delete a project's avatar.
 
         :param project: ID or key of the project to delete the avatar from
-        :param avatar: ID of the avater to delete
+        :param avatar: ID of the avatar to delete
         """
         url = self._get_url('project/' + project + '/avatar/' + avatar)
         return self._session.delete(url)
@@ -2587,38 +2588,13 @@ class JIRA(object):
                                 ". Specify the 'contentType' parameter explicitly.")
                 return None
 
-    def email_user(self, user, body, title="JIRA Notification"):
-        """(Obsolete) Send an email to an user via CannedScriptRunner."""
-        url = self._options['server'] + \
-            '/secure/admin/groovy/CannedScriptRunner.jspa'
-        payload = {
-            'cannedScript': 'com.onresolve.jira.groovy.canned.workflow.postfunctions.SendCustomEmail',
-            'cannedScriptArgs_FIELD_CONDITION': '',
-            'cannedScriptArgs_FIELD_EMAIL_TEMPLATE': body,
-            'cannedScriptArgs_FIELD_EMAIL_SUBJECT_TEMPLATE': title,
-            'cannedScriptArgs_FIELD_EMAIL_FORMAT': 'TEXT',
-            'cannedScriptArgs_FIELD_TO_ADDRESSES': self.user(user).emailAddress,
-            'cannedScriptArgs_FIELD_TO_USER_FIELDS': '',
-            'cannedScriptArgs_FIELD_INCLUDE_ATTACHMENTS': 'FIELD_INCLUDE_ATTACHMENTS_NONE',
-            'cannedScriptArgs_FIELD_FROM': '',
-            'cannedScriptArgs_FIELD_PREVIEW_ISSUE': '',
-            'cannedScript': 'com.onresolve.jira.groovy.canned.workflow.postfunctions.SendCustomEmail',
-            'id': '',
-            'Preview': 'Preview'}
-
-        r = self._session.post(
-            url, headers=self._options['headers'], data=payload)
-        with open("/tmp/jira_email_user_%s.html" % user, "w") as f:
-            f.write(r.text)
-
     def rename_user(self, old_user, new_user):
-        """Rename a JIRA user. Current implementation relies on third party plugin but in the future it may use embedded JIRA functionality.
+        """Rename a JIRA user.
 
         :param old_user: string with username login
         :param new_user: string with username login
         """
-        if self._version >= (6, 0, 0):
-
+        if self._version > (6, 0, 0):
             url = self._options['server'] + '/rest/api/latest/user'
             payload = {
                 "name": new_user}
@@ -2630,69 +2606,10 @@ class JIRA(object):
 
             r = self._session.put(url, params=params,
                                   data=json.dumps(payload))
-
+            raise_on_error(r)
         else:
-            # old implementation needed the ScripRunner plugin
-            merge = "true"
-            try:
-                self.user(new_user)
-            except Exception:
-                merge = "false"
-
-            url = self._options['server'] + '/secure/admin/groovy/CannedScriptRunner.jspa#result'
-            payload = {
-                "cannedScript": "com.onresolve.jira.groovy.canned.admin.RenameUser",
-                "cannedScriptArgs_FIELD_FROM_USER_ID": old_user,
-                "cannedScriptArgs_FIELD_TO_USER_ID": new_user,
-                "cannedScriptArgs_FIELD_MERGE": merge,
-                "id": "",
-                "RunCanned": "Run"}
-
-            # raw displayName
-            logging.debug("renaming %s" % self.user(old_user).emailAddress)
-
-            r = self._session.post(
-                url, headers=self._options['headers'], data=payload)
-            if r.status_code == 404:
-                logging.error(
-                    "In order to be able to use rename_user() you need to install Script Runner plugin. "
-                    "See https://marketplace.atlassian.com/plugins/com.onresolve.jira.groovy.groovyrunner")
-                return False
-            if r.status_code != 200:
-                logging.error(r.status_code)
-
-            if re.compile("XSRF Security Token Missing").search(r.content):
-                logging.fatal(
-                    "Reconfigure JIRA and disable XSRF in order to be able call this. See https://developer.atlassian.com/display/JIRADEV/Form+Token+Handling")
-                return False
-
-            with open("/tmp/jira_rename_user_%s_to%s.html" % (old_user, new_user), "w") as f:
-                f.write(r.content)
-
-            msg = r.status_code
-            m = re.search("<span class=\"errMsg\">(.*)<\/span>", r.content)
-            if m:
-                msg = m.group(1)
-                logging.error(msg)
-                return False
-                # <span class="errMsg">Target user ID must exist already for a merge</span>
-            p = re.compile("type=\"hidden\" name=\"cannedScriptArgs_Hidden_output\" value=\"(.*?)\"\/>",
-                           re.MULTILINE | re.DOTALL)
-            m = p.search(r.content)
-            if m:
-                h = html_parser.HTMLParser()
-                msg = h.unescape(m.group(1))
-                logging.info(msg)
-
-            # let's check if the user still exists
-            try:
-                self.user(old_user)
-            except Exception as e:
-                logging.error("User %s does not exists. %s", old_user, e)
-                return msg
-
-            logging.error(msg + '\n' + "User %s does still exists after rename, that's clearly a problem." % old_user)
-            return False
+            raise NotImplementedError("Support for renaming users in Jira "
+                                      "< 6.0.0 has been removed.")
 
     def delete_user(self, username):
 
@@ -2737,10 +2654,10 @@ class JIRA(object):
     def reindex(self, force=False, background=True):
         """Start jira re-indexing. Returns True if reindexing is in progress or not needed, or False.
 
-        If you call reindex() without any parameters it will perform a backfround reindex only if JIRA thinks it should do it.
+        If you call reindex() without any parameters it will perform a background reindex only if JIRA thinks it should do it.
 
-        :param force: reindex even if JIRA doesn'tt say this is needed, False by default.
-        :param background: reindex inde background, slower but does not impact the users, defaults to True.
+        :param force: reindex even if JIRA doesn't say this is needed, False by default.
+        :param background: reindex in background, slower but does not impact the users, defaults to True.
         """
         # /secure/admin/IndexAdmin.jspa
         # /secure/admin/jira/IndexProgress.jspa?taskId=1
@@ -3096,13 +3013,6 @@ class JIRA(object):
         if str(customfield).isdigit():
             customfield = "customfield_%s" % customfield
         params = {
-            # '_mode':'view',
-            # 'validate':True,
-            # '_search':False,
-            # 'rows':100,
-            # 'page':1,
-            # 'sidx':'DEFAULT',
-            # 'sord':'asc'
             '_issueId': issueid,
             '_fieldId': customfield,
             '_confSchemeId': schemeid}
@@ -3171,8 +3081,6 @@ class JIRA(object):
         """
         params = {}
         if state:
-            if isinstance(state, string_types):
-                state = state.split(",")
             params['state'] = state
 
         if self._options['agile_rest_path'] == GreenHopperResource.GREENHOPPER_REST_PATH:
@@ -3282,7 +3190,7 @@ class JIRA(object):
         :param location_type: the location type. Available in cloud.
         :type location_type: 'user', 'project'
         :param location_id: the id of project that the board should be
-            located under. Ommit this for a 'user' location_type. Available in cloud.
+            located under. Omit this for a 'user' location_type. Available in cloud.
         """
         if self._options['agile_rest_path'] != GreenHopperResource.GREENHOPPER_REST_PATH:
             raise NotImplementedError('JIRA Agile Public API does not support this request')
@@ -3442,7 +3350,6 @@ class JIRA(object):
                                   ' At least version 6.7.10 is required.')
                 raise
         elif self._options['agile_rest_path'] == GreenHopperResource.GREENHOPPER_REST_PATH:
-            # {"issueKeys":["ANERDS-102"],"rankBeforeKey":"ANERDS-94","rankAfterKey":"ANERDS-7","customFieldId":11431}
             data = {
                 "issueKeys": [issue], "rankBeforeKey": next_issue, "customFieldId": self._rank}
             url = self._get_url('rank', base=self.AGILE_BASE_URL)
@@ -3484,8 +3391,8 @@ class JIRA(object):
 
 class GreenHopper(JIRA):
 
-    def __init__(self, options=None, basic_auth=None, oauth=None, async=None):
+    def __init__(self, options=None, basic_auth=None, oauth=None, async_=None):
         warnings.warn(
             "GreenHopper() class is deprecated, just use JIRA() instead.", DeprecationWarning)
         JIRA.__init__(
-            self, options=options, basic_auth=basic_auth, oauth=oauth, async=async)
+            self, options=options, basic_auth=basic_auth, oauth=oauth, async_=async_)

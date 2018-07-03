@@ -204,17 +204,17 @@ class Resource(object):
         options.update({'path': path})
         return self._base_url.format(**options)
 
-    def update(self, fields=None, async=None, jira=None, notify=True, **kwargs):
+    def update(self, fields=None, async_=None, jira=None, notify=True, **kwargs):
         """Update this resource on the server.
 
         Keyword arguments are marshalled into a dict before being sent. If this
         resource doesn't support ``PUT``, a :py:exc:`.JIRAError` will be raised; subclasses that specialize this method
         will only raise errors in case of user error.
 
-        :param async: if true the request will be added to the queue so it can be executed later using async_run()
+        :param async_: if true the request will be added to the queue so it can be executed later using async_run()
         """
-        if async is None:
-            async = self._options['async']
+        if async_ is None:
+            async_ = self._options['async']
 
         data = {}
         if fields is not None:
@@ -282,8 +282,7 @@ class Resource(object):
                 #    logging.warning("autofix: setting assignee to '%s' and retrying the update." % self._options['autofix'])
                 #    data['fields']['assignee'] = {'name': self._options['autofix']}
             # EXPERIMENTAL --->
-            # import grequests
-            if async:
+            if async_:
                 if not hasattr(self._session, '_async_jobs'):
                     self._session._async_jobs = set()
                 self._session._async_jobs.add(threaded_requests.put(
@@ -331,7 +330,7 @@ class Resource(object):
 
     def _default_headers(self, user_headers):
         # result = dict(user_headers)
-        # esult['accept'] = 'application/json'
+        # result['accept'] = 'application/json'
         return CaseInsensitiveDict(self._options['headers'].items() + user_headers.items())
 
 
@@ -432,7 +431,7 @@ class Issue(Resource):
         if raw:
             self._parse_raw(raw)
 
-    def update(self, fields=None, update=None, async=None, jira=None, notify=True, **fieldargs):
+    def update(self, fields=None, update=None, async_=None, jira=None, notify=True, **fieldargs):
         """Update this issue on the server.
 
         Each keyword argument (other than the predefined ones) is treated as a field name and the argument's value
@@ -482,7 +481,7 @@ class Issue(Resource):
             else:
                 fields_dict[field] = value
 
-        super(Issue, self).update(async=async, jira=jira, notify=notify, fields=data)
+        super(Issue, self).update(async_=async_, jira=jira, notify=notify, fields=data)
 
     def add_field_value(self, field, value):
         """Add a value to a field that supports multiple values, without resetting the existing values.
@@ -527,7 +526,7 @@ class Comment(Resource):
         if raw:
             self._parse_raw(raw)
 
-    def update(self, fields=None, async=None, jira=None, body='', visibility=None):
+    def update(self, fields=None, async_=None, jira=None, body='', visibility=None):
         data = {}
         if body:
             data['body'] = body
@@ -757,7 +756,7 @@ class User(Resource):
             self._parse_raw(raw)
 
     def __hash__(self):
-        """Hash carculation."""
+        """Hash calculation."""
         return hash(str(self.name))
 
     def __eq__(self, other):
