@@ -246,7 +246,7 @@ class JIRA(object):
 
     For quick command line access to a server, see the ``jirashell`` script included with this distribution.
 
-    The easiest way to instantiate is using ``j = JIRA("https://jira.atlasian.com")``
+    The easiest way to instantiate is using ``j = JIRA("https://jira.atlassian.com")``
 
     :param options: Specify the server and properties this client will use. Use a dict with any
         of the following properties:
