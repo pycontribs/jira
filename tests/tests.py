@@ -1967,7 +1967,7 @@ class AsyncTests(unittest.TestCase):
 
     def setUp(self):
         self.jira = JIRA('https://jira.atlassian.com', logging=False,
-                         async=True, validate=False, get_server_info=False)
+                         async_=True, validate=False, get_server_info=False)
 
     def test_fetch_pages(self):
         """Tests that the JIRA._fetch_pages method works as expected. """

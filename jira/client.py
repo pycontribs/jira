@@ -246,7 +246,7 @@ class JIRA(object):
 
     For quick command line access to a server, see the ``jirashell`` script included with this distribution.
 
-    The easiest way to instantiate is using ``j = JIRA("https://jira.atlasian.com")``
+    The easiest way to instantiate is using ``j = JIRA("https://jira.atlassian.com")``
 
     :param options: Specify the server and properties this client will use. Use a dict with any
         of the following properties:
@@ -291,7 +291,7 @@ class JIRA(object):
         as anonymous it will fail to instantiate.
     :param get_server_info: If true it will fetch server version info first to determine if some API calls
         are available.
-    :param async: To enable async requests for those actions where we implemented it, like issue update() or delete().
+    :param async_: To enable asynchronous requests for those actions where we implemented it, like issue update() or delete().
     :param timeout: Set a read/connect timeout for the underlying calls to JIRA (default: None)
         Obviously this means that you cannot rely on the return code when this is enabled.
     """
@@ -325,7 +325,7 @@ class JIRA(object):
     AGILE_BASE_URL = GreenHopperResource.AGILE_BASE_URL
 
     def __init__(self, server=None, options=None, basic_auth=None, oauth=None, jwt=None, kerberos=False, kerberos_options=None,
-                 validate=False, get_server_info=True, async=False, logging=True, max_retries=3, proxies=None,
+                 validate=False, get_server_info=True, async_=False, logging=True, max_retries=3, proxies=None,
                  timeout=None, auth=None):
         """Construct a JIRA client instance.
 
@@ -373,7 +373,7 @@ class JIRA(object):
             as anonymous it will fail to instantiate.
         :param get_server_info: If true it will fetch server version info first to determine if some API calls
             are available.
-        :param async: To enable async requests for those actions where we implemented it, like issue update() or delete().
+        :param async_: To enable async requests for those actions where we implemented it, like issue update() or delete().
         :param timeout: Set a read/connect timeout for the underlying calls to JIRA (default: None)
         Obviously this means that you cannot rely on the return code when this is enabled.
         :param auth: Set a cookie auth token if this is required.
@@ -393,8 +393,8 @@ class JIRA(object):
 
         if server:
             options['server'] = server
-        if async:
-            options['async'] = async
+        if async_:
+            options['async'] = async_
 
         self.logging = logging
 
@@ -657,12 +657,12 @@ class JIRA(object):
         return resource
 
     def async_do(self, size=10):
-        """Execute all async jobs and wait for them to finish. By default it will run on 10 threads.
+        """Execute all asynchronous jobs and wait for them to finish. By default it will run on 10 threads.
 
         :param size: number of threads to run on.
         """
         if hasattr(self._session, '_async_jobs'):
-            logging.info("Executing async %s jobs found in queue by using %s threads..." % (
+            logging.info("Executing asynchronous %s jobs found in queue by using %s threads..." % (
                 len(self._session._async_jobs), size))
             threaded_requests.map(self._session._async_jobs, size=size)
 
@@ -3379,8 +3379,8 @@ class JIRA(object):
 
 class GreenHopper(JIRA):
 
-    def __init__(self, options=None, basic_auth=None, oauth=None, async=None):
+    def __init__(self, options=None, basic_auth=None, oauth=None, async_=None):
         warnings.warn(
             "GreenHopper() class is deprecated, just use JIRA() instead.", DeprecationWarning)
         JIRA.__init__(
-            self, options=options, basic_auth=basic_auth, oauth=oauth, async=async)
+            self, options=options, basic_auth=basic_auth, oauth=oauth, async_=async_)
