@@ -21,3 +21,8 @@ repos:
     hooks:
       - id: yamllint
         files: \.(yaml|yml)$
+
+  - repo: https://github.com/ssbarnea/bashate.git
+    rev: 0.5.2
+    hooks:
+      - id: bashate
