@@ -5,7 +5,6 @@ cache:
   - directories:
       - "node_modules"
       - $HOME/.cache
-sudo: false
 os:
   - linux
 stages:
@@ -13,52 +12,71 @@ stages:
   - docs
   - test
   - deploy
-script:
 before_install:
-  - pip install -U pip
-  - pip install -U setuptools
+  # begin: workaround to enable support for py37:
+  # - curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
+  # - sudo apt-get install -y nodejs
+  # - curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
+  # - echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
+  # - sudo apt-get update && sudo apt-get install yarn
+  # - if [[ $TRAVIS_PYTHON_VERSION == '3.7-dev' ]]; then sudo add-apt-repository ppa:deadsnakes/ppa -y; fi
+  # - if [[ $TRAVIS_PYTHON_VERSION == '3.7-dev' ]]; then sudo apt-get update; fi
+  - nvm install $TRAVIS_NODE_VERSION
+  # end
+  - which tox >/dev/null || if [ -z ${VIRTUAL_ENV+x} ]; then pip install --user tox tox-pyenv ; else pip install tox tox-pyenv; fi
 notifications:
   email:
     - pycontribs@googlegroups.com
-    - sorin.sbarnea@gmail.com
 jobs:
   include:
     - stage: lint
       script:
-        - pip install --user --upgrade pre-commit && python -m pre_commit run
+        - python -m tox
         - npm install && npm run spell
+      env: TOXENV=lint
+      python: "2.7"
       language: nodejs
       node_js:
         - "8"
     - stage: docs
-      script: pip install -q tox-travis && python -m tox
-      python: 2.7
+      script: python -m tox
+      python: "2.7"
       env: TOXENV=docs
     - stage: test
-      script: pip install -q tox-travis && python -m tox
-      python: 2.7
+      script: python -m tox
+      python: "2.7"
       env: TOXENV=py27
       after_success:
         - bash <(curl -s https://codecov.io/bash) -e TOX_ENV
         - requires.io update-site -t ac3bbcca32ae03237a6aae2b02eb9411045489bb -r
     - stage: test
-      script: pip install -q tox-travis && python -m tox
-      python: 3.4
+      script: python -m tox
+      python: "3.4"
       env: TOXENV=py34
       after_success:
         - bash <(curl -s https://codecov.io/bash) -e TOX_ENV
     - stage: test
-      script: pip install -q tox-travis && python -m tox
-      python: 3.5
+      script: python -m tox
+      python: "3.5"
       env: TOXENV=py35
       after_success:
         - bash <(curl -s https://codecov.io/bash) -e TOX_ENV
     - stage: test
-      script: pip install -q tox-travis && python -m tox
-      python: 3.6
+      script: python -m tox
+      python: "3.6"
       env: TOXENV=py36 PYTHON='3.6' PYENV_VERSION='system'
       after_success:
         - bash <(curl -s https://codecov.io/bash) -e TOX_ENV
+    - stage: test
+      script: pip install -q tox-travis && python -m tox
+      python: "3.7"
+      env: TOXENV=py37 PYTHON='3.7'
+      after_success:
+        - bash <(curl -s https://codecov.io/bash) -e TOX_ENV
+      # begin: workaround to enable support for py37:
+      sudo: required
+      dist: xenial
+      # end
     - stage: deploy
       script:
         - export PACKAGE_NAME=$(python setup.py --name)
@@ -73,17 +91,6 @@ deploy:
     skip_cleanup: true
     on:
       tags: true
-      branch: master
-      repo: pycontribs/jira
-  - provider: pypi
-    server: https://test.pypi.org/legacy/
-    user: ssbarnea
-    password:
-      secure: "FR8vDM2tWsT1ApQFfbbDO4B6tKZcRGzdRO2or2p8fY5uDEKbIa/SSJaIeaRluHbcxB6cedI1gJ5oCl2+kF0Km9LZqpT+mU4/StiWBBTHj/WmbBTXEROC28JuY6PzGJ+MYySFfLErRWqZZX6XxBzbNebDfdj6Gt8cQZXpvWr/1JA="
-    distributions: sdist bdist_wheel
-    skip_cleanup: true
-    on:
-      tags: false
       branch: master
       repo: pycontribs/jira
   - provider: releases
@@ -102,3 +109,5 @@ env:
   global:
     - secure: fuXwQL+KHQ96XkAFl2uQc8eK8dAjrgkup46tck/UGjVpdv1PT/yHmBKrvpFjDa50ueGbtBwTdKAwhyAmYuiZCk2IYHzdvBylCZBBji2FSpaTM59CVwgkVT6tx3HHO83X0mEX6ih9TJvZD5XhX+YUjopnseRXRq3ey3JZJXWN4RM=
     - secure: "pGQGM5YmHvOgaKihOyzb3k6bdqLQnZQ2OXO9QrfXlXwtop3zvZQi80Q+01l230x2psDWlwvqWTknAjAt1w463fYXPwpoSvKVCsLSSbjrf2l56nrDqnoir+n0CBy288+eIdaGEfzcxDiuULeKjlg08zrqjcjLjW0bDbBrlTXsb5U="
+    - PIP_DISABLE_PIP_VERSION_CHECK=1
+    - TRAVIS_NODE_VERSION="v8.11.3"

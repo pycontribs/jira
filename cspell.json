@@ -152,6 +152,7 @@
         "workon",
         "xargs",
         "xdist",
+        "xenial",
         "xfail",
         "xscs",
         "xsrf",

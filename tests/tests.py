@@ -721,7 +721,7 @@ class IssueTests(unittest.TestCase):
                                        summary='Test issue created', description='foo description',
                                        issuetype={'name': 'Bug'})  # customfield_10022='XSS'
         self.assertEqual(issue.fields.summary, 'Test issue created')
-        self.assertEqual(issue.fields.description, 'some details')
+        self.assertEqual(issue.fields.description, 'foo description')
         self.assertEqual(issue.fields.issuetype.name, 'Bug')
         self.assertEqual(issue.fields.project.key, self.project_b)
         # self.assertEqual(issue.fields.customfield_10022, 'XSS')
@@ -1969,7 +1969,7 @@ class AsyncTests(unittest.TestCase):
 
     def setUp(self):
         self.jira = JIRA('https://jira.atlassian.com', logging=False,
-                         async=True, validate=False, get_server_info=False)
+                         async_=True, validate=False, get_server_info=False)
 
     def test_fetch_pages(self):
         """Tests that the JIRA._fetch_pages method works as expected. """
