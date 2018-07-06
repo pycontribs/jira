@@ -1,5 +1,7 @@
 ---
 language: python
+# sudo required only till  https://github.com/travis-ci/travis-ci/issues/9848 is fixed
+sudo: required
 cache:
   - pip
   - directories:
@@ -21,6 +23,9 @@ before_install:
   # - sudo apt-get update && sudo apt-get install yarn
   # - if [[ $TRAVIS_PYTHON_VERSION == '3.7-dev' ]]; then sudo add-apt-repository ppa:deadsnakes/ppa -y; fi
   # - if [[ $TRAVIS_PYTHON_VERSION == '3.7-dev' ]]; then sudo apt-get update; fi
+  # sudo required only till  https://github.com/travis-ci/travis-ci/issues/9848 is fixed
+  - sudo pip install -U pip setuptools twine wheel
+  # ^ end workaround
   - nvm install $TRAVIS_NODE_VERSION
   # end
   - which tox >/dev/null || if [ -z ${VIRTUAL_ENV+x} ]; then pip install --user tox tox-pyenv ; else pip install tox tox-pyenv; fi
