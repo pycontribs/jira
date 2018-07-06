@@ -93,6 +93,9 @@ deploy:
       tags: true
       branch: master
       repo: pycontribs/jira
+    # workaround for https://github.com/travis-ci/travis-ci/issues/7735
+    edge:
+      branch: twine-user-install
   - provider: releases
     api_key:
       secure: G19YtkGAX0aJ1oyd/7eRj1KYdsmAkjkfU2UISvsjh/68ec1+9qtPpN7BbkFYZYMjSx0BtS0SEEA7Vdl4F9DI9Zzqahbj7WzDLFe9/4aZKM/ztfKWR6CNAYaMazAKS5W7r9pPkBBDIIJ9zCqvV7FRzjewEpfTwFzwUdY+IpxEsAM=
