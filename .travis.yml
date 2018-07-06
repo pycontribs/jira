@@ -1,7 +1,5 @@
 ---
 language: python
-# sudo required only till  https://github.com/travis-ci/travis-ci/issues/9848 is fixed
-sudo: required
 cache:
   - pip
   - directories:
@@ -24,11 +22,11 @@ before_install:
   # - if [[ $TRAVIS_PYTHON_VERSION == '3.7-dev' ]]; then sudo add-apt-repository ppa:deadsnakes/ppa -y; fi
   # - if [[ $TRAVIS_PYTHON_VERSION == '3.7-dev' ]]; then sudo apt-get update; fi
   # sudo required only till  https://github.com/travis-ci/travis-ci/issues/9848 is fixed
-  - sudo pip install -U pip setuptools twine wheel
+  # - sudo pip install -U pip setuptools twine wheel
   # ^ end workaround
   - nvm install $TRAVIS_NODE_VERSION
   # end
-  - which tox >/dev/null || if [ -z ${VIRTUAL_ENV+x} ]; then pip install --user tox tox-pyenv ; else pip install tox tox-pyenv; fi
+  - which tox >/dev/null || if [ -z ${VIRTUAL_ENV+x} ]; then python -m pip install --user tox tox-pyenv ; else python -m pip install tox tox-pyenv; fi
 notifications:
   email:
     - pycontribs@googlegroups.com
@@ -73,13 +71,12 @@ jobs:
       after_success:
         - bash <(curl -s https://codecov.io/bash) -e TOX_ENV
     - stage: test
-      script: pip install -q tox-travis && python -m tox
+      script: python -m pip install -q tox-travis && python -m tox
       python: "3.7"
       env: TOXENV=py37 PYTHON='3.7'
       after_success:
         - bash <(curl -s https://codecov.io/bash) -e TOX_ENV
-      # begin: workaround to enable support for py37:
-      sudo: required
+      # begin: workaround to enable support for py37: https://github.com/travis-ci/travis-ci/issues/9815
       dist: xenial
       # end
     - stage: deploy
@@ -94,6 +91,10 @@ deploy:
       secure: "CmBFcxAT3IAWpnqe9eFmfHfbPBvayGMNLC+P+9KKUGaf+k7vnIYB11vNNCYUrm/jVOR12szWAcGoUQMkUQrWcrShEidsYENOdreJnasZp0I+2uMbMFw1v2Mn7Kyiilv1q/m1G05cH3ls863SBIxOARoN/Ce24vhVgg3BO+GpoP8="
     distributions: sdist bdist_wheel
     skip_cleanup: true
+    # https://github.com/travis-ci/dpl/pull/834
+    edge:
+      source: ssbarnea/dpl
+      branch: master
     on:
       tags: true
       branch: master
@@ -112,7 +113,6 @@ deploy:
       branch: master
 env:
   global:
-    - secure: fuXwQL+KHQ96XkAFl2uQc8eK8dAjrgkup46tck/UGjVpdv1PT/yHmBKrvpFjDa50ueGbtBwTdKAwhyAmYuiZCk2IYHzdvBylCZBBji2FSpaTM59CVwgkVT6tx3HHO83X0mEX6ih9TJvZD5XhX+YUjopnseRXRq3ey3JZJXWN4RM=
     - secure: "pGQGM5YmHvOgaKihOyzb3k6bdqLQnZQ2OXO9QrfXlXwtop3zvZQi80Q+01l230x2psDWlwvqWTknAjAt1w463fYXPwpoSvKVCsLSSbjrf2l56nrDqnoir+n0CBy288+eIdaGEfzcxDiuULeKjlg08zrqjcjLjW0bDbBrlTXsb5U="
     - PIP_DISABLE_PIP_VERSION_CHECK=1
     - TRAVIS_NODE_VERSION="v8.11.3"
