@@ -2064,6 +2064,9 @@ class JIRA(object):
         if fields is None:
             fields = []
 
+        if isinstance(fields, list):
+            fields = fields.copy()
+
         if isinstance(fields, string_types):
             fields = fields.split(",")
 
