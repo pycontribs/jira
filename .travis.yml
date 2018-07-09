@@ -115,5 +115,4 @@ env:
     - secure: fuXwQL+KHQ96XkAFl2uQc8eK8dAjrgkup46tck/UGjVpdv1PT/yHmBKrvpFjDa50ueGbtBwTdKAwhyAmYuiZCk2IYHzdvBylCZBBji2FSpaTM59CVwgkVT6tx3HHO83X0mEX6ih9TJvZD5XhX+YUjopnseRXRq3ey3JZJXWN4RM=
     - secure: "pGQGM5YmHvOgaKihOyzb3k6bdqLQnZQ2OXO9QrfXlXwtop3zvZQi80Q+01l230x2psDWlwvqWTknAjAt1w463fYXPwpoSvKVCsLSSbjrf2l56nrDqnoir+n0CBy288+eIdaGEfzcxDiuULeKjlg08zrqjcjLjW0bDbBrlTXsb5U="
     - PIP_DISABLE_PIP_VERSION_CHECK=1
-    - PIP_USER=yes
     - TRAVIS_NODE_VERSION="v8.11.3"
