@@ -308,7 +308,7 @@ class JIRA(object):
         "verify": True,
         "resilient": True,
         "async": False,
-        "async_workers": 2,
+        "async_workers": 5,
         "client_cert": None,
         "check_update": False,
         "headers": {
@@ -327,7 +327,7 @@ class JIRA(object):
     AGILE_BASE_URL = GreenHopperResource.AGILE_BASE_URL
 
     def __init__(self, server=None, options=None, basic_auth=None, oauth=None, jwt=None, kerberos=False, kerberos_options=None,
-                 validate=False, get_server_info=True, async_=False, async_workers=2, logging=True, max_retries=3, proxies=None,
+                 validate=False, get_server_info=True, async_=False, async_workers=5, logging=True, max_retries=3, proxies=None,
                  timeout=None, auth=None):
         """Construct a JIRA client instance.
 
