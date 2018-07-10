@@ -26,7 +26,7 @@ before_install:
   # ^ end workaround
   - nvm install $TRAVIS_NODE_VERSION
   # end
-  - which tox >/dev/null || if [ -z ${VIRTUAL_ENV+x} ]; then python -m pip install --user tox tox-pyenv ; else python -m pip install tox tox-pyenv; fi
+  - which tox >/dev/null || if [ -z ${VIRTUAL_ENV+x} ]; then python -m pip install --user tox tox-pyenv ; else python -m pip install tox tox-pyenv twine; fi
 notifications:
   email:
     - pycontribs@googlegroups.com
@@ -34,6 +34,8 @@ jobs:
   include:
     - stage: phase1
       script:
+        # package building added here purely to fail-fast if is broken
+        - python setup.py sdist bdist_wheel
         - python -m tox
         - npm install && npm run spell
       env: TOXENV=lint
@@ -85,20 +87,9 @@ jobs:
         - export PACKAGE_NAME=$(python setup.py --name)
         - export PACKAGE_VERSION=$(python setup.py --version)
         - python setup.py sdist bdist_wheel
+        - python -m twine upload dist/*
+      if: tag IS present
       deploy:
-        - provider: pypi
-          user: pycontribs
-          distributions: sdist bdist_wheel
-          skip_existing: true
-          skip_cleanup: true
-          # https://github.com/travis-ci/dpl/pull/834
-          edge:
-            source: ssbarnea/dpl
-            branch: master
-          on:
-            tags: true
-            branch: master
-            repo: pycontribs/jira
         - provider: releases
           api_key:
             secure: YJGigSNYOzMJqs23gIZLFxiVYRqHdV4WsTZmRVosishD2QIaDlTwJma7k6Y5eMPVNdLpqo7Tq6bt7xkJAz/dcr3UO35T/Y0tiRFFW3sd6IOB6ELwSwPhSeHoyUMvZtKyDTl+9tOfeZusFZuCc+mBLQcG+S2NzEaeyrQ6n5hTT/8FGBP91FOq9l5q2gYbmACZ9MisDIjZkTHNYih36ComnZ9QHC91jHKcSuHmOfWWX3GneDVFtuPhF2vjaLQrz8IFtWGW5Sfe35yDYlVQRH+NFxzSJ2zDuT5j8cRgwXjGout78umtMsqAn+zv1Ws/MUNKMTEtONsACndMpGCkuB6Nifl/KcGj5kD7V4PO/gE0ecr830qAwJxSVB7xk6rl797nMxGbr4w2DWQ/iDdHDTlPAEzbLBMLrMRgPxzKPgg5CNxxjT1cHoBNcFPp6gaf017w4XOVUgp/zxXeCg7iGiNJj7z2t8/m9eYVNNlNRPcodN6BjSjPqkYxC3ZMVCI5KsRXbHmR0zOWbPdcRjrY/IgbiTqX09sHotHw5GThP6YTMbienC4h93cdx6MEfX656W6XMOxpC+MjWtYuV8QlfMEJFlstOnA86MVLcmbl+4A6FHuvlQMdDtP9KsKdKIf/4juGhNEFir32P1rUe8J1abmjwXmDkHVbli0SDqaFtB5gyCc=
