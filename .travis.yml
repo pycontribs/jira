@@ -8,9 +8,8 @@ cache:
 os:
   - linux
 stages:
-  - lint
-  - docs
-  - test
+  - phase1
+  - phase2
   - deploy
 before_install:
   # begin: workaround to enable support for py37:
@@ -21,16 +20,21 @@ before_install:
   # - sudo apt-get update && sudo apt-get install yarn
   # - if [[ $TRAVIS_PYTHON_VERSION == '3.7-dev' ]]; then sudo add-apt-repository ppa:deadsnakes/ppa -y; fi
   # - if [[ $TRAVIS_PYTHON_VERSION == '3.7-dev' ]]; then sudo apt-get update; fi
+  # sudo required only till  https://github.com/travis-ci/travis-ci/issues/9848 is fixed
+  # - sudo pip install -U pip setuptools twine wheel
+  # ^ end workaround
   - nvm install $TRAVIS_NODE_VERSION
   # end
-  - which tox >/dev/null || if [ -z ${VIRTUAL_ENV+x} ]; then pip install --user tox tox-pyenv ; else pip install tox tox-pyenv; fi
+  - which tox >/dev/null || if [ -z ${VIRTUAL_ENV+x} ]; then python -m pip install --user tox tox-pyenv ; else python -m pip install tox tox-pyenv twine; fi
 notifications:
   email:
     - pycontribs@googlegroups.com
 jobs:
   include:
-    - stage: lint
+    - stage: phase1
       script:
+        # package building added here purely to fail-fast if is broken
+        - python setup.py sdist bdist_wheel
         - python -m tox
         - npm install && npm run spell
       env: TOXENV=lint
@@ -38,76 +42,65 @@ jobs:
       language: nodejs
       node_js:
         - "8"
-    - stage: docs
+    - stage: phase1
       script: python -m tox
       python: "2.7"
       env: TOXENV=docs
-    - stage: test
+    - stage: phase1
       script: python -m tox
       python: "2.7"
       env: TOXENV=py27
       after_success:
         - bash <(curl -s https://codecov.io/bash) -e TOX_ENV
         - requires.io update-site -t ac3bbcca32ae03237a6aae2b02eb9411045489bb -r
-    - stage: test
+    - stage: phase2
       script: python -m tox
       python: "3.4"
       env: TOXENV=py34
       after_success:
         - bash <(curl -s https://codecov.io/bash) -e TOX_ENV
-    - stage: test
+    - stage: phase2
       script: python -m tox
       python: "3.5"
       env: TOXENV=py35
       after_success:
         - bash <(curl -s https://codecov.io/bash) -e TOX_ENV
-    - stage: test
+    - stage: phase2
       script: python -m tox
       python: "3.6"
       env: TOXENV=py36 PYTHON='3.6' PYENV_VERSION='system'
       after_success:
         - bash <(curl -s https://codecov.io/bash) -e TOX_ENV
-    - stage: test
-      script: pip install -q tox-travis && python -m tox
+    - stage: phase2
+      script: python -m pip install -q tox-travis && python -m tox
       python: "3.7"
       env: TOXENV=py37 PYTHON='3.7'
       after_success:
         - bash <(curl -s https://codecov.io/bash) -e TOX_ENV
-      # begin: workaround to enable support for py37:
-      sudo: required
+      # begin: workaround to enable support for py37: https://github.com/travis-ci/travis-ci/issues/9815
       dist: xenial
+      sudo: required
       # end
     - stage: deploy
       script:
-        - export PACKAGE_NAME=$(python setup.py --name)
-        - export PACKAGE_VERSION=$(python setup.py --version)
         - python setup.py sdist bdist_wheel
-deploy:
-  - provider: pypi
-    user: pycontribs
-    password:
-      secure: "CmBFcxAT3IAWpnqe9eFmfHfbPBvayGMNLC+P+9KKUGaf+k7vnIYB11vNNCYUrm/jVOR12szWAcGoUQMkUQrWcrShEidsYENOdreJnasZp0I+2uMbMFw1v2Mn7Kyiilv1q/m1G05cH3ls863SBIxOARoN/Ce24vhVgg3BO+GpoP8="
-    distributions: sdist bdist_wheel
-    skip_cleanup: true
-    on:
-      tags: true
-      branch: master
-      repo: pycontribs/jira
-  - provider: releases
-    api_key:
-      secure: G19YtkGAX0aJ1oyd/7eRj1KYdsmAkjkfU2UISvsjh/68ec1+9qtPpN7BbkFYZYMjSx0BtS0SEEA7Vdl4F9DI9Zzqahbj7WzDLFe9/4aZKM/ztfKWR6CNAYaMazAKS5W7r9pPkBBDIIJ9zCqvV7FRzjewEpfTwFzwUdY+IpxEsAM=
-    file:
-      - dist/$PACKAGE_NAME-$PACKAGE_VERSION.tar.gz
-      - dist/$PACKAGE_NAME-$PACKAGE_VERSION-py2.py3-none-any.whl
-      - ChangeLog
-    skip_cleanup: true
-    on:
-      tags: true
-      repo: pycontribs/jira
-      branch: master
+        - python -m twine upload dist/*
+      if: tag IS present
+      deploy:
+        - provider: releases
+          api_key:
+            secure: YJGigSNYOzMJqs23gIZLFxiVYRqHdV4WsTZmRVosishD2QIaDlTwJma7k6Y5eMPVNdLpqo7Tq6bt7xkJAz/dcr3UO35T/Y0tiRFFW3sd6IOB6ELwSwPhSeHoyUMvZtKyDTl+9tOfeZusFZuCc+mBLQcG+S2NzEaeyrQ6n5hTT/8FGBP91FOq9l5q2gYbmACZ9MisDIjZkTHNYih36ComnZ9QHC91jHKcSuHmOfWWX3GneDVFtuPhF2vjaLQrz8IFtWGW5Sfe35yDYlVQRH+NFxzSJ2zDuT5j8cRgwXjGout78umtMsqAn+zv1Ws/MUNKMTEtONsACndMpGCkuB6Nifl/KcGj5kD7V4PO/gE0ecr830qAwJxSVB7xk6rl797nMxGbr4w2DWQ/iDdHDTlPAEzbLBMLrMRgPxzKPgg5CNxxjT1cHoBNcFPp6gaf017w4XOVUgp/zxXeCg7iGiNJj7z2t8/m9eYVNNlNRPcodN6BjSjPqkYxC3ZMVCI5KsRXbHmR0zOWbPdcRjrY/IgbiTqX09sHotHw5GThP6YTMbienC4h93cdx6MEfX656W6XMOxpC+MjWtYuV8QlfMEJFlstOnA86MVLcmbl+4A6FHuvlQMdDtP9KsKdKIf/4juGhNEFir32P1rUe8J1abmjwXmDkHVbli0SDqaFtB5gyCc=
+          file_glob: true
+          file:
+            - dist/*
+            - ChangeLog
+          skip_cleanup: true
+          on:
+            tags: true
+            repo: pycontribs/jira
+            branch: master
 env:
   global:
-    - secure: fuXwQL+KHQ96XkAFl2uQc8eK8dAjrgkup46tck/UGjVpdv1PT/yHmBKrvpFjDa50ueGbtBwTdKAwhyAmYuiZCk2IYHzdvBylCZBBji2FSpaTM59CVwgkVT6tx3HHO83X0mEX6ih9TJvZD5XhX+YUjopnseRXRq3ey3JZJXWN4RM=
     - secure: "pGQGM5YmHvOgaKihOyzb3k6bdqLQnZQ2OXO9QrfXlXwtop3zvZQi80Q+01l230x2psDWlwvqWTknAjAt1w463fYXPwpoSvKVCsLSSbjrf2l56nrDqnoir+n0CBy288+eIdaGEfzcxDiuULeKjlg08zrqjcjLjW0bDbBrlTXsb5U="
     - PIP_DISABLE_PIP_VERSION_CHECK=1
     - TRAVIS_NODE_VERSION="v8.11.3"

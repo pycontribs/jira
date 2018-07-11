@@ -16,7 +16,7 @@ ifneq (,$(findstring conda, $(PYTHON_VERSION)))
 	CONDA := $(CONDA_DEFAULT_ENV)
 endif
 
-PREFIX := ""
+PREFIX :=
 ifndef GIT_BRANCH
 GIT_BRANCH=$(shell git branch | sed -n '/\* /s///p')
 endif
@@ -88,7 +88,7 @@ testspace:
 
 lint:
 	@echo "INFO:	linting...."
-	$(PREFIX)python -m flake8
+	$(PREFIX)tox -e lint
 
 test: prepare lint
 	@echo "INFO:	test"
