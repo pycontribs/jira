@@ -48,6 +48,7 @@ __all__ = (
     'SecurityLevel',
     'Status',
     'User',
+    'Group',
     'CustomFieldOption',
     'RemoteLink',
     'Customer',
@@ -764,7 +765,7 @@ class User(Resource):
         return str(self.name) == str(other.name)
 
 
-class UserGroup(Resource):
+class Group(Resource):
     """A JIRA user group."""
 
     def __init__(self, options, session, raw=None):
@@ -970,7 +971,7 @@ resource_class_map = {
     r'securitylevel/[^/]+$': SecurityLevel,
     r'status/[^/]+$': Status,
     r'user\?username.+$': User,
-    r'group\?groupname.+$': UserGroup,
+    r'group\?groupname.+$': Group,
     r'version/[^/]+$': Version,
     # GreenHopper specific resources
     r'sprints/[^/]+$': Sprint,
@@ -978,7 +979,7 @@ resource_class_map = {
 
 
 class UnknownResource(Resource):
-    """A JIRA project."""
+    """A Resource from JIRA that is not (yet) supported."""
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(self, 'unknown{0}', options, session)
