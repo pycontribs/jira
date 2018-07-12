@@ -204,17 +204,19 @@ Updating components::
 Fields
 ------
 
-    issue.fields.worklogs                                 # list of Worklog objects
-    issue.fields.worklogs[0].author
-    issue.fields.worklogs[0].comment
-    issue.fields.worklogs[0].created
-    issue.fields.worklogs[0].id
-    issue.fields.worklogs[0].self
-    issue.fields.worklogs[0].started
-    issue.fields.worklogs[0].timeSpent
-    issue.fields.worklogs[0].timeSpentSeconds
-    issue.fields.worklogs[0].updateAuthor                # dictionary
-    issue.fields.worklogs[0].updated
+Example about accessing the worklogs::
+
+    issue.fields.worklog.worklogs                                 # list of Worklog objects
+    issue.fields.worklog.worklogs[0].author
+    issue.fields.worklog.worklogs[0].comment
+    issue.fields.worklog.worklogs[0].created
+    issue.fields.worklog.worklogs[0].id
+    issue.fields.worklog.worklogs[0].self
+    issue.fields.worklog.worklogs[0].started
+    issue.fields.worklog.worklogs[0].timeSpent
+    issue.fields.worklog.worklogs[0].timeSpentSeconds
+    issue.fields.worklog.worklogs[0].updateAuthor                # dictionary
+    issue.fields.worklog.worklogs[0].updated
 
 
     issue.fields.timetracking.remainingEstimate           # may be NULL or string ("0m", "2h"...)
