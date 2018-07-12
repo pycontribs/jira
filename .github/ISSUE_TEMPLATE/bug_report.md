@@ -4,6 +4,8 @@ about: Create a report to help us improve
 
 ---
 
+Before raising any bug be sure that you used the latest release and that it still reproduces with the latest master. No other version is supported.
+
 **Describe the bug**
 A clear and concise description of what the bug is.
 
