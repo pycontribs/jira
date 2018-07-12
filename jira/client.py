@@ -292,6 +292,7 @@ class JIRA(object):
     :param get_server_info: If true it will fetch server version info first to determine if some API calls
         are available.
     :param async_: To enable asynchronous requests for those actions where we implemented it, like issue update() or delete().
+    :param async_workers: Set the number of worker threads for async operations.
     :param timeout: Set a read/connect timeout for the underlying calls to JIRA (default: None)
         Obviously this means that you cannot rely on the return code when this is enabled.
     """
@@ -307,6 +308,7 @@ class JIRA(object):
         "verify": True,
         "resilient": True,
         "async": False,
+        "async_workers": 5,
         "client_cert": None,
         "check_update": False,
         "headers": {
@@ -325,7 +327,7 @@ class JIRA(object):
     AGILE_BASE_URL = GreenHopperResource.AGILE_BASE_URL
 
     def __init__(self, server=None, options=None, basic_auth=None, oauth=None, jwt=None, kerberos=False, kerberos_options=None,
-                 validate=False, get_server_info=True, async_=False, logging=True, max_retries=3, proxies=None,
+                 validate=False, get_server_info=True, async_=False, async_workers=5, logging=True, max_retries=3, proxies=None,
                  timeout=None, auth=None):
         """Construct a JIRA client instance.
 
@@ -374,6 +376,7 @@ class JIRA(object):
         :param get_server_info: If true it will fetch server version info first to determine if some API calls
             are available.
         :param async_: To enable async requests for those actions where we implemented it, like issue update() or delete().
+        :param async_workers: Set the number of worker threads for async operations.
         :param timeout: Set a read/connect timeout for the underlying calls to JIRA (default: None)
         Obviously this means that you cannot rely on the return code when this is enabled.
         :param auth: Set a cookie auth token if this is required.
@@ -395,6 +398,7 @@ class JIRA(object):
             options['server'] = server
         if async_:
             options['async'] = async_
+            options['async_workers'] = async_workers
 
         self.logging = logging
 
@@ -549,6 +553,7 @@ class JIRA(object):
                 async_class = FuturesSession
             except ImportError:
                 pass
+            async_workers = self._options['async_workers']
         page_params = params.copy() if params else {}
         if startAt:
             page_params['startAt'] = startAt
@@ -582,7 +587,7 @@ class JIRA(object):
                 if async_class is not None and not is_last and (
                         total is not None and len(items) < total):
                     async_fetches = []
-                    future_session = async_class(session=self._session)
+                    future_session = async_class(session=self._session, max_workers=async_workers)
                     for start_index in range(page_start, total, page_size):
                         page_params = params.copy()
                         page_params['startAt'] = start_index
