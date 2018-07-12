@@ -48,6 +48,7 @@ __all__ = (
     'SecurityLevel',
     'Status',
     'User',
+    'Group',
     'CustomFieldOption',
     'RemoteLink',
     'Customer',
@@ -764,6 +765,23 @@ class User(Resource):
         return str(self.name) == str(other.name)
 
 
+class Group(Resource):
+    """A JIRA user group."""
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(self, 'group?groupname={0}', options, session)
+        if raw:
+            self._parse_raw(raw)
+
+    def __hash__(self):
+        """Hash calculation."""
+        return hash(str(self.name))
+
+    def __eq__(self, other):
+        """Equality by name."""
+        return str(self.name) == str(other.name)
+
+
 class Version(Resource):
     """A version of a project."""
 
@@ -953,10 +971,20 @@ resource_class_map = {
     r'securitylevel/[^/]+$': SecurityLevel,
     r'status/[^/]+$': Status,
     r'user\?username.+$': User,
+    r'group\?groupname.+$': Group,
     r'version/[^/]+$': Version,
     # GreenHopper specific resources
     r'sprints/[^/]+$': Sprint,
     r'views/[^/]+$': Board}
+
+
+class UnknownResource(Resource):
+    """A Resource from JIRA that is not (yet) supported."""
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(self, 'unknown{0}', options, session)
+        if raw:
+            self._parse_raw(raw)
 
 
 def cls_for_resource(resource_literal):
@@ -964,5 +992,5 @@ def cls_for_resource(resource_literal):
         if re.search(resource, resource_literal):
             return resource_class_map[resource]
     else:
-        # Generic Resource without specialized update/delete behavior
-        return Resource
+        # Generic Resource cannot directly be used b/c of different constructor signature
+        return UnknownResource
