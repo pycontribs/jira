@@ -147,7 +147,7 @@ def _field_worker(fields=None, **fieldargs):
 
 class ResultList(list):
 
-    def __init__(self, iterable=None, _startAt=None, _maxResults=None, _total=None, _isLast=None):
+    def __init__(self, iterable=None, _startAt=0, _maxResults=0, _total=0, _isLast=None):
         if iterable is not None:
             list.__init__(self, iterable)
         else:
@@ -158,6 +158,18 @@ class ResultList(list):
         # Optional parameters:
         self.isLast = _isLast
         self.total = _total
+
+        self.iterable = iterable or []
+        self.current = self.startAt
+
+    def __next__(self):
+        self.current += 1
+        if self.current > self.total:
+            raise StopIteration
+        else:
+            return self.iterable[self.current - 1]
+    # Python 2 and 3 compat
+    next = __next__
 
 
 class QshGenerator(object):
