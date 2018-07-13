@@ -1,3 +1,5 @@
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fpycontribs%2Fjira.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fpycontribs%2Fjira?ref=badge_shield)
+
 ===================
 JIRA Python Library
 ===================
@@ -133,3 +135,7 @@ In addition to all the contributors we would like to thank to these companies:
 
 .. image:: https://raw.githubusercontent.com/pycontribs/resources/master/logos/x32/logo-navicat.png
     :target: http://www.navicat.com/
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fpycontribs%2Fjira.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fpycontribs%2Fjira?ref=badge_large)
