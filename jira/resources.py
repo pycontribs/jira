@@ -911,6 +911,11 @@ class RequestType(Resource):
 
 # Utilities
 
+def setattrWithUnicode(obj, name, value):
+    try:
+        setattr(obj, name, value)
+    except Exception:
+        setattr(obj, name.encode('utf-8'), value.encode('utf-8'))
 
 def dict2resource(raw, top=None, options=None, session=None):
     """Convert a dictionary into a Jira Resource object.
@@ -927,11 +932,11 @@ def dict2resource(raw, top=None, options=None, session=None):
         if isinstance(j, dict):
             if 'self' in j:
                 resource = cls_for_resource(j['self'])(options, session, j)
-                setattr(top, i, resource)
+                setattrWithUnicode(top, i, resource)
             elif i == 'timetracking':
-                setattr(top, 'timetracking', TimeTracking(options, session, j))
+                setattrWithUnicode(top, 'timetracking', TimeTracking(options, session, j))
             else:
-                setattr(
+                setattrWithUnicode(
                     top, i, dict2resource(j, options=options, session=session))
         elif isinstance(j, seqs):
             seq_list = []
@@ -946,9 +951,9 @@ def dict2resource(raw, top=None, options=None, session=None):
                             dict2resource(seq_elem, options=options, session=session))
                 else:
                     seq_list.append(seq_elem)
-            setattr(top, i, seq_list)
+            setattrWithUnicode(top, i, seq_list)
         else:
-            setattr(top, i, j)
+            setattrWithUnicode(top, i, j)
     return top
 
 
