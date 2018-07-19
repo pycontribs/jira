@@ -32,6 +32,9 @@ JIRA Python Library
         :target: https://requires.io/github/pycontribs/jira/requirements/?branch=master
         :alt: Requirements Status
 
+.. image:: https://app.fossa.io/api/projects/git%2Bgithub.com%2Fpycontribs%2Fjira.svg?type=shield
+        :target: https://app.fossa.io/projects/git%2Bgithub.com%2Fpycontribs%2Fjira?ref=badge_shield
+        :alt: FOSSA Status
 
 This library eases the use of the JIRA REST API from Python and it has been used in production for years.
 
