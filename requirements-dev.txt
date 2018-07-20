@@ -16,7 +16,7 @@ pytest>=2.9.1
 PyYAML>=3.13
 requires.io==0.2.6
 tenacity==4.12.0
-tox-pyenv
+tox-pyenv==1.1.0
 tox>=2.3.1
 unittest2; python_version<'3.1'
 wheel>=0.24.0
