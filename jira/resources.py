@@ -751,6 +751,15 @@ class Status(Resource):
             self._parse_raw(raw)
 
 
+class StatusCategory(Resource):
+    """StatusCategory for an issue."""
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(self, 'statuscategory/{0}', options, session)
+        if raw:
+            self._parse_raw(raw)
+
+
 class User(Resource):
     """A JIRA user."""
 
@@ -973,6 +982,7 @@ resource_class_map = {
     r'resolution/[^/]+$': Resolution,
     r'securitylevel/[^/]+$': SecurityLevel,
     r'status/[^/]+$': Status,
+    r'statuscategory/[^/]+$': StatusCategory,
     r'user\?username.+$': User,
     r'group\?groupname.+$': Group,
     r'version/[^/]+$': Version,
