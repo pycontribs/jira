@@ -5,7 +5,7 @@ flaky==3.4.0
 hacking>=0.13
 MarkupSafe>=0.23
 mock==2.0.0; python_version<'3.3'
-oauthlib
+oauthlib==2.1.0
 pre-commit
 py >= 1.4
 pytest-cache
