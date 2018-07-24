@@ -73,6 +73,7 @@ from jira.resources import SecurityLevel
 from jira.resources import ServiceDesk
 from jira.resources import Sprint
 from jira.resources import Status
+from jira.resources import StatusCategory
 from jira.resources import User
 from jira.resources import Version
 from jira.resources import Votes
@@ -2156,6 +2157,22 @@ class JIRA(object):
         :param id: ID of the status resource to get
         """
         return self._find_for_resource(Status, id)
+
+    # Category
+
+    def statuscategories(self):
+        """Get a list of status category Resources from the server."""
+        r_json = self._get_json('statuscategory')
+        statuscategories = [StatusCategory(self._options, self._session, raw_stat_json)
+                            for raw_stat_json in r_json]
+        return statuscategories
+
+    def statuscategory(self, id):
+        """Get a status category Resource from the server.
+
+        :param id: ID of the status category resource to get
+        """
+        return self._find_for_resource(StatusCategory, id)
 
     # Users
 
