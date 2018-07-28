@@ -3,6 +3,6 @@
 # process, which may cause wedges in the gate later.
 
 filemagic>=1.6
-PyJWT
-requests_jwt
-requests_kerberos
+PyJWT==1.6.4
+requests_jwt==0.4
+requests_kerberos==0.12.0

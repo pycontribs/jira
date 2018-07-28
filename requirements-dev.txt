@@ -1,24 +1,24 @@
 # this file is needed by readthedocs.org so don't move them in another place
 coveralls>=1.1
 docutils>=0.12
-flaky
+flaky==3.4.0
 hacking>=0.13
 MarkupSafe>=0.23
-mock; python_version<'3.3'
-oauthlib
-pre-commit
+mock==2.0.0; python_version<'3.3'
+oauthlib==2.1.0
+pre-commit==1.10.3
 py >= 1.4
-pytest-cache
-pytest-cov
-pytest-instafail
+pytest-cache==1.0
+pytest-cov==2.5.1
+pytest-instafail==0.4.0
 pytest-xdist>=1.14
 pytest>=2.9.1
 PyYAML>=3.13
-requires.io
-tenacity
-tox-pyenv
+requires.io==0.2.6
+tenacity==4.12.0
+tox-pyenv==1.1.0
 tox>=2.3.1
-unittest2; python_version<'3.1'
+unittest2==1.1.0; python_version<'3.1'
 wheel>=0.24.0
 xmlrunner>=1.7.7
 yanc>=0.3.3
