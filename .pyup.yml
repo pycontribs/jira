@@ -1,0 +1,12 @@
+# https://pyup.io/docs/bot/config/
+update: insecure
+pin: False
+schedule: "every week"
+assignees:
+ - ssbarnea
+ - hdost
+ # we care only about runtime requirements, not testing ones
+search: False
+requirements:
+ - requirements.txt
+ - requirements-opt.txt
