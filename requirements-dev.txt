@@ -6,7 +6,7 @@ hacking>=0.13
 MarkupSafe>=0.23
 mock; python_version<'3.3'
 oauthlib
-pre-commit
+pre-commit==1.10.4
 py >= 1.4
 pytest-cache
 pytest-cov
