@@ -14,7 +14,7 @@ pytest-instafail
 pytest-xdist>=1.14
 pytest>=2.9.1
 PyYAML>=3.13
-requires.io
+requires.io==0.2.6
 tenacity
 tox-pyenv
 tox>=2.3.1
