@@ -9,7 +9,7 @@ oauthlib
 pre-commit
 py >= 1.4
 pytest-cache
-pytest-cov
+pytest-cov==2.5.1
 pytest-instafail
 pytest-xdist>=1.14
 pytest>=2.9.1
