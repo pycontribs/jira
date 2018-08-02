@@ -4,5 +4,5 @@
 
 filemagic>=1.6
 PyJWT
-requests_jwt
+requests_jwt==0.4
 requests_kerberos
