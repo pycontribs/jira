@@ -4,7 +4,7 @@ docutils>=0.12
 flaky
 hacking>=0.13
 MarkupSafe>=0.23
-mock; python_version<'3.3'
+mock==2.0.0; python_version<'3.3'
 oauthlib
 pre-commit
 py >= 1.4
