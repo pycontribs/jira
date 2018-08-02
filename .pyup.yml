@@ -1,0 +1,7 @@
+# https://pyup.io/docs/bot/config/
+update: insecure
+pin: False
+schedule: "every week"
+assignees:
+ - ssbarnea
+ - hdost
