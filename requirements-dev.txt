@@ -8,7 +8,7 @@ mock; python_version<'3.3'
 oauthlib
 pre-commit
 py >= 1.4
-pytest-cache
+pytest-cache==1.0
 pytest-cov
 pytest-instafail
 pytest-xdist>=1.14
