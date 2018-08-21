@@ -8,5 +8,9 @@ assignees:
  # we care only about runtime requirements, not testing ones
 search: False
 requirements:
- - requirements.txt
- - requirements-opt.txt
+ - requirements.txt:
+     pin: False
+     update: insecure
+ - requirements-opt.txt:
+     pin: False
+     update: insecure
