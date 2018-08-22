@@ -36,7 +36,6 @@ jobs:
         # package building added here purely to fail-fast if is broken
         - python setup.py sdist bdist_wheel
         - python -m tox
-        - npm install && npm run spell
       env: TOXENV=lint
       python: "2.7"
       language: nodejs

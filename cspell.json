@@ -180,6 +180,7 @@
         ".eggs"
     ],
     "ignoreWords": [
-        "I18NSPHINXOPTS"
+        "I18NSPHINXOPTS",
+        "hdost"
     ]
 }
