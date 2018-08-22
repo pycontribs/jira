@@ -324,6 +324,9 @@ class JIRA(object):
         "async_workers": 5,
         "client_cert": None,
         "check_update": False,
+        # amount of seconds to wait for loading a resource after updating it
+        # used to avoid server side caching issues, used to be 4 seconds.
+        "delay_reload": 0,
         "headers": {
             'Cache-Control': 'no-cache',
             # 'Accept': 'application/json;charset=UTF-8',  # default for REST
