@@ -292,9 +292,7 @@ class Resource(object):
                 r = self._session.put(
                     self.self, data=json.dumps(data))
 
-        # TODO(ssbarnea): compare loaded data in order to verify if resource was updated indeed
-        # we had random test failures (probably) due to caching
-        time.sleep(4)
+        time.sleep(self._options['delay_reload'])
         self._load(self.self)
 
     def delete(self, params=None):
