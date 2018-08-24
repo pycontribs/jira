@@ -11,7 +11,10 @@ responses from JIRA and the Resource/dict abstractions provided by this library.
 will construct a JIRA object as described below. Full API documentation can be found
 at: https://jira-python.readthedocs.org/en/latest/
 """
-
+try:
+    from functools import lru_cache
+except ImportError:
+    from functools32 import lru_cache
 from functools import wraps
 
 import imghdr
@@ -128,16 +131,6 @@ def translate_resource_args(func):
         return result
 
     return wrapper
-
-
-def _get_template_list(data):
-    template_list = []
-    if 'projectTemplates' in data:
-        template_list = data['projectTemplates']
-    elif 'projectTemplatesGroupedByType' in data:
-        for group in data['projectTemplatesGroupedByType']:
-            template_list.extend(group['projectTemplates'])
-    return template_list
 
 
 def _field_worker(fields=None, **fieldargs):
@@ -2880,6 +2873,25 @@ class JIRA(object):
         return self._session.post(
             url, headers=CaseInsensitiveDict({'content-type': 'application/x-www-form-urlencoded'}), data=payload)
 
+    @lru_cache(maxsize=None)
+    def templates(self):
+
+        url = self._options['server'] + \
+            '/rest/project-templates/latest/templates'
+
+        r = self._session.get(url)
+        data = json_loads(r)
+
+        templates = {}
+        # if 'projectTemplates' in data:
+        #     template_ = data['projectTemplates']
+        # el
+        if 'projectTemplatesGroupedByType' in data:
+            for group in data['projectTemplatesGroupedByType']:
+                for t in group['projectTemplates']:
+                    templates[t['name']] = t
+        return templates
+
     def create_project(self, key, name=None, assignee=None, type="Software", template_name=None):
         """Key is mandatory and has to match JIRA project key requirements, usually only 2-10 uppercase characters.
 
@@ -2893,24 +2905,19 @@ class JIRA(object):
             assignee = self.current_user()
         if name is None:
             name = key
-        url = self._options['server'] + \
-            '/rest/project-templates/latest/templates'
 
-        r = self._session.get(url)
-        j = json_loads(r)
-
-        possible_templates = ['JIRA Classic', 'JIRA Default Schemes', 'Basic software development']
+        possible_templates = ['Basic', 'JIRA Classic', 'JIRA Default Schemes', 'Basic software development']
 
         if template_name is not None:
             possible_templates = [template_name]
 
         # https://confluence.atlassian.com/jirakb/creating-a-project-via-rest-based-on-jira-default-schemes-744325852.html
-        template_key = 'com.atlassian.jira-legacy-project-templates:jira-blank-item'
-        templates = []
-        for template in _get_template_list(j):
-            templates.append(template['name'])
-            if template['name'] in possible_templates:
-                template_key = template['projectTemplateModuleCompleteKey']
+        templates = self.templates()
+        # TODO(ssbarnea): find a better logic to pick a default fallback template
+        template_key = list(templates.values())[0]['projectTemplateModuleCompleteKey']
+        for template_name, template_dic in templates.items():
+            if template_name in possible_templates:
+                template_key = template_dic['projectTemplateModuleCompleteKey']
                 break
 
         payload = {'name': name,
@@ -2930,6 +2937,8 @@ class JIRA(object):
 
         headers = CaseInsensitiveDict(
             {'Content-Type': 'application/x-www-form-urlencoded'})
+        url = self._options['server'] + \
+            '/rest/project-templates/latest/templates'
 
         r = self._session.post(url, data=payload, headers=headers)
 

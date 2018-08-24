@@ -1,6 +1,5 @@
-from flaky import flaky
+from __future__ import unicode_literals
 import getpass
-import json
 import pytest
 from tests import get_unique_project_name
 from tests import JiraTestManager
@@ -51,14 +50,16 @@ def slug(request, cl_admin):
     return slug
 
 
-@flaky
+@pytest.mark.timeout(180)
 def test_delete_project(cl_admin, cl_normal, slug):
-    time.sleep(6)  # with <=5s was failing often
+    for i in range(6):
+        time.sleep(1)  # with <=5s was failing often
 
-    with pytest.raises(JIRAError) as ex:
-        assert cl_normal.delete_project(slug)
+        with pytest.raises(ValueError) as ex:
+            assert cl_normal.delete_project(slug)
 
-    assert 'Not enough permissions to delete project' in str(ex.value)
+        assert 'Not enough permissions to delete project' in str(ex.value) \
+            or str(ex.value).endswith('is not a Project, projectID or slug')
 
     try:
         assert cl_admin.delete_project(slug)
@@ -78,54 +79,28 @@ def test_delete_inexistent_project(cl_admin):
     )
 
 
-def test_template_list():
-    text = (
-    r'{"projectTemplatesGroupedByType": ['
-    ' { "projectTemplates": [ { "projectTemplateModuleCompleteKey": '
-        '"com.pyxis.greenhopper.jira:gh-scrum-template", '
-        '"name": "Scrum software development"}, '
-        '{ "projectTemplateModuleCompleteKey": '
-        '"com.pyxis.greenhopper.jira:gh-kanban-template", '
-        '"name": "Kanban software development"}, '
-        '{ "projectTemplateModuleCompleteKey": '
-        '"com.pyxis.greenhopper.jira:'
-        'basic-software-development-template",'
-        ' "name": "Basic software development"} ],'
-        ' "applicationInfo": { '
-        '"applicationName": "JIRA Software"} }, '
-        '{ "projectTypeBean": { '
-        '"projectTypeKey": "service_desk", '
-        '"projectTypeDisplayKey": "Service Desk"}, '
-        '"projectTemplates": [ { '
-        '"projectTemplateModuleCompleteKey": '
-        '"com.atlassian.servicedesk:classic-service-desk-project", '
-        '"name": "Basic Service Desk"},'
-        ' { "projectTemplateModuleCompleteKey": '
-        '"com.atlassian.servicedesk:itil-service-desk-project",'
-        ' "name": "IT Service Desk"} ], '
-        '"applicationInfo": { '
-        '"applicationName": "JIRA Service Desk"} }, '
-        '{ "projectTypeBean": { '
-        '"projectTypeKey": "business", '
-        '"projectTypeDisplayKey": "Business"}, '
-        '"projectTemplates": [ { '
-        '"projectTemplateModuleCompleteKey": '
-        '"com.atlassian.jira-core-project-templates:jira-core-task-management", '
-        '"name": "Task management"}, {'
-        ' "projectTemplateModuleCompleteKey": '
-        '"com.atlassian.jira-core-project-templates:jira-core-project-management", '
-        '"name": "Project management"}, { '
-        '"projectTemplateModuleCompleteKey": '
-        '"com.atlassian.jira-core-project-templates:jira-core-process-management", '
-        '"name": "Process management"} ], '
-        '"applicationInfo": { "applicationName": "JIRA Core"} }],'
-        ' "maxNameLength": 80, "minNameLength": 2, "maxKeyLength": 10 }'
-    )  # noqa
-    j = json.loads(text)
-    template_list = jira.client._get_template_list(j)
-    assert [t['name'] for t in template_list] == ["Scrum software development", "Kanban software development", "Basic software development",
-                                                  "Basic Service Desk", "IT Service Desk", "Task management", "Project management",
-                                                  "Process management"]
+def test_templates(cl_admin):
+    templates = cl_admin.templates()
+    expected_templates = set(filter(None, """
+Agility
+Basic
+Bug tracking
+Content Management
+Customer service
+Document Approval
+IT Service Desk
+Kanban software development
+Lead Tracking
+Process management
+Procurement
+Project management
+Recruitment
+Scrum software development
+Task management
+""".split('\n')))
+
+    for t in expected_templates:
+        assert t in templates
 
 
 def test_result_list():
