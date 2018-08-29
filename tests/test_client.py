@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 import getpass
 import pytest
@@ -7,6 +8,11 @@ import time
 
 from jira import Role, Issue, JIRA, JIRAError, Project  # noqa
 import jira.client
+
+
+@pytest.fixture()
+def prep():
+    pass
 
 
 @pytest.fixture(scope='module')
