@@ -2,9 +2,6 @@
     "version": "0.1",
     "language": "en",
     "words": [
-        "Dalko",
-        "I18NSPHINXOPTS",
-        "TOXENV",
         "addfinalizer",
         "appid",
         "atexit",
@@ -13,6 +10,7 @@
         "ausername",
         "bdist",
         "bspeakmon",
+        "capsys",
         "categorised",
         "conda",
         "cygwin",
@@ -43,8 +41,9 @@
         "hashify",
         "howto",
         "hqi",
-        "iDalko",
+        "I18NSPHINXOPTS",
         "id",
+        "iDalko",
         "ifeq",
         "ifndef",
         "ifneq",
@@ -98,6 +97,7 @@
         "pyenv",
         "pyinstaller",
         "pytest",
+        "pyyaml",
         "qhcp",
         "qthelp",
         "reindex",
@@ -118,7 +118,6 @@
         "serialised",
         "service",
         "setenv",
-        "pyyaml",
         "skipif",
         "sorin",
         "ssbarnea",
@@ -133,6 +132,7 @@
         "th",
         "toctree",
         "tolower",
+        "TOXENV",
         "toxinidir",
         "transitionid",
         "truthy",
@@ -181,6 +181,7 @@
     ],
     "ignoreWords": [
         "I18NSPHINXOPTS",
-        "hdost"
+        "hdost",
+        "βρέθηκε"
     ]
 }

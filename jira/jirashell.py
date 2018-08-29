@@ -5,6 +5,7 @@
 Script arguments support changing the server and a persistent authentication over HTTP BASIC.
 """
 
+from __future__ import print_function
 try:
     import configparser
 except ImportError:
@@ -21,7 +22,7 @@ from oauthlib.oauth1 import SIGNATURE_RSA
 import os
 import requests
 from requests_oauthlib import OAuth1
-from sys import exit
+import sys
 
 import webbrowser
 
@@ -233,40 +234,55 @@ def get_config():
 
 
 def main():
+    # workaround for avoiding UnicodeEncodeError when printing exceptions
+    # containing unicode on py2
+    if sys.version_info[0] < 3 and sys.getdefaultencoding() != 'utf-8':
+        # without reload print would fail even if sys.stdin.encoding
+        # would report utf-8
+        # see: https://stackoverflow.com/a/23847316/99834
+        stdin, stdout, stderr = sys.stdin, sys.stdout, sys.stderr
+        reload(sys)
+        sys.stdin, sys.stdout, sys.stderr = stdin, stdout, stderr
+        sys.setdefaultencoding(os.environ.get('PYTHONIOENCODING', 'utf-8'))
+
     try:
-        get_ipython
-    except NameError:
-        pass
-    else:
-        exit("Running ipython inside ipython isn't supported. :(")
+        try:
+            get_ipython
+        except NameError:
+            pass
+        else:
+            sys.exit("Running ipython inside ipython isn't supported. :(")
 
-    options, basic_auth, oauth = get_config()
+        options, basic_auth, oauth = get_config()
 
-    if basic_auth:
-        basic_auth = (basic_auth['username'], basic_auth['password'])
+        if basic_auth:
+            basic_auth = (basic_auth['username'], basic_auth['password'])
 
-    if oauth.get('oauth_dance') is True:
-        oauth = oauth_dance(
-            options['server'], oauth['consumer_key'], oauth['key_cert'], oauth['print_tokens'], options['verify'])
-    elif not all((oauth.get('access_token'), oauth.get('access_token_secret'),
-                  oauth.get('consumer_key'), oauth.get('key_cert'))):
-        oauth = None
+        if oauth.get('oauth_dance') is True:
+            oauth = oauth_dance(
+                options['server'], oauth['consumer_key'], oauth['key_cert'], oauth['print_tokens'], options['verify'])
+        elif not all((oauth.get('access_token'), oauth.get('access_token_secret'),
+                     oauth.get('consumer_key'), oauth.get('key_cert'))):
+            oauth = None
 
-    jira = JIRA(options=options, basic_auth=basic_auth, oauth=oauth)
+        jira = JIRA(options=options, basic_auth=basic_auth, oauth=oauth)
 
-    import IPython
-    # The top-level `frontend` package has been deprecated since IPython 1.0.
-    if IPython.version_info[0] >= 1:
-        from IPython.terminal.embed import InteractiveShellEmbed
-    else:
-        from IPython.frontend.terminal.embed import InteractiveShellEmbed
+        import IPython
+        # The top-level `frontend` package has been deprecated since IPython 1.0.
+        if IPython.version_info[0] >= 1:
+            from IPython.terminal.embed import InteractiveShellEmbed
+        else:
+            from IPython.frontend.terminal.embed import InteractiveShellEmbed
 
-    ip_shell = InteractiveShellEmbed(
-        banner1='<JIRA Shell ' + __version__ + ' (' + jira.client_info() + ')>')
-    ip_shell("*** JIRA shell active; client is in 'jira'."
-             ' Press Ctrl-D to exit.')
+        ip_shell = InteractiveShellEmbed(
+            banner1='<JIRA Shell ' + __version__ + ' (' + jira.client_info() + ')>')
+        ip_shell("*** JIRA shell active; client is in 'jira'."
+                 ' Press Ctrl-D to exit.')
+    except Exception as e:
+        print(e, file=sys.stderr)
+        return 2
 
 
 if __name__ == '__main__':
     status = main()
-    exit(status)
+    sys.exit(status)
