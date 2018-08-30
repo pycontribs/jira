@@ -3147,6 +3147,8 @@ class JIRA(object):
         return sprints
 
     def update_sprint(self, id, name=None, startDate=None, endDate=None, state=None):
+	# For the 'agile' API, all the parameters are required to be in the payload. 
+	
         payload = {}
         if name:
             payload['name'] = name
@@ -3155,8 +3157,6 @@ class JIRA(object):
         if endDate:
             payload['endDate'] = endDate
         if state:
-            if self._options['agile_rest_path'] != GreenHopperResource.GREENHOPPER_REST_PATH:
-                raise NotImplementedError('Public JIRA API does not support state update')
             payload['state'] = state
 
         url = self._get_url('sprint/%s' % id, base=self.AGILE_BASE_URL)
