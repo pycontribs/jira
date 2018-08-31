@@ -3061,7 +3061,7 @@ class JIRA(object):
     """
 
     @translate_resource_args
-    def boards(self, startAt=0, maxResults=50, type=None, name=None):
+    def boards(self, startAt=0, maxResults=50, type=None, name=None, projectKeyOrID=projectKeyOrID):
         """Get a list of board resources.
 
         :param startAt: The starting index of the returned boards. Base index: 0.
@@ -3077,6 +3077,8 @@ class JIRA(object):
             params['type'] = type
         if name:
             params['name'] = name
+        if projectKeyOrID:
+            params['projectKeyOrId'] = projectKeyOrID
 
         if self._options['agile_rest_path'] == GreenHopperResource.GREENHOPPER_REST_PATH:
             # Old, private API did not support pagination, all records were present in response,
