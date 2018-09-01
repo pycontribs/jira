@@ -83,7 +83,7 @@ class ResilientSession(Session):
     def __recoverable(self, response, url, request, counter=1):
         msg = response
         if isinstance(response, ConnectionError):
-            logging.warning("Got ConnectionError [%s] errno:%s on %s %s\n%s\%s" % (
+            logging.warning("Got ConnectionError [%s] errno:%s on %s %s\n%s\n%s" % (
                 response, response.errno, request, url, vars(response), response.__dict__))
         if hasattr(response, 'status_code'):
             if response.status_code in [502, 503, 504, 401]:
