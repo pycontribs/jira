@@ -1285,7 +1285,7 @@ class IssueTests(unittest.TestCase):
         serialised_sprint = getattr(updated_issue_1.fields, sprint_customfield)[0]
 
         # Too hard to serialise the sprint object. Performing simple regex match instead.
-        assert re.search('\[id=' + str(s.id) + ',', serialised_sprint)
+        assert re.search(r'\[id=' + str(s.id) + ',', serialised_sprint)
 
         # self.jira.add_issues_to_sprint(s.id, self.issue_2)
 
@@ -1734,7 +1734,7 @@ class UserTests(unittest.TestCase):
     def test_user(self):
         user = self.jira.user(self.test_manager.CI_JIRA_ADMIN)
         self.assertEqual(user.name, self.test_manager.CI_JIRA_ADMIN)
-        self.assertRegex(user.emailAddress, '^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
+        self.assertRegex(user.emailAddress, r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
 
     @pytest.mark.xfail(reason='query returns empty list')
     def test_search_assignable_users_for_projects(self):
