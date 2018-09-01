@@ -479,17 +479,17 @@ class AttachmentTests(unittest.TestCase):
 
     def test_1_add_remove_attachment(self):
         issue = self.jira.issue(self.issue_1)
-        attachment = self.jira.add_attachment(issue,
-                                              open(TEST_ATTACH_PATH, 'rb'),
-                                              "new test attachment")
-        new_attachment = self.jira.attachment(attachment.id)
-        msg = "attachment %s of issue %s" % (new_attachment.__dict__, issue)
-        self.assertEqual(
-            new_attachment.filename, 'new test attachment', msg=msg)
-        self.assertEqual(
-            new_attachment.size, os.path.getsize(TEST_ATTACH_PATH), msg=msg)
-        # JIRA returns a HTTP 204 upon successful deletion
-        self.assertEqual(attachment.delete().status_code, 204)
+        with open(TEST_ATTACH_PATH, 'rb') as f:
+            attachment = self.jira.add_attachment(
+                issue, f, "new test attachment")
+            new_attachment = self.jira.attachment(attachment.id)
+            msg = "attachment %s of issue %s" % (new_attachment.__dict__, issue)
+            self.assertEqual(
+                new_attachment.filename, 'new test attachment', msg=msg)
+            self.assertEqual(
+                new_attachment.size, os.path.getsize(TEST_ATTACH_PATH), msg=msg)
+            # JIRA returns a HTTP 204 upon successful deletion
+            self.assertEqual(attachment.delete().status_code, 204)
 
 
 @flaky
