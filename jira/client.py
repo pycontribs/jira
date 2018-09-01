@@ -514,16 +514,15 @@ class JIRA(object):
     def close(self):
         session = getattr(self, "_session", None)
         if session is not None:
+            try:
+                session.close()
+            except TypeError:
+                # TypeError: "'NoneType' object is not callable"
+                # Could still happen here because other references are also
+                # in the process to be torn down, see warning section in
+                # https://docs.python.org/2/reference/datamodel.html#object.__del__
+                pass
             self._session = None
-            if self.sys_version_info < (3, 4, 0):  # workaround for https://github.com/kennethreitz/requests/issues/2303
-                try:
-                    session.close()
-                except TypeError:
-                    # TypeError: "'NoneType' object is not callable"
-                    # Could still happen here because other references are also
-                    # in the process to be torn down, see warning section in
-                    # https://docs.python.org/2/reference/datamodel.html#object.__del__
-                    pass
 
     def _check_for_html_error(self, content):
         # JIRA has the bad habit of returning errors in pages with 200 and
