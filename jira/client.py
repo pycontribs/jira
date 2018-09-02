@@ -3147,7 +3147,7 @@ class JIRA(object):
         return sprints
 
     def update_sprint(self, id, name=None, startDate=None, endDate=None, state=None):
-	# For the 'agile' API, all the parameters are required to be in the payload. 
+        # For the 'agile' API, all the parameters are required to be in the payload.
 
         payload = {}
         if name:
