@@ -479,17 +479,17 @@ class AttachmentTests(unittest.TestCase):
 
     def test_1_add_remove_attachment(self):
         issue = self.jira.issue(self.issue_1)
-        attachment = self.jira.add_attachment(issue,
-                                              open(TEST_ATTACH_PATH, 'rb'),
-                                              "new test attachment")
-        new_attachment = self.jira.attachment(attachment.id)
-        msg = "attachment %s of issue %s" % (new_attachment.__dict__, issue)
-        self.assertEqual(
-            new_attachment.filename, 'new test attachment', msg=msg)
-        self.assertEqual(
-            new_attachment.size, os.path.getsize(TEST_ATTACH_PATH), msg=msg)
-        # JIRA returns a HTTP 204 upon successful deletion
-        self.assertEqual(attachment.delete().status_code, 204)
+        with open(TEST_ATTACH_PATH, 'rb') as f:
+            attachment = self.jira.add_attachment(
+                issue, f, "new test attachment")
+            new_attachment = self.jira.attachment(attachment.id)
+            msg = "attachment %s of issue %s" % (new_attachment.__dict__, issue)
+            self.assertEqual(
+                new_attachment.filename, 'new test attachment', msg=msg)
+            self.assertEqual(
+                new_attachment.size, os.path.getsize(TEST_ATTACH_PATH), msg=msg)
+            # JIRA returns a HTTP 204 upon successful deletion
+            self.assertEqual(attachment.delete().status_code, 204)
 
 
 @flaky
@@ -1285,7 +1285,7 @@ class IssueTests(unittest.TestCase):
         serialised_sprint = getattr(updated_issue_1.fields, sprint_customfield)[0]
 
         # Too hard to serialise the sprint object. Performing simple regex match instead.
-        assert re.search('\[id=' + str(s.id) + ',', serialised_sprint)
+        assert re.search(r'\[id=' + str(s.id) + ',', serialised_sprint)
 
         # self.jira.add_issues_to_sprint(s.id, self.issue_2)
 
@@ -1734,7 +1734,7 @@ class UserTests(unittest.TestCase):
     def test_user(self):
         user = self.jira.user(self.test_manager.CI_JIRA_ADMIN)
         self.assertEqual(user.name, self.test_manager.CI_JIRA_ADMIN)
-        self.assertRegex(user.emailAddress, '^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
+        self.assertRegex(user.emailAddress, r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
 
     @pytest.mark.xfail(reason='query returns empty list')
     def test_search_assignable_users_for_projects(self):
