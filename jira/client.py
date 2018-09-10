@@ -2060,7 +2060,8 @@ class JIRA(object):
         :param maxResults: maximum number of issues to return. Total number of results
             is available in the ``total`` attribute of the returned :class:`~jira.client.ResultList`.
             If maxResults evaluates as False, it will try to get all issues in batches.
-        :param fields: comma-separated string of issue fields to include in the results
+        :param fields: comma-separated string of issue fields to include in the results.
+            Default is to include all fields.
         :param expand: extra information to fetch inside each resource
         :param json_result: JSON response will be returned when this parameter is set to True.
                 Otherwise, :class:`~jira.client.ResultList` will be returned.
