@@ -51,8 +51,8 @@ else ifeq ($(PLATFORM), linux)
 	exit 1
   endif
   ifneq ($(wildcard /etc/debian_version),)
-	sh -c 'echo "deb https://sdkrepo.atlassian.com/debian/ stable contrib" >/etc/apt/sources.list.d/atlassian_development.list'
-	apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys B07804338C015B73
+	sh -c 'echo "deb https://packages.atlassian.com/atlassian-sdk-deb stable contrib" >/etc/apt/sources.list.d/atlassian_development.list'
+	curl -fsSL https://packages.atlassian.com/api/gpg/key/public | apt-key add -
 	apt-get install apt-transport-https
 	apt-get update
 	apt-get install atlassian-plugin-sdk
