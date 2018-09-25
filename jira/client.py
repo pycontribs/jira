@@ -514,16 +514,15 @@ class JIRA(object):
     def close(self):
         session = getattr(self, "_session", None)
         if session is not None:
+            try:
+                session.close()
+            except TypeError:
+                # TypeError: "'NoneType' object is not callable"
+                # Could still happen here because other references are also
+                # in the process to be torn down, see warning section in
+                # https://docs.python.org/2/reference/datamodel.html#object.__del__
+                pass
             self._session = None
-            if self.sys_version_info < (3, 4, 0):  # workaround for https://github.com/kennethreitz/requests/issues/2303
-                try:
-                    session.close()
-                except TypeError:
-                    # TypeError: "'NoneType' object is not callable"
-                    # Could still happen here because other references are also
-                    # in the process to be torn down, see warning section in
-                    # https://docs.python.org/2/reference/datamodel.html#object.__del__
-                    pass
 
     def _check_for_html_error(self, content):
         # JIRA has the bad habit of returning errors in pages with 200 and
@@ -2061,7 +2060,8 @@ class JIRA(object):
         :param maxResults: maximum number of issues to return. Total number of results
             is available in the ``total`` attribute of the returned :class:`~jira.client.ResultList`.
             If maxResults evaluates as False, it will try to get all issues in batches.
-        :param fields: comma-separated string of issue fields to include in the results
+        :param fields: comma-separated string of issue fields to include in the results.
+            Default is to include all fields.
         :param expand: extra information to fetch inside each resource
         :param json_result: JSON response will be returned when this parameter is set to True.
                 Otherwise, :class:`~jira.client.ResultList` will be returned.
