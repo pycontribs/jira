@@ -121,6 +121,11 @@ def translate_resource_args(func):
     """Decorator that converts Issue and Project resources to their keys when used as arguments."""
     @wraps(func)
     def wrapper(*args, **kwargs):
+        """
+        :type args: *Any
+        :type kwargs: **Any
+        :return: Any
+        """
         arg_list = []
         for arg in args:
             if isinstance(arg, (Issue, Project)):
@@ -133,7 +138,14 @@ def translate_resource_args(func):
     return wrapper
 
 
-def _field_worker(fields=None, **fieldargs):
+def _field_worker(fields=None,
+                  **fieldargs
+                  ):
+    """
+    :type fields: Optional[Dict[str, Any]]
+    :type fieldargs: **Any
+    :return: Union[Dict[str, Dict[str, Any]], Dict[str, Dict[str, str]]]
+    """
     if fields is not None:
         return {'fields': fields}
     return {'fields': fieldargs}
@@ -142,6 +154,13 @@ def _field_worker(fields=None, **fieldargs):
 class ResultList(list):
 
     def __init__(self, iterable=None, _startAt=0, _maxResults=0, _total=0, _isLast=None):
+        """
+        :type iterable: Any
+        :type _startAt: int
+        :type _maxResults: int
+        :type _total: int
+        :type isLast: Optional[bool]
+        """
         if iterable is not None:
             list.__init__(self, iterable)
         else:
@@ -157,6 +176,9 @@ class ResultList(list):
         self.current = self.startAt
 
     def __next__(self):
+        """
+        :return: int
+        """
         self.current += 1
         if self.current > self.total:
             raise StopIteration
@@ -335,9 +357,24 @@ class JIRA(object):
     JIRA_BASE_URL = Resource.JIRA_BASE_URL
     AGILE_BASE_URL = GreenHopperResource.AGILE_BASE_URL
 
-    def __init__(self, server=None, options=None, basic_auth=None, oauth=None, jwt=None, kerberos=False, kerberos_options=None,
-                 validate=False, get_server_info=True, async_=False, async_workers=5, logging=True, max_retries=3, proxies=None,
-                 timeout=None, auth=None):
+    def __init__(self,
+                 server=None,
+                 options=None,
+                 basic_auth=None,
+                 oauth=None,
+                 jwt=None,
+                 kerberos=False,
+                 kerberos_options=None,
+                 validate=False,
+                 get_server_info=True,
+                 async_=False,
+                 async_workers=5,
+                 logging=True,
+                 max_retries=3,
+                 proxies=None,
+                 timeout=None,
+                 auth=None,
+                 ):
         """Construct a JIRA client instance.
 
         Without any arguments, this client will connect anonymously to the JIRA instance
@@ -351,7 +388,8 @@ class JIRA(object):
         For quick command line access to a server, see the ``jirashell`` script included with this distribution.
 
         The easiest way to instantiate is using j = JIRA("https://jira.atlasian.com")
-
+        :param server: The server address and context path to use. Defaults to ``http://localhost:2990/jira``.
+        :type server: Optional[str]
         :param options: Specify the server and properties this client will use. Use a dict with any
             of the following properties:
             * server -- the server address and context path to use. Defaults to ``http://localhost:2990/jira``.
@@ -362,33 +400,51 @@ class JIRA(object):
             * verify -- Verify SSL certs. Defaults to ``True``.
             * client_cert -- a tuple of (cert,key) for the requests library for client side SSL
             * check_update -- Check whether using the newest python-jira library version.
+        :type options: Optional[Dict[str, Any]]
         :param basic_auth: A tuple of username and password to use when establishing a session via HTTP BASIC
         authentication.
+        :type basic_auth: Union[Dict, None, Tuple[str, str]]
         :param oauth: A dict of properties for OAuth authentication. The following properties are required:
             * access_token -- OAuth access token for the user
             * access_token_secret -- OAuth access token secret to sign with the key
             * consumer_key -- key of the OAuth application link defined in JIRA
             * key_cert -- private key file to sign requests with (should be the pair of the public key supplied to
             JIRA in the OAuth application link)
+        :type oauth: Optional[Any]
         :param kerberos: If true it will enable Kerberos authentication.
+        :type kerberos: bool
         :param kerberos_options: A dict of properties for Kerberos authentication. The following properties are possible:
             * mutual_authentication -- string DISABLED or OPTIONAL.
             Example kerberos_options structure: ``{'mutual_authentication': 'DISABLED'}``
+        :type kerberos_options: Optional[Dict[str,str]]
         :param jwt: A dict of properties for JWT authentication supported by Atlassian Connect. The following
             properties are required:
             * secret -- shared secret as delivered during 'installed' lifecycle event
             (see https://developer.atlassian.com/static/connect/docs/latest/modules/lifecycle.html for details)
             * payload -- dict of fields to be inserted in the JWT payload, e.g. 'iss'
             Example jwt structure: ``{'secret': SHARED_SECRET, 'payload': {'iss': PLUGIN_KEY}}``
+        :type jwt: Optional[Any]
         :param validate: If true it will validate your credentials first. Remember that if you are accessing JIRA
             as anonymous it will fail to instantiate.
+        :type validate: bool
         :param get_server_info: If true it will fetch server version info first to determine if some API calls
             are available.
+        :type get_server_info: bool
         :param async_: To enable async requests for those actions where we implemented it, like issue update() or delete().
+        :type async_: bool
         :param async_workers: Set the number of worker threads for async operations.
+        :type async_workers: int
         :param timeout: Set a read/connect timeout for the underlying calls to JIRA (default: None)
+        :type timeout: Optional[Any]
         Obviously this means that you cannot rely on the return code when this is enabled.
+        :param max_retries: Sets the amount Retries for the HTTP sessions initiated by the client. (Default: 3)
+        :type max_retries: int
+        :param proxies: Sets the proxies for the HTTP session.
+        :type proxies: Optional[Any]
         :param auth: Set a cookie auth token if this is required.
+        :type auth: Optional[Tuple[str,str]]
+        :param logging: Determine whether or not logging should be enabled. (Default: True)
+        :type logging: bool
         """
         # force a copy of the tuple to be used in __del__() because
         # sys.version_info could have already been deleted in __del__()
@@ -539,20 +595,35 @@ class JIRA(object):
                            if f['name'] == sprint_field_name][0]
         return sprint_field_id
 
-    def _fetch_pages(self, item_type, items_key, request_path, startAt=0, maxResults=50, params=None, base=JIRA_BASE_URL):
+    def _fetch_pages(self,
+                     item_type,
+                     items_key,
+                     request_path,
+                     startAt=0,
+                     maxResults=50,
+                     params=None,
+                     base=JIRA_BASE_URL,
+                     ):
         """Fetch pages.
 
         :param item_type: Type of single item. ResultList of such items will be returned.
+        :type item_type: type
         :param items_key: Path to the items in JSON returned from server.
                 Set it to None, if response is an array, and not a JSON object.
+        :type items_key: Optional[str]
         :param request_path: path in request URL
-        :param startAt: index of the first record to be fetched
+        :type request_path: str
+        :param startAt: index of the first record to be fetched. (Default: 0)
+        :type startAt: int
         :param maxResults: Maximum number of items to return.
-                If maxResults evaluates as False, it will try to get all items in batches.
+                If maxResults evaluates as False, it will try to get all items in batches. (Default:50)
+        :type maxResults: int
         :param params: Params to be used in all requests. Should not contain startAt and maxResults,
                         as they will be added for each request created from this function.
+        :type params: Dict[str, Any]
         :param base: base URL
-        :return: ResultList
+        :type base: str
+        :rtype: ResultList
         """
         async_class = None
         if self._options['async']:
@@ -630,7 +701,17 @@ class JIRA(object):
             # it seams that search_users can return a list() containing a single user!
             return ResultList([item_type(self._options, self._session, resource)], 0, 1, 1, True)
 
-    def _get_items_from_page(self, item_type, items_key, resource):
+    def _get_items_from_page(self,
+                             item_type,
+                             items_key,
+                             resource,
+                             ):
+        """
+        :type item_type: type
+        :type items_key: str
+        :type resource: Dict[str, Any]
+        :rtype: Union[List[Dashboard], List[Issue]]
+        """
         try:
             return [item_type(self._options, self._session, raw_issue_json) for raw_issue_json in
                     (resource[items_key] if items_key else resource)]
@@ -662,8 +743,10 @@ class JIRA(object):
         Atlassian REST API.
 
         :param resource_format: the subpath to the resource string
+        :type resource_format: str
         :param ids: values to substitute in the ``resource_format`` string
         :type ids: tuple or None
+        :rtype: Resource
         """
         resource = Resource(resource_format, self._options, self._session)
         resource.find(ids)
@@ -686,6 +769,9 @@ class JIRA(object):
         """Return the mutable server application properties.
 
         :param key: the single property to return a value for
+        :type key: Optional[str]
+        :rtype: Union[Dict[str, str], List[Dict[str, str]]]
+
         """
         params = {}
         if key is not None:
@@ -696,7 +782,9 @@ class JIRA(object):
         """Set the application property.
 
         :param key: key of the property to set
+        :type key: str
         :param value: value to assign to the property
+        :type value: str
         """
         url = self._options['server'] + \
             '/rest/api/latest/application-properties/' + key
@@ -730,12 +818,20 @@ class JIRA(object):
 
     # Attachments
     def attachment(self, id):
-        """Get an attachment Resource from the server for the specified ID."""
+        """Get an attachment Resource from the server for the specified ID.
+
+        :param id: The Attachment ID
+        :type id: str
+        :rtype: Attachment
+        """
         return self._find_for_resource(Attachment, id)
 
     # non-resource
     def attachment_meta(self):
-        """Get the attachment metadata."""
+        """Get the attachment metadata.
+
+        :rtype: Dict[str, int]
+        """
         return self._get_json('attachment/meta')
 
     @translate_resource_args
@@ -746,11 +842,14 @@ class JIRA(object):
         for its use. The user is still responsible for tidying up (e.g., closing the file, killing the socket, etc.)
 
         :param issue: the issue to attach the attachment to
+        :type issue: str
         :param attachment: file-like object to attach to the issue, also works if it is a string with the filename.
+        :type attachment: BufferedReader
         :param filename: optional name for the attached file. If omitted, the file object's ``name`` attribute
             is used. If you acquired the file-like object by any other method than ``open()``, make sure
             that a name is specified in one way or the other.
-        :rtype: an Attachment Resource
+        :type filename: str
+        :rtype: Attachment
         """
         if isinstance(attachment, string_types):
             attachment = open(attachment, "rb")
@@ -775,6 +874,10 @@ class JIRA(object):
             method = 'MultipartEncoder'
 
             def file_stream():
+                """Returns files stream of attachment.
+
+                :rtype: MultipartEncoder
+                """
                 return MultipartEncoder(
                     fields={
                         'file': (fname, attachment, 'application/octet-stream')})
@@ -794,6 +897,7 @@ class JIRA(object):
         """Delete attachment by id.
 
         :param id: ID of the attachment to delete
+        :type id: str
         """
         url = self._get_url('attachment/' + str(id))
         return self._session.delete(url)
@@ -804,20 +908,34 @@ class JIRA(object):
         """Get a component Resource from the server.
 
         :param id: ID of the component to get
+        :type id: str
         """
         return self._find_for_resource(Component, id)
 
     @translate_resource_args
-    def create_component(self, name, project, description=None, leadUserName=None, assigneeType=None,
-                         isAssigneeTypeValid=False):
+    def create_component(self,
+                         name,
+                         project,
+                         description=None,
+                         leadUserName=None,
+                         assigneeType=None,
+                         isAssigneeTypeValid=False,
+                         ):
         """Create a component inside a project and return a Resource for it.
 
         :param name: name of the component
+        :type name: str
         :param project: key of the project to create the component in
+        :type project: str
         :param description: a description of the component
+        :type description: str
         :param leadUserName: the username of the user responsible for this component
+        :type leadUserName: Optional[str]
         :param assigneeType: see the ComponentBean.AssigneeType class for valid values
-        :param isAssigneeTypeValid: boolean specifying whether the assignee type is acceptable
+        :type assigneeType: Optional[str]
+        :param isAssigneeTypeValid: boolean specifying whether the assignee type is acceptable (Default: False)
+        :type isAssigneeTypeValid: bool
+        :rtype: Component
         """
         data = {
             'name': name,
@@ -849,6 +967,8 @@ class JIRA(object):
         """Delete component by id.
 
         :param id: ID of the component to use
+        :type id: str
+        :rtype: Response
         """
         url = self._get_url('component/' + str(id))
         return self._session.delete(url)
@@ -859,6 +979,8 @@ class JIRA(object):
         """Get a custom field option Resource from the server.
 
         :param id: ID of the custom field to use
+        :type id: str
+        :rtype: CustomFieldOption
         """
         return self._find_for_resource(CustomFieldOption, id)
 
@@ -868,9 +990,12 @@ class JIRA(object):
         """Return a ResultList of Dashboard resources and a ``total`` count.
 
         :param filter: either "favourite" or "my", the type of dashboards to return
-        :param startAt: index of the first dashboard to return
+        :type filter: Optional[str]
+        :param startAt: index of the first dashboard to return (Default: 0)
+        :type startAt: int
         :param maxResults: maximum number of dashboards to return.
-            If maxResults evaluates as False, it will try to get all items in batches.
+            If maxResults evaluates as False, it will try to get all items in batches. (Default: 20)
+        :type maxResults: int
 
         :rtype: ResultList
         """
@@ -883,6 +1008,8 @@ class JIRA(object):
         """Get a dashboard Resource from the server.
 
         :param id: ID of the dashboard to get.
+        :type id: str
+        :rtype: Dashboard
         """
         return self._find_for_resource(Dashboard, id)
 
@@ -890,7 +1017,10 @@ class JIRA(object):
 
     # non-resource
     def fields(self):
-        """Return a list of all issue fields."""
+        """Return a list of all issue fields.
+
+        :rtype: List[Dict[str, Any]]
+        """
         return self._get_json('field')
 
     # Filters
@@ -899,11 +1029,16 @@ class JIRA(object):
         """Get a filter Resource from the server.
 
         :param id: ID of the filter to get.
+        :type id: str
+        :rtype: Filter
         """
         return self._find_for_resource(Filter, id)
 
     def favourite_filters(self):
-        """Get a list of filter Resources which are the favourites of the currently authenticated user."""
+        """Get a list of filter Resources which are the favourites of the currently authenticated user.
+
+        :rtype: List[Filter]
+        """
         r_json = self._get_json('filter/favourite')
         filters = [Filter(self._options, self._session, raw_filter_json)
                    for raw_filter_json in r_json]
@@ -914,9 +1049,14 @@ class JIRA(object):
         """Create a new filter and return a filter Resource for it.
 
         :param name: name of the new filter
+        :type name: str
         :param description: useful human readable description of the new filter
+        :type description: str
         :param jql: query string that defines the filter
+        :type jql: str
         :param favourite: whether to add this filter to the current user's favorites
+        :type favourite: bool
+        :rtype: Filter
 
         """
         data = {}
@@ -941,9 +1081,13 @@ class JIRA(object):
         """Update a filter and return a filter Resource for it.
 
         :param name: name of the new filter
+        :type name: Optional[str]
         :param description: useful human readable description of the new filter
+        :type description: Optional[str]
         :param jql: query string that defines the filter
+        :type jql: Optional[str]
         :param favourite: whether to add this filter to the current user's favorites
+        :type favourite: Optional[bool]
 
         """
         filter = self.filter(filter_id)
@@ -967,8 +1111,13 @@ class JIRA(object):
         """Return a list of groups matching the specified criteria.
 
         :param query: filter groups by name with this string
+        :type query: Optional[str]
         :param exclude: filter out groups by name with this string
-        :param maxResults: maximum results to return. defaults to 9999
+        :type exclude: Optional[Any]
+        :param maxResults: maximum results to return. (Default: 9999)
+        :type maxResults: int
+        :rtype: List[str]
+
         """
         params = {}
         groups = []
@@ -983,7 +1132,11 @@ class JIRA(object):
         return sorted(groups)
 
     def group_members(self, group):
-        """Return a hash or users with their information. Requires JIRA 6.0 or will raise NotImplemented."""
+        """Return a hash or users with their information. Requires JIRA 6.0 or will raise NotImplemented.
+
+        :param group: Name of the group.
+        :type group: str
+        """
         if self._version < (6, 0, 0):
             raise NotImplementedError(
                 "Group members is not implemented in JIRA before version 6.0, upgrade the instance, if possible.")
@@ -1014,7 +1167,9 @@ class JIRA(object):
         """Create a new group in JIRA.
 
         :param groupname: The name of the group you wish to create.
+        :type groupname: str
         :return: Boolean - True if successful.
+        :rtype: bool
         """
         url = self._options['server'] + '/rest/api/latest/group'
 
@@ -1035,7 +1190,9 @@ class JIRA(object):
         """Delete a group from the JIRA instance.
 
         :param groupname: The group to be deleted from the JIRA instance.
+        :type groupname: str
         :return: Boolean. Returns True on success.
+        :rtype: bool
         """
         # implementation based on
         # https://docs.atlassian.com/jira/REST/ondemand/#d2e5173
@@ -1050,8 +1207,12 @@ class JIRA(object):
         """Get an issue Resource from the server.
 
         :param id: ID or key of the issue to get
+        :type id: Union[Issue, str]
         :param fields: comma-separated string of issue fields to include in the results
+        :type fields: Optional[str]
         :param expand: extra information to fetch inside each resource
+        :type expand: Optional[str]
+        :rtype: Issue
         """
         # this allows us to pass Issue objects to issue()
         if isinstance(id, Issue):
@@ -1083,8 +1244,11 @@ class JIRA(object):
 
         :param fields: a dict containing field names and the values to use. If present, all other keyword arguments
             will be ignored
+        :type fields: Optional[Dict[str, Any]]
         :param prefetch: whether to reload the created issue Resource so that all of its data is present in the value
             returned from this method
+        :type prefetch: bool
+        :rtype: Issue
         """
         data = _field_worker(fields, **fieldargs)
 
@@ -1117,8 +1281,12 @@ class JIRA(object):
 
         :param field_list: a list of dicts each containing field names and the values to use. Each dict
             is an individual issue to create and is subject to its minimum requirements.
+        :type field_list: List[Dict[str, Any]]
         :param prefetch: whether to reload the created issue Resource for each created issue so that all
             of its data is present in the value returned from this method.
+        :type prefetch: bool
+        :rtype: List[Dict[str, Any]]
+
         """
         data = {'issueUpdates': []}
         for field_dict in field_list:
@@ -1165,6 +1333,10 @@ class JIRA(object):
         return issue_list
 
     def supports_service_desk(self):
+        """Returns whether or not the JIRA instance supports service desk.
+
+        :rtype: bool
+        """
         url = self._options['server'] + '/rest/servicedeskapi/info'
         headers = {'X-ExperimentalApi': 'opt-in'}
         try:
@@ -1174,7 +1346,15 @@ class JIRA(object):
             return False
 
     def create_customer(self, email, displayName):
-        """Create a new customer and return an issue Resource for it."""
+        """Create a new customer and return an issue Resource for it.
+
+        :param email: Customer Email
+        :type email: str
+        :param displayName: Customer display name
+        :type displayName: str
+        :rtype: Customer
+
+        """
         url = self._options['server'] + '/rest/servicedeskapi/customer'
         headers = {'X-ExperimentalApi': 'opt-in'}
         r = self._session.post(url, headers=headers, data=json.dumps({
@@ -1189,7 +1369,11 @@ class JIRA(object):
         return Customer(self._options, self._session, raw=raw_customer_json)
 
     def service_desks(self):
-        """Get a list of ServiceDesk Resources from the server visible to the current authenticated user."""
+        """Get a list of ServiceDesk Resources from the server visible to the current authenticated user.
+
+        :rtype: List[ServiceDesk]
+
+        """
         url = self._options['server'] + '/rest/servicedeskapi/servicedesk'
         headers = {'X-ExperimentalApi': 'opt-in'}
         r_json = json_loads(self._session.get(url, headers=headers))
@@ -1201,6 +1385,9 @@ class JIRA(object):
         """Get a Service Desk Resource from the server.
 
         :param id: ID or key of the Service Desk to get
+        :type id: str
+        :rtype: ServiceDesk
+
         """
         return self._find_for_resource(ServiceDesk, id)
 
@@ -1220,8 +1407,11 @@ class JIRA(object):
 
         :param fields: a dict containing field names and the values to use. If present, all other keyword arguments
             will be ignored
+        :type fields: Dict[str, Any]
         :param prefetch: whether to reload the created issue Resource so that all of its data is present in the value
             returned from this method
+        :type prefetch: bool
+        :rtype: Issue
         """
         data = fields
 
@@ -1254,22 +1444,34 @@ class JIRA(object):
         else:
             return Issue(self._options, self._session, raw=raw_issue_json)
 
-    def createmeta(self, projectKeys=None, projectIds=[], issuetypeIds=None, issuetypeNames=None, expand=None):
+    def createmeta(self,
+                   projectKeys=None,
+                   projectIds=[],
+                   issuetypeIds=None,
+                   issuetypeNames=None,
+                   expand=None,
+                   ):
         """Get the metadata required to create issues, optionally filtered by projects and issue types.
 
         :param projectKeys: keys of the projects to filter the results with.
             Can be a single value or a comma-delimited string. May be combined
             with projectIds.
+        :type projectKeys: Union[None, Tuple[str, str], str]
         :param projectIds: IDs of the projects to filter the results with. Can
             be a single value or a comma-delimited string. May be combined with
             projectKeys.
+        :type projectIds: Union[List, Tuple[str, str]]
         :param issuetypeIds: IDs of the issue types to filter the results with.
             Can be a single value or a comma-delimited string. May be combined
             with issuetypeNames.
+        :type issuetypeIds: Optional[List[str]]
         :param issuetypeNames: Names of the issue types to filter the results
             with. Can be a single value or a comma-delimited string. May be
             combined with issuetypeIds.
+        :type issuetypeNames: Optional[str]
         :param expand: extra information to fetch inside each resource.
+        :type expand: Optional[str]
+        :rtype: Dict[str, Any]
 
         """
         params = {}
@@ -1293,9 +1495,8 @@ class JIRA(object):
         """Assign an issue to a user. None will set it to unassigned. -1 will set it to Automatic.
 
         :param issue: the issue ID or key to assign
-        :param assignee: the user to assign the issue to
-
         :type issue: int or str
+        :param assignee: the user to assign the issue to
         :type assignee: str
 
         :rtype: bool
@@ -1313,6 +1514,8 @@ class JIRA(object):
         """Get a list of comment Resources.
 
         :param issue: the issue to get comments from
+        :type issue: str
+        :rtype: List[Comment]
         """
         r_json = self._get_json('issue/' + str(issue) + '/comment')
 
@@ -1336,12 +1539,18 @@ class JIRA(object):
         The issue identifier and comment body are required.
 
         :param issue: ID or key of the issue to add the comment to
+        :type issue: str
         :param body: Text of the comment to add
+        :type body: str
         :param visibility: a dict containing two entries: "type" and "value".
             "type" is 'role' (or 'group' if the JIRA server has configured
             comment visibility for groups) and 'value' is the name of the role
             (or group) to which viewing of this comment will be restricted.
-        :param is_internal: defines whether a comment has to be marked as 'Internal' in Jira Service Desk
+        :type visibility: Optional[Dict[str, str]]
+        :param is_internal: Defines whether a comment has to be marked as 'Internal' in Jira Service Desk (Default: False)
+        :type is_internal: bool
+        :rtype: Comment
+
         """
         data = {
             'body': body,
@@ -1372,6 +1581,8 @@ class JIRA(object):
         """Get the edit metadata for an issue.
 
         :param issue: the issue to get metadata for
+        :rtype: Dict[str, Dict[str, Dict[str, Any]]]
+
         """
         return self._get_json('issue/' + str(issue) + '/editmeta')
 
@@ -1584,6 +1795,7 @@ class JIRA(object):
         """Get a votes Resource from the server.
 
         :param issue: ID or key of the issue to get the votes for
+        :rtype: Votes
         """
         return self._find_for_resource(Votes, issue)
 
@@ -1592,6 +1804,7 @@ class JIRA(object):
         """Register a vote for the current authenticated user on an issue.
 
         :param issue: ID or key of the issue to vote on
+        :rtype: Response
         """
         url = self._get_url('issue/' + str(issue) + '/votes')
         return self._session.post(url)
@@ -1610,6 +1823,7 @@ class JIRA(object):
         """Get a watchers Resource from the server for an issue.
 
         :param issue: ID or key of the issue to get the watchers for
+        :rtype: Watchers
         """
         return self._find_for_resource(Watchers, issue)
 
@@ -1630,6 +1844,7 @@ class JIRA(object):
 
         :param issue: ID or key of the issue affected
         :param watcher: username of the user to remove from the watchers list
+        :rtype: Response
         """
         url = self._get_url('issue/' + str(issue) + '/watchers')
         params = {'username': watcher}
@@ -1641,6 +1856,7 @@ class JIRA(object):
         """Get a list of worklog Resources from the server for an issue.
 
         :param issue: ID or key of the issue to get worklogs from
+        :rtype: List[Worklog]
         """
         r_json = self._get_json('issue/' + str(issue) + '/worklog')
         worklogs = [Worklog(self._options, self._session, raw_worklog_json)
@@ -1653,12 +1869,22 @@ class JIRA(object):
 
         :param issue: ID or key of the issue to get the worklog from
         :param id: ID of the worklog to get
+        :rtype: Worklog
         """
         return self._find_for_resource(Worklog, (issue, id))
 
     @translate_resource_args
-    def add_worklog(self, issue, timeSpent=None, timeSpentSeconds=None, adjustEstimate=None,
-                    newEstimate=None, reduceBy=None, comment=None, started=None, user=None):
+    def add_worklog(self,
+                    issue,
+                    timeSpent=None,
+                    timeSpentSeconds=None,
+                    adjustEstimate=None,
+                    newEstimate=None,
+                    reduceBy=None,
+                    comment=None,
+                    started=None,
+                    user=None,
+                    ):
         """Add a new worklog entry on an issue and return a Resource for it.
 
         :param issue: the issue to add the worklog to
@@ -1669,6 +1895,7 @@ class JIRA(object):
         :param reduceBy: the amount to reduce the remaining estimate by e.g. "2d"
         :param started: Moment when the work is logged, if not specified will default to now
         :param comment: optional worklog comment
+        :rtype: Worklog
         """
         params = {}
         if adjustEstimate is not None:
@@ -1722,6 +1949,8 @@ class JIRA(object):
             ``group`` if the JIRA server has configured comment visibility for
             groups) and ``value`` is the name of the role (or group) to which
             viewing of this comment will be restricted.
+        :type comment: Optional[Dict[str, Any]]
+        :rtype: Response
         """
         # let's see if we have the right issue link 'type' and fix it if needed
         if not hasattr(self, '_cached_issuetypes'):
@@ -1769,7 +1998,10 @@ class JIRA(object):
     # Issue link types
 
     def issue_link_types(self):
-        """Get a list of issue link type Resources from the server."""
+        """Get a list of issue link type Resources from the server.
+
+        :rtype: List[IssueLinkType]
+        """
         r_json = self._get_json('issueLinkType')
         link_types = [IssueLinkType(self._options, self._session, raw_link_json) for raw_link_json in
                       r_json['issueLinkTypes']]
@@ -1779,13 +2011,20 @@ class JIRA(object):
         """Get an issue link type Resource from the server.
 
         :param id: ID of the issue link type to get
+        :type id: str
+        :rtype: IssueLinkType
+
         """
         return self._find_for_resource(IssueLinkType, id)
 
     # Issue types
 
     def issue_types(self):
-        """Get a list of issue type Resources from the server."""
+        """Get a list of issue type Resources from the server.
+
+        :rtype: List[IssueType]
+
+        """
         r_json = self._get_json('issuetype')
         issue_types = [IssueType(
             self._options, self._session, raw_type_json) for raw_type_json in r_json]
@@ -1795,10 +2034,16 @@ class JIRA(object):
         """Get an issue type Resource from the server.
 
         :param id: ID of the issue type to get
+        :rtype: IssueType
         """
         return self._find_for_resource(IssueType, id)
 
     def issue_type_by_name(self, name):
+        """
+        :param name: Name of the issue type
+        :type name: str
+        :rtype: IssueType
+        """
         issue_types = self.issue_types()
         try:
             issue_type = [it for it in issue_types if it.name == name][0]
@@ -1807,6 +2052,11 @@ class JIRA(object):
         return issue_type
 
     def request_types(self, service_desk):
+        """ Returns request types supported by a service desk instance.
+        :param service_desk: The service desk instance.
+        :type service_desk: ServiceDesk
+        :rtype: List[RequestType]
+        """
         if hasattr(service_desk, 'id'):
             service_desk = service_desk.id
         url = (self._options['server'] +
@@ -1830,13 +2080,23 @@ class JIRA(object):
     # User permissions
 
     # non-resource
-    def my_permissions(self, projectKey=None, projectId=None, issueKey=None, issueId=None):
+    def my_permissions(self,
+                       projectKey=None,
+                       projectId=None,
+                       issueKey=None,
+                       issueId=None,
+                       ):
         """Get a dict of all available permissions on the server.
 
         :param projectKey: limit returned permissions to the specified project
+        :type projectKey: Optional[str]
         :param projectId: limit returned permissions to the specified project
+        :type projectId: Optional[str]
         :param issueKey: limit returned permissions to the specified issue
+        :type issueKey: Optional[str]
         :param issueId: limit returned permissions to the specified issue
+        :type issueId: Optional[str]
+        :rtype: Dict[str, Dict[str, Dict[str, str]]]
         """
         params = {}
         if projectKey is not None:
@@ -1852,7 +2112,11 @@ class JIRA(object):
     # Priorities
 
     def priorities(self):
-        """Get a list of priority Resources from the server."""
+        """Get a list of priority Resources from the server.
+
+        :rtype: List[Priority]
+
+        """
         r_json = self._get_json('priority')
         priorities = [Priority(
             self._options, self._session, raw_priority_json) for raw_priority_json in r_json]
@@ -1862,13 +2126,20 @@ class JIRA(object):
         """Get a priority Resource from the server.
 
         :param id: ID of the priority to get
+        :type id: str
+        :rtype: Priority
+
         """
         return self._find_for_resource(Priority, id)
 
     # Projects
 
     def projects(self):
-        """Get a list of project Resources from the server visible to the current authenticated user."""
+        """Get a list of project Resources from the server visible to the current authenticated user.
+
+        :rtype: List[Project]
+
+        """
         r_json = self._get_json('project')
         projects = [Project(
             self._options, self._session, raw_project_json) for raw_project_json in r_json]
@@ -1878,6 +2149,7 @@ class JIRA(object):
         """Get a project Resource from the server.
 
         :param id: ID or key of the project to get
+        :rtype: Project
         """
         return self._find_for_resource(Project, id)
 
@@ -1914,8 +2186,9 @@ class JIRA(object):
         :param size: size of the avatar file
         :param avatar_img: file-like object holding the avatar
         :param contentType: explicit specification for the avatar image's content-type
-        :param boolean auto_confirm: whether to automatically confirm the temporary avatar by calling
-            :py:meth:`confirm_project_avatar` with the return value of this method.
+        :param auto_confirm: whether to automatically confirm the temporary avatar by calling
+            :py:meth:`confirm_project_avatar` with the return value of this method. (Default: False)
+        :type auto_confirm: bool
         """
         size_from_file = os.path.getsize(filename)
         if size != size_from_file:
@@ -1986,6 +2259,8 @@ class JIRA(object):
         """Get a list of component Resources present on a project.
 
         :param project: ID or key of the project to get components from
+        :type project: str
+        :rtype: List[Component]
         """
         r_json = self._get_json('project/' + project + '/components')
         components = [Component(
@@ -1997,6 +2272,8 @@ class JIRA(object):
         """Get a list of version Resources present on a project.
 
         :param project: ID or key of the project to get versions from
+        :type project: str
+        :rtype: List[Version]
         """
         r_json = self._get_json('project/' + project + '/versions')
         versions = [
@@ -2036,7 +2313,11 @@ class JIRA(object):
     # Resolutions
 
     def resolutions(self):
-        """Get a list of resolution Resources from the server."""
+        """Get a list of resolution Resources from the server.
+
+        :rtype: List[Resolution]
+
+        """
         r_json = self._get_json('resolution')
         resolutions = [Resolution(
             self._options, self._session, raw_res_json) for raw_res_json in r_json]
@@ -2046,34 +2327,45 @@ class JIRA(object):
         """Get a resolution Resource from the server.
 
         :param id: ID of the resolution to get
+        :type id: str
+        :rtype: Resolution
         """
         return self._find_for_resource(Resolution, id)
 
     # Search
 
-    def search_issues(self, jql_str, startAt=0, maxResults=50, validate_query=True, fields=None, expand=None,
-                      json_result=None):
+    def search_issues(self,
+                      jql_str,
+                      startAt=0,
+                      maxResults=50,
+                      validate_query=True,
+                      fields=None,
+                      expand=None,
+                      json_result=None,
+                      ):
         """Get a :class:`~jira.client.ResultList` of issue Resources matching a JQL search string.
 
-        :param jql_str: the JQL search string to use
-        :param startAt: index of the first issue to return
-        :param maxResults: maximum number of issues to return. Total number of results
+        :param jql_str: The JQL search string.
+        :type jql_str: str
+        :param startAt: Index of the first issue to return. (Default: 0)
+        :type startAt: int
+        :param maxResults: Maximum number of issues to return. Total number of results
             is available in the ``total`` attribute of the returned :class:`~jira.client.ResultList`.
-            If maxResults evaluates as False, it will try to get all issues in batches.
+            If maxResults evaluates as False, it will try to get all issues in batches. (Default: 50)
+        :type maxResults: int
+        :param validate_query: Whether or not the query should be validated. (Default: True)
+        :type validate_query: bool
         :param fields: comma-separated string of issue fields to include in the results.
             Default is to include all fields.
+        :type fields: Optional[str]
         :param expand: extra information to fetch inside each resource
+        :type expand: Optional[str]
         :param json_result: JSON response will be returned when this parameter is set to True.
                 Otherwise, :class:`~jira.client.ResultList` will be returned.
-
-        :type jql_str: str
-        :type startAt: int
-        :type maxResults: int
-        :type fields: str
-        :type expand: str
         :type json_result: bool
 
         :rtype: dict or :class:`~jira.client.ResultList`
+
         """
         if fields is None:
             fields = []
@@ -2125,7 +2417,9 @@ class JIRA(object):
 
     # non-resource
     def server_info(self):
-        """Get a dict of server information for this JIRA instance."""
+        """Get a dict of server information for this JIRA instance.
+        :rtype: Dict[str, Any]
+        """
         retry = 0
         j = self._get_json('serverInfo')
         while not j and retry < 3:
@@ -2141,13 +2435,18 @@ class JIRA(object):
     # Status
 
     def statuses(self):
-        """Get a list of status Resources from the server."""
+        """Get a list of status Resources from the server.
+
+        :rtype: List[Status]
+
+        """
         r_json = self._get_json('status')
         statuses = [Status(self._options, self._session, raw_stat_json)
                     for raw_stat_json in r_json]
         return statuses
 
     def status(self, id):
+        # type: (str) -> Status
         """Get a status Resource from the server.
 
         :param id: ID of the status resource to get
@@ -2157,7 +2456,10 @@ class JIRA(object):
     # Category
 
     def statuscategories(self):
-        """Get a list of status category Resources from the server."""
+        """Get a list of status category Resources from the server.
+
+        :rtype: List[StatusCategory]
+        """
         r_json = self._get_json('statuscategory')
         statuscategories = [StatusCategory(self._options, self._session, raw_stat_json)
                             for raw_stat_json in r_json]
@@ -2167,6 +2469,10 @@ class JIRA(object):
         """Get a status category Resource from the server.
 
         :param id: ID of the status category resource to get
+        :type id: int
+
+        :rtype: StatusCategory
+
         """
         return self._find_for_resource(StatusCategory, id)
 
@@ -2176,7 +2482,11 @@ class JIRA(object):
         """Get a user Resource from the server.
 
         :param id: ID of the user to get
-        :param expand: extra information to fetch inside each resource
+        :param id: str
+        :param expand: Extra information to fetch inside each resource
+        :type expand: Optional[Any]
+
+        :rtype: User
         """
         user = User(self._options, self._session)
         params = {}
@@ -2188,33 +2498,53 @@ class JIRA(object):
     def search_assignable_users_for_projects(self, username, projectKeys, startAt=0, maxResults=50):
         """Get a list of user Resources that match the search string and can be assigned issues for projects.
 
-        :param username: a string to match usernames against
-        :param projectKeys: comma-separated list of project keys to check for issue assignment permissions
-        :param startAt: index of the first user to return
-        :param maxResults: maximum number of users to return.
-                If maxResults evaluates as False, it will try to get all users in batches.
+        :param username: A string to match usernames against
+        :type username: str
+        :param projectKeys: Comma-separated list of project keys to check for issue assignment permissions
+        :type projectKeys: str
+        :param startAt: Index of the first user to return (Default: 0)
+        :type startAt: int
+        :param maxResults: Maximum number of users to return.
+                If maxResults evaluates as False, it will try to get all users in batches. (Default: 50)
+        :type maxResults: int
+
+        :rtype: ResultList
+
         """
         params = {
             'username': username,
             'projectKeys': projectKeys}
         return self._fetch_pages(User, None, 'user/assignable/multiProjectSearch', startAt, maxResults, params)
 
-    def search_assignable_users_for_issues(self, username, project=None, issueKey=None, expand=None, startAt=0,
-                                           maxResults=50):
+    def search_assignable_users_for_issues(self,
+                                           username,
+                                           project=None,
+                                           issueKey=None,
+                                           expand=None,
+                                           startAt=0,
+                                           maxResults=50,
+                                           ):
         """Get a list of user Resources that match the search string for assigning or creating issues.
 
         This method is intended to find users that are eligible to create issues in a project or be assigned
         to an existing issue. When searching for eligible creators, specify a project. When searching for eligible
         assignees, specify an issue key.
 
-        :param username: a string to match usernames against
-        :param project: filter returned users by permission in this project (expected if a result will be used to
+        :param username: A string to match usernames against
+        :type username: str
+        :param project: Filter returned users by permission in this project (expected if a result will be used to
             create an issue)
-        :param issueKey: filter returned users by this issue (expected if a result will be used to edit this issue)
-        :param expand: extra information to fetch inside each resource
-        :param startAt: index of the first user to return
+        :type project: Optional[str]
+        :param issueKey: Filter returned users by this issue (expected if a result will be used to edit this issue)
+        :type issueKey: Optional[str]
+        :param expand: Extra information to fetch inside each resource
+        :type expand: Optional[Any]
+        :param startAt: Index of the first user to return (Default: 0)
+        :type startAt: int
         :param maxResults: maximum number of users to return.
-                If maxResults evaluates as False, it will try to get all items in batches.
+                If maxResults evaluates as False, it will try to get all items in batches. (Default: 50)
+
+        :rtype: ResultList
         """
         params = {
             'username': username}
@@ -2234,7 +2564,14 @@ class JIRA(object):
         """
         return self._get_json('user/avatars', params={'username': username})
 
-    def create_temp_user_avatar(self, user, filename, size, avatar_img, contentType=None, auto_confirm=False):
+    def create_temp_user_avatar(self,
+                                user,
+                                filename,
+                                size,
+                                avatar_img,
+                                contentType=None,
+                                auto_confirm=False,
+                                ):
         """Register an image file as a user avatar.
 
         The avatar created is temporary and must be confirmed before it can
@@ -2252,13 +2589,21 @@ class JIRA(object):
         argument with a truthy value and :py:meth:`confirm_user_avatar` will be called for you before this method
         returns.
 
-        :param user: user to register the avatar for
+        :param user: User to register the avatar for
+        :type user: str
         :param filename: name of the avatar file
+        :type filename: str
         :param size: size of the avatar file
+        :type size: int
         :param avatar_img: file-like object containing the avatar
+        :type avatar_img: bytes
         :param contentType: explicit specification for the avatar image's content-type
+        :type contentType: Optional[Any]
         :param auto_confirm: whether to automatically confirm the temporary avatar by calling
-            :py:meth:`confirm_user_avatar` with the return value of this method.
+            :py:meth:`confirm_user_avatar` with the return value of this method. (Default: False)
+        :type auto_confirm: bool
+
+        :rtype: NoReturn
         """
         size_from_file = os.path.getsize(filename)
         if size != size_from_file:
@@ -2298,7 +2643,9 @@ class JIRA(object):
         argument.
 
         :param user: the user to confirm the avatar for
+        :type user: str
         :param cropping_properties: a dict of cropping properties from :py:meth:`create_temp_user_avatar`
+        :type cropping_properties: Dict[str,Any]
         """
         data = cropping_properties
         url = self._get_url('user/avatar')
@@ -2330,11 +2677,19 @@ class JIRA(object):
         """Get a list of user Resources that match the specified search string.
 
         :param user: a string to match usernames, name or email against.
+        :type user: str
         :param startAt: index of the first user to return.
+        :type startAt: int
         :param maxResults: maximum number of users to return.
                 If maxResults evaluates as False, it will try to get all items in batches.
-        :param includeActive: If true, then active users are included in the results.
-        :param includeInactive: If true, then inactive users are included in the results.
+        :type maxResults: int
+        :param includeActive: If true, then active users are included in the results. (Default: True)
+        :type includeActive: bool
+        :param includeInactive: If true, then inactive users are included in the results. (Default: False)
+        :type includeInactive: bool
+
+
+        :rtype: ResultList
         """
         params = {
             'username': user,
@@ -2346,11 +2701,16 @@ class JIRA(object):
         """Get a list of user Resources that match a username string and have browse permission for the issue or project.
 
         :param user: a string to match usernames against.
+        :type user: str
         :param issueKey: find users with browse permission for this issue.
+        :type issueKey: Optional[str]
         :param projectKey: find users with browse permission for this project.
-        :param startAt: index of the first user to return.
+        :type projectKey: Optional[str]
+        :param startAt: index of the first user to return. (Default: 0)
+        :type startAt: int
         :param maxResults: maximum number of users to return.
-                If maxResults evaluates as False, it will try to get all items in batches.
+                If maxResults evaluates as False, it will try to get all items in batches. (Default: 50)
+        :type maxResults: int
         """
         params = {
             'username': user}
@@ -2363,15 +2723,33 @@ class JIRA(object):
     # Versions
 
     @translate_resource_args
-    def create_version(self, name, project, description=None, releaseDate=None, startDate=None, archived=False,
-                       released=False):
+    def create_version(self,
+                       name,
+                       project,
+                       description=None,
+                       releaseDate=None,
+                       startDate=None,
+                       archived=False,
+                       released=False,
+                       ):
         """Create a version in a project and return a Resource for it.
 
         :param name: name of the version to create
+        :type name: str
         :param project: key of the project to create the version in
+        :type project: str
         :param description: a description of the version
+        :type description: str
         :param releaseDate: the release date assigned to the version
+        :type releaseDate: Optional[Any]
         :param startDate: The start date for the version
+        :type startDate: Optional[Any]
+        :param archived: Denotes whether a version should be archived. (Default: False)
+        :type archived: bool
+        :param released: Denotes whether a version is released. (Default: False)
+        :type released: bool
+
+        :rtype: Version
         """
         data = {
             'name': name,
@@ -2420,7 +2798,11 @@ class JIRA(object):
         """Get a version Resource.
 
         :param id: ID of the version to get
+        :type id: str
         :param expand: extra information to fetch inside each resource
+        :type expand: Optional[Any]
+
+        :rtype: Version
         """
         version = Version(self._options, self._session)
         params = {}
@@ -2448,7 +2830,14 @@ class JIRA(object):
     # Session authentication
 
     def session(self, auth=None):
-        """Get a dict of the current authenticated user's session information."""
+        """Get a dict of the current authenticated user's session information.
+
+        :param auth: Tuple of username and password.
+        :type auth: Optional[Tuple[str,str]]
+
+        :rtype: User
+
+        """
         url = '{server}{auth_url}'.format(**self._options)
 
         if isinstance(self._session.auth, tuple) or auth:
@@ -2473,6 +2862,8 @@ class JIRA(object):
         """Destroy the user's current WebSudo session.
 
         Works only for non-cloud deployments, for others does nothing.
+
+        :rtype: Optional[Any]
         """
         if self.deploymentType != 'Cloud':
             url = self._options['server'] + '/rest/auth/1/websudo'
@@ -2480,6 +2871,17 @@ class JIRA(object):
 
     # Utilities
     def _create_http_basic_session(self, username, password, timeout=None):
+        """ Creates a basic http session.
+
+        :param username: Username for the session
+        :type username: str
+        :param password: Password for the username
+        :type password: str
+        :param timeout: If set determines the timeout period for the Session.
+        :type timeout: Optional[int]
+
+        :rtype: NoReturn
+        """
         verify = self._options['verify']
         self._session = ResilientSession(timeout=timeout)
         self._session.verify = verify
@@ -2553,11 +2955,38 @@ class JIRA(object):
         return self._session.put(url, params=params, data=json.dumps(data))
 
     def _get_url(self, path, base=JIRA_BASE_URL):
+        """ Returns the full url based on JIRA base url and the path provided
+
+        :param path: The subpath desired.
+        :type path: str
+        :param base: The base url which should be prepended to the path
+        :type base: Optional[str]
+
+        :return Fully qualified URL
+        :rtype: str
+
+        """
         options = self._options.copy()
         options.update({'path': path})
         return base.format(**options)
 
-    def _get_json(self, path, params=None, base=JIRA_BASE_URL):
+    def _get_json(self,
+                  path,
+                  params=None,
+                  base=JIRA_BASE_URL,
+                  ):
+        """Get the json for a given path and params.
+
+        :param path: The subpath required
+        :type path: str
+        :param params: Parameters to filter the json query.
+        :type params: Optional[Dict[str, Any]]
+        :param base: The Base JIRA URL, defaults to the instance base.
+        :type base: Optional[str]
+
+        :rtype: Union[Dict[str, Any], List[Dict[str, str]]]
+
+        """
         url = self._get_url(path, base)
         r = self._session.get(url, params=params)
         try:
@@ -2597,6 +3026,14 @@ class JIRA(object):
                 self._magic = None
 
     def _get_mime_type(self, buff):
+        """Get the MIME type for a given stream of bytes
+
+        :param buff: Stream of bytes
+        :type buff: bytes
+
+        :rtype: str
+
+        """
         if self._magic is not None:
             return self._magic.id_buffer(buff)
         else:
@@ -2610,8 +3047,11 @@ class JIRA(object):
     def rename_user(self, old_user, new_user):
         """Rename a JIRA user.
 
-        :param old_user: string with username login
-        :param new_user: string with username login
+        :param old_user: Old username login
+        :type old_user: str
+        :param new_user: New username login
+        :type new_user: str
+
         """
         if self._version > (6, 0, 0):
             url = self._options['server'] + '/rest/api/latest/user'
@@ -2631,6 +3071,15 @@ class JIRA(object):
                                       "< 6.0.0 has been removed.")
 
     def delete_user(self, username):
+        """Deletes a JIRA User.
+
+        :param username: Username to delete
+        :type username: str
+
+        :return: Success of user deletion
+        :rtype: bool
+
+        """
 
         url = self._options['server'] + '/rest/api/latest/user/?username=%s' % username
 
@@ -2798,6 +3247,10 @@ class JIRA(object):
         return None
 
     def current_user(self):
+        """Returns the username of the current user.
+
+        :rtype: str
+        """
         if not hasattr(self, '_serverInfo') or 'username' not in self._serverInfo:
 
             url = self._get_url('serverInfo')
@@ -2815,8 +3268,10 @@ class JIRA(object):
     def delete_project(self, pid):
         """Delete project from Jira.
 
-        :param str pid:     JIRA projectID or Project or slug
-        :returns bool:      True if project was deleted
+        :param pid: JIRA projectID or Project or slug
+        :type pid: str
+        :return: True if project was deleted
+        :rtype: bool
         :raises JIRAError:  If project not found or not enough permissions
         :raises ValueError: If pid parameter is not Project, slug or ProjectID
         """
@@ -2893,13 +3348,23 @@ class JIRA(object):
         return templates
 
     def create_project(self, key, name=None, assignee=None, type="Software", template_name=None):
-        """Key is mandatory and has to match JIRA project key requirements, usually only 2-10 uppercase characters.
+        """Create a project with the specified parameters.
 
-        If name is not specified it will use the key value.
-        If assignee is not specified it will use current user.
-        Parameter template_name is used to create a project based on one of the existing project templates.
-        If template_name is not specified, then it should use one of the default values.
-        The returned value should evaluate to False if it fails otherwise it will be the new project id.
+        :param key: Mandatory. Must match JIRA project key requirements, usually only 2-10 uppercase characters.
+        :type: str
+        :param name: If not specified it will use the key value.
+        :type name: Optional[str]
+        :param assignee: If not specified it will use current user.
+        :type assignee: Optional[str]
+        :param type: Determines the type of project should be created.
+        :type type: Optional[str]
+        :param template_name: is used to create a project based on one of the existing project templates.
+                If `template_name` is not specified, then it should use one of the default values.
+        :type template_name: Optional[str]
+
+        :return: Should evaluate to False if it fails otherwise it will be the new project id.
+        :rtype: Union[bool,int]
+
         """
         if assignee is None:
             assignee = self.current_user()
@@ -2956,26 +3421,43 @@ class JIRA(object):
                     f.name, r.status_code))
         return False
 
-    def add_user(self, username, email, directoryId=1, password=None,
-                 fullname=None, notify=False, active=True, ignore_existing=False, application_keys=None):
+    def add_user(self,
+                 username,
+                 email,
+                 directoryId=1,
+                 password=None,
+                 fullname=None,
+                 notify=False,
+                 active=True,
+                 ignore_existing=False,
+                 application_keys=None,
+                 ):
         """Create a new JIRA user.
 
         :param username: the username of the new user
-        :type username: ``str``
+        :type username: str
         :param email: email address of the new user
-        :type email: ``str``
-        :param directoryId: the directory ID the new user should be a part of
-        :type directoryId: ``int``
+        :type email: str
+        :param directoryId: The directory ID the new user should be a part of (Default: 1)
+        :type directoryId: int
         :param password: Optional, the password for the new user
-        :type password: ``str``
+        :type password: Optional[str]
         :param fullname: Optional, the full name of the new user
-        :type fullname: ``str``
-        :param notify: Whether or not to send a notification to the new user
-        :type notify: ``bool``
-        :param active: Whether or not to make the new user active upon creation
-        :type active: ``bool``
+        :type fullname: Optional[str]
+        :param notify: Whether or not to send a notification to the new user. (Default: False)
+        :type notify: bool
+        :param active: Whether or not to make the new user active upon creation. (Default: True)
+        :type active: bool
+        :param ignore_existing: Whether or not to ignore and existing user. (Default: False)
+        :type ignore_existing: bool
         :param applicationKeys: Keys of products user should have access to
-        :type applicationKeys: ``list``
+        :type applicationKeys: Optional[list]
+
+        :return: Whether or not the user creation was successful.
+        :rtype: bool
+
+        :raises JIRAError:  If username already exists and `ignore_existing` has not been set to `True`.
+
         """
         if not fullname:
             fullname = username
@@ -3011,8 +3493,12 @@ class JIRA(object):
         """Add a user to an existing group.
 
         :param username: Username that will be added to specified group.
+        :type username: str
         :param group: Group that the user will be added to.
+        :type group: str
+
         :return: json response from Jira server for success or a value that evaluates as False in case of failure.
+        :rtype: Union[bool,Dict[str,Any]]
         """
         url = self._options['server'] + '/rest/api/latest/group/user'
         x = {'groupname': group}
@@ -3222,13 +3708,19 @@ class JIRA(object):
         """Create a new board for the ``project_ids``.
 
         :param name: name of the board
+        :type name: str
         :param project_ids: the projects to create the board in
-        :param preset: what preset to use for this board
+        :type project_ids: str
+        :param preset: What preset to use for this board. (Default: "scrum")
         :type preset: 'kanban', 'scrum', 'diy'
-        :param location_type: the location type. Available in cloud.
+        :param location_type: the location type. Available in cloud. (Default: "user")
         :type location_type: 'user', 'project'
         :param location_id: the id of project that the board should be
             located under. Omit this for a 'user' location_type. Available in cloud.
+        :type location_id: Optional[str]
+
+        :return: The newly created board
+        :rtype: Board
         """
         if self._options['agile_rest_path'] != GreenHopperResource.GREENHOPPER_REST_PATH:
             raise NotImplementedError('JIRA Agile Public API does not support this request')
@@ -3259,8 +3751,17 @@ class JIRA(object):
     def create_sprint(self, name, board_id, startDate=None, endDate=None):
         """Create a new sprint for the ``board_id``.
 
-        :param name: name of the sprint
-        :param board_id: the board to add the sprint to
+        :param name: Name of the sprint
+        :type name: str
+        :param board_id: Which board the sprint should be assigned.
+        :type board_id: int
+        :param startDate: Start date for the sprint.
+        :type startDate: Optional[Any]
+        :param endDate: End date for the sprint.
+        :type endDate: Optional[Any]
+
+        :return: The newly created Sprint
+        :rtype: Sprint
         """
         payload = {'name': name}
         if startDate:
@@ -3311,10 +3812,11 @@ class JIRA(object):
         rank of each issue too.
 
         :param sprint_id: the sprint to add issues to
-        :param issue_keys: the issues to add to the sprint
-
         :type sprint_id: int
-        :type issue_keys: list of str
+        :param issue_keys: the issues to add to the sprint
+        :type issue_keys: List[str]
+
+        :rtype: Response
         """
         if self._options['agile_rest_path'] == GreenHopperResource.AGILE_BASE_REST_PATH:
             url = self._get_url('sprint/%s/issue' % sprint_id, base=self.AGILE_BASE_URL)
@@ -3344,9 +3846,13 @@ class JIRA(object):
     def add_issues_to_epic(self, epic_id, issue_keys, ignore_epics=True):
         """Add the issues in ``issue_keys`` to the ``epic_id``.
 
-        :param epic_id: the epic to add issues to
-        :param issue_keys: the issues to add to the epic
-        :param ignore_epics: ignore any issues listed in ``issue_keys`` that are epics
+        :param epic_id: The ID for the epic where issues should be added.
+        :type epic_id: int
+        :param issue_keys: The issues to add to the epic
+        :type issue_keys: str
+        :param ignore_epics: ignore any issues listed in ``issue_keys`` that are epics. (Default: True)
+        :type ignore_epics: bool
+
         """
         if self._options['agile_rest_path'] != GreenHopperResource.GREENHOPPER_REST_PATH:
             # TODO(ssbarnea): simulate functionality using issue.update()?
@@ -3400,6 +3906,9 @@ class JIRA(object):
         """Move issues in ``issue_keys`` to the backlog, removing them from all sprints that have not been completed.
 
         :param issue_keys: the issues to move to the backlog
+        :param issue_keys: str
+
+        :raises JIRAError: If moving issues to backlog fails
         """
         if self._options['agile_rest_path'] == GreenHopperResource.AGILE_BASE_REST_PATH:
             url = self._get_url('backlog/issue', base=self.AGILE_BASE_URL)
