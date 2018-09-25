@@ -3091,16 +3091,19 @@ class JIRA(object):
             return False
 
     def deactivate_user(self, username):
-        """Disable/deactivate the user."""
+        """Disable/deactivate the user.
+
+        :param username: User to be deactivated.
+        :type username: str
+
+        :rtype: Union[str, int]
+        """
         if self.deploymentType == 'Cloud':
             # Disabling users now needs cookie auth in the Cloud - see https://jira.atlassian.com/browse/ID-6230
             if 'authCookie' not in vars(self):
                 user = self.session()
                 if user.raw is None:
-                    auth_method = (
-                        oauth or basic_auth or jwt or kerberos or "anonymous"
-                    )
-                    raise JIRAError("Can not log in with %s" % str(auth_method))
+                    raise JIRAError("Can not log in!")
                 self.authCookie = '%s=%s' % (user.raw['session']['name'], user.raw['session']['value'])
             url = self._options['server'] + '/admin/rest/um/1/user/deactivate?username=%s' % (username)
             # We can't use our existing session here - this endpoint is fragile and objects to extra headers
@@ -3112,9 +3115,10 @@ class JIRA(object):
                     logging.warning(
                         'Got response from deactivating %s: %s' % (username, r.status_code))
                     return r.status_code
-            except urllib2.HTTPError as e:
+            except Exception as e:
                 logging.error(
-                        "Error Deactivating %s: %s" % (username, e))
+                    "Error Deactivating %s: %s" % (username, e))
+                raise JIRAError("Error Deactivating %s: %s" % (username, e))
         else:
             url = self._options['server'] + '/secure/admin/user/EditUser.jspa'
             self._options['headers']['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8'
@@ -3137,7 +3141,8 @@ class JIRA(object):
                     return r.status_code
             except Exception as e:
                 logging.error(
-                        "Error Deactivating %s: %s" % (username, e))
+                    "Error Deactivating %s: %s" % (username, e))
+                raise JIRAError("Error Deactivating %s: %s" % (username, e))
 
     def reindex(self, force=False, background=True):
         """Start jira re-indexing. Returns True if reindexing is in progress or not needed, or False.
