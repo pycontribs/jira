@@ -9,7 +9,28 @@ class JIRAError(Exception):
     if 'TRAVIS' in os.environ:
         log_to_tempfile = False  # Travis is keeping only the console log.
 
-    def __init__(self, status_code=None, text=None, url=None, request=None, response=None, **kwargs):
+    def __init__(self,
+                 status_code=None,
+                 text=None,
+                 url=None,
+                 request=None,
+                 response=None,
+                 **kwargs
+                 ):
+        """ Creates a JIRAError.
+
+        :param status_code: Status code for the error.
+        :type status_code: Optional[int]
+        :param text: Message for the error.
+        :type text: Optional[str]
+        :param url: Url related to the error.
+        :type url: Optional[str]
+        :param request: Request made related to the error.
+        :type request: Optional[Any]
+        :param response: Response received related to the error.
+        :type response: Optional[Response]
+        :type kwargs: **Any
+        """
         self.status_code = status_code
         self.text = text
         self.url = url
@@ -24,7 +45,10 @@ class JIRAError(Exception):
             self.travis = True
 
     def __str__(self):
-        """Return a string representation of the error."""
+        """Return a string representation of the error.
+
+        :rtype: str
+        """
         t = "JiraError HTTP %s" % self.status_code
         if self.url:
             t += " url: %s" % self.url
