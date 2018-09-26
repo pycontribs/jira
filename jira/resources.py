@@ -120,6 +120,17 @@ class Resource(object):
                      'scope', 'votes', 'id', 'mimeType', 'closed')
 
     def __init__(self, resource, options, session, base_url=JIRA_BASE_URL):
+        """Initializes a generic resource.
+        :param resource: The name of the resource.
+        :type resource: str
+        :param options: Options for the new resource
+        :type options: Dict[str,str]
+        :param session: Session used for the resource.
+        :type session: ResilientSession
+        :param base_url: The Base JIRA url.
+        :type base_url: Optional[str]
+
+        """
         self._resource = resource
         self._options = options
         self._session = session
@@ -130,7 +141,10 @@ class Resource(object):
         self.raw = None
 
     def __str__(self):
-        """Return the first value we find that is likely to be human readable."""
+        """Return the first value we find that is likely to be human readable.
+
+        :rtype: str
+        """
         if self.raw:
             for name in self._READABLE_IDS:
                 if name in self.raw:
@@ -144,7 +158,10 @@ class Resource(object):
         return repr(self)
 
     def __repr__(self):
-        """Identify the class and include any and all relevant values."""
+        """Identify the class and include any and all relevant values.
+
+        :rtype: str
+        """
         names = []
         if self.raw:
             for name in self._READABLE_IDS:
@@ -156,7 +173,17 @@ class Resource(object):
         return '<JIRA %s: %s>' % (self.__class__.__name__, ', '.join(names))
 
     def __getattr__(self, item):
-        """Allow access of attributes via names."""
+        """Allow access of attributes via names.
+
+        :param item: Attribute name
+        :type item: str
+
+        :rtype: Any
+
+        :raises KeyError: When the attribute does not exist.
+        :raises AttributeError: When attribute does not exist.
+
+        """
         try:
             return self[item]
         except Exception as e:
@@ -188,7 +215,16 @@ class Resource(object):
     #     self._parse_raw(raw_pickled)
     #
 
-    def find(self, id, params=None):
+    def find(self,
+             id,
+             params=None,
+             ):
+        """Finds a resource based on the input parameters.
+
+        :type id: Union[Tuple[str, str], int, str]
+        :type params: Optional[Dict[str, str]]
+
+        """
 
         if params is None:
             params = {}
@@ -201,6 +237,13 @@ class Resource(object):
         self._load(url, params=params)
 
     def _get_url(self, path):
+        """ Gets the url for the specified path.
+
+        :type path: str
+
+        :rtype: str
+
+        """
         options = self._options.copy()
         options.update({'path': path})
         return self._base_url.format(**options)
@@ -212,7 +255,15 @@ class Resource(object):
         resource doesn't support ``PUT``, a :py:exc:`.JIRAError` will be raised; subclasses that specialize this method
         will only raise errors in case of user error.
 
-        :param async_: if true the request will be added to the queue so it can be executed later using async_run()
+        :param fields: Fields which should be updated for the object.
+        :type fields: Optional[Dict[str, Any]]
+        :param async_: If true the request will be added to the queue so it can be executed later using async_run()
+        :type async_: bool
+        :param jira: Instance of JIRA Client
+        :type jira: jira.JIRA
+        :param notify: Whether or not to notify users about the update. (Default: True)
+        :type notify: bool
+        :type kwargs: **Any
         """
         if async_ is None:
             async_ = self._options['async']
@@ -301,6 +352,11 @@ class Resource(object):
         If this resource doesn't support ``DELETE``, a :py:exc:`.JIRAError`
         will be raised; subclasses that specialize this method will only raise errors
         in case of user error.
+
+        :param params: Parameters for the delete request.
+        :type params: Optional[Dict[str, Any]]
+
+        :rtype: Response
         """
         if self._options['async']:
             if not hasattr(self._session, '_async_jobs'):
@@ -310,7 +366,20 @@ class Resource(object):
         else:
             return self._session.delete(url=self.self, params=params)
 
-    def _load(self, url, headers=CaseInsensitiveDict(), params=None, path=None):
+    def _load(self,
+              url,
+              headers=CaseInsensitiveDict(),
+              params=None,
+              path=None,
+              ):
+        """ Load a resource.
+
+        :type url: str
+        :type headers: CaseInsensitiveDict
+        :type params: Optional[Dict[str,str]]
+        :type path: Optional[str]
+
+        """
         r = self._session.get(url, headers=headers, params=params)
         try:
             j = json_loads(r)
@@ -322,6 +391,10 @@ class Resource(object):
         self._parse_raw(j)
 
     def _parse_raw(self, raw):
+        """Parse a raw dictionary to create a resource.
+
+        :type raw: Dict[str, Any]
+        """
         self.raw = raw
         if not raw:
             raise NotImplementedError("We cannot instantiate empty resources: %s" % raw)
