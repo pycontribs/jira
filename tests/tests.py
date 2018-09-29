@@ -709,6 +709,7 @@ class IssueTests(unittest.TestCase):
         issue1 = self.jira.issue(self.issue_1)
         issue2 = self.jira.issue(self.issue_2)
         issues = self.jira.search_issues('key=%s' % self.issue_1)
+        self.assertTrue(issue1 is not None)
         self.assertTrue(issue1 == issues[0])
         self.assertFalse(issue2 == issues[0])
 

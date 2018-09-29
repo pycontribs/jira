@@ -590,7 +590,7 @@ class Issue(Resource):
 
     def __eq__(self, other):
         """Comparison method."""
-        return self.id == other.id
+        return other is not None and self.id == other.id
 
 
 class Comment(Resource):
