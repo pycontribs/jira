@@ -3669,7 +3669,7 @@ class JIRA(object):
         if endDate:
             payload['endDate'] = endDate
         if state:
-            if self._options['agile_rest_path'] != GreenHopperResource.GREENHOPPER_REST_PATH:
+            if self._options['agile_rest_path'] == GreenHopperResource.GREENHOPPER_REST_PATH:
                 raise NotImplementedError('Public JIRA API does not support state update')
             payload['state'] = state
 
