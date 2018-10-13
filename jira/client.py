@@ -2355,9 +2355,9 @@ class JIRA(object):
         :type maxResults: int
         :param validate_query: Whether or not the query should be validated. (Default: True)
         :type validate_query: bool
-        :param fields: comma-separated string of issue fields to include in the results.
+        :param fields: comma-separated string or list of issue fields to include in the results.
             Default is to include all fields.
-        :type fields: Optional[str]
+        :type fields: Optional[str or list]
         :param expand: extra information to fetch inside each resource
         :type expand: Optional[str]
         :param json_result: JSON response will be returned when this parameter is set to True.
@@ -2367,12 +2367,10 @@ class JIRA(object):
         :rtype: dict or :class:`~jira.client.ResultList`
 
         """
-        if fields is None:
-            fields = []
-        elif isinstance(fields, list):
-            fields = fields.copy()
-        elif isinstance(fields, string_types):
+        if isinstance(fields, string_types):
             fields = fields.split(",")
+        else:
+            fields = list(fields or [])
 
         # this will translate JQL field names to REST API Name
         # most people do know the JQL names so this will help them use the API easier
