@@ -2109,6 +2109,36 @@ class JIRA(object):
             params['issueId'] = issueId
         return self._get_json('mypermissions', params=params)
 
+    def users_with_permissions(self, permissions, username=None, issueKey=None, projectKey=None, startAt=None, maxResults=None):
+        """Get permissions of the user.
+
+        :param permissions: List of permissions names. \
+        See https://docs.atlassian.com/DAC/javadoc/jira/latest/reference/com/atlassian/jira/security/Permissions.Permission.html.
+        :type permissions: List[str]
+        :param username: Username of the user to get permissions for. If not set, get list of all users with permissions.
+        :param issueKey: Key of the issue to get permissions for.
+        :type issueKey: str
+        :param projectKey: Key of the project to get permissions for.
+        :type projectKey: str
+        :param startAt: The index of the first user to return (0-based).
+        :type startAt: int
+        :param maxResults: The maximum number of users to return (defaults to 50). The maximum allowed value is 1000. If you specify a value that is higher \
+        than this number, your search results will be truncated.
+        """
+        url = self._get_url(path='user/permission/search')
+        params = {'permissions': ','.join(permissions)}
+        if username is not None:
+            params['username'] = username
+        if issueKey is not None:
+            params['issueKey'] = issueKey
+        if projectKey is not None:
+            params['projectKey'] = projectKey
+        if maxResults is not None:
+            params['maxResults'] = maxResults
+        r = self._session.get(url=url, params=params)
+        j = json_loads(r)
+        return [User(options=self._options, session=self._session, raw=user) for user in j]
+
     # Priorities
 
     def priorities(self):
