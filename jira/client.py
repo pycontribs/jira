@@ -3755,9 +3755,9 @@ class JIRA(object):
                 ids.append(self.project(p).id)
             project_ids = ','.join(ids)
        
-        if location_id != None:
+        if location_id is not None:
             location_id = self.project(location_id).id
-                
+
         payload['name'] = name
         if isinstance(project_ids, string_types):
             project_ids = project_ids.split(',')
