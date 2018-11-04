@@ -323,6 +323,9 @@ class JIRA(object):
     :param async_workers: Set the number of worker threads for async operations.
     :param timeout: Set a read/connect timeout for the underlying calls to JIRA (default: None)
         Obviously this means that you cannot rely on the return code when this is enabled.
+    :param generator: If True, fetching methods return generator instead of ResultList.
+        This allows to process results as they come instead of waiting for all batches to finish.
+        Default if False to maintain backward compatibility.
     """
 
     DEFAULT_OPTIONS = {
@@ -374,6 +377,7 @@ class JIRA(object):
                  proxies=None,
                  timeout=None,
                  auth=None,
+                 generator=False,
                  ):
         """Construct a JIRA client instance.
 
@@ -542,6 +546,8 @@ class JIRA(object):
                 for name in f['clauseNames']:
                     self._fields[name] = f['id']
 
+        self._generator = generator
+
     def _create_cookie_auth(self, auth, timeout):
         self._session = ResilientSession(timeout=timeout)
         self._session.auth = JiraCookieAuth(self._session, self.session, auth)
@@ -642,29 +648,30 @@ class JIRA(object):
         resource = self._get_json(request_path, params=page_params, base=base)
         next_items_page = self._get_items_from_page(item_type, items_key,
                                                     resource)
-        items = next_items_page
 
-        if True:  # isinstance(resource, dict):
+        if isinstance(resource, dict):
+            total = resource.get('total')
+            # 'isLast' is the optional key added to responses in JIRA Agile 6.7.6. So far not used in basic JIRA API.
+            is_last = resource.get('isLast', False)
+            start_at_from_response = resource.get('startAt', 0)
+            max_results_from_response = resource.get('maxResults', 1)
+        else:
+            # if is a list
+            total = 1
+            is_last = True
+            start_at_from_response = 0
+            max_results_from_response = 1
 
-            if isinstance(resource, dict):
-                total = resource.get('total')
-                # 'isLast' is the optional key added to responses in JIRA Agile 6.7.6. So far not used in basic JIRA API.
-                is_last = resource.get('isLast', False)
-                start_at_from_response = resource.get('startAt', 0)
-                max_results_from_response = resource.get('maxResults', 1)
-            else:
-                # if is a list
-                total = 1
-                is_last = True
-                start_at_from_response = 0
-                max_results_from_response = 1
+        def generate(next_items_page, page_params):
+            for item in next_items_page:
+                yield item
 
             # If maxResults evaluates as False, get all items in batches
             if not maxResults:
-                page_size = max_results_from_response or len(items)
+                page_size = max_results_from_response or len(next_items_page)
                 page_start = (startAt or start_at_from_response or 0) + page_size
                 if async_class is not None and not is_last and (
-                        total is not None and len(items) < total):
+                        total is not None and len(next_items_page) < total):
                     async_fetches = []
                     future_session = async_class(session=self._session, max_workers=async_workers)
                     for start_index in range(page_start, total, page_size):
@@ -680,7 +687,8 @@ class JIRA(object):
                         if resource:
                             next_items_page = self._get_items_from_page(
                                 item_type, items_key, resource)
-                            items.extend(next_items_page)
+                            for item in next_items_page:
+                                yield item
                 while async_class is None and not is_last and (
                     total is None or page_start < total) and len(
                         next_items_page) == page_size:
@@ -690,16 +698,19 @@ class JIRA(object):
                     if resource:
                         next_items_page = self._get_items_from_page(
                             item_type, items_key, resource)
-                        items.extend(next_items_page)
+                        for item in next_items_page:
+                            yield item
                         page_start += page_size
                     else:
                         # if resource is an empty dictionary we assume no-results
                         break
 
-            return ResultList(items, start_at_from_response, max_results_from_response, total, is_last)
+        generator = generate(next_items_page, page_params)
+
+        if self._generator:
+            return generator
         else:
-            # it seams that search_users can return a list() containing a single user!
-            return ResultList([item_type(self._options, self._session, resource)], 0, 1, 1, True)
+            return ResultList(list(generator), start_at_from_response, max_results_from_response, total, is_last)
 
     def _get_items_from_page(self,
                              item_type,
@@ -997,7 +1008,7 @@ class JIRA(object):
             If maxResults evaluates as False, it will try to get all items in batches. (Default: 20)
         :type maxResults: int
 
-        :rtype: ResultList
+        :rtype: ResultList or generator
         """
         params = {}
         if filter is not None:
@@ -2364,7 +2375,7 @@ class JIRA(object):
                 Otherwise, :class:`~jira.client.ResultList` will be returned.
         :type json_result: bool
 
-        :rtype: dict or :class:`~jira.client.ResultList`
+        :rtype: dict or :class:`~jira.client.ResultList` or generator
 
         """
         if isinstance(fields, string_types):
@@ -2506,7 +2517,7 @@ class JIRA(object):
                 If maxResults evaluates as False, it will try to get all users in batches. (Default: 50)
         :type maxResults: int
 
-        :rtype: ResultList
+        :rtype: ResultList or generator
 
         """
         params = {
@@ -2542,7 +2553,7 @@ class JIRA(object):
         :param maxResults: maximum number of users to return.
                 If maxResults evaluates as False, it will try to get all items in batches. (Default: 50)
 
-        :rtype: ResultList
+        :rtype: ResultList or generator
         """
         params = {
             'username': username}
@@ -2687,7 +2698,7 @@ class JIRA(object):
         :type includeInactive: bool
 
 
-        :rtype: ResultList
+        :rtype: ResultList or generator
         """
         params = {
             'username': user,
@@ -3578,7 +3589,7 @@ class JIRA(object):
         :param type: Filters results to boards of the specified type. Valid values: scrum, kanban.
         :param name: Filters results to boards that match or partially match the specified name.
         :param projectKeyOrID: Filters results to boards that match the specified project key or ID.
-        :rtype: ResultList[Board]
+        :rtype: ResultList[Board] or generator
 
         When old GreenHopper private API is used, paging is not enabled and all parameters are ignored.
         """
