@@ -1622,6 +1622,19 @@ class SearchTests(unittest.TestCase):
         finally:
             self.jira._options['async'] = original_val
 
+    def test_search_issues_generator(self):
+        original_val = self.jira._generator
+        try:
+            self.jira._generator = True
+            issues = self.jira.search_issues('project=%s' % self.project_b)
+            issue_counter = 0
+            for issue in issues:
+                issue_counter += 1
+                self.assertTrue(issue.key.startswith(self.project_b))
+            self.assertLessEqual(issue_counter, 50)  # default maxResults
+        finally:
+            self.jira._generator = original_val
+
     def test_search_issues_maxresults(self):
         issues = self.jira.search_issues('project=%s' % self.project_b,
                                          maxResults=10)
