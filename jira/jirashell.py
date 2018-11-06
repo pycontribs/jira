@@ -2,7 +2,8 @@
 
 """Starts an interactive JIRA session in an ipython terminal.
 
-Script arguments support changing the server and a persistent authentication over HTTP BASIC.
+Script arguments support changing the server and a persistent authentication
+over HTTP BASIC or Kerberos.
 """
 
 from __future__ import print_function
@@ -91,7 +92,7 @@ def oauth_dance(server, consumer_key, key_cert_data, print_tokens=False, verify=
 
 def process_config():
     if not os.path.exists(CONFIG_PATH):
-        return {}, {}, {}
+        return {}, {}, {}, {}
 
     parser = configparser.ConfigParser()
     try:
@@ -124,7 +125,16 @@ def process_config():
     else:
         oauth = {}
 
-    return options, basic_auth, oauth
+    if parser.has_section('kerberos_auth'):
+        kerberos_auth = {}
+        for option, value in parser.items('kerberos_auth'):
+            if option in ("use_kerberos"):
+                value = parser.getboolean('kerberos_auth', option)
+            kerberos_auth[option] = value
+    else:
+        kerberos_auth = {}
+
+    return options, basic_auth, oauth, kerberos_auth
 
 
 def process_command_line():
@@ -169,6 +179,12 @@ def process_command_line():
     oauth_already_group.add_argument('-ats', '--access-token-secret',
                                      help='Secret for the OAuth access token.')
 
+    kerberos_group = parser.add_argument_group('Kerberos options')
+    kerberos_group.add_argument('--use-kerberos-auth', action='store_true',
+                                help='Use kerberos auth')
+    kerberos_group.add_argument('--mutual-authentication',
+                                choices=['OPTIONAL', 'DISABLED'],
+                                help='Mutual authentication')
     args = parser.parse_args()
 
     options = {}
@@ -218,19 +234,27 @@ def process_command_line():
             'consumer_key': args.consumer_key,
             'key_cert': key_cert_data}
 
-    return options, basic_auth, oauth
+    kerberos_auth = {
+        'use_kerberos': args.use_kerberos_auth
+    }
+
+    if args.mutual_authentication:
+        kerberos_auth['mutual_authentication'] = args.mutual_authentication
+
+    return options, basic_auth, oauth, kerberos_auth
 
 
 def get_config():
-    options, basic_auth, oauth = process_config()
+    options, basic_auth, oauth, kerberos_auth = process_config()
 
-    cmd_options, cmd_basic_auth, cmd_oauth = process_command_line()
+    cmd_options, cmd_basic_auth, cmd_oauth, cmd_kerberos_auth = process_command_line()
 
     options.update(cmd_options)
     basic_auth.update(cmd_basic_auth)
     oauth.update(cmd_oauth)
+    kerberos_auth.update(cmd_kerberos_auth)
 
-    return options, basic_auth, oauth
+    return options, basic_auth, oauth, kerberos_auth
 
 
 def main():
@@ -253,7 +277,7 @@ def main():
         else:
             sys.exit("Running ipython inside ipython isn't supported. :(")
 
-        options, basic_auth, oauth = get_config()
+        options, basic_auth, oauth, kerberos_auth = get_config()
 
         if basic_auth:
             basic_auth = (basic_auth['username'], basic_auth['password'])
@@ -265,7 +289,11 @@ def main():
                      oauth.get('consumer_key'), oauth.get('key_cert'))):
             oauth = None
 
-        jira = JIRA(options=options, basic_auth=basic_auth, oauth=oauth)
+        use_kerberos = kerberos_auth.get('use_kerberos', False)
+        del kerberos_auth['use_kerberos']
+
+        jira = JIRA(options=options, basic_auth=basic_auth, kerberos=use_kerberos, kerberos_options=kerberos_auth,
+                    oauth=oauth)
 
         import IPython
         # The top-level `frontend` package has been deprecated since IPython 1.0.
