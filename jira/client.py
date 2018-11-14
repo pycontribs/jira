@@ -2772,6 +2772,58 @@ class JIRA(object):
         version = Version(self._options, self._session, raw=json_loads(r))
         return version
 
+    def modify_version(self,
+                       name,
+                       project,
+                       description=None,
+                       releaseDate=None,
+                       startDate=None,
+                       archived=False,
+                       released=False,
+                       ):
+        """Modify a version in a project and return a Resource for it.
+
+        :param name: name of the version to modify
+        :type name: str
+        :param project: key of the project to create the version in
+        :type project: str
+        :param description: a description of the version
+        :type description: str
+        :param releaseDate: the release date assigned to the version
+        :type releaseDate: Optional[Any]
+        :param startDate: The start date for the version
+        :type startDate: Optional[Any]
+        :param archived: Denotes whether a version should be archived. (Default: False)
+        :type archived: bool
+        :param released: Denotes whether a version is released. (Default: False)
+        :type released: bool
+
+        :rtype: Version
+        """
+        data = {
+            'name': name,
+            'project': project,
+            'archived': archived,
+            'released': released}
+        if description is not None:
+            data['description'] = description
+        if releaseDate is not None:
+            data['releaseDate'] = releaseDate
+        if startDate is not None:
+            data['startDate'] = startDate
+
+        versions = self.project_versions(project)
+        for each in versions:
+            if str(each) == name:
+                version = each.id
+        url = self._get_url('version/' + version)
+        r = self._session.put(
+            url, data=json.dumps(data))
+
+        time.sleep(1)
+        version = Version(self._options, self._session, raw=json_loads(r))
+        return version
+
     def move_version(self, id, after=None, position=None):
         """Move a version within a project's ordered version list and return a new version Resource for it.
 
