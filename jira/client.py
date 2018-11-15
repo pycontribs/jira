@@ -2811,17 +2811,31 @@ class JIRA(object):
             data['releaseDate'] = releaseDate
         if startDate is not None:
             data['startDate'] = startDate
-
-        versions = self.project_versions(project)
-        for each in versions:
-            if str(each) == name:
-                version = each.id
-        url = self._get_url('version/' + version)
+        version = self.get_version(name, project)
+        url = self._get_url('version/' + version.id)
         r = self._session.put(
             url, data=json.dumps(data))
 
         time.sleep(1)
         version = Version(self._options, self._session, raw=json_loads(r))
+        return version
+
+    def get_version(self,
+                    name,
+                    project):
+        """Find a Version from the Version number and return a Resource for it.
+
+        :param name: name of the version to modify
+        :type name: str
+        :param project: key of the project to create the version in
+        :type project: str
+
+        :rtype: Version
+        """
+        versions = self.project_versions(project)
+        for each in versions:
+            if str(each) == name:
+                version = each
         return version
 
     def move_version(self, id, after=None, position=None):
