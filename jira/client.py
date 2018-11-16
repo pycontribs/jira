@@ -2283,6 +2283,37 @@ class JIRA(object):
             Version(self._options, self._session, raw_ver_json) for raw_ver_json in r_json]
         return versions
 
+    @translate_resource_args
+    def get_project_version_by_name(self, project, version_name):
+        """Get a version Resource by its name present on a project.
+
+        :param project: ID or key of the project to get versions from
+        :type project: str
+        :param version_name: name of the version to search for
+        :type version_name: str
+        :rtype: Optional[Version]
+        """
+        versions = self.project_versions(project)
+        for version in versions:
+            if version.name == version_name:
+                return version
+
+    @translate_resource_args
+    def rename_version(self, project, old_name, new_name):
+        """Rename a version Resource on a project.
+
+        :param project: ID or key of the project to get versions from
+        :type project: str
+        :param old_name: old name of the version to rename
+        :type old_name: str
+        :param new_name: new name of the version to rename
+        :type new_name: str
+        :rtype: None
+        """
+        version = self.get_project_version_by_name(project, old_name)
+        if version:
+            version.update(name=new_name)
+
     # non-resource
     @translate_resource_args
     def project_roles(self, project):

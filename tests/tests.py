@@ -1545,6 +1545,45 @@ class ProjectTests(unittest.TestCase):
             'fixVersions': [{'id': version.id}]})
         version.delete()
 
+    def test_get_project_version_by_name(self):
+        name = "version-%s" % rndstr()
+        version = self.jira.create_version(name,
+                                           self.project_b, "will be deleted soon")
+
+        found_version = self.jira.get_project_version_by_name(self.project_b, name)
+        self.assertEqual(found_version.id, version.id)
+        self.assertEqual(found_version.name, name)
+
+        not_found_version = self.jira.get_project_version_by_name(self.project_b, "non-existent")
+        self.assertEqual(not_found_version, None)
+
+        i = self.jira.issue(JiraTestManager().project_b_issue1)
+        i.update(fields={
+            'versions': [{'id': version.id}],
+            'fixVersions': [{'id': version.id}]})
+        version.delete()
+
+    def test_rename_version(self):
+        old_name = "version-%s" % rndstr()
+        version = self.jira.create_version(old_name,
+                                           self.project_b, "will be deleted soon")
+
+        new_name = old_name + "-renamed"
+        self.jira.rename_version(self.project_b, old_name, new_name)
+
+        found_version = self.jira.get_project_version_by_name(self.project_b, new_name)
+        self.assertEqual(found_version.id, version.id)
+        self.assertEqual(found_version.name, new_name)
+
+        not_found_version = self.jira.get_project_version_by_name(self.project_b, old_name)
+        self.assertEqual(not_found_version, None)
+
+        i = self.jira.issue(JiraTestManager().project_b_issue1)
+        i.update(fields={
+            'versions': [{'id': version.id}],
+            'fixVersions': [{'id': version.id}]})
+        version.delete()
+
     def test_project_versions_with_project_obj(self):
         name = "version-%s" % rndstr()
         version = self.jira.create_version(name,
