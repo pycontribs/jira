@@ -3109,7 +3109,8 @@ class JIRA(object):
             url = self._options['server'] + '/admin/rest/um/1/user/deactivate?username=%s' % (username)
             # We can't use our existing session here - this endpoint is fragile and objects to extra headers
             try:
-                r = requests.post(url, headers={'Cookie': self.authCookie, 'Content-Type': 'application/json'}, data={})
+                r = requests.post(url, headers={'Cookie': self.authCookie, 'Content-Type': 'application/json'}, 
+                                  proxies=self._session.proxies, data={})
                 if r.status_code == 200:
                     return True
                 else:
