@@ -57,9 +57,11 @@ the retrieved session cookie will be used in future requests. Upon cookie expira
 HTTP BASIC
 ^^^^^^^^^^
 
-Pass a tuple of (username, password) to the ``basic_auth`` constructor argument::
+Pass a tuple of (username, token) to the ``basic_auth`` constructor argument::
 
-    auth_jira = JIRA(basic_auth=('username', 'password'))
+    auth_jira = JIRA(basic_auth=('username', 'token'))
+
+You can get a token by going to https://id.atlassian.com/manage/api-tokens and clicking "Create API Token"
 
 OAuth
 ^^^^^
