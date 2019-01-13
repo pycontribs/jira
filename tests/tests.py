@@ -432,10 +432,13 @@ class RawTests(unittest.TestCase):
     def setUp(self):
         self.test_manager = JiraTestManager()
         self.jira = JiraTestManager().jira_admin
-        self.issue_1 = self.test_manager.project_b_issue1_obj
 
     def test_parse_raw(self):
-        self.assertIsInstance(self.jira.parse_raw(self.issue_1.raw), Issue)
+        issue = self.test_manager.project_b_issue1_obj
+        project = self.jira.project(self.test_manager.project_b)
+        self.assertIsInstance(self.jira.parse_raw(issue.raw), Issue)
+        self.assertIsInstance(self.jira.parse_raw(project.raw), Project)
+        self.assertIsInstance(self.jira.parse_raw({}), UnknownResource)
 
 
 @flaky

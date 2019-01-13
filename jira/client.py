@@ -3968,7 +3968,7 @@ class JIRA(object):
 
         :param raw_json: dict of properties parsed out of the JSON response from the server
         """
-        return cls_for_resource(raw_json['self'])(self._options, self._session, raw=raw_json)
+        return cls_for_resource(raw_json['self'] if 'self' in raw_json else '')(self._options, self._session, raw=raw_json)
 
 
 class GreenHopper(JIRA):
