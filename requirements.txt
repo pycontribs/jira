@@ -1,7 +1,7 @@
 argparse; python_version<'2.7'
 defusedxml
 functools32; python_version<'3.2'  # PSF license
-oauthlib[signedtoken]>=1.0.0  # dep of requests-oauthlib, to avoid pycrypto. See: https://github.com/pycontribs/jira/issues/619
+oauthlib[signedtoken]>=1.0.0,<3.0.0  # dep of requests-oauthlib, to avoid pycrypto. See: https://github.com/pycontribs/jira/issues/619
 pbr>=3.0.0
 requests-oauthlib>=0.6.1
 requests>=2.10.0

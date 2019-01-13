@@ -82,6 +82,7 @@ from jira.resources import Version
 from jira.resources import Votes
 from jira.resources import Watchers
 from jira.resources import Worklog
+from jira.resources import cls_for_resource
 
 from jira import __version__
 from jira.utils import CaseInsensitiveDict
@@ -3961,6 +3962,13 @@ class JIRA(object):
         else:
             raise NotImplementedError('No API for moving issues to backlog for agile_rest_path="%s"' %
                                       self._options['agile_rest_path'])
+
+    def parse_raw(self, raw_json):
+        """Constructs Resource object from raw json with client object's options and session
+
+        :param raw_json: dict of properties parsed out of the JSON response from the server
+        """
+        return cls_for_resource(raw_json['self'])(self._options, self._session, raw=raw_json)
 
 
 class GreenHopper(JIRA):
