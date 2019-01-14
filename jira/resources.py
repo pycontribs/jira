@@ -312,19 +312,19 @@ class Resource(object):
                 data['fields'][
                     'summary'] = self.fields.summary.replace("/n", "")
             for error in error_list:
-                if re.search(u"^User '(.*)' was not found in the system\.", error, re.U):
+                if re.search(r"^User '(.*)' was not found in the system\.", error, re.U):
                     m = re.search(
-                        u"^User '(.*)' was not found in the system\.", error, re.U)
+                        r"^User '(.*)' was not found in the system\.", error, re.U)
                     if m:
                         user = m.groups()[0]
                     else:
-                        raise NotImplemented()
-                if re.search("^User '(.*)' does not exist\.", error):
-                    m = re.search("^User '(.*)' does not exist\.", error)
+                        raise NotImplementedError()
+                if re.search(r"^User '(.*)' does not exist\.", error):
+                    m = re.search(r"^User '(.*)' does not exist\.", error)
                     if m:
                         user = m.groups()[0]
                     else:
-                        raise NotImplemented()
+                        raise NotImplementedError()
 
             if user:
                 logging.warning(

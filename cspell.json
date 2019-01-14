@@ -146,6 +146,7 @@
         "undoc",
         "unstaged",
         "untranslate",
+        "venv",
         "virtualenv",
         "virtualenvs",
         "websudo",
