@@ -475,7 +475,8 @@ class AttachmentTests(unittest.TestCase):
     def test_0_attachment_meta(self):
         meta = self.jira.attachment_meta()
         self.assertTrue(meta['enabled'])
-        self.assertEqual(meta['uploadLimit'], 10485760)
+        # we have no control over server side upload limit
+        self.assertIn('uploadLimit', meta)
 
     def test_1_add_remove_attachment(self):
         issue = self.jira.issue(self.issue_1)
