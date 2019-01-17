@@ -83,10 +83,6 @@ Pass a dict of OAuth properties to the ``oauth`` constructor argument::
     The OAuth access tokens must be obtained and authorized ahead of time through the standard OAuth dance. For
     interactive use, ``jirashell`` can perform the dance with you if you don't already have valid tokens.
 
-.. note ::
-    OAuth in Jira uses RSA-SHA1 which requires the PyCrypto library. PyCrypto is **not** installed automatically
-    when installing jira-python. See also the :ref:`Dependencies`. section above.
-
 * The access token and token secret uniquely identify the user.
 * The consumer key must match the OAuth provider configured on the JIRA server.
 * The key cert data must be the private key that matches the public key configured on the JIRA server's OAuth provider.
