@@ -3876,7 +3876,7 @@ class JIRA(object):
         :param epic_id: The ID for the epic where issues should be added.
         :type epic_id: int
         :param issue_keys: The issues to add to the epic
-        :type issue_keys: str
+        :type issue_keys: List[str]
         :param ignore_epics: ignore any issues listed in ``issue_keys`` that are epics. (Default: True)
         :type ignore_epics: bool
 
