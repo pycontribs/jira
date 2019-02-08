@@ -105,8 +105,8 @@ def get_unique_project_name():
         jid = 'T' + hashify(user + os.environ['TRAVIS_JOB_NUMBER'])
     else:
         identifier = user + \
-            chr(ord('A') + sys.version_info[0]) + \
-            chr(ord('A') + sys.version_info[1])
+                     chr(ord('A') + sys.version_info[0]) + \
+                     chr(ord('A') + sys.version_info[1])
         jid = 'Z' + hashify(identifier)
     return jid
 
@@ -806,7 +806,7 @@ class IssueTests(unittest.TestCase):
                 'summary': 'This issue will not succeed',
                 'description': "Should not be seen.",
                 'priority': {
-                'name': 'Blah'}},
+                    'name': 'Blah'}},
             {'project': {
                 'key': self.project_a},
                 'issuetype': {
@@ -1575,7 +1575,8 @@ class ProjectTests(unittest.TestCase):
         self.assertEqual(test.name, name)
         version.delete()
 
-    @unittest.skip("temporary disabled because roles() return a dictionary of role_name:role_url and we have no call to convert it to proper Role()")
+    @unittest.skip(
+        "temporary disabled because roles() return a dictionary of role_name:role_url and we have no call to convert it to proper Role()")
     def test_project_roles(self):
         project = self.jira.project(self.project_b)
         role_name = 'Developers'
@@ -1944,7 +1945,6 @@ class VersionTests(unittest.TestCase):
 
     @flaky
     def test_update_version(self):
-
         version = self.jira.create_version('new updated version 1',
                                            self.project_b, releaseDate='2015-03-11',
                                            description='new to be updated!')
@@ -1973,10 +1973,7 @@ class OtherTests(unittest.TestCase):
 
     def test_session_invalid_login(self):
         try:
-            JIRA('https://jira.atlassian.com',
-                 basic_auth=("xxx", "xxx"),
-                 validate=True,
-                 logging=False)
+            JIRA('https://jira.atlassian.com', basic_auth=("xxx", "xxx"), validate=True, )
         except Exception as e:
             self.assertIsInstance(e, JIRAError)
             # 20161010: jira cloud returns 500
@@ -1997,14 +1994,14 @@ class SessionTests(unittest.TestCase):
         self.assertIsNotNone(user.raw['session'])
 
     def test_session_with_no_logged_in_user_raises(self):
-        anon_jira = JIRA('https://jira.atlassian.com', logging=False)
+        anon_jira = JIRA('https://jira.atlassian.com')
         self.assertRaises(JIRAError, anon_jira.session)
 
     # @pytest.mark.skipif(platform.python_version() < '3', reason='Does not work with Python 2')
     # @not_on_custom_jira_instance  # takes way too long
     def test_session_server_offline(self):
         try:
-            JIRA('https://127.0.0.1:1', logging=False, max_retries=0)
+            JIRA('https://127.0.0.1:1', max_retries=0)
         except Exception as e:
             self.assertIn(type(e), (JIRAError, requests.exceptions.ConnectionError, AttributeError), e)
             return
@@ -2014,8 +2011,7 @@ class SessionTests(unittest.TestCase):
 class AsyncTests(unittest.TestCase):
 
     def setUp(self):
-        self.jira = JIRA('https://jira.atlassian.com', logging=False,
-                         async_=True, validate=False, get_server_info=False)
+        self.jira = JIRA('https://jira.atlassian.com', async_=True, validate=False, get_server_info=False)
 
     def test_fetch_pages(self):
         """Tests that the JIRA._fetch_pages method works as expected. """
@@ -2100,8 +2096,8 @@ class UserAdministrationTests(unittest.TestCase):
 
     def _should_skip_for_pycontribs_instance(self):
         return self.test_manager.CI_JIRA_ADMIN == 'ci-admin' and (
-            self.test_manager.CI_JIRA_URL ==
-            "https://pycontribs.atlassian.net")
+                self.test_manager.CI_JIRA_URL ==
+                "https://pycontribs.atlassian.net")
 
     def test_add_and_remove_user(self):
         if self._should_skip_for_pycontribs_instance():
@@ -2283,7 +2279,6 @@ class JiraServiceDeskTests(unittest.TestCase):
 
 
 if __name__ == '__main__':
-
     # when running tests we expect various errors and we don't want to display them by default
     logging.getLogger("requests").setLevel(logging.FATAL)
     logging.getLogger("urllib3").setLevel(logging.FATAL)
