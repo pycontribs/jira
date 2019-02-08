@@ -114,6 +114,7 @@ except ImportError:
 #    "which means that there is a big change of having problems. " \
 #    "Possible workaround http://stackoverflow.com/a/17628350/99834" % encoding)
 
+# If this is changed needs to be changed again in JIRA.__init__()
 logging.getLogger('jira').addHandler(NullHandler())
 
 
@@ -369,7 +370,7 @@ class JIRA(object):
                  get_server_info=True,
                  async_=False,
                  async_workers=5,
-                 logging=True,
+                 logging=None,
                  max_retries=3,
                  proxies=None,
                  timeout=None,
@@ -443,8 +444,8 @@ class JIRA(object):
         :type proxies: Optional[Any]
         :param auth: Set a cookie auth token if this is required.
         :type auth: Optional[Tuple[str,str]]
-        :param logging: Determine whether or not logging should be enabled. (Default: True)
-        :type logging: bool
+        :param logging: Determine whether or not logging should be enabled. Deprecated. (Default: None)
+        :type logging: bool, None, logging
         """
         # force a copy of the tuple to be used in __del__() because
         # sys.version_info could have already been deleted in __del__()
@@ -465,7 +466,16 @@ class JIRA(object):
             options['async'] = async_
             options['async_workers'] = async_workers
 
-        self.logging = logging
+        # Breaks https://docs.python.org/3/howto/logging.html#library-config
+        # TODO remove in future version
+        if logging is not None:
+            warnings.warn("Deprecated option. Breaks correct logging.", DeprecationWarning)
+        if logging is None or (isinstance(logging, bool) and not logging):
+            import logging
+            logging.getLogger('jira').addHandler(NullHandler())
+        if isinstance(logging, bool) and logging:
+            import logging
+            logging.getLogger('jira')
 
         self._options = copy.copy(JIRA.DEFAULT_OPTIONS)
 
