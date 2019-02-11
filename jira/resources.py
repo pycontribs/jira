@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 from __future__ import print_function
+
 """
 This module implements the Resource classes that translate JSON from JIRA REST resources
 into usable objects.
@@ -9,6 +10,7 @@ into usable objects.
 import logging
 import re
 import time
+
 try:  # Python 2.7+
     from logging import NullHandler
 except ImportError:
@@ -202,6 +204,7 @@ class Resource(object):
                 return self.raw[item]
             else:
                 raise AttributeError("%r object has no attribute %r (%s)" % (self.__class__, item, e))
+
     # def __getstate__(self):
     #     """
     #     Pickling the resource; using the raw dict
@@ -312,15 +315,15 @@ class Resource(object):
                 data['fields'][
                     'summary'] = self.fields.summary.replace("/n", "")
             for error in error_list:
-                if re.search(u"^User '(.*)' was not found in the system\.", error, re.U):
+                if re.search(u"^User '(.*)' was not found in the system[.]", error, re.U):
                     m = re.search(
-                        u"^User '(.*)' was not found in the system\.", error, re.U)
+                        u"^User '(.*)' was not found in the system[.]", error, re.U)
                     if m:
                         user = m.groups()[0]
                     else:
                         raise NotImplementedError()
-                if re.search("^User '(.*)' does not exist\.", error):
-                    m = re.search("^User '(.*)' does not exist\.", error)
+                if re.search("^User '(.*)' does not exist[.]", error):
+                    m = re.search("^User '(.*)' does not exist[.]", error)
                     if m:
                         user = m.groups()[0]
                     else:
@@ -988,6 +991,7 @@ class RequestType(Resource):
         Resource.__init__(self, 'servicedesk/{0}/requesttype', options, session, '{server}/rest/servicedeskapi/{path}')
         if raw:
             self._parse_raw(raw)
+
 
 # Utilities
 
