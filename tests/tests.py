@@ -259,7 +259,7 @@ class JiraTestManager(object):
                     try:
                         self.jira_admin.delete_project(self.project_a)
                     except Exception as e:
-                        pass
+                        logging.warning(e)
 
                 try:
                     self.jira_admin.project(self.project_b)
@@ -270,7 +270,7 @@ class JiraTestManager(object):
                     try:
                         self.jira_admin.delete_project(self.project_b)
                     except Exception as e:
-                        pass
+                        logging.warning(e)
 
                 # wait for the project to be deleted
                 for i in range(1, 20):
@@ -341,8 +341,7 @@ class JiraTestManager(object):
                 sleep(1)
                 counter += 1
                 if counter > 60:
-                    logging.fatal("Something is clearly not right with " +
-                                  "initialization, killing the tests to prevent a " +
+                    logging.fatal("Something is clearly not right with initialization, killing the tests to prevent a "
                                   "deadlock.")
                     sys.exit(3)
 
@@ -2081,9 +2080,7 @@ class UserAdministrationTests(unittest.TestCase):
                     'permission to modify users.')
 
     def _should_skip_for_pycontribs_instance(self):
-        return self.test_manager.CI_JIRA_ADMIN == 'ci-admin' and (
-            self.test_manager.CI_JIRA_URL ==
-            "https://pycontribs.atlassian.net")
+        return self.test_manager.CI_JIRA_ADMIN == 'ci-admin' and (self.test_manager.CI_JIRA_URL == "https://pycontribs.atlassian.net")
 
     def test_add_and_remove_user(self):
         if self._should_skip_for_pycontribs_instance():

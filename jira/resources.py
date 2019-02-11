@@ -318,13 +318,13 @@ class Resource(object):
                     if m:
                         user = m.groups()[0]
                     else:
-                        raise NotImplemented()
+                        raise NotImplementedError()
                 if re.search("^User '(.*)' does not exist\.", error):
                     m = re.search("^User '(.*)' does not exist\.", error)
                     if m:
                         user = m.groups()[0]
                     else:
-                        raise NotImplemented()
+                        raise NotImplementedError()
 
             if user:
                 logging.warning(
