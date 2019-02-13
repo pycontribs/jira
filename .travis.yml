@@ -1,5 +1,16 @@
 ---
 language: python
+
+# Build only commits on master and release tags for the "Build pushed branches" feature.
+# This prevents building twice on PRs originating from our repo ("Build pushed pull requests)".
+# See:
+#   - https://github.com/travis-ci/travis-ci/issues/1147
+#   - https://docs.travis-ci.com/user/pull-requests/#double-builds-on-pull-requests
+branches:
+  only:
+    - master
+    - /v[0-9]+\.[0-9]+\.[0-9]+(-.*)?$/
+
 cache:
   - pip
   - directories:
