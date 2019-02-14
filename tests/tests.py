@@ -104,9 +104,7 @@ def get_unique_project_name():
         # JIRA even if it is documented as supported.
         jid = 'T' + hashify(user + os.environ['TRAVIS_JOB_NUMBER'])
     else:
-        identifier = user + \
-                     chr(ord('A') + sys.version_info[0]) + \
-                     chr(ord('A') + sys.version_info[1])
+        identifier = user + chr(ord('A') + sys.version_info[0]) + chr(ord('A') + sys.version_info[1])
         jid = 'Z' + hashify(identifier)
     return jid
 
@@ -2096,8 +2094,8 @@ class UserAdministrationTests(unittest.TestCase):
 
     def _should_skip_for_pycontribs_instance(self):
         return self.test_manager.CI_JIRA_ADMIN == 'ci-admin' and (
-                self.test_manager.CI_JIRA_URL ==
-                "https://pycontribs.atlassian.net")
+            self.test_manager.CI_JIRA_URL ==
+            "https://pycontribs.atlassian.net")
 
     def test_add_and_remove_user(self):
         if self._should_skip_for_pycontribs_instance():
