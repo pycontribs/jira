@@ -349,7 +349,7 @@ class JIRA(object):
             # 'Accept': 'application/json',  # default for REST
             # 'Pragma': 'no-cache',
             # 'Expires': 'Thu, 01 Jan 1970 00:00:00 GMT'
-            'X-Atlassian-Token': 'no-check'}}
+            'X-Atlassian-Token': 'nocheck'}}
 
     checked_version = False
 
