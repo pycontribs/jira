@@ -78,6 +78,7 @@ from jira.resources import Sprint
 from jira.resources import Status
 from jira.resources import StatusCategory
 from jira.resources import User
+from jira.resources import Group
 from jira.resources import Version
 from jira.resources import Votes
 from jira.resources import Watchers
@@ -1104,7 +1105,24 @@ class JIRA(object):
         raw_filter_json = json.loads(r.text)
         return Filter(self._options, self._session, raw=raw_filter_json)
 
-# Groups
+    # Groups
+
+    def group(self, id, expand=None):
+        """Get a group Resource from the server.
+
+        :param id: ID of the group to get
+        :param id: str
+        :param expand: Extra information to fetch inside each resource
+        :type expand: Optional[Any]
+
+        :rtype: User
+        """
+        group = Group(self._options, self._session)
+        params = {}
+        if expand is not None:
+            params['expand'] = expand
+        group.find(id, params=params)
+        return group
 
     # non-resource
     def groups(self, query=None, exclude=None, maxResults=9999):

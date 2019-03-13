@@ -662,6 +662,10 @@ class GroupsTest(unittest.TestCase):
         self.test_manager = JiraTestManager()
         self.jira = self.test_manager.jira_admin
 
+    def test_group(self):
+        group = self.jira.group('jira-users')
+        self.assertEqual(group.name, 'jira-users')
+
     def test_groups(self):
         groups = self.jira.groups()
         self.assertGreater(len(groups), 0)
