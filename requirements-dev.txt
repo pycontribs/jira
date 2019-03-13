@@ -14,7 +14,7 @@ pytest-instafail
 pytest-timeout>=1.3.1
 pytest-xdist>=1.14
 pytest>=2.9.1,<5.0  # MIT
-PyYAML>=5.1b3  # MIT
+PyYAML>=5.1  # MIT
 requests_mock  # Apache-2
 requires.io  # UNKNOWN!!!
 tenacity  # Apache-2
