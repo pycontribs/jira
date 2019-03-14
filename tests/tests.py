@@ -1971,7 +1971,7 @@ class OtherTests(unittest.TestCase):
 
     def test_session_invalid_login(self):
         try:
-            JIRA('https://jira.atlassian.com', basic_auth=("xxx", "xxx"), validate=True, )
+            JIRA('https://jira.atlassian.com', basic_auth=("xxx", "xxx"), validate=True)
         except Exception as e:
             self.assertIsInstance(e, JIRAError)
             # 20161010: jira cloud returns 500
