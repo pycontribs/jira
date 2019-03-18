@@ -9,7 +9,7 @@ from requests.auth import AuthBase
 This module implements a friendly (well, friendlier) interface between the raw JSON
 responses from JIRA and the Resource/dict abstractions provided by this library. Users
 will construct a JIRA object as described below. Full API documentation can be found
-at: https://jira-python.readthedocs.org/en/latest/
+at: https://jira.readthedocs.io/en/latest/
 """
 try:
     from functools import lru_cache
