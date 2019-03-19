@@ -345,6 +345,7 @@ class JIRA(object):
         "delay_reload": 0,
         "headers": {
             'Cache-Control': 'no-cache',
+            'X-Atlassian-Force-Account-Id': 'true',
             # 'Accept': 'application/json;charset=UTF-8',  # default for REST
             'Content-Type': 'application/json',  # ;charset=UTF-8',
             # 'Accept': 'application/json',  # default for REST
