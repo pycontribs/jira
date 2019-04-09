@@ -265,7 +265,7 @@ def main():
         # would report utf-8
         # see: https://stackoverflow.com/a/23847316/99834
         stdin, stdout, stderr = sys.stdin, sys.stdout, sys.stderr
-        reload(sys)
+        reload(sys)  # noqa
         sys.stdin, sys.stdout, sys.stderr = stdin, stdout, stderr
         sys.setdefaultencoding(os.environ.get('PYTHONIOENCODING', 'utf-8'))
 
