@@ -1,7 +1,7 @@
 ---
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v1.3.0
+    rev: v2.1.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -11,18 +11,20 @@ repos:
       - id: check-merge-conflict
       - id: check-symlinks
       - id: check-vcs-permalinks
-      - id: flake8
       - id: debug-statements
       - id: requirements-txt-fixer
       - id: check-yaml
         files: .*\.(yaml|yml)$
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.11.1
+    rev: v1.15.0
     hooks:
       - id: yamllint
         files: \.(yaml|yml)$
-
   - repo: https://github.com/openstack-dev/bashate.git
     rev: 0.6.0
     hooks:
       - id: bashate
+  - repo: https://github.com/PyCQA/flake8
+    rev: 3.7.7
+    hooks:
+      - id: flake8

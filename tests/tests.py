@@ -258,7 +258,7 @@ class JiraTestManager(object):
                 else:
                     try:
                         self.jira_admin.delete_project(self.project_a)
-                    except Exception as e:
+                    except Exception as e:  # noqa
                         pass
 
                 try:
@@ -269,7 +269,7 @@ class JiraTestManager(object):
                 else:
                     try:
                         self.jira_admin.delete_project(self.project_b)
-                    except Exception as e:
+                    except Exception as e:  # noqa
                         pass
 
                 # wait for the project to be deleted
