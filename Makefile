@@ -35,9 +35,6 @@ package:
 req:
 	@$(PREFIX)requires.io update-site -t ac3bbcca32ae03237a6aae2b02eb9411045489bb -r $(PACKAGE_NAME)
 
-hooks:
-	@$(PREFIX)python -m flake8 --install-hook 2>/dev/null || true
-
 install: prepare
 	$(PREFIX)pip install .
 
