@@ -1175,10 +1175,9 @@ class JIRA(object):
 
         result = {}
         for user in r['users']['items']:
-            result[user['key']] = {'name': user['name'],
-                                   'fullname': user['displayName'],
-                                   'email': user.get('emailAddress', 'hidden'),
-                                   'active': user['active']}
+            result[user['accountId']] = {'fullname': user['displayName'],
+                                         'email': user.get('emailAddress', 'hidden'),
+                                         'active': user['active']}
         return OrderedDict(sorted(result.items(), key=lambda t: t[0]))
 
     def add_group(self, groupname):
@@ -2723,11 +2722,11 @@ class JIRA(object):
         url = self._get_url('user/avatar/' + avatar)
         return self._session.delete(url, params=params)
 
-    def search_users(self, user, startAt=0, maxResults=50, includeActive=True, includeInactive=False):
+    def search_users(self, query, startAt=0, maxResults=50, includeActive=True, includeInactive=False, accountId=None):
         """Get a list of user Resources that match the specified search string.
 
-        :param user: a string to match usernames, name or email against.
-        :type user: str
+        :param query: a string to match accountId, name or email against.
+        :type query: str
         :param startAt: index of the first user to return.
         :type startAt: int
         :param maxResults: maximum number of users to return.
@@ -2742,9 +2741,11 @@ class JIRA(object):
         :rtype: ResultList
         """
         params = {
-            'username': user,
+            'query': query,
             'includeActive': includeActive,
             'includeInactive': includeInactive}
+        if query:
+            params['accountId'] = accountId
         return self._fetch_pages(User, None, 'user/search', startAt, maxResults, params)
 
     def search_allowed_users_for_issue(self, user, issueKey=None, projectKey=None, startAt=0, maxResults=50):
@@ -3322,24 +3323,24 @@ class JIRA(object):
             logging.error(ioe)
         return None
 
-    def current_user(self):
-        """Returns the username of the current user.
+    def current_accountid(self):
+        """Returns the accountId of the current user.
 
         :rtype: str
         """
-        if not hasattr(self, '_serverInfo') or 'username' not in self._serverInfo:
+        if not hasattr(self, '_serverInfo') or 'accountid' not in self._serverInfo:
 
             url = self._get_url('serverInfo')
             r = self._session.get(url, headers=self._options['headers'])
 
             r_json = json_loads(r)
-            if 'x-ausername' in r.headers:
-                r_json['username'] = r.headers['x-ausername']
+            if 'x-aaccountid' in r.headers:
+                r_json['accountid'] = r.headers['x-aaccountid']
             else:
-                r_json['username'] = None
+                r_json['accountid'] = None
             self._serverInfo = r_json
             # del r_json['self']  # this isn't really an addressable resource
-        return self._serverInfo['username']
+        return self._serverInfo['accountid']
 
     def delete_project(self, pid):
         """Delete project from Jira.

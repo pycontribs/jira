@@ -117,7 +117,7 @@ class Resource(object):
     # A prioritized list of the keys in self.raw most likely to contain a human
     # readable name or identifier, or that offer other key information.
     _READABLE_IDS = ('displayName', 'key', 'name', 'filename', 'value',
-                     'scope', 'votes', 'id', 'mimeType', 'closed')
+                     'scope', 'votes', 'id', 'mimeType', 'closed', 'accountId')
 
     def __init__(self, resource, options, session, base_url=JIRA_BASE_URL):
         """Initializes a generic resource.
@@ -835,7 +835,7 @@ class User(Resource):
     """A JIRA user."""
 
     def __init__(self, options, session, raw=None):
-        Resource.__init__(self, 'user?username={0}', options, session)
+        Resource.__init__(self, 'user?accountId={0}', options, session)
         if raw:
             self._parse_raw(raw)
 
