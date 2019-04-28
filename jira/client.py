@@ -3323,24 +3323,24 @@ class JIRA(object):
             logging.error(ioe)
         return None
 
-    def current_accountid(self):
-        """Returns the accountId of the current user.
+    def current_user(self):
+        """Returns the username or accountId of the current user, depending
+        on what the server supports, in order of preference.
 
         :rtype: str
         """
-        if not hasattr(self, '_serverInfo') or 'accountid' not in self._serverInfo:
+        if not hasattr(self, '_serverInfo') or\
+           not [i for i in self._serverInfo if i in ('accountid', 'username')]:
 
             url = self._get_url('serverInfo')
             r = self._session.get(url, headers=self._options['headers'])
 
             r_json = json_loads(r)
-            if 'x-aaccountid' in r.headers:
-                r_json['accountid'] = r.headers['x-aaccountid']
-            else:
-                r_json['accountid'] = None
+            r_json['accountid'] = r.headers.get('x-aaccountid')
+            r_json['username'] = r.headers.get('x-ausername')
             self._serverInfo = r_json
             # del r_json['self']  # this isn't really an addressable resource
-        return self._serverInfo['accountid']
+        return self._serverInfo['username'] or self._serverInfo['accountid']
 
     def delete_project(self, pid):
         """Delete project from Jira.
