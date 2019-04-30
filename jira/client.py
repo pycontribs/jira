@@ -2026,7 +2026,7 @@ class JIRA(object):
             r_json = self._get_json('issueLinkType')
             self._cached_issue_link_types = [
                 IssueLinkType(self._options, self._session, raw_link_json)
-                   for raw_link_json in r_json['issueLinkTypes']
+                for raw_link_json in r_json['issueLinkTypes']
             ]
         return self._cached_issue_link_types
 
