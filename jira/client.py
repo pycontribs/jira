@@ -1974,11 +1974,10 @@ class JIRA(object):
         :rtype: Response
         """
         # let's see if we have the right issue link 'type' and fix it if needed
-        if not hasattr(self, '_cached_issuetypes'):
-            self._cached_issue_link_types = self.issue_link_types()
+        issue_link_types = self.issue_link_types()
 
-        if type not in self._cached_issue_link_types:
-            for lt in self._cached_issue_link_types:
+        if type not in issue_link_types:
+            for lt in issue_link_types:
                 if lt.outward == type:
                     # we are smart to figure it out what he meant
                     type = lt.name
@@ -2018,15 +2017,20 @@ class JIRA(object):
 
     # Issue link types
 
-    def issue_link_types(self):
+    def issue_link_types(self, force=False):
         """Get a list of issue link type Resources from the server.
 
         :rtype: List[IssueLinkType]
         """
-        r_json = self._get_json('issueLinkType')
-        link_types = [IssueLinkType(self._options, self._session, raw_link_json) for raw_link_json in
-                      r_json['issueLinkTypes']]
-        return link_types
+        if not hasattr(self, 'self._cached_issue_link_types') or force:
+            self._cached_issue_link_types = self.issue_link_types()
+
+            r_json = self._get_json('issueLinkType')
+            self._cached_issue_link_types = [
+                IssueLinkType(self._options, self._session, raw_link_json)
+                   for raw_link_json in r_json['issueLinkTypes']
+            ]
+        return self._cached_issue_link_types
 
     def issue_link_type(self, id):
         """Get an issue link type Resource from the server.
