@@ -2022,8 +2022,6 @@ class JIRA(object):
         :rtype: List[IssueLinkType]
         """
         if not hasattr(self, 'self._cached_issue_link_types') or force:
-            self._cached_issue_link_types = self.issue_link_types()
-
             r_json = self._get_json('issueLinkType')
             self._cached_issue_link_types = [
                 IssueLinkType(self._options, self._session, raw_link_json)
