@@ -7,25 +7,26 @@ over HTTP BASIC or Kerberos.
 """
 
 from __future__ import print_function
+
+import argparse
+import os
+import sys
+import webbrowser
+from getpass import getpass
+
+import requests
+from oauthlib.oauth1 import SIGNATURE_RSA
+from requests_oauthlib import OAuth1
+from six.moves import input
+from six.moves.urllib.parse import parse_qsl
+
+from jira import JIRA, __version__
+
 try:
     import configparser
 except ImportError:
     from six.moves import configparser
 
-from six.moves import input
-from six.moves.urllib.parse import parse_qsl
-
-import argparse
-from getpass import getpass
-from jira import __version__
-from jira import JIRA
-from oauthlib.oauth1 import SIGNATURE_RSA
-import os
-import requests
-from requests_oauthlib import OAuth1
-import sys
-
-import webbrowser
 
 CONFIG_PATH = os.path.join(
     os.path.expanduser('~'), '.jira-python', 'jirashell.ini')
