@@ -95,9 +95,9 @@ Setup
 * Fork_ repo
 * Keep it sync_'ed while you are developing
 * Install pyenv_
-* Install Atlassian Server for testing
+* Install `Atlassian JIRA Server`_ for testing
   - make install-sdk
-* pip install requirements-dev.txt
+* pip install -r requirements-dev.txt
 * Start up Jira Server
   - atlas-run-standalone
 * Test your changes
@@ -106,6 +106,7 @@ Setup
 .. _Fork: https://help.github.com/articles/fork-a-repo/
 .. _sync: https://help.github.com/articles/syncing-a-fork/
 .. _pyenv: https://amaral.northwestern.edu/resources/guides/pyenv-tutorial
+.. _`Atlassian JIRA Server`: https://www.atlassian.com/software/jira/download
 
 
 Credits
