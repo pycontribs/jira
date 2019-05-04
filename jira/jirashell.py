@@ -14,6 +14,7 @@ import sys
 import webbrowser
 from getpass import getpass
 
+import keyring
 import requests
 from oauthlib.oauth1 import SIGNATURE_RSA
 from requests_oauthlib import OAuth1
@@ -258,6 +259,20 @@ def get_config():
     return options, basic_auth, oauth, kerberos_auth
 
 
+def handle_basic_auth(auth, server):
+    if auth.get('password'):
+        password = auth['password']
+        if input(
+            'Would you like to remember password in OS keyring? (y/n)'
+        ) == 'y':
+            keyring.set_password(server, auth['username'], password)
+    else:
+        print('Getting password from keyring...')
+        password = keyring.get_password(server, auth['username'])
+        assert password, 'No password provided!'
+    return (auth['username'], password)
+
+
 def main():
     # workaround for avoiding UnicodeEncodeError when printing exceptions
     # containing unicode on py2
@@ -281,7 +296,7 @@ def main():
         options, basic_auth, oauth, kerberos_auth = get_config()
 
         if basic_auth:
-            basic_auth = (basic_auth['username'], basic_auth['password'])
+            basic_auth = handle_basic_auth(auth=basic_auth, server=options['server'])
 
         if oauth.get('oauth_dance') is True:
             oauth = oauth_dance(
