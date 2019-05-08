@@ -34,7 +34,7 @@ issue.update(
 issue.update(notify=False, description='Quiet summary update.')
 
 # You can update the entire labels field like this
-issue.update(labels=['AAA', 'BBB'])
+issue.update(fields={"labels": ['AAA', 'BBB']})
 
 # Or modify the List of existing labels. The new label is unicode with no
 # spaces
