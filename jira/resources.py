@@ -847,6 +847,12 @@ class User(Resource):
         """Comparison."""
         return str(self.name) == str(other.name)
 
+    def find_by_account_id(self, account_id, params=None):
+        orig_resource = self._resource
+        self._resource = 'user?accountId={0}'
+        self.find(account_id, params=params)
+        self._resource = orig_resource
+
 
 class Group(Resource):
     """A JIRA user group."""

@@ -2528,21 +2528,31 @@ class JIRA(object):
 
     # Users
 
-    def user(self, id, expand=None):
+    def user(self, username=None, account_id=None, expand=None):
         """Get a user Resource from the server.
 
-        :param id: ID of the user to get
-        :param id: str
+        :param username: username of the user to get
+        :param username: str
+        :param account_id: account_id of the user to get
+        :param account_id: str
         :param expand: Extra information to fetch inside each resource
         :type expand: Optional[Any]
 
         :rtype: User
         """
+        assert username or account_id, 'Need either username or account_id'
+
         user = User(self._options, self._session)
         params = {}
+
         if expand is not None:
             params['expand'] = expand
-        user.find(id, params=params)
+
+        if account_id:
+            user.find_by_account_id(account_id, params=params)
+        else:
+            user.find(username, params=params)
+
         return user
 
     def search_assignable_users_for_projects(self, username, projectKeys, startAt=0, maxResults=50):
@@ -3333,10 +3343,15 @@ class JIRA(object):
             r = self._session.get(url, headers=self._options['headers'])
 
             r_json = json_loads(r)
+
             if 'x-ausername' in r.headers:
                 r_json['username'] = r.headers['x-ausername']
+            elif 'x-aaccountid' in r.headers:
+                user = self.user(account_id=r.headers['x-aaccountid'])
+                r_json['username'] = user.name
             else:
                 r_json['username'] = None
+
             self._serverInfo = r_json
             # del r_json['self']  # this isn't really an addressable resource
         return self._serverInfo['username']
