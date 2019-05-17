@@ -1,4 +1,4 @@
-#!/usr/bin/python
+!/usr/bin/python
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 from __future__ import print_function
@@ -222,9 +222,14 @@ class JiraCookieAuth(AuthBase):
     def handle_401(self, response, **kwargs):
         if response.status_code != 401:
             return response
-        self.init_session()
-        response = self.process_original_request(response.request.copy())
-        return response
+        else:
+            retries = kwargs.get('retries', None)
+            if retries is None or retries < 5:
+                self.init_session()
+                response = self.process_original_request(response.request.copy())
+                return response
+            else:
+                raise JIRAError("Can not log in: %s" % str(response.status_code))
 
     def process_original_request(self, original_request):
         self.update_cookies(original_request)
