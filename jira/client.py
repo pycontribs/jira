@@ -1629,7 +1629,7 @@ class JIRA(object):
     def add_remote_link(self, issue, destination, globalId=None, application=None, relationship=None):
         """Add a remote link from an issue to an external application and returns a remote link Resource for it.
 
-        ``object`` should be a dict containing at least ``url`` to the linked external URL and
+        ``destination`` should be a dict containing at least ``url`` to the linked external URL and
         ``title`` to display for the link inside JIRA.
 
         For definitions of the allowable fields for ``object`` and the keyword arguments ``globalId``, ``application``
