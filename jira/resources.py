@@ -602,6 +602,7 @@ class Comment(Resource):
             self._parse_raw(raw)
 
     def update(self, fields=None, async_=None, jira=None, body='', visibility=None):
+        """Update a comment"""
         data = {}
         if body:
             data['body'] = body
