@@ -2,9 +2,10 @@
 from __future__ import unicode_literals
 import getpass
 import pytest
+from tenacity import retry
+from tenacity import wait_random_exponential
 from tests import get_unique_project_name
 from tests import JiraTestManager
-import time
 
 from jira import Role, Issue, JIRA, JIRAError, Project  # noqa
 import jira.client
@@ -56,22 +57,16 @@ def slug(request, cl_admin):
     return slug
 
 
-@pytest.mark.timeout(180)
+@retry(wait=wait_random_exponential(multiplier=1, max=180))
 def test_delete_project(cl_admin, cl_normal, slug):
-    for i in range(6):
-        time.sleep(1)  # with <=5s was failing often
 
-        with pytest.raises(ValueError) as ex:
-            assert cl_normal.delete_project(slug)
+    with pytest.raises(JIRAError) as ex:
+        assert cl_normal.delete_project(slug)
 
         assert 'Not enough permissions to delete project' in str(ex.value) \
             or str(ex.value).endswith('is not a Project, projectID or slug')
 
-    try:
-        assert cl_admin.delete_project(slug)
-    except Exception as e:
-        e.message += " slug=%s" % slug
-        raise
+    assert cl_admin.delete_project(slug)
 
 
 def test_delete_inexistent_project(cl_admin):

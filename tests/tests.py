@@ -179,7 +179,7 @@ class JiraTestManager(object):
                     else:
                         self.jira_admin = JIRA(self.CI_JIRA_URL, validate=True,
                                                logging=False, max_retries=self.max_retries)
-                if self.jira_admin.current_user() != self.CI_JIRA_ADMIN:
+                if not self.jira_admin.current_user():
                     self.initialized = 1
                     sys.exit(3)
 
@@ -543,13 +543,13 @@ class ComponentTests(unittest.TestCase):
 
         component = self.jira.create_component(name,
                                                self.project_b, description='stand by!',
-                                               leadUserName=self.test_manager.CI_JIRA_ADMIN)
+                                               leadUserName=self.jira.current_user())
         name = 'renamed-' + name
         component.update(name=name, description='It is done.',
-                         leadUserName=self.test_manager.CI_JIRA_ADMIN)
+                         leadUserName=self.jira.current_user())
         self.assertEqual(component.name, name)
         self.assertEqual(component.description, 'It is done.')
-        self.assertEqual(component.lead.name, self.test_manager.CI_JIRA_ADMIN)
+        self.assertEqual(component.lead.name, self.jira.current_user())
         component.delete()
 
     def test_4_delete(self):

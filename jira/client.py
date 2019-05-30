@@ -3323,23 +3323,28 @@ class JIRA(object):
         return None
 
     def current_user(self):
-        """Returns the username of the current user.
+        """Returns the username or account-id of the current user. For anonymous
+        users it will return a value that evaluates as False.
 
         :rtype: str
         """
-        if not hasattr(self, '_serverInfo') or 'username' not in self._serverInfo:
+        if not hasattr(self, '_myself'):
 
-            url = self._get_url('serverInfo')
+            url = self._get_url('myself')
             r = self._session.get(url, headers=self._options['headers'])
 
             r_json = json_loads(r)
-            if 'x-ausername' in r.headers:
-                r_json['username'] = r.headers['x-ausername']
-            else:
-                r_json['username'] = None
-            self._serverInfo = r_json
+            self._myself = r_json
+            print(r_json, r.headers)
+            # if 'X-AACCOUNTID' in r.headers:
+            #     r_json['username'] = r.headers['X-AACCOUNTID']
+            # elif 'x-ausername' in r.headers:
+            #     r_json['username'] = r.headers['x-ausername']
+            # else:
+            #     r_json['username'] = None
             # del r_json['self']  # this isn't really an addressable resource
-        return self._serverInfo['username']
+        print(self._myself)
+        return self._myself['name']
 
     def delete_project(self, pid):
         """Delete project from Jira.
@@ -3469,7 +3474,7 @@ class JIRA(object):
                    'projectTemplateWebItemKey': template_key,
                    'projectTemplateModuleKey': template_key,
                    'lead': assignee,
-                   # 'assigneeType': '2',
+                   'assigneeType': 'PROJECT_LEAD',
                    }
 
         if self._version[0] > 6:
