@@ -183,6 +183,8 @@
         ".eggs"
     ],
     "ignoreWords": [
+        "AACCOUNTID",
+        "GDPR",
         "I18NSPHINXOPTS",
         "hdost",
         "βρέθηκε"
