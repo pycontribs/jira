@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 import getpass
 import pytest
 from tenacity import retry
-from tenacity import wait_random_exponential
+from tenacity import wait_incrementing
 from tests import get_unique_project_name
 from tests import JiraTestManager
 
@@ -57,15 +57,14 @@ def slug(request, cl_admin):
     return slug
 
 
-@retry(wait=wait_random_exponential(multiplier=1, max=180))
+@retry(wait=wait_incrementing(start=0, increment=1, max=60))
 def test_delete_project(cl_admin, cl_normal, slug):
 
     with pytest.raises(JIRAError) as ex:
-        assert cl_normal.delete_project(slug)
-
-        assert 'Not enough permissions to delete project' in str(ex.value) \
-            or str(ex.value).endswith('is not a Project, projectID or slug')
-
+        cl_normal.delete_project(slug)
+    # verify that normal user cannot delete project
+    assert 'Not enough permissions to delete project' in str(ex.value)
+    # verify that admin user can delete project
     assert cl_admin.delete_project(slug)
 
 
