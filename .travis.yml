@@ -19,6 +19,7 @@ cache:
 os:
   - linux
 stages:
+  - maintenance
   - phase1
   - phase2
   - deploy
@@ -42,6 +43,11 @@ notifications:
     - pycontribs@googlegroups.com
 jobs:
   include:
+    - stage: maintenance
+      script:
+        - python -m tox -e maintenance
+      on:
+        condition: $TRAVIS_EVENT_TYPE = cron
     - stage: phase1
       script:
         # package building added here purely to fail-fast if is broken
