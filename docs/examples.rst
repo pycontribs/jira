@@ -346,15 +346,8 @@ Here are some examples::
     # attach file from memory (you can skip IO operations). In this case you MUST provide `filename`.
     import sys
     
-    # Python 3 StringIO
-    if sys.version_info[0] > 2:
-        from io import StringIO
-        attachment = StringIO()
-    
-    # Python 2 StringIO
-    else:
-        import StringIO
-        attachment = StringIO.StringIO()
+    from six import StringIO
+    attachment = StringIO()
      
     attachment.write(data)
     jira.add_attachment(issue=issue, attachment=attachment, filename='content.txt')
