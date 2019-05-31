@@ -26,7 +26,6 @@ import json
 import logging
 import os
 import re
-import tempfile
 try:  # Python 2.7+
     from logging import NullHandler
 except ImportError:
@@ -3360,38 +3359,13 @@ class JIRA(object):
         if hasattr(pid, 'id'):
             pid = pid.id
 
-        # Check if pid is a number - then we assume that it is
-        # projectID
-        try:
-            str(int(pid)) == pid
-        except Exception as e:
-            # pid looks like a slug, lets verify that
-            r_json = self._get_json('project')
-            for e in r_json:
-                if e['key'] == pid or e['name'] == pid:
-                    pid = e['id']
-                    break
-            else:
-                # pid is not a Project
-                # not a projectID and not a slug - we raise error here
-                raise ValueError('Parameter pid="%s" is not a Project, '
-                                 'projectID or slug' % pid)
-
-        uri = '/rest/api/2/project/%s' % pid
-        url = self._options['server'] + uri
-        try:
-            r = self._session.delete(
-                url, headers={'Content-Type': 'application/json'}
-            )
-        except JIRAError as je:
-            if '403' in str(je):
-                raise JIRAError('Not enough permissions to delete project')
-            if '404' in str(je):
-                raise JIRAError('Project not found in Jira')
-            raise je
-
-        if r.status_code == 204:
-            return True
+        url = self._options['server'] + '/rest/api/2/project/%s' % pid
+        r = self._session.delete(url)
+        if r.status_code == 403:
+            raise JIRAError('Not enough permissions to delete project')
+        if r.status_code == 404:
+            raise JIRAError('Project not found in Jira')
+        return r.ok
 
     def _gain_sudo_session(self, options, destination):
         url = self._options['server'] + '/secure/admin/WebSudoAuthenticate.jspa'
@@ -3419,16 +3393,14 @@ class JIRA(object):
         data = json_loads(r)
 
         templates = {}
-        # if 'projectTemplates' in data:
-        #     template_ = data['projectTemplates']
-        # el
         if 'projectTemplatesGroupedByType' in data:
             for group in data['projectTemplatesGroupedByType']:
                 for t in group['projectTemplates']:
                     templates[t['name']] = t
+        # pprint(templates.keys())
         return templates
 
-    def create_project(self, key, name=None, assignee=None, type="Software", template_name=None):
+    def create_project(self, key, name=None, assignee=None, type="software", template_name=None):
         """Create a project with the specified parameters.
 
         :param key: Mandatory. Must match JIRA project key requirements, usually only 2-10 uppercase characters.
@@ -3447,60 +3419,60 @@ class JIRA(object):
         :rtype: Union[bool,int]
 
         """
+        template_key = None
+
         if assignee is None:
             assignee = self.current_user()
         if name is None:
             name = key
 
-        possible_templates = ['Basic', 'JIRA Classic', 'JIRA Default Schemes', 'Basic software development']
+        # preference list for picking a default template
+        possible_templates = [
+            'Scrum software development',  # have Bug
+            'Agility',  # cannot set summary
+            'Bug tracking',
+            'JIRA Classic',
+            'JIRA Default Schemes',
+            'Basic software development',
+            'Project management',
+            'Kanban software development',
+            'Task management',
 
-        if template_name is not None:
-            possible_templates = [template_name]
+            'Basic',  # does not have Bug
+            'Content Management',
+            'Customer service',
+            'Document Approval',
+            'IT Service Desk',
+            'Lead Tracking',
+            'Process management',
+            'Procurement',
+            'Recruitment',
+        ]
+
+        templates = self.templates()
+        if not template_name:
+            template_name = next(t for t in possible_templates if t in templates)
+
+        template_key = templates[template_name]['projectTemplateModuleCompleteKey']
+        project_type_key = templates[template_name]['projectTypeKey']
 
         # https://confluence.atlassian.com/jirakb/creating-a-project-via-rest-based-on-jira-default-schemes-744325852.html
-        templates = self.templates()
-        # TODO(ssbarnea): find a better logic to pick a default fallback template
-        template_key = list(templates.values())[0]['projectTemplateModuleCompleteKey']
-        for template_name, template_dic in templates.items():
-            if template_name in possible_templates:
-                template_key = template_dic['projectTemplateModuleCompleteKey']
-                break
-
+        # see https://confluence.atlassian.com/jirakb/creating-projects-via-rest-api-in-jira-963651978.html
         payload = {'name': name,
                    'key': key,
-                   'keyEdited': 'false',
-                   # 'projectTemplate': 'com.atlassian.jira-core-project-templates:jira-issuetracking',
-                   # 'permissionScheme': '',
-                   'projectTemplateWebItemKey': template_key,
-                   'projectTemplateModuleKey': template_key,
+                   'projectTypeKey': project_type_key,
+                   'projectTemplateKey': template_key,
                    'lead': assignee,
                    'assigneeType': 'PROJECT_LEAD',
                    }
 
-        if self._version[0] > 6:
-            # JIRA versions before 7 will throw an error if we specify type parameter
-            payload['type'] = type
-
-        headers = CaseInsensitiveDict(
-            {'Content-Type': 'application/x-www-form-urlencoded'})
         url = self._options['server'] + \
-            '/rest/project-templates/latest/templates'
+            '/rest/api/2/project'
 
-        r = self._session.post(url, data=payload, headers=headers)
-
-        if r.status_code == 200:
-            r_json = json_loads(r)
-            return r_json
-
-        f = tempfile.NamedTemporaryFile(
-            suffix='.html', prefix='python-jira-error-create-project-', delete=False)
-        f.write(r.text)
-
-        if self.logging:
-            logging.error(
-                "Unexpected result while running create project. Server response saved in %s for further investigation [HTTP response=%s]." % (
-                    f.name, r.status_code))
-        return False
+        r = self._session.post(url, data=json.dumps(payload))
+        r.raise_for_status()
+        r_json = json_loads(r)
+        return r_json
 
     def add_user(self,
                  username,
