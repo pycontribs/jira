@@ -348,7 +348,6 @@ Here are some examples::
     
     from six import StringIO
     attachment = StringIO()
-     
     attachment.write(data)
     jira.add_attachment(issue=issue, attachment=attachment, filename='content.txt')
 
