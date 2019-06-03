@@ -18,7 +18,7 @@ from jira.client import Watchers  # noqa: E402
 from jira.client import Worklog  # noqa: E402
 from jira.config import get_jira  # noqa: E402
 from jira.exceptions import JIRAError  # noqa: E402
-from jira import resources # noqa: E402
+from jira import resources  # noqa: E402,E401
 
 __all__ = (
     'Comment',
@@ -28,6 +28,7 @@ __all__ = (
     'JIRAError',
     'Priority',
     'Project',
+    'resources',
     'Role',
     'User',
     'version_info',
