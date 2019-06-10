@@ -93,6 +93,19 @@ Development takes place on GitHub_, where the git-flow_ branch structure is used
 .. _GitHub: https://github.com/pycontribs/jira
 .. _git-flow: http://nvie.com/posts/a-successful-git-branching-model/
 
+The following steps can be taken to contribute code:
+
+#. fork the repo 
+#. git clone your new repo
+#. cd repo
+#. create virtual environment (see link above)
+#. create a branch (see git-flow branch structure above)
+#. pip install -r requirement*txt
+#. pip install --editable
+#. makes changes to library && test
+#. commit and push to your repo
+#. issue pull request to upstream repo
+
 
 Credits
 -------
@@ -119,3 +132,4 @@ In additions to all the contributors we would like to thank to these companies:
 
 .. image:: https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?container=focus&refresh=3600&resize_h=50&url=https://upload.wikimedia.org/wikipedia/en/9/90/PremiumSoft_Navicat_Premium_Logo.png
     :target: http://www.navicat.com/
+ following steps to contribute code
