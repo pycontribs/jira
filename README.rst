@@ -132,4 +132,3 @@ In additions to all the contributors we would like to thank to these companies:
 
 .. image:: https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?container=focus&refresh=3600&resize_h=50&url=https://upload.wikimedia.org/wikipedia/en/9/90/PremiumSoft_Navicat_Premium_Logo.png
     :target: http://www.navicat.com/
- following steps to contribute code
