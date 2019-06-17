@@ -47,6 +47,9 @@ The library is able to load the credentials from inside the ~/.netrc file, so pu
 Cookie Based Authentication
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+.. note::
+    JIRA Cloud API authentication using Cookie Based Authentication is no longer supported.
+
 Pass a tuple of (username, password) to the ``auth`` constructor argument::
 
     auth_jira = JIRA(auth=('username', 'password'))
@@ -54,12 +57,28 @@ Pass a tuple of (username, password) to the ``auth`` constructor argument::
 Using this method, authentication happens during then initialization of the object. If the authentication is successful,
 the retrieved session cookie will be used in future requests. Upon cookie expiration, authentication will happen again transparently.
 
-HTTP BASIC
-^^^^^^^^^^
+HTTP BASIC With Password
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. note::
+    JIRA Cloud API authentication using HTTP BASIC with password is no longer supported.
 
 Pass a tuple of (username, password) to the ``basic_auth`` constructor argument::
 
     auth_jira = JIRA(basic_auth=('username', 'password'))
+
+
+HTTP BASIC With API-token
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. note::
+    This authentication mechanism is only supported in JIRA Cloud.
+
+Pass a tuple of (username, api_token) to the ``basic_auth`` constructor argument::
+
+    auth_jira = JIRA(basic_auth=('username', 'api-token'))
+
+To create an API token see https://confluence.atlassian.com/cloud/api-tokens-938839638.html.
 
 OAuth
 ^^^^^
