@@ -2228,13 +2228,17 @@ class JIRA(object):
 
     # Projects
 
-    def projects(self):
+    def projects(self, expand=None):
         """Get a list of project Resources from the server visible to the current authenticated user.
 
-        :rtype: List[Project]
+        :param expand: extra information to fetch inside each project
 
+        :type expand: str
         """
-        r_json = self._get_json("project")
+        params = {}
+        if expand is not None:
+            params['expand'] = expand
+        r_json = self._get_json('project', params)
         projects = [
             Project(self._options, self._session, raw_project_json)
             for raw_project_json in r_json

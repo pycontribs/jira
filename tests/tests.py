@@ -1503,6 +1503,11 @@ class ProjectTests(unittest.TestCase):
         projects = self.jira.projects()
         self.assertGreaterEqual(len(projects), 2)
 
+    def test_projects_expand(self):
+        projects = self.jira.projects(expand='description')
+        for project in projects:
+            self.assertTrue(hasattr(project, 'description'))
+
     def test_project(self):
         project = self.jira.project(self.project_b)
         self.assertEqual(project.key, self.project_b)
