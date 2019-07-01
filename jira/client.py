@@ -1625,7 +1625,7 @@ class JIRA(object):
 
     # removed the @translate_resource_args because it prevents us from finding
     # information for building a proper link
-    def add_remote_link(self, issue, destination, globalId=None, application=None, relationship=None):
+    def add_remote_link(self, issue, destination, globalId=None, application=None, relationship=None, getApplicationLinks=True):
         """Add a remote link from an issue to an external application and returns a remote link Resource for it.
 
         ``destination`` should be a dict containing at least ``url`` to the linked external URL and
@@ -1640,20 +1640,22 @@ class JIRA(object):
         :param application: application information for the link (see the above link for details)
         :param relationship: relationship description for the link (see the above link for details)
         """
-        try:
-            applicationlinks = self.applicationlinks()
-        except JIRAError as e:
-            applicationlinks = []
-            # In many (if not most) configurations, non-admin users are
-            # not allowed to list applicationlinks; if we aren't allowed,
-            # let's let people try to add remote links anyway, we just
-            # won't be able to be quite as helpful.
-            warnings.warn(
-                "Unable to gather applicationlinks; you will not be able "
-                "to add links to remote issues: (%s) %s" % (
-                    e.status_code,
-                    e.text),
-                Warning)
+        applicationlinks = []
+
+        if getApplicationLinks:
+            try:
+                applicationlinks = self.applicationlinks()
+            except JIRAError as e:
+                # In many (if not most) configurations, non-admin users are
+                # not allowed to list applicationlinks; if we aren't allowed,
+                # let's let people try to add remote links anyway, we just
+                # won't be able to be quite as helpful.
+                warnings.warn(
+                    "Unable to gather applicationlinks; you will not be able "
+                    "to add links to remote issues: (%s) %s" % (
+                        e.status_code,
+                        e.text),
+                    Warning)
 
         data = {}
         if isinstance(destination, Issue):
