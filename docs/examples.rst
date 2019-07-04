@@ -61,6 +61,8 @@ Pass a tuple of (username, password) to the ``basic_auth`` constructor argument:
 
     auth_jira = JIRA(basic_auth=('username', 'password'))
 
+For cloud basic authentication the password is an API TOKEN, not the password of the user. Please read: https://developer.atlassian.com/cloud/jira/platform/jira-rest-api-basic-authentication 
+
 OAuth
 ^^^^^
 
