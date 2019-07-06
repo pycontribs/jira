@@ -9,16 +9,18 @@ import os
 from jira import Role, Issue, JIRA, JIRAError, Project  # noqa
 
 
-CI_JIRA_URL = os.environ['CI_JIRA_URL']
-CI_JIRA_ADMIN = os.environ['CI_JIRA_ADMIN']
-CI_JIRA_ADMIN_PASSWORD = os.environ['CI_JIRA_ADMIN_PASSWORD']
+CI_JIRA_URL = os.environ["CI_JIRA_URL"]
+CI_JIRA_ADMIN = os.environ["CI_JIRA_ADMIN"]
+CI_JIRA_ADMIN_PASSWORD = os.environ["CI_JIRA_ADMIN_PASSWORD"]
 
-j = JIRA(CI_JIRA_URL,
-         basic_auth=(CI_JIRA_ADMIN, CI_JIRA_ADMIN_PASSWORD),
-         logging=True,
-         validate=True,
-         async_=True,
-         async_workers=20)
+j = JIRA(
+    CI_JIRA_URL,
+    basic_auth=(CI_JIRA_ADMIN, CI_JIRA_ADMIN_PASSWORD),
+    logging=True,
+    validate=True,
+    async_=True,
+    async_workers=20,
+)
 
 for p in j.projects():
     print(p)

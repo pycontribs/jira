@@ -6,8 +6,7 @@ from jira.client import GreenHopper
 # (see https://developer.atlassian.com/display/DOCS/Installing+the+Atlassian+Plugin+SDK for details).
 # Override this with the options parameter.
 # GreenHopper is a plugin in a JIRA instance
-options = {
-    'server': 'https://jira.atlassian.com'}
+options = {"server": "https://jira.atlassian.com"}
 gh = GreenHopper(options)
 
 # Get all boards viewable by anonymous users.
@@ -23,5 +22,6 @@ for sprint in sprints:
     sprint_id = sprint.id
     print("Sprint: %s" % sprint.name)
     incompleted_issues = gh.incompleted_issues(board_id, sprint_id)
-    print("Incomplete issues: %s" %
-          ', '.join(issue.key for issue in incompleted_issues))
+    print(
+        "Incomplete issues: %s" % ", ".join(issue.key for issue in incompleted_issues)
+    )

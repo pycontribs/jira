@@ -9,6 +9,7 @@ Also, this simplifies the scripts by not having to write the same initialization
 import logging
 import os
 import sys
+
 try:
     import configparser
 except ImportError:
@@ -17,7 +18,15 @@ except ImportError:
 from jira.client import JIRA
 
 
-def get_jira(profile=None, url="http://localhost:2990", username="admin", password="admin", appid=None, autofix=False, verify=True):
+def get_jira(
+    profile=None,
+    url="http://localhost:2990",
+    username="admin",
+    password="admin",
+    appid=None,
+    autofix=False,
+    verify=True,
+):
     """Return a JIRA object by loading the connection details from the `config.ini` file.
 
     :param profile: The name of the section from config.ini file that stores server config url/username/password
@@ -47,22 +56,32 @@ def get_jira(profile=None, url="http://localhost:2990", username="admin", passwo
         verify=...
 
     """
+
     def findfile(path):
         """Find the file named path in the sys.path.
 
         Returns the full path name if found, None if not found
         """
-        paths = ['.', os.path.expanduser('~')]
+        paths = [".", os.path.expanduser("~")]
         paths.extend(sys.path)
         for dirname in paths:
             possible = os.path.abspath(os.path.join(dirname, path))
             if os.path.isfile(possible):
                 return possible
         return None
-    config = configparser.ConfigParser(defaults={'user': None, 'pass': None, 'appid': appid, 'autofix': autofix,
-                                                 'verify': 'yes' if verify else 'no'}, allow_no_value=True)
 
-    config_file = findfile('config.ini')
+    config = configparser.ConfigParser(
+        defaults={
+            "user": None,
+            "pass": None,
+            "appid": appid,
+            "autofix": autofix,
+            "verify": "yes" if verify else "no",
+        },
+        allow_no_value=True,
+    )
+
+    config_file = findfile("config.ini")
     if config_file:
         logging.debug("Found %s config file" % config_file)
 
@@ -70,29 +89,31 @@ def get_jira(profile=None, url="http://localhost:2990", username="admin", passwo
         if config_file:
             config.read(config_file)
             try:
-                profile = config.get('general', 'default-jira-profile')
+                profile = config.get("general", "default-jira-profile")
             except configparser.NoOptionError:
                 pass
 
     if profile:
         if config_file:
             config.read(config_file)
-            url = config.get(profile, 'url')
-            username = config.get(profile, 'user')
-            password = config.get(profile, 'pass')
-            appid = config.get(profile, 'appid')
-            autofix = config.get(profile, 'autofix')
-            verify = config.getboolean(profile, 'verify')
+            url = config.get(profile, "url")
+            username = config.get(profile, "user")
+            password = config.get(profile, "pass")
+            appid = config.get(profile, "appid")
+            autofix = config.get(profile, "autofix")
+            verify = config.getboolean(profile, "verify")
 
         else:
             raise EnvironmentError(
-                "%s was not able to locate the config.ini file in current directory, user home directory or PYTHONPATH." % __name__)
+                "%s was not able to locate the config.ini file in current directory, user home directory or PYTHONPATH."
+                % __name__
+            )
 
     options = JIRA.DEFAULT_OPTIONS
-    options['server'] = url
-    options['autofix'] = autofix
-    options['appid'] = appid
-    options['verify'] = verify
+    options["server"] = url
+    options["autofix"] = autofix
+    options["appid"] = appid
+    options["verify"] = verify
 
     return JIRA(options=options, basic_auth=(username, password))
     # self.jira.config.debug = debug

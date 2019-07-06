@@ -64,13 +64,11 @@ class CaseInsensitiveDict(dict):
 
 def threaded_requests(requests):
     for fn, url, request_args in requests:
-        th = threading.Thread(
-            target=fn, args=(url,), kwargs=request_args, name=url,
-        )
+        th = threading.Thread(target=fn, args=(url,), kwargs=request_args, name=url)
         th.start()
 
     for th in threading.enumerate():
-        if th.name.startswith('http'):
+        if th.name.startswith("http"):
             th.join()
 
 
