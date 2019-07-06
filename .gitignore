@@ -14,9 +14,11 @@
 .tox/
 amps-standalone*
 coverage.xml
+dist/
 docs/_build
 docs/build
 encrypt-credentials.sh
+pip-wheel-metadata/
 reports
 reports/
 setenv.sh

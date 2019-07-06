@@ -22,6 +22,10 @@ JIRA Python Library
 .. image:: https://travis-ci.com/pycontribs/jira.svg?branch=master
         :target: https://travis-ci.com/pycontribs/jira
 
+.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
+   :target: https://github.com/python/black
+   :alt: Python Black Code Style
+
 .. image:: https://codecov.io/gh/pycontribs/jira/branch/develop/graph/badge.svg
         :target: https://codecov.io/gh/pycontribs/jira
 

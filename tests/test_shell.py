@@ -28,9 +28,14 @@ def test_unicode(requests_mock, capsys, testargs):
     Introduce for catching py2 Unicode output workaround regression.
     Likely not needed for Py3 versions.
     """
-    requests_mock.register_uri('GET', 'http://localhost/rest/api/2/serverInfo', text='Δεν βρέθηκε', status_code=404)
+    requests_mock.register_uri(
+        "GET",
+        "http://localhost/rest/api/2/serverInfo",
+        text="Δεν βρέθηκε",
+        status_code=404,
+    )
 
-    with patch.object(sys, 'argv', testargs):
+    with patch.object(sys, "argv", testargs):
         jirashell.main()
     captured = capsys.readouterr()
     assert captured.err.startswith("JiraError HTTP 404")
@@ -45,25 +50,29 @@ def mock_keyring():
         _keyring[(server, username)] = password
 
     def mock_get_password(server, username):
-        return _keyring.get((server, username), '')
+        return _keyring.get((server, username), "")
 
     mock_kr = MagicMock(
         set_password=MagicMock(side_effect=mock_set_password),
         get_password=MagicMock(side_effect=mock_get_password),
         _keyring=_keyring,
     )
-    mocked_module = patch.object(jirashell, 'keyring', new=mock_kr)
+    mocked_module = patch.object(jirashell, "keyring", new=mock_kr)
     yield mocked_module.start()
     mocked_module.stop()
 
 
 @pytest.mark.timeout(4)
-def test_no_password_try_keyring(requests_mock, capsys, testargs, mock_keyring, monkeypatch):
-    requests_mock.register_uri('GET', 'http://localhost/rest/api/2/serverInfo', status_code=200)
+def test_no_password_try_keyring(
+    requests_mock, capsys, testargs, mock_keyring, monkeypatch
+):
+    requests_mock.register_uri(
+        "GET", "http://localhost/rest/api/2/serverInfo", status_code=200
+    )
 
     # no password provided
-    args = testargs + ['-u', 'test@user']
-    with patch.object(sys, 'argv', args):
+    args = testargs + ["-u", "test@user"]
+    with patch.object(sys, "argv", args):
         jirashell.main()
 
         assert len(requests_mock.request_history) == 0
@@ -73,33 +82,39 @@ def test_no_password_try_keyring(requests_mock, capsys, testargs, mock_keyring, 
         assert mock_keyring._keyring == {}
 
     # password provided, don't save
-    monkeypatch.setattr('sys.stdin', io.StringIO('n'))
-    args = args + ['-p', 'pass123']
-    with patch.object(sys, 'argv', args):
+    monkeypatch.setattr("sys.stdin", io.StringIO("n"))
+    args = args + ["-p", "pass123"]
+    with patch.object(sys, "argv", args):
         jirashell.main()
 
         assert len(requests_mock.request_history) == 4
         captured = capsys.readouterr()
-        assert captured.out.strip() == "Would you like to remember password in OS keyring? (y/n)"
+        assert (
+            captured.out.strip()
+            == "Would you like to remember password in OS keyring? (y/n)"
+        )
         assert mock_keyring._keyring == {}
 
     # password provided, save
-    monkeypatch.setattr('sys.stdin', io.StringIO('y'))
-    args = args + ['-p', 'pass123']
-    with patch.object(sys, 'argv', args):
+    monkeypatch.setattr("sys.stdin", io.StringIO("y"))
+    args = args + ["-p", "pass123"]
+    with patch.object(sys, "argv", args):
         jirashell.main()
 
         assert len(requests_mock.request_history) == 8
         captured = capsys.readouterr()
-        assert captured.out.strip() == "Would you like to remember password in OS keyring? (y/n)"
-        assert mock_keyring._keyring == {('http://localhost', 'test@user'): 'pass123'}
+        assert (
+            captured.out.strip()
+            == "Would you like to remember password in OS keyring? (y/n)"
+        )
+        assert mock_keyring._keyring == {("http://localhost", "test@user"): "pass123"}
 
     # user stored password
-    args = testargs + ['-u', 'test@user']
-    with patch.object(sys, 'argv', args):
+    args = testargs + ["-u", "test@user"]
+    with patch.object(sys, "argv", args):
         jirashell.main()
 
         assert len(requests_mock.request_history) == 12
         captured = capsys.readouterr()
         assert "Getting password from keyring..." == captured.out.strip()
-        assert mock_keyring._keyring == {('http://localhost', 'test@user'): 'pass123'}
+        assert mock_keyring._keyring == {("http://localhost", "test@user"): "pass123"}
