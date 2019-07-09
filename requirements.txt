@@ -3,6 +3,7 @@ defusedxml
 functools32; python_version<'3.2'  # PSF license
 keyring<19  # to support python 2.7 and 3.4
 pbr>=3.0.0
+urllib3[secure]<1.25,>=1.21.1; python_version < '3'
 requests-oauthlib>=1.1.0
 requests>=2.10.0
 requests_toolbelt
