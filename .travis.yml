@@ -36,7 +36,7 @@ before_install:
   # ^ end workaround
   - nvm install $TRAVIS_NODE_VERSION
   # end
-  - which tox >/dev/null || if [ -z ${VIRTUAL_ENV+x} ]; then python -m pip install --user tox tox-pyenv wheel setuptools --upgrade; else python -m pip install tox tox-pyenv wheel twine setuptools --upgrade; fi
+  - which tox >/dev/null || if [ -z ${VIRTUAL_ENV+x} ]; then python -m pip install --user tox tox-pyenv wheel pre-commit setuptools --upgrade; else python -m pip install tox tox-pyenv wheel twine pre-commit setuptools --upgrade; fi
 notifications:
   email:
     - pycontribs@googlegroups.com
