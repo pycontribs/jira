@@ -78,7 +78,7 @@ Pass a tuple of (username, api_token) to the ``basic_auth`` constructor argument
 
     auth_jira = JIRA(basic_auth=('username', 'api-token'))
 
-To create an API token see https://confluence.atlassian.com/cloud/api-tokens-938839638.html.
+To create an API token see https://confluence.atlassian.com/cloud/api-tokens-938839638.html
 
 OAuth
 ^^^^^
