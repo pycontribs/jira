@@ -541,7 +541,7 @@ class Issue(Resource):
             # apply some heuristics to make certain changes easier
             if isinstance(value, string_types):
                 if field == 'assignee' or field == 'reporter':
-                    fields_dict['assignee'] = {'name': value}
+                    fields_dict[field] = {'name': value}
                 elif field == 'comment':
                     if 'comment' not in update_dict:
                         update_dict['comment'] = []

@@ -176,6 +176,7 @@ You can also update an issue's fields with keyword arguments::
 
     issue.update(summary='new summary', description='A new summary was added')
     issue.update(assignee={'name': 'new_user'})    # reassigning in update requires issue edit permission
+    issue.update(reporter={'name'; 'new_user'})    # changing the reporter of an issue
 
 or with a dict of new field values::
 
