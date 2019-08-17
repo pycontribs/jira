@@ -12,6 +12,7 @@ except ImportError:
 import random
 from requests.exceptions import ConnectionError
 from requests import Session
+from urllib import parse
 import time
 
 from jira.exceptions import JIRAError
@@ -121,6 +122,7 @@ class ResilientSession(Session):
             response = None
             exception = None
             try:
+                url = parse.unquote(url)
                 method = getattr(super(ResilientSession, self), verb.lower())
                 response = method(url, timeout=self.timeout, **kwargs)
                 if response.status_code >= 200 and response.status_code <= 299:
