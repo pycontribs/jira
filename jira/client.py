@@ -714,7 +714,7 @@ class JIRA(object):
         """
         try:
             return [item_type(self._options, self._session, raw_issue_json) for raw_issue_json in
-                    (resource[items_key] if items_key else resource)]
+                    (resource[items_key] if items_key and items_key in resource else resource)]
         except KeyError as e:
             # improving the error text so we know why it happened
             raise KeyError(str(e) + " : " + json.dumps(resource))
