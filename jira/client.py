@@ -1508,19 +1508,22 @@ class JIRA(object):
 
     # non-resource
     @translate_resource_args
-    def assign_issue(self, issue, assignee):
+    def assign_issue(self, issue, assignee, use_accountId=False):
         """Assign an issue to a user. None will set it to unassigned. -1 will set it to Automatic.
 
         :param issue: the issue ID or key to assign
         :type issue: int or str
-        :param assignee: the user to assign the issue to
+        :param assignee: name or accountId of the user to assign the issue to
         :type assignee: str
+        :param use_accountId: whether to use accountId instead of name
+        :type use_accountId: bool
 
         :rtype: bool
         """
         url = self._options['server'] + \
             '/rest/api/latest/issue/' + str(issue) + '/assignee'
-        payload = {'name': assignee}
+        key = 'accountId' if use_accountId else 'name'
+        payload = {key: assignee}
         r = self._session.put(
             url, data=json.dumps(payload))
         raise_on_error(r)
