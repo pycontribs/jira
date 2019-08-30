@@ -3039,7 +3039,6 @@ class JIRA(object):
 
         """
         url = self._get_url(path, base)
-
         r = self._session.get(url, params=params)
         try:
             r_json = json_loads(r)
