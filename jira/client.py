@@ -3039,6 +3039,7 @@ class JIRA(object):
 
         """
         url = self._get_url(path, base)
+
         r = self._session.get(url, params=params)
         try:
             r_json = json_loads(r)
@@ -3633,6 +3634,49 @@ class JIRA(object):
             return ResultList(boards, 0, len(boards), len(boards), True)
         else:
             return self._fetch_pages(Board, 'values', 'board', startAt, maxResults, params, base=self.AGILE_BASE_URL)
+
+    def board_issues(self, board_id, startAt=0, maxResults=50, jql=None, validate_query=True, fields=None, expand=None):
+        """Get a :class:`~jira.client.ResultList` of issue Resources from a board and matching an optional JQL search string.
+
+        :param id: Id of the board to search issues from.
+        :type id: int
+
+        :param startAt: Index of the first issue to return. (Default: 0)
+        :type startAt: int
+
+        :param maxResults: Maximum number of issues to return. Total number of results
+            is available in the ``total`` attribute of the returned :class:`~jira.client.ResultList`.
+            If maxResults evaluates as False, it will try to get all issues in batches. (Default: 50)
+        :type maxResults: int
+
+        :param jql_str: The JQL search string.
+        :type jql_str: Optional[str]
+
+        :param validate_query: Whether or not the query should be validated. (Default: True)
+        :type validate_query: bool
+
+        :param fields: comma-separated string or list of issue fields to include in the results.
+            Default is to include all fields.
+        :type fields: Optional[str or list]
+
+        :param expand: extra information to fetch inside each resource
+        :type expand: Optional[str]
+
+        :rtype: :class:`~jira.client.ResultList`
+        """
+        params = {
+            "validateQuery": validate_query,
+            "fields": fields,
+            "expand": expand,
+            "jql": jql
+        }
+
+        return self._fetch_pages(
+            Issue, 'issues', 'board/%s/issue' % board_id,
+            startAt, maxResults, params,
+            base=self.AGILE_BASE_URL
+        )
+        
 
     @translate_resource_args
     def sprints(self, board_id, extended=False, startAt=0, maxResults=50, state=None):
