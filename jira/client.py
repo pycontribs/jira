@@ -1792,10 +1792,7 @@ class JIRA(object):
         if fields is not None:
             data['fields'] = fields
         else:
-            fields_dict = {}
-            for field in fieldargs:
-                fields_dict[field] = fieldargs[field]
-            data['fields'] = fields_dict
+            data['fields'] = fieldargs
 
         url = self._get_url('issue/' + str(issue) + '/transitions')
         r = self._session.post(
