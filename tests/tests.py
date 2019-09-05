@@ -1427,9 +1427,19 @@ class ProjectTests(unittest.TestCase):
         projects = self.jira.projects()
         self.assertGreaterEqual(len(projects), 2)
 
+    def test_projects_expand(self):
+        project = self.jira.projects(expand='description')[0]
+        self.assertTrue(hasattr(project, 'description'))
+        self.assertFalse(hasattr(project, 'lead'))
+
     def test_project(self):
         project = self.jira.project(self.project_b)
         self.assertEqual(project.key, self.project_b)
+
+    def test_project_expand(self):
+        project = self.jira.project(self.project_b, expand='description')
+        self.assertTrue(hasattr(project, 'description'))
+        self.assertFalse(hasattr(project, 'lead'))
 
     # I have no idea what avatars['custom'] is and I get different results every time
     #    def test_project_avatars(self):
