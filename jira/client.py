@@ -497,8 +497,10 @@ class JIRA(object):
             validate = True  # always log in for cookie based auth, as we need a first request to be logged in
         else:
             verify = self._options['verify']
+            cert = self._options['client_cert']
             self._session = ResilientSession(timeout=timeout)
             self._session.verify = verify
+            self._session.cert = cert
         self._session.headers.update(self._options['headers'])
 
         if 'cookies' in self._options:
@@ -2941,6 +2943,7 @@ class JIRA(object):
 
     def _create_oauth_session(self, oauth, timeout):
         verify = self._options['verify']
+        cert = self._options['client_cert']
 
         from oauthlib.oauth1 import SIGNATURE_RSA
         from requests_oauthlib import OAuth1
@@ -2953,6 +2956,7 @@ class JIRA(object):
             resource_owner_secret=oauth['access_token_secret'])
         self._session = ResilientSession(timeout)
         self._session.verify = verify
+        self._session.cert = cert
         self._session.auth = oauth
 
     def _create_kerberos_session(self, timeout, kerberos_options=None):
