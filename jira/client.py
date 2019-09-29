@@ -82,6 +82,7 @@ from jira.resources import Version
 from jira.resources import Votes
 from jira.resources import Watchers
 from jira.resources import Worklog
+from jira.resources import IssueProperty
 
 from jira import __version__
 from jira.utils import CaseInsensitiveDict
@@ -1867,6 +1868,28 @@ class JIRA(object):
         params = {'username': watcher}
         result = self._session.delete(url, params=params)
         return result
+
+    @translate_resource_args
+    def issue_properties(self, issue):
+        """Get a list of issue property Resource from the server for an issue.
+
+        :param issue: ID or key of the issue to get properties from
+        :rtype: List[IssueProperty]
+        """
+        r_json = self._get_json('issue/' + str(issue) + '/properties')
+        properties = [self.issue_property(issue, key['key'])
+                      for key in r_json['keys']]
+        return properties
+
+    @translate_resource_args
+    def issue_property(self, issue, id):
+        """Get a specific issue property Resource from the server.
+
+        :param issue: ID or key of the issue to get the property from
+        :param id: ID of the property to get
+        :rtype: IssueProperty
+        """
+        return self._find_for_resource(IssueProperty, (issue, id))
 
     @translate_resource_args
     def worklogs(self, issue):

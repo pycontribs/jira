@@ -54,6 +54,7 @@ __all__ = (
     'Customer',
     'ServiceDesk',
     'RequestType',
+    'IssueProperty',
 )
 
 logging.getLogger('jira').addHandler(NullHandler())
@@ -907,6 +908,22 @@ class Version(Resource):
         return self.id == other.id and self.name == other.name
 
 
+class IssueProperties(Resource):
+    """A property of an issue."""
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(self, 'issue/{0}/properties', options, session)
+        if raw:
+            self._parse_raw(raw)
+
+
+class IssueProperty(Resource):
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(self, 'issue/{0}/properties/{1}', options, session)
+        if raw:
+            self._parse_raw(raw)
+
 # GreenHopper
 
 
@@ -1042,6 +1059,7 @@ resource_class_map = {
     r'filter/[^/]$': Filter,
     r'issue/[^/]+$': Issue,
     r'issue/[^/]+/comment/[^/]+$': Comment,
+    r'issue/[^/]+/properties/[^/]+$': IssueProperty,
     r'issue/[^/]+/votes$': Votes,
     r'issue/[^/]+/watchers$': Watchers,
     r'issue/[^/]+/worklog/[^/]+$': Worklog,
