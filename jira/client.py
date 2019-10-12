@@ -3964,10 +3964,10 @@ class JIRA(object):
         :type name: str
         :param project_ids: the projects to create the board in
         :type project_ids: str
-        :param preset: What preset to use for this board. (Default: "scrum")
-        :type preset: 'kanban', 'scrum', 'diy'
-        :param location_type: the location type. Available in cloud. (Default: "user")
-        :type location_type: 'user', 'project'
+        :param preset: What preset to use for this board. (Default: scrum)
+        :type preset: kanban, scrum, diy
+        :param location_type: the location type. Available in cloud. (Default: user)
+        :type location_type: user, project
         :param location_id: the id of project that the board should be
             located under. Omit this for a 'user' location_type. Available in cloud.
         :type location_id: Optional[str]
