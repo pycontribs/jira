@@ -24,9 +24,6 @@ def test_unicode(requests_mock, capsys, testargs):
     """This functions tests that CLI tool does not throw an UnicodeDecodeError
     when it attempts to display some Unicode error message, which can happen
     when printing exceptions received from the remote HTTP server.
-
-    Introduce for catching py2 Unicode output workaround regression.
-    Likely not needed for Py3 versions.
     """
     requests_mock.register_uri(
         "GET",

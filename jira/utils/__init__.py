@@ -15,7 +15,7 @@ class CaseInsensitiveDict(dict):
 
     All keys are expected to be strings. The structure remembers the
     case of the last key to be set, and ``iter(instance)``,
-    ``keys()``, ``items()``, ``iterkeys()``, and ``iteritems()``
+    ``keys()``, ``items()``, ``iterkeys()``
     will contain case-sensitive keys. However, querying and contains
     testing is case insensitive::
 

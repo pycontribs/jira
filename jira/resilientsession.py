@@ -3,14 +3,6 @@ from __future__ import unicode_literals
 import json
 import logging
 
-try:  # Python 2.7+
-    from logging import NullHandler
-except ImportError:
-
-    class NullHandler(logging.Handler):
-        def emit(self, record):
-            pass
-
 
 import random
 from requests.exceptions import ConnectionError
@@ -19,7 +11,7 @@ import time
 
 from jira.exceptions import JIRAError
 
-logging.getLogger("jira").addHandler(NullHandler())
+logging.getLogger("jira").addHandler(logging.NullHandler())
 
 
 def raise_on_error(r, verb="???", **kwargs):

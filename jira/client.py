@@ -11,10 +11,7 @@ responses from JIRA and the Resource/dict abstractions provided by this library.
 will construct a JIRA object as described below. Full API documentation can be found
 at: https://jira.readthedocs.io/en/latest/
 """
-try:
-    from functools import lru_cache
-except ImportError:
-    from functools32 import lru_cache
+from functools import lru_cache
 from functools import wraps
 
 import imghdr
@@ -27,14 +24,6 @@ import logging
 import os
 import re
 
-try:  # Python 2.7+
-    from logging import NullHandler
-except ImportError:
-
-    class NullHandler(logging.Handler):
-        def emit(self, record):
-            pass
-
 
 import calendar
 import datetime
@@ -46,8 +35,7 @@ import time
 import warnings
 
 from requests.utils import get_netrc_auth
-from six import iteritems
-from six.moves.urllib.parse import urlparse
+from urllib.parse import urlparse
 
 # GreenHopper specific resources
 from jira.exceptions import JIRAError
@@ -95,10 +83,6 @@ from pkg_resources import parse_version
 
 from collections import OrderedDict
 
-from six import integer_types
-from six import string_types
-
-# six.moves does not play well with pyinstaller, see https://github.com/pycontribs/jira/issues/38
 try:
     # noinspection PyUnresolvedReferences
     from requests_toolbelt import MultipartEncoder
@@ -118,7 +102,7 @@ except ImportError:
 #    "which means that there is a big change of having problems. " \
 #    "Possible workaround http://stackoverflow.com/a/17628350/99834" % encoding)
 
-logging.getLogger("jira").addHandler(NullHandler())
+logging.getLogger("jira").addHandler(logging.NullHandler())
 
 
 def translate_resource_args(func):
@@ -887,7 +871,7 @@ class JIRA(object):
         :type filename: str
         :rtype: Attachment
         """
-        if isinstance(attachment, string_types):
+        if isinstance(attachment, str):
             attachment = open(attachment, "rb")
         if (
             hasattr(attachment, "read")
@@ -1334,13 +1318,13 @@ class JIRA(object):
 
         p = data["fields"]["project"]
 
-        if isinstance(p, string_types) or isinstance(p, integer_types):
+        if isinstance(p, str) or isinstance(p, int):
             data["fields"]["project"] = {"id": self.project(p).id}
 
         p = data["fields"]["issuetype"]
-        if isinstance(p, integer_types):
+        if isinstance(p, int):
             data["fields"]["issuetype"] = {"id": p}
-        if isinstance(p, string_types) or isinstance(p, integer_types):
+        if isinstance(p, str) or isinstance(p, int):
             data["fields"]["issuetype"] = {"id": self.issue_type_by_name(p).id}
 
         url = self._get_url("issue")
@@ -1373,13 +1357,13 @@ class JIRA(object):
             issue_data = _field_worker(field_dict)
             p = issue_data["fields"]["project"]
 
-            if isinstance(p, string_types) or isinstance(p, integer_types):
+            if isinstance(p, str) or isinstance(p, int):
                 issue_data["fields"]["project"] = {"id": self.project(p).id}
 
             p = issue_data["fields"]["issuetype"]
-            if isinstance(p, integer_types):
+            if isinstance(p, int):
                 issue_data["fields"]["issuetype"] = {"id": p}
-            if isinstance(p, string_types) or isinstance(p, integer_types):
+            if isinstance(p, str) or isinstance(p, int):
                 issue_data["fields"]["issuetype"] = {
                     "id": self.issue_type_by_name(p).id
                 }
@@ -1515,7 +1499,7 @@ class JIRA(object):
         p = data["serviceDeskId"]
         service_desk = None
 
-        if isinstance(p, string_types) or isinstance(p, integer_types):
+        if isinstance(p, str) or isinstance(p, int):
             service_desk = self.service_desk(p)
         elif isinstance(p, ServiceDesk):
             service_desk = p
@@ -1523,9 +1507,9 @@ class JIRA(object):
         data["serviceDeskId"] = service_desk.id
 
         p = data["requestTypeId"]
-        if isinstance(p, integer_types):
+        if isinstance(p, int):
             data["requestTypeId"] = p
-        elif isinstance(p, string_types):
+        elif isinstance(p, str):
             data["requestTypeId"] = self.request_type_by_name(service_desk, p).id
 
         url = self._options["server"] + "/rest/servicedeskapi/request"
@@ -1575,7 +1559,7 @@ class JIRA(object):
         if projectKeys is not None:
             params["projectKeys"] = projectKeys
         if projectIds is not None:
-            if isinstance(projectIds, string_types):
+            if isinstance(projectIds, str):
                 projectIds = projectIds.split(",")
             params["projectIds"] = projectIds
         if issuetypeIds is not None:
@@ -2516,7 +2500,7 @@ class JIRA(object):
         :rtype: dict or :class:`~jira.client.ResultList`
 
         """
-        if isinstance(fields, string_types):
+        if isinstance(fields, str):
             fields = fields.split(",")
         else:
             fields = list(fields or [])
@@ -2552,7 +2536,7 @@ class JIRA(object):
 
         if untranslate:
             for i in issues:
-                for k, v in iteritems(untranslate):
+                for k, v in untranslate.items():
                     if k in i.raw.get("fields", {}):
                         i.raw["fields"][v] = i.raw["fields"][k]
 
@@ -4000,7 +3984,7 @@ class JIRA(object):
             )
 
         payload = {}
-        if isinstance(project_ids, string_types):
+        if isinstance(project_ids, str):
             ids = []
             for p in project_ids.split(","):
                 ids.append(self.project(p).id)
@@ -4008,7 +3992,7 @@ class JIRA(object):
         if location_id is not None:
             location_id = self.project(location_id).id
         payload["name"] = name
-        if isinstance(project_ids, string_types):
+        if isinstance(project_ids, str):
             project_ids = project_ids.split(",")
         payload["projectIds"] = project_ids
         payload["preset"] = preset

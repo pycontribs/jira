@@ -6,7 +6,6 @@ import inspect
 import logging
 import os
 import pickle
-import platform
 import random
 import re
 import string
@@ -17,35 +16,13 @@ from flaky import flaky
 import py
 import pytest
 import requests
-from six import integer_types
 
-# _non_parallel is used to prevent some tests from failing due to concurrency
-# issues because detox, Travis or Jenkins can run test in parallel for multiple
-# python versions.
-# The current workaround is to run these problematic tests only on py27
+import unittest
 
-_non_parallel = True
-if platform.python_version() < "3":
-    _non_parallel = False
+try:
+    from unittest import mock
+except ImportError:
     import mock
-
-    try:
-        import unittest2 as unittest
-    except ImportError:
-        import pip
-
-        if hasattr(sys, "real_prefix"):
-            pip.main(["install", "--upgrade", "unittest2"])
-        else:
-            pip.main(["install", "--upgrade", "--user", "unittest2"])
-        import unittest2 as unittest
-else:
-    import unittest
-
-    try:
-        from unittest import mock
-    except ImportError:
-        import mock
 
 
 cmd_folder = os.path.abspath(
@@ -403,7 +380,6 @@ class UniversalResourceTests(unittest.TestCase):
             self.jira.find("woopsydoodle/{0}", "666")
 
         ex = cm.exception
-        # py26,27,34 gets 404 but on py33 gets 400
         assert ex.status_code in [400, 404]
         self.assertIsNotNone(ex.text)
         self.assertRegex(ex.url, "^https?://.*/rest/api/(2|latest)/woopsydoodle/666$")
@@ -483,7 +459,6 @@ class ApplicationPropertiesTests(unittest.TestCase):
         )
         self.assertEqual(clone_prefix["value"], "#292929")
 
-    @pytest.mark.skipif(_non_parallel, reason="avoid concurrency conflict")
     def test_set_application_property(self):
         prop = "jira.lf.favicon.hires.url"
         valid_value = "/jira-favicon-hires.png"
@@ -1355,10 +1330,10 @@ class IssueTests(unittest.TestCase):
         sprint_name = "sprint-" + uniq
 
         b = self.jira.create_board(board_name, self.project_a)
-        assert isinstance(b.id, integer_types)
+        assert isinstance(b.id, int)
 
         s = self.jira.create_sprint(sprint_name, b.id)
-        assert isinstance(s.id, integer_types)
+        assert isinstance(s.id, int)
         assert s.name == sprint_name
         assert s.state == "FUTURE"
 

@@ -18,15 +18,11 @@ import keyring
 import requests
 from oauthlib.oauth1 import SIGNATURE_RSA
 from requests_oauthlib import OAuth1
-from six.moves import input
-from six.moves.urllib.parse import parse_qsl
+from urllib.parse import parse_qsl
 
 from jira import JIRA, __version__
 
-try:
-    import configparser
-except ImportError:
-    from six.moves import configparser
+import configparser
 
 
 CONFIG_PATH = os.path.join(os.path.expanduser("~"), ".jira-python", "jirashell.ini")
@@ -316,16 +312,6 @@ def handle_basic_auth(auth, server):
 
 
 def main():
-    # workaround for avoiding UnicodeEncodeError when printing exceptions
-    # containing unicode on py2
-    if sys.version_info[0] < 3 and sys.getdefaultencoding() != "utf-8":
-        # without reload print would fail even if sys.stdin.encoding
-        # would report utf-8
-        # see: https://stackoverflow.com/a/23847316/99834
-        stdin, stdout, stderr = sys.stdin, sys.stdout, sys.stderr
-        reload(sys)  # noqa
-        sys.stdin, sys.stdout, sys.stderr = stdin, stdout, stderr
-        sys.setdefaultencoding(os.environ.get("PYTHONIOENCODING", "utf-8"))
 
     try:
         try:
