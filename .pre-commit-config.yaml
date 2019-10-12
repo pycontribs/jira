@@ -17,7 +17,6 @@ repos:
       - id: check-symlinks
       - id: check-vcs-permalinks
       - id: debug-statements
-      - id: requirements-txt-fixer
       - id: check-yaml
         files: .*\.(yaml|yml)$
   - repo: https://gitlab.com/pycqa/flake8

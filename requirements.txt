@@ -1,7 +1,0 @@
-defusedxml
-keyring
-pbr>=3.0.0
-requests-oauthlib>=1.1.0
-requests>=2.10.0
-requests_toolbelt
-setuptools>=20.10.1

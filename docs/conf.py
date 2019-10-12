@@ -24,21 +24,77 @@ from jira import __version__  # noqa
 # -- General configuration -----------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
-needs_sphinx = "1.6.5"
+needs_sphinx = "2.2.0"
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = ["sphinx.ext.autodoc", "sphinx.ext.viewcode", "sphinx.ext.intersphinx"]
 
 intersphinx_mapping = {
-    "python": ("https://docs.python.org/3.5", None),
-    "requests": ("http://docs.python-requests.org/en/latest/", None),
+    "python": ("https://docs.python.org/3.7", None),
+    # until https://github.com/psf/requests/issues/5212 is addressed
+    # "requests": ("http://docs.python-requests.org/en/latest/", None),
+    "requests": ("https://requests.kennethreitz.org/en/master/", None),
     "requests-oauthlib": ("https://requests-oauthlib.readthedocs.io/en/latest/", None),
-    "ipython": ("http://ipython.readthedocs.io/en/stable/", None),
-    "pip": ("http://pip.readthedocs.io/en/stable/", None),
+    "ipython": ("https://ipython.readthedocs.io/en/stable/", None),
+    "pip": ("https://pip.readthedocs.io/en/stable/", None),
 }
 
-autodoc_default_flags = ["members", "undoc-members", "show-inheritance"]
+autodoc_default_options = {
+    "members": True,
+    "undoc-members": True,
+    "show-inheritance": True,
+}
+
+nitpick_ignore = [
+    ("py:class", "Any"),
+    ("py:class", "Attachment"),
+    ("py:class", "Board"),
+    ("py:class", "BufferedReader"),
+    ("py:class", "Component"),
+    ("py:class", "CustomFieldOption"),
+    ("py:class", "Customer"),
+    ("py:class", "Dashboard"),
+    ("py:class", "Dict"),
+    ("py:class", "Filter"),
+    ("py:class", "Issue._IssueFields"),
+    ("py:class", "IssueLinkType"),
+    ("py:class", "IssueType"),
+    ("py:class", "List"),
+    ("py:class", "NoReturn"),
+    ("py:class", "Optional"),
+    ("py:class", "Project"),
+    ("py:class", "Resolution"),
+    ("py:class", "Resource"),
+    ("py:class", "Response"),
+    ("py:class", "ResultList"),
+    ("py:class", "ServiceDesk"),
+    ("py:class", "Sprint"),
+    ("py:class", "Status"),
+    ("py:class", "StatusCategory"),
+    ("py:class", "Tuple"),
+    ("py:class", "Union"),
+    ("py:class", "User"),
+    ("py:class", "Version"),
+    ("py:class", "Votes"),
+    ("py:class", "diy"),
+    ("py:class", "integer"),
+    ("py:class", "jira.client.ResultList"),
+    ("py:class", "jira.resources.Resource"),
+    ("py:class", "jira.resources.Sprint"),
+    ("py:class", "jira.resources.Watchers"),
+    ("py:class", "kanban"),
+    ("py:class", "project"),
+    ("py:class", "scrum"),
+    ("py:class", "user"),
+    ("py:meth", "Resource.delete"),
+    ("py:meth", "Resource.update"),
+    ("py:mod", "filemagic"),
+    ("py:mod", "ipython"),
+    ("py:mod", "pip"),
+    ("py:mod", "requests-kerberos"),
+    ("py:mod", "requests-oauthlib"),
+]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]

@@ -72,7 +72,7 @@ right?
 
 By default only the basic library dependencies are installed, so if you want
 to use the ``cli`` tool or other optional dependencies do perform a full
-installation using ``pip install jira[opt,cli,testing]``
+installation using ``pip install jira[opt,cli,test]``
 
 .. _virtualenv: http://www.virtualenv.org/en/latest/index.html
 
@@ -101,7 +101,7 @@ Setup
 * Install pyenv_
 * Install `Atlassian JIRA Server`_ for testing
   - make install-sdk
-* pip install -r requirements-dev.txt
+* pip install jira[test]
 * Start up Jira Server
   - atlas-run-standalone
 * Test your changes

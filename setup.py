@@ -1,4 +1,6 @@
-#!/usr/bin/env python
+# !/usr/bin/env python
 import setuptools
 
-setuptools.setup(setup_requires=["pbr>=3.0.0", "setuptools>=17.1"], pbr=True)
+
+if __name__ == "__main__":
+    setuptools.setup(use_scm_version=True)

@@ -5,12 +5,8 @@ schedule: "every week"
 assignees:
  - ssbarnea
  - hdost
- # we care only about runtime requirements, not testing ones
 search: False
 requirements:
- - requirements.txt:
-    pin: False
-    update: insecure
- - requirements-opt.txt:
+ - setup.cfg:
     pin: False
     update: insecure
