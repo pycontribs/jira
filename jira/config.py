@@ -6,14 +6,10 @@ This module allows people to keep their jira server credentials outside their sc
 Also, this simplifies the scripts by not having to write the same initialization code for each script.
 
 """
+import configparser
 import logging
 import os
 import sys
-
-try:
-    import configparser
-except ImportError:
-    from six.moves import configparser
 
 from jira.client import JIRA
 

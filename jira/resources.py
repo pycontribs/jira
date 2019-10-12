@@ -11,20 +11,7 @@ import logging
 import re
 import time
 
-try:  # Python 2.7+
-    from logging import NullHandler
-except ImportError:
-
-    class NullHandler(logging.Handler):
-        def emit(self, record):
-            pass
-
-
 import json
-
-from six import iteritems
-from six import string_types
-from six import text_type
 
 from jira.utils import CaseInsensitiveDict
 from jira.utils import json_loads
@@ -60,7 +47,7 @@ __all__ = (
     "RequestType",
 )
 
-logging.getLogger("jira").addHandler(NullHandler())
+logging.getLogger("jira").addHandler(logging.NullHandler())
 
 
 def get_error_list(r):
@@ -162,10 +149,10 @@ class Resource(object):
         if self.raw:
             for name in self._READABLE_IDS:
                 if name in self.raw:
-                    pretty_name = text_type(self.raw[name])
+                    pretty_name = str(self.raw[name])
                     # Include any child to support nested select fields.
                     if hasattr(self, "child"):
-                        pretty_name += " - " + text_type(self.child)
+                        pretty_name += " - " + str(self.child)
                     return pretty_name
 
         # If all else fails, use repr to make sure we get something.
@@ -562,7 +549,7 @@ class Issue(Resource):
         for field in sorted(fieldargs.keys()):
             value = fieldargs[field]
             # apply some heuristics to make certain changes easier
-            if isinstance(value, string_types):
+            if isinstance(value, str):
                 if field == "assignee" or field == "reporter":
                     fields_dict["assignee"] = {"name": value}
                 elif field == "comment":
@@ -783,9 +770,9 @@ class Role(Resource):
         :type groups: string, list or tuple
         """
 
-        if users is not None and isinstance(users, string_types):
+        if users is not None and isinstance(users, str):
             users = (users,)
-        if groups is not None and isinstance(groups, string_types):
+        if groups is not None and isinstance(groups, str):
             groups = (groups,)
 
         data = {
@@ -809,9 +796,9 @@ class Role(Resource):
         :type groups: string, list or tuple
         """
 
-        if users is not None and isinstance(users, string_types):
+        if users is not None and isinstance(users, str):
             users = (users,)
-        if groups is not None and isinstance(groups, string_types):
+        if groups is not None and isinstance(groups, str):
             groups = (groups,)
 
         data = {"user": users}
@@ -1054,7 +1041,7 @@ def dict2resource(raw, top=None, options=None, session=None):
         top = PropertyHolder(raw)
 
     seqs = tuple, list, set, frozenset
-    for i, j in iteritems(raw):
+    for i, j in raw.items():
         if isinstance(j, dict):
             if "self" in j:
                 resource = cls_for_resource(j["self"])(options, session, j)

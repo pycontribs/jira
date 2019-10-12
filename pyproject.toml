@@ -5,4 +5,5 @@ requires = [
   "setuptools_scm_git_archive >= 1.0",
   "wheel",
 ]
+requires-python = ">=3.5"
 build-backend = "setuptools.build_meta"
