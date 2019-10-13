@@ -111,6 +111,7 @@ class Resource(object):
         "displayName",
         "key",
         "name",
+        "accountId",
         "filename",
         "value",
         "scope",
