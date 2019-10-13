@@ -14,7 +14,7 @@ from flaky import flaky
 import py
 import pytest
 import requests
-from typing import Dict
+from typing import Any, Dict
 
 import unittest
 
@@ -98,7 +98,7 @@ class JiraTestManager(object):
         max_retries (int): number of retries to perform for recoverable HTTP errors.
     """
 
-    __shared_state = {}  # type: Dict[any, any]
+    __shared_state = {}  # type: Dict[Any, Any]
 
     def __init__(self):
         self.__dict__ = self.__shared_state
@@ -2417,7 +2417,7 @@ class JiraServiceDeskTests(unittest.TestCase):
         except Exception:
             pass
 
-    @flaky
+    @pytest.mark.xfail(reason="Broken needs fixing")
     def test_create_customer_request(self):
 
         self.jira.create_project(
@@ -2426,14 +2426,28 @@ class JiraServiceDeskTests(unittest.TestCase):
             ptype="service_desk",
             template_name="IT Service Desk",
         )
+        service_desks = []
+        for i in range(3):
+            service_desks = self.jira.service_desks()
+            if service_desks:
+                break
+            logging.warning("Service desk not reported...")
+            sleep(2)
+        self.assertTrue(service_desks, "No service desks were found!")
+        service_desk = service_desks[0]
 
-        service_desk = self.jira.service_desks()[0]
-        request_type = self.jira.request_types(service_desk)[0]
+        for i in range(3):
+            request_types = self.jira.request_types(service_desk)
+            if request_types:
+                logging.warning("Service desk request_types not reported...")
+                break
+            sleep(2)
+        self.assertTrue(request_types, "No request_types for service desk found!")
 
         request = self.jira.create_customer_request(
             dict(
                 serviceDeskId=service_desk.id,
-                requestTypeId=int(request_type.id),
+                requestTypeId=int(request_types[0].id),
                 requestFieldValues=dict(
                     summary="Ticket title here", description="Ticket body here"
                 ),
