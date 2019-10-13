@@ -6,8 +6,6 @@ Script arguments support changing the server and a persistent authentication
 over HTTP BASIC or Kerberos.
 """
 
-from __future__ import print_function
-
 import argparse
 import os
 import sys

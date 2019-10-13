@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """The root of JIRA package namespace."""
-from __future__ import unicode_literals
-
 try:
     import pkg_resources
 

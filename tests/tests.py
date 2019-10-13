@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-from __future__ import print_function
 import getpass
 import hashlib
 import inspect
@@ -19,10 +18,7 @@ import requests
 
 import unittest
 
-try:
-    from unittest import mock
-except ImportError:
-    import mock
+from unittest import mock
 
 
 cmd_folder = os.path.abspath(
