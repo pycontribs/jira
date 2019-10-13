@@ -34,3 +34,7 @@ repos:
     rev: 0.6.0
     hooks:
       - id: bashate
+  - repo: https://github.com/pre-commit/mirrors-mypy.git
+    rev: v0.730
+    hooks:
+      - id: mypy

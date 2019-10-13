@@ -191,6 +191,8 @@
         "I18NSPHINXOPTS",
         "hdost",
         "βρέθηκε",
-        "PYTHONHTTPSVERIFY"
+        "PYTHONHTTPSVERIFY",
+        "ptype",
+        "mypy"
     ]
 }

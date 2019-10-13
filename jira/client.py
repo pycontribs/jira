@@ -1447,6 +1447,7 @@ class JIRA(object):
         url = self._options["server"] + "/rest/servicedeskapi/servicedesk"
         headers = {"X-ExperimentalApi": "opt-in"}
         r_json = json_loads(self._session.get(url, headers=headers))
+        print(r_json)
         projects = [
             ServiceDesk(self._options, self._session, raw_project_json)
             for raw_project_json in r_json["values"]
@@ -3617,7 +3618,7 @@ class JIRA(object):
         key,
         name=None,
         assignee=None,
-        type="software",
+        ptype="software",
         template_name=None,
         avatarId=None,
         issueSecurityScheme=None,
@@ -3636,7 +3637,7 @@ class JIRA(object):
         :param assignee: accountId of the lead, if not specified it will use current user.
         :type assignee: Optional[str]
         :param type: Determines the type of project should be created.
-        :type type: Optional[str]
+        :type ptype: Optional[str]
         :param template_name: is used to create a project based on one of the existing project templates.
                 If `template_name` is not specified, then it should use one of the default values.
         :type template_name: Optional[str]
@@ -3685,10 +3686,6 @@ class JIRA(object):
         # preference list for picking a default template
         if not template_name:
             template_key = "com.pyxis.greenhopper.jira:gh-simplified-basic"
-
-        project_type_key = "software"
-
-        # project_type_keys = ["ops", "software", "service_desk", "business"]
 
         # template_keys = [
         #     "com.pyxis.greenhopper.jira:gh-simplified-agility-kanban",
@@ -3747,7 +3744,7 @@ class JIRA(object):
         payload = {
             "name": name,
             "key": key,
-            "projectTypeKey": project_type_key,
+            "projectTypeKey": ptype,
             "projectTemplateKey": template_key,
             "leadAccountId": assignee,
             "assigneeType": "PROJECT_LEAD",

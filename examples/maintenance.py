@@ -43,7 +43,7 @@ for s in j.permissionschemes():
         logging.info("Deleting permission scheme: %s" % s["name"])
         try:
             j.delete_permissionscheme(s["id"])
-        except Exception as e:
+        except JIRAError as e:
             logging.error(e.text)
     else:
         logging.info("Permission scheme: %s" % s["name"])
