@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """JIRA utils used internally."""
-from __future__ import unicode_literals
 import threading
 
 from jira.resilientsession import raise_on_error
