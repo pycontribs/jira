@@ -35,3 +35,4 @@ tests/test-reports-*/*
 /.pytest_cache
 /.vscode
 /node_modules
+.mypy_cache/

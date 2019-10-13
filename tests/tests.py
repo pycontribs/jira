@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import getpass
 import hashlib
-import inspect
 import logging
 import os
 import pickle
@@ -15,17 +14,12 @@ from flaky import flaky
 import py
 import pytest
 import requests
+from typing import Dict
 
 import unittest
 
 from unittest import mock
 
-
-cmd_folder = os.path.abspath(
-    os.path.join(os.path.split(inspect.getfile(inspect.currentframe()))[0], "..")
-)
-if cmd_folder not in sys.path:
-    sys.path.insert(0, cmd_folder)
 
 import jira  # noqa
 from jira import Role, Issue, JIRA, JIRAError, Project  # noqa
@@ -104,7 +98,7 @@ class JiraTestManager(object):
         max_retries (int): number of retries to perform for recoverable HTTP errors.
     """
 
-    __shared_state = {}
+    __shared_state = {}  # type: Dict[any, any]
 
     def __init__(self):
         self.__dict__ = self.__shared_state
@@ -2415,8 +2409,6 @@ class JiraServiceDeskTests(unittest.TestCase):
     def setUp(self):
         self.jira = JiraTestManager().jira_admin
         self.test_manager = JiraTestManager()
-
-    def test_create_customer_request(self):
         if not self.jira.supports_service_desk():
             pytest.skip("Skipping Service Desk not enabled")
 
@@ -2425,9 +2417,13 @@ class JiraServiceDeskTests(unittest.TestCase):
         except Exception:
             pass
 
+    @flaky
+    def test_create_customer_request(self):
+
         self.jira.create_project(
             key=self.test_manager.project_sd,
             name=self.test_manager.project_sd_name,
+            ptype="service_desk",
             template_name="IT Service Desk",
         )
 

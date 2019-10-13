@@ -3,12 +3,8 @@ import pytest  # noqa
 import io
 import requests  # noqa
 import sys
+from unittest.mock import patch, MagicMock
 
-try:
-    # python 3.4+ should use builtin unittest.mock not mock package
-    from unittest.mock import patch, MagicMock
-except ImportError:
-    from mock import patch, MagicMock
 
 from jira import Role, Issue, JIRA, JIRAError, Project  # noqa
 import jira.jirashell as jirashell
