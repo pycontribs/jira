@@ -163,9 +163,6 @@ class ResultList(list):
         else:
             return self.iterable[self.current - 1]
 
-    # Python 2 and 3 compat
-    next = __next__
-
 
 class QshGenerator(object):
     def __init__(self, context_path):
@@ -3879,7 +3876,7 @@ class JIRA(object):
         """Return JIRA role information.
 
         :return: List of current user roles
-        :rtype: iterable
+        :rtype: Iterable
 
         """
         # https://developer.atlassian.com/cloud/jira/platform/rest/v3/?utm_source=%2Fcloud%2Fjira%2Fplatform%2Frest%2F&utm_medium=302#api-rest-api-3-role-get
