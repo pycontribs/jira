@@ -2118,8 +2118,6 @@ class SessionTests(unittest.TestCase):
         anon_jira = JIRA("https://jira.atlassian.com", logging=False)
         self.assertRaises(JIRAError, anon_jira.session)
 
-    # @pytest.mark.skipif(platform.python_version() < '3', reason='Does not work with Python 2')
-    # @not_on_custom_jira_instance  # takes way too long
     def test_session_server_offline(self):
         try:
             JIRA("https://127.0.0.1:1", logging=False, max_retries=0)

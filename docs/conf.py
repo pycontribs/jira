@@ -60,6 +60,7 @@ nitpick_ignore = [
     ("py:class", "Issue._IssueFields"),
     ("py:class", "IssueLinkType"),
     ("py:class", "IssueType"),
+    ("py:class", "Iterable"),
     ("py:class", "List"),
     ("py:class", "NoReturn"),
     ("py:class", "Optional"),
