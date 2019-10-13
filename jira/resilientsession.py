@@ -101,6 +101,8 @@ class ResilientSession(Session):
             if response.status_code in [502, 503, 504, 401]:
                 # 401 UNAUTHORIZED still randomly returned by Atlassian Cloud as of 2017-01-16
                 msg = "%s %s" % (response.status_code, response.reason)
+                # 2019-07-25: Disabled recovery for codes above^
+                return False
             elif not (
                 response.status_code == 200
                 and len(response.content) == 0
@@ -117,6 +119,8 @@ class ResilientSession(Session):
             "Got recoverable error from %s %s, will retry [%s/%s] in %ss. Err: %s"
             % (request, url, counter, self.max_retries, delay, msg)
         )
+        logging.debug("response.headers: %s", response.headers)
+        logging.debug("response.body: %s", response.content)
         time.sleep(delay)
         return True
 

@@ -94,13 +94,6 @@ try:
 except ImportError:
     pass
 
-# warnings.simplefilter('default')
-
-# encoding = sys.getdefaultencoding()
-# if encoding != 'UTF8':
-#    warnings.warning("Python default encoding is '%s' instead of 'UTF8' " \
-#    "which means that there is a big change of having problems. " \
-#    "Possible workaround http://stackoverflow.com/a/17628350/99834" % encoding)
 
 logging.getLogger("jira").addHandler(logging.NullHandler())
 
@@ -511,10 +504,11 @@ class JIRA(object):
         if proxies:
             self._session.proxies = proxies
 
+        self.auth = auth
         if validate:
             # This will raise an Exception if you are not allowed to login.
             # It's better to fail faster than later.
-            user = self.session(auth)
+            user = self.session()
             if user.raw is None:
                 auth_method = (
                     oauth or basic_auth or jwt or kerberos or auth or "anonymous"
@@ -1570,6 +1564,14 @@ class JIRA(object):
             params["expand"] = expand
         return self._get_json("issue/createmeta", params)
 
+    def _get_user_accountid(self, user):
+        """Internal method for translating an user to an accountId."""
+        try:
+            accountId = self.search_users(user, maxResults=1)[0].accountId
+        except Exception as e:
+            raise JIRAError(e)
+        return accountId
+
     # non-resource
     @translate_resource_args
     def assign_issue(self, issue, assignee):
@@ -1588,7 +1590,8 @@ class JIRA(object):
             + str(issue)
             + "/assignee"
         )
-        payload = {"name": assignee}
+        payload = {"accountId": self._get_user_accountid(assignee)}
+        # 'key' and 'name' are deprecated in favor of accountId
         r = self._session.put(url, data=json.dumps(payload))
         raise_on_error(r)
         return True
@@ -1930,11 +1933,11 @@ class JIRA(object):
         """Remove a user from an issue's watch list.
 
         :param issue: ID or key of the issue affected
-        :param watcher: username of the user to remove from the watchers list
+        :param watcher: accountId of the user to remove from the watchers list
         :rtype: Response
         """
         url = self._get_url("issue/" + str(issue) + "/watchers")
-        params = {"username": watcher}
+        params = {"accountId": watcher}
         result = self._session.delete(url, params=params)
         return result
 
@@ -2978,25 +2981,14 @@ class JIRA(object):
 
     # Session authentication
 
-    def session(self, auth=None):
+    def session(self):
         """Get a dict of the current authenticated user's session information.
-
-        :param auth: Tuple of username and password.
-        :type auth: Optional[Tuple[str,str]]
 
         :rtype: User
 
         """
         url = "{server}{auth_url}".format(**self._options)
-
-        if isinstance(self._session.auth, tuple) or auth:
-            if not auth:
-                auth = self._session.auth
-            username, password = auth
-            authentication_data = {"username": username, "password": password}
-            r = self._session.post(url, data=json.dumps(authentication_data))
-        else:
-            r = self._session.get(url)
+        r = self._session.get(url)
 
         user = User(self._options, self._session, json_loads(r))
         return user
@@ -3451,8 +3443,8 @@ class JIRA(object):
             logging.error(ioe)
         return None
 
-    def current_user(self):
-        """Returns the username or account-id of the current user. For anonymous
+    def current_user(self, field="key"):
+        """Returns the username or emailAddress of the current user. For anonymous
         users it will return a value that evaluates as False.
 
         :rtype: str
@@ -3464,16 +3456,8 @@ class JIRA(object):
 
             r_json = json_loads(r)
             self._myself = r_json
-            print(r_json, r.headers)
-            # if 'X-AACCOUNTID' in r.headers:
-            #     r_json['username'] = r.headers['X-AACCOUNTID']
-            # elif 'x-ausername' in r.headers:
-            #     r_json['username'] = r.headers['x-ausername']
-            # else:
-            #     r_json['username'] = None
-            # del r_json['self']  # this isn't really an addressable resource
-        print(self._myself)
-        return self._myself["name"]
+
+        return self._myself[field]
 
     def delete_project(self, pid):
         """Delete project from Jira.
@@ -3535,8 +3519,116 @@ class JIRA(object):
         # pprint(templates.keys())
         return templates
 
+    @lru_cache(maxsize=None)
+    def permissionschemes(self):
+
+        url = self._options["server"] + "/rest/api/3/permissionscheme"
+
+        r = self._session.get(url)
+        data = json_loads(r)["permissionSchemes"]
+
+        return data
+
+    @lru_cache(maxsize=None)
+    def issuesecurityschemes(self):
+
+        url = self._options["server"] + "/rest/api/3/issuesecurityschemes"
+
+        r = self._session.get(url)
+        data = json_loads(r)["issueSecuritySchemes"]
+
+        return data
+
+    @lru_cache(maxsize=None)
+    def projectcategories(self):
+
+        url = self._options["server"] + "/rest/api/3/projectCategory"
+
+        r = self._session.get(url)
+        data = json_loads(r)
+
+        return data
+
+    @lru_cache(maxsize=None)
+    def avatars(self, entity="project"):
+
+        url = self._options["server"] + "/rest/api/3/avatar/%s/system" % entity
+
+        r = self._session.get(url)
+        data = json_loads(r)["system"]
+
+        return data
+
+    @lru_cache(maxsize=None)
+    def notificationschemes(self):
+        # TODO(ssbarnea): implement pagination support
+        url = self._options["server"] + "/rest/api/3/notificationscheme"
+
+        r = self._session.get(url)
+        data = json_loads(r)
+        return data["values"]
+
+    @lru_cache(maxsize=None)
+    def screens(self):
+        # TODO(ssbarnea): implement pagination support
+        url = self._options["server"] + "/rest/api/3/screens"
+
+        r = self._session.get(url)
+        data = json_loads(r)
+        return data["values"]
+
+    @lru_cache(maxsize=None)
+    def workflowscheme(self):
+        # TODO(ssbarnea): implement pagination support
+        url = self._options["server"] + "/rest/api/3/workflowschemes"
+
+        r = self._session.get(url)
+        data = json_loads(r)
+        return data  # ['values']
+
+    @lru_cache(maxsize=None)
+    def workflows(self):
+        # TODO(ssbarnea): implement pagination support
+        url = self._options["server"] + "/rest/api/3/workflow"
+
+        r = self._session.get(url)
+        data = json_loads(r)
+        return data  # ['values']
+
+    def delete_screen(self, id):
+
+        url = self._options["server"] + "/rest/api/3/screens/%s" % id
+
+        r = self._session.delete(url)
+        data = json_loads(r)
+
+        self.screens.cache_clear()
+        return data
+
+    def delete_permissionscheme(self, id):
+
+        url = self._options["server"] + "/rest/api/3/permissionscheme/%s" % id
+
+        r = self._session.delete(url)
+        data = json_loads(r)
+
+        self.permissionschemes.cache_clear()
+        return data
+
     def create_project(
-        self, key, name=None, assignee=None, type="software", template_name=None
+        self,
+        key,
+        name=None,
+        assignee=None,
+        type="software",
+        template_name=None,
+        avatarId=None,
+        issueSecurityScheme=None,
+        permissionScheme=None,
+        projectCategory=None,
+        notificationScheme=10000,
+        categoryId=None,
+        url="",
     ):
         """Create a project with the specified parameters.
 
@@ -3544,7 +3636,7 @@ class JIRA(object):
         :type: str
         :param name: If not specified it will use the key value.
         :type name: Optional[str]
-        :param assignee: If not specified it will use current user.
+        :param assignee: accountId of the lead, if not specified it will use current user.
         :type assignee: Optional[str]
         :param type: Determines the type of project should be created.
         :type type: Optional[str]
@@ -3559,38 +3651,99 @@ class JIRA(object):
         template_key = None
 
         if assignee is None:
-            assignee = self.current_user()
+            assignee = self.current_user("accountId")
         if name is None:
             name = key
 
+        if not permissionScheme:
+            ps_list = self.permissionschemes()
+            for sec in ps_list:
+                if sec["name"] == "Default Permission Scheme":
+                    permissionScheme = sec["id"]
+                break
+            if not permissionScheme:
+                permissionScheme = ps_list[0]["id"]
+
+        if not issueSecurityScheme:
+            ps_list = self.issuesecurityschemes()
+            for sec in ps_list:
+                if sec["name"] == "Default":  # no idea which one is default
+                    issueSecurityScheme = sec["id"]
+                break
+            if not issueSecurityScheme and ps_list:
+                issueSecurityScheme = ps_list[0]["id"]
+
+        if not projectCategory:
+            ps_list = self.projectcategories()
+            for sec in ps_list:
+                if sec["name"] == "Default":  # no idea which one is default
+                    projectCategory = sec["id"]
+                break
+            if not projectCategory and ps_list:
+                projectCategory = ps_list[0]["id"]
+        # <beep> Atlassian for failing to provide an API to get projectTemplateKey values
+        #  Possible values are just hardcoded and obviously depending on JIRA version.
+        # https://developer.atlassian.com/cloud/jira/platform/rest/v3/?_ga=2.88310429.766596084.1562439833-992274574.1559129176#api-rest-api-3-project-post
+        # https://jira.atlassian.com/browse/JRASERVER-59658
         # preference list for picking a default template
-        possible_templates = [
-            "Scrum software development",  # have Bug
-            "Agility",  # cannot set summary
-            "Bug tracking",
-            "JIRA Classic",
-            "JIRA Default Schemes",
-            "Basic software development",
-            "Project management",
-            "Kanban software development",
-            "Task management",
-            "Basic",  # does not have Bug
-            "Content Management",
-            "Customer service",
-            "Document Approval",
-            "IT Service Desk",
-            "Lead Tracking",
-            "Process management",
-            "Procurement",
-            "Recruitment",
-        ]
-
-        templates = self.templates()
         if not template_name:
-            template_name = next(t for t in possible_templates if t in templates)
+            template_key = "com.pyxis.greenhopper.jira:gh-simplified-basic"
 
-        template_key = templates[template_name]["projectTemplateModuleCompleteKey"]
-        project_type_key = templates[template_name]["projectTypeKey"]
+        project_type_key = "software"
+
+        # project_type_keys = ["ops", "software", "service_desk", "business"]
+
+        # template_keys = [
+        #     "com.pyxis.greenhopper.jira:gh-simplified-agility-kanban",
+        #     "com.pyxis.greenhopper.jira:gh-simplified-agility-scrum",
+        #     "com.pyxis.greenhopper.jira:gh-simplified-basic",
+        #     "com.pyxis.greenhopper.jira:gh-simplified-kanban-classic",
+        #     "com.pyxis.greenhopper.jira:gh-simplified-scrum-classic",
+        #     "com.atlassian.servicedesk:simplified-it-service-desk",
+        #     "com.atlassian.servicedesk:simplified-internal-service-desk",
+        #     "com.atlassian.servicedesk:simplified-external-service-desk",
+        #     "com.atlassian.jira-core-project-templates:jira-core-simplified-content-management",
+        #     "com.atlassian.jira-core-project-templates:jira-core-simplified-document-approval",
+        #     "com.atlassian.jira-core-project-templates:jira-core-simplified-lead-tracking",
+        #     "com.atlassian.jira-core-project-templates:jira-core-simplified-process-control",
+        #     "com.atlassian.jira-core-project-templates:jira-core-simplified-procurement",
+        #     "com.atlassian.jira-core-project-templates:jira-core-simplified-project-management",
+        #     "com.atlassian.jira-core-project-templates:jira-core-simplified-recruitment",
+        #     "com.atlassian.jira-core-project-templates:jira-core-simplified-task-",
+        #     "com.atlassian.jira.jira-incident-management-plugin:im-incident-management",
+        # ]
+
+        # possible_templates = [
+        #     "Scrum software development",  # have Bug
+        #     "Agility",  # cannot set summary
+        #     "Bug tracking",
+        #     "JIRA Classic",
+        #     "JIRA Default Schemes",
+        #     "Basic software development",
+        #     "Project management",
+        #     "Kanban software development",
+        #     "Task management",
+        #     "Basic",  # does not have Bug
+        #     "Content Management",
+        #     "Customer service",
+        #     "Document Approval",
+        #     "IT Service Desk",
+        #     "Lead Tracking",
+        #     "Process management",
+        #     "Procurement",
+        #     "Recruitment",
+        # ]
+
+        # templates = self.templates()
+        # if not template_name:
+        #     for k, v in templates.items():
+        #         if v['projectTypeKey'] == type:
+        #             template_name = k
+
+        # template_name = next((t for t in templates if t['projectTypeKey'] == 'x'))
+
+        # template_key = templates[template_name]["projectTemplateModuleCompleteKey"]
+        # project_type_key = templates[template_name]["projectTypeKey"]
 
         # https://confluence.atlassian.com/jirakb/creating-a-project-via-rest-based-on-jira-default-schemes-744325852.html
         # see https://confluence.atlassian.com/jirakb/creating-projects-via-rest-api-in-jira-963651978.html
@@ -3599,11 +3752,20 @@ class JIRA(object):
             "key": key,
             "projectTypeKey": project_type_key,
             "projectTemplateKey": template_key,
-            "lead": assignee,
+            "leadAccountId": assignee,
             "assigneeType": "PROJECT_LEAD",
+            "description": "",
+            # "avatarId": 13946,
+            "permissionScheme": int(permissionScheme),
+            "notificationScheme": notificationScheme,
+            "url": url,
         }
+        if issueSecurityScheme:
+            payload["issueSecurityScheme"] = int(issueSecurityScheme)
+        if projectCategory:
+            payload["categoryId"] = int(projectCategory)
 
-        url = self._options["server"] + "/rest/api/2/project"
+        url = self._options["server"] + "/rest/api/3/project"
 
         r = self._session.post(url, data=json.dumps(payload))
         r.raise_for_status()
@@ -3718,6 +3880,20 @@ class JIRA(object):
         self._session.delete(url, params=x)
 
         return True
+
+    def role(self):
+        """Return JIRA role information.
+
+        :return: List of current user roles
+        :rtype: iterable
+
+        """
+        # https://developer.atlassian.com/cloud/jira/platform/rest/v3/?utm_source=%2Fcloud%2Fjira%2Fplatform%2Frest%2F&utm_medium=302#api-rest-api-3-role-get
+
+        url = self._options["server"] + "/rest/api/latest/role"
+
+        r = self._session.get(url)
+        return json_loads(r)
 
     # Experimental
     # Experimental support for iDalko Grid, expect API to change as it's using private APIs currently
