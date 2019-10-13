@@ -17,7 +17,7 @@ from functools import wraps
 import imghdr
 import mimetypes
 
-import collections
+from collections.abc import Iterable
 import copy
 import json
 import logging
@@ -921,7 +921,7 @@ class JIRA(object):
             )
 
         js = json_loads(r)
-        if not js or not isinstance(js, collections.Iterable):
+        if not js or not isinstance(js, Iterable):
             raise JIRAError("Unable to parse JSON: %s" % js)
         attachment = Attachment(self._options, self._session, js[0])
         if attachment.size == 0:
