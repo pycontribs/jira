@@ -699,6 +699,7 @@ class IssueTests(unittest.TestCase):
         self.test_manager = JiraTestManager()
         self.jira = JiraTestManager().jira_admin
         self.jira_normal = JiraTestManager().jira_normal
+        self.user_admin = self.jira.search_users(self.test_manager.CI_JIRA_ADMIN)[0]
         self.project_b = self.test_manager.project_b
         self.project_a = self.test_manager.project_a
         self.issue_1 = self.test_manager.project_b_issue1
@@ -1069,21 +1070,17 @@ class IssueTests(unittest.TestCase):
         self.assertTrue("fields" in meta["projects"][0]["issuetypes"][0])
 
     def test_assign_issue(self):
-        self.assertTrue(
-            self.jira.assign_issue(self.issue_1, self.test_manager.CI_JIRA_ADMIN)
-        )
+        self.assertTrue(self.jira.assign_issue(self.issue_1, self.user_admin.name))
         self.assertEqual(
-            self.jira.issue(self.issue_1).fields.assignee.name,
-            self.test_manager.CI_JIRA_ADMIN,
+            self.jira.issue(self.issue_1).fields.assignee.name, self.user_admin.name
         )
 
     def test_assign_issue_with_issue_obj(self):
         issue = self.jira.issue(self.issue_1)
-        x = self.jira.assign_issue(issue, self.test_manager.CI_JIRA_ADMIN)
+        x = self.jira.assign_issue(issue, self.user_admin.name)
         self.assertTrue(x)
         self.assertEqual(
-            self.jira.issue(self.issue_1).fields.assignee.name,
-            self.test_manager.CI_JIRA_ADMIN,
+            self.jira.issue(self.issue_1).fields.assignee.name, self.user_admin.name
         )
 
     def test_assign_to_bad_issue_raises(self):
