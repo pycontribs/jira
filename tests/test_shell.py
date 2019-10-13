@@ -86,9 +86,8 @@ def test_no_password_try_keyring(
 
         assert len(requests_mock.request_history) == 4
         captured = capsys.readouterr()
-        assert (
-            captured.out.strip()
-            == "Would you like to remember password in OS keyring? (y/n)"
+        assert captured.out.strip().startswith(
+            "Would you like to remember password in OS keyring? (y/n)"
         )
         assert mock_keyring._keyring == {}
 
@@ -100,9 +99,8 @@ def test_no_password_try_keyring(
 
         assert len(requests_mock.request_history) == 8
         captured = capsys.readouterr()
-        assert (
-            captured.out.strip()
-            == "Would you like to remember password in OS keyring? (y/n)"
+        assert captured.out.strip().startswith(
+            "Would you like to remember password in OS keyring? (y/n)"
         )
         assert mock_keyring._keyring == {("http://localhost", "test@user"): "pass123"}
 
