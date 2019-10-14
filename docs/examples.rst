@@ -340,8 +340,8 @@ Here are some examples::
         jira.add_attachment(issue=issue, attachment=f)
 
     # attach file from memory (you can skip IO operations). In this case you MUST provide `filename`.
-    import StringIO
-    attachment = StringIO.StringIO()
+    from io import StringIO
+    attachment = StringIO()
     attachment.write(data)
     jira.add_attachment(issue=issue, attachment=attachment, filename='content.txt')
 
