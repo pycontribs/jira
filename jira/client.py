@@ -628,6 +628,7 @@ class JIRA(object):
         maxResults=50,
         params=None,
         base=JIRA_BASE_URL,
+        verb="GET"
     ):
         """Fetch pages.
 
@@ -648,6 +649,8 @@ class JIRA(object):
         :type params: Dict[str, Any]
         :param base: base URL
         :type base: str
+        :param verb: HTTP verb to use for the request.
+        :type verb: str
         :rtype: ResultList
         """
         async_class = None
@@ -665,7 +668,7 @@ class JIRA(object):
         if maxResults:
             page_params["maxResults"] = maxResults
 
-        resource = self._get_json(request_path, params=page_params, base=base)
+        resource = self._get_json(request_path, params=page_params, base=base, verb=verb)
         next_items_page = self._get_items_from_page(item_type, items_key, resource)
         items = next_items_page
 
@@ -2544,10 +2547,10 @@ class JIRA(object):
                     "All issues cannot be fetched at once, when json_result parameter is set",
                     Warning,
                 )
-            return self._get_json("search", params=search_params)
+            return self._get_json("search", params=search_params, verb="POST")
 
         issues = self._fetch_pages(
-            Issue, "issues", "search", startAt, maxResults, search_params
+            Issue, "issues", "search", startAt, maxResults, search_params, verb="POST"
         )
 
         if untranslate:
@@ -3141,7 +3144,7 @@ class JIRA(object):
         options.update({"path": path})
         return base.format(**options)
 
-    def _get_json(self, path, params=None, base=JIRA_BASE_URL):
+    def _get_json(self, path, params=None, base=JIRA_BASE_URL, verb="GET"):
         """Get the json for a given path and params.
 
         :param path: The subpath required
@@ -3150,12 +3153,13 @@ class JIRA(object):
         :type params: Optional[Dict[str, Any]]
         :param base: The Base JIRA URL, defaults to the instance base.
         :type base: Optional[str]
-
+        :param verb: HTTP verb to use for the request.
+        :type verb: str
         :rtype: Union[Dict[str, Any], List[Dict[str, str]]]
 
         """
         url = self._get_url(path, base)
-        r = self._session.get(url, params=params)
+        r = getattr(self._session, verb.lower())(url, params=params)
         try:
             r_json = json_loads(r)
         except ValueError as e:
