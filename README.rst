@@ -14,6 +14,9 @@ JIRA Python Library
 .. image:: https://img.shields.io/github/issues/pycontribs/jira.svg
         :target: https://github.com/pycontribs/jira/issues
 
+.. image:: https://img.shields.io/badge/irc-%23pycontribs-blue
+        :target: irc:///#pycontribs
+
 ------------
 
 .. image:: https://readthedocs.org/projects/jira/badge/?version=master
@@ -26,7 +29,7 @@ JIRA Python Library
    :target: https://github.com/python/black
    :alt: Python Black Code Style
 
-.. image:: https://codecov.io/gh/pycontribs/jira/branch/develop/graph/badge.svg
+.. image:: https://codecov.io/gh/pycontribs/jira/branch/master/graph/badge.svg
         :target: https://codecov.io/gh/pycontribs/jira
 
 .. image:: https://img.shields.io/bountysource/team/pycontribs/activity.svg
