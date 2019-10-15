@@ -1,5 +1,0 @@
-[gerrit]
-host=review.gerrithub.io
-port=29418
-project=pycontribs/jira.git
-defaultbranch=develop
