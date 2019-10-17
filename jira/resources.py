@@ -751,8 +751,8 @@ class Status(Resource):
 class User(Resource):
     """A JIRA user."""
 
-    def __init__(self, options, session, raw=None):
-        Resource.__init__(self, 'user?username={0}', options, session)
+    def __init__(self, options, session, raw=None, payload="username"):
+        Resource.__init__(self, 'user?%s={0}' % payload, options, session)
         if raw:
             self._parse_raw(raw)
 

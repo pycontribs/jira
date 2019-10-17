@@ -2159,13 +2159,13 @@ class JIRA(object):
 
     # Users
 
-    def user(self, id, expand=None):
+    def user(self, id, expand=None, payload="username"):
         """Get a user Resource from the server.
 
         :param id: ID of the user to get
         :param expand: extra information to fetch inside each resource
         """
-        user = User(self._options, self._session)
+        user = User(self._options, self._session, payload=payload)
         params = {}
         if expand is not None:
             params['expand'] = expand
