@@ -11,5 +11,5 @@ except ImportError:
 
 
 setuptools.setup(
-    setup_requires=['pbr>=3.0.0', 'setuptools>=17.1', 'pytest-runner', 'sphinx>=1.6.5'],
+    setup_requires=['pbr>=3.0.0', 'setuptools>=17.1'],
     pbr=True)
