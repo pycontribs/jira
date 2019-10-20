@@ -33,8 +33,8 @@ DATES = ["2019-12-18"]
 # Loop thru project list and create fix versions for each project.
 # Don't worry about creating duplicate fix version,
 # JIRA will reject duplicate requests
-for i in range(len(PROJECTS)):
-    for j in range(len(FIXVERSIONS)):
+for i in enumerate(PROJECTS):
+    for j in enumerate(FIXVERSIONS):
         newversion = jira.create_version(
             name=FIXVERSIONS[j], project=PROJECTS[i], releaseDate=DATES[j]
         )
