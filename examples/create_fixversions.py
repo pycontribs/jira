@@ -16,9 +16,12 @@ from jira import JIRA
 # https://confluence.atlassian.com/cloud/api-tokens-938839638.html
 # to create api token.
 
+options = {"server": "https://jira.atlassian.com"}
+jira = JIRA(options)
 
-OPTIONS = {"server": "https://your-site.atlassian.net"}
-jira = JIRA(OPTIONS, basic_auth=("your-user-name", "api-token"))
+# Override the above with the below to authenticate in your JIRA instance
+# OPTIONS = {"server": "https://your-site.atlassian.net"}
+# jira = JIRA(OPTIONS, basic_auth=("your-user-name", "api-token"))
 
 PROJECTS = ["PLATFORM", "PAYMENTS", "ENTERPRISE", "DATA"]
 
