@@ -101,6 +101,17 @@ To pass additional options to Kerberos auth use dict ``kerberos_options``, e.g.:
 
     auth_jira = JIRA(kerberos=True, kerberos_options={'mutual_authentication': 'DISABLED'})
 
+JIRA Cloud API Token
+^^^^^^^^^^^^^^^^^^^^
+
+If you use JIRA Cloud, refer the instructions at https://confluence.atlassian.com/cloud/api-tokens-938839638.html to create API token. It will help you to access JIRA instance without exposing
+your password in plain text.
+
+    from jira import JIRA
+ 
+    options = {'server': 'https://<your-site>.atlassian.net'}
+    jira = JIRA(options, basic_auth=('YourUserName@your-domain.com', '<your api token>'))
+
 .. _jirashell-label:
 
 Issues
