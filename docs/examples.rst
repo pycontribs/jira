@@ -108,7 +108,7 @@ If you use JIRA Cloud, refer the instructions at https://confluence.atlassian.co
 your password in plain text.
 
     from jira import JIRA
- 
+
     options = {'server': 'https://<your-site>.atlassian.net'}
     jira = JIRA(options, basic_auth=('YourUserName@your-domain.com', '<your api token>'))
 
