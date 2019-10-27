@@ -599,6 +599,10 @@ class Issue(Resource):
         """Comparison method."""
         return other is not None and self.id == other.id
 
+    def __hash__(self):
+        """Allow using Issue in sets and as key for dictionaries."""
+        return hash(self.id)
+
 
 class Comment(Resource):
     """An issue comment."""
