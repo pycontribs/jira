@@ -4030,6 +4030,23 @@ class JIRA(object):
                 self.AGILE_BASE_URL,
             )
 
+    @translate_resource_args
+    def backlog(self, board_id, startAt=0, maxResults=50, jql_str=None):
+        """Get a list of issue GreenHopperResources from the backlog.
+        """
+        params = {}
+        if jql_str:
+            params['jql'] = jql_str
+        return self._fetch_pages(
+            Issue,
+            "issues",
+            "board/%s/backlog" % board_id,
+            startAt,
+            maxResults,
+            params,
+            self.AGILE_BASE_URL,
+        )
+
     def sprints_by_name(self, id, extended=False):
         sprints = {}
         for s in self.sprints(id, extended=extended):
