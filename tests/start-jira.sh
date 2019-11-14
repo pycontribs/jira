@@ -6,7 +6,7 @@ rm jira.log
 atlas-run-standalone --product jira --http-port 2990 \
     -B -nsu -o --threads 2.0C </dev/zero >jira.log 2>&1 &
 
-printf "Waiting for JIRA to start respinding on $JIRA_URL "
+printf "Waiting for Jira to start respinding on $JIRA_URL "
 until $(curl --output /dev/null --silent --head --fail $JIRA_URL); do
     printf '.'
     sleep 5

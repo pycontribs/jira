@@ -42,9 +42,9 @@ except Exception:
 
 if "CI_JIRA_URL" in os.environ:
     not_on_custom_jira_instance = pytest.mark.skipif(
-        True, reason="Not applicable for custom JIRA instance"
+        True, reason="Not applicable for custom Jira instance"
     )
-    logging.info("Picked up custom JIRA engine.")
+    logging.info("Picked up custom Jira engine.")
 else:
 
     def noop(arg):
@@ -77,7 +77,7 @@ def get_unique_project_name():
     user = re.sub("[^A-Z_]", "", getpass.getuser().upper())
     if user == "TRAVIS" and "TRAVIS_JOB_NUMBER" in os.environ:
         # please note that user underline (_) is not supported by
-        # JIRA even if it is documented as supported.
+        # Jira even if it is documented as supported.
         jid = "T" + hashify(user + os.environ["TRAVIS_JOB_NUMBER"])
     else:
         identifier = (
@@ -227,7 +227,7 @@ class JiraTestManager(object):
             executing tests in parallel as we have only one test instance.
 
             jid length must be less than 9 characters because we may append
-            another one and the JIRA Project key length limit is 10.
+            another one and the Jira Project key length limit is 10.
 
             Tests run in parallel:
             * git branches master or developer, git pr or developers running
@@ -305,7 +305,7 @@ class JiraTestManager(object):
             except Exception:
                 # we care only for the project to exist
                 pass
-            sleep(1)  # keep it here as often JIRA will report the
+            sleep(1)  # keep it here as often Jira will report the
             # project as missing even after is created
             self.project_b_issue1_obj = self.jira_admin.create_issue(
                 project=self.project_b,

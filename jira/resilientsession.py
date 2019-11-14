@@ -28,10 +28,10 @@ def raise_on_error(r, verb="???", **kwargs):
             try:
                 response = json.loads(r.text)
                 if "message" in response:
-                    # JIRA 5.1 errors
+                    # Jira 5.1 errors
                     error = response["message"]
                 elif "errorMessages" in response and len(response["errorMessages"]) > 0:
-                    # JIRA 5.0.x error messages sometimes come wrapped in this array
+                    # Jira 5.0.x error messages sometimes come wrapped in this array
                     # Sometimes this is present but empty
                     errorMessages = response["errorMessages"]
                     if isinstance(errorMessages, (list, tuple)):
@@ -44,7 +44,7 @@ def raise_on_error(r, verb="???", **kwargs):
                     and len(response["errors"]) > 0
                     and isinstance(response["errors"], dict)
                 ):
-                    # JIRA 6.x error messages are found in this array.
+                    # Jira 6.x error messages are found in this array.
                     error_list = response["errors"].values()
                     error = ", ".join(error_list)
                 else:

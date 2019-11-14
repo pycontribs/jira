@@ -4,9 +4,9 @@
    contain the root `toctree` directive.
 
 
-Python JIRA
+Python Jira
 ###########
-Python library to work with JIRA APIs
+Python library to work with Jira APIs
 
 .. toctree::
     :numbered:
@@ -19,7 +19,7 @@ Python library to work with JIRA APIs
     api
 
 This documents the ``jira`` python package (version |release|), a Python library designed to ease the use of the
-JIRA REST API. Some basic support for the GreenHopper REST API also exists.
+Jira REST API. Some basic support for the GreenHopper REST API also exists.
 
 Documentation is also available in
 `Dash

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""Starts an interactive JIRA session in an ipython terminal.
+"""Starts an interactive Jira session in an ipython terminal.
 
 Script arguments support changing the server and a persistent authentication
 over HTTP BASIC or Kerberos.
@@ -144,13 +144,13 @@ def process_config():
 
 def process_command_line():
     parser = argparse.ArgumentParser(
-        description="Start an interactive JIRA shell with the REST API."
+        description="Start an interactive Jira shell with the REST API."
     )
-    jira_group = parser.add_argument_group("JIRA server connection options")
+    jira_group = parser.add_argument_group("Jira server connection options")
     jira_group.add_argument(
         "-s",
         "--server",
-        help="The JIRA instance to connect to, including context path.",
+        help="The Jira instance to connect to, including context path.",
     )
     jira_group.add_argument(
         "-r", "--rest-path", help="The root path of the REST API to use."
@@ -168,7 +168,7 @@ def process_command_line():
 
     basic_auth_group = parser.add_argument_group("BASIC auth options")
     basic_auth_group.add_argument(
-        "-u", "--username", help="The username to connect to this JIRA instance with."
+        "-u", "--username", help="The username to connect to this Jira instance with."
     )
     basic_auth_group.add_argument(
         "-p", "--password", help="The password associated with this user."
@@ -185,14 +185,14 @@ def process_command_line():
         "-od",
         "--oauth-dance",
         action="store_true",
-        help="Start a 3-legged OAuth authentication dance with JIRA.",
+        help="Start a 3-legged OAuth authentication dance with Jira.",
     )
     oauth_group.add_argument("-ck", "--consumer-key", help="OAuth consumer key.")
     oauth_group.add_argument(
         "-k",
         "--key-cert",
         help="Private key to sign OAuth requests with (should be the pair of the public key\
-                                   configured in the JIRA application link)",
+                                   configured in the Jira application link)",
     )
     oauth_group.add_argument(
         "-pt",
@@ -362,9 +362,9 @@ def main():
             from IPython.frontend.terminal.embed import InteractiveShellEmbed
 
         ip_shell = InteractiveShellEmbed(
-            banner1="<JIRA Shell " + __version__ + " (" + jira.client_info() + ")>"
+            banner1="<Jira Shell " + __version__ + " (" + jira.client_info() + ")>"
         )
-        ip_shell("*** JIRA shell active; client is in 'jira'." " Press Ctrl-D to exit.")
+        ip_shell("*** Jira shell active; client is in 'jira'." " Press Ctrl-D to exit.")
     except Exception as e:
         print(e, file=sys.stderr)
         return 2
