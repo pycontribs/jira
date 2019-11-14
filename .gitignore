@@ -1,4 +1,4 @@
-# See http://stackoverflow.com/questions/5533050/gitignore-exclude-folder-but-include-specific-subfolder
+# See https://stackoverflow.com/questions/5533050/gitignore-exclude-folder-but-include-specific-subfolder
 # to understand pattern used to include .idea/codeStyleSettings.xml but not the rest of .idea/
 !.idea/
 .idea/*
