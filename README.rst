@@ -20,7 +20,7 @@ Jira Python Library
 ------------
 
 .. image:: https://readthedocs.org/projects/jira/badge/?version=master
-        :target: http://jira.readthedocs.io
+        :target: https://jira.readthedocs.io/
 
 .. image:: https://travis-ci.com/pycontribs/jira.svg?branch=master
         :target: https://travis-ci.com/pycontribs/jira
@@ -77,7 +77,7 @@ By default only the basic library dependencies are installed, so if you want
 to use the ``cli`` tool or other optional dependencies do perform a full
 installation using ``pip install jira[opt,cli,test]``
 
-.. _virtualenv: http://www.virtualenv.org/en/latest/index.html
+.. _virtualenv: https://virtualenv.pypa.io/
 
 
 Usage
@@ -85,7 +85,7 @@ Usage
 
 See the documentation_ for full details.
 
-.. _documentation: http://jira.readthedocs.org/en/latest/
+.. _documentation: https://jira.readthedocs.org/en/latest/
 
 
 Development
@@ -128,16 +128,16 @@ In addition to all the contributors we would like to thank to these companies:
 
 .. _Atlassian: https://www.atlassian.com/
 .. _Jira: https://pycontribs.atlassian.net
-.. _JetBrains: http://www.jetbrains.com
-.. _PyCharm: http://www.jetbrains.com/pycharm/
+.. _JetBrains: https://www.jetbrains.com/
+.. _PyCharm: https://www.jetbrains.com/pycharm/
 .. _Travis: https://travis-ci.org/
 .. _navicat: https://www.navicat.com/
 
 .. image:: https://raw.githubusercontent.com/pycontribs/resources/master/logos/x32/logo-atlassian.png
-   :target: http://www.atlassian.com
+   :target: https://www.atlassian.com/
 
 .. image:: https://raw.githubusercontent.com/pycontribs/resources/master/logos/x32/logo-pycharm.png
-    :target: http://www.jetbrains.com/
+    :target: https://www.jetbrains.com/
 
 .. image:: https://raw.githubusercontent.com/pycontribs/resources/master/logos/x32/logo-navicat.png
-    :target: http://www.navicat.com/
+    :target: https://www.navicat.com/

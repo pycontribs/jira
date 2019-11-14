@@ -2269,7 +2269,7 @@ class JIRA(object):
 
         Avatar images are specified by a filename, size, and file object. By default, the client will attempt to
             autodetect the picture's content type: this mechanism relies on libmagic and will not work out of the box
-            on Windows systems (see http://filemagic.readthedocs.org/en/latest/guide.html for details on how to install
+            on Windows systems (see https://filemagic.readthedocs.io/en/latest/guide.html for details on how to install
             support). The ``contentType`` argument can be used to explicitly set the value (note that Jira will reject any
             type other than the well-known ones for images, e.g. ``image/jpg``, ``image/png``, etc.)
 
