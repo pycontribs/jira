@@ -4,7 +4,7 @@ from requests.auth import AuthBase
 
 """
 This module implements a friendly (well, friendlier) interface between the raw JSON
-responses from JIRA and the Resource/dict abstractions provided by this library. Users
+responses from Jira and the Resource/dict abstractions provided by this library. Users
 will construct a JIRA object as described below. Full API documentation can be found
 at: https://jira.readthedocs.io/en/latest/
 """
@@ -39,7 +39,7 @@ from jira.exceptions import JIRAError
 from jira.resilientsession import raise_on_error
 from jira.resilientsession import ResilientSession
 
-# JIRA specific resources
+# Jira-specific resources
 from jira.resources import Attachment
 from jira.resources import Board
 from jira.resources import Comment
@@ -238,22 +238,22 @@ class JiraCookieAuth(AuthBase):
 
 
 class JIRA(object):
-    """User interface to JIRA.
+    """User interface to Jira.
 
-    Clients interact with JIRA by constructing an instance of this object and calling its methods. For addressable
-    resources in JIRA -- those with "self" links -- an appropriate subclass of :py:class:`Resource` will be returned
+    Clients interact with Jira by constructing an instance of this object and calling its methods. For addressable
+    resources in Jira -- those with "self" links -- an appropriate subclass of :py:class:`Resource` will be returned
     with customized ``update()`` and ``delete()`` methods, along with attribute access to fields. This means that calls
     of the form ``issue.fields.summary`` will be resolved into the proper lookups to return the JSON value at that
     mapping. Methods that do not return resources will return a dict constructed from the JSON response or a scalar
     value; see each method's documentation for details on what that method returns.
 
-    Without any arguments, this client will connect anonymously to the JIRA instance
+    Without any arguments, this client will connect anonymously to the Jira instance
     started by the Atlassian Plugin SDK from one of the 'atlas-run', ``atlas-debug``,
     or ``atlas-run-standalone`` commands. By default, this instance runs at
-    ``http://localhost:2990/jira``. The ``options`` argument can be used to set the JIRA instance to use.
+    ``http://localhost:2990/jira``. The ``options`` argument can be used to set the Jira instance to use.
 
     Authentication is handled with the ``basic_auth`` argument. If authentication is supplied (and is
-    accepted by JIRA), the client will remember it for subsequent requests.
+    accepted by Jira), the client will remember it for subsequent requests.
 
     For quick command line access to a server, see the ``jirashell`` script included with this distribution.
 
@@ -263,9 +263,9 @@ class JIRA(object):
         of the following properties:
 
         * server -- the server address and context path to use. Defaults to ``http://localhost:2990/jira``.
-        * rest_path -- the root REST path to use. Defaults to ``api``, where the JIRA REST resources live.
+        * rest_path -- the root REST path to use. Defaults to ``api``, where the Jira REST resources live.
         * rest_api_version -- the version of the REST resources under rest_path to use. Defaults to ``2``.
-        * agile_rest_path - the REST path to use for JIRA Agile requests. Defaults to ``greenhopper`` (old, private
+        * agile_rest_path - the REST path to use for Jira Agile requests. Defaults to ``greenhopper`` (old, private
                 API). Check `GreenHopperResource` for other supported values.
         * verify -- Verify SSL certs. Defaults to ``True``.
         * client_cert -- a tuple of (cert,key) for the requests library for client side SSL
@@ -278,9 +278,9 @@ class JIRA(object):
 
         * access_token -- OAuth access token for the user
         * access_token_secret -- OAuth access token secret to sign with the key
-        * consumer_key -- key of the OAuth application link defined in JIRA
+        * consumer_key -- key of the OAuth application link defined in Jira
         * key_cert -- private key file to sign requests with (should be the pair of the public key supplied to
-          JIRA in the OAuth application link)
+          Jira in the OAuth application link)
 
     :param kerberos: If true it will enable Kerberos authentication.
     :param kerberos_options: A dict of properties for Kerberos authentication. The following properties are possible:
@@ -298,13 +298,13 @@ class JIRA(object):
 
         Example jwt structure: ``{'secret': SHARED_SECRET, 'payload': {'iss': PLUGIN_KEY}}``
 
-    :param validate: If true it will validate your credentials first. Remember that if you are accessing JIRA
+    :param validate: If true it will validate your credentials first. Remember that if you are accessing Jira
         as anonymous it will fail to instantiate.
     :param get_server_info: If true it will fetch server version info first to determine if some API calls
         are available.
     :param async_: To enable asynchronous requests for those actions where we implemented it, like issue update() or delete().
     :param async_workers: Set the number of worker threads for async operations.
-    :param timeout: Set a read/connect timeout for the underlying calls to JIRA (default: None)
+    :param timeout: Set a read/connect timeout for the underlying calls to Jira (default: None)
         Obviously this means that you cannot rely on the return code when this is enabled.
     """
 
@@ -361,15 +361,15 @@ class JIRA(object):
         timeout=None,
         auth=None,
     ):
-        """Construct a JIRA client instance.
+        """Construct a Jira client instance.
 
-        Without any arguments, this client will connect anonymously to the JIRA instance
+        Without any arguments, this client will connect anonymously to the Jira instance
         started by the Atlassian Plugin SDK from one of the 'atlas-run', ``atlas-debug``,
         or ``atlas-run-standalone`` commands. By default, this instance runs at
-        ``http://localhost:2990/jira``. The ``options`` argument can be used to set the JIRA instance to use.
+        ``http://localhost:2990/jira``. The ``options`` argument can be used to set the Jira instance to use.
 
         Authentication is handled with the ``basic_auth`` argument. If authentication is supplied (and is
-        accepted by JIRA), the client will remember it for subsequent requests.
+        accepted by Jira), the client will remember it for subsequent requests.
 
         For quick command line access to a server, see the ``jirashell`` script included with this distribution.
 
@@ -379,9 +379,9 @@ class JIRA(object):
         :param options: Specify the server and properties this client will use. Use a dict with any
             of the following properties:
             * server -- the server address and context path to use. Defaults to ``http://localhost:2990/jira``.
-            * rest_path -- the root REST path to use. Defaults to ``api``, where the JIRA REST resources live.
+            * rest_path -- the root REST path to use. Defaults to ``api``, where the Jira REST resources live.
             * rest_api_version -- the version of the REST resources under rest_path to use. Defaults to ``2``.
-            * agile_rest_path - the REST path to use for JIRA Agile requests. Defaults to ``greenhopper`` (old, private
+            * agile_rest_path - the REST path to use for Jira Agile requests. Defaults to ``greenhopper`` (old, private
                API). Check `GreenHopperResource` for other supported values.
             * verify -- Verify SSL certs. Defaults to ``True``.
             * client_cert -- a tuple of (cert,key) for the requests library for client side SSL
@@ -393,9 +393,9 @@ class JIRA(object):
         :param oauth: A dict of properties for OAuth authentication. The following properties are required:
             * access_token -- OAuth access token for the user
             * access_token_secret -- OAuth access token secret to sign with the key
-            * consumer_key -- key of the OAuth application link defined in JIRA
+            * consumer_key -- key of the OAuth application link defined in Jira
             * key_cert -- private key file to sign requests with (should be the pair of the public key supplied to
-            JIRA in the OAuth application link)
+            Jira in the OAuth application link)
         :type oauth: Optional[Any]
         :param kerberos: If true it will enable Kerberos authentication.
         :type kerberos: bool
@@ -410,7 +410,7 @@ class JIRA(object):
             * payload -- dict of fields to be inserted in the JWT payload, e.g. 'iss'
             Example jwt structure: ``{'secret': SHARED_SECRET, 'payload': {'iss': PLUGIN_KEY}}``
         :type jwt: Optional[Any]
-        :param validate: If true it will validate your credentials first. Remember that if you are accessing JIRA
+        :param validate: If true it will validate your credentials first. Remember that if you are accessing Jira
             as anonymous it will fail to instantiate.
         :type validate: bool
         :param get_server_info: If true it will fetch server version info first to determine if some API calls
@@ -420,7 +420,7 @@ class JIRA(object):
         :type async_: bool
         :param async_workers: Set the number of worker threads for async operations.
         :type async_workers: int
-        :param timeout: Set a read/connect timeout for the underlying calls to JIRA (default: None)
+        :param timeout: Set a read/connect timeout for the underlying calls to Jira (default: None)
         :type timeout: Optional[Any]
         Obviously this means that you cannot rely on the return code when this is enabled.
         :param max_retries: Sets the amount Retries for the HTTP sessions initiated by the client. (Default: 3)
@@ -548,7 +548,7 @@ class JIRA(object):
             released_version = data["info"]["version"]
             if parse_version(released_version) > parse_version(__version__):
                 warnings.warn(
-                    "You are running an outdated version of JIRA Python %s. Current version is %s. Do not file any bugs against older versions."
+                    "You are running an outdated version of Jira Python %s. Current version is %s. Do not file any bugs against older versions."
                     % (__version__, released_version)
                 )
         except requests.RequestException:
@@ -574,7 +574,7 @@ class JIRA(object):
             self._session = None
 
     def _check_for_html_error(self, content):
-        # JIRA has the bad habit of returning errors in pages with 200 and
+        # Jira has the bad habit of returning errors in pages with 200 and
         # embedding the error in a huge webpage.
         if "<!-- SecurityTokenMissing -->" in content:
             logging.warning("Got SecurityTokenMissing")
@@ -645,7 +645,7 @@ class JIRA(object):
 
             if isinstance(resource, dict):
                 total = resource.get("total")
-                # 'isLast' is the optional key added to responses in JIRA Agile 6.7.6. So far not used in basic JIRA API.
+                # 'isLast' is the optional key added to responses in Jira Agile 6.7.6. So far not used in basic Jira API.
                 is_last = resource.get("isLast", False)
                 start_at_from_response = resource.get("startAt", 0)
                 max_results_from_response = resource.get("maxResults", 1)
@@ -741,7 +741,7 @@ class JIRA(object):
     def find(self, resource_format, ids=None):
         """Find Resource object for any addressable resource on the server.
 
-        This method is a universal resource locator for any REST-ful resource in JIRA. The
+        This method is a universal resource locator for any REST-ful resource in Jira. The
         argument ``resource_format`` is a string of the form ``resource``, ``resource/{0}``,
         ``resource/{0}/sub``, ``resource/{0}/sub/{1}``, etc. The format placeholders will be
         populated from the ``ids`` argument if present. The existing authentication session
@@ -1179,14 +1179,14 @@ class JIRA(object):
         return sorted(groups)
 
     def group_members(self, group):
-        """Return a hash or users with their information. Requires JIRA 6.0 or will raise NotImplemented.
+        """Return a hash or users with their information. Requires Jira 6.0 or will raise NotImplemented.
 
         :param group: Name of the group.
         :type group: str
         """
         if self._version < (6, 0, 0):
             raise NotImplementedError(
-                "Group members is not implemented in JIRA before version 6.0, upgrade the instance, if possible."
+                "Group members is not implemented in Jira before version 6.0, upgrade the instance, if possible."
             )
 
         params = {"groupname": group, "expand": "users"}
@@ -1216,7 +1216,7 @@ class JIRA(object):
         return OrderedDict(sorted(result.items(), key=lambda t: t[0]))
 
     def add_group(self, groupname):
-        """Create a new group in JIRA.
+        """Create a new group in Jira.
 
         :param groupname: The name of the group you wish to create.
         :type groupname: str
@@ -1239,9 +1239,9 @@ class JIRA(object):
         return True
 
     def remove_group(self, groupname):
-        """Delete a group from the JIRA instance.
+        """Delete a group from the Jira instance.
 
-        :param groupname: The group to be deleted from the JIRA instance.
+        :param groupname: The group to be deleted from the Jira instance.
         :type groupname: str
         :return: Boolean. Returns True on success.
         :rtype: bool
@@ -1290,7 +1290,7 @@ class JIRA(object):
         By default, the client will immediately reload the issue Resource created by this method in order to return
         a complete Issue object to the caller; this behavior can be controlled through the 'prefetch' argument.
 
-        JIRA projects may contain many different issue types. Some issue screens have different requirements for
+        Jira projects may contain many different issue types. Some issue screens have different requirements for
         fields in a new issue. This information is available through the 'createmeta' method. Further examples are
         available here: https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Create+Issue
 
@@ -1399,7 +1399,7 @@ class JIRA(object):
         return issue_list
 
     def supports_service_desk(self):
-        """Returns whether or not the JIRA instance supports service desk.
+        """Returns whether or not the Jira instance supports service desk.
 
         :rtype: bool
         """
@@ -1471,7 +1471,7 @@ class JIRA(object):
         By default, the client will immediately reload the issue Resource created by this method in order to return
         a complete Issue object to the caller; this behavior can be controlled through the 'prefetch' argument.
 
-        JIRA projects may contain many different issue types. Some issue screens have different requirements for
+        Jira projects may contain many different issue types. Some issue screens have different requirements for
         fields in a new issue. This information is available through the 'createmeta' method. Further examples are
         available here: https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Create+Issue
 
@@ -1627,7 +1627,7 @@ class JIRA(object):
         :param body: Text of the comment to add
         :type body: str
         :param visibility: a dict containing two entries: "type" and "value".
-            "type" is 'role' (or 'group' if the JIRA server has configured
+            "type" is 'role' (or 'group' if the Jira server has configured
             comment visibility for groups) and 'value' is the name of the role
             (or group) to which viewing of this comment will be restricted.
         :type visibility: Optional[Dict[str, str]]
@@ -1697,7 +1697,7 @@ class JIRA(object):
         """Add a remote link from an issue to an external application and returns a remote link Resource for it.
 
         ``destination`` should be a dict containing at least ``url`` to the linked external URL and
-        ``title`` to display for the link inside JIRA.
+        ``title`` to display for the link inside Jira.
 
         For definitions of the allowable fields for ``object`` and the keyword arguments ``globalId``, ``application``
         and ``relationship``, see https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+for+Remote+Issue+Links.
@@ -1778,7 +1778,7 @@ class JIRA(object):
             requiring more complex ``application`` data.
 
         ``object`` should be a dict containing at least ``url`` to the
-            linked external URL and ``title`` to display for the link inside JIRA.
+            linked external URL and ``title`` to display for the link inside Jira.
 
         For definitions of the allowable fields for ``object`` , see https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+for+Remote+Issue+Links.
 
@@ -2038,7 +2038,7 @@ class JIRA(object):
             a dict containing ``body`` and ``visibility`` fields: ``body`` being
             the text of the comment and ``visibility`` being a dict containing
             two entries: ``type`` and ``value``. ``type`` is ``role`` (or
-            ``group`` if the JIRA server has configured comment visibility for
+            ``group`` if the Jira server has configured comment visibility for
             groups) and ``value`` is the name of the role (or group) to which
             viewing of this comment will be restricted.
         :type comment: Optional[Dict[str, Any]]
@@ -2270,12 +2270,12 @@ class JIRA(object):
         Avatar images are specified by a filename, size, and file object. By default, the client will attempt to
             autodetect the picture's content type: this mechanism relies on libmagic and will not work out of the box
             on Windows systems (see http://filemagic.readthedocs.org/en/latest/guide.html for details on how to install
-            support). The ``contentType`` argument can be used to explicitly set the value (note that JIRA will reject any
+            support). The ``contentType`` argument can be used to explicitly set the value (note that Jira will reject any
             type other than the well-known ones for images, e.g. ``image/jpg``, ``image/png``, etc.)
 
         This method returns a dict of properties that can be used to crop a subarea of a larger image for use. This
             dict should be saved and passed to :py:meth:`confirm_project_avatar` to finish the avatar creation process. If
-            you want to cut out the middleman and confirm the avatar with JIRA's default cropping, pass the 'auto_confirm'
+            you want to cut out the middleman and confirm the avatar with Jira's default cropping, pass the 'auto_confirm'
             argument with a truthy value and :py:meth:`confirm_project_avatar` will be called for you before this method
             returns.
 
@@ -2552,7 +2552,7 @@ class JIRA(object):
 
     # non-resource
     def server_info(self):
-        """Get a dict of server information for this JIRA instance.
+        """Get a dict of server information for this Jira instance.
         :rtype: Dict[str, Any]
         """
         retry = 0
@@ -2566,7 +2566,7 @@ class JIRA(object):
         return j
 
     def myself(self):
-        """Get a dict of server information for this JIRA instance."""
+        """Get a dict of server information for this Jira instance."""
         return self._get_json("myself")
 
     # Status
@@ -2725,12 +2725,12 @@ class JIRA(object):
         Avatar images are specified by a filename, size, and file object. By default, the client will attempt to
         autodetect the picture's content type: this mechanism relies on ``libmagic`` and will not work out of the box
         on Windows systems (see http://filemagic.readthedocs.org/en/latest/guide.html for details on how to install
-        support). The ``contentType`` argument can be used to explicitly set the value (note that JIRA will reject any
+        support). The ``contentType`` argument can be used to explicitly set the value (note that Jira will reject any
         type other than the well-known ones for images, e.g. ``image/jpg``, ``image/png``, etc.)
 
         This method returns a dict of properties that can be used to crop a subarea of a larger image for use. This
         dict should be saved and passed to :py:meth:`confirm_user_avatar` to finish the avatar creation process. If you
-        want to cut out the middleman and confirm the avatar with JIRA's default cropping, pass the ``auto_confirm``
+        want to cut out the middleman and confirm the avatar with Jira's default cropping, pass the ``auto_confirm``
         argument with a truthy value and :py:meth:`confirm_user_avatar` will be called for you before this method
         returns.
 
@@ -3097,7 +3097,7 @@ class JIRA(object):
         return self._session.put(url, params=params, data=json.dumps(data))
 
     def _get_url(self, path, base=JIRA_BASE_URL):
-        """ Returns the full url based on JIRA base url and the path provided
+        """ Returns the full url based on Jira base url and the path provided
 
         :param path: The subpath desired.
         :type path: str
@@ -3119,7 +3119,7 @@ class JIRA(object):
         :type path: str
         :param params: Parameters to filter the json query.
         :type params: Optional[Dict[str, Any]]
-        :param base: The Base JIRA URL, defaults to the instance base.
+        :param base: The Base Jira URL, defaults to the instance base.
         :type base: Optional[str]
 
         :rtype: Union[Dict[str, Any], List[Dict[str, str]]]
@@ -3186,7 +3186,7 @@ class JIRA(object):
                 return None
 
     def rename_user(self, old_user, new_user):
-        """Rename a JIRA user.
+        """Rename a Jira user.
 
         :param old_user: Old username login
         :type old_user: str
@@ -3210,7 +3210,7 @@ class JIRA(object):
             )
 
     def delete_user(self, username):
-        """Deletes a JIRA User.
+        """Deletes a Jira User.
 
         :param username: Username to delete
         :type username: str
@@ -3305,9 +3305,9 @@ class JIRA(object):
     def reindex(self, force=False, background=True):
         """Start jira re-indexing. Returns True if reindexing is in progress or not needed, or False.
 
-        If you call reindex() without any parameters it will perform a background reindex only if JIRA thinks it should do it.
+        If you call reindex() without any parameters it will perform a background reindex only if Jira thinks it should do it.
 
-        :param force: reindex even if JIRA doesn't say this is needed, False by default.
+        :param force: reindex even if Jira doesn't say this is needed, False by default.
         :param background: reindex in background, slower but does not impact the users, defaults to True.
         """
         # /secure/admin/IndexAdmin.jspa
@@ -3321,7 +3321,7 @@ class JIRA(object):
 
         r = self._session.get(url, headers=self._options["headers"])
         if r.status_code == 503:
-            # logging.warning("JIRA returned 503, this could mean that a full reindex is in progress.")
+            # logging.warning("Jira returned 503, this could mean that a full reindex is in progress.")
             return 503
 
         if (
@@ -3331,7 +3331,7 @@ class JIRA(object):
             return True
 
         if r.text.find("All issues are being re-indexed"):
-            logging.warning("JIRA re-indexing is already running.")
+            logging.warning("Jira re-indexing is already running.")
             return True  # still reindexing is considered still a success
 
         if r.text.find("To perform the re-index now, please go to the") or force:
@@ -3457,7 +3457,7 @@ class JIRA(object):
     def delete_project(self, pid):
         """Delete project from Jira.
 
-        :param pid: JIRA projectID or Project or slug
+        :param pid: Jira projectID or Project or slug
         :type pid: str
         :return: True if project was deleted
         :rtype: bool
@@ -3627,7 +3627,7 @@ class JIRA(object):
     ):
         """Create a project with the specified parameters.
 
-        :param key: Mandatory. Must match JIRA project key requirements, usually only 2-10 uppercase characters.
+        :param key: Mandatory. Must match Jira project key requirements, usually only 2-10 uppercase characters.
         :type: str
         :param name: If not specified it will use the key value.
         :type name: Optional[str]
@@ -3677,7 +3677,7 @@ class JIRA(object):
             if not projectCategory and ps_list:
                 projectCategory = ps_list[0]["id"]
         # <beep> Atlassian for failing to provide an API to get projectTemplateKey values
-        #  Possible values are just hardcoded and obviously depending on JIRA version.
+        #  Possible values are just hardcoded and obviously depending on Jira version.
         # https://developer.atlassian.com/cloud/jira/platform/rest/v3/?_ga=2.88310429.766596084.1562439833-992274574.1559129176#api-rest-api-3-project-post
         # https://jira.atlassian.com/browse/JRASERVER-59658
         # preference list for picking a default template
@@ -3775,7 +3775,7 @@ class JIRA(object):
         ignore_existing=False,
         application_keys=None,
     ):
-        """Create a new JIRA user.
+        """Create a new Jira user.
 
         :param username: the username of the new user
         :type username: str
@@ -3873,7 +3873,7 @@ class JIRA(object):
         return True
 
     def role(self):
-        """Return JIRA role information.
+        """Return Jira role information.
 
         :return: List of current user roles
         :rtype: Iterable
@@ -3965,7 +3965,7 @@ class JIRA(object):
         :param board_id: the board to get sprints from
         :param extended: Used only by old GreenHopper API to fetch additional information like
             startDate, endDate, completeDate, much slower because it requires an additional requests for each sprint.
-            New JIRA Agile API always returns this information without a need for additional requests.
+            New Jira Agile API always returns this information without a need for additional requests.
         :param startAt: the index of the first sprint to return (0 based)
         :param maxResults: the maximum number of sprints to return
         :param state: Filters results to sprints in specified states. Valid values: `future`, `active`, `closed`.
@@ -4053,7 +4053,7 @@ class JIRA(object):
                 == GreenHopperResource.GREENHOPPER_REST_PATH
             ):
                 raise NotImplementedError(
-                    "Public JIRA API does not support state update"
+                    "Public Jira API does not support state update"
                 )
             payload["state"] = state
 
@@ -4147,7 +4147,7 @@ class JIRA(object):
             != GreenHopperResource.GREENHOPPER_REST_PATH
         ):
             raise NotImplementedError(
-                "JIRA Agile Public API does not support this request"
+                "Jira Agile Public API does not support this request"
             )
 
         payload = {}
@@ -4253,7 +4253,7 @@ class JIRA(object):
             except JIRAError as e:
                 if e.status_code == 404:
                     warnings.warn(
-                        "Status code 404 may mean, that too old JIRA Agile version is installed."
+                        "Status code 404 may mean, that too old Jira Agile version is installed."
                         " At least version 6.7.10 is required."
                     )
                 raise
@@ -4298,7 +4298,7 @@ class JIRA(object):
         ):
             # TODO(ssbarnea): simulate functionality using issue.update()?
             raise NotImplementedError(
-                "JIRA Agile Public API does not support this request"
+                "Jira Agile Public API does not support this request"
             )
 
         data = {}
@@ -4307,7 +4307,7 @@ class JIRA(object):
         url = self._get_url("epics/%s/add" % epic_id, base=self.AGILE_BASE_URL)
         return self._session.put(url, data=json.dumps(data))
 
-    # TODO(ssbarnea): Both GreenHopper and new JIRA Agile API support moving more than one issue.
+    # TODO(ssbarnea): Both GreenHopper and new Jira Agile API support moving more than one issue.
     def rank(self, issue, next_issue):
         """Rank an issue before another using the default Ranking field, the one named 'Rank'.
 
@@ -4327,7 +4327,7 @@ class JIRA(object):
                         field["schema"]["custom"]
                         == "com.pyxis.greenhopper.jira:gh-global-rank"
                     ):
-                        # Obsolete since JIRA v6.3.13.1
+                        # Obsolete since Jira v6.3.13.1
                         self._rank = field["schema"]["customId"]
 
         if self._options["agile_rest_path"] == GreenHopperResource.AGILE_BASE_REST_PATH:
@@ -4342,7 +4342,7 @@ class JIRA(object):
             except JIRAError as e:
                 if e.status_code == 404:
                     warnings.warn(
-                        "Status code 404 may mean, that too old JIRA Agile version is installed."
+                        "Status code 404 may mean, that too old Jira Agile version is installed."
                         " At least version 6.7.10 is required."
                     )
                 raise
@@ -4379,7 +4379,7 @@ class JIRA(object):
             except JIRAError as e:
                 if e.status_code == 404:
                     warnings.warn(
-                        "Status code 404 may mean, that too old JIRA Agile version is installed."
+                        "Status code 404 may mean, that too old Jira Agile version is installed."
                         " At least version 6.7.10 is required."
                     )
                 raise

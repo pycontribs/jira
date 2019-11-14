@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# JIRA Python Client documentation build configuration file, created by
+# Jira Python Client documentation build configuration file, created by
 # sphinx-quickstart on Thu May  3 17:01:50 2012.
 #
 # This file is execfile()d with the current directory set to its containing dir.

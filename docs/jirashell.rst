@@ -8,14 +8,14 @@ it, and bang your elbows -- trial and error. A REST design is especially well-su
 Run it from the command line::
 
     $ jirashell -s http://jira.atlassian.com
-    <JIRA Shell (http://jira.atlassian.com)>
+    <Jira Shell (http://jira.atlassian.com)>
 
-    *** JIRA shell active; client is in 'jira'. Press Ctrl-D to exit.
+    *** Jira shell active; client is in 'jira'. Press Ctrl-D to exit.
 
     In [1]:
 
-This is a specialized Python interpreter (built on IPython) that lets you explore JIRA as a service. Any legal
-Python code is acceptable input. The shell builds a JIRA client object for you (based on the launch parameters) and
+This is a specialized Python interpreter (built on IPython) that lets you explore Jira as a service. Any legal
+Python code is acceptable input. The shell builds a ``JIRA`` client object for you (based on the launch parameters) and
 stores it in the ``jira`` object.
 
 Try getting an issue::
