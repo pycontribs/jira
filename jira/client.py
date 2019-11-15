@@ -4062,35 +4062,35 @@ class JIRA(object):
 
         return json_loads(r)
 
-    def incompletedIssuesEstimateSum(self, board_id, sprint_id):
-        """Return the total incompleted points this sprint."""
+    def sprint_report(self, board_id, sprint_id):
+        """Return the sprint report."""
         return self._get_json(
             "rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s"
             % (board_id, sprint_id),
             base=self.AGILE_BASE_URL,
-        )["contents"]["incompletedIssuesEstimateSum"]["value"]
+        )["contents"]
+
+    def incompletedIssuesEstimateSum(self, board_id, sprint_id):
+        """Return the total incompleted points this sprint."""
+        return self.sprint_report(
+            board_id, sprint_id,
+        )["incompletedIssuesEstimateSum"]["value"]
 
     def removed_issues(self, board_id, sprint_id):
         """Return the completed issues for the sprint."""
-        r_json = self._get_json(
-            "rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s"
-            % (board_id, sprint_id),
-            base=self.AGILE_BASE_URL,
-        )
+        r_json = self.sprint_report(board_id, sprint_id)
         issues = [
             Issue(self._options, self._session, raw_issues_json)
-            for raw_issues_json in r_json["contents"]["puntedIssues"]
+            for raw_issues_json in r_json["puntedIssues"]
         ]
 
         return issues
 
     def removedIssuesEstimateSum(self, board_id, sprint_id):
         """Return the total incompleted points this sprint."""
-        return self._get_json(
-            "rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s"
-            % (board_id, sprint_id),
-            base=self.AGILE_BASE_URL,
-        )["contents"]["puntedIssuesEstimateSum"]["value"]
+        return self.sprint_report(
+            board_id, sprint_id,
+        )["puntedIssuesEstimateSum"]["value"]
 
     # TODO(ssbarnea): remove sprint_info() method, sprint() method suit the convention more
     def sprint_info(self, board_id, sprint_id):
