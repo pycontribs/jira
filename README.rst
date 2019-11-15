@@ -123,7 +123,7 @@ In addition to all the contributors we would like to thank to these companies:
 
 * Atlassian_ for developing such a powerful issue tracker and for providing a free on-demand JIRA_ instance that we can use for continuous integration testing.
 * JetBrains_ for providing us with free licenses of PyCharm_
-* Travis_ for hosting our continuous integration
+* Travis_ (is broken) for hosting our continuous integration
 * Navicat_ for providing us free licenses of their powerful database client GUI tools.
 
 .. _Atlassian: https://www.atlassian.com/
