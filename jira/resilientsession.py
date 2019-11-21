@@ -15,7 +15,6 @@ logging.getLogger("jira").addHandler(logging.NullHandler())
 
 def raise_on_error(r, verb="???", **kwargs):
     request = kwargs.get("request", None)
-    # headers = kwargs.get('headers', None)
 
     if r is None:
         raise JIRAError(None, **kwargs)

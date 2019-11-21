@@ -327,11 +327,7 @@ class JIRA(object):
         "delay_reload": 0,
         "headers": {
             "Cache-Control": "no-cache",
-            # 'Accept': 'application/json;charset=UTF-8',  # default for REST
             "Content-Type": "application/json",  # ;charset=UTF-8',
-            # 'Accept': 'application/json',  # default for REST
-            # 'Pragma': 'no-cache',
-            # 'Expires': 'Thu, 01 Jan 1970 00:00:00 GMT'
             "X-Atlassian-Token": "no-check",
         },
     }
@@ -812,7 +808,6 @@ class JIRA(object):
         if cached and hasattr(self, "_applicationlinks"):
             return self._applicationlinks
 
-        # url = self._options['server'] + '/rest/applinks/latest/applicationlink'
         url = self._options["server"] + "/rest/applinks/latest/listApplicationlinks"
 
         r = self._session.get(url)
@@ -3321,7 +3316,6 @@ class JIRA(object):
 
         r = self._session.get(url, headers=self._options["headers"])
         if r.status_code == 503:
-            # logging.warning("JIRA returned 503, this could mean that a full reindex is in progress.")
             return 503
 
         if (
@@ -3511,7 +3505,6 @@ class JIRA(object):
             for group in data["projectTemplatesGroupedByType"]:
                 for t in group["projectTemplates"]:
                     templates[t["name"]] = t
-        # pprint(templates.keys())
         return templates
 
     @lru_cache(maxsize=None)
@@ -3579,7 +3572,7 @@ class JIRA(object):
 
         r = self._session.get(url)
         data = json_loads(r)
-        return data  # ['values']
+        return data
 
     @lru_cache(maxsize=None)
     def workflows(self):
@@ -3588,7 +3581,7 @@ class JIRA(object):
 
         r = self._session.get(url)
         data = json_loads(r)
-        return data  # ['values']
+        return data
 
     def delete_screen(self, id):
 
@@ -3683,58 +3676,6 @@ class JIRA(object):
         # preference list for picking a default template
         if not template_name:
             template_key = "com.pyxis.greenhopper.jira:gh-simplified-basic"
-
-        # template_keys = [
-        #     "com.pyxis.greenhopper.jira:gh-simplified-agility-kanban",
-        #     "com.pyxis.greenhopper.jira:gh-simplified-agility-scrum",
-        #     "com.pyxis.greenhopper.jira:gh-simplified-basic",
-        #     "com.pyxis.greenhopper.jira:gh-simplified-kanban-classic",
-        #     "com.pyxis.greenhopper.jira:gh-simplified-scrum-classic",
-        #     "com.atlassian.servicedesk:simplified-it-service-desk",
-        #     "com.atlassian.servicedesk:simplified-internal-service-desk",
-        #     "com.atlassian.servicedesk:simplified-external-service-desk",
-        #     "com.atlassian.jira-core-project-templates:jira-core-simplified-content-management",
-        #     "com.atlassian.jira-core-project-templates:jira-core-simplified-document-approval",
-        #     "com.atlassian.jira-core-project-templates:jira-core-simplified-lead-tracking",
-        #     "com.atlassian.jira-core-project-templates:jira-core-simplified-process-control",
-        #     "com.atlassian.jira-core-project-templates:jira-core-simplified-procurement",
-        #     "com.atlassian.jira-core-project-templates:jira-core-simplified-project-management",
-        #     "com.atlassian.jira-core-project-templates:jira-core-simplified-recruitment",
-        #     "com.atlassian.jira-core-project-templates:jira-core-simplified-task-",
-        #     "com.atlassian.jira.jira-incident-management-plugin:im-incident-management",
-        # ]
-
-        # possible_templates = [
-        #     "Scrum software development",  # have Bug
-        #     "Agility",  # cannot set summary
-        #     "Bug tracking",
-        #     "JIRA Classic",
-        #     "JIRA Default Schemes",
-        #     "Basic software development",
-        #     "Project management",
-        #     "Kanban software development",
-        #     "Task management",
-        #     "Basic",  # does not have Bug
-        #     "Content Management",
-        #     "Customer service",
-        #     "Document Approval",
-        #     "IT Service Desk",
-        #     "Lead Tracking",
-        #     "Process management",
-        #     "Procurement",
-        #     "Recruitment",
-        # ]
-
-        # templates = self.templates()
-        # if not template_name:
-        #     for k, v in templates.items():
-        #         if v['projectTypeKey'] == type:
-        #             template_name = k
-
-        # template_name = next((t for t in templates if t['projectTypeKey'] == 'x'))
-
-        # template_key = templates[template_name]["projectTemplateModuleCompleteKey"]
-        # project_type_key = templates[template_name]["projectTypeKey"]
 
         # https://confluence.atlassian.com/jirakb/creating-a-project-via-rest-based-on-jira-default-schemes-744325852.html
         # see https://confluence.atlassian.com/jirakb/creating-projects-via-rest-api-in-jira-963651978.html

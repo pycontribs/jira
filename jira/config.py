@@ -112,4 +112,3 @@ def get_jira(
     options["verify"] = verify
 
     return JIRA(options=options, basic_auth=(username, password))
-    # self.jira.config.debug = debug

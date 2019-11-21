@@ -203,19 +203,6 @@ class Resource(object):
                     "%r object has no attribute %r (%s)" % (self.__class__, item, e)
                 )
 
-    # def __getstate__(self):
-    #     """
-    #     Pickling the resource; using the raw dict
-    #     """
-    #     return self.raw
-    #
-    # def __setstate__(self, raw_pickled):
-    #     """
-    #     Unpickling of the resource
-    #     """
-    #     self._parse_raw(raw_pickled)
-    #
-
     def find(self, id, params=None):
         """Finds a resource based on the input parameters.
 
@@ -406,8 +393,6 @@ class Resource(object):
         dict2resource(raw, self, self._options, self._session)
 
     def _default_headers(self, user_headers):
-        # result = dict(user_headers)
-        # result['accept'] = 'application/json'
         return CaseInsensitiveDict(
             self._options["headers"].items() + user_headers.items()
         )
