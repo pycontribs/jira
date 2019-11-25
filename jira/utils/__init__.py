@@ -36,13 +36,18 @@ class CaseInsensitiveDict(dict):
     def __init__(self, *args, **kw):
         super(CaseInsensitiveDict, self).__init__(*args, **kw)
 
-        self.itemlist = {}
-        for key, value in super(CaseInsensitiveDict, self).items():
-            if key != key.lower():
-                self[key.lower()] = value
-                self.pop(key, None)
+#        self.itemlist = {}
+#        for key, value in super(CaseInsensitiveDict, self).items():
+#            if key != key.lower():
+#                self[key.lower()] = value
+#                self.pop(key, None)
 
         # self.itemlist[key.lower()] = value
+        itemlist = {}
+        for key, value in super(CaseInsensitiveDict, self).items():
+            itemlist[key.lower()] = value
+        self = itemlist
+
 
     def __setitem__(self, key, value):
         """Overwrite [] implementation."""
