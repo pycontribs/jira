@@ -63,7 +63,7 @@ Pass a tuple of (username, password) to the ``basic_auth`` constructor argument:
     
 To log into a remote Jira server with basic authentication::
 
-   jira = JIRA('https://jira.atlassian.com', basic_auth('username', 'password'))
+   jira = JIRA('https://jira.atlassian.com', basic_auth=('username', 'password'))
 
 OAuth
 ^^^^^
