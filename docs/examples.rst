@@ -60,6 +60,10 @@ HTTP BASIC
 Pass a tuple of (username, password) to the ``basic_auth`` constructor argument::
 
     auth_jira = JIRA(basic_auth=('username', 'password'))
+    
+To log into a remote Jira server with basic authentication::
+
+   jira = JIRA('https://jira.atlassian.com', basic_auth('username', 'password'))
 
 OAuth
 ^^^^^
@@ -100,13 +104,6 @@ To enable Kerberos auth, set ``kerberos=True``::
 To pass additional options to Kerberos auth use dict ``kerberos_options``, e.g.::
 
     auth_jira = JIRA(kerberos=True, kerberos_options={'mutual_authentication': 'DISABLED'})
-
-Authenticating on a remote server
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-You may also pass multiple arguments to initialize the JIRA object. For example, to log into a remote Jira server with basic authentication::
-
-   jira = JIRA('https://jira.atlassian.com', basic_auth('username', 'password'))
     
 .. _jirashell-label:
 
