@@ -104,7 +104,7 @@ To enable Kerberos auth, set ``kerberos=True``::
 To pass additional options to Kerberos auth use dict ``kerberos_options``, e.g.::
 
     auth_jira = JIRA(kerberos=True, kerberos_options={'mutual_authentication': 'DISABLED'})
-    
+
 .. _jirashell-label:
 
 Issues
