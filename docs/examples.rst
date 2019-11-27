@@ -35,10 +35,6 @@ default address for a JIRA instance started from the Atlassian Plugin SDK.
 You can manually set the JIRA server to use::
 
     jira = JIRA('https://jira.atlassian.com')
-    
-You may also pass multiple arguments to initialize the JIRA object. For example, to log into a remote Jira server with basic authentication:
-
-    jira = JIRA('https://jira.atlassian.com', basic_auth('username', 'password'))
 
 Authentication
 --------------
@@ -105,6 +101,13 @@ To pass additional options to Kerberos auth use dict ``kerberos_options``, e.g.:
 
     auth_jira = JIRA(kerberos=True, kerberos_options={'mutual_authentication': 'DISABLED'})
 
+Authenticating on a remote server
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+You may also pass multiple arguments to initialize the JIRA object. For example, to log into a remote Jira server with basic authentication::
+
+   jira = JIRA('https://jira.atlassian.com', basic_auth('username', 'password'))
+    
 .. _jirashell-label:
 
 Issues
