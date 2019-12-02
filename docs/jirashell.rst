@@ -7,7 +7,7 @@ it, and bang your elbows -- trial and error. A REST design is especially well-su
 
 Run it from the command line::
 
-    $ jirashell -s http://jira.atlassian.com
+    $ jirashell -s http://jira.atlassian.com -u <username> -p <password>
     <JIRA Shell (http://jira.atlassian.com)>
 
     *** JIRA shell active; client is in 'jira'. Press Ctrl-D to exit.
