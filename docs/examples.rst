@@ -83,10 +83,6 @@ Pass a dict of OAuth properties to the ``oauth`` constructor argument::
     The OAuth access tokens must be obtained and authorized ahead of time through the standard OAuth dance. For
     interactive use, ``jirashell`` can perform the dance with you if you don't already have valid tokens.
 
-.. note ::
-    OAuth in Jira uses RSA-SHA1 which requires the PyCrypto library. PyCrypto is **not** installed automatically
-    when installing jira-python. See also the :ref:`Dependencies`. section above.
-
 * The access token and token secret uniquely identify the user.
 * The consumer key must match the OAuth provider configured on the JIRA server.
 * The key cert data must be the private key that matches the public key configured on the JIRA server's OAuth provider.
@@ -204,17 +200,19 @@ Updating components::
 Fields
 ------
 
-    issue.fields.worklogs                                 # list of Worklog objects
-    issue.fields.worklogs[0].author
-    issue.fields.worklogs[0].comment
-    issue.fields.worklogs[0].created
-    issue.fields.worklogs[0].id
-    issue.fields.worklogs[0].self
-    issue.fields.worklogs[0].started
-    issue.fields.worklogs[0].timeSpent
-    issue.fields.worklogs[0].timeSpentSeconds
-    issue.fields.worklogs[0].updateAuthor                # dictionary
-    issue.fields.worklogs[0].updated
+Example about accessing the worklogs::
+
+    issue.fields.worklog.worklogs                                 # list of Worklog objects
+    issue.fields.worklog.worklogs[0].author
+    issue.fields.worklog.worklogs[0].comment
+    issue.fields.worklog.worklogs[0].created
+    issue.fields.worklog.worklogs[0].id
+    issue.fields.worklog.worklogs[0].self
+    issue.fields.worklog.worklogs[0].started
+    issue.fields.worklog.worklogs[0].timeSpent
+    issue.fields.worklog.worklogs[0].timeSpentSeconds
+    issue.fields.worklog.worklogs[0].updateAuthor                # dictionary
+    issue.fields.worklog.worklogs[0].updated
 
 
     issue.fields.timetracking.remainingEstimate           # may be NULL or string ("0m", "2h"...)

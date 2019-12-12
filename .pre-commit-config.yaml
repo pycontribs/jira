@@ -1,28 +1,40 @@
 ---
 repos:
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v1.3.0
+  - repo: https://github.com/python/black
+    rev: 19.3b0
     hooks:
-      - id: trailing-whitespace
+      - id: black
+        language_version: python3
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.3.0
+    hooks:
       - id: end-of-file-fixer
+      - id: trailing-whitespace
       - id: mixed-line-ending
       - id: check-byte-order-marker
       - id: check-executables-have-shebangs
       - id: check-merge-conflict
       - id: check-symlinks
       - id: check-vcs-permalinks
-      - id: flake8
       - id: debug-statements
-      - id: requirements-txt-fixer
       - id: check-yaml
         files: .*\.(yaml|yml)$
+  - repo: https://gitlab.com/pycqa/flake8
+    rev: 3.7.8
+    hooks:
+      - id: flake8
+        additional_dependencies:
+          - flake8-black
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.11.1
+    rev: v1.17.0
     hooks:
       - id: yamllint
         files: \.(yaml|yml)$
-
-  - repo: https://github.com/ssbarnea/bashate.git
-    rev: 0.5.2
+  - repo: https://github.com/openstack-dev/bashate.git
+    rev: 0.6.0
     hooks:
       - id: bashate
+  - repo: https://github.com/pre-commit/mirrors-mypy.git
+    rev: v0.730
+    hooks:
+      - id: mypy

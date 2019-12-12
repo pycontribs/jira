@@ -14,6 +14,9 @@ JIRA Python Library
 .. image:: https://img.shields.io/github/issues/pycontribs/jira.svg
         :target: https://github.com/pycontribs/jira/issues
 
+.. image:: https://img.shields.io/badge/irc-%23pycontribs-blue
+        :target: irc:///#pycontribs
+
 ------------
 
 .. image:: https://readthedocs.org/projects/jira/badge/?version=master
@@ -22,7 +25,11 @@ JIRA Python Library
 .. image:: https://travis-ci.com/pycontribs/jira.svg?branch=master
         :target: https://travis-ci.com/pycontribs/jira
 
-.. image:: https://codecov.io/gh/pycontribs/jira/branch/develop/graph/badge.svg
+.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
+   :target: https://github.com/python/black
+   :alt: Python Black Code Style
+
+.. image:: https://codecov.io/gh/pycontribs/jira/branch/master/graph/badge.svg
         :target: https://codecov.io/gh/pycontribs/jira
 
 .. image:: https://img.shields.io/bountysource/team/pycontribs/activity.svg
@@ -68,7 +75,7 @@ right?
 
 By default only the basic library dependencies are installed, so if you want
 to use the ``cli`` tool or other optional dependencies do perform a full
-installation using ``pip install jira[opt,cli,testing]``
+installation using ``pip install jira[opt,cli,test]``
 
 .. _virtualenv: http://www.virtualenv.org/en/latest/index.html
 
@@ -95,9 +102,9 @@ Setup
 * Fork_ repo
 * Keep it sync_'ed while you are developing
 * Install pyenv_
-* Install Atlassian Server for testing
+* Install `Atlassian JIRA Server`_ for testing
   - make install-sdk
-* pip install requirements-dev.txt
+* pip install jira[test]
 * Start up Jira Server
   - atlas-run-standalone
 * Test your changes
@@ -106,6 +113,7 @@ Setup
 .. _Fork: https://help.github.com/articles/fork-a-repo/
 .. _sync: https://help.github.com/articles/syncing-a-fork/
 .. _pyenv: https://amaral.northwestern.edu/resources/guides/pyenv-tutorial
+.. _`Atlassian JIRA Server`: https://www.atlassian.com/software/jira/download
 
 
 Credits

@@ -1,3 +1,0 @@
-pbr>=3.0.0
-sphinx>=1.7.1
-sphinx_rtd_theme

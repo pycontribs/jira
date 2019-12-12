@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 """The root of JIRA package namespace."""
-from __future__ import unicode_literals
-from pbr.version import VersionInfo
+try:
+    import pkg_resources
 
-_v = VersionInfo('jira').semantic_version()
-__version__ = _v.release_string()
-version_info = _v.version_tuple()
+    __version__ = pkg_resources.get_distribution("jira").version
+except Exception:
+    __version__ = "unknown"
 
 from jira.client import Comment  # noqa: E402
 from jira.client import Issue  # noqa: E402
@@ -19,18 +19,18 @@ from jira.client import Worklog  # noqa: E402
 from jira.config import get_jira  # noqa: E402
 from jira.exceptions import JIRAError  # noqa: E402
 
+
 __all__ = (
-    'Comment',
-    '__version__',
-    'Issue',
-    'JIRA',
-    'JIRAError',
-    'Priority',
-    'Project',
-    'Role',
-    'User',
-    'version_info',
-    'Watchers',
-    'Worklog',
-    'get_jira'
+    "Comment",
+    "__version__",
+    "Issue",
+    "JIRA",
+    "JIRAError",
+    "Priority",
+    "Project",
+    "Role",
+    "User",
+    "Watchers",
+    "Worklog",
+    "get_jira",
 )

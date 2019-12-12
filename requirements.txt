@@ -1,9 +1,0 @@
-argparse; python_version<'2.7'
-defusedxml
-oauthlib[signedtoken]>=1.0.0  # dep of requests-oauthlib, to avoid pycrypto. See: https://github.com/pycontribs/jira/issues/619
-pbr>=3.0.0
-requests-oauthlib>=0.6.1
-requests>=2.10.0
-requests_toolbelt
-setuptools>=20.10.1
-six>=1.10.0

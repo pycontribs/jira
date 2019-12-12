@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """JIRA utils used internally."""
-from __future__ import unicode_literals
 import threading
 
 from jira.resilientsession import raise_on_error
@@ -15,7 +14,7 @@ class CaseInsensitiveDict(dict):
 
     All keys are expected to be strings. The structure remembers the
     case of the last key to be set, and ``iter(instance)``,
-    ``keys()``, ``items()``, ``iterkeys()``, and ``iteritems()``
+    ``keys()``, ``items()``, ``iterkeys()``
     will contain case-sensitive keys. However, querying and contains
     testing is case insensitive::
 
@@ -64,13 +63,11 @@ class CaseInsensitiveDict(dict):
 
 def threaded_requests(requests):
     for fn, url, request_args in requests:
-        th = threading.Thread(
-            target=fn, args=(url,), kwargs=request_args, name=url,
-        )
+        th = threading.Thread(target=fn, args=(url,), kwargs=request_args, name=url)
         th.start()
 
     for th in threading.enumerate():
-        if th.name.startswith('http'):
+        if th.name.startswith("http"):
             th.join()
 
 

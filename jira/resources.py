@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-from __future__ import print_function
 """
 This module implements the Resource classes that translate JSON from JIRA REST resources
 into usable objects.
@@ -9,54 +7,44 @@ into usable objects.
 import logging
 import re
 import time
-try:  # Python 2.7+
-    from logging import NullHandler
-except ImportError:
-    class NullHandler(logging.Handler):
 
-        def emit(self, record):
-            pass
 import json
-
-from six import iteritems
-from six import string_types
-from six import text_type
 
 from jira.utils import CaseInsensitiveDict
 from jira.utils import json_loads
 from jira.utils import threaded_requests
 
 __all__ = (
-    'Resource',
-    'Issue',
-    'Comment',
-    'Project',
-    'Attachment',
-    'Component',
-    'Dashboard',
-    'Filter',
-    'Votes',
-    'Watchers',
-    'Worklog',
-    'IssueLink',
-    'IssueLinkType',
-    'IssueType',
-    'Priority',
-    'Version',
-    'Role',
-    'Resolution',
-    'SecurityLevel',
-    'Status',
-    'User',
-    'Group',
-    'CustomFieldOption',
-    'RemoteLink',
-    'Customer',
-    'ServiceDesk',
-    'RequestType',
+    "Resource",
+    "Issue",
+    "Comment",
+    "Project",
+    "Attachment",
+    "Component",
+    "Dashboard",
+    "Filter",
+    "Votes",
+    "Watchers",
+    "Worklog",
+    "IssueLink",
+    "IssueLinkType",
+    "IssueType",
+    "Priority",
+    "Version",
+    "Role",
+    "Resolution",
+    "SecurityLevel",
+    "Status",
+    "User",
+    "Group",
+    "CustomFieldOption",
+    "RemoteLink",
+    "Customer",
+    "ServiceDesk",
+    "RequestType",
 )
 
-logging.getLogger('jira').addHandler(NullHandler())
+logging.getLogger("jira").addHandler(logging.NullHandler())
 
 
 def get_error_list(r):
@@ -67,20 +55,20 @@ def get_error_list(r):
         elif r.text:
             try:
                 response = json_loads(r)
-                if 'message' in response:
+                if "message" in response:
                     # JIRA 5.1 errors
-                    error_list = [response['message']]
-                elif 'errorMessages' in response and len(response['errorMessages']) > 0:
+                    error_list = [response["message"]]
+                elif "errorMessages" in response and len(response["errorMessages"]) > 0:
                     # JIRA 5.0.x error messages sometimes come wrapped in this array
                     # Sometimes this is present but empty
-                    errorMessages = response['errorMessages']
+                    errorMessages = response["errorMessages"]
                     if isinstance(errorMessages, (list, tuple)):
                         error_list = errorMessages
                     else:
                         error_list = [errorMessages]
-                elif 'errors' in response and len(response['errors']) > 0:
+                elif "errors" in response and len(response["errors"]) > 0:
                     # JIRA 6.x error messages are found in this array.
-                    error_list = response['errors'].values()
+                    error_list = response["errors"].values()
                 else:
                     error_list = [r.text]
             except ValueError:
@@ -112,14 +100,36 @@ class Resource(object):
     ``ids`` parameter to ``find()``.
     """
 
-    JIRA_BASE_URL = '{server}/rest/{rest_path}/{rest_api_version}/{path}'
+    JIRA_BASE_URL = "{server}/rest/{rest_path}/{rest_api_version}/{path}"
 
     # A prioritized list of the keys in self.raw most likely to contain a human
     # readable name or identifier, or that offer other key information.
-    _READABLE_IDS = ('displayName', 'key', 'name', 'filename', 'value',
-                     'scope', 'votes', 'id', 'mimeType', 'closed')
+    _READABLE_IDS = (
+        "displayName",
+        "key",
+        "name",
+        "accountId",
+        "filename",
+        "value",
+        "scope",
+        "votes",
+        "id",
+        "mimeType",
+        "closed",
+    )
 
     def __init__(self, resource, options, session, base_url=JIRA_BASE_URL):
+        """Initializes a generic resource.
+        :param resource: The name of the resource.
+        :type resource: str
+        :param options: Options for the new resource
+        :type options: Dict[str,str]
+        :param session: Session used for the resource.
+        :type session: ResilientSession
+        :param base_url: The Base JIRA url.
+        :type base_url: Optional[str]
+
+        """
         self._resource = resource
         self._options = options
         self._session = session
@@ -130,33 +140,48 @@ class Resource(object):
         self.raw = None
 
     def __str__(self):
-        """Return the first value we find that is likely to be human readable."""
+        """Return the first value we find that is likely to be human readable.
+
+        :rtype: str
+        """
         if self.raw:
             for name in self._READABLE_IDS:
                 if name in self.raw:
-                    pretty_name = text_type(self.raw[name])
+                    pretty_name = str(self.raw[name])
                     # Include any child to support nested select fields.
-                    if hasattr(self, 'child'):
-                        pretty_name += ' - ' + text_type(self.child)
+                    if hasattr(self, "child"):
+                        pretty_name += " - " + str(self.child)
                     return pretty_name
 
         # If all else fails, use repr to make sure we get something.
         return repr(self)
 
     def __repr__(self):
-        """Identify the class and include any and all relevant values."""
+        """Identify the class and include any and all relevant values.
+
+        :rtype: str
+        """
         names = []
         if self.raw:
             for name in self._READABLE_IDS:
                 if name in self.raw:
-                    names.append(name + '=' + repr(self.raw[name]))
+                    names.append(name + "=" + repr(self.raw[name]))
         if not names:
-            return '<JIRA %s at %s>' % (self.__class__.__name__,
-                                        id(self))
-        return '<JIRA %s: %s>' % (self.__class__.__name__, ', '.join(names))
+            return "<JIRA %s at %s>" % (self.__class__.__name__, id(self))
+        return "<JIRA %s: %s>" % (self.__class__.__name__, ", ".join(names))
 
     def __getattr__(self, item):
-        """Allow access of attributes via names."""
+        """Allow access of attributes via names.
+
+        :param item: Attribute name
+        :type item: str
+
+        :rtype: Any
+
+        :raises KeyError: When the attribute does not exist.
+        :raises AttributeError: When attribute does not exist.
+
+        """
         try:
             return self[item]
         except Exception as e:
@@ -168,13 +193,16 @@ class Resource(object):
             #                unpickling (i.e. pickle.load* methods).
             #   *NOTE*: if the __new__ method were to be implemented in this class, this may have
             #           to be removed or changed.
-            if item == '__getnewargs__':
+            if item == "__getnewargs__":
                 raise KeyError(item)
 
-            if hasattr(self, 'raw') and item in self.raw:
+            if hasattr(self, "raw") and item in self.raw:
                 return self.raw[item]
             else:
-                raise AttributeError("%r object has no attribute %r (%s)" % (self.__class__, item, e))
+                raise AttributeError(
+                    "%r object has no attribute %r (%s)" % (self.__class__, item, e)
+                )
+
     # def __getstate__(self):
     #     """
     #     Pickling the resource; using the raw dict
@@ -189,6 +217,12 @@ class Resource(object):
     #
 
     def find(self, id, params=None):
+        """Finds a resource based on the input parameters.
+
+        :type id: Union[Tuple[str, str], int, str]
+        :type params: Optional[Dict[str, str]]
+
+        """
 
         if params is None:
             params = {}
@@ -201,8 +235,15 @@ class Resource(object):
         self._load(url, params=params)
 
     def _get_url(self, path):
+        """ Gets the url for the specified path.
+
+        :type path: str
+
+        :rtype: str
+
+        """
         options = self._options.copy()
-        options.update({'path': path})
+        options.update({"path": path})
         return self._base_url.format(**options)
 
     def update(self, fields=None, async_=None, jira=None, notify=True, **kwargs):
@@ -212,10 +253,18 @@ class Resource(object):
         resource doesn't support ``PUT``, a :py:exc:`.JIRAError` will be raised; subclasses that specialize this method
         will only raise errors in case of user error.
 
-        :param async_: if true the request will be added to the queue so it can be executed later using async_run()
+        :param fields: Fields which should be updated for the object.
+        :type fields: Optional[Dict[str, Any]]
+        :param async_: If true the request will be added to the queue so it can be executed later using async_run()
+        :type async_: bool
+        :param jira: Instance of JIRA Client
+        :type jira: jira.JIRA
+        :param notify: Whether or not to notify users about the update. (Default: True)
+        :type notify: bool
+        :type kwargs: **Any
         """
         if async_ is None:
-            async_ = self._options['async']
+            async_ = self._options["async"]
 
         data = {}
         if fields is not None:
@@ -229,72 +278,81 @@ class Resource(object):
         else:
             querystring = ""
 
-        r = self._session.put(
-            self.self + querystring, data=data)
-        if 'autofix' in self._options and \
-                r.status_code == 400:
+        r = self._session.put(self.self + querystring, data=data)
+        if "autofix" in self._options and r.status_code == 400:
             user = None
             error_list = get_error_list(r)
             logging.error(error_list)
             if "The reporter specified is not a user." in error_list:
-                if 'reporter' not in data['fields']:
+                if "reporter" not in data["fields"]:
                     logging.warning(
-                        "autofix: setting reporter to '%s' and retrying the update." % self._options['autofix'])
-                    data['fields']['reporter'] = {
-                        'name': self._options['autofix']}
+                        "autofix: setting reporter to '%s' and retrying the update."
+                        % self._options["autofix"]
+                    )
+                    data["fields"]["reporter"] = {"name": self._options["autofix"]}
 
             if "Issues must be assigned." in error_list:
-                if 'assignee' not in data['fields']:
-                    logging.warning("autofix: setting assignee to '%s' for %s and retrying the update." % (
-                        self._options['autofix'], self.key))
-                    data['fields']['assignee'] = {
-                        'name': self._options['autofix']}
+                if "assignee" not in data["fields"]:
+                    logging.warning(
+                        "autofix: setting assignee to '%s' for %s and retrying the update."
+                        % (self._options["autofix"], self.key)
+                    )
+                    data["fields"]["assignee"] = {"name": self._options["autofix"]}
                     # for some reason the above approach fails on Jira 5.2.11
                     # so we need to change the assignee before
 
-            if "Issue type is a sub-task but parent issue key or id not specified." in error_list:
+            if (
+                "Issue type is a sub-task but parent issue key or id not specified."
+                in error_list
+            ):
                 logging.warning(
-                    "autofix: trying to fix sub-task without parent by converting to it to bug")
-                data['fields']['issuetype'] = {"name": "Bug"}
-            if "The summary is invalid because it contains newline characters." in error_list:
+                    "autofix: trying to fix sub-task without parent by converting to it to bug"
+                )
+                data["fields"]["issuetype"] = {"name": "Bug"}
+            if (
+                "The summary is invalid because it contains newline characters."
+                in error_list
+            ):
                 logging.warning("autofix: trying to fix newline in summary")
-                data['fields'][
-                    'summary'] = self.fields.summary.replace("/n", "")
+                data["fields"]["summary"] = self.fields.summary.replace("/n", "")
             for error in error_list:
-                if re.search(u"^User '(.*)' was not found in the system\.", error, re.U):
+                if re.search(
+                    r"^User '(.*)' was not found in the system\.", error, re.U
+                ):
                     m = re.search(
-                        u"^User '(.*)' was not found in the system\.", error, re.U)
+                        r"^User '(.*)' was not found in the system\.", error, re.U
+                    )
                     if m:
                         user = m.groups()[0]
                     else:
-                        raise NotImplemented()
-                if re.search("^User '(.*)' does not exist\.", error):
-                    m = re.search("^User '(.*)' does not exist\.", error)
+                        raise NotImplementedError()
+                if re.search(r"^User '(.*)' does not exist\.", error):
+                    m = re.search(r"^User '(.*)' does not exist\.", error)
                     if m:
                         user = m.groups()[0]
                     else:
-                        raise NotImplemented()
+                        raise NotImplementedError()
 
             if user:
                 logging.warning(
-                    "Trying to add missing orphan user '%s' in order to complete the previous failed operation." % user)
-                jira.add_user(user, 'noreply@example.com', 10100, active=False)
+                    "Trying to add missing orphan user '%s' in order to complete the previous failed operation."
+                    % user
+                )
+                jira.add_user(user, "noreply@example.com", 10100, active=False)
                 # if 'assignee' not in data['fields']:
                 #    logging.warning("autofix: setting assignee to '%s' and retrying the update." % self._options['autofix'])
                 #    data['fields']['assignee'] = {'name': self._options['autofix']}
             # EXPERIMENTAL --->
             if async_:
-                if not hasattr(self._session, '_async_jobs'):
+                if not hasattr(self._session, "_async_jobs"):
                     self._session._async_jobs = set()
-                self._session._async_jobs.add(threaded_requests.put(
-                    self.self, data=json.dumps(data)))
+                self._session._async_jobs.add(
+                    threaded_requests.put(self.self, data=json.dumps(data))
+                )
             else:
-                r = self._session.put(
-                    self.self, data=json.dumps(data))
+                r = self._session.put(self.self, data=json.dumps(data))
 
-        # TODO(ssbarnea): compare loaded data in order to verify if resource was updated indeed
-        # we had random test failures (probably) due to caching
-        time.sleep(4)
+        time.sleep(self._options["delay_reload"])
         self._load(self.self)
 
     def delete(self, params=None):
@@ -303,16 +361,30 @@ class Resource(object):
         If this resource doesn't support ``DELETE``, a :py:exc:`.JIRAError`
         will be raised; subclasses that specialize this method will only raise errors
         in case of user error.
+
+        :param params: Parameters for the delete request.
+        :type params: Optional[Dict[str, Any]]
+
+        :rtype: Response
         """
-        if self._options['async']:
-            if not hasattr(self._session, '_async_jobs'):
+        if self._options["async"]:
+            if not hasattr(self._session, "_async_jobs"):
                 self._session._async_jobs = set()
             self._session._async_jobs.add(
-                threaded_requests.delete(url=self.self, params=params))
+                threaded_requests.delete(url=self.self, params=params)
+            )
         else:
             return self._session.delete(url=self.self, params=params)
 
     def _load(self, url, headers=CaseInsensitiveDict(), params=None, path=None):
+        """ Load a resource.
+
+        :type url: str
+        :type headers: CaseInsensitiveDict
+        :type params: Optional[Dict[str,str]]
+        :type path: Optional[str]
+
+        """
         r = self._session.get(url, headers=headers, params=params)
         try:
             j = json_loads(r)
@@ -324,6 +396,10 @@ class Resource(object):
         self._parse_raw(j)
 
     def _parse_raw(self, raw):
+        """Parse a raw dictionary to create a resource.
+
+        :type raw: Dict[str, Any]
+        """
         self.raw = raw
         if not raw:
             raise NotImplementedError("We cannot instantiate empty resources: %s" % raw)
@@ -332,20 +408,22 @@ class Resource(object):
     def _default_headers(self, user_headers):
         # result = dict(user_headers)
         # result['accept'] = 'application/json'
-        return CaseInsensitiveDict(self._options['headers'].items() + user_headers.items())
+        return CaseInsensitiveDict(
+            self._options["headers"].items() + user_headers.items()
+        )
 
 
 class Attachment(Resource):
     """An issue attachment."""
 
     def __init__(self, options, session, raw=None):
-        Resource.__init__(self, 'attachment/{0}', options, session)
+        Resource.__init__(self, "attachment/{0}", options, session)
         if raw:
             self._parse_raw(raw)
 
     def get(self):
         """Return the file content as a string."""
-        r = self._session.get(self.content, headers={'Accept': '*/*'})
+        r = self._session.get(self.content, headers={"Accept": "*/*"})
         return r.content
 
     def iter_content(self, chunk_size=1024):
@@ -358,7 +436,7 @@ class Component(Resource):
     """A project component."""
 
     def __init__(self, options, session, raw=None):
-        Resource.__init__(self, 'component/{0}', options, session)
+        Resource.__init__(self, "component/{0}", options, session)
         if raw:
             self._parse_raw(raw)
 
@@ -369,7 +447,7 @@ class Component(Resource):
         """
         params = {}
         if moveIssuesTo is not None:
-            params['moveIssuesTo'] = moveIssuesTo
+            params["moveIssuesTo"] = moveIssuesTo
 
         super(Component, self).delete(params)
 
@@ -378,7 +456,7 @@ class CustomFieldOption(Resource):
     """An existing option for a custom issue field."""
 
     def __init__(self, options, session, raw=None):
-        Resource.__init__(self, 'customFieldOption/{0}', options, session)
+        Resource.__init__(self, "customFieldOption/{0}", options, session)
         if raw:
             self._parse_raw(raw)
 
@@ -387,7 +465,7 @@ class Dashboard(Resource):
     """A JIRA dashboard."""
 
     def __init__(self, options, session, raw=None):
-        Resource.__init__(self, 'dashboard/{0}', options, session)
+        Resource.__init__(self, "dashboard/{0}", options, session)
         if raw:
             self._parse_raw(raw)
 
@@ -396,7 +474,7 @@ class Filter(Resource):
     """An issue navigator filter."""
 
     def __init__(self, options, session, raw=None):
-        Resource.__init__(self, 'filter/{0}', options, session)
+        Resource.__init__(self, "filter/{0}", options, session)
         if raw:
             self._parse_raw(raw)
 
@@ -405,7 +483,6 @@ class Issue(Resource):
     """A JIRA issue."""
 
     class _IssueFields(object):
-
         def __init__(self):
             self.attachment = None
             """ :type : list[Attachment] """
@@ -421,7 +498,7 @@ class Issue(Resource):
             """ :type : list[Worklog] """
 
     def __init__(self, options, session, raw=None):
-        Resource.__init__(self, 'issue/{0}', options, session)
+        Resource.__init__(self, "issue/{0}", options, session)
 
         self.fields = None
         """ :type: :class:`~Issue._IssueFields` """
@@ -432,7 +509,9 @@ class Issue(Resource):
         if raw:
             self._parse_raw(raw)
 
-    def update(self, fields=None, update=None, async_=None, jira=None, notify=True, **fieldargs):
+    def update(
+        self, fields=None, update=None, async_=None, jira=None, notify=True, **fieldargs
+    ):
         """Update this issue on the server.
 
         Each keyword argument (other than the predefined ones) is treated as a field name and the argument's value
@@ -445,34 +524,36 @@ class Issue(Resource):
 
         :param fields: a dict containing field names and the values to use
         :param update: a dict containing update operations to apply
+        :param notify: query parameter notifyUsers. If true send the email with notification that the issue was updated
+                       to users that watch it. Admin or project admin permissions are required to disable the notification.
         :param fieldargs: keyword arguments will generally be merged into fields, except lists,
                           which will be merged into updates
 
         :type fields: dict
         :type update: dict
+
         """
         data = {}
         if fields is not None:
             fields_dict = fields
         else:
             fields_dict = {}
-        data['fields'] = fields_dict
+        data["fields"] = fields_dict
         if update is not None:
             update_dict = update
         else:
             update_dict = {}
-        data['update'] = update_dict
+        data["update"] = update_dict
         for field in sorted(fieldargs.keys()):
             value = fieldargs[field]
             # apply some heuristics to make certain changes easier
-            if isinstance(value, string_types):
-                if field == 'assignee' or field == 'reporter':
-                    fields_dict['assignee'] = {'name': value}
-                elif field == 'comment':
-                    if 'comment' not in update_dict:
-                        update_dict['comment'] = []
-                    update_dict['comment'].append({
-                        'add': {'body': value}})
+            if isinstance(value, str):
+                if field == "assignee" or field == "reporter":
+                    fields_dict["assignee"] = {"name": value}
+                elif field == "comment":
+                    if "comment" not in update_dict:
+                        update_dict["comment"] = []
+                    update_dict["comment"].append({"add": {"body": value}})
                 else:
                     fields_dict[field] = value
             elif isinstance(value, list):
@@ -503,7 +584,7 @@ class Issue(Resource):
 
         :type deleteSubtasks: bool
         """
-        super(Issue, self).delete(params={'deleteSubtasks': deleteSubtasks})
+        super(Issue, self).delete(params={"deleteSubtasks": deleteSubtasks})
 
     def permalink(self):
         """Get the URL of the issue, the browsable one not the REST one.
@@ -512,27 +593,28 @@ class Issue(Resource):
 
         :rtype: str
         """
-        return "%s/browse/%s" % (self._options['server'], self.key)
+        return "%s/browse/%s" % (self._options["server"], self.key)
 
     def __eq__(self, other):
         """Comparison method."""
-        return self.id == other.id
+        return other is not None and self.id == other.id
 
 
 class Comment(Resource):
     """An issue comment."""
 
     def __init__(self, options, session, raw=None):
-        Resource.__init__(self, 'issue/{0}/comment/{1}', options, session)
+        Resource.__init__(self, "issue/{0}/comment/{1}", options, session)
         if raw:
             self._parse_raw(raw)
 
-    def update(self, fields=None, async_=None, jira=None, body='', visibility=None):
+    def update(self, fields=None, async_=None, jira=None, body="", visibility=None):
+        """Update a comment"""
         data = {}
         if body:
-            data['body'] = body
+            data["body"] = body
         if visibility:
-            data['visibility'] = visibility
+            data["visibility"] = visibility
         super(Comment, self).update(data)
 
 
@@ -540,7 +622,7 @@ class RemoteLink(Resource):
     """A link to a remote application from an issue."""
 
     def __init__(self, options, session, raw=None):
-        Resource.__init__(self, 'issue/{0}/remotelink/{1}', options, session)
+        Resource.__init__(self, "issue/{0}/remotelink/{1}", options, session)
         if raw:
             self._parse_raw(raw)
 
@@ -555,14 +637,13 @@ class RemoteLink(Resource):
         :param application: application information for the link (see the above link for details)
         :param relationship: relationship description for the link (see the above link for details)
         """
-        data = {
-            'object': object}
+        data = {"object": object}
         if globalId is not None:
-            data['globalId'] = globalId
+            data["globalId"] = globalId
         if application is not None:
-            data['application'] = application
+            data["application"] = application
         if relationship is not None:
-            data['relationship'] = relationship
+            data["relationship"] = relationship
 
         super(RemoteLink, self).update(**data)
 
@@ -571,7 +652,7 @@ class Votes(Resource):
     """Vote information on an issue."""
 
     def __init__(self, options, session, raw=None):
-        Resource.__init__(self, 'issue/{0}/votes', options, session)
+        Resource.__init__(self, "issue/{0}/votes", options, session)
         if raw:
             self._parse_raw(raw)
 
@@ -580,18 +661,18 @@ class Watchers(Resource):
     """Watcher information on an issue."""
 
     def __init__(self, options, session, raw=None):
-        Resource.__init__(self, 'issue/{0}/watchers', options, session)
+        Resource.__init__(self, "issue/{0}/watchers", options, session)
         if raw:
             self._parse_raw(raw)
 
     def delete(self, username):
         """Remove the specified user from the watchers list."""
-        super(Watchers, self).delete(params={'username': username})
+        super(Watchers, self).delete(params={"username": username})
 
 
 class TimeTracking(Resource):
     def __init__(self, options, session, raw=None):
-        Resource.__init__(self, 'issue/{0}/worklog/{1}', options, session)
+        Resource.__init__(self, "issue/{0}/worklog/{1}", options, session)
         self.remainingEstimate = None
         if raw:
             self._parse_raw(raw)
@@ -601,7 +682,7 @@ class Worklog(Resource):
     """Worklog on an issue."""
 
     def __init__(self, options, session, raw=None):
-        Resource.__init__(self, 'issue/{0}/worklog/{1}', options, session)
+        Resource.__init__(self, "issue/{0}/worklog/{1}", options, session)
         if raw:
             self._parse_raw(raw)
 
@@ -616,11 +697,11 @@ class Worklog(Resource):
         """
         params = {}
         if adjustEstimate is not None:
-            params['adjustEstimate'] = adjustEstimate
+            params["adjustEstimate"] = adjustEstimate
         if newEstimate is not None:
-            params['newEstimate'] = newEstimate
+            params["newEstimate"] = newEstimate
         if increaseBy is not None:
-            params['increaseBy'] = increaseBy
+            params["increaseBy"] = increaseBy
 
         super(Worklog, self).delete(params)
 
@@ -629,7 +710,7 @@ class IssueLink(Resource):
     """Link between two issues."""
 
     def __init__(self, options, session, raw=None):
-        Resource.__init__(self, 'issueLink/{0}', options, session)
+        Resource.__init__(self, "issueLink/{0}", options, session)
         if raw:
             self._parse_raw(raw)
 
@@ -638,7 +719,7 @@ class IssueLinkType(Resource):
     """Type of link between two issues."""
 
     def __init__(self, options, session, raw=None):
-        Resource.__init__(self, 'issueLinkType/{0}', options, session)
+        Resource.__init__(self, "issueLinkType/{0}", options, session)
         if raw:
             self._parse_raw(raw)
 
@@ -647,7 +728,7 @@ class IssueType(Resource):
     """Type of an issue."""
 
     def __init__(self, options, session, raw=None):
-        Resource.__init__(self, 'issuetype/{0}', options, session)
+        Resource.__init__(self, "issuetype/{0}", options, session)
         if raw:
             self._parse_raw(raw)
 
@@ -656,7 +737,7 @@ class Priority(Resource):
     """Priority that can be set on an issue."""
 
     def __init__(self, options, session, raw=None):
-        Resource.__init__(self, 'priority/{0}', options, session)
+        Resource.__init__(self, "priority/{0}", options, session)
         if raw:
             self._parse_raw(raw)
 
@@ -665,7 +746,7 @@ class Project(Resource):
     """A JIRA project."""
 
     def __init__(self, options, session, raw=None):
-        Resource.__init__(self, 'project/{0}', options, session)
+        Resource.__init__(self, "project/{0}", options, session)
         if raw:
             self._parse_raw(raw)
 
@@ -674,7 +755,7 @@ class Role(Resource):
     """A role inside a project."""
 
     def __init__(self, options, session, raw=None):
-        Resource.__init__(self, 'project/{0}/role/{1}', options, session)
+        Resource.__init__(self, "project/{0}/role/{1}", options, session)
         if raw:
             self._parse_raw(raw)
 
@@ -687,16 +768,18 @@ class Role(Resource):
         :type groups: string, list or tuple
         """
 
-        if users is not None and isinstance(users, string_types):
+        if users is not None and isinstance(users, str):
             users = (users,)
-        if groups is not None and isinstance(groups, string_types):
+        if groups is not None and isinstance(groups, str):
             groups = (groups,)
 
         data = {
-            'id': self.id,
-            'categorisedActors': {
-                'atlassian-user-role-actor': users,
-                'atlassian-group-role-actor': groups}}
+            "id": self.id,
+            "categorisedActors": {
+                "atlassian-user-role-actor": users,
+                "atlassian-group-role-actor": groups,
+            },
+        }
 
         super(Role, self).update(**data)
 
@@ -712,25 +795,24 @@ class Role(Resource):
         """
 
         data = None
-        if users is not None and isinstance(users, string_types):
+        if users is not None and isinstance(users, str):
             users = (users,)
             data = {"user": users}
             if groups is not None: 
                 raise NotImplementedError("JIRA can only add users XOR groups") 
             
-        if groups is not None and isinstance(groups, string_types):
+        if groups is not None and isinstance(groups, str):
             groups = (groups,)
             data = {"group": groups}
 
         if data is not None:
             self._session.post(self.self, data=json.dumps(data))
 
-
 class Resolution(Resource):
     """A resolution for an issue."""
 
     def __init__(self, options, session, raw=None):
-        Resource.__init__(self, 'resolution/{0}', options, session)
+        Resource.__init__(self, "resolution/{0}", options, session)
         if raw:
             self._parse_raw(raw)
 
@@ -739,7 +821,7 @@ class SecurityLevel(Resource):
     """A security level for an issue or project."""
 
     def __init__(self, options, session, raw=None):
-        Resource.__init__(self, 'securitylevel/{0}', options, session)
+        Resource.__init__(self, "securitylevel/{0}", options, session)
         if raw:
             self._parse_raw(raw)
 
@@ -748,7 +830,16 @@ class Status(Resource):
     """Status for an issue."""
 
     def __init__(self, options, session, raw=None):
-        Resource.__init__(self, 'status/{0}', options, session)
+        Resource.__init__(self, "status/{0}", options, session)
+        if raw:
+            self._parse_raw(raw)
+
+
+class StatusCategory(Resource):
+    """StatusCategory for an issue."""
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(self, "statuscategory/{0}", options, session)
         if raw:
             self._parse_raw(raw)
 
@@ -757,7 +848,7 @@ class User(Resource):
     """A JIRA user."""
 
     def __init__(self, options, session, raw=None):
-        Resource.__init__(self, 'user?username={0}', options, session)
+        Resource.__init__(self, "user?username={0}", options, session)
         if raw:
             self._parse_raw(raw)
 
@@ -774,7 +865,7 @@ class Group(Resource):
     """A JIRA user group."""
 
     def __init__(self, options, session, raw=None):
-        Resource.__init__(self, 'group?groupname={0}', options, session)
+        Resource.__init__(self, "group?groupname={0}", options, session)
         if raw:
             self._parse_raw(raw)
 
@@ -791,7 +882,7 @@ class Version(Resource):
     """A version of a project."""
 
     def __init__(self, options, session, raw=None):
-        Resource.__init__(self, 'version/{0}', options, session)
+        Resource.__init__(self, "version/{0}", options, session)
         if raw:
             self._parse_raw(raw)
 
@@ -809,9 +900,9 @@ class Version(Resource):
 
         params = {}
         if moveFixIssuesTo is not None:
-            params['moveFixIssuesTo'] = moveFixIssuesTo
+            params["moveFixIssuesTo"] = moveFixIssuesTo
         if moveAffectedIssuesTo is not None:
-            params['moveAffectedIssuesTo'] = moveAffectedIssuesTo
+            params["moveAffectedIssuesTo"] = moveAffectedIssuesTo
 
         return super(Version, self).delete(params)
 
@@ -834,7 +925,7 @@ class Version(Resource):
 class GreenHopperResource(Resource):
     """A generic GreenHopper resource."""
 
-    AGILE_BASE_URL = '{server}/rest/{agile_rest_path}/{agile_rest_api_version}/{path}'
+    AGILE_BASE_URL = "{server}/rest/{agile_rest_path}/{agile_rest_api_version}/{path}"
 
     GREENHOPPER_REST_PATH = "greenhopper"
     """ Old, private API. Deprecated and will be removed from JIRA on the 1st February 2016. """
@@ -851,45 +942,60 @@ class GreenHopperResource(Resource):
             self._parse_raw(raw)
             # Old GreenHopper API did not contain self - create it for backward compatibility.
             if not self.self:
-                self.self = self._get_url(path.format(raw['id']))
+                self.self = self._get_url(path.format(raw["id"]))
 
 
 class Sprint(GreenHopperResource):
     """A GreenHopper sprint."""
 
     def __init__(self, options, session, raw=None):
-        GreenHopperResource.__init__(self, 'sprint/{0}', options, session, raw)
+        GreenHopperResource.__init__(self, "sprint/{0}", options, session, raw)
 
     def find(self, id, params=None):
-        if self._options['agile_rest_path'] != GreenHopperResource.GREENHOPPER_REST_PATH:
+        if (
+            self._options["agile_rest_path"]
+            != GreenHopperResource.GREENHOPPER_REST_PATH
+        ):
             Resource.find(self, id, params)
         else:
             # Old, private GreenHopper API had non-standard way of loading Sprint
-            url = self._get_url('sprint/%s/edit/model' % id)
-            self._load(url, params=params, path='sprint')
+            url = self._get_url("sprint/%s/edit/model" % id)
+            self._load(url, params=params, path="sprint")
 
 
 class Board(GreenHopperResource):
     """A GreenHopper board."""
 
     def __init__(self, options, session, raw=None):
-        path = 'rapidview/{0}' if options['agile_rest_path'] == self.GREENHOPPER_REST_PATH else 'board/{id}'
+        path = (
+            "rapidview/{0}"
+            if options["agile_rest_path"] == self.GREENHOPPER_REST_PATH
+            else "board/{id}"
+        )
         GreenHopperResource.__init__(self, path, options, session, raw)
 
     def delete(self, params=None):
-        if self._options['agile_rest_path'] != GreenHopperResource.GREENHOPPER_REST_PATH:
-            raise NotImplementedError('JIRA Agile Public API does not support Board removal')
+        if (
+            self._options["agile_rest_path"]
+            != GreenHopperResource.GREENHOPPER_REST_PATH
+        ):
+            raise NotImplementedError(
+                "JIRA Agile Public API does not support Board removal"
+            )
 
         Resource.delete(self, params)
 
 
 # Service Desk
 
+
 class Customer(Resource):
     """A Service Desk customer."""
 
     def __init__(self, options, session, raw=None):
-        Resource.__init__(self, 'customer', options, session, '{server}/rest/servicedeskapi/{path}')
+        Resource.__init__(
+            self, "customer", options, session, "{server}/rest/servicedeskapi/{path}"
+        )
         if raw:
             self._parse_raw(raw)
 
@@ -898,7 +1004,13 @@ class ServiceDesk(Resource):
     """A Service Desk."""
 
     def __init__(self, options, session, raw=None):
-        Resource.__init__(self, 'servicedesk/{0}', options, session, '{server}/rest/servicedeskapi/{path}')
+        Resource.__init__(
+            self,
+            "servicedesk/{0}",
+            options,
+            session,
+            "{server}/rest/servicedeskapi/{path}",
+        )
         if raw:
             self._parse_raw(raw)
 
@@ -907,9 +1019,17 @@ class RequestType(Resource):
     """A Service Desk Request Type."""
 
     def __init__(self, options, session, raw=None):
-        Resource.__init__(self, 'servicedesk/{0}/requesttype', options, session, '{server}/rest/servicedeskapi/{path}')
         if raw:
             self._parse_raw(raw)
+
+        Resource.__init__(
+            self,
+            "servicedesk/{0}/requesttype",
+            options,
+            session,
+            "{server}/rest/servicedeskapi/{path}",
+        )
+
 
 # Utilities
 
@@ -922,30 +1042,31 @@ def dict2resource(raw, top=None, options=None, session=None):
     or a ``PropertyHolder`` object (if no ``self`` link is present).
     """
     if top is None:
-        top = type(str('PropertyHolder'), (object,), raw)
+        top = PropertyHolder(raw)
 
     seqs = tuple, list, set, frozenset
-    for i, j in iteritems(raw):
+    for i, j in raw.items():
         if isinstance(j, dict):
-            if 'self' in j:
-                resource = cls_for_resource(j['self'])(options, session, j)
+            if "self" in j:
+                resource = cls_for_resource(j["self"])(options, session, j)
                 setattr(top, i, resource)
-            elif i == 'timetracking':
-                setattr(top, 'timetracking', TimeTracking(options, session, j))
+            elif i == "timetracking":
+                setattr(top, "timetracking", TimeTracking(options, session, j))
             else:
-                setattr(
-                    top, i, dict2resource(j, options=options, session=session))
+                setattr(top, i, dict2resource(j, options=options, session=session))
         elif isinstance(j, seqs):
             seq_list = []
             for seq_elem in j:
                 if isinstance(seq_elem, dict):
-                    if 'self' in seq_elem:
-                        resource = cls_for_resource(seq_elem['self'])(
-                            options, session, seq_elem)
+                    if "self" in seq_elem:
+                        resource = cls_for_resource(seq_elem["self"])(
+                            options, session, seq_elem
+                        )
                         seq_list.append(resource)
                     else:
                         seq_list.append(
-                            dict2resource(seq_elem, options=options, session=session))
+                            dict2resource(seq_elem, options=options, session=session)
+                        )
                 else:
                     seq_list.append(seq_elem)
             setattr(top, i, seq_list)
@@ -956,38 +1077,40 @@ def dict2resource(raw, top=None, options=None, session=None):
 
 resource_class_map = {
     # JIRA specific resources
-    r'attachment/[^/]+$': Attachment,
-    r'component/[^/]+$': Component,
-    r'customFieldOption/[^/]+$': CustomFieldOption,
-    r'dashboard/[^/]+$': Dashboard,
-    r'filter/[^/]$': Filter,
-    r'issue/[^/]+$': Issue,
-    r'issue/[^/]+/comment/[^/]+$': Comment,
-    r'issue/[^/]+/votes$': Votes,
-    r'issue/[^/]+/watchers$': Watchers,
-    r'issue/[^/]+/worklog/[^/]+$': Worklog,
-    r'issueLink/[^/]+$': IssueLink,
-    r'issueLinkType/[^/]+$': IssueLinkType,
-    r'issuetype/[^/]+$': IssueType,
-    r'priority/[^/]+$': Priority,
-    r'project/[^/]+$': Project,
-    r'project/[^/]+/role/[^/]+$': Role,
-    r'resolution/[^/]+$': Resolution,
-    r'securitylevel/[^/]+$': SecurityLevel,
-    r'status/[^/]+$': Status,
-    r'user\?username.+$': User,
-    r'group\?groupname.+$': Group,
-    r'version/[^/]+$': Version,
+    r"attachment/[^/]+$": Attachment,
+    r"component/[^/]+$": Component,
+    r"customFieldOption/[^/]+$": CustomFieldOption,
+    r"dashboard/[^/]+$": Dashboard,
+    r"filter/[^/]$": Filter,
+    r"issue/[^/]+$": Issue,
+    r"issue/[^/]+/comment/[^/]+$": Comment,
+    r"issue/[^/]+/votes$": Votes,
+    r"issue/[^/]+/watchers$": Watchers,
+    r"issue/[^/]+/worklog/[^/]+$": Worklog,
+    r"issueLink/[^/]+$": IssueLink,
+    r"issueLinkType/[^/]+$": IssueLinkType,
+    r"issuetype/[^/]+$": IssueType,
+    r"priority/[^/]+$": Priority,
+    r"project/[^/]+$": Project,
+    r"project/[^/]+/role/[^/]+$": Role,
+    r"resolution/[^/]+$": Resolution,
+    r"securitylevel/[^/]+$": SecurityLevel,
+    r"status/[^/]+$": Status,
+    r"statuscategory/[^/]+$": StatusCategory,
+    r"user\?(username|accountId).+$": User,
+    r"group\?groupname.+$": Group,
+    r"version/[^/]+$": Version,
     # GreenHopper specific resources
-    r'sprints/[^/]+$': Sprint,
-    r'views/[^/]+$': Board}
+    r"sprints/[^/]+$": Sprint,
+    r"views/[^/]+$": Board,
+}
 
 
 class UnknownResource(Resource):
     """A Resource from JIRA that is not (yet) supported."""
 
     def __init__(self, options, session, raw=None):
-        Resource.__init__(self, 'unknown{0}', options, session)
+        Resource.__init__(self, "unknown{0}", options, session)
         if raw:
             self._parse_raw(raw)
 
@@ -999,3 +1122,8 @@ def cls_for_resource(resource_literal):
     else:
         # Generic Resource cannot directly be used b/c of different constructor signature
         return UnknownResource
+
+
+class PropertyHolder(object):
+    def __init__(self, raw):
+        __bases__ = raw  # noqa

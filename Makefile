@@ -35,9 +35,6 @@ package:
 req:
 	@$(PREFIX)requires.io update-site -t ac3bbcca32ae03237a6aae2b02eb9411045489bb -r $(PACKAGE_NAME)
 
-hooks:
-	@$(PREFIX)python -m flake8 --install-hook 2>/dev/null || true
-
 install: prepare
 	$(PREFIX)pip install .
 
@@ -51,8 +48,8 @@ else ifeq ($(PLATFORM), linux)
 	exit 1
   endif
   ifneq ($(wildcard /etc/debian_version),)
-	sh -c 'echo "deb https://sdkrepo.atlassian.com/debian/ stable contrib" >/etc/apt/sources.list.d/atlassian_development.list'
-	apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys B07804338C015B73
+	sh -c 'echo "deb https://packages.atlassian.com/atlassian-sdk-deb stable contrib" >/etc/apt/sources.list.d/atlassian_development.list'
+	curl -fsSL https://packages.atlassian.com/api/gpg/key/public | apt-key add -
 	apt-get install apt-transport-https
 	apt-get update
 	apt-get install atlassian-plugin-sdk
@@ -75,11 +72,10 @@ dist:
 	$(PREFIX)python setup.py sdist bdist_wheel
 
 prepare:
-	@pyenv install -s 2.7.13
-	@pyenv install -s 3.4.5
-	@pyenv install -s 3.5.2
-	@pyenv install -s 3.6.0
-	@pyenv local 2.7.13 3.4.5 3.5.2 3.6.0
+	@pyenv install -s 3.5.7
+	@pyenv install -s 3.6.9
+	@pyenv install -s 3.7.4
+	@pyenv local 3.5.7 3.6.9 3.7.4
 	@echo "INFO:	=== Preparing to run for package:$(PACKAGE_NAME) platform:$(PLATFORM) py:$(PYTHON_VERSION) dir:$(DIR) ==="
 	#if [ -f ${HOME}/testspace/testspace ]; then ${HOME}/testspace/testspace config url ${TESTSPACE_TOKEN}@pycontribs.testspace.com/jira/tests ; fi;
 
@@ -106,11 +102,6 @@ docs:
 	$(PREFIX)python setup.py build_sphinx
 	@mkdir -p docs/build/docset
 	@mkdir -p docs/build/html/docset
-# cannot put doc2dash into requirements.txt file because is using pinned requirements
-#	@DOC2DASH_OPTS=$(shell [ -d "$HOME/Library/Application Support/doc2dash/DocSets" ] && echo '--add-to-global')
-#	doc2dash --force --name jira docs/build/html --destination docs/build/docset --icon docs/_static/python-32.png --online-redirect-url https://jira.readthedocs.io/en/stable/ $(DOC2DASH_OPTS)
-#	cd docs/build/docset && tar --exclude='.DS_Store' -czf ../html/docset/jira.tgz jira.docset
-#	# TODO: publish the docs
 
 tag:
 	bumpversion --feature --no-input
