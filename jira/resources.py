@@ -711,14 +711,19 @@ class Role(Resource):
         :type groups: string, list or tuple
         """
 
+        data = None
         if users is not None and isinstance(users, string_types):
             users = (users,)
+            data = {"user": users}
+            if groups is not None: 
+                raise NotImplementedError("JIRA can only add users XOR groups") 
+            
         if groups is not None and isinstance(groups, string_types):
             groups = (groups,)
+            data = {"group": groups}
 
-        data = {
-            'user': users}
-        self._session.post(self.self, data=json.dumps(data))
+        if data is not None:
+            self._session.post(self.self, data=json.dumps(data))
 
 
 class Resolution(Resource):
