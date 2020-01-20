@@ -61,6 +61,11 @@ Pass a tuple of (username, password) to the ``basic_auth`` constructor argument:
 
     auth_jira = JIRA(basic_auth=('username', 'password'))
 
+Or pass a tuple of (email, api_token) to the ``basic_auth`` constructor argument (JIRA cloud)::
+
+    auth_jira = JIRA(basic_auth=('email', 'API token'))
+
+
 OAuth
 ^^^^^
 
