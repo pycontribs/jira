@@ -322,6 +322,7 @@ class JIRA(object):
         "async_workers": 5,
         "client_cert": None,
         "check_update": False,
+        "page_size": None,
         # amount of seconds to wait for loading a resource after updating it
         # used to avoid server side caching issues, used to be 4 seconds.
         "delay_reload": 0,
@@ -636,6 +637,9 @@ class JIRA(object):
             page_params["startAt"] = startAt
         if maxResults:
             page_params["maxResults"] = maxResults
+        elif self._options["page_size"]:
+            # Set initial page size guess.
+            page_params["maxResults"] = self._options["page_size"]
 
         resource = self._get_json(request_path, params=page_params, base=base)
         next_items_page = self._get_items_from_page(item_type, items_key, resource)

@@ -1724,16 +1724,20 @@ class SearchTests(unittest.TestCase):
 
     def test_search_issues_async(self):
         original_val = self.jira._options["async"]
+        original_page_size = self.jira._options["page_size"]
         try:
             self.jira._options["async"] = True
+            self.jira._options["page_size"] = 100
             issues = self.jira.search_issues(
                 "project=%s" % self.project_b, maxResults=False
             )
             self.assertEqual(len(issues), issues.total)
             for issue in issues:
                 self.assertTrue(issue.key.startswith(self.project_b))
+            self.assertEqual(issues.max_results_from_response, 100)
         finally:
             self.jira._options["async"] = original_val
+            self.jira._options["page_size"] = original_page_size
 
     def test_search_issues_maxresults(self):
         issues = self.jira.search_issues("project=%s" % self.project_b, maxResults=10)
