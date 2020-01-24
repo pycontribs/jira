@@ -37,7 +37,7 @@ class CaseInsensitiveDict(dict):
         super(CaseInsensitiveDict, self).__init__(*args, **kw)
 
         self.itemlist = {}
-        for key, value in super(CaseInsensitiveDict, self).items():
+        for key, value in super(CaseInsensitiveDict, self).copy().items():
             if key != key.lower():
                 self[key.lower()] = value
                 self.pop(key, None)
