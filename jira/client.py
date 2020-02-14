@@ -4059,8 +4059,9 @@ class JIRA(object):
 
         url = self._get_url("sprint/%s" % id, base=self.AGILE_BASE_URL)
         r = self._session.put(url, data=json.dumps(payload))
-
-        return json_loads(r)
+  
+        raw_issue_json = json_loads(r)
+        return Sprint(self._options, self._session, raw=raw_issue_json)
 
     def incompletedIssuesEstimateSum(self, board_id, sprint_id):
         """Return the total incompleted points this sprint."""
