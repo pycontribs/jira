@@ -1560,8 +1560,10 @@ class JIRA(object):
         return self._get_json("issue/createmeta", params)
 
     def _get_user_accountid(self, user):
-        """Internal method for translating an user to an accountId."""
+        """Internal method for translating an user to an accountId. Return None and -1 unchanged."""
         try:
+            if user is None or user in (-1, "-1"):
+                return user
             accountId = self.search_users(user, maxResults=1)[0].accountId
         except Exception as e:
             raise JIRAError(e)
