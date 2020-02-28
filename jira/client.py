@@ -3438,9 +3438,9 @@ class JIRA(object):
             logging.error(ioe)
         return None
 
-    def current_user(self, field="key"):
-        """Returns the username or emailAddress of the current user. For anonymous
-        users it will return a value that evaluates as False.
+    def current_user(self, field="accountId"):
+        """Returns information about the current user, including but not limited
+        to their display name, e-mail, accountId.
 
         :rtype: str
         """

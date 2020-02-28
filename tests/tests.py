@@ -145,7 +145,8 @@ class JiraTestManager(object):
                         logging=False,
                         max_retries=self.max_retries,
                     )
-            if not self.jira_admin.current_user():
+
+            if not self.jira_admin.current_user("displayName") == 'CI Admin':
                 self.initialized = 1
                 sys.exit(3)
 
