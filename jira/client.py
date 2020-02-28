@@ -944,7 +944,7 @@ class JIRA(object):
         name,
         project,
         description=None,
-        leadUserName=None,
+        leadAccountId=None,
         assigneeType=None,
         isAssigneeTypeValid=False,
     ):
@@ -956,8 +956,8 @@ class JIRA(object):
         :type project: str
         :param description: a description of the component
         :type description: str
-        :param leadUserName: the username of the user responsible for this component
-        :type leadUserName: Optional[str]
+        :param leadAccountId: the username of the user responsible for this component
+        :type leadAccountId: Optional[str]
         :param assigneeType: see the ComponentBean.AssigneeType class for valid values
         :type assigneeType: Optional[str]
         :param isAssigneeTypeValid: boolean specifying whether the assignee type is acceptable (Default: False)
@@ -971,8 +971,8 @@ class JIRA(object):
         }
         if description is not None:
             data["description"] = description
-        if leadUserName is not None:
-            data["leadUserName"] = leadUserName
+        if leadAccountId is not None:
+            data["leadAccountId"] = leadAccountId
         if assigneeType is not None:
             data["assigneeType"] = assigneeType
 
@@ -1569,7 +1569,7 @@ class JIRA(object):
 
     # non-resource
     @translate_resource_args
-    def assign_issue(self, issue, assignee):
+    def assign_issue(self, issue, assignee_id):
         """Assign an issue to a user. None will set it to unassigned. -1 will set it to Automatic.
 
         :param issue: the issue ID or key to assign
@@ -1585,7 +1585,7 @@ class JIRA(object):
             + str(issue)
             + "/assignee"
         )
-        payload = {"accountId": self._get_user_accountid(assignee)}
+        payload = {"accountId": assignee_id}
         # 'key' and 'name' are deprecated in favor of accountId
         r = self._session.put(url, data=json.dumps(payload))
         raise_on_error(r)

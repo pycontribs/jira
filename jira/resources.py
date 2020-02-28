@@ -843,17 +843,17 @@ class User(Resource):
     """A JIRA user."""
 
     def __init__(self, options, session, raw=None):
-        Resource.__init__(self, "user?username={0}", options, session)
+        Resource.__init__(self, "user?accountId={0}", options, session)
         if raw:
             self._parse_raw(raw)
 
     def __hash__(self):
         """Hash calculation."""
-        return hash(str(self.name))
+        return hash(str(self.accountId))
 
     def __eq__(self, other):
         """Comparison."""
-        return str(self.name) == str(other.name)
+        return str(self.accountId) == str(other.accountId)
 
 
 class Group(Resource):

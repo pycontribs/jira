@@ -544,15 +544,15 @@ class ComponentTests(unittest.TestCase):
             name,
             self.project_b,
             description="stand by!",
-            leadUserName=self.jira.current_user(),
+            leadAccountId=self.jira.current_user(),
         )
         name = "renamed-" + name
         component.update(
-            name=name, description="It is done.", leadUserName=self.jira.current_user()
+            name=name, description="It is done.", leadAccountId=self.jira.current_user()
         )
         self.assertEqual(component.name, name)
         self.assertEqual(component.description, "It is done.")
-        self.assertEqual(component.lead.name, self.jira.current_user())
+        self.assertEqual(component.lead.accountId, self.jira.current_user())
         component.delete()
 
     def test_4_delete(self):
@@ -639,7 +639,7 @@ class FilterTests(unittest.TestCase):
             name=name, description="just some new test filter", jql=jql, favourite=False
         )
         self.assertEqual(myfilter.name, name)
-        self.assertEqual(myfilter.owner.name, self.test_manager.user_admin.name)
+        self.assertEqual(myfilter.owner.accountId, self.test_manager.user_admin.accountId)
         myfilter.delete()
 
     def test_favourite_filters(self):
@@ -1052,17 +1052,17 @@ class IssueTests(unittest.TestCase):
         self.assertTrue("fields" in meta["projects"][0]["issuetypes"][0])
 
     def test_assign_issue(self):
-        self.assertTrue(self.jira.assign_issue(self.issue_1, self.user_admin.name))
+        self.assertTrue(self.jira.assign_issue(self.issue_1, self.user_admin.accountId))
         self.assertEqual(
-            self.jira.issue(self.issue_1).fields.assignee.name, self.user_admin.name
+            self.jira.issue(self.issue_1).fields.assignee.accountId, self.user_admin.accountId
         )
 
     def test_assign_issue_with_issue_obj(self):
         issue = self.jira.issue(self.issue_1)
-        x = self.jira.assign_issue(issue, self.user_admin.name)
+        x = self.jira.assign_issue(issue, self.user_admin.accountId)
         self.assertTrue(x)
         self.assertEqual(
-            self.jira.issue(self.issue_1).fields.assignee.name, self.user_admin.name
+            self.jira.issue(self.issue_1).fields.assignee.accountId, self.user_admin.accountId
         )
 
     def test_assign_to_bad_issue_raises(self):
@@ -1359,7 +1359,7 @@ class IssueTests(unittest.TestCase):
     def test_worklog(self):
         worklog = self.jira.add_worklog(self.issue_1, "1d 2h")
         new_worklog = self.jira.worklog(self.issue_1, str(worklog))
-        self.assertEqual(new_worklog.author.name, self.test_manager.user_admin.name)
+        self.assertEqual(new_worklog.author.accountId, self.test_manager.user_admin.accountId)
         self.assertEqual(new_worklog.timeSpent, "1d 2h")
         worklog.delete()
 
@@ -1367,7 +1367,7 @@ class IssueTests(unittest.TestCase):
         issue = self.jira.issue(self.issue_1)
         worklog = self.jira.add_worklog(issue, "1d 2h")
         new_worklog = self.jira.worklog(issue, str(worklog))
-        self.assertEqual(new_worklog.author.name, self.test_manager.user_admin.name)
+        self.assertEqual(new_worklog.author.accountId, self.test_manager.user_admin.accountId)
         self.assertEqual(new_worklog.timeSpent, "1d 2h")
         worklog.delete()
 
@@ -1826,10 +1826,11 @@ class UserTests(unittest.TestCase):
         self.issue = self.test_manager.project_b_issue3
 
     def test_user(self):
-        user = self.jira.user(self.test_manager.user_admin.name)
-        self.assertTrue(user.name)
+        user = self.jira.user(self.test_manager.user_admin.accountId)
+        self.assertTrue(user.accountId)
         self.assertRegex(
-            user.emailAddress, r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
+            user.emailAddress,
+            r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
         )
 
     @pytest.mark.xfail(reason="query returns empty list")
@@ -1969,8 +1970,8 @@ class UserTests(unittest.TestCase):
     def test_search_users(self):
         users = self.jira.search_users(self.test_manager.CI_JIRA_ADMIN)
         self.assertGreaterEqual(len(users), 1)
-        usernames = map(lambda user: user.name, users)
-        self.assertIn(self.test_manager.user_admin.name, usernames)
+        ids = map(lambda user: user.accountId, users)
+        self.assertIn(self.test_manager.user_admin.accountId, ids)
 
     def test_search_users_maxresults(self):
         users = self.jira.search_users(self.test_manager.CI_JIRA_USER, maxResults=1)
