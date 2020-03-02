@@ -1850,7 +1850,7 @@ class JIRA(object):
             transitionId = int(transition)
         except Exception:
             # cannot cast to int, so try to find transitionId by name
-            transitionId = self.find_transitionid_by_name(issue, transition)
+            transitionId = self.find_transitionid_by_name(issue, transition["name"])
             if transitionId is None:
                 raise JIRAError("Invalid transition name. %s" % transition)
 
