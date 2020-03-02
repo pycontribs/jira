@@ -2176,7 +2176,8 @@ class JIRA(object):
 
     # non-resource
     def my_permissions(
-        self, projectKey=None, projectId=None, issueKey=None, issueId=None
+        self, projectKey=None, projectId=None, issueKey=None, issueId=None, * ,
+        permissions
     ):
         """Get a dict of all available permissions on the server.
 
@@ -2188,6 +2189,8 @@ class JIRA(object):
         :type issueKey: Optional[str]
         :param issueId: limit returned permissions to the specified issue
         :type issueId: Optional[str]
+        :param permissions: a CSV list of permission keys to get permissions for
+        :type permissions: str
         :rtype: Dict[str, Dict[str, Dict[str, str]]]
         """
         params = {}
@@ -2199,6 +2202,7 @@ class JIRA(object):
             params["issueKey"] = issueKey
         if issueId is not None:
             params["issueId"] = issueId
+        params["permissions"] = permissions
         return self._get_json("mypermissions", params=params)
 
     # Priorities

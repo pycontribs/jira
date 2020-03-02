@@ -1445,21 +1445,32 @@ class MyPermissionsTests(unittest.TestCase):
         self.issue_1 = self.test_manager.project_b_issue1
 
     def test_my_permissions(self):
-        perms = self.jira.my_permissions()
-        self.assertGreaterEqual(len(perms["permissions"]), 40)
+        perms = self.jira.my_permissions(permissions="BROWSE_PROJECTS")
+        self.assertEqual(perms["permissions"]["BROWSE_PROJECTS"]["key"],"BROWSE_PROJECTS")
 
     def test_my_permissions_by_project(self):
-        perms = self.jira.my_permissions(projectKey=self.test_manager.project_a)
-        self.assertGreaterEqual(len(perms["permissions"]), 10)
-        perms = self.jira.my_permissions(projectId=self.test_manager.project_a_id)
-        self.assertGreaterEqual(len(perms["permissions"]), 10)
+        perms = self.jira.my_permissions(
+                    projectKey=self.test_manager.project_a,
+                    permissions="BROWSE_PROJECTS"
+                )
+        self.assertEqual(perms["permissions"]["BROWSE_PROJECTS"]["key"],"BROWSE_PROJECTS")
+        perms = self.jira.my_permissions(
+                    projectId=self.test_manager.project_a_id,
+                    permissions="BROWSE_PROJECTS"
+                )
+        self.assertEqual(perms["permissions"]["BROWSE_PROJECTS"]["key"],"BROWSE_PROJECTS")
 
-    @unittest.skip("broken")
     def test_my_permissions_by_issue(self):
-        perms = self.jira.my_permissions(issueKey="ZTRAVISDEB-7")
-        self.assertGreaterEqual(len(perms["permissions"]), 10)
-        perms = self.jira.my_permissions(issueId="11021")
-        self.assertGreaterEqual(len(perms["permissions"]), 10)
+        perms = self.jira.my_permissions(
+                    issueKey="PERM-1",
+                    permissions="CREATE_ISSUES"
+                )
+        self.assertEqual(perms["permissions"]["CREATE_ISSUES"]["key"],"CREATE_ISSUES")
+        perms = self.jira.my_permissions(
+                    issueId="11228",
+                    permissions="CREATE_ISSUES"
+                )
+        self.assertEqual(perms["permissions"]["CREATE_ISSUES"]["key"],"CREATE_ISSUES")
 
 
 @flaky
