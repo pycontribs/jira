@@ -112,7 +112,7 @@ class JiraTestManager(object):
                 "CI_JIRA_ADMIN",
                 "CI_JIRA_ADMIN_PASSWORD",
                 "CI_JIRA_USER",
-                "CI_JIRA_USER_PASSWORD"
+                "CI_JIRA_USER_PASSWORD",
             ]
 
             for var in env_auth_vars:
@@ -146,7 +146,7 @@ class JiraTestManager(object):
                         max_retries=self.max_retries,
                     )
 
-            if not self.jira_admin.current_user("displayName") == 'CI Admin':
+            if not self.jira_admin.current_user("displayName") == "CI Admin":
                 self.initialized = 1
                 sys.exit(3)
 
@@ -639,7 +639,9 @@ class FilterTests(unittest.TestCase):
             name=name, description="just some new test filter", jql=jql, favourite=False
         )
         self.assertEqual(myfilter.name, name)
-        self.assertEqual(myfilter.owner.accountId, self.test_manager.user_admin.accountId)
+        self.assertEqual(
+            myfilter.owner.accountId, self.test_manager.user_admin.accountId
+        )
         myfilter.delete()
 
     def test_favourite_filters(self):
@@ -1054,7 +1056,8 @@ class IssueTests(unittest.TestCase):
     def test_assign_issue(self):
         self.assertTrue(self.jira.assign_issue(self.issue_1, self.user_admin.accountId))
         self.assertEqual(
-            self.jira.issue(self.issue_1).fields.assignee.accountId, self.user_admin.accountId
+            self.jira.issue(self.issue_1).fields.assignee.accountId,
+            self.user_admin.accountId,
         )
 
     def test_assign_issue_with_issue_obj(self):
@@ -1062,7 +1065,8 @@ class IssueTests(unittest.TestCase):
         x = self.jira.assign_issue(issue, self.user_admin.accountId)
         self.assertTrue(x)
         self.assertEqual(
-            self.jira.issue(self.issue_1).fields.assignee.accountId, self.user_admin.accountId
+            self.jira.issue(self.issue_1).fields.assignee.accountId,
+            self.user_admin.accountId,
         )
 
     def test_assign_to_bad_issue_raises(self):
@@ -1359,7 +1363,9 @@ class IssueTests(unittest.TestCase):
     def test_worklog(self):
         worklog = self.jira.add_worklog(self.issue_1, "1d 2h")
         new_worklog = self.jira.worklog(self.issue_1, str(worklog))
-        self.assertEqual(new_worklog.author.accountId, self.test_manager.user_admin.accountId)
+        self.assertEqual(
+            new_worklog.author.accountId, self.test_manager.user_admin.accountId
+        )
         self.assertEqual(new_worklog.timeSpent, "1d 2h")
         worklog.delete()
 
@@ -1367,7 +1373,9 @@ class IssueTests(unittest.TestCase):
         issue = self.jira.issue(self.issue_1)
         worklog = self.jira.add_worklog(issue, "1d 2h")
         new_worklog = self.jira.worklog(issue, str(worklog))
-        self.assertEqual(new_worklog.author.accountId, self.test_manager.user_admin.accountId)
+        self.assertEqual(
+            new_worklog.author.accountId, self.test_manager.user_admin.accountId
+        )
         self.assertEqual(new_worklog.timeSpent, "1d 2h")
         worklog.delete()
 
@@ -1446,31 +1454,29 @@ class MyPermissionsTests(unittest.TestCase):
 
     def test_my_permissions(self):
         perms = self.jira.my_permissions(permissions="BROWSE_PROJECTS")
-        self.assertEqual(perms["permissions"]["BROWSE_PROJECTS"]["key"],"BROWSE_PROJECTS")
+        self.assertEqual(
+            perms["permissions"]["BROWSE_PROJECTS"]["key"], "BROWSE_PROJECTS"
+        )
 
     def test_my_permissions_by_project(self):
         perms = self.jira.my_permissions(
-                    projectKey=self.test_manager.project_a,
-                    permissions="BROWSE_PROJECTS"
-                )
-        self.assertEqual(perms["permissions"]["BROWSE_PROJECTS"]["key"],"BROWSE_PROJECTS")
+            projectKey=self.test_manager.project_a, permissions="BROWSE_PROJECTS"
+        )
+        self.assertEqual(
+            perms["permissions"]["BROWSE_PROJECTS"]["key"], "BROWSE_PROJECTS"
+        )
         perms = self.jira.my_permissions(
-                    projectId=self.test_manager.project_a_id,
-                    permissions="BROWSE_PROJECTS"
-                )
-        self.assertEqual(perms["permissions"]["BROWSE_PROJECTS"]["key"],"BROWSE_PROJECTS")
+            projectId=self.test_manager.project_a_id, permissions="BROWSE_PROJECTS"
+        )
+        self.assertEqual(
+            perms["permissions"]["BROWSE_PROJECTS"]["key"], "BROWSE_PROJECTS"
+        )
 
     def test_my_permissions_by_issue(self):
-        perms = self.jira.my_permissions(
-                    issueKey="PERM-1",
-                    permissions="CREATE_ISSUES"
-                )
-        self.assertEqual(perms["permissions"]["CREATE_ISSUES"]["key"],"CREATE_ISSUES")
-        perms = self.jira.my_permissions(
-                    issueId="11228",
-                    permissions="CREATE_ISSUES"
-                )
-        self.assertEqual(perms["permissions"]["CREATE_ISSUES"]["key"],"CREATE_ISSUES")
+        perms = self.jira.my_permissions(issueKey="PERM-1", permissions="CREATE_ISSUES")
+        self.assertEqual(perms["permissions"]["CREATE_ISSUES"]["key"], "CREATE_ISSUES")
+        perms = self.jira.my_permissions(issueId="11228", permissions="CREATE_ISSUES")
+        self.assertEqual(perms["permissions"]["CREATE_ISSUES"]["key"], "CREATE_ISSUES")
 
 
 @flaky
@@ -1840,8 +1846,7 @@ class UserTests(unittest.TestCase):
         user = self.jira.user(self.test_manager.user_admin.accountId)
         self.assertTrue(user.accountId)
         self.assertRegex(
-            user.emailAddress,
-            r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
+            user.emailAddress, r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
         )
 
     @pytest.mark.xfail(reason="query returns empty list")

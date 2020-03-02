@@ -481,9 +481,8 @@ class JIRA(object):
             self._create_kerberos_session(timeout, kerberos_options=kerberos_options)
         elif auth:
             self._create_cookie_auth(auth, timeout)
-            validate = (
-                True
-            )  # always log in for cookie based auth, as we need a first request to be logged in
+            # always log in for cookie based auth, as we need a first request to be logged in
+            validate = True
         else:
             verify = self._options["verify"]
             self._session = ResilientSession(timeout=timeout)
@@ -2176,7 +2175,12 @@ class JIRA(object):
 
     # non-resource
     def my_permissions(
-        self, projectKey=None, projectId=None, issueKey=None, issueId=None, * ,
+        self,
+        projectKey=None,
+        projectId=None,
+        issueKey=None,
+        issueId=None,
+        *,
         permissions
     ):
         """Get a dict of all available permissions on the server.
