@@ -105,33 +105,18 @@ class JiraTestManager(object):
 
         if not self.__dict__:
             self.initialized = 0
+            self.max_retries = 5
 
-            if "CI_JIRA_URL" in os.environ:
-                self.CI_JIRA_URL = os.environ["CI_JIRA_URL"]
-                self.max_retries = 5
-            else:
-                self.CI_JIRA_URL = "https://pycontribs.atlassian.net"
-                self.max_retries = 5
+            env_auth_vars = [
+                "CI_JIRA_URL",
+                "CI_JIRA_ADMIN",
+                "CI_JIRA_ADMIN_PASSWORD",
+                "CI_JIRA_USER",
+                "CI_JIRA_USER_PASSWORD"
+            ]
 
-            if "CI_JIRA_ADMIN" in os.environ:
-                self.CI_JIRA_ADMIN = os.environ["CI_JIRA_ADMIN"]
-            else:
-                self.CI_JIRA_ADMIN = "ci-admin"
-
-            if "CI_JIRA_ADMIN_PASSWORD" in os.environ:
-                self.CI_JIRA_ADMIN_PASSWORD = os.environ["CI_JIRA_ADMIN_PASSWORD"]
-            else:
-                self.CI_JIRA_ADMIN_PASSWORD = "sd4s3dgec5fhg4tfsds3434"
-
-            if "CI_JIRA_USER" in os.environ:
-                self.CI_JIRA_USER = os.environ["CI_JIRA_USER"]
-            else:
-                self.CI_JIRA_USER = "ci-user"
-
-            if "CI_JIRA_USER_PASSWORD" in os.environ:
-                self.CI_JIRA_USER_PASSWORD = os.environ["CI_JIRA_USER_PASSWORD"]
-            else:
-                self.CI_JIRA_USER_PASSWORD = "sd4s3dgec5fhg4tfsds3434"
+            for var in env_auth_vars:
+                setattr(self, var, os.environ[var])
 
             self.CI_JIRA_ISSUE = os.environ.get("CI_JIRA_ISSUE", "Bug")
 
