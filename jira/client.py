@@ -3963,6 +3963,17 @@ class JIRA:
         return data
 
     @lru_cache(maxsize=None)
+    def labels(self):
+
+        url = self._options["server"] + "/rest/api/3/label"
+
+        print(f"using url = {url}")
+        r = self._session.get(url)
+        data = json_loads(r)["values"]
+
+        return data
+
+    @lru_cache(maxsize=None)
     def avatars(self, entity="project"):
 
         url = self._get_url(f"avatar/{entity}/system")
