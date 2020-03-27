@@ -51,7 +51,7 @@ Pass a tuple of (username, password) to the ``auth`` constructor argument::
 
     auth_jira = JIRA(auth=('username', 'password'))
 
-Using this method, authentication happens during then initialization of the object. If the authentication is successful,
+Using this method, authentication happens during the initialization of the object. If the authentication is successful,
 the retrieved session cookie will be used in future requests. Upon cookie expiration, authentication will happen again transparently.
 
 HTTP BASIC
