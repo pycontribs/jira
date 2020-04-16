@@ -2964,8 +2964,11 @@ class JIRA(object):
         maxResults: int = 50,
         includeActive: bool = True,
         includeInactive: bool = False,
+        query: Optional[str] = None,
     ) -> ResultList[User]:
         """Get a list of user Resources that match the specified search string.
+        "username" query parameter is deprecated; the expected parameter now is "query", which can just be the full
+        email again. But the first parameter is kept for backwards compatibility.
 
         Args:
             user (str): a string to match usernames, name or email against.
@@ -2974,15 +2977,25 @@ class JIRA(object):
               If maxResults evaluates as False, it will try to get all items in batches.
             includeActive (bool): If true, then active users are included in the results. (Default: True)
             includeInactive (bool): If true, then inactive users are included in the results. (Default: False)
+            query (optional str): Search term. It can just be the email.
 
         Returns:
             ResultList[User]
         """
+        if not user and not query:
+            raise ValueError("Either 'user' or 'query' arguments must be specified.")
+
         params = {
             "username": user,
             "includeActive": includeActive,
             "includeInactive": includeInactive,
         }
+
+        if user:
+            params["username"] = user
+        else:
+            params["query"] = query
+
         return self._fetch_pages(User, None, "user/search", startAt, maxResults, params)
 
     def search_allowed_users_for_issue(
