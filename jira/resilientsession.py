@@ -167,7 +167,8 @@ class ResilientSession(Session):
                 if response.status_code >= 200 and response.status_code <= 299:
                     return response
             except ConnectionError as e:
-                logging.warning(f"{e} while doing {verb.upper()} {url} [{kwargs}]")
+                logging.warning(f"{e} while doing {verb.upper()} {url}")
+
                 exception = e
             retry_number += 1
 
