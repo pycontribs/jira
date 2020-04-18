@@ -2833,7 +2833,7 @@ class JIRA(object):
         :rtype: ResultList
         """
         params = {
-            "username": user,
+            "query": user,
             "includeActive": includeActive,
             "includeInactive": includeInactive,
         }
