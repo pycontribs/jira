@@ -2987,12 +2987,10 @@ class JIRA(object):
 
         params = {
             "username": user,
+            "query": query,
             "includeActive": includeActive,
             "includeInactive": includeInactive,
         }
-
-        if query:
-            params["query"] = query
 
         return self._fetch_pages(User, None, "user/search", startAt, maxResults, params)
 
