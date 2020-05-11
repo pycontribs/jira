@@ -919,13 +919,21 @@ class JIRA(object):
             )
         return attachment
 
-    def delete_attachment(self, id):
+    def delete_attachment(self, id, notify=True):
         """Delete attachment by id.
 
         :param id: ID of the attachment to delete
         :type id: str
+        :param notify: query parameter notifyUsers. If true send the email with notification that the issue was updated to users that watch it.
+                       Admin or project admin permissions are required to disable the notification.
+        :type notify: bool
         """
-        url = self._get_url("attachment/" + str(id))
+        if not notify:
+            querystring = "?notifyUsers=false"
+        else:
+            querystring = ""
+
+        url = self._get_url("attachment/{id}{query}".format(id=str(id), query=querystring))
         return self._session.delete(url)
 
     # Components
