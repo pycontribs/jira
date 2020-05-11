@@ -492,7 +492,7 @@ class AttachmentTests(unittest.TestCase):
     def test_1_add_remove_attachment(self):
         issue = self.jira.issue(self.issue_1)
         with open(TEST_ATTACH_PATH, "rb") as f:
-            attachment = self.jira.add_attachment(issue, f, "new test attachment")
+            attachment = self.jira.add_attachment(issue, f, "new test attachment", notify=False)
             new_attachment = self.jira.attachment(attachment.id)
             msg = "attachment %s of issue %s" % (new_attachment.__dict__, issue)
             self.assertEqual(new_attachment.filename, "new test attachment", msg=msg)
