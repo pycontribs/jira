@@ -843,7 +843,7 @@ class JIRA(object):
         return self._get_json("attachment/meta")
 
     @translate_resource_args
-    def add_attachment(self, issue, attachment, filename=None):
+    def add_attachment(self, issue, attachment, filename=None, notify=True):
         """Attach an attachment to an issue and returns a Resource for it.
 
         The client will *not* attempt to open or validate the attachment; it expects a file-like object to be ready
@@ -857,6 +857,9 @@ class JIRA(object):
             is used. If you acquired the file-like object by any other method than ``open()``, make sure
             that a name is specified in one way or the other.
         :type filename: str
+        :param notify: query parameter notifyUsers. If true send the email with notification that the issue was updated to users that watch it.
+                       Admin or project admin permissions are required to disable the notification.
+        :type notify: bool
         :rtype: Attachment
         """
         if isinstance(attachment, str):
@@ -871,7 +874,12 @@ class JIRA(object):
                 % attachment.name
             )
 
-        url = self._get_url("issue/" + str(issue) + "/attachments")
+        if not notify:
+            querystring = "?notifyUsers=false"
+        else:
+            querystring = ""
+
+        url = self._get_url("issue/{issue}/attachments{query}".format(issue=str(issue), query=querystring))
 
         fname = filename
         if not fname:
