@@ -2813,29 +2813,23 @@ class JIRA(object):
         return self._session.delete(url, params=params)
 
     def search_users(
-        self, user, startAt=0, maxResults=50, includeActive=True, includeInactive=False
+        self, query, startAt=0, maxResults=50
     ):
         """Get a list of user Resources that match the specified search string.
 
-        :param user: a string to match usernames, name or email against.
-        :type user: str
+        :param query: a string to match usernames, name or email against.
+        :type query: str
         :param startAt: index of the first user to return.
         :type startAt: int
         :param maxResults: maximum number of users to return.
                 If maxResults evaluates as False, it will try to get all items in batches.
         :type maxResults: int
-        :param includeActive: If true, then active users are included in the results. (Default: True)
-        :type includeActive: bool
-        :param includeInactive: If true, then inactive users are included in the results. (Default: False)
-        :type includeInactive: bool
 
 
         :rtype: ResultList
         """
         params = {
-            "username": user,
-            "includeActive": includeActive,
-            "includeInactive": includeInactive,
+            "query": query,
         }
         return self._fetch_pages(User, None, "user/search", startAt, maxResults, params)
 
