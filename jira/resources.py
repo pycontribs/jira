@@ -246,7 +246,7 @@ class Resource(object):
         options.update({"path": path})
         return self._base_url.format(**options)
 
-    def update(self, fields=None, async_=None, jira=None, notify=True, **kwargs):
+    def update(self, fields=None, async_=None, jira=None, notify=True, actualize=True, **kwargs):
         """Update this resource on the server.
 
         Keyword arguments are marshalled into a dict before being sent. If this
@@ -261,6 +261,8 @@ class Resource(object):
         :type jira: jira.JIRA
         :param notify: Whether or not to notify users about the update. (Default: True)
         :type notify: bool
+        :param actualize: Actualize self after update completed. (Default: True)
+        :type actualize: bool
         :type kwargs: **Any
         """
         if async_ is None:
@@ -351,9 +353,9 @@ class Resource(object):
                 )
             else:
                 r = self._session.put(self.self, data=json.dumps(data))
-
-        time.sleep(self._options["delay_reload"])
-        self._load(self.self)
+        if actualize:
+            time.sleep(self._options["delay_reload"])
+            self._load(self.self)
 
     def delete(self, params=None):
         """Delete this resource from the server, passing the specified query parameters.
