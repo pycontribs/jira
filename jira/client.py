@@ -3009,6 +3009,7 @@ class JIRA:
         started: datetime.datetime | None = None,
         user: str | None = None,
         visibility: dict[str, Any] | None = None,
+        notify: bool = True,
     ) -> Worklog:
         """Add a new worklog entry on an issue and return a Resource for it.
 
@@ -3026,6 +3027,9 @@ class JIRA:
             visibility (Optional[Dict[str,Any]]): Details about any restrictions in the visibility of the worklog.
                 Example of visibility options when creating or updating a worklog.
                 ``{ "type": "group", "value": "<string>", "identifier": "<string>"}``
+            notify (bool): Whether to email users watching the issue about the new worklog.
+              Jira Cloud honours this. Jira Server/DC does not document the parameter; it accepts
+              and ignores it. (Default: ``True``)
 
         Returns:
             Worklog
@@ -3037,6 +3041,8 @@ class JIRA:
             params["newEstimate"] = newEstimate
         if reduceBy is not None:
             params["reduceBy"] = reduceBy
+        if not notify:
+            params["notifyUsers"] = "false"
 
         data: dict[str, Any] = {}
         if timeSpent is not None:
