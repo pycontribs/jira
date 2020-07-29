@@ -2404,6 +2404,7 @@ class JIRA:
         comment: (str | None) = None,
         started: (datetime.datetime | None) = None,
         user: (str | None) = None,
+        notify: bool=True,
     ) -> Worklog:
         """Add a new worklog entry on an issue and return a Resource for it.
 
@@ -2418,10 +2419,11 @@ class JIRA:
             comment (Optional[str]): optional worklog comment
             started (Optional[datetime.datetime]): Moment when the work is logged, if not specified will default to now
             user (Optional[str]): the user ID or name to use for this worklog
-
+            notify (bool): Whether or not to send a notification to the new user. (Default: True)
         Returns:
             Worklog
         """
+
         params = {}
         if adjustEstimate is not None:
             params["adjustEstimate"] = adjustEstimate
@@ -2429,6 +2431,8 @@ class JIRA:
             params["newEstimate"] = newEstimate
         if reduceBy is not None:
             params["reduceBy"] = reduceBy
+        if not notify:
+            params["notifyUsers"] = "false"
 
         data: dict[str, Any] = {}
         if timeSpent is not None:
