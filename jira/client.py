@@ -1972,6 +1972,7 @@ class JIRA(object):
         comment=None,
         started=None,
         user=None,
+        notify: bool=True,
     ):
         """Add a new worklog entry on an issue and return a Resource for it.
 
@@ -1983,6 +1984,7 @@ class JIRA(object):
         :param reduceBy: the amount to reduce the remaining estimate by e.g. "2d"
         :param started: Moment when the work is logged, if not specified will default to now
         :param comment: optional worklog comment
+        :param notify: Whether or not to send a notification to the new user. (Default: True)
         :rtype: Worklog
         """
         params = {}
@@ -1992,6 +1994,8 @@ class JIRA(object):
             params["newEstimate"] = newEstimate
         if reduceBy is not None:
             params["reduceBy"] = reduceBy
+        if not notify:
+            params["notifyUsers"] = "false"
 
         data = {}
         if timeSpent is not None:
