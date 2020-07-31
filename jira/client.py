@@ -849,8 +849,10 @@ class JIRA(object):
         Returns:
             Attachment
         """
+        close_attachment = False
         if isinstance(attachment, str):
             attachment: BufferedReader = open(attachment, "rb")  # type: ignore
+            close_attachment = True
         elif isinstance(attachment, BufferedReader) and attachment.mode != "rb":
             self.log.warning(
                 "%s was not opened in 'rb' mode, attaching file may fail."
@@ -865,13 +867,17 @@ class JIRA(object):
 
         if "MultipartEncoder" not in globals():
             method = "old"
-            r = self._session.post(
-                url,
-                files={"file": (fname, attachment, "application/octet-stream")},
-                headers=CaseInsensitiveDict(
-                    {"content-type": None, "X-Atlassian-Token": "no-check"}
-                ),
-            )
+            try:
+                r = self._session.post(
+                    url,
+                    files={"file": (fname, attachment, "application/octet-stream")},
+                    headers=CaseInsensitiveDict(
+                        {"content-type": None, "X-Atlassian-Token": "no-check"}
+                    ),
+                )
+            finally:
+                if close_attachment:
+                    attachment.close()
         else:
             method = "MultipartEncoder"
 
@@ -882,14 +888,18 @@ class JIRA(object):
                 )
 
             m = file_stream()
-            r = self._session.post(
-                url,
-                data=m,
-                headers=CaseInsensitiveDict(
-                    {"content-type": m.content_type, "X-Atlassian-Token": "no-check"}
-                ),
-                retry_data=file_stream,
-            )
+            try:
+                r = self._session.post(
+                    url,
+                    data=m,
+                    headers=CaseInsensitiveDict(
+                        {"content-type": m.content_type, "X-Atlassian-Token": "no-check"}
+                    ),
+                    retry_data=file_stream,
+                )
+            finally:
+                if close_attachment:
+                    attachment.close()
 
         js: Union[Dict[str, Any], List[Dict[str, Any]]] = json_loads(r)
         if not js or not isinstance(js, Iterable):
