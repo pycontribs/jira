@@ -271,6 +271,7 @@ class JIRA(object):
         * client_cert -- a tuple of (cert,key) for the requests library for client side SSL
         * check_update -- Check whether using the newest python-jira library version.
         * cookies -- A dict of custom cookies that are sent in all requests to the server.
+        * headers -- A dict of headers to be added to http connections.
 
     :param basic_auth: A tuple of username and password to use when establishing a session via HTTP BASIC
         authentication.
@@ -456,7 +457,14 @@ class JIRA(object):
 
         self._options = copy.copy(JIRA.DEFAULT_OPTIONS)
 
+        if "headers" in options:
+            headers = copy.copy(options['headers'])
+            del options['headers']
+        else:
+            headers = {}
+
         self._options.update(options)
+        self._options['headers'].update(headers)
 
         self._rank = None
 
