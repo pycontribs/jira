@@ -34,13 +34,15 @@ class CaseInsensitiveDict(dict):
     """
 
     def __init__(self, *args, **kw):
-        super(CaseInsensitiveDict, self).__init__(*args, **kw)
+        data = dict(*args, **kw)
+        self.update({k.lower(): v for k, v in data.items()})
+        #super(CaseInsensitiveDict, self).__init__(*args, **kw)
 
-        self.itemlist = {}
-        for key, value in super(CaseInsensitiveDict, self).copy().items():
-            if key != key.lower():
-                self[key.lower()] = value
-                self.pop(key, None)
+        #self.itemlist = {}
+        #for key, value in super(CaseInsensitiveDict, self).copy().items():
+            #if key != key.lower():
+                #self[key.lower()] = value
+                #self.pop(key, None)
 
         # self.itemlist[key.lower()] = value
 
