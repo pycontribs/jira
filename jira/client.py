@@ -1567,6 +1567,17 @@ class JIRA(object):
             raise JIRAError(e)
         return accountId
 
+    def _get_user_key(self, user):
+        """Internal method for translating an user to a key.
+            Needed for backwards compatibilty with Jira Software API, not using
+            accountId
+        """
+        try:
+            key = self.search_users(user, maxResults=1)[0].key
+        except Exception as e:
+            raise JIRAError(e)
+        return key
+
     # non-resource
     @translate_resource_args
     def assign_issue(self, issue, assignee):
@@ -1585,8 +1596,11 @@ class JIRA(object):
             + str(issue)
             + "/assignee"
         )
-        payload = {"accountId": self._get_user_accountid(assignee)}
-        # 'key' and 'name' are deprecated in favor of accountId
+        try:
+            # 'key' and 'name' are deprecated in favor of accountId
+            payload = {"accountId": self._get_user_accountid(assignee)}
+        except JIRAError:
+            payload = {"key": self._get_user_key(assignee)}
         r = self._session.put(url, data=json.dumps(payload))
         raise_on_error(r)
         return True
