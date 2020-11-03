@@ -4071,7 +4071,7 @@ class JIRA(object):
         )["contents"]["incompletedIssuesEstimateSum"]["value"]
 
     def removed_issues(self, board_id, sprint_id):
-        """Return the completed issues for the sprint."""
+        """Return the removed issues for the sprint."""
         r_json = self._get_json(
             "rapid/charts/sprintreport?rapidViewId=%s&sprintId=%s"
             % (board_id, sprint_id),
