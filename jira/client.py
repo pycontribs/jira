@@ -397,6 +397,8 @@ class JIRA:
 
                 Example jwt structure: ``{'secret': SHARED_SECRET, 'payload': {'iss': PLUGIN_KEY}}``
 
+            token_auth (str): A string containg the token necessary for (PAT) token authorization.
+
             validate (bool): If true it will validate your credentials first. Remember that if you are accessing Jira
               as anonymous it will fail to instantiate.
             get_server_info (bool): If true it will fetch server version info first to determine if some API calls
@@ -3415,7 +3417,11 @@ class JIRA:
         self._session.verify = bool(self._options["verify"])
         self._session.auth = jwt_auth
 
-    def _create_token_session(self, token_auth, timeout):
+    def _create_token_session(self, token_auth: str, timeout):
+        """
+        Creates token-based session.
+        Header structure: "authorization": "Bearer <token_auth>"
+        """
         verify = self._options["verify"]
         self._session = ResilientSession(timeout=timeout)
         self._session.verify = verify
