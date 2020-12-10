@@ -3419,7 +3419,8 @@ class JIRA:
         verify = self._options["verify"]
         self._session = ResilientSession(timeout=timeout)
         self._session.verify = verify
-        self._options["headers"]["authorization"] = "Bearer " + token_auth
+        token_auth = TokenAuth(token_auth)
+        self._session.auth = token_auth
 
     def _set_avatar(self, params, url, avatar):
         data = {"id": avatar}
@@ -4818,3 +4819,14 @@ class GreenHopper(JIRA):
         JIRA.__init__(
             self, options=options, basic_auth=basic_auth, oauth=oauth, async_=async_
         )
+
+class TokenAuth(AuthBase):
+    """Token Authentication"""
+    def __init__(self, token: str):
+        # setup any auth-related data here
+        self._token = token
+
+    def __call__(self, r):
+        # modify and return the request
+        r.headers['authorization'] = "Bearer " + self._token
+        return r
