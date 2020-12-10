@@ -349,6 +349,7 @@ class JIRA(object):
         basic_auth=None,
         oauth=None,
         jwt=None,
+        token_auth=None,
         kerberos=False,
         kerberos_options=None,
         validate=False,
@@ -477,6 +478,8 @@ class JIRA(object):
             self._session.headers.update(self._options["headers"])
         elif jwt:
             self._create_jwt_session(jwt, timeout)
+        elif token_auth:
+            self._create_token_session(token_auth, timeout)
         elif kerberos:
             self._create_kerberos_session(timeout, kerberos_options=kerberos_options)
         elif auth:
@@ -3091,6 +3094,12 @@ class JIRA(object):
         self._session = ResilientSession(timeout=timeout)
         self._session.verify = self._options["verify"]
         self._session.auth = jwt_auth
+
+    def _create_token_session(self, token_auth, timeout):
+        verify = self._options["verify"]
+        self._session = ResilientSession(timeout=timeout)
+        self._session.verify = verify
+        self._options["headers"]["authorization"] = "Bearer " + token_auth
 
     def _set_avatar(self, params, url, avatar):
         data = {"id": avatar}
