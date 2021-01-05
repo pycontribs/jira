@@ -141,7 +141,7 @@ class ResilientSession(Session):
             exception = None
             try:
                 method = getattr(super(ResilientSession, self), verb.lower())
-                response = method(url, timeout=self.timeout, **kwargs)
+                response = method(url, timeout=self.timeout, verify=self.verify, **kwargs)
                 if response.status_code >= 200 and response.status_code <= 299:
                     return response
             except ConnectionError as e:
