@@ -1592,14 +1592,18 @@ class JIRA(object):
         return True
 
     @translate_resource_args
-    def comments(self, issue):
+    def comments(self, issue, expand=None):
         """Get a list of comment Resources.
 
         :param issue: the issue to get comments from
+        :param expand: extra information to fetch inside each comment
         :type issue: str
         :rtype: List[Comment]
         """
-        r_json = self._get_json("issue/" + str(issue) + "/comment")
+        params = {}
+        if expand is not None:
+            params["expand"] = expand
+        r_json = self._get_json("issue/" + str(issue) + "/comment", params=params)
 
         comments = [
             Comment(self._options, self._session, raw_comment_json)
@@ -1608,13 +1612,14 @@ class JIRA(object):
         return comments
 
     @translate_resource_args
-    def comment(self, issue, comment):
+    def comment(self, issue, comment, expand=None):
         """Get a comment Resource from the server for the specified ID.
 
         :param issue: ID or key of the issue to get the comment from
         :param comment: ID of the comment to get
+        :param expand: extra information to fetch for comment
         """
-        return self._find_for_resource(Comment, (issue, comment))
+        return self._find_for_resource(Comment, (issue, comment), expand=expand)
 
     @translate_resource_args
     def add_comment(self, issue, body, visibility=None, is_internal=False):
