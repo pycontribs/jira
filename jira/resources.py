@@ -42,6 +42,7 @@ __all__ = (
     "Customer",
     "ServiceDesk",
     "RequestType",
+    "resource_class_map",
 )
 
 logging.getLogger("jira").addHandler(logging.NullHandler())
@@ -799,7 +800,7 @@ class Role(Resource):
         if groups is not None and isinstance(groups, str):
             groups = (groups,)
 
-        data = {"user": users}
+        data = {"user": users, "group": groups}
         self._session.post(self.self, data=json.dumps(data))
 
 
