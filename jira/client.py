@@ -883,7 +883,7 @@ class JIRA(object):
                 url,
                 files={"file": (fname, attachment, "application/octet-stream")},
                 headers=CaseInsensitiveDict(
-                    {"content-type": None, "X-Atlassian-Token": "nocheck"}
+                    {"content-type": None, "X-Atlassian-Token": "no-check"}
                 ),
             )
         else:
@@ -903,7 +903,7 @@ class JIRA(object):
                 url,
                 data=m,
                 headers=CaseInsensitiveDict(
-                    {"content-type": m.content_type, "X-Atlassian-Token": "nocheck"}
+                    {"content-type": m.content_type, "X-Atlassian-Token": "no-check"}
                 ),
                 retry_data=file_stream,
             )
