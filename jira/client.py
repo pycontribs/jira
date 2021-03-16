@@ -2630,7 +2630,7 @@ class JIRA(object):
         :rtype: User
         """
         user = User(self._options, self._session)
-        params = {}
+        params = {'accountId': id}
         if expand is not None:
             params["expand"] = expand
         user.find(id, params=params)
