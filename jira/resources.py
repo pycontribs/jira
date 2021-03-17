@@ -608,14 +608,14 @@ class Comment(Resource):
         if raw:
             self._parse_raw(raw)
 
-    def update(self, fields=None, async_=None, jira=None, body="", visibility=None):
+    def update(self, fields=None, async_=None, jira=None, body="", visibility=None, notify=True):
         """Update a comment"""
         data = {}
         if body:
             data["body"] = body
         if visibility:
             data["visibility"] = visibility
-        super(Comment, self).update(data)
+        super(Comment, self).update(data, notify=notify)
 
 
 class RemoteLink(Resource):
