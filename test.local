@@ -1,14 +1,19 @@
 #!/bin/bash
 
-# Settings for using the Vagrant VM from atlassian
-# (see https://developer.atlassian.com/static/connect/docs/latest/developing/developing-locally.html)
-# a user "jira_user" with password "jira" needs to be created manually
 export CI_JIRA_URL="http://localhost:2990/jira"
 export CI_JIRA_ADMIN="admin"
 export CI_JIRA_ADMIN_PASSWORD="admin"
 export CI_JIRA_USER=jira_user
 export CI_JIRA_USER_PASSWORD=jira
 export CI_JIRA_ISSUE=Task
+#sudo docker run -dit -p 2990:2990 --name jira addono/jira-software-standalone
+echo waiting for the jira server to be up and running...
+echo THIS CAN TAKE A WHILE on a vm this can take up to 10 minutes
+start_time="$(date -u +%s)"
+until $(curl -u $CI_JIRA_ADMIN:$CI_JIRA_ADMIN_PASSWORD --output /dev/null --silent --head --fail $CI_JIRA_URL/rest/api/2/permissions); do end_time="$(date -u +%s)";elapsed="$(($end_time-$start_time))"; echo "not running yet after $elapsed seconds $CI_JIRA_URL";sleep 5; done
+pip install -e .
+echo adding user $CI_JIRA_USER to $CI_JIRA_URL
+(python -c "from jira import JIRA;jira_client = JIRA('$CI_JIRA_URL', basic_auth=('$CI_JIRA_ADMIN', '$CI_JIRA_ADMIN_PASSWORD'));a = jira_client.add_user('$CI_JIRA_USER', 'user@example.com', password='$CI_JIRA_USER_PASSWORD') if not jira_client.user('$CI_JIRA_USER') else None" && echo "Created user '$CI_JIRA_USER', or user was already present") || (echo "Failed creating user '$CI_JIRA_USER'" && docker logs --tail 500 jira)
 
 if [ "$1" = "--tox" ] ; then
     shift
