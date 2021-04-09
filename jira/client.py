@@ -763,8 +763,14 @@ class JIRA(object):
         resource.find(ids)
         return resource
 
-    def get_changelogs_from_issue(self, issueID_or_key, base=JIRA_BASE_URL):
+    def get_changelogs_from_issue(self, issueID_or_key):
         url = f'{self._options["server"]}/rest/api/2/issue/{issueID_or_key}/changelog'
+        r = self._session.get(url)
+        j = json_loads(r)
+        return j
+
+    def get_board_config(self, board_id):
+        url = f'{self._options["server"]}/rest/agile/1.0/board/{board_id}/configuration'
         r = self._session.get(url)
         j = json_loads(r)
         return j
