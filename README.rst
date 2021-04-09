@@ -40,6 +40,11 @@ Jira Python Library
         :alt: Requirements Status
 
 
+Note
+----------
+It's just and fix for the original lib
+
+
 This library eases the use of the Jira REST API from Python and it has been used in production for years.
 
 As this is an open-source project that is community maintained, do not be surprised if some bugs or features are not implemented quickly enough. You are always welcomed to use BountySource_ to motivate others to help.

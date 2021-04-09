@@ -763,6 +763,12 @@ class JIRA(object):
         resource.find(ids)
         return resource
 
+    def get_changelogs_from_issue(self, issueID_or_key, base=JIRA_BASE_URL):
+        url = f'{self._options["server"]}/rest/api/2/issue/{issueID_or_key}/changelog'
+        r = self._session.get(url)
+        j = json_loads(r)
+        return j
+
     def async_do(self, size=10):
         """Execute all asynchronous jobs and wait for them to finish. By default it will run on 10 threads.
 
