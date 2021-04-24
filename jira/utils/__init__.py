@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""JIRA utils used internally."""
+"""Jira utils used internally."""
 import threading
 
 from jira.resilientsession import raise_on_error

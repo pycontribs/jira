@@ -1,5 +1,5 @@
 ===================
-JIRA Python Library
+Jira Python Library
 ===================
 
 .. image:: https://img.shields.io/pypi/v/jira.svg
@@ -20,7 +20,7 @@ JIRA Python Library
 ------------
 
 .. image:: https://readthedocs.org/projects/jira/badge/?version=master
-        :target: http://jira.readthedocs.io
+        :target: https://jira.readthedocs.io/
 
 .. image:: https://travis-ci.com/pycontribs/jira.svg?branch=master
         :target: https://travis-ci.com/pycontribs/jira
@@ -40,7 +40,7 @@ JIRA Python Library
         :alt: Requirements Status
 
 
-This library eases the use of the JIRA REST API from Python and it has been used in production for years.
+This library eases the use of the Jira REST API from Python and it has been used in production for years.
 
 As this is an open-source project that is community maintained, do not be surprised if some bugs or features are not implemented quickly enough. You are always welcomed to use BountySource_ to motivate others to help.
 
@@ -77,7 +77,7 @@ By default only the basic library dependencies are installed, so if you want
 to use the ``cli`` tool or other optional dependencies do perform a full
 installation using ``pip install jira[opt,cli,test]``
 
-.. _virtualenv: http://www.virtualenv.org/en/latest/index.html
+.. _virtualenv: https://virtualenv.pypa.io/
 
 
 Usage
@@ -85,7 +85,7 @@ Usage
 
 See the documentation_ for full details.
 
-.. _documentation: http://jira.readthedocs.org/en/latest/
+.. _documentation: https://jira.readthedocs.org/en/latest/
 
 
 Development
@@ -103,7 +103,7 @@ Setup
 * Keep it sync_'ed while you are developing
 * Install pyenv_
 * develop and test, old way
-    * Install `Atlassian JIRA Server`_ for testing
+    * Install `Atlassian Jira Server`_ for testing
       - make install-sdk
     * pip install jira[test]
     * Start up Jira Server
@@ -121,7 +121,7 @@ Setup
 .. _Fork: https://help.github.com/articles/fork-a-repo/
 .. _sync: https://help.github.com/articles/syncing-a-fork/
 .. _pyenv: https://amaral.northwestern.edu/resources/guides/pyenv-tutorial
-.. _`Atlassian JIRA Server`: https://www.atlassian.com/software/jira/download
+.. _`Atlassian Jira Server`: https://www.atlassian.com/software/jira/download
 
 
 Credits
@@ -129,23 +129,23 @@ Credits
 
 In addition to all the contributors we would like to thank to these companies:
 
-* Atlassian_ for developing such a powerful issue tracker and for providing a free on-demand JIRA_ instance that we can use for continuous integration testing.
+* Atlassian_ for developing such a powerful issue tracker and for providing a free on-demand Jira_ instance that we can use for continuous integration testing.
 * JetBrains_ for providing us with free licenses of PyCharm_
 * Travis_ for hosting our continuous integration
 * Navicat_ for providing us free licenses of their powerful database client GUI tools.
 
 .. _Atlassian: https://www.atlassian.com/
-.. _JIRA: https://pycontribs.atlassian.net
-.. _JetBrains: http://www.jetbrains.com
-.. _PyCharm: http://www.jetbrains.com/pycharm/
+.. _Jira: https://pycontribs.atlassian.net
+.. _JetBrains: https://www.jetbrains.com/
+.. _PyCharm: https://www.jetbrains.com/pycharm/
 .. _Travis: https://travis-ci.org/
 .. _navicat: https://www.navicat.com/
 
 .. image:: https://raw.githubusercontent.com/pycontribs/resources/master/logos/x32/logo-atlassian.png
-   :target: http://www.atlassian.com
+   :target: https://www.atlassian.com/
 
 .. image:: https://raw.githubusercontent.com/pycontribs/resources/master/logos/x32/logo-pycharm.png
-    :target: http://www.jetbrains.com/
+    :target: https://www.jetbrains.com/
 
 .. image:: https://raw.githubusercontent.com/pycontribs/resources/master/logos/x32/logo-navicat.png
-    :target: http://www.navicat.com/
+    :target: https://www.navicat.com/

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-This module implements the Resource classes that translate JSON from JIRA REST resources
+This module implements the Resource classes that translate JSON from Jira REST resources
 into usable objects.
 """
 
@@ -56,10 +56,10 @@ def get_error_list(r):
             try:
                 response = json_loads(r)
                 if "message" in response:
-                    # JIRA 5.1 errors
+                    # Jira 5.1 errors
                     error_list = [response["message"]]
                 elif "errorMessages" in response and len(response["errorMessages"]) > 0:
-                    # JIRA 5.0.x error messages sometimes come wrapped in this array
+                    # Jira 5.0.x error messages sometimes come wrapped in this array
                     # Sometimes this is present but empty
                     errorMessages = response["errorMessages"]
                     if isinstance(errorMessages, (list, tuple)):
@@ -67,7 +67,7 @@ def get_error_list(r):
                     else:
                         error_list = [errorMessages]
                 elif "errors" in response and len(response["errors"]) > 0:
-                    # JIRA 6.x error messages are found in this array.
+                    # Jira 6.x error messages are found in this array.
                     error_list = response["errors"].values()
                 else:
                     error_list = [r.text]
@@ -77,7 +77,7 @@ def get_error_list(r):
 
 
 class Resource(object):
-    """Models a URL-addressable resource in the JIRA REST API.
+    """Models a URL-addressable resource in the Jira REST API.
 
     All Resource objects provide the following:
     ``find()`` -- get a resource from the server and load it into the current object
@@ -126,7 +126,7 @@ class Resource(object):
         :type options: Dict[str,str]
         :param session: Session used for the resource.
         :type session: ResilientSession
-        :param base_url: The Base JIRA url.
+        :param base_url: The Base Jira url.
         :type base_url: Optional[str]
 
         """
@@ -257,7 +257,7 @@ class Resource(object):
         :type fields: Optional[Dict[str, Any]]
         :param async_: If true the request will be added to the queue so it can be executed later using async_run()
         :type async_: bool
-        :param jira: Instance of JIRA Client
+        :param jira: Instance of Jira Client
         :type jira: jira.JIRA
         :param notify: Whether or not to notify users about the update. (Default: True)
         :type notify: bool
@@ -462,7 +462,7 @@ class CustomFieldOption(Resource):
 
 
 class Dashboard(Resource):
-    """A JIRA dashboard."""
+    """A Jira dashboard."""
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(self, "dashboard/{0}", options, session)
@@ -480,7 +480,7 @@ class Filter(Resource):
 
 
 class Issue(Resource):
-    """A JIRA issue."""
+    """A Jira issue."""
 
     class _IssueFields(object):
         def __init__(self):
@@ -518,7 +518,7 @@ class Issue(Resource):
         is treated as the intended value for that field -- if the fields argument is used, all other keyword arguments
         will be ignored.
 
-        JIRA projects may contain many different issue types. Some issue screens have different requirements for
+        Jira projects may contain many different issue types. Some issue screens have different requirements for
         fields in an issue. This information is available through the :py:meth:`.JIRA.editmeta` method. Further examples
         are available here: https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Edit+issues
 
@@ -743,7 +743,7 @@ class Priority(Resource):
 
 
 class Project(Resource):
-    """A JIRA project."""
+    """A Jira project."""
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(self, "project/{0}", options, session)
@@ -840,7 +840,7 @@ class StatusCategory(Resource):
 
 
 class User(Resource):
-    """A JIRA user."""
+    """A Jira user."""
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(self, "user?username={0}", options, session)
@@ -857,7 +857,7 @@ class User(Resource):
 
 
 class Group(Resource):
-    """A JIRA user group."""
+    """A Jira user group."""
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(self, "group?groupname={0}", options, session)
@@ -923,11 +923,11 @@ class GreenHopperResource(Resource):
     AGILE_BASE_URL = "{server}/rest/{agile_rest_path}/{agile_rest_api_version}/{path}"
 
     GREENHOPPER_REST_PATH = "greenhopper"
-    """ Old, private API. Deprecated and will be removed from JIRA on the 1st February 2016. """
+    """ Old, private API. Deprecated and will be removed from Jira on the 1st February 2016. """
     AGILE_EXPERIMENTAL_REST_PATH = "greenhopper/experimental-api"
-    """ Experimental API available in JIRA Agile 6.7.3 - 6.7.6, basically the same as Public API """
+    """ Experimental API available in Jira Agile 6.7.3 - 6.7.6, basically the same as Public API """
     AGILE_BASE_REST_PATH = "agile"
-    """ Public API introduced in JIRA Agile 6.7.7. """
+    """ Public API introduced in Jira Agile 6.7.7. """
 
     def __init__(self, path, options, session, raw):
         self.self = None
@@ -975,7 +975,7 @@ class Board(GreenHopperResource):
             != GreenHopperResource.GREENHOPPER_REST_PATH
         ):
             raise NotImplementedError(
-                "JIRA Agile Public API does not support Board removal"
+                "Jira Agile Public API does not support Board removal"
             )
 
         Resource.delete(self, params)
@@ -1071,7 +1071,7 @@ def dict2resource(raw, top=None, options=None, session=None):
 
 
 resource_class_map = {
-    # JIRA specific resources
+    # Jira-specific resources
     r"attachment/[^/]+$": Attachment,
     r"component/[^/]+$": Component,
     r"customFieldOption/[^/]+$": CustomFieldOption,
@@ -1102,7 +1102,7 @@ resource_class_map = {
 
 
 class UnknownResource(Resource):
-    """A Resource from JIRA that is not (yet) supported."""
+    """A Resource from Jira that is not (yet) supported."""
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(self, "unknown{0}", options, session)

@@ -3,7 +3,7 @@
 from jira import JIRA
 import re
 
-# By default, the client will connect to a JIRA instance started from the Atlassian Plugin SDK
+# By default, the client will connect to a Jira instance started from the Atlassian Plugin SDK
 # (see https://developer.atlassian.com/display/DOCS/Installing+the+Atlassian+Plugin+SDK for details).
 # Override this with the options parameter.
 options = {"server": "https://jira.atlassian.com"}

@@ -2,10 +2,10 @@
 # against jira.atlassian.com.
 from jira.client import GreenHopper
 
-# By default, the client will connect to a JIRA instance started from the Atlassian Plugin SDK
+# By default, the client will connect to a Jira instance started from the Atlassian Plugin SDK
 # (see https://developer.atlassian.com/display/DOCS/Installing+the+Atlassian+Plugin+SDK for details).
 # Override this with the options parameter.
-# GreenHopper is a plugin in a JIRA instance
+# GreenHopper is a plugin in a Jira instance
 options = {"server": "https://jira.atlassian.com"}
 gh = GreenHopper(options)
 

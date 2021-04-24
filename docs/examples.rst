@@ -8,7 +8,7 @@ Here's a quick usage example:
 
 .. literalinclude:: ../examples/basic_use.py
 
-Another example shows how to authenticate with your JIRA username and password:
+Another example shows how to authenticate with your Jira username and password:
 
 .. literalinclude:: ../examples/basic_auth.py
 
@@ -23,16 +23,16 @@ Quickstart
 Initialization
 --------------
 
-Everything goes through the JIRA object, so make one::
+Everything goes through the ``JIRA`` object, so make one::
 
     from jira import JIRA
 
     jira = JIRA()
 
-This connects to a JIRA started on your local machine at http://localhost:2990/jira, which not coincidentally is the
-default address for a JIRA instance started from the Atlassian Plugin SDK.
+This connects to a Jira started on your local machine at http://localhost:2990/jira, which not coincidentally is the
+default address for a Jira instance started from the Atlassian Plugin SDK.
 
-You can manually set the JIRA server to use::
+You can manually set the Jira server to use::
 
     jac = JIRA('https://jira.atlassian.com')
 
@@ -40,7 +40,7 @@ Authentication
 --------------
 
 At initialization time, jira-python can optionally create an HTTP BASIC or use OAuth 1.0a access tokens for user
-authentication. These sessions will apply to all subsequent calls to the JIRA object.
+authentication. These sessions will apply to all subsequent calls to the ``JIRA`` object.
 
 The library is able to load the credentials from inside the ~/.netrc file, so put them there instead of keeping them in your source code.
 
@@ -84,11 +84,11 @@ Pass a dict of OAuth properties to the ``oauth`` constructor argument::
     interactive use, ``jirashell`` can perform the dance with you if you don't already have valid tokens.
 
 * The access token and token secret uniquely identify the user.
-* The consumer key must match the OAuth provider configured on the JIRA server.
-* The key cert data must be the private key that matches the public key configured on the JIRA server's OAuth provider.
+* The consumer key must match the OAuth provider configured on the Jira server.
+* The key cert data must be the private key that matches the public key configured on the Jira server's OAuth provider.
 
 See https://confluence.atlassian.com/display/JIRA/Configuring+OAuth+Authentication+for+an+Application+Link for details
-on configuring an OAuth provider for JIRA.
+on configuring an OAuth provider for Jira.
 
 Kerberos
 ^^^^^^^^
@@ -106,7 +106,7 @@ To pass additional options to Kerberos auth use dict ``kerberos_options``, e.g.:
 Issues
 ------
 
-Issues are objects. You get hold of them through the JIRA object::
+Issues are objects. You get hold of them through the ``JIRA`` object::
 
     issue = jira.issue('JRA-1330')
 
@@ -164,7 +164,7 @@ You can even bulk create multiple issues::
     issues = jira.create_issues(field_list=issue_list)
 
 .. note::
-    Project, summary, description and issue type are always required when creating issues. Your JIRA may require
+    Project, summary, description and issue type are always required when creating issues. Your Jira may require
     additional fields for creating issues; see the ``jira.createmeta`` method for getting access to that information.
 
 .. note::
@@ -241,7 +241,7 @@ to quickly find the issues you want::
 Comments
 --------
 
-Comments, like issues, are objects. Get at issue comments through the parent Issue object or the JIRA object's
+Comments, like issues, are objects. Get at issue comments through the parent Issue object or the ``JIRA`` object's
 dedicated method::
 
     comments_a = issue.fields.comment.comments
