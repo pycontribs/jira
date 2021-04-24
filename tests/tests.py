@@ -295,7 +295,7 @@ class JiraTestManager(object):
                     ):
                         break
                 except Exception as e:
-                    if "A project with that name already exists" not in e.text:
+                    if "A project with that name already exists" not in str(e):
                         raise e
             self.project_a_id = self.jira_admin.project(self.project_a).id
             self.jira_admin.create_project(self.project_b, self.project_b_name)
@@ -453,7 +453,7 @@ class ApplicationPropertiesTests(unittest.TestCase):
         clone_prefix = self.jira.application_properties(
             key="jira.lf.text.headingcolour"
         )
-        self.assertEqual(clone_prefix["value"], "#292929")
+        self.assertEqual(clone_prefix["value"], "#172b4d")
 
     def test_set_application_property(self):
         prop = "jira.lf.favicon.hires.url"
@@ -1133,12 +1133,10 @@ class IssueTests(unittest.TestCase):
             "comment",
             "components",
             "description",
-            "environment",
             "fixVersions",
             "issuelinks",
             "labels",
             "summary",
-            "versions",
         }
         for i in (self.issue_1, self.issue_2):
             meta = self.jira.editmeta(i)
@@ -1304,15 +1302,15 @@ class IssueTests(unittest.TestCase):
     def test_add_remove_watcher(self):
 
         # removing it in case it exists, so we know its state
-        self.jira.remove_watcher(self.issue_1, self.test_manager.user_admin.accountId)
+        self.jira.remove_watcher(self.issue_1, self.test_manager.user_admin.key)
         init_watchers = self.jira.watchers(self.issue_1).watchCount
 
         # adding a new watcher
-        self.jira.add_watcher(self.issue_1, self.test_manager.user_admin.accountId)
+        self.jira.add_watcher(self.issue_1, self.test_manager.user_admin.key)
         self.assertEqual(self.jira.watchers(self.issue_1).watchCount, init_watchers + 1)
 
         # now we verify that remove does indeed remove watchers
-        self.jira.remove_watcher(self.issue_1, self.test_manager.user_admin.accountId)
+        self.jira.remove_watcher(self.issue_1, self.test_manager.user_admin.key)
         new_watchers = self.jira.watchers(self.issue_1).watchCount
         self.assertEqual(init_watchers, new_watchers)
 
@@ -1598,12 +1596,7 @@ class ProjectTests(unittest.TestCase):
         self.assertEqual(test.name, name)
 
         i = self.jira.issue(JiraTestManager().project_b_issue1)
-        i.update(
-            fields={
-                "versions": [{"id": version.id}],
-                "fixVersions": [{"id": version.id}],
-            }
-        )
+        i.update(fields={"fixVersions": [{"id": version.id}]})
         version.delete()
 
     def test_get_project_version_by_name(self):
@@ -1620,12 +1613,7 @@ class ProjectTests(unittest.TestCase):
         self.assertEqual(not_found_version, None)
 
         i = self.jira.issue(JiraTestManager().project_b_issue1)
-        i.update(
-            fields={
-                "versions": [{"id": version.id}],
-                "fixVersions": [{"id": version.id}],
-            }
-        )
+        i.update(fields={"fixVersions": [{"id": version.id}]})
         version.delete()
 
     def test_rename_version(self):
@@ -1647,12 +1635,7 @@ class ProjectTests(unittest.TestCase):
         self.assertEqual(not_found_version, None)
 
         i = self.jira.issue(JiraTestManager().project_b_issue1)
-        i.update(
-            fields={
-                "versions": [{"id": version.id}],
-                "fixVersions": [{"id": version.id}],
-            }
-        )
+        i.update(fields={"fixVersions": [{"id": version.id}]})
         version.delete()
 
     def test_project_versions_with_project_obj(self):
