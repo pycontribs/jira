@@ -1092,7 +1092,7 @@ resource_class_map = {
     r"securitylevel/[^/]+$": SecurityLevel,
     r"status/[^/]+$": Status,
     r"statuscategory/[^/]+$": StatusCategory,
-    r"user\?(username|accountId).+$": User,
+    r"user\?(username|key).+$": User,
     r"group\?groupname.+$": Group,
     r"version/[^/]+$": Version,
     # GreenHopper specific resources
