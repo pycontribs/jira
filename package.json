@@ -12,7 +12,7 @@
     "url": "https://github.com/pycontribs/jira.git"
   },
   "dependencies": {
-    "cspell": "^4.0.23",
+    "cspell": "^4.2.8",
     "npm": "^6.10.0"
   }
 }
