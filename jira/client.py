@@ -464,7 +464,7 @@ class JIRA(object):
         if self._options["server"].endswith("/"):
             self._options["server"] = self._options["server"][:-1]
 
-        context_path = urlparse(self.server).path
+        context_path = urlparse(self.server_url).path
         if len(context_path) > 0:
             self._options["context_path"] = context_path
 
@@ -532,7 +532,7 @@ class JIRA(object):
                     self._fields[name] = f["id"]
 
     @property
-    def server(self):
+    def server_url(self):
         """Return the server url"""
         return self._options["server"]
 
@@ -738,7 +738,7 @@ class JIRA(object):
 
     def client_info(self):
         """Get the server this client is connected to."""
-        return self.server
+        return self.server_url
 
     # Universal resource loading
 
@@ -817,7 +817,7 @@ class JIRA(object):
             return self._applicationlinks
 
         # url = self._options['server'] + '/rest/applinks/latest/applicationlink'
-        url = self.server + "/rest/applinks/latest/listApplicationlinks"
+        url = self.server_url + "/rest/applinks/latest/listApplicationlinks"
 
         r = self._session.get(url)
 
@@ -1407,7 +1407,7 @@ class JIRA(object):
 
         :rtype: bool
         """
-        url = self.server + "/rest/servicedeskapi/info"
+        url = self.server_url + "/rest/servicedeskapi/info"
         headers = {"X-ExperimentalApi": "opt-in"}
         try:
             r = self._session.get(url, headers=headers)
@@ -1425,7 +1425,7 @@ class JIRA(object):
         :rtype: Customer
 
         """
-        url = self.server + "/rest/servicedeskapi/customer"
+        url = self.server_url + "/rest/servicedeskapi/customer"
         headers = {"X-ExperimentalApi": "opt-in"}
         r = self._session.post(
             url,
@@ -1445,7 +1445,7 @@ class JIRA(object):
         :rtype: List[ServiceDesk]
 
         """
-        url = self.server + "/rest/servicedeskapi/servicedesk"
+        url = self.server_url + "/rest/servicedeskapi/servicedesk"
         headers = {"X-ExperimentalApi": "opt-in"}
         r_json = json_loads(self._session.get(url, headers=headers))
         print(r_json)
@@ -1505,7 +1505,7 @@ class JIRA(object):
         elif isinstance(p, str):
             data["requestTypeId"] = self.request_type_by_name(service_desk, p).id
 
-        url = self.server + "/rest/servicedeskapi/request"
+        url = self.server_url + "/rest/servicedeskapi/request"
         headers = {"X-ExperimentalApi": "opt-in"}
         r = self._session.post(url, headers=headers, data=json.dumps(data))
 
@@ -1752,7 +1752,7 @@ class JIRA(object):
 
         # check if the link comes from one of the configured application links
         for x in applicationlinks:
-            if x["application"]["displayUrl"] == self.server:
+            if x["application"]["displayUrl"] == self.server_url:
                 data["globalId"] = "appId=%s&issueId=%s" % (
                     x["application"]["id"],
                     destination.raw["id"],
@@ -2153,7 +2153,7 @@ class JIRA(object):
         if hasattr(service_desk, "id"):
             service_desk = service_desk.id
         url = (
-            self.server
+            self.server_url
             + "/rest/servicedeskapi/servicedesk/%s/requesttype" % service_desk
         )
         headers = {"X-ExperimentalApi": "opt-in"}
@@ -2990,7 +2990,7 @@ class JIRA(object):
 
     def kill_session(self):
         """Destroy the session of the current authenticated user."""
-        url = self.server + "/rest/auth/latest/session"
+        url = self.server_url + "/rest/auth/latest/session"
         return self._session.delete(url)
 
     # Websudo
@@ -3002,7 +3002,7 @@ class JIRA(object):
         :rtype: Optional[Any]
         """
         if self.deploymentType != "Cloud":
-            url = self.server + "/rest/auth/1/websudo"
+            url = self.server_url + "/rest/auth/1/websudo"
             return self._session.delete(url)
 
     # Utilities
@@ -3291,7 +3291,7 @@ class JIRA(object):
                 logging.error("Error Deactivating %s: %s" % (username, e))
                 raise JIRAError("Error Deactivating %s: %s" % (username, e))
         else:
-            url = self.server + "/secure/admin/user/EditUser.jspa"
+            url = self.server_url + "/secure/admin/user/EditUser.jspa"
             self._options["headers"][
                 "Content-Type"
             ] = "application/x-www-form-urlencoded; charset=UTF-8"
@@ -3335,7 +3335,7 @@ class JIRA(object):
         else:
             indexingStrategy = "stoptheworld"
 
-        url = self.server + "/secure/admin/jira/IndexReIndex.jspa"
+        url = self.server_url + "/secure/admin/jira/IndexReIndex.jspa"
 
         r = self._session.get(url, headers=self._options["headers"])
         if r.status_code == 503:
@@ -3367,11 +3367,11 @@ class JIRA(object):
     def backup(self, filename="backup.zip", attachments=False):
         """Will call jira export to backup as zipped xml. Returning with success does not mean that the backup process finished."""
         if self.deploymentType == "Cloud":
-            url = self.server + "/rest/backup/1/export/runbackup"
+            url = self.server_url + "/rest/backup/1/export/runbackup"
             payload = json.dumps({"cbAttachments": attachments})
             self._options["headers"]["X-Requested-With"] = "XMLHttpRequest"
         else:
-            url = self.server + "/secure/admin/XmlBackup.jspa"
+            url = self.server_url + "/secure/admin/XmlBackup.jspa"
             payload = {"filename": filename}
         try:
             r = self._session.post(url, headers=self._options["headers"], data=payload)
@@ -3390,9 +3390,7 @@ class JIRA(object):
         """
         epoch_time = int(time.time() * 1000)
         if self.deploymentType == "Cloud":
-            url = (
-                self.server + "/rest/obm/1.0/getprogress?_=%i" % epoch_time
-            )
+            url = self.server_url + "/rest/obm/1.0/getprogress?_=%i" % epoch_time
         else:
             logging.warning("This functionality is not available in Server version")
             return None
@@ -3435,7 +3433,7 @@ class JIRA(object):
             return None
         remote_file = self.backup_progress()["fileName"]
         local_file = filename or remote_file
-        url = self.server + "/webdav/backupmanager/" + remote_file
+        url = self.server_url + "/webdav/backupmanager/" + remote_file
         try:
             logging.debug("Writing file to %s" % local_file)
             with open(local_file, "wb") as file:
@@ -3495,7 +3493,7 @@ class JIRA(object):
         return r.ok
 
     def _gain_sudo_session(self, options, destination):
-        url = self.server + "/secure/admin/WebSudoAuthenticate.jspa"
+        url = self.server_url + "/secure/admin/WebSudoAuthenticate.jspa"
 
         if not self._session.auth:
             self._session.auth = get_netrc_auth(url)
@@ -3519,7 +3517,7 @@ class JIRA(object):
     @lru_cache(maxsize=None)
     def templates(self):
 
-        url = self.server + "/rest/project-templates/latest/templates"
+        url = self.server_url + "/rest/project-templates/latest/templates"
 
         r = self._session.get(url)
         data = json_loads(r)
@@ -3913,7 +3911,7 @@ class JIRA(object):
     # Experimental support for iDalko Grid, expect API to change as it's using private APIs currently
     # https://support.idalko.com/browse/IGRID-1017
     def get_igrid(self, issueid, customfield, schemeid):
-        url = self.server + "/rest/idalko-igrid/1.0/datagrid/data"
+        url = self.server_url + "/rest/idalko-igrid/1.0/datagrid/data"
         if str(customfield).isdigit():
             customfield = "customfield_%s" % customfield
         params = {
