@@ -8,10 +8,10 @@ services:
 # See:
 #   - https://github.com/travis-ci/travis-ci/issues/1147
 #   - https://docs.travis-ci.com/user/pull-requests/#double-builds-on-pull-requests
-# branches:
-#   only:
-#     - master
-#     - /^\d+\.\d+(\.\d+)?(-\S*)?$/
+branches:
+  only:
+    - master
+    - /^\d+\.\d+(\.\d+)?(-\S*)?$/
 
 cache:
   bundler: true
@@ -28,16 +28,16 @@ stages:
   - test
   - deploy
 before_install:
+  # Launch a Jira instance in detached mode, will take a while, so do first
+  - docker run -dit -p 2990:2990 --name jira addono/jira-software-standalone
   - pip install --upgrade tox tox-venv
   - rm -rf .tox
-# Launch a Jira instance in detached mode
-  - docker run -dit -p 2990:2990 --name jira addono/jira-software-standalone
-# Wait until Jira has booted
-  - until $(curl -u $CI_JIRA_ADMIN:$CI_JIRA_ADMIN_PASSWORD --output /dev/null --silent --head --fail $CI_JIRA_URL/rest/api/2/permissions); do sleep 5; done
-# Install this repository, as we will need it in the next step
+  # Install this repository, as we will need it in the next step
   - pip install .
-# Attempt to create the test user, as the empty JIRA instance isn't provisioned with one
-  - (python -c "from jira import JIRA; JIRA('$CI_JIRA_URL', basic_auth=('$CI_JIRA_ADMIN', '$CI_JIRA_ADMIN_PASSWORD')).add_user('$CI_JIRA_USER', 'user@example.com', password='$CI_JIRA_USER_PASSWORD')" && echo "Created user '$CI_JIRA_USER'") || (echo "Failed creating user '$CI_JIRA_USER'" && docker logs --tail 500 jira)
+  # Wait until Jira has booted
+  - until $(curl -u $CI_JIRA_ADMIN:$CI_JIRA_ADMIN_PASSWORD --output /dev/null --silent --head --fail $CI_JIRA_URL/rest/api/2/permissions); do sleep 5; done
+  # Attempt to create the test user, as the empty JIRA instance isn't provisioned with one
+  - (python make_local_jira_user.py && echo "Created user '$CI_JIRA_USER'") || (echo "Failed creating user '$CI_JIRA_USER'" && docker logs --tail 500 jira)
 notifications:
   email:
     - pycontribs@googlegroups.com

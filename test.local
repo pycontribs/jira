@@ -13,7 +13,7 @@ start_time="$(date -u +%s)"
 until $(curl -u $CI_JIRA_ADMIN:$CI_JIRA_ADMIN_PASSWORD --output /dev/null --silent --head --fail $CI_JIRA_URL/rest/api/2/permissions); do end_time="$(date -u +%s)";elapsed="$(($end_time-$start_time))"; echo "not running yet after $elapsed seconds $CI_JIRA_URL";sleep 5; done
 pip install -e .
 echo adding user $CI_JIRA_USER to $CI_JIRA_URL
-(python -c "from jira import JIRA;jira_client = JIRA('$CI_JIRA_URL', basic_auth=('$CI_JIRA_ADMIN', '$CI_JIRA_ADMIN_PASSWORD'));a = jira_client.add_user('$CI_JIRA_USER', 'user@example.com', password='$CI_JIRA_USER_PASSWORD') if not jira_client.user('$CI_JIRA_USER') else None" && echo "Created user '$CI_JIRA_USER', or user was already present") || (echo "Failed creating user '$CI_JIRA_USER'" && docker logs --tail 500 jira)
+(python make_local_jira_user.py && echo "Created user '$CI_JIRA_USER', or user was already present") || (echo "Failed creating user '$CI_JIRA_USER'" && docker logs --tail 500 jira)
 
 if [ "$1" = "--tox" ] ; then
     shift
