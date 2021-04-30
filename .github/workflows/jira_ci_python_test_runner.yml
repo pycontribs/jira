@@ -1,43 +1,43 @@
 name: Jira CI Python Test runner
 
-on:  [push, pull_request]
+on: [push, pull_request]
 
 jobs:
   test:
     name: ${{ matrix.os }} / ${{ matrix.python-version }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}-latest
     strategy:
       matrix:
-        python-version: [3.9]
+        os: [Ubuntu]
+        python-version: [3.8, 3.9]
 
     steps:
-    - uses: actions/checkout@master
-    - name: Start Jira docker instance
-      run: docker run -dit -p 2990:2990 --name jira addono/jira-software-standalone
+      - uses: actions/checkout@master
+      - name: Start Jira docker instance
+        run: docker run -dit -p 2990:2990 --name jira addono/jira-software-standalone
 
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install Dependencies
-      run: |
-        sudo apt-get update; sudo apt-get install gcc libkrb5-dev
-        python -m pip install --upgrade pip
-        python -m pip install --upgrade tox tox-gh-actions
-    - name: Test with tox
-      run: |
-        python -m tox
-      env:
-        CI_JIRA_URL: http://localhost:2990/jira
-        CI_JIRA_ADMIN: admin
-        CI_JIRA_ADMIN_PASSWORD: admin
-        CI_JIRA_USER: jira_user
-        CI_JIRA_USER_PASSWORD: jira
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v1.0.15
-      with:
-        file: ./coverage.xml
-        name: ${{ runner.os }}-${{ matrix.python-version }}
-    - name: Run tox pkg
-      run: tox -e pkg
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update; sudo apt-get install gcc libkrb5-dev
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade tox tox-gh-actions
+
+      - name: Lint with tox
+        run: tox -e lint
+
+      - name: Test with tox
+        run: tox
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1.0.15
+        with:
+          file: ./coverage.xml
+          name: ${{ runner.os }}-${{ matrix.python-version }}
+
+      - name: Run tox pkg
+        run: tox -e pkg
