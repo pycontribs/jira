@@ -23,18 +23,12 @@ repos:
     rev: 3.7.8
     hooks:
       - id: flake8
-        additional_dependencies:
-          - flake8-black
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.17.0
     hooks:
       - id: yamllint
         files: \.(yaml|yml)$
-  - repo: https://github.com/openstack-dev/bashate.git
-    rev: 0.6.0
-    hooks:
-      - id: bashate
   - repo: https://github.com/pre-commit/mirrors-mypy.git
-    rev: v0.730
+    rev: v0.812
     hooks:
       - id: mypy
