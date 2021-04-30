@@ -2585,10 +2585,12 @@ class JIRA(object):
         return statuses
 
     def status(self, id):
-        # type: (str) -> Status
         """Get a status Resource from the server.
 
         :param id: ID of the status resource to get
+        :type id: str
+
+        :rtype: Status
         """
         return self._find_for_resource(Status, id)
 
