@@ -184,9 +184,16 @@
         "/I18NSPHINXOPTS/"
     ],
     "ignorePaths": [
-        "docs/build",
+        "__pycache__",
+        ".eggs",
         ".tox",
-        ".eggs"
+        "*.egg-info",
+        "*.egg",
+        "*.pyc",
+        "dist/**",
+        "docs/_build/**",
+        "node_modules/**",
+        "package-lock.json"
     ],
     "ignoreWords": [
         "AACCOUNTID",
