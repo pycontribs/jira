@@ -2145,7 +2145,7 @@ class JIRA(object):
         return issue_type
 
     def request_types(self, service_desk):
-        """ Returns request types supported by a service desk instance.
+        """Returns request types supported by a service desk instance.
         :param service_desk: The service desk instance.
         :type service_desk: ServiceDesk
         :rtype: List[RequestType]
@@ -3009,7 +3009,7 @@ class JIRA(object):
 
     # Utilities
     def _create_http_basic_session(self, username, password, timeout=None):
-        """ Creates a basic http session.
+        """Creates a basic http session.
 
         :param username: Username for the session
         :type username: str
@@ -3099,7 +3099,7 @@ class JIRA(object):
         return self._session.put(url, params=params, data=json.dumps(data))
 
     def _get_url(self, path, base=JIRA_BASE_URL):
-        """ Returns the full url based on Jira base url and the path provided.
+        """Returns the full url based on Jira base url and the path provided.
         Using the API version specified during the __init__.
 
         :param path: The subpath desired.
@@ -3116,7 +3116,7 @@ class JIRA(object):
         return base.format(**options)
 
     def _get_latest_url(self, path, base=JIRA_BASE_URL):
-        """ Returns the full url based on Jira base url and the path provided.
+        """Returns the full url based on Jira base url and the path provided.
         Using the latest API endpoint.
 
         :param path: The subpath desired.
