@@ -3,41 +3,41 @@ Jira Python Library
 ===================
 
 .. image:: https://img.shields.io/pypi/v/jira.svg
-        :target: https://pypi.python.org/pypi/jira/
+    :target: https://pypi.python.org/pypi/jira/
 
 .. image:: https://img.shields.io/pypi/l/jira.svg
-        :target: https://pypi.python.org/pypi/jira/
+    :target: https://pypi.python.org/pypi/jira/
 
 .. image:: https://img.shields.io/pypi/wheel/jira.svg
-        :target: https://pypi.python.org/pypi/jira/
+    :target: https://pypi.python.org/pypi/jira/
 
 .. image:: https://img.shields.io/github/issues/pycontribs/jira.svg
-        :target: https://github.com/pycontribs/jira/issues
+    :target: https://github.com/pycontribs/jira/issues
 
 .. image:: https://img.shields.io/badge/irc-%23pycontribs-blue
-        :target: irc:///#pycontribs
+    :target: irc:///#pycontribs
 
 ------------
 
 .. image:: https://readthedocs.org/projects/jira/badge/?version=master
-        :target: https://jira.readthedocs.io/
+    :target: https://jira.readthedocs.io/
 
 .. image:: https://travis-ci.com/pycontribs/jira.svg?branch=master
-        :target: https://travis-ci.com/pycontribs/jira
+    :target: https://travis-ci.com/pycontribs/jira
 
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
    :target: https://github.com/python/black
    :alt: Python Black Code Style
 
 .. image:: https://codecov.io/gh/pycontribs/jira/branch/master/graph/badge.svg
-        :target: https://codecov.io/gh/pycontribs/jira
+    :target: https://codecov.io/gh/pycontribs/jira
 
 .. image:: https://img.shields.io/bountysource/team/pycontribs/activity.svg
-        :target: https://www.bountysource.com/teams/pycontribs/issues?tracker_ids=3650997
+    :target: https://www.bountysource.com/teams/pycontribs/issues?tracker_ids=3650997
 
 .. image:: https://requires.io/github/pycontribs/jira/requirements.svg?branch=master
-        :target: https://requires.io/github/pycontribs/jira/requirements/?branch=master
-        :alt: Requirements Status
+    :target: https://requires.io/github/pycontribs/jira/requirements/?branch=master
+    :alt: Requirements Status
 
 
 This library eases the use of the Jira REST API from Python and it has been used in production for years.
@@ -54,14 +54,14 @@ Feeling impatient? I like your style.
 
 .. code-block:: python
 
-        from jira import JIRA
+    from jira import JIRA
 
-        jira = JIRA('https://jira.atlassian.com')
+    jira = JIRA('https://jira.atlassian.com')
 
-        issue = jira.issue('JRA-9')
-        print(issue.fields.project.key)            # 'JRA'
-        print(issue.fields.issuetype.name)         # 'New Feature'
-        print(issue.fields.reporter.displayName)   # 'Mike Cannon-Brookes [Atlassian]'
+    issue = jira.issue('JRA-9')
+    print(issue.fields.project.key)            # 'JRA'
+    print(issue.fields.issuetype.name)         # 'New Feature'
+    print(issue.fields.reporter.displayName)   # 'Mike Cannon-Brookes [Atlassian]'
 
 
 Installation
@@ -103,16 +103,20 @@ Setup
 * Keep it sync_'ed while you are developing
 * Install pyenv_
 * develop and test
-    * launch docker jira server
-      - docker run -dit -p 2990:2990 --name jira addono/jira-software-standalone
-    * lint
-      - tox -e lint
-    * run tests
-      - tox
-    * run tests for one env only
-      - tox -e py37
+    * Launch docker jira server
+        - ``docker run -dit -p 2990:2990 --name jira addono/jira-software-standalone``
+    * Lint
+        - ``tox -e lint``
+        - Note: Windows users trying to run locally will need to:
+            - Comment out the ``npm`` commands in the ``lint`` environment before running the ``lint`` environment
+            - Run ``npm install`` manually
+            - Run ``cspell "**"  --unique`` manually - this relies on the ``cspell.json`` to check the right files
+    * Run tests
+        - ``tox``
+    * Run tests for one env only
+        - ``tox -e py37``
     * Build and publish with TWINE
-      - tox -e upload
+        - ``tox -e upload``
 
 .. _Fork: https://help.github.com/articles/fork-a-repo/
 .. _sync: https://help.github.com/articles/syncing-a-fork/

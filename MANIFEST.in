@@ -1,2 +1,10 @@
 include LICENSE README.rst
+
+# Exclude what is in these folders
 prune tests
+prune .github
+
+# Exclude these files
+exclude package-lock.json
+recursive-exclude * *.py[co]
+recursive-exclude * __pycache__
