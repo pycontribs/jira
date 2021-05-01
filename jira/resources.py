@@ -235,7 +235,7 @@ class Resource(object):
         self._load(url, params=params)
 
     def _get_url(self, path):
-        """ Gets the url for the specified path.
+        """Gets the url for the specified path.
 
         :type path: str
 
@@ -377,7 +377,7 @@ class Resource(object):
             return self._session.delete(url=self.self, params=params)
 
     def _load(self, url, headers=CaseInsensitiveDict(), params=None, path=None):
-        """ Load a resource.
+        """Load a resource.
 
         :type url: str
         :type headers: CaseInsensitiveDict
