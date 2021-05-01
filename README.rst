@@ -102,26 +102,21 @@ Setup
 * Fork_ repo
 * Keep it sync_'ed while you are developing
 * Install pyenv_
-* develop and test, old way
-    * Install `Atlassian Jira Server`_ for testing
-      - make install-sdk
-    * pip install jira[test]
-    * Start up Jira Server
-      - atlas-run-standalone
-    * Test your changes
-      - make test
-* develop and test new way => at least to be able to fix the CI
+* develop and test
     * launch docker jira server
       - docker run -dit -p 2990:2990 --name jira addono/jira-software-standalone
+    * lint
+      - tox -e lint
     * run tests
-      - ./test_local --tox
+      - tox
     * run tests for one env only
-      - ./test_local --tox -e py37
+      - tox -e py37
+    * Build and publish with TWINE
+      - tox -e upload
 
 .. _Fork: https://help.github.com/articles/fork-a-repo/
 .. _sync: https://help.github.com/articles/syncing-a-fork/
 .. _pyenv: https://amaral.northwestern.edu/resources/guides/pyenv-tutorial
-.. _`Atlassian Jira Server`: https://www.atlassian.com/software/jira/download
 
 
 Credits
