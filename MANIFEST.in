@@ -6,5 +6,6 @@ prune .github
 
 # Exclude these files
 exclude package-lock.json
+exclude test-requirements.*
 recursive-exclude * *.py[co]
 recursive-exclude * __pycache__
