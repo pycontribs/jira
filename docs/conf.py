@@ -29,7 +29,12 @@ needs_sphinx = "2.2.0"
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ["sphinx.ext.autodoc", "sphinx.ext.viewcode", "sphinx.ext.intersphinx"]
+extensions = [
+    "sphinx.ext.autodoc",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.viewcode",
+]
 
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3.7", None),
@@ -42,9 +47,11 @@ intersphinx_mapping = {
 }
 
 autodoc_default_options = {
+    "member-order": "bysource",
     "members": True,
-    "undoc-members": True,
     "show-inheritance": True,
+    "special-members": "__init__",
+    "undoc-members": True,
 }
 
 nitpick_ignore = [
@@ -286,6 +293,11 @@ man_pages = [
 
 # If true, show URL addresses after external links.
 # man_show_urls = False
+
+# -- Options for Napoleon  -----------------------------------------------------
+
+napoleon_google_docstring = True
+napoleon_numpy_docstring = False  # Explicitly prefer Google style docstring
 
 
 # -- Options for Texinfo output ------------------------------------------------

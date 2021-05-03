@@ -250,54 +250,6 @@ class JIRA(object):
     For quick command line access to a server, see the ``jirashell`` script included with this distribution.
 
     The easiest way to instantiate is using ``j = JIRA("https://jira.atlassian.com")``
-
-    :param options: Specify the server and properties this client will use. Use a dict with any
-        of the following properties:
-
-        * server -- the server address and context path to use. Defaults to ``http://localhost:2990/jira``.
-        * rest_path -- the root REST path to use. Defaults to ``api``, where the Jira REST resources live.
-        * rest_api_version -- the version of the REST resources under rest_path to use. Defaults to ``2``.
-        * agile_rest_path - the REST path to use for Jira Agile requests. Defaults to ``greenhopper`` (old, private
-                API). Check `GreenHopperResource` for other supported values.
-        * verify -- Verify SSL certs. Defaults to ``True``.
-        * client_cert -- a tuple of (cert,key) for the requests library for client side SSL
-        * check_update -- Check whether using the newest python-jira library version.
-        * cookies -- A dict of custom cookies that are sent in all requests to the server.
-
-    :param basic_auth: A tuple of username and password to use when establishing a session via HTTP BASIC
-        authentication.
-    :param oauth: A dict of properties for OAuth authentication. The following properties are required:
-
-        * access_token -- OAuth access token for the user
-        * access_token_secret -- OAuth access token secret to sign with the key
-        * consumer_key -- key of the OAuth application link defined in Jira
-        * key_cert -- private key file to sign requests with (should be the pair of the public key supplied to
-          Jira in the OAuth application link)
-
-    :param kerberos: If true it will enable Kerberos authentication.
-    :param kerberos_options: A dict of properties for Kerberos authentication. The following properties are possible:
-
-        * mutual_authentication -- string DISABLED or OPTIONAL.
-
-        Example kerberos_options structure: ``{'mutual_authentication': 'DISABLED'}``
-
-    :param jwt: A dict of properties for JWT authentication supported by Atlassian Connect. The following
-        properties are required:
-
-        * secret -- shared secret as delivered during 'installed' lifecycle event
-          (see https://developer.atlassian.com/static/connect/docs/latest/modules/lifecycle.html for details)
-        * payload -- dict of fields to be inserted in the JWT payload, e.g. 'iss'
-
-        Example jwt structure: ``{'secret': SHARED_SECRET, 'payload': {'iss': PLUGIN_KEY}}``
-
-    :param validate: If true it will validate your credentials first. Remember that if you are accessing Jira
-        as anonymous it will fail to instantiate.
-    :param get_server_info: If true it will fetch server version info first to determine if some API calls
-        are available.
-    :param async_: To enable asynchronous requests for those actions where we implemented it, like issue update() or delete().
-    :param async_workers: Set the number of worker threads for async operations.
-    :param timeout: Set a read/connect timeout for the underlying calls to Jira (default: None)
-        Obviously this means that you cannot rely on the return code when this is enabled.
     """
 
     DEFAULT_OPTIONS = {
@@ -365,64 +317,61 @@ class JIRA(object):
 
         For quick command line access to a server, see the ``jirashell`` script included with this distribution.
 
-        The easiest way to instantiate is using j = JIRA("https://jira.atlasian.com")
-        :param server: The server address and context path to use. Defaults to ``http://localhost:2990/jira``.
-        :type server: Optional[str]
-        :param options: Specify the server and properties this client will use. Use a dict with any
-            of the following properties:
-            * server -- the server address and context path to use. Defaults to ``http://localhost:2990/jira``.
-            * rest_path -- the root REST path to use. Defaults to ``api``, where the Jira REST resources live.
-            * rest_api_version -- the version of the REST resources under rest_path to use. Defaults to ``2``.
-            * agile_rest_path - the REST path to use for Jira Agile requests. Defaults to ``greenhopper`` (old, private
-               API). Check `GreenHopperResource` for other supported values.
-            * verify -- Verify SSL certs. Defaults to ``True``.
-            * client_cert -- a tuple of (cert,key) for the requests library for client side SSL
-            * check_update -- Check whether using the newest python-jira library version.
-        :type options: Optional[Dict[str, Any]]
-        :param basic_auth: A tuple of username and password to use when establishing a session via HTTP BASIC
-        authentication.
-        :type basic_auth: Union[Dict, None, Tuple[str, str]]
-        :param oauth: A dict of properties for OAuth authentication. The following properties are required:
-            * access_token -- OAuth access token for the user
-            * access_token_secret -- OAuth access token secret to sign with the key
-            * consumer_key -- key of the OAuth application link defined in Jira
-            * key_cert -- private key file to sign requests with (should be the pair of the public key supplied to
-            Jira in the OAuth application link)
-        :type oauth: Optional[Any]
-        :param kerberos: If true it will enable Kerberos authentication.
-        :type kerberos: bool
-        :param kerberos_options: A dict of properties for Kerberos authentication. The following properties are possible:
-            * mutual_authentication -- string DISABLED or OPTIONAL.
-            Example kerberos_options structure: ``{'mutual_authentication': 'DISABLED'}``
-        :type kerberos_options: Optional[Dict[str,str]]
-        :param jwt: A dict of properties for JWT authentication supported by Atlassian Connect. The following
-            properties are required:
-            * secret -- shared secret as delivered during 'installed' lifecycle event
-            (see https://developer.atlassian.com/static/connect/docs/latest/modules/lifecycle.html for details)
-            * payload -- dict of fields to be inserted in the JWT payload, e.g. 'iss'
-            Example jwt structure: ``{'secret': SHARED_SECRET, 'payload': {'iss': PLUGIN_KEY}}``
-        :type jwt: Optional[Any]
-        :param validate: If true it will validate your credentials first. Remember that if you are accessing Jira
-            as anonymous it will fail to instantiate.
-        :type validate: bool
-        :param get_server_info: If true it will fetch server version info first to determine if some API calls
-            are available.
-        :type get_server_info: bool
-        :param async_: To enable async requests for those actions where we implemented it, like issue update() or delete().
-        :type async_: bool
-        :param async_workers: Set the number of worker threads for async operations.
-        :type async_workers: int
-        :param timeout: Set a read/connect timeout for the underlying calls to Jira (default: None)
-        :type timeout: Optional[Any]
-        Obviously this means that you cannot rely on the return code when this is enabled.
-        :param max_retries: Sets the amount Retries for the HTTP sessions initiated by the client. (Default: 3)
-        :type max_retries: int
-        :param proxies: Sets the proxies for the HTTP session.
-        :type proxies: Optional[Any]
-        :param auth: Set a cookie auth token if this is required.
-        :type auth: Optional[Tuple[str,str]]
-        :param logging: Determine whether or not logging should be enabled. (Default: True)
-        :type logging: bool
+        The easiest way to instantiate is using ``j = JIRA("https://jira.atlasian.com")``
+
+        Args:
+            server (Optional[str]): The server address and context path to use. Defaults to ``http://localhost:2990/jira``.
+            options (Optional[Dict[str, Any]]): Specify the server and properties this client will use.
+              Use a dict with any of the following properties:
+
+                * server -- the server address and context path to use. Defaults to ``http://localhost:2990/jira``.
+                * rest_path -- the root REST path to use. Defaults to ``api``, where the Jira REST resources live.
+                * rest_api_version -- the version of the REST resources under rest_path to use. Defaults to ``2``.
+                * agile_rest_path - the REST path to use for Jira Agile requests. Defaults to ``greenhopper`` (old, private
+                  API). Check :py:class:``GreenHopperResource`` for other supported values.
+                * verify -- Verify SSL certs. Defaults to ``True``.
+                * client_cert -- a tuple of (cert,key) for the requests library for client side SSL
+                * check_update -- Check whether using the newest python-jira library version.
+
+            basic_auth (Union[None, Tuple[str, str]]): A tuple of username and password to use when
+              establishing a session via HTTP BASIC authentication.
+            oauth (Optional[Any]): A dict of properties for OAuth authentication. The following properties are required:
+
+                * access_token -- OAuth access token for the user
+                * access_token_secret -- OAuth access token secret to sign with the key
+                * consumer_key -- key of the OAuth application link defined in Jira
+                * key_cert -- private key file to sign requests with (should be the pair of the public key supplied to
+                  Jira in the OAuth application link)
+
+            kerberos (bool): If true it will enable Kerberos authentication.
+            kerberos_options (Optional[Dict[str,str]]): A dict of properties for Kerberos authentication.
+              The following properties are possible:
+
+                * mutual_authentication -- string DISABLED or OPTIONAL.
+
+                Example kerberos_options structure: ``{'mutual_authentication': 'DISABLED'}``
+
+            jwt (Optional[Any]): A dict of properties for JWT authentication supported by Atlassian Connect.
+              The following properties are required:
+
+                * secret -- shared secret as delivered during 'installed' lifecycle event
+                    (see https://developer.atlassian.com/static/connect/docs/latest/modules/lifecycle.html for details)
+                * payload -- dict of fields to be inserted in the JWT payload, e.g. 'iss'
+
+                Example jwt structure: ``{'secret': SHARED_SECRET, 'payload': {'iss': PLUGIN_KEY}}``
+
+            validate (bool): If true it will validate your credentials first. Remember that if you are accessing Jira
+              as anonymous it will fail to instantiate.
+            get_server_info (bool): If true it will fetch server version info first to determine if some API calls
+              are available.
+            async_ (bool): To enable async requests for those actions where we implemented it, like issue update() or delete().
+            async_workers (int): Set the number of worker threads for async operations.
+            timeout (Optional[Any]): Set a read/connect timeout for the underlying calls to Jira (default: None)
+              Obviously this means that you cannot rely on the return code when this is enabled.
+            max_retries (int): Sets the amount Retries for the HTTP sessions initiated by the client. (Default: 3)
+            proxies (Optional[Any]): Sets the proxies for the HTTP session.
+            auth (Optional[Tuple[str,str]]): Set a cookie auth token if this is required.
+            logging (bool): Determine whether or not logging should be enabled. (Default: True)
         """
         # force a copy of the tuple to be used in __del__() because
         # sys.version_info could have already been deleted in __del__()
@@ -430,13 +379,13 @@ class JIRA(object):
 
         if options is None:
             options = {}
-            if server and hasattr(server, "keys"):
+            if server and isinstance(server, dict):
                 warnings.warn(
                     "Old API usage, use JIRA(url) or JIRA(options={'server': url}, when using dictionary always use named parameters.",
                     DeprecationWarning,
                 )
                 options = server
-                server = None
+                server = ""
 
         if server:
             options["server"] = server
@@ -444,7 +393,8 @@ class JIRA(object):
             options["async"] = async_
             options["async_workers"] = async_workers
 
-        self.logging = logging
+        self.logging = _logging.getLogger("jira")
+        self.logging.setLevel(_logging.INFO if logging else _logging.WARNING)
 
         self._options = copy.copy(JIRA.DEFAULT_OPTIONS)
 
@@ -453,6 +403,7 @@ class JIRA(object):
         self._rank = None
 
         # Rip off trailing slash since all urls depend on that
+        assert isinstance(self._options["server"], str)  # to help mypy
         if self._options["server"].endswith("/"):
             self._options["server"] = self._options["server"][:-1]
 
