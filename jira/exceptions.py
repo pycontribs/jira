@@ -24,8 +24,8 @@ class JIRAError(Exception):
         """Creates a JIRAError.
 
         Args:
-            status_code (Optional[int]): Status code for the error.
             text (Optional[str]): Message for the error.
+            status_code (Optional[int]): Status code for the error.
             url (Optional[str]): Url related to the error.
             request (Optional[requests.Response]): Request made related to the error.
             response (Optional[requests.Response]): Response received related to the error.
