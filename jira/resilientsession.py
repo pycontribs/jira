@@ -51,11 +51,18 @@ def raise_on_error(r, verb="???", **kwargs):
             except ValueError:
                 error = r.text
         raise JIRAError(
-            r.status_code, error, r.url, request=request, response=r, **kwargs
+            error,
+            status_code=r.status_code,
+            url=r.url,
+            request=request,
+            response=r,
+            **kwargs
         )
     # for debugging weird errors on CI
     if r.status_code not in [200, 201, 202, 204]:
-        raise JIRAError(r.status_code, request=request, response=r, **kwargs)
+        raise JIRAError(
+            status_code=r.status_code, request=request, response=r, **kwargs
+        )
     # testing for the bug exposed on
     # https://answers.atlassian.com/questions/11457054/answers/11975162
     if (

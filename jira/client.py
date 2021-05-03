@@ -1268,7 +1268,9 @@ class JIRA(object):
 
         raw_issue_json = json_loads(r)
         if "key" not in raw_issue_json:
-            raise JIRAError(r.status_code, response=r, url=url, text=json.dumps(data))
+            raise JIRAError(
+                status_code=r.status_code, response=r, url=url, text=json.dumps(data)
+            )
         if prefetch:
             return self.issue(raw_issue_json["key"])
         else:
@@ -1380,7 +1382,7 @@ class JIRA(object):
         raw_customer_json = json_loads(r)
 
         if r.status_code != 201:
-            raise JIRAError(r.status_code, request=r)
+            raise JIRAError(status_code=r.status_code, request=r)
         return Customer(self._options, self._session, raw=raw_customer_json)
 
     def service_desks(self):
@@ -1455,7 +1457,7 @@ class JIRA(object):
 
         raw_issue_json = json_loads(r)
         if "issueKey" not in raw_issue_json:
-            raise JIRAError(r.status_code, request=r)
+            raise JIRAError(status_code=r.status_code, request=r)
         if prefetch:
             return self.issue(raw_issue_json["issueKey"])
         else:
