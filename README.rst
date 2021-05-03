@@ -8,9 +8,6 @@ Jira Python Library
 .. image:: https://img.shields.io/pypi/l/jira.svg
     :target: https://pypi.python.org/pypi/jira/
 
-.. image:: https://img.shields.io/pypi/wheel/jira.svg
-    :target: https://pypi.python.org/pypi/jira/
-
 .. image:: https://img.shields.io/github/issues/pycontribs/jira.svg
     :target: https://github.com/pycontribs/jira/issues
 
@@ -21,13 +18,6 @@ Jira Python Library
 
 .. image:: https://readthedocs.org/projects/jira/badge/?version=master
     :target: https://jira.readthedocs.io/
-
-.. image:: https://travis-ci.com/pycontribs/jira.svg?branch=master
-    :target: https://travis-ci.com/pycontribs/jira
-
-.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
-   :target: https://github.com/python/black
-   :alt: Python Black Code Style
 
 .. image:: https://codecov.io/gh/pycontribs/jira/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/pycontribs/jira
