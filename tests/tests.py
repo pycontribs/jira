@@ -223,7 +223,7 @@ class JiraTestManager(object):
             # [7-8] python version A=0, B=1,..
             # [9] A,B -- we may need more than one project
 
-            """ `jid` is important for avoiding concurency problems when
+            """ `jid` is important for avoiding concurrency problems when
             executing tests in parallel as we have only one test instance.
 
             jid length must be less than 9 characters because we may append
