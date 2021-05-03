@@ -19,6 +19,18 @@ repos:
       - id: debug-statements
       - id: check-yaml
         files: .*\.(yaml|yml)$
+  - repo: https://github.com/codespell-project/codespell.git
+    rev: v2.0.0
+    hooks:
+      - id: codespell
+        name: codespell
+        description: Checks for common misspellings in text files.
+        entry: codespell
+        language: python
+        types: [text]
+        args: []
+        require_serial: false
+        additional_dependencies: []
   - repo: https://gitlab.com/pycqa/flake8
     rev: 3.9.1
     hooks:
