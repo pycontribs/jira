@@ -97,10 +97,6 @@ Setup
         - ``docker run -dit -p 2990:2990 --name jira addono/jira-software-standalone``
     * Lint
         - ``tox -e lint``
-        - Note: Windows users trying to run locally will need to:
-            - Comment out the ``npm`` commands in the ``lint`` environment before running the ``lint`` environment
-            - Run ``npm install`` manually
-            - Run ``cspell "**"  --unique`` manually - this relies on the ``cspell.json`` to check the right files
     * Run tests
         - ``tox``
     * Run tests for one env only
