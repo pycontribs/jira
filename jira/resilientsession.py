@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 import json
 import logging
-
-
 import random
-from requests.exceptions import ConnectionError
-from requests import Session
 import time
+
+from requests import Session
+from requests.exceptions import ConnectionError
 
 from jira.exceptions import JIRAError
 
