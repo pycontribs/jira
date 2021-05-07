@@ -19,7 +19,7 @@ class JIRAError(Exception):
         response=None,
         **kwargs
     ):
-        """ Creates a JIRAError.
+        """Creates a JIRAError.
 
         :param status_code: Status code for the error.
         :type status_code: Optional[int]

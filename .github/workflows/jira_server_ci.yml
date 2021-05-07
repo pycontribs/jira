@@ -1,0 +1,70 @@
+name: Jira Server CI
+
+on:
+  # Trigger the workflow on push or pull request,
+  # but only for the master branch
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  test:
+    name: ${{ matrix.os }} / ${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      matrix:
+        os: [Ubuntu]
+        python-version: [3.6, 3.7, 3.8, 3.9]
+
+    steps:
+      - uses: actions/checkout@master
+      - name: Start Jira docker instance
+        run: docker run -dit -p 2990:2990 --name jira addono/jira-software-standalone
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Get pip cache dir
+        id: pip-cache
+        run: |
+          echo "::set-output name=dir::$(pip cache dir)"
+      - name: Setup the Pip cache
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.pip-cache.outputs.dir }}
+          key: >-
+            ${{ runner.os }}-pip-${{ hashFiles('setup.cfg') }}-${{
+            hashFiles('setup.py') }}-${{ hashFiles('tox.ini') }}-${{
+            hashFiles('.pre-commit-config.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+            ${{ runner.os }}-
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update; sudo apt-get install gcc libkrb5-dev
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade tox tox-gh-actions
+
+      - name: Lint with tox
+        run: tox -e lint
+
+      - name: Test with tox
+        run: tox
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1.0.15
+        with:
+          file: ./coverage.xml
+          name: ${{ runner.os }}-${{ matrix.python-version }}
+
+      - name: Run tox pkg
+        run: tox -e pkg
+
+      - name: Make docs
+        run: tox -e docs

@@ -73,24 +73,15 @@ def test_delete_inexistent_project(cl_admin):
 
 
 def test_templates(cl_admin):
-    templates = cl_admin.templates()
+    templates = set(cl_admin.templates())
     expected_templates = set(
         filter(
             None,
             """
-Agility
-Basic
-Bug tracking
-Content Management
-Customer service
-Document Approval
-IT Service Desk
+Basic software development
 Kanban software development
-Lead Tracking
 Process management
-Procurement
 Project management
-Recruitment
 Scrum software development
 Task management
 """.split(
@@ -99,8 +90,7 @@ Task management
         )
     )
 
-    for t in expected_templates:
-        assert t in templates
+    assert templates == expected_templates
 
 
 def test_result_list():

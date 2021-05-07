@@ -362,7 +362,7 @@ def main():
             from IPython.frontend.terminal.embed import InteractiveShellEmbed
 
         ip_shell = InteractiveShellEmbed(
-            banner1="<Jira Shell " + __version__ + " (" + jira.client_info() + ")>"
+            banner1="<Jira Shell " + __version__ + " (" + jira.server_url + ")>"
         )
         ip_shell("*** Jira shell active; client is in 'jira'." " Press Ctrl-D to exit.")
     except Exception as e:

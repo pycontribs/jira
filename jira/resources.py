@@ -235,7 +235,7 @@ class Resource(object):
         self._load(url, params=params)
 
     def _get_url(self, path):
-        """ Gets the url for the specified path.
+        """Gets the url for the specified path.
 
         :type path: str
 
@@ -377,7 +377,7 @@ class Resource(object):
             return self._session.delete(url=self.self, params=params)
 
     def _load(self, url, headers=CaseInsensitiveDict(), params=None, path=None):
-        """ Load a resource.
+        """Load a resource.
 
         :type url: str
         :type headers: CaseInsensitiveDict
@@ -1092,7 +1092,7 @@ resource_class_map = {
     r"securitylevel/[^/]+$": SecurityLevel,
     r"status/[^/]+$": Status,
     r"statuscategory/[^/]+$": StatusCategory,
-    r"user\?(username|accountId).+$": User,
+    r"user\?(username|key).+$": User,
     r"group\?groupname.+$": Group,
     r"version/[^/]+$": Version,
     # GreenHopper specific resources
