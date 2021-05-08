@@ -16,12 +16,11 @@ keys = sorted([project.key for project in projects])[2:5]
 
 # Get an issue.
 issue = jira.issue("JRA-1330")
-assert issue.fields  # for mypy benefit
 # Find all comments made by Atlassians on this issue.
 atl_comments = [
     comment
-    for comment in issue.fields.comment.comments  # type: ignore # FIXME: .comments?
-    if re.search(r"@atlassian.com$", comment.author.emailAddress)
+    for comment in issue.fields.comment.comments
+    if re.search(r"@atlassian.com$", comment.author.key)
 ]
 
 # Add a comment to the issue.
@@ -40,7 +39,6 @@ issue.update(fields={"labels": ["AAA", "BBB"]})
 
 # Or modify the List of existing labels. The new label is unicode with no
 # spaces
-assert issue.fields.labels  # help mypy
 issue.fields.labels.append(u"new_text")
 issue.update(fields={"labels": issue.fields.labels})
 
@@ -50,4 +48,4 @@ issue.delete()
 # Linking a remote jira issue (needs applinks to be configured to work)
 issue = jira.issue("JRA-1330")
 issue2 = jira.issue("XX-23")  # could also be another instance
-jira.add_remote_link(str(issue.id), issue2)
+jira.add_remote_link(issue.id, issue2)

@@ -543,14 +543,22 @@ class Issue(Resource):
     """A Jira issue."""
 
     class _IssueFields(object):
+        class _Comment(object):
+            def __init__(self) -> None:
+                self.comments: List[Comment] = []
+
+        class _Worklog(object):
+            def __init__(self) -> None:
+                self.worklogs: List[Worklog] = []
+
         def __init__(self):
-            self.attachment: Optional[List[Attachment]] = None
-            self.comment: Optional[List[Comment]] = None
+            self.attachment: List[Attachment] = []
+            self.comment = self._Comment()
             self.description: Optional[str] = None
-            self.issuelinks: Optional[List[IssueLink]] = None
-            self.labels: Optional[List[str]] = None
+            self.issuelinks: List[IssueLink] = []
+            self.labels: List[str] = []
             self.project: Optional[Project] = None
-            self.worklog: Optional[List[Worklog]] = None
+            self.worklog = self._Worklog()
 
     def __init__(
         self,
@@ -560,13 +568,13 @@ class Issue(Resource):
     ):
         Resource.__init__(self, "issue/{0}", options, session)
 
-        self.fields: Optional[Issue._IssueFields] = None
-        self.id: Optional[int] = None
-        self.key: Optional[str] = None
+        self.fields: Issue._IssueFields
+        self.id: str
+        self.key: str
         if raw:
             self._parse_raw(raw)
 
-    def update(  # type: ignore # incompatible supertype ignored
+    def update(  # type: ignore[override] # incompatible supertype ignored
         self,
         fields: Dict[str, Any] = None,
         update: Dict[str, Any] = None,
