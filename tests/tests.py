@@ -1102,11 +1102,11 @@ class IssueTests(unittest.TestCase):
         self.assertTrue(hasattr(comments[0], "renderedBody"))
         ret_comment1 = self.jira.comment(self.issue_1, comment1.id,
                                          expand="renderedBody")
-        self.assertTrue(hasattr(ret_comment1, "renderedBody"))
         ret_comment2 = self.jira.comment(self.issue_1, comment2.id)
-        self.assertFalse(hasattr(ret_comment2, "renderedBody"))
         comment1.delete()
         comment2.delete()
+        self.assertTrue(hasattr(ret_comment1, "renderedBody"))
+        self.assertFalse(hasattr(ret_comment2, "renderedBody"))
         comments = self.jira_comments(self.issue_1)
         assert len(comments) == 0
 
