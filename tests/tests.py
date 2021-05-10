@@ -1108,7 +1108,7 @@ class IssueTests(unittest.TestCase):
         comment2.delete()
         self.assertTrue(hasattr(ret_comment1, "renderedBody"))
         self.assertFalse(hasattr(ret_comment2, "renderedBody"))
-        comments = self.jira_comments(self.issue_1)
+        comments = self.jira.comments(self.issue_1)
         assert len(comments) == 0
 
     def test_add_comment(self):
