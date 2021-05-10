@@ -1100,8 +1100,9 @@ class IssueTests(unittest.TestCase):
         comment2 = self.jira.add_comment(self.issue_1, "Second comment")
         comments = self.jira.comments(self.issue_1, expand="renderedBody")
         self.assertTrue(hasattr(comments[0], "renderedBody"))
-        ret_comment1 = self.jira.comment(self.issue_1, comment1.id,
-                                         expand="renderedBody")
+        ret_comment1 = self.jira.comment(
+            self.issue_1, comment1.id, expand="renderedBody"
+        )
         ret_comment2 = self.jira.comment(self.issue_1, comment2.id)
         comment1.delete()
         comment2.delete()
