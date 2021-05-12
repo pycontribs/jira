@@ -26,6 +26,9 @@ A code block with the any trace messages.
 
 
 **Version Information**
+Type of Jira instance:
+- [ ] Jira Cloud (Hosted by Atlassian)
+- [ ] Jira Server or Data Center (Self-hosted)
 Python Interpreter: <VERSION>
 jira-python: <VERSION>
 OS: <OPERATING SYSTEM>
