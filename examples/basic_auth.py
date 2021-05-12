@@ -2,6 +2,7 @@
 # username and password over HTTP BASIC authentication.
 
 from collections import Counter
+
 from jira import JIRA
 
 # By default, the client will connect to a Jira instance started from the Atlassian Plugin SDK.

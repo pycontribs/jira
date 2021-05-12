@@ -1,84 +1,76 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-from requests.auth import AuthBase
-
 """
 This module implements a friendly (well, friendlier) interface between the raw JSON
 responses from Jira and the Resource/dict abstractions provided by this library. Users
 will construct a JIRA object as described below. Full API documentation can be found
 at: https://jira.readthedocs.io/en/latest/
 """
-from functools import lru_cache
-from functools import wraps
-
-import imghdr
-import mimetypes
-
-from collections.abc import Iterable
-import copy
-import json
-import logging
-import os
-import re
-
-
 import calendar
+import copy
 import datetime
 import hashlib
-from numbers import Number
-import requests
+import imghdr
+import json
+import logging
+import mimetypes
+import os
+import re
 import sys
 import time
 import warnings
-
-from requests.utils import get_netrc_auth
+from collections import OrderedDict
+from collections.abc import Iterable
+from functools import lru_cache, wraps
+from numbers import Number
 from urllib.parse import urlparse
+
+import requests
+from pkg_resources import parse_version
+from requests.auth import AuthBase
+from requests.utils import get_netrc_auth
+
+from jira import __version__
 
 # GreenHopper specific resources
 from jira.exceptions import JIRAError
-from jira.resilientsession import raise_on_error
-from jira.resilientsession import ResilientSession
+from jira.resilientsession import ResilientSession, raise_on_error
 
 # Jira-specific resources
-from jira.resources import Attachment
-from jira.resources import Board
-from jira.resources import Comment
-from jira.resources import Component
-from jira.resources import Customer
-from jira.resources import CustomFieldOption
-from jira.resources import Dashboard
-from jira.resources import Filter
-from jira.resources import GreenHopperResource
-from jira.resources import Issue
-from jira.resources import IssueLink
-from jira.resources import IssueLinkType
-from jira.resources import IssueType
-from jira.resources import Priority
-from jira.resources import Project
-from jira.resources import RemoteLink
-from jira.resources import RequestType
-from jira.resources import Resolution
-from jira.resources import Resource
-from jira.resources import Role
-from jira.resources import SecurityLevel
-from jira.resources import ServiceDesk
-from jira.resources import Sprint
-from jira.resources import Status
-from jira.resources import StatusCategory
-from jira.resources import User
-from jira.resources import Group
-from jira.resources import Version
-from jira.resources import Votes
-from jira.resources import Watchers
-from jira.resources import Worklog
-
-from jira import __version__
-from jira.utils import CaseInsensitiveDict
-from jira.utils import json_loads
-from jira.utils import threaded_requests
-from pkg_resources import parse_version
-
-from collections import OrderedDict
+from jira.resources import (
+    Attachment,
+    Board,
+    Comment,
+    Component,
+    Customer,
+    CustomFieldOption,
+    Dashboard,
+    Filter,
+    GreenHopperResource,
+    Group,
+    Issue,
+    IssueLink,
+    IssueLinkType,
+    IssueType,
+    Priority,
+    Project,
+    RemoteLink,
+    RequestType,
+    Resolution,
+    Resource,
+    Role,
+    SecurityLevel,
+    ServiceDesk,
+    Sprint,
+    Status,
+    StatusCategory,
+    User,
+    Version,
+    Votes,
+    Watchers,
+    Worklog,
+)
+from jira.utils import CaseInsensitiveDict, json_loads, threaded_requests
 
 try:
     # noinspection PyUnresolvedReferences
@@ -3048,9 +3040,7 @@ class JIRA(object):
         if kerberos_options is None:
             kerberos_options = {}
 
-        from requests_kerberos import DISABLED
-        from requests_kerberos import HTTPKerberosAuth
-        from requests_kerberos import OPTIONAL
+        from requests_kerberos import DISABLED, OPTIONAL, HTTPKerberosAuth
 
         if kerberos_options.get("mutual_authentication", "OPTIONAL") == "OPTIONAL":
             mutual_authentication = OPTIONAL
@@ -3166,8 +3156,9 @@ class JIRA(object):
 
     def _try_magic(self):
         try:
-            import magic
             import weakref
+
+            import magic
         except ImportError:
             self._magic = None
         else:

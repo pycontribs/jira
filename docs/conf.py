@@ -12,8 +12,9 @@
 # serve to show the default.
 
 import os
-import sphinx_rtd_theme
 import sys
+
+import sphinx_rtd_theme
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the

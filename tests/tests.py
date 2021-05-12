@@ -8,22 +8,19 @@ import random
 import re
 import string
 import sys
+import unittest
 from time import sleep
+from typing import Any, Dict
+from unittest import mock
 
-from flaky import flaky
 import py
 import pytest
 import requests
-from typing import Any, Dict
-
-import unittest
-
-from unittest import mock
-
+from flaky import flaky
 
 import jira  # noqa
-from jira import Role, Issue, JIRA, JIRAError, Project  # noqa
-from jira.resources import Resource, cls_for_resource, Group, UnknownResource  # noqa
+from jira import JIRA, Issue, JIRAError, Project, Role  # noqa
+from jira.resources import Group, Resource, UnknownResource, cls_for_resource  # noqa
 
 TEST_ROOT = os.path.dirname(__file__)
 TEST_ICON_PATH = os.path.join(TEST_ROOT, "icon.png")

@@ -4,15 +4,12 @@ This module implements the Resource classes that translate JSON from Jira REST r
 into usable objects.
 """
 
+import json
 import logging
 import re
 import time
 
-import json
-
-from jira.utils import CaseInsensitiveDict
-from jira.utils import json_loads
-from jira.utils import threaded_requests
+from jira.utils import CaseInsensitiveDict, json_loads, threaded_requests
 
 __all__ = (
     "Resource",

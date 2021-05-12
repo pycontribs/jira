@@ -2,11 +2,11 @@
 as the empty JIRA instance isn't provisioned with one.
 """
 import time
+from os import environ
 
 import requests
 
 from jira import JIRA
-from os import environ
 
 CI_JIRA_URL = environ["CI_JIRA_URL"]
 
