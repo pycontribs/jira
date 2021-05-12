@@ -12,7 +12,7 @@ jobs:
 
     env:
       PY_COLORS: 1
-      TOXENV: publish
+      TOXENV: pkg
 
     steps:
       - name: Switch to using Python 3.6 by default
