@@ -75,7 +75,7 @@ pytest-timeout==1.4.2
     # via -r test-requirements.in
 pytest-xdist==2.2.1
     # via -r test-requirements.in
-pytest==6.2.3
+pytest==6.2.4
     # via
     #   -r test-requirements.in
     #   pytest-cache
