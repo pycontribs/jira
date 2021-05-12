@@ -19,8 +19,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install gcc libkrb5-dev
-          python -m pip install --upgrade pip
-          python -m pip install --upgrade tox
+          python3 -m pip install --upgrade pip
+          python3 -m pip install --upgrade tox
 
       - name: Switch to using Python 3.6 by default
         uses: actions/setup-python@v2
