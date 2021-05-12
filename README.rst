@@ -102,7 +102,7 @@ Setup
     * Run tests for one env only
         - ``tox -e py37``
     * Build and publish with TWINE
-        - ``tox -e upload``
+        - ``tox -e publish``
 
 .. _Fork: https://help.github.com/articles/fork-a-repo/
 .. _sync: https://help.github.com/articles/syncing-a-fork/
