@@ -15,17 +15,17 @@ jobs:
       TOXENV: publish
 
     steps:
+      - name: Switch to using Python 3.6 by default
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.6
+
       - name: Install Dependencies
         run: |
           sudo apt-get update
           sudo apt-get install gcc libkrb5-dev
           python3 -m pip install --upgrade pip
           python3 -m pip install --upgrade tox
-
-      - name: Switch to using Python 3.6 by default
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.6
 
       - name: Check out src from Git
         uses: actions/checkout@v2
