@@ -2,7 +2,7 @@ name: release
 
 on:
   release:
-    types: [published, created, edited]
+    types: [created, edited]
 
 jobs:
   publish:
@@ -15,12 +15,18 @@ jobs:
       TOXENV: publish
 
     steps:
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install gcc libkrb5-dev
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade tox
+
       - name: Switch to using Python 3.6 by default
         uses: actions/setup-python@v2
         with:
           python-version: 3.6
-      - name: Install tox
-        run: python3 -m pip install --user tox
+
       - name: Check out src from Git
         uses: actions/checkout@v2
         with:
@@ -40,6 +46,7 @@ jobs:
               ) &&
               1 || 0
             }}
+
       - name: Drop Git tags from HEAD for non-tag-create and non-release events
         if: >-
           (
@@ -51,8 +58,10 @@ jobs:
           git tag --points-at HEAD
           |
           xargs git tag --delete
+
       - name: Build dists
         run: python3 -m tox
+
       - name: Publish to test.pypi.org
         if: >-
           (
@@ -69,6 +78,7 @@ jobs:
         with:
           password: ${{ secrets.TESTPYPI_PASSWORD }}
           repository_url: https://test.pypi.org/legacy/
+
       - name: Publish to pypi.org
         if: >-  # "create" workflows run separately from "push" & "pull_request"
           github.event_name == 'release'
