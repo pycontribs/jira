@@ -26,6 +26,11 @@ Comment
 
 .. autoclass:: Comment
 
+Version
+=======
+
+.. autoclass:: jira.resources.Version
+
 Worklog
 =======
 
