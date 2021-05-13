@@ -54,17 +54,34 @@ Pass a tuple of (username, password) to the ``auth`` constructor argument::
 Using this method, authentication happens during the initialization of the object. If the authentication is successful,
 the retrieved session cookie will be used in future requests. Upon cookie expiration, authentication will happen again transparently.
 
+.. warning::
+    This way of authentication is not supported anymore on Jira Cloud. You can find the deprecation notice `here <https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-basic-auth-and-cookie-based-auth>`_.
+
+    For Jira Cloud use the basic_auth= :ref:`basic-auth-api-token` authentication
+
 HTTP BASIC
 ^^^^^^^^^^
+
+(username, password)
+""""""""""""""""""""
 
 Pass a tuple of (username, password) to the ``basic_auth`` constructor argument::
 
     auth_jira = JIRA(basic_auth=('username', 'password'))
 
+.. warning::
+    This way of authentication is not supported anymore on Jira Cloud. You can find the deprecation notice `here <https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-basic-auth-and-cookie-based-auth>`_
+
+    For Jira Cloud use the basic_auth= :ref:`basic-auth-api-token` authentication
+
+.. _basic-auth-api-token:
+
+(username, api_token)
+"""""""""""""""""""""
+
 Or pass a tuple of (email, api_token) to the ``basic_auth`` constructor argument (JIRA cloud)::
 
     auth_jira = JIRA(basic_auth=('email', 'API token'))
-
 
 OAuth
 ^^^^^
