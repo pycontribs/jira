@@ -899,7 +899,7 @@ class Version(Resource):
 
         return super(Version, self).delete(params)
 
-    def update(self, **args):
+    def update(self, **kwargs):
         """
         Update this project version from the server. It is prior used to archive versions.
 
@@ -908,8 +908,8 @@ class Version(Resource):
         .. _documentation: https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-project-versions/#api-rest-api-2-version-id-put
         """
         data = {}
-        for field in args:
-            data[field] = args[field]
+        for field in kwargs:
+            data[field] = kwargs[field]
 
         super(Version, self).update(**data)
 
