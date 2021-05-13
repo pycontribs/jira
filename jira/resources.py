@@ -906,6 +906,21 @@ class Version(Resource):
         Refer to Atlassian REST API `documentation`_.
 
         .. _documentation: https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-project-versions/#api-rest-api-2-version-id-put
+
+        :Example:
+
+            .. code-block:: python
+
+                >> version_id = "10543"
+                >> version = JIRA("https://atlassian.org").version(version_id)
+                >> print(version.name)
+                "some_version_name"
+                >> version.update(name="another_name")
+                >> print(version.name)
+                "another_name"
+                >> version.update(archived=True)
+                >> print(version.archived)
+                True
         """
         data = {}
         for field in kwargs:
