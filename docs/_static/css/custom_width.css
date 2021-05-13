@@ -1,0 +1,5 @@
+@import url("theme.css");
+/* as found in https://stackoverflow.com/a/62338678/2559785 */
+.wy-nav-content {
+    max-width: 90%; !important
+}
