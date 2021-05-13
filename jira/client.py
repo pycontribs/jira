@@ -1598,7 +1598,7 @@ class JIRA(object):
         :type issue: str
         :param expand: extra information to fetch for each comment
                        such as renderedBody and properties.
-        :type expand: comma delimited str
+        :type expand: str
         :rtype: List[Comment]
         """
         params = {}
