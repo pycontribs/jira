@@ -413,8 +413,8 @@ class JIRA(object):
         :param async_workers: Set the number of worker threads for async operations.
         :type async_workers: int
         :param timeout: Set a read/connect timeout for the underlying calls to Jira (default: None)
+            Obviously this means that you cannot rely on the return code when this is enabled.
         :type timeout: Optional[Any]
-        Obviously this means that you cannot rely on the return code when this is enabled.
         :param max_retries: Sets the amount Retries for the HTTP sessions initiated by the client. (Default: 3)
         :type max_retries: int
         :param proxies: Sets the proxies for the HTTP session.
