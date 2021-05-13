@@ -1595,8 +1595,10 @@ class JIRA(object):
         """Get a list of comment Resources.
 
         :param issue: the issue to get comments from
-        :param expand: extra information to fetch inside each comment
         :type issue: str
+        :param expand: extra information to fetch for each comment
+                       such as renderedBody and properties.
+        :type expand: comma delimted str
         :rtype: List[Comment]
         """
         params = {}
@@ -1617,6 +1619,7 @@ class JIRA(object):
         :param issue: ID or key of the issue to get the comment from
         :param comment: ID of the comment to get
         :param expand: extra information to fetch for comment
+                       such as renderedBody and properties.
         """
         return self._find_for_resource(Comment, (issue, comment), expand=expand)
 
