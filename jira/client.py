@@ -4509,12 +4509,12 @@ class JIRA(object):
             )
 
     def add_issues_to_epic(
-        self, epic_id: int, issue_keys: str, ignore_epics: bool = True
+        self, epic_id: str, issue_keys: str, ignore_epics: bool = True
     ) -> Response:
         """Add the issues in ``issue_keys`` to the ``epic_id``.
 
         Args:
-            epic_id (int): The ID for the epic where issues should be added.
+            epic_id (str): The ID for the epic where issues should be added.
             issue_keys (str): The issues to add to the epic
             ignore_epics (bool): ignore any issues listed in ``issue_keys`` that are epics. (Default: True)
 
