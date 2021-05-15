@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 """Jira utils used internally."""
 import threading
+from typing import Any, Optional, cast
+
+from requests import Response
 
 from jira.resilientsession import raise_on_error
 
@@ -28,7 +31,7 @@ class CaseInsensitiveDict(dict):
     of how the header name was originally stored.
 
     If the constructor, ``.update``, or equality comparison
-    operations are given keys that have equal ``.lower()``s, the
+    operations are given keys that have equal ``.lower()`` s, the
     behavior is undefined.
 
     """
@@ -71,8 +74,20 @@ def threaded_requests(requests):
             th.join()
 
 
-def json_loads(r):
-    raise_on_error(r)
+def json_loads(r: Optional[Response]) -> Any:
+    """Attempts to load json the result of a response
+
+    Args:
+        r (Optional[Response]): The Response object
+
+    Raises:
+        JIRAError: via :py:func:`jira.resilientsession.raise_on_error`
+
+    Returns:
+        Union[List[Dict[str, Any]], Dict[str, Any]]: the json
+    """
+    raise_on_error(r)  # if 'r' is None, will raise an error here
+    r = cast(Response, r)  # tell mypy only Response-like are here
     try:
         return r.json()
     except ValueError:

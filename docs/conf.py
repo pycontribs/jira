@@ -25,75 +25,48 @@ from jira import __version__  # noqa
 # -- General configuration -----------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
-needs_sphinx = "2.2.0"
+needs_sphinx = "4.0.0"
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ["sphinx.ext.autodoc", "sphinx.ext.viewcode", "sphinx.ext.intersphinx"]
+extensions = [
+    "sphinx.ext.autodoc",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.viewcode",
+]
 
 intersphinx_mapping = {
-    "python": ("https://docs.python.org/3.7", None),
-    # until https://github.com/psf/requests/issues/5212 is addressed
-    # "requests": ("http://docs.python-requests.org/en/latest/", None),
-    "requests": ("https://requests.kennethreitz.org/en/master/", None),
+    "python": ("https://docs.python.org/3.8", None),
+    "requests": ("https://requests.readthedocs.io/en/latest/", None),
     "requests-oauthlib": ("https://requests-oauthlib.readthedocs.io/en/latest/", None),
     "ipython": ("https://ipython.readthedocs.io/en/stable/", None),
     "pip": ("https://pip.readthedocs.io/en/stable/", None),
 }
 
 autodoc_default_options = {
+    "member-order": "bysource",
     "members": True,
-    "undoc-members": True,
     "show-inheritance": True,
+    "special-members": "__init__",
+    "undoc-members": True,
 }
+autodoc_inherit_docstrings = False
+
 
 nitpick_ignore = [
-    ("py:class", "Any"),
-    ("py:class", "Attachment"),
-    ("py:class", "Board"),
-    ("py:class", "BufferedReader"),
-    ("py:class", "Component"),
-    ("py:class", "CustomFieldOption"),
-    ("py:class", "Customer"),
-    ("py:class", "Dashboard"),
-    ("py:class", "Dict"),
-    ("py:class", "Filter"),
-    ("py:class", "Issue._IssueFields"),
-    ("py:class", "IssueLinkType"),
-    ("py:class", "IssueType"),
-    ("py:class", "Iterable"),
-    ("py:class", "List"),
-    ("py:class", "NoReturn"),
-    ("py:class", "Optional"),
-    ("py:class", "Project"),
-    ("py:class", "Resolution"),
-    ("py:class", "Resource"),
-    ("py:class", "Response"),
-    ("py:class", "ResultList"),
-    ("py:class", "ServiceDesk"),
-    ("py:class", "Sprint"),
-    ("py:class", "Status"),
-    ("py:class", "StatusCategory"),
-    ("py:class", "Tuple"),
-    ("py:class", "Union"),
-    ("py:class", "User"),
-    ("py:class", "Version"),
-    ("py:class", "Votes"),
-    ("py:class", "diy"),
-    ("py:class", "integer"),
-    ("py:class", "jira.client.ResultList"),
-    ("py:class", "jira.resources.Resource"),
-    ("py:class", "jira.resources.Sprint"),
-    ("py:class", "jira.resources.Watchers"),
-    ("py:class", "kanban"),
-    ("py:class", "project"),
-    ("py:class", "scrum"),
-    ("py:class", "user"),
-    ("py:meth", "Resource.delete"),
-    ("py:meth", "Resource.update"),
+    ("py:class", "JIRA"),  # in jira.resources we only import this class if type
+    ("py:obj", "typing.ResourceType"),  # only Py36 has a problem with this reference
+    # From other packages
     ("py:mod", "filemagic"),
     ("py:mod", "ipython"),
     ("py:mod", "pip"),
+    ("py:class", "_io.BufferedReader"),
+    ("py:class", "BufferedReader"),
+    ("py:class", "Request"),
+    ("py:class", "requests.models.Response"),
+    ("py:class", "requests.sessions.Session"),
+    ("py:class", "Response"),
     ("py:mod", "requests-kerberos"),
     ("py:mod", "requests-oauthlib"),
 ]
@@ -288,6 +261,12 @@ man_pages = [
 
 # If true, show URL addresses after external links.
 # man_show_urls = False
+
+# -- Options for Napoleon  -----------------------------------------------------
+
+napoleon_google_docstring = True
+napoleon_numpy_docstring = False  # Explicitly prefer Google style docstring
+napoleon_use_param = True  # for type hint support
 
 
 # -- Options for Texinfo output ------------------------------------------------
