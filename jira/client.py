@@ -2239,11 +2239,11 @@ class JIRA(object):
             IssueType
         """
         matching_issue_types = [it for it in self.issue_types() if it.name == name]
-        if len(matching_issue_types == 1:
+        if len(matching_issue_types) == 1:
             return matching_issue_types[0]
         elif len(matching_issue_types) == 0:
             raise KeyError("Issue type '%s' is unknown." % name)
-        else
+        else:
             raise KeyError("Issue type '%s' appears more than once." % name)
 
     def request_types(self, service_desk: ServiceDesk) -> List[RequestType]:
