@@ -70,20 +70,15 @@ def hashify(some_string, max_len=8):
 
 
 def get_unique_project_name():
-    jid = ""
     user = re.sub("[^A-Z_]", "", getpass.getuser().upper())
-    if user == "TRAVIS" and "TRAVIS_JOB_NUMBER" in os.environ:
+    if "GITHUB_ACTION" in os.environ and "GITHUB_RUN_NUMBER" in os.environ:
         # please note that user underline (_) is not supported by
         # Jira even if it is documented as supported.
-        jid = "T" + hashify(user + os.environ["TRAVIS_JOB_NUMBER"])
-    else:
-        identifier = (
-            user
-            + chr(ord("A") + sys.version_info[0])
-            + chr(ord("A") + sys.version_info[1])
-        )
-        jid = "Z" + hashify(identifier)
-    return jid
+        return "GH" + hashify(user + os.environ["GITHUB_RUN_NUMBER"])
+    identifier = (
+        user + chr(ord("A") + sys.version_info[0]) + chr(ord("A") + sys.version_info[1])
+    )
+    return "Z" + hashify(identifier)
 
 
 class JiraTestManager(object):
@@ -102,14 +97,12 @@ class JiraTestManager(object):
 
         if not self.__dict__:
             self.initialized = 0
+            self.max_retries = 5
 
             if "CI_JIRA_URL" in os.environ:
                 self.CI_JIRA_URL = os.environ["CI_JIRA_URL"]
-                self.max_retries = 5
             else:
                 self.CI_JIRA_URL = "https://pycontribs.atlassian.net"
-                self.max_retries = 5
-
             if "CI_JIRA_ADMIN" in os.environ:
                 self.CI_JIRA_ADMIN = os.environ["CI_JIRA_ADMIN"]
             else:
@@ -141,27 +134,6 @@ class JiraTestManager(object):
                         "key_cert": KEY_CERT_DATA,
                     }
                 )
-            else:
-                if self.CI_JIRA_ADMIN:
-                    self.jira_admin = JIRA(
-                        self.CI_JIRA_URL,
-                        basic_auth=(self.CI_JIRA_ADMIN, self.CI_JIRA_ADMIN_PASSWORD),
-                        logging=False,
-                        validate=True,
-                        max_retries=self.max_retries,
-                    )
-                else:
-                    self.jira_admin = JIRA(
-                        self.CI_JIRA_URL,
-                        validate=True,
-                        logging=False,
-                        max_retries=self.max_retries,
-                    )
-            if not self.jira_admin.current_user():
-                self.initialized = 1
-                sys.exit(3)
-
-            if OAUTH:
                 self.jira_sysadmin = JIRA(
                     oauth={
                         "access_token": "4ul1ETSFo7ybbIxAxzyRal39cTrwEGFv",
@@ -172,21 +144,6 @@ class JiraTestManager(object):
                     logging=False,
                     max_retries=self.max_retries,
                 )
-            else:
-                if self.CI_JIRA_ADMIN:
-                    self.jira_sysadmin = JIRA(
-                        self.CI_JIRA_URL,
-                        basic_auth=(self.CI_JIRA_ADMIN, self.CI_JIRA_ADMIN_PASSWORD),
-                        logging=False,
-                        validate=True,
-                        max_retries=self.max_retries,
-                    )
-                else:
-                    self.jira_sysadmin = JIRA(
-                        self.CI_JIRA_URL, logging=False, max_retries=self.max_retries
-                    )
-
-            if OAUTH:
                 self.jira_normal = JIRA(
                     oauth={
                         "access_token": "ZVDgYDyIQqJY8IFlQ446jZaURIz5ECiB",
@@ -197,6 +154,20 @@ class JiraTestManager(object):
                 )
             else:
                 if self.CI_JIRA_ADMIN:
+                    self.jira_admin = JIRA(
+                        self.CI_JIRA_URL,
+                        basic_auth=(self.CI_JIRA_ADMIN, self.CI_JIRA_ADMIN_PASSWORD),
+                        logging=False,
+                        validate=True,
+                        max_retries=self.max_retries,
+                    )
+                    self.jira_sysadmin = JIRA(
+                        self.CI_JIRA_URL,
+                        basic_auth=(self.CI_JIRA_ADMIN, self.CI_JIRA_ADMIN_PASSWORD),
+                        logging=False,
+                        validate=True,
+                        max_retries=self.max_retries,
+                    )
                     self.jira_normal = JIRA(
                         self.CI_JIRA_URL,
                         basic_auth=(self.CI_JIRA_USER, self.CI_JIRA_USER_PASSWORD),
@@ -205,12 +176,24 @@ class JiraTestManager(object):
                         max_retries=self.max_retries,
                     )
                 else:
+                    self.jira_admin = JIRA(
+                        self.CI_JIRA_URL,
+                        validate=True,
+                        logging=False,
+                        max_retries=self.max_retries,
+                    )
+                    self.jira_sysadmin = JIRA(
+                        self.CI_JIRA_URL, logging=False, max_retries=self.max_retries
+                    )
                     self.jira_normal = JIRA(
                         self.CI_JIRA_URL,
                         validate=True,
                         logging=False,
                         max_retries=self.max_retries,
                     )
+            if not self.jira_admin.current_user():
+                self.initialized = 1
+                sys.exit(3)
 
             # now we need some data to start with for the tests
 
@@ -225,13 +208,6 @@ class JiraTestManager(object):
 
             jid length must be less than 9 characters because we may append
             another one and the Jira Project key length limit is 10.
-
-            Tests run in parallel:
-            * git branches master or developer, git pr or developers running
-                tests outside Travis
-            * Travis is using "Travis" username
-
-            https://docs.travis-ci.com/user/environment-variables/
             """
 
             self.jid = get_unique_project_name()
@@ -258,7 +234,6 @@ class JiraTestManager(object):
                 self.jira_admin.project(self.project_a)
             except Exception as e:
                 logging.warning(e)
-                pass
             else:
                 try:
                     self.jira_admin.delete_project(self.project_a)
@@ -269,7 +244,6 @@ class JiraTestManager(object):
                 self.jira_admin.project(self.project_b)
             except Exception as e:
                 logging.warning(e)
-                pass
             else:
                 try:
                     self.jira_admin.delete_project(self.project_b)
@@ -277,7 +251,7 @@ class JiraTestManager(object):
                     pass
 
             # wait for the project to be deleted
-            for i in range(1, 20):
+            for _ in range(1, 20):
                 try:
                     self.jira_admin.project(self.project_b)
                 except Exception:
@@ -285,7 +259,7 @@ class JiraTestManager(object):
                 print("Warning: Project not deleted yet....")
                 sleep(2)
 
-            for i in range(6):
+            for _ in range(6):
                 try:
                     if self.jira_admin.create_project(
                         self.project_a, self.project_a_name
@@ -2269,9 +2243,7 @@ class UserAdministrationTests(unittest.TestCase):
         except JIRAError:
             pass
 
-        sleep(
-            2
-        )  # avoid 500 errors like https://travis-ci.org/pycontribs/jira/jobs/176544578#L552
+        sleep(2)  # avoid 500 errors
         result = self.jira.add_group(self.test_groupname)
         assert result, True
 
@@ -2288,9 +2260,7 @@ class UserAdministrationTests(unittest.TestCase):
             self._skip_pycontribs_instance()
         try:
             self.jira.add_group(self.test_groupname)
-            sleep(
-                1
-            )  # avoid 400: https://travis-ci.org/pycontribs/jira/jobs/176539521#L395
+            sleep(1)  # avoid 400
         except JIRAError:
             pass
 
@@ -2311,9 +2281,7 @@ class UserAdministrationTests(unittest.TestCase):
         )
 
     @not_on_custom_jira_instance
-    @pytest.mark.xfail(
-        reason="query may return empty list: https://travis-ci.org/pycontribs/jira/jobs/191274505#L520"
-    )
+    @pytest.mark.xfail(reason="query may return empty list")
     def test_add_user_to_group(self):
         try:
             self.jira.add_user(
