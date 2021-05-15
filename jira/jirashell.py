@@ -7,21 +7,19 @@ over HTTP BASIC or Kerberos.
 """
 
 import argparse
+import configparser
 import os
 import sys
 import webbrowser
 from getpass import getpass
+from urllib.parse import parse_qsl
 
 import keyring
 import requests
 from oauthlib.oauth1 import SIGNATURE_RSA
 from requests_oauthlib import OAuth1
-from urllib.parse import parse_qsl
 
 from jira import JIRA, __version__
-
-import configparser
-
 
 CONFIG_PATH = os.path.join(os.path.expanduser("~"), ".jira-python", "jirashell.ini")
 
@@ -362,7 +360,7 @@ def main():
             from IPython.frontend.terminal.embed import InteractiveShellEmbed
 
         ip_shell = InteractiveShellEmbed(
-            banner1="<Jira Shell " + __version__ + " (" + jira.client_info() + ")>"
+            banner1="<Jira Shell " + __version__ + " (" + jira.server_url + ")>"
         )
         ip_shell("*** Jira shell active; client is in 'jira'." " Press Ctrl-D to exit.")
     except Exception as e:

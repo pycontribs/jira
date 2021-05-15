@@ -1,12 +1,12 @@
 ---
 repos:
   - repo: https://github.com/python/black
-    rev: 19.3b0
+    rev: 21.4b2
     hooks:
       - id: black
         language_version: python3
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.3.0
+    rev: v3.4.0
     hooks:
       - id: end-of-file-fixer
       - id: trailing-whitespace
@@ -19,22 +19,39 @@ repos:
       - id: debug-statements
       - id: check-yaml
         files: .*\.(yaml|yml)$
+  - repo: https://github.com/codespell-project/codespell.git
+    rev: v2.0.0
+    hooks:
+      - id: codespell
+        name: codespell
+        description: Checks for common misspellings in text files.
+        entry: codespell
+        language: python
+        types: [text]
+        args: []
+        require_serial: false
+        additional_dependencies: []
   - repo: https://gitlab.com/pycqa/flake8
-    rev: 3.7.8
+    rev: 3.9.1
     hooks:
       - id: flake8
-        additional_dependencies:
-          - flake8-black
+  - repo: https://github.com/pycqa/isort
+    rev: 5.8.0
+    hooks:
+      - id: isort
+        name: isort (python)
+      - id: isort
+        name: isort (cython)
+        types: [cython]
+      - id: isort
+        name: isort (pyi)
+        types: [pyi]
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.17.0
+    rev: v1.26.1
     hooks:
       - id: yamllint
         files: \.(yaml|yml)$
-  - repo: https://github.com/openstack-dev/bashate.git
-    rev: 0.6.0
-    hooks:
-      - id: bashate
   - repo: https://github.com/pre-commit/mirrors-mypy.git
-    rev: v0.730
+    rev: v0.812
     hooks:
       - id: mypy
