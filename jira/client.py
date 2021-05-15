@@ -1375,7 +1375,7 @@ class JIRA(object):
             p = issue_data["fields"]["issuetype"]
             if isinstance(p, int):
                 issue_data["fields"]["issuetype"] = {"id": p}
-            if isinstance(p, str) or isinstance(p, int):
+            if isinstance(p, str):
                 issue_data["fields"]["issuetype"] = {
                     "id": self.issue_type_by_name(str(p)).id
                 }
@@ -2238,12 +2238,13 @@ class JIRA(object):
         Returns:
             IssueType
         """
-        issue_types = self.issue_types()
-        try:
-            issue_type = [it for it in issue_types if it.name == name][0]
-        except IndexError:
+        matching_issue_types = [it for it in self.issue_types() if it.name == name]
+        if len(matching_issue_types) == 1:
+            return matching_issue_types[0]
+        elif len(matching_issue_types) == 0:
             raise KeyError("Issue type '%s' is unknown." % name)
-        return issue_type
+        else:
+            raise KeyError("Issue type '%s' appears more than once." % name)
 
     def request_types(self, service_desk: ServiceDesk) -> List[RequestType]:
         """Returns request types supported by a service desk instance.
