@@ -9,8 +9,8 @@ class JIRAError(Exception):
     """General error raised for all problems in operation of the client."""
 
     log_to_tempfile = True
-    if "TRAVIS" in os.environ:
-        log_to_tempfile = False  # Travis is keeping only the console log.
+    if "GITHUB_ACTION" in os.environ:
+        log_to_tempfile = False  # GitHub Actions is keeping only the console log.
 
     def __init__(
         self,
@@ -37,12 +37,8 @@ class JIRAError(Exception):
         self.request = request
         self.response = response
         self.headers = kwargs.get("headers", None)
-        self.log_to_tempfile = False
-        self.travis = False
-        if "PYJIRA_LOG_TO_TEMPFILE" in os.environ:
-            self.log_to_tempfile = True
-        if "TRAVIS" in os.environ:
-            self.travis = True
+        self.log_to_tempfile = "PYJIRA_LOG_TO_TEMPFILE" in os.environ
+        self.ci_run = "GITHUB_ACTION" in os.environ
 
     def __str__(self) -> str:
         """Return a string representation of the error.
@@ -67,8 +63,8 @@ class JIRAError(Exception):
         if self.response is not None and hasattr(self.response, "text"):
             details += "\n\tresponse text = %s" % self.response.text
 
-        # separate logging for Travis makes sense.
-        if self.travis:
+        # separate logging for CI makes sense.
+        if self.ci_run:
             if self.text:
                 t += "\n\ttext: %s" % self.text
             t += details
