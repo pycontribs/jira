@@ -879,10 +879,11 @@ class Version(Resource):
             self._parse_raw(raw)
 
     def delete(self, moveFixIssuesTo=None, moveAffectedIssuesTo=None):
-        """Delete this project version from the server.
+        """
+        Delete this project version from the server.
 
-        If neither of the arguments are specified, the version is
-            removed from all issues it is attached to.
+        If neither of the arguments are specified, the version is removed from all
+        issues it is attached to.
 
         :param moveFixIssuesTo: in issues for which this version is a fix
             version, add this argument version to the fix version list
@@ -898,11 +899,32 @@ class Version(Resource):
 
         return super(Version, self).delete(params)
 
-    def update(self, **args):
-        """Update this project version from the server. It is prior used to archive versions."""
+    def update(self, **kwargs):
+        """
+        Update this project version from the server. It is prior used to archive versions.
+
+        Refer to Atlassian REST API `documentation`_.
+
+        .. _documentation: https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-project-versions/#api-rest-api-2-version-id-put
+
+        :Example:
+
+            .. code-block:: python
+
+                >> version_id = "10543"
+                >> version = JIRA("https://atlassian.org").version(version_id)
+                >> print(version.name)
+                "some_version_name"
+                >> version.update(name="another_name")
+                >> print(version.name)
+                "another_name"
+                >> version.update(archived=True)
+                >> print(version.archived)
+                True
+        """
         data = {}
-        for field in args:
-            data[field] = args[field]
+        for field in kwargs:
+            data[field] = kwargs[field]
 
         super(Version, self).update(**data)
 

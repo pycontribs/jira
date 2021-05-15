@@ -1570,6 +1570,17 @@ class ProjectTests(unittest.TestCase):
         i.update(fields={"fixVersions": [{"id": version.id}]})
         version.delete()
 
+    def test_update_project_version(self):
+        # given
+        name = "version-%s" % rndstr()
+        version = self.jira.create_version(name, self.project_b, "will be deleted soon")
+        updated_name = "version-%s" % rndstr()
+        # when
+        version.update(name=updated_name)
+        # then
+        self.assertEqual(updated_name, version.name)
+        version.delete()
+
     def test_get_project_version_by_name(self):
         name = "version-%s" % rndstr()
         version = self.jira.create_version(name, self.project_b, "will be deleted soon")
