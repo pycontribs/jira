@@ -1216,11 +1216,14 @@ class JIRA(object):
 
         result = {}
         for user in r["users"]["items"]:
-            result[user["key"]] = {
-                "name": user["name"],
-                "fullname": user["displayName"],
+            result[user["id"]] = {
+                "name": user.get("name"),
+                "id": user.get("id"),
+                "accountId": user.get("accountId"),
+                "fullname": user.get("displayName"),
                 "email": user.get("emailAddress", "hidden"),
-                "active": user["active"],
+                "active": user.get("active"),
+                "timezone": user.get("timezone"),
             }
         return OrderedDict(sorted(result.items(), key=lambda t: t[0]))
 
