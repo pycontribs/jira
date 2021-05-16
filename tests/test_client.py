@@ -8,7 +8,7 @@ from jira import JIRA, Issue, JIRAError, Project, Role  # noqa
 
 # from tenacity import retry
 # from tenacity import wait_incrementing
-from tests import JiraTestManager, get_unique_project_name
+from tests.conftest import JiraTestManager, get_unique_project_name
 
 
 @pytest.fixture()
