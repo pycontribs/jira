@@ -100,12 +100,41 @@ Setup
         - ``tox``
     * Run tests for one env only
         - ``tox -e py37``
+    * Specify what tests to run with pytest_
+        - ``tox -e py39 -- tests/resources/test_attachment.py``
+    * Debug tests with breakpoints by disabling the coverage plugin, with the ``--no-cov`` argument.
+        - Example for VSCode on Windows :
+
+        .. code-block:: java
+
+            {
+                "name": "Pytest",
+                "type": "python",
+                "request": "launch",
+                "python": ".tox\\py39\\Scripts\\python.exe",
+                "module": "pytest",
+                "env": {
+                    "CI_JIRA_URL": "http://localhost:2990/jira",
+                    "CI_JIRA_ADMIN": "admin",
+                    "CI_JIRA_ADMIN_PASSWORD": "admin",
+                    "CI_JIRA_USER": "jira_user",
+                    "CI_JIRA_USER_PASSWORD": "jira",
+                    "CI_JIRA_ISSUE": "Task"
+                },
+                "args": [
+                    // "-v",
+                    "--no-cov", // running coverage affects breakpoints
+                    "tests/resources/test_attachment.py"
+                ]
+            }
+
     * Build and publish with TWINE
         - ``tox -e publish``
 
 .. _Fork: https://help.github.com/articles/fork-a-repo/
 .. _sync: https://help.github.com/articles/syncing-a-fork/
 .. _pyenv: https://amaral.northwestern.edu/resources/guides/pyenv-tutorial
+.. _pytest: https://docs.pytest.org/en/stable/usage.html#specifying-tests-selecting-tests
 
 
 Credits
