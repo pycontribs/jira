@@ -1,5 +1,8 @@
 include LICENSE README.rst
 
+# Include
+include jira/py.typed
+
 # Exclude what is in these folders
 prune tests
 prune .github

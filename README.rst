@@ -85,7 +85,6 @@ Development takes place on GitHub_:
 
 * ``master`` - (default branch) contains the primary development stream. Tags will be used to show latest releases.
 
-.. _GitHub: https://github.com/pycontribs/jira
 
 Setup
 =====
@@ -97,16 +96,12 @@ Setup
         - ``docker run -dit -p 2990:2990 --name jira addono/jira-software-standalone``
     * Lint
         - ``tox -e lint``
-        - Note: Windows users trying to run locally will need to:
-            - Comment out the ``npm`` commands in the ``lint`` environment before running the ``lint`` environment
-            - Run ``npm install`` manually
-            - Run ``cspell "**"  --unique`` manually - this relies on the ``cspell.json`` to check the right files
     * Run tests
         - ``tox``
     * Run tests for one env only
         - ``tox -e py37``
     * Build and publish with TWINE
-        - ``tox -e upload``
+        - ``tox -e publish``
 
 .. _Fork: https://help.github.com/articles/fork-a-repo/
 .. _sync: https://help.github.com/articles/syncing-a-fork/
@@ -120,15 +115,15 @@ In addition to all the contributors we would like to thank to these companies:
 
 * Atlassian_ for developing such a powerful issue tracker and for providing a free on-demand Jira_ instance that we can use for continuous integration testing.
 * JetBrains_ for providing us with free licenses of PyCharm_
-* Travis_ for hosting our continuous integration
+* GitHub_ for hosting our continuous integration and our git repo
 * Navicat_ for providing us free licenses of their powerful database client GUI tools.
 
 .. _Atlassian: https://www.atlassian.com/
 .. _Jira: https://pycontribs.atlassian.net
 .. _JetBrains: https://www.jetbrains.com/
 .. _PyCharm: https://www.jetbrains.com/pycharm/
-.. _Travis: https://travis-ci.org/
-.. _navicat: https://www.navicat.com/
+.. _GitHub: https://github.com/pycontribs/jira
+.. _Navicat: https://www.navicat.com/
 
 .. image:: https://raw.githubusercontent.com/pycontribs/resources/master/logos/x32/logo-atlassian.png
    :target: https://www.atlassian.com/

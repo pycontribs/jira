@@ -1,19 +1,30 @@
 # -*- coding: utf-8 -*-
 import json
 import logging
-
-
 import random
-from requests.exceptions import ConnectionError
-from requests import Session
 import time
+from typing import Callable, Optional, Union, cast
+
+from requests import Response, Session
+from requests.exceptions import ConnectionError
 
 from jira.exceptions import JIRAError
 
 logging.getLogger("jira").addHandler(logging.NullHandler())
 
 
-def raise_on_error(r, verb="???", **kwargs):
+def raise_on_error(r: Optional[Response], verb="???", **kwargs):
+    """Handle errors from a Jira Request
+
+    Args:
+        r (Optional[Response]): Response from Jira request
+        verb (Optional[str]): Request type, e.g. POST. Defaults to "???".
+
+    Raises:
+        JIRAError: If Response is None
+        JIRAError: for unhandled 400 status codes.
+        JIRAError: for unhandled 200 status codes.
+    """
     request = kwargs.get("request", None)
     # headers = kwargs.get('headers', None)
 
@@ -52,11 +63,18 @@ def raise_on_error(r, verb="???", **kwargs):
             except ValueError:
                 error = r.text
         raise JIRAError(
-            r.status_code, error, r.url, request=request, response=r, **kwargs
+            error,
+            status_code=r.status_code,
+            url=r.url,
+            request=request,
+            response=r,
+            **kwargs,
         )
     # for debugging weird errors on CI
     if r.status_code not in [200, 201, 202, 204]:
-        raise JIRAError(r.status_code, request=request, response=r, **kwargs)
+        raise JIRAError(
+            status_code=r.status_code, request=request, response=r, **kwargs
+        )
     # testing for the bug exposed on
     # https://answers.atlassian.com/questions/11457054/answers/11975162
     if (
@@ -82,8 +100,14 @@ class ResilientSession(Session):
         # Indicate our preference for JSON to avoid https://bitbucket.org/bspeakmon/jira-python/issue/46 and https://jira.atlassian.com/browse/JRA-38551
         self.headers.update({"Accept": "application/json,*.*;q=0.9"})
 
-    def __recoverable(self, response, url, request, counter=1):
-        msg = response
+    def __recoverable(
+        self,
+        response: Optional[Union[ConnectionError, Response]],
+        url: str,
+        request,
+        counter: int = 1,
+    ):
+        msg = str(response)
         if isinstance(response, ConnectionError):
             logging.warning(
                 "Got ConnectionError [%s] errno:%s on %s %s\n%s\n%s"
@@ -96,10 +120,10 @@ class ResilientSession(Session):
                     response.__dict__,
                 )
             )
-        if hasattr(response, "status_code"):
+        if isinstance(response, Response):
             if response.status_code in [502, 503, 504, 401]:
                 # 401 UNAUTHORIZED still randomly returned by Atlassian Cloud as of 2017-01-16
-                msg = "%s %s" % (response.status_code, response.reason)
+                msg = f"{response.status_code} {response.reason}"
                 # 2019-07-25: Disabled recovery for codes above^
                 return False
             elif not (
@@ -118,12 +142,15 @@ class ResilientSession(Session):
             "Got recoverable error from %s %s, will retry [%s/%s] in %ss. Err: %s"
             % (request, url, counter, self.max_retries, delay, msg)
         )
-        logging.debug("response.headers: %s", response.headers)
-        logging.debug("response.body: %s", response.content)
+        if isinstance(response, Response):
+            logging.debug("response.headers: %s", response.headers)
+            logging.debug("response.body: %s", response.content)
         time.sleep(delay)
         return True
 
-    def __verb(self, verb, url, retry_data=None, **kwargs):
+    def __verb(
+        self, verb: str, url: str, retry_data: Callable = None, **kwargs
+    ) -> Response:
 
         d = self.headers.copy()
         d.update(kwargs.get("headers", {}))
@@ -136,6 +163,8 @@ class ResilientSession(Session):
             data = json.dumps(data)
 
         retry_number = 0
+        exception = None
+        response = None
         while retry_number <= self.max_retries:
             response = None
             exception = None
@@ -167,25 +196,27 @@ class ResilientSession(Session):
         if exception is not None:
             raise exception
         raise_on_error(response, verb=verb, **kwargs)
+        # after raise_on_error, only Response objects are allowed through
+        response = cast(Response, response)  # tell mypy only Response-like are here
         return response
 
-    def get(self, url, **kwargs):
-        return self.__verb("GET", url, **kwargs)
+    def get(self, url: Union[str, bytes], **kwargs) -> Response:
+        return self.__verb("GET", str(url), **kwargs)
 
-    def post(self, url, **kwargs):
-        return self.__verb("POST", url, **kwargs)
+    def post(self, url: Union[str, bytes], data=None, json=None, **kwargs) -> Response:
+        return self.__verb("POST", str(url), data=data, json=json, **kwargs)
 
-    def put(self, url, **kwargs):
-        return self.__verb("PUT", url, **kwargs)
+    def put(self, url: Union[str, bytes], data=None, **kwargs) -> Response:
+        return self.__verb("PUT", str(url), data=data, **kwargs)
 
-    def delete(self, url, **kwargs):
-        return self.__verb("DELETE", url, **kwargs)
+    def delete(self, url: Union[str, bytes], **kwargs) -> Response:
+        return self.__verb("DELETE", str(url), **kwargs)
 
-    def head(self, url, **kwargs):
-        return self.__verb("HEAD", url, **kwargs)
+    def head(self, url: Union[str, bytes], **kwargs) -> Response:
+        return self.__verb("HEAD", str(url), **kwargs)
 
-    def patch(self, url, **kwargs):
-        return self.__verb("PATCH", url, **kwargs)
+    def patch(self, url: Union[str, bytes], data=None, **kwargs) -> Response:
+        return self.__verb("PATCH", str(url), data=data, **kwargs)
 
-    def options(self, url, **kwargs):
-        return self.__verb("OPTIONS", url, **kwargs)
+    def options(self, url: Union[str, bytes], **kwargs) -> Response:
+        return self.__verb("OPTIONS", str(url), **kwargs)
