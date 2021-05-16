@@ -38,19 +38,13 @@ def oauth_dance(server, consumer_key, key_cert_data, print_tokens=False, verify=
     request_token_secret = request["oauth_token_secret"]
     if print_tokens:
         print("Request tokens received.")
-        print("    Request token:        {}".format(request_token))
-        print("    Request token secret: {}".format(request_token_secret))
+        print(f"    Request token:        {request_token}")
+        print(f"    Request token secret: {request_token_secret}")
 
     # step 2: prompt user to validate
-    auth_url = "{}/plugins/servlet/oauth/authorize?oauth_token={}".format(
-        server, request_token
-    )
+    auth_url = f"{server}/plugins/servlet/oauth/authorize?oauth_token={request_token}"
     if print_tokens:
-        print(
-            "Please visit this URL to authorize the OAuth request:\n\t{}".format(
-                auth_url
-            )
-        )
+        print(f"Please visit this URL to authorize the OAuth request:\n\t{auth_url}")
     else:
         webbrowser.open_new(auth_url)
         print(
@@ -58,9 +52,7 @@ def oauth_dance(server, consumer_key, key_cert_data, print_tokens=False, verify=
         )
 
     approved = input(
-        "Have you authorized this program to connect on your behalf to {}? (y/n)".format(
-            server
-        )
+        f"Have you authorized this program to connect on your behalf to {server}? (y/n)"
     )
 
     if approved.lower() != "y":
@@ -83,8 +75,8 @@ def oauth_dance(server, consumer_key, key_cert_data, print_tokens=False, verify=
 
     if print_tokens:
         print("Access tokens received.")
-        print("    Access token:        {}".format(access["oauth_token"]))
-        print("    Access token secret: {}".format(access["oauth_token_secret"]))
+        print(f"    Access token:        {access['oauth_token']}")
+        print(f"    Access token secret: {access['oauth_token_secret']}")
 
     return {
         "access_token": access["oauth_token"],
@@ -102,7 +94,7 @@ def process_config():
     try:
         parser.read(CONFIG_PATH)
     except configparser.ParsingError as err:
-        print("Couldn't read config file at path: {}\n{}".format(CONFIG_PATH, err))
+        print(f"Couldn't read config file at path: {CONFIG_PATH}\n{err}")
         raise
 
     if parser.has_section("options"):
@@ -304,7 +296,7 @@ def handle_basic_auth(auth, server):
         print("Getting password from keyring...")
         password = keyring.get_password(server, auth["username"])
         assert password, "No password provided!"
-    return (auth["username"], password)
+    return auth["username"], password
 
 
 def main():
@@ -362,7 +354,7 @@ def main():
         ip_shell = InteractiveShellEmbed(
             banner1="<Jira Shell " + __version__ + " (" + jira.server_url + ")>"
         )
-        ip_shell("*** Jira shell active; client is in 'jira'." " Press Ctrl-D to exit.")
+        ip_shell("*** Jira shell active; client is in 'jira'. Press Ctrl-D to exit.")
     except Exception as e:
         print(e, file=sys.stderr)
         return 2

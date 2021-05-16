@@ -110,15 +110,7 @@ class ResilientSession(Session):
         msg = str(response)
         if isinstance(response, ConnectionError):
             logging.warning(
-                "Got ConnectionError [%s] errno:%s on %s %s\n%s\n%s"
-                % (
-                    response,
-                    response.errno,
-                    request,
-                    url,
-                    vars(response),
-                    response.__dict__,
-                )
+                f"Got ConnectionError [{response}] errno:{response.errno} on {request} {url}\n{vars(response)}\n{response.__dict__}"
             )
         if isinstance(response, Response):
             if response.status_code in [502, 503, 504, 401]:
@@ -174,9 +166,7 @@ class ResilientSession(Session):
                 if response.status_code >= 200 and response.status_code <= 299:
                     return response
             except ConnectionError as e:
-                logging.warning(
-                    "%s while doing %s %s [%s]" % (e, verb.upper(), url, kwargs)
-                )
+                logging.warning(f"{e} while doing {verb.upper()} {url} [{kwargs}]")
                 exception = e
             retry_number += 1
 

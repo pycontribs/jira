@@ -177,8 +177,8 @@ class Resource(object):
                 if name in self.raw:
                     names.append(name + "=" + repr(self.raw[name]))
         if not names:
-            return "<JIRA %s at %s>" % (self.__class__.__name__, id(self))
-        return "<JIRA %s: %s>" % (self.__class__.__name__, ", ".join(names))
+            return f"<JIRA {self.__class__.__name__} at {id(self)}>"
+        return f"<JIRA {self.__class__.__name__}: {', '.join(names)}>"
 
     def __getattr__(self, item: str):
         """Allow access of attributes via names.
@@ -211,7 +211,7 @@ class Resource(object):
                 return self.raw[item]
             else:
                 raise AttributeError(
-                    "%r object has no attribute %r (%s)" % (self.__class__, item, e)
+                    f"{self.__class__!r} object has no attribute {item!r} ({e})"
                 )
 
     # def __getstate__(self):
@@ -269,7 +269,7 @@ class Resource(object):
         async_: Optional[bool] = None,
         jira: "JIRA" = None,
         notify: bool = True,
-        **kwargs: Any
+        **kwargs: Any,
     ):
         """Update this resource on the server.
 
@@ -422,7 +422,7 @@ class Resource(object):
         try:
             j = json_loads(r)
         except ValueError as e:
-            logging.error("%s:\n%s" % (e, r.text))
+            logging.error(f"{e}:\n{r.text}")
             raise e
         if path:
             j = j[path]
@@ -436,7 +436,7 @@ class Resource(object):
         """
         self.raw = raw
         if not raw:
-            raise NotImplementedError("We cannot instantiate empty resources: %s" % raw)
+            raise NotImplementedError(f"We cannot instantiate empty resources: {raw}")
         dict2resource(raw, self, self._options, self._session)
 
     def _default_headers(self, user_headers):
@@ -581,7 +581,7 @@ class Issue(Resource):
         async_: bool = None,
         jira: "JIRA" = None,
         notify: bool = True,
-        **fieldargs
+        **fieldargs,
     ):
         """Update this issue on the server.
 
@@ -662,7 +662,7 @@ class Issue(Resource):
         Returns:
             str: URL of the issue
         """
-        return "%s/browse/%s" % (self._options["server"], self.key)
+        return f"{self._options['server']}/browse/{self.key}"
 
     def __eq__(self, other):
         """Comparison method."""
@@ -1162,7 +1162,7 @@ class Sprint(GreenHopperResource):
             Resource.find(self, id, params)
         else:
             # Old, private GreenHopper API had non-standard way of loading Sprint
-            url = self._get_url("sprint/%s/edit/model" % id)
+            url = self._get_url(f"sprint/{id}/edit/model")
             self._load(url, params=params, path="sprint")
 
 
