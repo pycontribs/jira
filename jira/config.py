@@ -87,7 +87,7 @@ def get_jira(
 
     config_file = findfile("config.ini")
     if config_file:
-        logging.debug("Found %s config file" % config_file)
+        logging.debug(f"Found {config_file} config file")
 
     if not profile:
         if config_file:
