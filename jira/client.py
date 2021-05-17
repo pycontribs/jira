@@ -1618,7 +1618,7 @@ class JIRA(object):
         return True
 
     @translate_resource_args
-    def comments(self, issue: str, expand=None):
+    def comments(self, issue: str, expand: Optional[str] = None) -> List[Comment]:
         """Get a list of comment Resources.
 
         :param issue: the issue to get comments from
@@ -1640,7 +1640,7 @@ class JIRA(object):
         return comments
 
     @translate_resource_args
-    def comment(self, issue: str, comment, expand=None):
+    def comment(self, issue: str, comment: str, expand: Optional[str] = None) -> Comment:
         """Get a comment Resource from the server for the specified ID.
 
         :param issue: ID or key of the issue to get the comment from
