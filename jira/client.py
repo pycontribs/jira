@@ -2977,7 +2977,7 @@ class JIRA(object):
               If maxResults evaluates as False, it will try to get all items in batches.
             includeActive (bool): If true, then active users are included in the results. (Default: True)
             includeInactive (bool): If true, then inactive users are included in the results. (Default: False)
-            query (optional str): Search term. It can just be the email.
+            query (Optional[str]): Search term. It can just be the email.
 
         Returns:
             ResultList[User]
