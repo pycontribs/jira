@@ -7,8 +7,6 @@ from tests.conftest import (
     not_on_custom_jira_instance,
 )
 
-broken_empty_list = broken_test(reason="query returns an empty list")
-
 
 class UserTests(JiraTestCase):
     def setUp(self):
@@ -22,7 +20,6 @@ class UserTests(JiraTestCase):
             user.emailAddress, r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
         )
 
-    @broken_empty_list
     def test_search_assignable_users_for_projects(self):
         users = self.jira.search_assignable_users_for_projects(
             self.test_manager.CI_JIRA_ADMIN, "%s,%s" % (self.project_a, self.project_b)
@@ -31,7 +28,6 @@ class UserTests(JiraTestCase):
         usernames = map(lambda user: user.name, users)
         self.assertIn(self.test_manager.CI_JIRA_ADMIN, usernames)
 
-    @broken_empty_list
     def test_search_assignable_users_for_projects_maxresults(self):
         users = self.jira.search_assignable_users_for_projects(
             self.test_manager.CI_JIRA_ADMIN,
@@ -40,7 +36,6 @@ class UserTests(JiraTestCase):
         )
         self.assertLessEqual(len(users), 1)
 
-    @broken_empty_list
     def test_search_assignable_users_for_projects_startat(self):
         users = self.jira.search_assignable_users_for_projects(
             self.test_manager.CI_JIRA_ADMIN,
@@ -58,14 +53,12 @@ class UserTests(JiraTestCase):
         usernames = map(lambda user: user.name, users)
         self.assertIn(self.test_manager.CI_JIRA_ADMIN, usernames)
 
-    @broken_empty_list
     def test_search_assignable_users_for_issues_by_project_maxresults(self):
         users = self.jira.search_assignable_users_for_issues(
             self.test_manager.CI_JIRA_USER, project=self.project_b, maxResults=1
         )
         self.assertLessEqual(len(users), 1)
 
-    @broken_empty_list
     def test_search_assignable_users_for_issues_by_project_startat(self):
         users = self.jira.search_assignable_users_for_issues(
             self.test_manager.CI_JIRA_USER, project=self.project_a, startAt=1
@@ -81,14 +74,12 @@ class UserTests(JiraTestCase):
         usernames = map(lambda user: user.name, users)
         self.assertIn(self.test_manager.CI_JIRA_ADMIN, usernames)
 
-    @broken_empty_list
     def test_search_assignable_users_for_issues_by_issue_maxresults(self):
         users = self.jira.search_assignable_users_for_issues(
             self.test_manager.CI_JIRA_ADMIN, issueKey=self.issue, maxResults=2
         )
         self.assertLessEqual(len(users), 2)
 
-    @broken_empty_list
     def test_search_assignable_users_for_issues_by_issue_startat(self):
         users = self.jira.search_assignable_users_for_issues(
             self.test_manager.CI_JIRA_ADMIN, issueKey=self.issue, startAt=2
@@ -177,14 +168,12 @@ class UserTests(JiraTestCase):
         users = self.jira.search_allowed_users_for_issue("a", issueKey=self.issue)
         self.assertGreaterEqual(len(users), 1)
 
-    @broken_empty_list
     def test_search_allowed_users_for_issue_maxresults(self):
         users = self.jira.search_allowed_users_for_issue(
             "a", projectKey=self.project_b, maxResults=2
         )
         self.assertLessEqual(len(users), 2)
 
-    @broken_empty_list
     def test_search_allowed_users_for_issue_startat(self):
         users = self.jira.search_allowed_users_for_issue(
             "c", projectKey=self.project_b, startAt=1
