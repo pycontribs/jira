@@ -22,6 +22,7 @@ from requests_oauthlib import OAuth1
 from jira import JIRA, __version__
 
 CONFIG_PATH = os.path.join(os.path.expanduser("~"), ".jira-python", "jirashell.ini")
+SENTINEL = object()
 
 
 def oauth_dance(server, consumer_key, key_cert_data, print_tokens=False, verify=None):
@@ -34,8 +35,16 @@ def oauth_dance(server, consumer_key, key_cert_data, print_tokens=False, verify=
         server + "/plugins/servlet/oauth/request-token", verify=verify, auth=oauth
     )
     request = dict(parse_qsl(r.text))
-    request_token = request["oauth_token"]
-    request_token_secret = request["oauth_token_secret"]
+    request_token = request.get("oauth_token", SENTINEL)
+    request_token_secret = request.get("oauth_token_secret", SENTINEL)
+    if request_token is SENTINEL or request_token_secret is SENTINEL:
+        problem = request.get("oauth_problem")
+        if problem is not None:
+            message = "OAuth error: {}".format(problem)
+        else:
+            message = " ".join(f"{key}:{value}" for key, value in request.items())
+        exit(message)
+
     if print_tokens:
         print("Request tokens received.")
         print("    Request token:        {}".format(request_token))
