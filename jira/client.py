@@ -2967,7 +2967,7 @@ class JIRA(object):
         query: Optional[str] = None,
     ) -> ResultList[User]:
         """Get a list of user Resources that match the specified search string.
-        "username" query parameter is deprecated; the expected parameter now is "query", which can just be the full
+        "username" query parameter is deprecated in Jira Cloud; the expected parameter now is "query", which can just be the full
         email again. But the first parameter is kept for backwards compatibility.
 
         Args:
