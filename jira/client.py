@@ -35,6 +35,7 @@ from typing import (
     Type,
     TypeVar,
     Union,
+    cast,
     no_type_check,
 )
 from urllib.parse import urlparse
@@ -877,7 +878,7 @@ class JIRA(object):
                 )
             finally:
                 if close_attachment:
-                    attachment.close()
+                    cast(BufferedReader, attachment).close()
         else:
             method = "MultipartEncoder"
 
@@ -899,7 +900,7 @@ class JIRA(object):
                 )
             finally:
                 if close_attachment:
-                    attachment.close()
+                    cast(BufferedReader, attachment).close()
 
         js: Union[Dict[str, Any], List[Dict[str, Any]]] = json_loads(r)
         if not js or not isinstance(js, Iterable):
