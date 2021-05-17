@@ -17,7 +17,7 @@ class JiraServiceDeskTests(JiraTestCase):
         try:
             self.jira.delete_project(self.test_manager.project_sd)
         except Exception:
-            pass
+            LOGGER.warning("Failed to delete %s", self.test_manager.project_sd)
 
     @broken_test(reason="Broken needs fixing")
     def test_create_customer_request(self):
@@ -29,7 +29,7 @@ class JiraServiceDeskTests(JiraTestCase):
             template_name="IT Service Desk",
         )
         service_desks = []
-        for i in range(3):
+        for _ in range(3):
             service_desks = self.jira.service_desks()
             if service_desks:
                 break
@@ -38,7 +38,7 @@ class JiraServiceDeskTests(JiraTestCase):
         self.assertTrue(service_desks, "No service desks were found!")
         service_desk = service_desks[0]
 
-        for i in range(3):
+        for _ in range(3):
             request_types = self.jira.request_types(service_desk)
             if request_types:
                 logging.warning("Service desk request_types not reported...")

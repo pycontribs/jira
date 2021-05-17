@@ -4,11 +4,11 @@ import getpass
 import pytest
 
 import jira.client
-from jira import JIRA, Issue, JIRAError, Project, Role  # noqa
+from jira.exceptions import JIRAError
+from tests.conftest import JiraTestManager, get_unique_project_name
 
 # from tenacity import retry
 # from tenacity import wait_incrementing
-from tests.conftest import JiraTestManager, get_unique_project_name
 
 
 @pytest.fixture()

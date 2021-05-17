@@ -31,7 +31,7 @@ try:
         KEY_CERT_DATA = cert.read()
     OAUTH = True
 except Exception:
-    pass
+    OAUTH = False
 
 
 ON_CUSTOM_JIRA = "CI_JIRA_URL" in os.environ
@@ -49,7 +49,8 @@ broken_test = pytest.mark.xfail
 
 @flaky  # all have default flaki-ness
 class JiraTestCase(unittest.TestCase):
-    """
+    """Test case for all Jira tests.
+
     This is the base class for all Jira tests that require access to the
     Jira instance.
 
@@ -97,7 +98,7 @@ def rndpassword():
 
 
 def hashify(some_string, max_len=8):
-    return hashlib.md5(some_string.encode("utf-8")).hexdigest()[:8].upper()
+    return hashlib.sha256(some_string.encode("utf-8")).hexdigest()[:8].upper()
 
 
 def get_unique_project_name():
@@ -113,7 +114,7 @@ def get_unique_project_name():
 
 
 class JiraTestManager(object):
-    """Used to instantiate and populate the JIRA instance with data used by the unit tests.
+    """Instantiate and populate the JIRA instance with data for tests.
 
     Attributes:
         CI_JIRA_ADMIN (str): Admin user account name.
@@ -124,6 +125,7 @@ class JiraTestManager(object):
     __shared_state: Dict[Any, Any] = {}
 
     def __init__(self):
+        """Instantiate and populate the JIRA instance"""
         self.__dict__ = self.__shared_state
 
         if not self.__dict__:
@@ -268,8 +270,8 @@ class JiraTestManager(object):
             else:
                 try:
                     self.jira_admin.delete_project(self.project_a)
-                except Exception as e:  # noqa
-                    pass
+                except Exception as e:
+                    LOGGER.warning("Failed to delete %s\n%s", self.project_a, e)
 
             try:
                 self.jira_admin.project(self.project_b)
@@ -278,8 +280,8 @@ class JiraTestManager(object):
             else:
                 try:
                     self.jira_admin.delete_project(self.project_b)
-                except Exception as e:  # noqa
-                    pass
+                except Exception as e:
+                    LOGGER.warning("Failed to delete %s\n%s", self.project_b, e)
 
             # wait for the project to be deleted
             for _ in range(1, 20):
