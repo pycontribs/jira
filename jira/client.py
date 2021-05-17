@@ -2959,7 +2959,7 @@ class JIRA(object):
 
     def search_users(
         self,
-        user: str,
+        user: Optional[str] = None,
         startAt: int = 0,
         maxResults: int = 50,
         includeActive: bool = True,
@@ -2971,7 +2971,7 @@ class JIRA(object):
         email again. But the first parameter is kept for backwards compatibility.
 
         Args:
-            user (str): a string to match usernames, name or email against.
+            user (optional str): a string to match usernames, name or email against.
             startAt (int): index of the first user to return.
             maxResults (int): maximum number of users to return.
               If maxResults evaluates as False, it will try to get all items in batches.
