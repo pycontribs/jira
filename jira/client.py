@@ -853,6 +853,7 @@ class JIRA(object):
         close_attachment = False
         if isinstance(attachment, str):
             attachment: BufferedReader = open(attachment, "rb")  # type: ignore
+            attachment = cast(BufferedReader, attachment)
             close_attachment = True
         elif isinstance(attachment, BufferedReader) and attachment.mode != "rb":
             self.log.warning(
@@ -878,7 +879,7 @@ class JIRA(object):
                 )
             finally:
                 if close_attachment:
-                    cast(BufferedReader, attachment).close()
+                    attachment.close()
         else:
             method = "MultipartEncoder"
 
@@ -900,7 +901,7 @@ class JIRA(object):
                 )
             finally:
                 if close_attachment:
-                    cast(BufferedReader, attachment).close()
+                    attachment.close()
 
         js: Union[Dict[str, Any], List[Dict[str, Any]]] = json_loads(r)
         if not js or not isinstance(js, Iterable):
