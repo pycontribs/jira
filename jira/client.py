@@ -895,7 +895,10 @@ class JIRA(object):
                     url,
                     data=m,
                     headers=CaseInsensitiveDict(
-                        {"content-type": m.content_type, "X-Atlassian-Token": "no-check"}
+                        {
+                            "content-type": m.content_type,
+                            "X-Atlassian-Token": "no-check",
+                        }
                     ),
                     retry_data=file_stream,
                 )
