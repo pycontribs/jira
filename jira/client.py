@@ -35,6 +35,7 @@ from typing import (
     Type,
     TypeVar,
     Union,
+    cast,
     no_type_check,
 )
 from urllib.parse import urlparse
@@ -845,8 +846,11 @@ class JIRA(object):
         Returns:
             Attachment
         """
+        close_attachment = False
         if isinstance(attachment, str):
             attachment: BufferedReader = open(attachment, "rb")  # type: ignore
+            attachment = cast(BufferedReader, attachment)
+            close_attachment = True
         elif isinstance(attachment, BufferedReader) and attachment.mode != "rb":
             self.log.warning(
                 "%s was not opened in 'rb' mode, attaching file may fail."
@@ -861,13 +865,17 @@ class JIRA(object):
 
         if "MultipartEncoder" not in globals():
             method = "old"
-            r = self._session.post(
-                url,
-                files={"file": (fname, attachment, "application/octet-stream")},
-                headers=CaseInsensitiveDict(
-                    {"content-type": None, "X-Atlassian-Token": "no-check"}
-                ),
-            )
+            try:
+                r = self._session.post(
+                    url,
+                    files={"file": (fname, attachment, "application/octet-stream")},
+                    headers=CaseInsensitiveDict(
+                        {"content-type": None, "X-Atlassian-Token": "no-check"}
+                    ),
+                )
+            finally:
+                if close_attachment:
+                    attachment.close()
         else:
             method = "MultipartEncoder"
 
@@ -878,14 +886,21 @@ class JIRA(object):
                 )
 
             m = file_stream()
-            r = self._session.post(
-                url,
-                data=m,
-                headers=CaseInsensitiveDict(
-                    {"content-type": m.content_type, "X-Atlassian-Token": "no-check"}
-                ),
-                retry_data=file_stream,
-            )
+            try:
+                r = self._session.post(
+                    url,
+                    data=m,
+                    headers=CaseInsensitiveDict(
+                        {
+                            "content-type": m.content_type,
+                            "X-Atlassian-Token": "no-check",
+                        }
+                    ),
+                    retry_data=file_stream,
+                )
+            finally:
+                if close_attachment:
+                    attachment.close()
 
         js: Union[Dict[str, Any], List[Dict[str, Any]]] = json_loads(r)
         if not js or not isinstance(js, Iterable):
@@ -1614,15 +1629,20 @@ class JIRA(object):
         return True
 
     @translate_resource_args
-    def comments(self, issue: str) -> List[Comment]:
+    def comments(self, issue: str, expand: Optional[str] = None) -> List[Comment]:
         """Get a list of comment Resources.
 
-        Args:
-            issue (str): the issue to get comments from
-        Returns:
-            List[Comment]
+        :param issue: the issue to get comments from
+        :type issue: str
+        :param expand: extra information to fetch for each comment
+                       such as renderedBody and properties.
+        :type expand: str
+        :rtype: List[Comment]
         """
-        r_json = self._get_json("issue/{}/comment".format(str(issue)))
+        params = {}
+        if expand is not None:
+            params["expand"] = expand
+        r_json = self._get_json("issue/{}/comment".format(str(issue)), params=params)
 
         comments = [
             Comment(self._options, self._session, raw_comment_json)
@@ -1631,14 +1651,17 @@ class JIRA(object):
         return comments
 
     @translate_resource_args
-    def comment(self, issue: str, comment: str) -> Comment:
+    def comment(
+        self, issue: str, comment: str, expand: Optional[str] = None
+    ) -> Comment:
         """Get a comment Resource from the server for the specified ID.
 
-        Args:
-            issue (str): ID or key of the issue to get the comment from
-            comment (str): ID of the comment to get
+        :param issue: ID or key of the issue to get the comment from
+        :param comment: ID of the comment to get
+        :param expand: extra information to fetch for comment
+                       such as renderedBody and properties.
         """
-        return self._find_for_resource(Comment, (issue, comment))
+        return self._find_for_resource(Comment, (issue, comment), expand=expand)
 
     @translate_resource_args
     def add_comment(
@@ -2959,30 +2982,39 @@ class JIRA(object):
 
     def search_users(
         self,
-        user: str,
+        user: Optional[str] = None,
         startAt: int = 0,
         maxResults: int = 50,
         includeActive: bool = True,
         includeInactive: bool = False,
+        query: Optional[str] = None,
     ) -> ResultList[User]:
         """Get a list of user Resources that match the specified search string.
+        "username" query parameter is deprecated in Jira Cloud; the expected parameter now is "query", which can just be the full
+        email again. But the "user" parameter is kept for backwards compatibility, i.e. Jira Server/Data Center.
 
         Args:
-            user (str): a string to match usernames, name or email against.
+            user (Optional[str]): a string to match usernames, name or email against.
             startAt (int): index of the first user to return.
             maxResults (int): maximum number of users to return.
               If maxResults evaluates as False, it will try to get all items in batches.
             includeActive (bool): If true, then active users are included in the results. (Default: True)
             includeInactive (bool): If true, then inactive users are included in the results. (Default: False)
+            query (Optional[str]): Search term. It can just be the email.
 
         Returns:
             ResultList[User]
         """
+        if not user and not query:
+            raise ValueError("Either 'user' or 'query' arguments must be specified.")
+
         params = {
             "username": user,
+            "query": query,
             "includeActive": includeActive,
             "includeInactive": includeInactive,
         }
+
         return self._fetch_pages(User, None, "user/search", startAt, maxResults, params)
 
     def search_allowed_users_for_issue(
