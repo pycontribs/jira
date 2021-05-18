@@ -1629,15 +1629,20 @@ class JIRA(object):
         return True
 
     @translate_resource_args
-    def comments(self, issue: str) -> List[Comment]:
+    def comments(self, issue: str, expand: Optional[str] = None) -> List[Comment]:
         """Get a list of comment Resources.
 
-        Args:
-            issue (str): the issue to get comments from
-        Returns:
-            List[Comment]
+        :param issue: the issue to get comments from
+        :type issue: str
+        :param expand: extra information to fetch for each comment
+                       such as renderedBody and properties.
+        :type expand: str
+        :rtype: List[Comment]
         """
-        r_json = self._get_json("issue/{}/comment".format(str(issue)))
+        params = {}
+        if expand is not None:
+            params["expand"] = expand
+        r_json = self._get_json("issue/{}/comment".format(str(issue)), params=params)
 
         comments = [
             Comment(self._options, self._session, raw_comment_json)
@@ -1646,14 +1651,17 @@ class JIRA(object):
         return comments
 
     @translate_resource_args
-    def comment(self, issue: str, comment: str) -> Comment:
+    def comment(
+        self, issue: str, comment: str, expand: Optional[str] = None
+    ) -> Comment:
         """Get a comment Resource from the server for the specified ID.
 
-        Args:
-            issue (str): ID or key of the issue to get the comment from
-            comment (str): ID of the comment to get
+        :param issue: ID or key of the issue to get the comment from
+        :param comment: ID of the comment to get
+        :param expand: extra information to fetch for comment
+                       such as renderedBody and properties.
         """
-        return self._find_for_resource(Comment, (issue, comment))
+        return self._find_for_resource(Comment, (issue, comment), expand=expand)
 
     @translate_resource_args
     def add_comment(
