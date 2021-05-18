@@ -2959,30 +2959,39 @@ class JIRA(object):
 
     def search_users(
         self,
-        user: str,
+        user: Optional[str] = None,
         startAt: int = 0,
         maxResults: int = 50,
         includeActive: bool = True,
         includeInactive: bool = False,
+        query: Optional[str] = None,
     ) -> ResultList[User]:
         """Get a list of user Resources that match the specified search string.
+        "username" query parameter is deprecated in Jira Cloud; the expected parameter now is "query", which can just be the full
+        email again. But the "user" parameter is kept for backwards compatibility, i.e. Jira Server/Data Center.
 
         Args:
-            user (str): a string to match usernames, name or email against.
+            user (Optional[str]): a string to match usernames, name or email against.
             startAt (int): index of the first user to return.
             maxResults (int): maximum number of users to return.
               If maxResults evaluates as False, it will try to get all items in batches.
             includeActive (bool): If true, then active users are included in the results. (Default: True)
             includeInactive (bool): If true, then inactive users are included in the results. (Default: False)
+            query (Optional[str]): Search term. It can just be the email.
 
         Returns:
             ResultList[User]
         """
+        if not user and not query:
+            raise ValueError("Either 'user' or 'query' arguments must be specified.")
+
         params = {
             "username": user,
+            "query": query,
             "includeActive": includeActive,
             "includeInactive": includeInactive,
         }
+
         return self._fetch_pages(User, None, "user/search", startAt, maxResults, params)
 
     def search_allowed_users_for_issue(
