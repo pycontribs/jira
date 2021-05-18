@@ -8,10 +8,6 @@ from requests import Response
 class JIRAError(Exception):
     """General error raised for all problems in operation of the client."""
 
-    log_to_tempfile = True
-    if "GITHUB_ACTION" in os.environ:
-        log_to_tempfile = False  # GitHub Actions is keeping only the console log.
-
     def __init__(
         self,
         text: str = None,
@@ -59,19 +55,14 @@ class JIRAError(Exception):
             if hasattr(self.response, "text"):
                 details += f"\n\tresponse text = {self.response.text}"
 
-        # separate logging for CI makes sense.
-        if self.ci_run:
-            if self.text:
-                t += f"\n\ttext: {self.text}"
-            t += details
-        # Only log to tempfile if the option is set.
-        elif self.log_to_tempfile:
-            fd, file_name = tempfile.mkstemp(suffix=".tmp", prefix="jiraerror-")
+        if self.log_to_tempfile:
+            # Only log to tempfile if the option is set.
+            _, file_name = tempfile.mkstemp(suffix=".tmp", prefix="jiraerror-")
             with open(file_name, "w") as f:
                 t += f" details: {file_name}"
                 f.write(details)
-        # Otherwise, just return the error as usual
         else:
+            # Otherwise, just return the error as usual
             if self.text:
                 t += f"\n\ttext: {self.text}"
             t += f"\n\t{details}"
