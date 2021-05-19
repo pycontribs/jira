@@ -311,7 +311,6 @@ class WebsudoTests(JiraTestCase):
 class UserAdministrationTests(JiraTestCase):
     def setUp(self):
         JiraTestCase.setUp(self)
-        self.jira = self.test_manager.jira_admin
         self.test_username = "test_%s" % self.test_manager.project_a
         self.test_email = "%s@example.com" % self.test_username
         self.test_password = rndpassword()
