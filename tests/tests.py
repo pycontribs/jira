@@ -363,6 +363,14 @@ class UniversalResourceTests(unittest.TestCase):
         self.assertEqual(resource.key, unpickled_instance.key)
         self.assertTrue(resource == unpickled_instance)
 
+    def test_pickling_resource_class(self):
+        resource = self.jira.find("issue/{0}", self.test_manager.project_b_issue1)
+
+        pickled = pickle.dumps(resource)
+        unpickled = pickle.loads(pickled)
+
+        self.assertEqual(resource.key, unpickled.key)
+        self.assertEqual(resource.raw, unpickled.raw)
 
 @flaky
 class ResourceTests(unittest.TestCase):
