@@ -361,7 +361,9 @@ class UniversalResourceTests(unittest.TestCase):
             self.jira._options, self.jira._session, raw=pickle.loads(pickled)
         )
         self.assertEqual(resource.key, unpickled_instance.key)
-        self.assertTrue(resource == unpickled_instance)
+        # Class types are no longer equal, cls_for_resource() returns an Issue type
+        # find() returns a Resource type. So we compare the raw json
+        self.assertEqual(resource.raw, unpickled_instance.raw)
 
     def test_pickling_resource_class(self):
         resource = self.jira.find("issue/{0}", self.test_manager.project_b_issue1)
@@ -370,7 +372,46 @@ class UniversalResourceTests(unittest.TestCase):
         unpickled = pickle.loads(pickled)
 
         self.assertEqual(resource.key, unpickled.key)
-        self.assertEqual(resource.raw, unpickled.raw)
+        self.assertEqual(resource, unpickled)
+
+    def test_bad_attribute(self):
+        resource = self.jira.find("issue/{0}", self.test_manager.project_b_issue1)
+
+        with self.assertRaises(AttributeError):
+            getattr(resource, "bogus123")
+
+    def test_hashable(self):
+        resource = self.jira.find("issue/{0}", self.test_manager.project_b_issue1)
+        resource2 = self.jira.find("issue/{0}", self.test_manager.project_b_issue2)
+
+        r1_hash = hash(resource)
+        r2_hash = hash(resource2)
+
+        assert r1_hash != r2_hash
+
+        dict_of_resource = {resource: "hey", resource2: "peekaboo"}
+        dict_of_resource.update({resource: "hey ho"})
+
+        assert len(dict_of_resource.keys()) == 2
+        assert {resource, resource2} == set(dict_of_resource.keys())
+        assert dict_of_resource[resource] == "hey ho"
+
+    def test_hashable_issue_object(self):
+        resource = self.test_manager.project_b_issue1_obj
+        resource2 = self.test_manager.project_b_issue2_obj
+
+        r1_hash = hash(resource)
+        r2_hash = hash(resource2)
+
+        assert r1_hash != r2_hash
+
+        dict_of_resource = {resource: "hey", resource2: "peekaboo"}
+        dict_of_resource.update({resource: "hey ho"})
+
+        assert len(dict_of_resource.keys()) == 2
+        assert {resource, resource2} == set(dict_of_resource.keys())
+        assert dict_of_resource[resource] == "hey ho"
+
 
 @flaky
 class ResourceTests(unittest.TestCase):

@@ -122,6 +122,16 @@ class Resource(object):
         "closed",
     )
 
+    # A list of properties that should uniquely identify a Resource object
+    # Each of these properties should be hashable, usually strings
+    _HASH_IDS = (
+        "self",
+        "type",
+        "key",
+        "id",
+        "name",
+    )
+
     def __init__(
         self,
         resource: str,
@@ -210,6 +220,38 @@ class Resource(object):
         """Unpickling of the resource"""
         # https://stackoverflow.com/a/50888571/7724187
         vars(self).update(raw_pickled)
+
+    def __hash__(self) -> int:
+        """Hash calculation.
+
+        We try to find unique identifier like properties
+        to form our hash object.
+        Technically 'self', if present, is the unique URL to the object,
+        and should be sufficient to generate a unique hash.
+        """
+        hash_list = []
+        for a in self._HASH_IDS:
+            if hasattr(self, a):
+                hash_list.append(getattr(self, a))
+
+        if hash_list:
+            return hash(tuple(hash_list))
+        else:
+            raise TypeError(f"'{self.__class__}' is not hashable")
+
+    def __eq__(self, other: Any) -> bool:
+        """Default equality test.
+
+        Checks the types look about right and that the relevant
+        attributes that uniquely identify a resource are equal.
+        """
+        return isinstance(other, self.__class__) and all(
+            [
+                getattr(self, a) == getattr(other, a)
+                for a in self._HASH_IDS
+                if hasattr(self, a)
+            ]
+        )
 
     def find(
         self,
@@ -648,10 +690,6 @@ class Issue(Resource):
         """
         return f"{self._options['server']}/browse/{self.key}"
 
-    def __eq__(self, other):
-        """Comparison method."""
-        return other is not None and self.id == other.id
-
 
 class Comment(Resource):
     """An issue comment."""
@@ -995,14 +1033,6 @@ class User(Resource):
         if raw:
             self._parse_raw(raw)
 
-    def __hash__(self):
-        """Hash calculation."""
-        return hash(str(self.name))
-
-    def __eq__(self, other):
-        """Comparison."""
-        return str(self.name) == str(other.name)
-
 
 class Group(Resource):
     """A Jira user group."""
@@ -1016,14 +1046,6 @@ class Group(Resource):
         Resource.__init__(self, "group?groupname={0}", options, session)
         if raw:
             self._parse_raw(raw)
-
-    def __hash__(self):
-        """Hash calculation."""
-        return hash(str(self.name))
-
-    def __eq__(self, other):
-        """Equality by name."""
-        return str(self.name) == str(other.name)
 
 
 class Version(Resource):
@@ -1089,10 +1111,6 @@ class Version(Resource):
             data[field] = kwargs[field]
 
         super(Version, self).update(**data)
-
-    def __eq__(self, other):
-        """Comparison."""
-        return self.id == other.id and self.name == other.name
 
 
 # GreenHopper
