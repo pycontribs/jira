@@ -374,6 +374,15 @@ class UniversalResourceTests(unittest.TestCase):
         self.assertEqual(resource.key, unpickled.key)
         self.assertEqual(resource, unpickled)
 
+    def test_pickling_issue_class(self):
+        resource = self.test_manager.project_b_issue1_obj
+
+        pickled = pickle.dumps(resource)
+        unpickled = pickle.loads(pickled)
+
+        self.assertEqual(resource.key, unpickled.key)
+        self.assertEqual(resource, unpickled)
+
     def test_bad_attribute(self):
         resource = self.jira.find("issue/{0}", self.test_manager.project_b_issue1)
 
