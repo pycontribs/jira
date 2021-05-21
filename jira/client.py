@@ -2047,7 +2047,7 @@ class JIRA(object):
 
         Args:
             issue (str): ID or key of the issue affected
-            watcher (str): key of the user to add to the watchers list
+            watcher (str): name of the user to add to the watchers list
         """
         url = self._get_url("issue/" + str(issue) + "/watchers")
         return self._session.post(url, data=json.dumps(watcher))
@@ -2058,15 +2058,19 @@ class JIRA(object):
 
         Args:
             issue (str): ID or key of the issue affected
-            watcher (str): key of the user to remove from the watchers list
+            watcher (str): name of the user to remove from the watchers list
 
         Returns:
             Response
         """
         url = self._get_url("issue/" + str(issue) + "/watchers")
         # https://docs.atlassian.com/software/jira/docs/api/REST/8.13.6/#api/2/issue-removeWatcher
-        params = {"username": watcher}
-        result = self._session.delete(url, params=params)
+        user_id = self._get_user_id(watcher)
+        if self.deploymentType == "Cloud":
+            payload = {"accountId": user_id}
+        else:
+            payload = {"username": user_id}
+        result = self._session.delete(url, params=payload)
         return result
 
     @translate_resource_args
