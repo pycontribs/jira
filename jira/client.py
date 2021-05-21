@@ -1601,13 +1601,47 @@ class JIRA(object):
             params["expand"] = expand
         return self._get_json("issue/createmeta", params)
 
-    def _get_user_key(self, user: str) -> str:
-        """Internal method for translating an user (str) to an key."""
+    def _get_user_identifier(self, user: User) -> str:
+        """Get the unique identifier depending on the deployment type.
+
+        - Cloud: 'accountId'
+        - Self Hosted: 'name' (equivalent to username)
+
+        Args:
+            user (User): a User object
+
+        Returns:
+            str: the User's unique identifier.
+        """
+        return user.accountId if self.deploymentType == "Cloud" else user.name
+
+    def _get_user_id(self, user: str) -> str:
+        """Internal method for translating an user search (str) to an id.
+
+        This function uses :py:meth:`JIRA.search_users` to find the user
+        and then using :py:meth:`JIRA._get_user_identifier` extracts
+        the relevant identifier property depending on whether
+        the instance is a Cloud or self-hosted Instance.
+
+
+        Args:
+            user (str): The search term used for finding a user.
+
+        Raises:
+            JIRAError: If any error occurs.
+
+        Returns:
+            str: The Jira user's identifier.
+        """
         try:
-            key = self.search_users(user, maxResults=1)[0].key
+            user_obj: User
+            if self.deploymentType == "Cloud":
+                user_obj = self.search_users(query=user, maxResults=1)[0]
+            else:
+                user_obj = self.search_users(user=user, maxResults=1)[0]
         except Exception as e:
             raise JIRAError(str(e))
-        return key
+        return self._get_user_identifier(user_obj)
 
     # non-resource
     @translate_resource_args
@@ -1622,8 +1656,11 @@ class JIRA(object):
             bool
         """
         url = self._get_latest_url("issue/{}/assignee".format(str(issue)))
-        payload = {"name": self._get_user_key(assignee)}
-        # 'key' and 'name' are deprecated in favor of accountId
+        user_id = self._get_user_id(assignee)
+        if self.deploymentType == "Cloud":
+            payload = {"accountId": user_id}
+        else:
+            payload = {"name": user_id}
         r = self._session.put(url, data=json.dumps(payload))
         raise_on_error(r)
         return True
