@@ -3226,7 +3226,7 @@ class JIRA(object):
         Returns:
             Optional[Response]
         """
-        if self.deploymentType != "Cloud":
+        if not self._is_cloud:
             url = self.server_url + "/rest/auth/1/websudo"
             return self._session.delete(url)
         return None
@@ -3507,7 +3507,7 @@ class JIRA(object):
         Returns:
             Union[str, int]
         """
-        if self.deploymentType == "Cloud":
+        if self._is_cloud:
             # Disabling users now needs cookie auth in the Cloud - see https://jira.atlassian.com/browse/ID-6230
             if "authCookie" not in vars(self):
                 user = self.session()
@@ -3622,7 +3622,7 @@ class JIRA(object):
     def backup(self, filename: str = "backup.zip", attachments: bool = False):
         """Will call jira export to backup as zipped xml. Returning with success does not mean that the backup process finished."""
         payload: Any  # _session.post is pretty open
-        if self.deploymentType == "Cloud":
+        if self._is_cloud:
             url = self.server_url + "/rest/backup/1/export/runbackup"
             payload = json.dumps({"cbAttachments": attachments})
             self._options["headers"]["X-Requested-With"] = "XMLHttpRequest"
@@ -3645,7 +3645,7 @@ class JIRA(object):
         Is there a way to get progress for Server version?
         """
         epoch_time = int(time.time() * 1000)
-        if self.deploymentType == "Cloud":
+        if self._is_cloud:
             url = self.server_url + "/rest/obm/1.0/getprogress?_=%i" % epoch_time
         else:
             self.log.warning("This functionality is not available in Server version")
@@ -3672,7 +3672,7 @@ class JIRA(object):
 
     def backup_complete(self) -> Optional[bool]:
         """Return boolean based on 'alternativePercentage' and 'size' returned from backup_progress (cloud only)."""
-        if self.deploymentType != "Cloud":
+        if not self._is_cloud:
             self.log.warning("This functionality is not available in Server version")
             return None
         status = self.backup_progress()
@@ -3685,7 +3685,7 @@ class JIRA(object):
 
     def backup_download(self, filename: str = None):
         """Download backup file from WebDAV (cloud only)."""
-        if self.deploymentType != "Cloud":
+        if not self._is_cloud:
             self.log.warning("This functionality is not available in Server version")
             return None
         remote_file = self.backup_progress()["fileName"]
@@ -4454,7 +4454,7 @@ class JIRA(object):
             project_ids = project_ids.split(",")  # type: ignore # re-use of variable
         payload["projectIds"] = project_ids
         payload["preset"] = preset
-        if self.deploymentType == "Cloud":
+        if self._is_cloud:
             payload["locationType"] = location_type
             payload["locationId"] = location_id
         url = self._get_url("rapidview/create/presets", base=self.AGILE_BASE_URL)
