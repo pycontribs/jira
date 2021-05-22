@@ -504,6 +504,11 @@ class JIRA(object):
         """Return the server url"""
         return str(self._options["server"])
 
+    @property
+    def _is_cloud(self) -> bool:
+        """Return whether we are on a Cloud based Jira instance."""
+        return self.deploymentType in ("Cloud",)
+
     def _create_cookie_auth(
         self,
         auth: Tuple[str, str],
@@ -1613,7 +1618,7 @@ class JIRA(object):
         Returns:
             str: the User's unique identifier.
         """
-        return user.accountId if self.deploymentType == "Cloud" else user.name
+        return user.accountId if self._is_cloud else user.name
 
     def _get_user_id(self, user: str) -> str:
         """Internal method for translating an user search (str) to an id.
@@ -1635,7 +1640,7 @@ class JIRA(object):
         """
         try:
             user_obj: User
-            if self.deploymentType == "Cloud":
+            if self._is_cloud:
                 user_obj = self.search_users(query=user, maxResults=1)[0]
             else:
                 user_obj = self.search_users(user=user, maxResults=1)[0]
@@ -1657,10 +1662,7 @@ class JIRA(object):
         """
         url = self._get_latest_url("issue/{}/assignee".format(str(issue)))
         user_id = self._get_user_id(assignee)
-        if self.deploymentType == "Cloud":
-            payload = {"accountId": user_id}
-        else:
-            payload = {"name": user_id}
+        payload = {"accountId": user_id} if self._is_cloud else {"name": user_id}
         r = self._session.put(url, data=json.dumps(payload))
         raise_on_error(r)
         return True
@@ -2066,10 +2068,7 @@ class JIRA(object):
         url = self._get_url("issue/" + str(issue) + "/watchers")
         # https://docs.atlassian.com/software/jira/docs/api/REST/8.13.6/#api/2/issue-removeWatcher
         user_id = self._get_user_id(watcher)
-        if self.deploymentType == "Cloud":
-            payload = {"accountId": user_id}
-        else:
-            payload = {"username": user_id}
+        payload = {"accountId": user_id} if self._is_cloud else {"username": user_id}
         result = self._session.delete(url, params=payload)
         return result
 
