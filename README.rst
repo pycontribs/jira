@@ -118,8 +118,10 @@ Setup
                     "CI_JIRA_ADMIN": "admin",
                     "CI_JIRA_ADMIN_PASSWORD": "admin",
                     "CI_JIRA_USER": "jira_user",
+                    "CI_JIRA_USER_FULL_NAME": "Newly Created CI User",
                     "CI_JIRA_USER_PASSWORD": "jira",
-                    "CI_JIRA_ISSUE": "Task"
+                    "CI_JIRA_ISSUE": "Task",
+                    "PYTEST_TIMEOUT": "0", // Don't timeout
                 },
                 "args": [
                     // "-v",
