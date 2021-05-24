@@ -386,17 +386,17 @@ class IssueTests(JiraTestCase):
         self.assertTrue("fields" in meta["projects"][0]["issuetypes"][0])
 
     def test_assign_issue(self):
-        self.assertTrue(self.jira.assign_issue(self.issue_1, self.user_admin.name))
+        self.assertTrue(self.jira.assign_issue(self.issue_1, self.user_normal.name))
         self.assertEqual(
-            self.jira.issue(self.issue_1).fields.assignee.name, self.user_admin.name
+            self.jira.issue(self.issue_1).fields.assignee.name, self.user_normal.name
         )
 
     def test_assign_issue_with_issue_obj(self):
         issue = self.jira.issue(self.issue_1)
-        x = self.jira.assign_issue(issue, self.user_admin.name)
+        x = self.jira.assign_issue(issue, self.user_normal.name)
         self.assertTrue(x)
         self.assertEqual(
-            self.jira.issue(self.issue_1).fields.assignee.name, self.user_admin.name
+            self.jira.issue(self.issue_1).fields.assignee.name, self.user_normal.name
         )
 
     def test_assign_to_bad_issue_raises(self):

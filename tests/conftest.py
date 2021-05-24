@@ -77,7 +77,8 @@ class JiraTestCase(unittest.TestCase):
         self.test_manager = JiraTestManager()
         self.jira = self.test_manager.jira_admin
         self.jira_normal = self.test_manager.jira_normal
-        self.user_admin = self.jira.search_users(self.test_manager.CI_JIRA_ADMIN)[0]
+        self.user_admin = self.test_manager.user_admin
+        self.user_normal = self.test_manager.user_normal  # use this user where possible
         self.project_b = self.test_manager.project_b
         self.project_a = self.test_manager.project_a
 
@@ -336,6 +337,7 @@ class JiraTestManager(object):
             py.test.exit("FATAL: WTF!?")
 
         self.user_admin = self.jira_admin.search_users(self.CI_JIRA_ADMIN)[0]
+        self.user_normal = self.jira_admin.search_users(self.CI_JIRA_USER)[0]
         self.initialized = 1
 
 
