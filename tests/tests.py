@@ -1,4 +1,13 @@
 #!/usr/bin/env python
+"""This file contains tests that do not fit into any specific file yet.
+
+Feel free to make your own test file if appropriate.
+
+Refer to conftest.py for shared helper methods.
+
+resources/test_* : For tests related to resources
+test_* : For other tests of the non-resource elements of the jira package.
+"""
 import logging
 import os
 import pickle
