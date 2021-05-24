@@ -1,7 +1,0 @@
-# EditorConfig is awesome: https://editorconfig.org/
-
-# top-most EditorConfig file
-root = true
-
-[*]
-max_line_length = 160

@@ -4,12 +4,11 @@
 # This script will cleanup your jira instance by removing all projects and
 # it is used to clean the CI/CD Jira server used for testing.
 #
-import os
-from jira import Role, Issue, JIRA, JIRAError, Project  # noqa
-import logging
-
 import json
+import logging
+import os
 
+from jira import JIRA, Issue, JIRAError, Project, Role  # noqa
 
 logging.getLogger().setLevel(logging.DEBUG)
 logging.getLogger("requests").setLevel(logging.INFO)

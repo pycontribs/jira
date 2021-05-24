@@ -8,22 +8,19 @@ import random
 import re
 import string
 import sys
+import unittest
 from time import sleep
+from typing import Any, Dict
+from unittest import mock
 
-from flaky import flaky
 import py
 import pytest
 import requests
-from typing import Any, Dict
-
-import unittest
-
-from unittest import mock
-
+from flaky import flaky
 
 import jira  # noqa
-from jira import Role, Issue, JIRA, JIRAError, Project  # noqa
-from jira.resources import Resource, cls_for_resource, Group, UnknownResource  # noqa
+from jira import JIRA, Issue, JIRAError, Project, Role  # noqa
+from jira.resources import Group, Resource, UnknownResource, cls_for_resource  # noqa
 
 TEST_ROOT = os.path.dirname(__file__)
 TEST_ICON_PATH = os.path.join(TEST_ROOT, "icon.png")
@@ -73,20 +70,15 @@ def hashify(some_string, max_len=8):
 
 
 def get_unique_project_name():
-    jid = ""
     user = re.sub("[^A-Z_]", "", getpass.getuser().upper())
-    if user == "TRAVIS" and "TRAVIS_JOB_NUMBER" in os.environ:
+    if "GITHUB_ACTION" in os.environ and "GITHUB_RUN_NUMBER" in os.environ:
         # please note that user underline (_) is not supported by
         # Jira even if it is documented as supported.
-        jid = "T" + hashify(user + os.environ["TRAVIS_JOB_NUMBER"])
-    else:
-        identifier = (
-            user
-            + chr(ord("A") + sys.version_info[0])
-            + chr(ord("A") + sys.version_info[1])
-        )
-        jid = "Z" + hashify(identifier)
-    return jid
+        return "GH" + hashify(user + os.environ["GITHUB_RUN_NUMBER"])
+    identifier = (
+        user + chr(ord("A") + sys.version_info[0]) + chr(ord("A") + sys.version_info[1])
+    )
+    return "Z" + hashify(identifier)
 
 
 class JiraTestManager(object):
@@ -105,14 +97,12 @@ class JiraTestManager(object):
 
         if not self.__dict__:
             self.initialized = 0
+            self.max_retries = 5
 
             if "CI_JIRA_URL" in os.environ:
                 self.CI_JIRA_URL = os.environ["CI_JIRA_URL"]
-                self.max_retries = 5
             else:
                 self.CI_JIRA_URL = "https://pycontribs.atlassian.net"
-                self.max_retries = 5
-
             if "CI_JIRA_ADMIN" in os.environ:
                 self.CI_JIRA_ADMIN = os.environ["CI_JIRA_ADMIN"]
             else:
@@ -144,27 +134,6 @@ class JiraTestManager(object):
                         "key_cert": KEY_CERT_DATA,
                     }
                 )
-            else:
-                if self.CI_JIRA_ADMIN:
-                    self.jira_admin = JIRA(
-                        self.CI_JIRA_URL,
-                        basic_auth=(self.CI_JIRA_ADMIN, self.CI_JIRA_ADMIN_PASSWORD),
-                        logging=False,
-                        validate=True,
-                        max_retries=self.max_retries,
-                    )
-                else:
-                    self.jira_admin = JIRA(
-                        self.CI_JIRA_URL,
-                        validate=True,
-                        logging=False,
-                        max_retries=self.max_retries,
-                    )
-            if not self.jira_admin.current_user():
-                self.initialized = 1
-                sys.exit(3)
-
-            if OAUTH:
                 self.jira_sysadmin = JIRA(
                     oauth={
                         "access_token": "4ul1ETSFo7ybbIxAxzyRal39cTrwEGFv",
@@ -175,21 +144,6 @@ class JiraTestManager(object):
                     logging=False,
                     max_retries=self.max_retries,
                 )
-            else:
-                if self.CI_JIRA_ADMIN:
-                    self.jira_sysadmin = JIRA(
-                        self.CI_JIRA_URL,
-                        basic_auth=(self.CI_JIRA_ADMIN, self.CI_JIRA_ADMIN_PASSWORD),
-                        logging=False,
-                        validate=True,
-                        max_retries=self.max_retries,
-                    )
-                else:
-                    self.jira_sysadmin = JIRA(
-                        self.CI_JIRA_URL, logging=False, max_retries=self.max_retries
-                    )
-
-            if OAUTH:
                 self.jira_normal = JIRA(
                     oauth={
                         "access_token": "ZVDgYDyIQqJY8IFlQ446jZaURIz5ECiB",
@@ -200,6 +154,20 @@ class JiraTestManager(object):
                 )
             else:
                 if self.CI_JIRA_ADMIN:
+                    self.jira_admin = JIRA(
+                        self.CI_JIRA_URL,
+                        basic_auth=(self.CI_JIRA_ADMIN, self.CI_JIRA_ADMIN_PASSWORD),
+                        logging=False,
+                        validate=True,
+                        max_retries=self.max_retries,
+                    )
+                    self.jira_sysadmin = JIRA(
+                        self.CI_JIRA_URL,
+                        basic_auth=(self.CI_JIRA_ADMIN, self.CI_JIRA_ADMIN_PASSWORD),
+                        logging=False,
+                        validate=True,
+                        max_retries=self.max_retries,
+                    )
                     self.jira_normal = JIRA(
                         self.CI_JIRA_URL,
                         basic_auth=(self.CI_JIRA_USER, self.CI_JIRA_USER_PASSWORD),
@@ -208,12 +176,24 @@ class JiraTestManager(object):
                         max_retries=self.max_retries,
                     )
                 else:
+                    self.jira_admin = JIRA(
+                        self.CI_JIRA_URL,
+                        validate=True,
+                        logging=False,
+                        max_retries=self.max_retries,
+                    )
+                    self.jira_sysadmin = JIRA(
+                        self.CI_JIRA_URL, logging=False, max_retries=self.max_retries
+                    )
                     self.jira_normal = JIRA(
                         self.CI_JIRA_URL,
                         validate=True,
                         logging=False,
                         max_retries=self.max_retries,
                     )
+            if not self.jira_admin.current_user():
+                self.initialized = 1
+                sys.exit(3)
 
             # now we need some data to start with for the tests
 
@@ -223,18 +203,11 @@ class JiraTestManager(object):
             # [7-8] python version A=0, B=1,..
             # [9] A,B -- we may need more than one project
 
-            """ `jid` is important for avoiding concurency problems when
+            """ `jid` is important for avoiding concurrency problems when
             executing tests in parallel as we have only one test instance.
 
             jid length must be less than 9 characters because we may append
             another one and the Jira Project key length limit is 10.
-
-            Tests run in parallel:
-            * git branches master or developer, git pr or developers running
-                tests outside Travis
-            * Travis is using "Travis" username
-
-            https://docs.travis-ci.com/user/environment-variables/
             """
 
             self.jid = get_unique_project_name()
@@ -261,7 +234,6 @@ class JiraTestManager(object):
                 self.jira_admin.project(self.project_a)
             except Exception as e:
                 logging.warning(e)
-                pass
             else:
                 try:
                     self.jira_admin.delete_project(self.project_a)
@@ -272,7 +244,6 @@ class JiraTestManager(object):
                 self.jira_admin.project(self.project_b)
             except Exception as e:
                 logging.warning(e)
-                pass
             else:
                 try:
                     self.jira_admin.delete_project(self.project_b)
@@ -280,7 +251,7 @@ class JiraTestManager(object):
                     pass
 
             # wait for the project to be deleted
-            for i in range(1, 20):
+            for _ in range(1, 20):
                 try:
                     self.jira_admin.project(self.project_b)
                 except Exception:
@@ -288,14 +259,14 @@ class JiraTestManager(object):
                 print("Warning: Project not deleted yet....")
                 sleep(2)
 
-            for i in range(6):
+            for _ in range(6):
                 try:
                     if self.jira_admin.create_project(
                         self.project_a, self.project_a_name
                     ):
                         break
                 except Exception as e:
-                    if "A project with that name already exists" not in e.text:
+                    if "A project with that name already exists" not in str(e):
                         raise e
             self.project_a_id = self.jira_admin.project(self.project_a).id
             self.jira_admin.create_project(self.project_b, self.project_b_name)
@@ -332,6 +303,7 @@ class JiraTestManager(object):
             py.test.exit("FATAL: WTF!?")
 
         self.user_admin = self.jira_admin.search_users(self.CI_JIRA_ADMIN)[0]
+        self.user_normal = self.jira_admin.search_users(self.CI_JIRA_USER)[0]
         self.initialized = 1
 
 
@@ -390,7 +362,65 @@ class UniversalResourceTests(unittest.TestCase):
             self.jira._options, self.jira._session, raw=pickle.loads(pickled)
         )
         self.assertEqual(resource.key, unpickled_instance.key)
-        self.assertTrue(resource == unpickled_instance)
+        # Class types are no longer equal, cls_for_resource() returns an Issue type
+        # find() returns a Resource type. So we compare the raw json
+        self.assertEqual(resource.raw, unpickled_instance.raw)
+
+    def test_pickling_resource_class(self):
+        resource = self.jira.find("issue/{0}", self.test_manager.project_b_issue1)
+
+        pickled = pickle.dumps(resource)
+        unpickled = pickle.loads(pickled)
+
+        self.assertEqual(resource.key, unpickled.key)
+        self.assertEqual(resource, unpickled)
+
+    def test_pickling_issue_class(self):
+        resource = self.test_manager.project_b_issue1_obj
+
+        pickled = pickle.dumps(resource)
+        unpickled = pickle.loads(pickled)
+
+        self.assertEqual(resource.key, unpickled.key)
+        self.assertEqual(resource, unpickled)
+
+    def test_bad_attribute(self):
+        resource = self.jira.find("issue/{0}", self.test_manager.project_b_issue1)
+
+        with self.assertRaises(AttributeError):
+            getattr(resource, "bogus123")
+
+    def test_hashable(self):
+        resource = self.jira.find("issue/{0}", self.test_manager.project_b_issue1)
+        resource2 = self.jira.find("issue/{0}", self.test_manager.project_b_issue2)
+
+        r1_hash = hash(resource)
+        r2_hash = hash(resource2)
+
+        assert r1_hash != r2_hash
+
+        dict_of_resource = {resource: "hey", resource2: "peekaboo"}
+        dict_of_resource.update({resource: "hey ho"})
+
+        assert len(dict_of_resource.keys()) == 2
+        assert {resource, resource2} == set(dict_of_resource.keys())
+        assert dict_of_resource[resource] == "hey ho"
+
+    def test_hashable_issue_object(self):
+        resource = self.test_manager.project_b_issue1_obj
+        resource2 = self.test_manager.project_b_issue2_obj
+
+        r1_hash = hash(resource)
+        r2_hash = hash(resource2)
+
+        assert r1_hash != r2_hash
+
+        dict_of_resource = {resource: "hey", resource2: "peekaboo"}
+        dict_of_resource.update({resource: "hey ho"})
+
+        assert len(dict_of_resource.keys()) == 2
+        assert {resource, resource2} == set(dict_of_resource.keys())
+        assert dict_of_resource[resource] == "hey ho"
 
 
 @flaky
@@ -453,7 +483,7 @@ class ApplicationPropertiesTests(unittest.TestCase):
         clone_prefix = self.jira.application_properties(
             key="jira.lf.text.headingcolour"
         )
-        self.assertEqual(clone_prefix["value"], "#292929")
+        self.assertEqual(clone_prefix["value"], "#172b4d")
 
     def test_set_application_property(self):
         prop = "jira.lf.favicon.hires.url"
@@ -696,6 +726,7 @@ class IssueTests(unittest.TestCase):
         self.jira = JiraTestManager().jira_admin
         self.jira_normal = JiraTestManager().jira_normal
         self.user_admin = self.jira.search_users(self.test_manager.CI_JIRA_ADMIN)[0]
+        self.user_normal = self.test_manager.user_normal
         self.project_b = self.test_manager.project_b
         self.project_a = self.test_manager.project_a
         self.issue_1 = self.test_manager.project_b_issue1
@@ -1066,17 +1097,17 @@ class IssueTests(unittest.TestCase):
         self.assertTrue("fields" in meta["projects"][0]["issuetypes"][0])
 
     def test_assign_issue(self):
-        self.assertTrue(self.jira.assign_issue(self.issue_1, self.user_admin.name))
+        self.assertTrue(self.jira.assign_issue(self.issue_1, self.user_normal.name))
         self.assertEqual(
-            self.jira.issue(self.issue_1).fields.assignee.name, self.user_admin.name
+            self.jira.issue(self.issue_1).fields.assignee.name, self.user_normal.name
         )
 
     def test_assign_issue_with_issue_obj(self):
         issue = self.jira.issue(self.issue_1)
-        x = self.jira.assign_issue(issue, self.user_admin.name)
+        x = self.jira.assign_issue(issue, self.user_normal.name)
         self.assertTrue(x)
         self.assertEqual(
-            self.jira.issue(self.issue_1).fields.assignee.name, self.user_admin.name
+            self.jira.issue(self.issue_1).fields.assignee.name, self.user_normal.name
         )
 
     def test_assign_to_bad_issue_raises(self):
@@ -1094,6 +1125,22 @@ class IssueTests(unittest.TestCase):
             comment2.delete()
             comments = self.jira.comments(issue)
             assert len(comments) == 0
+
+    def test_expanded_comments(self):
+        comment1 = self.jira.add_comment(self.issue_1, "First comment")
+        comment2 = self.jira.add_comment(self.issue_1, "Second comment")
+        comments = self.jira.comments(self.issue_1, expand="renderedBody")
+        self.assertTrue(hasattr(comments[0], "renderedBody"))
+        ret_comment1 = self.jira.comment(
+            self.issue_1, comment1.id, expand="renderedBody"
+        )
+        ret_comment2 = self.jira.comment(self.issue_1, comment2.id)
+        comment1.delete()
+        comment2.delete()
+        self.assertTrue(hasattr(ret_comment1, "renderedBody"))
+        self.assertFalse(hasattr(ret_comment2, "renderedBody"))
+        comments = self.jira.comments(self.issue_1)
+        assert len(comments) == 0
 
     def test_add_comment(self):
         comment = self.jira.add_comment(
@@ -1133,12 +1180,10 @@ class IssueTests(unittest.TestCase):
             "comment",
             "components",
             "description",
-            "environment",
             "fixVersions",
             "issuelinks",
             "labels",
             "summary",
-            "versions",
         }
         for i in (self.issue_1, self.issue_2):
             meta = self.jira.editmeta(i)
@@ -1304,15 +1349,15 @@ class IssueTests(unittest.TestCase):
     def test_add_remove_watcher(self):
 
         # removing it in case it exists, so we know its state
-        self.jira.remove_watcher(self.issue_1, self.test_manager.user_admin.accountId)
+        self.jira.remove_watcher(self.issue_1, self.test_manager.user_normal.name)
         init_watchers = self.jira.watchers(self.issue_1).watchCount
 
         # adding a new watcher
-        self.jira.add_watcher(self.issue_1, self.test_manager.user_admin.accountId)
+        self.jira.add_watcher(self.issue_1, self.test_manager.user_normal.name)
         self.assertEqual(self.jira.watchers(self.issue_1).watchCount, init_watchers + 1)
 
         # now we verify that remove does indeed remove watchers
-        self.jira.remove_watcher(self.issue_1, self.test_manager.user_admin.accountId)
+        self.jira.remove_watcher(self.issue_1, self.test_manager.user_normal.name)
         new_watchers = self.jira.watchers(self.issue_1).watchCount
         self.assertEqual(init_watchers, new_watchers)
 
@@ -1598,12 +1643,18 @@ class ProjectTests(unittest.TestCase):
         self.assertEqual(test.name, name)
 
         i = self.jira.issue(JiraTestManager().project_b_issue1)
-        i.update(
-            fields={
-                "versions": [{"id": version.id}],
-                "fixVersions": [{"id": version.id}],
-            }
-        )
+        i.update(fields={"fixVersions": [{"id": version.id}]})
+        version.delete()
+
+    def test_update_project_version(self):
+        # given
+        name = "version-%s" % rndstr()
+        version = self.jira.create_version(name, self.project_b, "will be deleted soon")
+        updated_name = "version-%s" % rndstr()
+        # when
+        version.update(name=updated_name)
+        # then
+        self.assertEqual(updated_name, version.name)
         version.delete()
 
     def test_get_project_version_by_name(self):
@@ -1620,12 +1671,7 @@ class ProjectTests(unittest.TestCase):
         self.assertEqual(not_found_version, None)
 
         i = self.jira.issue(JiraTestManager().project_b_issue1)
-        i.update(
-            fields={
-                "versions": [{"id": version.id}],
-                "fixVersions": [{"id": version.id}],
-            }
-        )
+        i.update(fields={"fixVersions": [{"id": version.id}]})
         version.delete()
 
     def test_rename_version(self):
@@ -1647,12 +1693,7 @@ class ProjectTests(unittest.TestCase):
         self.assertEqual(not_found_version, None)
 
         i = self.jira.issue(JiraTestManager().project_b_issue1)
-        i.update(
-            fields={
-                "versions": [{"id": version.id}],
-                "fixVersions": [{"id": version.id}],
-            }
-        )
+        i.update(fields={"fixVersions": [{"id": version.id}]})
         version.delete()
 
     def test_project_versions_with_project_obj(self):
@@ -2142,7 +2183,7 @@ class AsyncTests(unittest.TestCase):
         )
 
     def test_fetch_pages(self):
-        """Tests that the JIRA._fetch_pages method works as expected. """
+        """Tests that the JIRA._fetch_pages method works as expected."""
         params = {"startAt": 0}
         total = 26
         expected_results = []
@@ -2176,7 +2217,7 @@ class AsyncTests(unittest.TestCase):
 
 
 def _create_issue_result_json(issue_id, summary, key, **kwargs):
-    """Returns a minimal json object for an issue. """
+    """Returns a minimal json object for an issue."""
     return {
         "id": "%s" % issue_id,
         "summary": summary,
@@ -2186,7 +2227,7 @@ def _create_issue_result_json(issue_id, summary, key, **kwargs):
 
 
 def _create_issue_search_results_json(issues, **kwargs):
-    """Returns a minimal json object for Jira issue search results. """
+    """Returns a minimal json object for Jira issue search results."""
     return {
         "startAt": kwargs.get("start_at", 0),
         "maxResults": kwargs.get("max_results", 50),
@@ -2289,9 +2330,7 @@ class UserAdministrationTests(unittest.TestCase):
         except JIRAError:
             pass
 
-        sleep(
-            2
-        )  # avoid 500 errors like https://travis-ci.org/pycontribs/jira/jobs/176544578#L552
+        sleep(2)  # avoid 500 errors
         result = self.jira.add_group(self.test_groupname)
         assert result, True
 
@@ -2308,9 +2347,7 @@ class UserAdministrationTests(unittest.TestCase):
             self._skip_pycontribs_instance()
         try:
             self.jira.add_group(self.test_groupname)
-            sleep(
-                1
-            )  # avoid 400: https://travis-ci.org/pycontribs/jira/jobs/176539521#L395
+            sleep(1)  # avoid 400
         except JIRAError:
             pass
 
@@ -2331,9 +2368,7 @@ class UserAdministrationTests(unittest.TestCase):
         )
 
     @not_on_custom_jira_instance
-    @pytest.mark.xfail(
-        reason="query may return empty list: https://travis-ci.org/pycontribs/jira/jobs/191274505#L520"
-    )
+    @pytest.mark.xfail(reason="query may return empty list")
     def test_add_user_to_group(self):
         try:
             self.jira.add_user(

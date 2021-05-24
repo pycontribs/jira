@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 import getpass
+
 import pytest
+
+import jira.client
+from jira import JIRA, Issue, JIRAError, Project, Role  # noqa
 
 # from tenacity import retry
 # from tenacity import wait_incrementing
-from tests import get_unique_project_name
-from tests import JiraTestManager
-
-from jira import Role, Issue, JIRA, JIRAError, Project  # noqa
-import jira.client
+from tests import JiraTestManager, get_unique_project_name
 
 
 @pytest.fixture()
@@ -73,24 +73,15 @@ def test_delete_inexistent_project(cl_admin):
 
 
 def test_templates(cl_admin):
-    templates = cl_admin.templates()
+    templates = set(cl_admin.templates())
     expected_templates = set(
         filter(
             None,
             """
-Agility
-Basic
-Bug tracking
-Content Management
-Customer service
-Document Approval
-IT Service Desk
+Basic software development
 Kanban software development
-Lead Tracking
 Process management
-Procurement
 Project management
-Recruitment
 Scrum software development
 Task management
 """.split(
@@ -99,8 +90,7 @@ Task management
         )
     )
 
-    for t in expected_templates:
-        assert t in templates
+    assert templates == expected_templates
 
 
 def test_result_list():

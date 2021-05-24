@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
-import pytest  # noqa
 import io
-import requests  # noqa
 import sys
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
+import pytest  # noqa
+import requests  # noqa
 
-from jira import Role, Issue, JIRA, JIRAError, Project  # noqa
 import jira.jirashell as jirashell
+from jira import JIRA, Issue, JIRAError, Project, Role  # noqa
 
 
 @pytest.fixture
