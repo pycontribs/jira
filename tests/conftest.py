@@ -10,7 +10,6 @@ import unittest
 from time import sleep
 from typing import Any, Dict
 
-import py
 import pytest
 from flaky import flaky
 
