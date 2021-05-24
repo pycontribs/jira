@@ -504,6 +504,11 @@ class JIRA(object):
         """Return the server url"""
         return str(self._options["server"])
 
+    @property
+    def _is_cloud(self) -> bool:
+        """Return whether we are on a Cloud based Jira instance."""
+        return self.deploymentType in ("Cloud",)
+
     def _create_cookie_auth(
         self,
         auth: Tuple[str, str],
@@ -1601,13 +1606,47 @@ class JIRA(object):
             params["expand"] = expand
         return self._get_json("issue/createmeta", params)
 
-    def _get_user_key(self, user: str) -> str:
-        """Internal method for translating an user (str) to an key."""
+    def _get_user_identifier(self, user: User) -> str:
+        """Get the unique identifier depending on the deployment type.
+
+        - Cloud: 'accountId'
+        - Self Hosted: 'name' (equivalent to username)
+
+        Args:
+            user (User): a User object
+
+        Returns:
+            str: the User's unique identifier.
+        """
+        return user.accountId if self._is_cloud else user.name
+
+    def _get_user_id(self, user: str) -> str:
+        """Internal method for translating an user search (str) to an id.
+
+        This function uses :py:meth:`JIRA.search_users` to find the user
+        and then using :py:meth:`JIRA._get_user_identifier` extracts
+        the relevant identifier property depending on whether
+        the instance is a Cloud or self-hosted Instance.
+
+
+        Args:
+            user (str): The search term used for finding a user.
+
+        Raises:
+            JIRAError: If any error occurs.
+
+        Returns:
+            str: The Jira user's identifier.
+        """
         try:
-            key = self.search_users(user, maxResults=1)[0].key
+            user_obj: User
+            if self._is_cloud:
+                user_obj = self.search_users(query=user, maxResults=1)[0]
+            else:
+                user_obj = self.search_users(user=user, maxResults=1)[0]
         except Exception as e:
             raise JIRAError(str(e))
-        return key
+        return self._get_user_identifier(user_obj)
 
     # non-resource
     @translate_resource_args
@@ -1622,8 +1661,8 @@ class JIRA(object):
             bool
         """
         url = self._get_latest_url("issue/{}/assignee".format(str(issue)))
-        payload = {"name": self._get_user_key(assignee)}
-        # 'key' and 'name' are deprecated in favor of accountId
+        user_id = self._get_user_id(assignee)
+        payload = {"accountId": user_id} if self._is_cloud else {"name": user_id}
         r = self._session.put(url, data=json.dumps(payload))
         raise_on_error(r)
         return True
@@ -2010,7 +2049,7 @@ class JIRA(object):
 
         Args:
             issue (str): ID or key of the issue affected
-            watcher (str): key of the user to add to the watchers list
+            watcher (str): name of the user to add to the watchers list
         """
         url = self._get_url("issue/" + str(issue) + "/watchers")
         return self._session.post(url, data=json.dumps(watcher))
@@ -2021,15 +2060,16 @@ class JIRA(object):
 
         Args:
             issue (str): ID or key of the issue affected
-            watcher (str): key of the user to remove from the watchers list
+            watcher (str): name of the user to remove from the watchers list
 
         Returns:
             Response
         """
         url = self._get_url("issue/" + str(issue) + "/watchers")
         # https://docs.atlassian.com/software/jira/docs/api/REST/8.13.6/#api/2/issue-removeWatcher
-        params = {"username": watcher}
-        result = self._session.delete(url, params=params)
+        user_id = self._get_user_id(watcher)
+        payload = {"accountId": user_id} if self._is_cloud else {"username": user_id}
+        result = self._session.delete(url, params=payload)
         return result
 
     @translate_resource_args
@@ -3186,7 +3226,7 @@ class JIRA(object):
         Returns:
             Optional[Response]
         """
-        if self.deploymentType != "Cloud":
+        if not self._is_cloud:
             url = self.server_url + "/rest/auth/1/websudo"
             return self._session.delete(url)
         return None
@@ -3467,7 +3507,7 @@ class JIRA(object):
         Returns:
             Union[str, int]
         """
-        if self.deploymentType == "Cloud":
+        if self._is_cloud:
             # Disabling users now needs cookie auth in the Cloud - see https://jira.atlassian.com/browse/ID-6230
             if "authCookie" not in vars(self):
                 user = self.session()
@@ -3582,7 +3622,7 @@ class JIRA(object):
     def backup(self, filename: str = "backup.zip", attachments: bool = False):
         """Will call jira export to backup as zipped xml. Returning with success does not mean that the backup process finished."""
         payload: Any  # _session.post is pretty open
-        if self.deploymentType == "Cloud":
+        if self._is_cloud:
             url = self.server_url + "/rest/backup/1/export/runbackup"
             payload = json.dumps({"cbAttachments": attachments})
             self._options["headers"]["X-Requested-With"] = "XMLHttpRequest"
@@ -3605,7 +3645,7 @@ class JIRA(object):
         Is there a way to get progress for Server version?
         """
         epoch_time = int(time.time() * 1000)
-        if self.deploymentType == "Cloud":
+        if self._is_cloud:
             url = self.server_url + "/rest/obm/1.0/getprogress?_=%i" % epoch_time
         else:
             self.log.warning("This functionality is not available in Server version")
@@ -3632,7 +3672,7 @@ class JIRA(object):
 
     def backup_complete(self) -> Optional[bool]:
         """Return boolean based on 'alternativePercentage' and 'size' returned from backup_progress (cloud only)."""
-        if self.deploymentType != "Cloud":
+        if not self._is_cloud:
             self.log.warning("This functionality is not available in Server version")
             return None
         status = self.backup_progress()
@@ -3645,7 +3685,7 @@ class JIRA(object):
 
     def backup_download(self, filename: str = None):
         """Download backup file from WebDAV (cloud only)."""
-        if self.deploymentType != "Cloud":
+        if not self._is_cloud:
             self.log.warning("This functionality is not available in Server version")
             return None
         remote_file = self.backup_progress()["fileName"]
@@ -4414,7 +4454,7 @@ class JIRA(object):
             project_ids = project_ids.split(",")  # type: ignore # re-use of variable
         payload["projectIds"] = project_ids
         payload["preset"] = preset
-        if self.deploymentType == "Cloud":
+        if self._is_cloud:
             payload["locationType"] = location_type
             payload["locationId"] = location_id
         url = self._get_url("rapidview/create/presets", base=self.AGILE_BASE_URL)
