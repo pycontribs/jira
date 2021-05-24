@@ -1,18 +1,22 @@
 # -*- coding: utf-8 -*-
 """
-This module implements the Resource classes that translate JSON from JIRA REST resources
+This module implements the Resource classes that translate JSON from Jira REST resources
 into usable objects.
 """
 
+import json
 import logging
 import re
 import time
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Type, Union, cast
 
-import json
+from requests import Response
 
-from jira.utils import CaseInsensitiveDict
-from jira.utils import json_loads
-from jira.utils import threaded_requests
+from jira.resilientsession import ResilientSession
+from jira.utils import CaseInsensitiveDict, json_loads, threaded_requests
+
+if TYPE_CHECKING:
+    from jira.client import JIRA
 
 __all__ = (
     "Resource",
@@ -42,32 +46,33 @@ __all__ = (
     "Customer",
     "ServiceDesk",
     "RequestType",
+    "resource_class_map",
 )
 
 logging.getLogger("jira").addHandler(logging.NullHandler())
 
 
-def get_error_list(r):
+def get_error_list(r: Response) -> List[str]:
     error_list = []
     if r.status_code >= 400:
         if r.status_code == 403 and "x-authentication-denied-reason" in r.headers:
             error_list = [r.headers["x-authentication-denied-reason"]]
         elif r.text:
             try:
-                response = json_loads(r)
+                response: Dict[str, Any] = json_loads(r)
                 if "message" in response:
-                    # JIRA 5.1 errors
+                    # Jira 5.1 errors
                     error_list = [response["message"]]
                 elif "errorMessages" in response and len(response["errorMessages"]) > 0:
-                    # JIRA 5.0.x error messages sometimes come wrapped in this array
+                    # Jira 5.0.x error messages sometimes come wrapped in this array
                     # Sometimes this is present but empty
                     errorMessages = response["errorMessages"]
                     if isinstance(errorMessages, (list, tuple)):
-                        error_list = errorMessages
+                        error_list = list(errorMessages)
                     else:
                         error_list = [errorMessages]
                 elif "errors" in response and len(response["errors"]) > 0:
-                    # JIRA 6.x error messages are found in this array.
+                    # Jira 6.x error messages are found in this array.
                     error_list = response["errors"].values()
                 else:
                     error_list = [r.text]
@@ -77,7 +82,7 @@ def get_error_list(r):
 
 
 class Resource(object):
-    """Models a URL-addressable resource in the JIRA REST API.
+    """Models a URL-addressable resource in the Jira REST API.
 
     All Resource objects provide the following:
     ``find()`` -- get a resource from the server and load it into the current object
@@ -118,16 +123,30 @@ class Resource(object):
         "closed",
     )
 
-    def __init__(self, resource, options, session, base_url=JIRA_BASE_URL):
+    # A list of properties that should uniquely identify a Resource object
+    # Each of these properties should be hashable, usually strings
+    _HASH_IDS = (
+        "self",
+        "type",
+        "key",
+        "id",
+        "name",
+    )
+
+    def __init__(
+        self,
+        resource: str,
+        options: Dict[str, Any],
+        session: ResilientSession,
+        base_url: str = JIRA_BASE_URL,
+    ):
         """Initializes a generic resource.
-        :param resource: The name of the resource.
-        :type resource: str
-        :param options: Options for the new resource
-        :type options: Dict[str,str]
-        :param session: Session used for the resource.
-        :type session: ResilientSession
-        :param base_url: The Base JIRA url.
-        :type base_url: Optional[str]
+
+        Args:
+            resource (str): The name of the resource.
+            options (Dict[str,str]): Options for the new resource
+            session (ResilientSession): Session used for the resource.
+            base_url (Optional[str]): The Base Jira url.
 
         """
         self._resource = resource
@@ -137,12 +156,13 @@ class Resource(object):
 
         # Explicitly define as None so we know when a resource has actually
         # been loaded
-        self.raw = None
+        self.raw: Optional[Dict[str, Any]] = None
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return the first value we find that is likely to be human readable.
 
-        :rtype: str
+        Returns:
+            str
         """
         if self.raw:
             for name in self._READABLE_IDS:
@@ -156,71 +176,94 @@ class Resource(object):
         # If all else fails, use repr to make sure we get something.
         return repr(self)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Identify the class and include any and all relevant values.
 
-        :rtype: str
+        Returns:
+            str
         """
-        names = []
+        names: List[str] = []
         if self.raw:
             for name in self._READABLE_IDS:
                 if name in self.raw:
                     names.append(name + "=" + repr(self.raw[name]))
         if not names:
-            return "<JIRA %s at %s>" % (self.__class__.__name__, id(self))
-        return "<JIRA %s: %s>" % (self.__class__.__name__, ", ".join(names))
+            return f"<JIRA {self.__class__.__name__} at {id(self)}>"
+        return f"<JIRA {self.__class__.__name__}: {', '.join(names)}>"
 
-    def __getattr__(self, item):
+    def __getattr__(self, item: str) -> Any:
         """Allow access of attributes via names.
 
-        :param item: Attribute name
-        :type item: str
+        Args:
+            item (str): Attribute Name
 
-        :rtype: Any
+        Raises:
+            AttributeError: When attribute does not exist.
 
-        :raises KeyError: When the attribute does not exist.
-        :raises AttributeError: When attribute does not exist.
-
+        Returns:
+            Any: Attribute value.
         """
         try:
-            return self[item]
+            return self[item]  # type: ignore
         except Exception as e:
-            # Make sure pickling doesn't break
-            #   *MORE INFO*: This conditional wouldn't be necessary if __getattr__ wasn't used. But
-            #                since it is in use (no worries), we need to give the pickle.dump*
-            #                methods what they expect back. They expect to either get a KeyError
-            #                exception or a tuple of args to be passed to the __new__ method upon
-            #                unpickling (i.e. pickle.load* methods).
-            #   *NOTE*: if the __new__ method were to be implemented in this class, this may have
-            #           to be removed or changed.
-            if item == "__getnewargs__":
-                raise KeyError(item)
-
-            if hasattr(self, "raw") and item in self.raw:
+            if hasattr(self, "raw") and self.raw is not None and item in self.raw:
                 return self.raw[item]
             else:
                 raise AttributeError(
-                    "%r object has no attribute %r (%s)" % (self.__class__, item, e)
+                    f"{self.__class__!r} object has no attribute {item!r} ({e})"
                 )
 
-    # def __getstate__(self):
-    #     """
-    #     Pickling the resource; using the raw dict
-    #     """
-    #     return self.raw
-    #
-    # def __setstate__(self, raw_pickled):
-    #     """
-    #     Unpickling of the resource
-    #     """
-    #     self._parse_raw(raw_pickled)
-    #
+    def __getstate__(self) -> Dict[str, Any]:
+        """Pickling the resource."""
+        return vars(self)
 
-    def find(self, id, params=None):
+    def __setstate__(self, raw_pickled: Dict[str, Any]):
+        """Unpickling of the resource"""
+        # https://stackoverflow.com/a/50888571/7724187
+        vars(self).update(raw_pickled)
+
+    def __hash__(self) -> int:
+        """Hash calculation.
+
+        We try to find unique identifier like properties
+        to form our hash object.
+        Technically 'self', if present, is the unique URL to the object,
+        and should be sufficient to generate a unique hash.
+        """
+        hash_list = []
+        for a in self._HASH_IDS:
+            if hasattr(self, a):
+                hash_list.append(getattr(self, a))
+
+        if hash_list:
+            return hash(tuple(hash_list))
+        else:
+            raise TypeError(f"'{self.__class__}' is not hashable")
+
+    def __eq__(self, other: Any) -> bool:
+        """Default equality test.
+
+        Checks the types look about right and that the relevant
+        attributes that uniquely identify a resource are equal.
+        """
+        return isinstance(other, self.__class__) and all(
+            [
+                getattr(self, a) == getattr(other, a)
+                for a in self._HASH_IDS
+                if hasattr(self, a)
+            ]
+        )
+
+    def find(
+        self,
+        id: Union[Tuple[str, str], int, str],
+        params: Optional[Dict[str, str]] = None,
+    ):
         """Finds a resource based on the input parameters.
 
-        :type id: Union[Tuple[str, str], int, str]
-        :type params: Optional[Dict[str, str]]
+        Args:
+            id (Union[Tuple[str, str], int, str]): id
+            params (Optional[Dict[str, str]]): params
 
         """
 
@@ -234,51 +277,54 @@ class Resource(object):
         url = self._get_url(path)
         self._load(url, params=params)
 
-    def _get_url(self, path):
-        """ Gets the url for the specified path.
+    def _get_url(self, path: str) -> str:
+        """Gets the url for the specified path.
 
-        :type path: str
+        Args:
+            path (str): str
 
-        :rtype: str
-
+        Returns:
+            str
         """
         options = self._options.copy()
         options.update({"path": path})
         return self._base_url.format(**options)
 
-    def update(self, fields=None, async_=None, jira=None, notify=True, **kwargs):
+    def update(
+        self,
+        fields: Optional[Dict[str, Any]] = None,
+        async_: Optional[bool] = None,
+        jira: "JIRA" = None,
+        notify: bool = True,
+        **kwargs: Any,
+    ):
         """Update this resource on the server.
 
         Keyword arguments are marshalled into a dict before being sent. If this
         resource doesn't support ``PUT``, a :py:exc:`.JIRAError` will be raised; subclasses that specialize this method
         will only raise errors in case of user error.
 
-        :param fields: Fields which should be updated for the object.
-        :type fields: Optional[Dict[str, Any]]
-        :param async_: If true the request will be added to the queue so it can be executed later using async_run()
-        :type async_: bool
-        :param jira: Instance of JIRA Client
-        :type jira: jira.JIRA
-        :param notify: Whether or not to notify users about the update. (Default: True)
-        :type notify: bool
-        :type kwargs: **Any
+        Args:
+            fields (Optional[Dict[str, Any]]): Fields which should be updated for the object.
+            async_ (bool): If true the request will be added to the queue so it can be executed later using async_run()
+            jira (jira.client.JIRA): Instance of Jira Client
+            notify (bool): Whether or not to notify users about the update. (Default: True)
+            kwargs (Any): extra arguments to the PUT request.
         """
         if async_ is None:
-            async_ = self._options["async"]
+            async_: bool = self._options["async"]  # type: ignore # redefinition
 
         data = {}
         if fields is not None:
             data.update(fields)
         data.update(kwargs)
 
-        data = json.dumps(data)
-
         if not notify:
             querystring = "?notifyUsers=false"
         else:
             querystring = ""
 
-        r = self._session.put(self.self + querystring, data=data)
+        r = self._session.put(self.self + querystring, data=json.dumps(data))
         if "autofix" in self._options and r.status_code == 400:
             user = None
             error_list = get_error_list(r)
@@ -333,7 +379,7 @@ class Resource(object):
                     else:
                         raise NotImplementedError()
 
-            if user:
+            if user and jira:
                 logging.warning(
                     "Trying to add missing orphan user '%s' in order to complete the previous failed operation."
                     % user
@@ -343,11 +389,13 @@ class Resource(object):
                 #    logging.warning("autofix: setting assignee to '%s' and retrying the update." % self._options['autofix'])
                 #    data['fields']['assignee'] = {'name': self._options['autofix']}
             # EXPERIMENTAL --->
-            if async_:
+            if async_:  # FIXME: no async
                 if not hasattr(self._session, "_async_jobs"):
-                    self._session._async_jobs = set()
-                self._session._async_jobs.add(
-                    threaded_requests.put(self.self, data=json.dumps(data))
+                    self._session._async_jobs = set()  # type: ignore
+                self._session._async_jobs.add(  # type: ignore
+                    threaded_requests.put(  # type: ignore
+                        self.self, data=json.dumps(data)
+                    )
                 )
             else:
                 r = self._session.put(self.self, data=json.dumps(data))
@@ -355,54 +403,67 @@ class Resource(object):
         time.sleep(self._options["delay_reload"])
         self._load(self.self)
 
-    def delete(self, params=None):
+    def delete(self, params: Optional[Dict[str, Any]] = None) -> Optional[Response]:
         """Delete this resource from the server, passing the specified query parameters.
 
         If this resource doesn't support ``DELETE``, a :py:exc:`.JIRAError`
         will be raised; subclasses that specialize this method will only raise errors
         in case of user error.
 
-        :param params: Parameters for the delete request.
-        :type params: Optional[Dict[str, Any]]
+        Args:
+            params: Parameters for the delete request.
 
-        :rtype: Response
+        Returns:
+            Optional[Response]: Returns None if async
         """
         if self._options["async"]:
+            # FIXME: mypy doesn't think this should work
             if not hasattr(self._session, "_async_jobs"):
-                self._session._async_jobs = set()
-            self._session._async_jobs.add(
-                threaded_requests.delete(url=self.self, params=params)
+                self._session._async_jobs = set()  # type: ignore
+            self._session._async_jobs.add(  # type: ignore
+                threaded_requests.delete(url=self.self, params=params)  # type: ignore
             )
+            return None
         else:
             return self._session.delete(url=self.self, params=params)
 
-    def _load(self, url, headers=CaseInsensitiveDict(), params=None, path=None):
-        """ Load a resource.
+    def _load(
+        self,
+        url: str,
+        headers=CaseInsensitiveDict(),
+        params: Optional[Dict[str, str]] = None,
+        path: Optional[str] = None,
+    ):
+        """Load a resource.
 
-        :type url: str
-        :type headers: CaseInsensitiveDict
-        :type params: Optional[Dict[str,str]]
-        :type path: Optional[str]
+        Args:
+            url (str): url
+            headers (Optional[CaseInsensitiveDict]): headers. Defaults to CaseInsensitiveDict().
+            params (Optional[Dict[str,str]]): params to get request. Defaults to None.
+            path (Optional[str]): field to get. Defaults to None.
 
+        Raises:
+            ValueError: If json cannot be loaded
         """
         r = self._session.get(url, headers=headers, params=params)
         try:
             j = json_loads(r)
         except ValueError as e:
-            logging.error("%s:\n%s" % (e, r.text))
+            logging.error(f"{e}:\n{r.text}")
             raise e
         if path:
             j = j[path]
         self._parse_raw(j)
 
-    def _parse_raw(self, raw):
+    def _parse_raw(self, raw: Dict[str, Any]):
         """Parse a raw dictionary to create a resource.
 
-        :type raw: Dict[str, Any]
+        Args:
+            raw (Dict[str, Any])
         """
         self.raw = raw
         if not raw:
-            raise NotImplementedError("We cannot instantiate empty resources: %s" % raw)
+            raise NotImplementedError(f"We cannot instantiate empty resources: {raw}")
         dict2resource(raw, self, self._options, self._session)
 
     def _default_headers(self, user_headers):
@@ -416,7 +477,12 @@ class Resource(object):
 class Attachment(Resource):
     """An issue attachment."""
 
-    def __init__(self, options, session, raw=None):
+    def __init__(
+        self,
+        options: Dict[str, str],
+        session: ResilientSession,
+        raw: Dict[str, Any] = None,
+    ):
         Resource.__init__(self, "attachment/{0}", options, session)
         if raw:
             self._parse_raw(raw)
@@ -435,15 +501,21 @@ class Attachment(Resource):
 class Component(Resource):
     """A project component."""
 
-    def __init__(self, options, session, raw=None):
+    def __init__(
+        self,
+        options: Dict[str, str],
+        session: ResilientSession,
+        raw: Dict[str, Any] = None,
+    ):
         Resource.__init__(self, "component/{0}", options, session)
         if raw:
             self._parse_raw(raw)
 
-    def delete(self, moveIssuesTo=None):
+    def delete(self, moveIssuesTo: Optional[str] = None):  # type: ignore[override]
         """Delete this component from the server.
 
-        :param moveIssuesTo: the name of the component to which to move any issues this component is applied
+        Args:
+            moveIssuesTo: the name of the component to which to move any issues this component is applied
         """
         params = {}
         if moveIssuesTo is not None:
@@ -455,16 +527,26 @@ class Component(Resource):
 class CustomFieldOption(Resource):
     """An existing option for a custom issue field."""
 
-    def __init__(self, options, session, raw=None):
+    def __init__(
+        self,
+        options: Dict[str, str],
+        session: ResilientSession,
+        raw: Dict[str, Any] = None,
+    ):
         Resource.__init__(self, "customFieldOption/{0}", options, session)
         if raw:
             self._parse_raw(raw)
 
 
 class Dashboard(Resource):
-    """A JIRA dashboard."""
+    """A Jira dashboard."""
 
-    def __init__(self, options, session, raw=None):
+    def __init__(
+        self,
+        options: Dict[str, str],
+        session: ResilientSession,
+        raw: Dict[str, Any] = None,
+    ):
         Resource.__init__(self, "dashboard/{0}", options, session)
         if raw:
             self._parse_raw(raw)
@@ -473,44 +555,60 @@ class Dashboard(Resource):
 class Filter(Resource):
     """An issue navigator filter."""
 
-    def __init__(self, options, session, raw=None):
+    def __init__(
+        self,
+        options: Dict[str, str],
+        session: ResilientSession,
+        raw: Dict[str, Any] = None,
+    ):
         Resource.__init__(self, "filter/{0}", options, session)
         if raw:
             self._parse_raw(raw)
 
 
 class Issue(Resource):
-    """A JIRA issue."""
+    """A Jira issue."""
 
     class _IssueFields(object):
-        def __init__(self):
-            self.attachment = None
-            """ :type : list[Attachment] """
-            self.description = None
-            """ :type : str """
-            self.project = None
-            """ :type : Project """
-            self.comment = None
-            """ :type : list[Comment] """
-            self.issuelinks = None
-            """ :type : list[IssueLink] """
-            self.worklog = None
-            """ :type : list[Worklog] """
+        class _Comment(object):
+            def __init__(self) -> None:
+                self.comments: List[Comment] = []
 
-    def __init__(self, options, session, raw=None):
+        class _Worklog(object):
+            def __init__(self) -> None:
+                self.worklogs: List[Worklog] = []
+
+        def __init__(self):
+            self.attachment: List[Attachment] = []
+            self.comment = self._Comment()
+            self.description: Optional[str] = None
+            self.issuelinks: List[IssueLink] = []
+            self.labels: List[str] = []
+            self.project: Optional[Project] = None
+            self.worklog = self._Worklog()
+
+    def __init__(
+        self,
+        options: Dict[str, str],
+        session: ResilientSession,
+        raw: Dict[str, Any] = None,
+    ):
         Resource.__init__(self, "issue/{0}", options, session)
 
-        self.fields = None
-        """ :type: :class:`~Issue._IssueFields` """
-        self.id = None
-        """ :type: int """
-        self.key = None
-        """ :type: str """
+        self.fields: Issue._IssueFields
+        self.id: str
+        self.key: str
         if raw:
             self._parse_raw(raw)
 
-    def update(
-        self, fields=None, update=None, async_=None, jira=None, notify=True, **fieldargs
+    def update(  # type: ignore[override] # incompatible supertype ignored
+        self,
+        fields: Dict[str, Any] = None,
+        update: Dict[str, Any] = None,
+        async_: bool = None,
+        jira: "JIRA" = None,
+        notify: bool = True,
+        **fieldargs,
     ):
         """Update this issue on the server.
 
@@ -518,19 +616,18 @@ class Issue(Resource):
         is treated as the intended value for that field -- if the fields argument is used, all other keyword arguments
         will be ignored.
 
-        JIRA projects may contain many different issue types. Some issue screens have different requirements for
+        Jira projects may contain many different issue types. Some issue screens have different requirements for
         fields in an issue. This information is available through the :py:meth:`.JIRA.editmeta` method. Further examples
         are available here: https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Edit+issues
 
-        :param fields: a dict containing field names and the values to use
-        :param update: a dict containing update operations to apply
-        :param notify: query parameter notifyUsers. If true send the email with notification that the issue was updated
-                       to users that watch it. Admin or project admin permissions are required to disable the notification.
-        :param fieldargs: keyword arguments will generally be merged into fields, except lists,
-                          which will be merged into updates
-
-        :type fields: dict
-        :type update: dict
+        Args:
+            fields (Dict[str,Any]): a dict containing field names and the values to use
+            update (Dict[str,Any]): a dict containing update operations to apply
+            notify (bool): query parameter notifyUsers. If true send the email with notification that the issue was updated
+              to users that watch it. Admin or project admin permissions are required to disable the notification.
+            jira (Optional[jira.client.JIRA]): JIRA instance.
+            fieldargs (dict): keyword arguments will generally be merged into fields, except lists,
+              which will be merged into updates
 
         """
         data = {}
@@ -549,7 +646,7 @@ class Issue(Resource):
             # apply some heuristics to make certain changes easier
             if isinstance(value, str):
                 if field == "assignee" or field == "reporter":
-                    fields_dict["assignee"] = {"name": value}
+                    fields_dict[field] = {"name": value}
                 elif field == "comment":
                     if "comment" not in update_dict:
                         update_dict["comment"] = []
@@ -565,45 +662,45 @@ class Issue(Resource):
 
         super(Issue, self).update(async_=async_, jira=jira, notify=notify, fields=data)
 
-    def add_field_value(self, field, value):
+    def add_field_value(self, field: str, value: str):
         """Add a value to a field that supports multiple values, without resetting the existing values.
 
         This should work with: labels, multiple checkbox lists, multiple select
 
-        :param field: The field name
-        :param value: The field's value
+        Args:
+            field (str): The field name
+            value (str): The field's value
 
-        :type field: str
         """
         super(Issue, self).update(fields={"update": {field: [{"add": value}]}})
 
     def delete(self, deleteSubtasks=False):
         """Delete this issue from the server.
 
-        :param deleteSubtasks: if the issue has subtasks, this argument must be set to true for the call to succeed.
+        Args:
+            deleteSubtasks (bool): if the issue has subtasks, this argument must be set to true for the call to succeed.
 
-        :type deleteSubtasks: bool
         """
         super(Issue, self).delete(params={"deleteSubtasks": deleteSubtasks})
 
     def permalink(self):
         """Get the URL of the issue, the browsable one not the REST one.
 
-        :return: URL of the issue
-
-        :rtype: str
+        Returns:
+            str: URL of the issue
         """
-        return "%s/browse/%s" % (self._options["server"], self.key)
-
-    def __eq__(self, other):
-        """Comparison method."""
-        return other is not None and self.id == other.id
+        return f"{self._options['server']}/browse/{self.key}"
 
 
 class Comment(Resource):
     """An issue comment."""
 
-    def __init__(self, options, session, raw=None):
+    def __init__(
+        self,
+        options: Dict[str, str],
+        session: ResilientSession,
+        raw: Dict[str, Any] = None,
+    ):
         Resource.__init__(self, "issue/{0}/comment/{1}", options, session)
         if raw:
             self._parse_raw(raw)
@@ -621,7 +718,12 @@ class Comment(Resource):
 class RemoteLink(Resource):
     """A link to a remote application from an issue."""
 
-    def __init__(self, options, session, raw=None):
+    def __init__(
+        self,
+        options: Dict[str, str],
+        session: ResilientSession,
+        raw: Dict[str, Any] = None,
+    ):
         Resource.__init__(self, "issue/{0}/remotelink/{1}", options, session)
         if raw:
             self._parse_raw(raw)
@@ -632,10 +734,11 @@ class RemoteLink(Resource):
         For definitions of the allowable fields for 'object' and the keyword arguments 'globalId', 'application' and
         'relationship', see https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+for+Remote+Issue+Links.
 
-        :param object: the link details to add (see the above link for details)
-        :param globalId: unique ID for the link (see the above link for details)
-        :param application: application information for the link (see the above link for details)
-        :param relationship: relationship description for the link (see the above link for details)
+        Args:
+            object: the link details to add (see the above link for details)
+            globalId: unique ID for the link (see the above link for details)
+            application: application information for the link (see the above link for details)
+            relationship: relationship description for the link (see the above link for details)
         """
         data = {"object": object}
         if globalId is not None:
@@ -651,7 +754,12 @@ class RemoteLink(Resource):
 class Votes(Resource):
     """Vote information on an issue."""
 
-    def __init__(self, options, session, raw=None):
+    def __init__(
+        self,
+        options: Dict[str, str],
+        session: ResilientSession,
+        raw: Dict[str, Any] = None,
+    ):
         Resource.__init__(self, "issue/{0}/votes", options, session)
         if raw:
             self._parse_raw(raw)
@@ -660,7 +768,12 @@ class Votes(Resource):
 class Watchers(Resource):
     """Watcher information on an issue."""
 
-    def __init__(self, options, session, raw=None):
+    def __init__(
+        self,
+        options: Dict[str, str],
+        session: ResilientSession,
+        raw: Dict[str, Any] = None,
+    ):
         Resource.__init__(self, "issue/{0}/watchers", options, session)
         if raw:
             self._parse_raw(raw)
@@ -671,7 +784,12 @@ class Watchers(Resource):
 
 
 class TimeTracking(Resource):
-    def __init__(self, options, session, raw=None):
+    def __init__(
+        self,
+        options: Dict[str, str],
+        session: ResilientSession,
+        raw: Dict[str, Any] = None,
+    ):
         Resource.__init__(self, "issue/{0}/worklog/{1}", options, session)
         self.remainingEstimate = None
         if raw:
@@ -681,19 +799,27 @@ class TimeTracking(Resource):
 class Worklog(Resource):
     """Worklog on an issue."""
 
-    def __init__(self, options, session, raw=None):
+    def __init__(
+        self,
+        options: Dict[str, str],
+        session: ResilientSession,
+        raw: Dict[str, Any] = None,
+    ):
         Resource.__init__(self, "issue/{0}/worklog/{1}", options, session)
         if raw:
             self._parse_raw(raw)
 
-    def delete(self, adjustEstimate=None, newEstimate=None, increaseBy=None):
+    def delete(  # type: ignore[override]
+        self, adjustEstimate: Optional[str] = None, newEstimate=None, increaseBy=None
+    ):
         """Delete this worklog entry from its associated issue.
 
-        :param adjustEstimate: one of ``new``, ``leave``, ``manual`` or ``auto``.
-            ``auto`` is the default and adjusts the estimate automatically.
-            ``leave`` leaves the estimate unchanged by this deletion.
-        :param newEstimate: combined with ``adjustEstimate=new``, set the estimate to this value
-        :param increaseBy: combined with ``adjustEstimate=manual``, increase the remaining estimate by this amount
+        Args:
+            adjustEstimate: one of ``new``, ``leave``, ``manual`` or ``auto``.
+              ``auto`` is the default and adjusts the estimate automatically.
+              ``leave`` leaves the estimate unchanged by this deletion.
+            newEstimate: combined with ``adjustEstimate=new``, set the estimate to this value
+            increaseBy: combined with ``adjustEstimate=manual``, increase the remaining estimate by this amount
         """
         params = {}
         if adjustEstimate is not None:
@@ -709,7 +835,12 @@ class Worklog(Resource):
 class IssueLink(Resource):
     """Link between two issues."""
 
-    def __init__(self, options, session, raw=None):
+    def __init__(
+        self,
+        options: Dict[str, str],
+        session: ResilientSession,
+        raw: Dict[str, Any] = None,
+    ):
         Resource.__init__(self, "issueLink/{0}", options, session)
         if raw:
             self._parse_raw(raw)
@@ -718,7 +849,12 @@ class IssueLink(Resource):
 class IssueLinkType(Resource):
     """Type of link between two issues."""
 
-    def __init__(self, options, session, raw=None):
+    def __init__(
+        self,
+        options: Dict[str, str],
+        session: ResilientSession,
+        raw: Dict[str, Any] = None,
+    ):
         Resource.__init__(self, "issueLinkType/{0}", options, session)
         if raw:
             self._parse_raw(raw)
@@ -727,7 +863,12 @@ class IssueLinkType(Resource):
 class IssueType(Resource):
     """Type of an issue."""
 
-    def __init__(self, options, session, raw=None):
+    def __init__(
+        self,
+        options: Dict[str, str],
+        session: ResilientSession,
+        raw: Dict[str, Any] = None,
+    ):
         Resource.__init__(self, "issuetype/{0}", options, session)
         if raw:
             self._parse_raw(raw)
@@ -736,16 +877,26 @@ class IssueType(Resource):
 class Priority(Resource):
     """Priority that can be set on an issue."""
 
-    def __init__(self, options, session, raw=None):
+    def __init__(
+        self,
+        options: Dict[str, str],
+        session: ResilientSession,
+        raw: Dict[str, Any] = None,
+    ):
         Resource.__init__(self, "priority/{0}", options, session)
         if raw:
             self._parse_raw(raw)
 
 
 class Project(Resource):
-    """A JIRA project."""
+    """A Jira project."""
 
-    def __init__(self, options, session, raw=None):
+    def __init__(
+        self,
+        options: Dict[str, str],
+        session: ResilientSession,
+        raw: Dict[str, Any] = None,
+    ):
         Resource.__init__(self, "project/{0}", options, session)
         if raw:
             self._parse_raw(raw)
@@ -754,18 +905,26 @@ class Project(Resource):
 class Role(Resource):
     """A role inside a project."""
 
-    def __init__(self, options, session, raw=None):
+    def __init__(
+        self,
+        options: Dict[str, str],
+        session: ResilientSession,
+        raw: Dict[str, Any] = None,
+    ):
         Resource.__init__(self, "project/{0}/role/{1}", options, session)
         if raw:
             self._parse_raw(raw)
 
-    def update(self, users=None, groups=None):
+    def update(  # type: ignore[override]
+        self,
+        users: Union[str, List, Tuple] = None,
+        groups: Union[str, List, Tuple] = None,
+    ):
         """Add the specified users or groups to this project role. One of ``users`` or ``groups`` must be specified.
 
-        :param users: a user or users to add to the role
-        :type users: string, list or tuple
-        :param groups: a group or groups to add to the role
-        :type groups: string, list or tuple
+        Args:
+            users (Optional[Union[str,List,Tuple]]): a user or users to add to the role
+            groups (Optional[Union[str,List,Tuple]]): a group or groups to add to the role
         """
 
         if users is not None and isinstance(users, str):
@@ -783,15 +942,18 @@ class Role(Resource):
 
         super(Role, self).update(**data)
 
-    def add_user(self, users=None, groups=None):
+    def add_user(
+        self,
+        users: Union[str, List, Tuple] = None,
+        groups: Union[str, List, Tuple] = None,
+    ):
         """Add the specified users or groups to this project role.
 
         One of ``users`` or ``groups`` must be specified.
 
-        :param users: a user or users to add to the role
-        :type users: string, list or tuple
-        :param groups: a group or groups to add to the role
-        :type groups: string, list or tuple
+        Args:
+            users (Optional[Union[str,List,Tuple]]): a user or users to add to the role
+            groups (Optional[Union[str,List,Tuple]]): a group or groups to add to the role
         """
 
         data = None
@@ -808,10 +970,16 @@ class Role(Resource):
         if data is not None:
             self._session.post(self.self, data=json.dumps(data))
 
+
 class Resolution(Resource):
     """A resolution for an issue."""
 
-    def __init__(self, options, session, raw=None):
+    def __init__(
+        self,
+        options: Dict[str, str],
+        session: ResilientSession,
+        raw: Dict[str, Any] = None,
+    ):
         Resource.__init__(self, "resolution/{0}", options, session)
         if raw:
             self._parse_raw(raw)
@@ -820,7 +988,12 @@ class Resolution(Resource):
 class SecurityLevel(Resource):
     """A security level for an issue or project."""
 
-    def __init__(self, options, session, raw=None):
+    def __init__(
+        self,
+        options: Dict[str, str],
+        session: ResilientSession,
+        raw: Dict[str, Any] = None,
+    ):
         Resource.__init__(self, "securitylevel/{0}", options, session)
         if raw:
             self._parse_raw(raw)
@@ -829,7 +1002,12 @@ class SecurityLevel(Resource):
 class Status(Resource):
     """Status for an issue."""
 
-    def __init__(self, options, session, raw=None):
+    def __init__(
+        self,
+        options: Dict[str, str],
+        session: ResilientSession,
+        raw: Dict[str, Any] = None,
+    ):
         Resource.__init__(self, "status/{0}", options, session)
         if raw:
             self._parse_raw(raw)
@@ -838,64 +1016,70 @@ class Status(Resource):
 class StatusCategory(Resource):
     """StatusCategory for an issue."""
 
-    def __init__(self, options, session, raw=None):
+    def __init__(
+        self,
+        options: Dict[str, str],
+        session: ResilientSession,
+        raw: Dict[str, Any] = None,
+    ):
         Resource.__init__(self, "statuscategory/{0}", options, session)
         if raw:
             self._parse_raw(raw)
 
 
 class User(Resource):
-    """A JIRA user."""
+    """A Jira user."""
 
-    def __init__(self, options, session, raw=None):
+    def __init__(
+        self,
+        options: Dict[str, str],
+        session: ResilientSession,
+        raw: Dict[str, Any] = None,
+    ):
         Resource.__init__(self, "user?username={0}", options, session)
         if raw:
             self._parse_raw(raw)
 
-    def __hash__(self):
-        """Hash calculation."""
-        return hash(str(self.name))
-
-    def __eq__(self, other):
-        """Comparison."""
-        return str(self.name) == str(other.name)
-
 
 class Group(Resource):
-    """A JIRA user group."""
+    """A Jira user group."""
 
-    def __init__(self, options, session, raw=None):
+    def __init__(
+        self,
+        options: Dict[str, str],
+        session: ResilientSession,
+        raw: Dict[str, Any] = None,
+    ):
         Resource.__init__(self, "group?groupname={0}", options, session)
         if raw:
             self._parse_raw(raw)
-
-    def __hash__(self):
-        """Hash calculation."""
-        return hash(str(self.name))
-
-    def __eq__(self, other):
-        """Equality by name."""
-        return str(self.name) == str(other.name)
 
 
 class Version(Resource):
     """A version of a project."""
 
-    def __init__(self, options, session, raw=None):
+    def __init__(
+        self,
+        options: Dict[str, str],
+        session: ResilientSession,
+        raw: Dict[str, Any] = None,
+    ):
         Resource.__init__(self, "version/{0}", options, session)
         if raw:
             self._parse_raw(raw)
 
     def delete(self, moveFixIssuesTo=None, moveAffectedIssuesTo=None):
-        """Delete this project version from the server.
+        """
+        Delete this project version from the server.
 
-        If neither of the arguments are specified, the version is
-            removed from all issues it is attached to.
+        If neither of the arguments are specified, the version is removed from all
+        issues it is attached to.
 
-        :param moveFixIssuesTo: in issues for which this version is a fix
-            version, add this argument version to the fix version list
-        :param moveAffectedIssuesTo: in issues for which this version is an
-            affected version, add this argument version to the affected version list
+        Args:
+            moveFixIssuesTo: in issues for which this version is a fix
+              version, add this argument version to the fix version list
+            moveAffectedIssuesTo: in issues for which this version is an
+              affected version, add this argument version to the affected version list
         """
 
         params = {}
@@ -906,17 +1090,34 @@ class Version(Resource):
 
         return super(Version, self).delete(params)
 
-    def update(self, **args):
-        """Update this project version from the server. It is prior used to archive versions."""
+    def update(self, **kwargs):
+        """
+        Update this project version from the server. It is prior used to archive versions.
+
+        Refer to Atlassian REST API `documentation`_.
+
+        .. _documentation: https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-project-versions/#api-rest-api-2-version-id-put
+
+        :Example:
+
+            .. code-block:: python
+
+                >> version_id = "10543"
+                >> version = JIRA("https://atlassian.org").version(version_id)
+                >> print(version.name)
+                "some_version_name"
+                >> version.update(name="another_name")
+                >> print(version.name)
+                "another_name"
+                >> version.update(archived=True)
+                >> print(version.archived)
+                True
+        """
         data = {}
-        for field in args:
-            data[field] = args[field]
+        for field in kwargs:
+            data[field] = kwargs[field]
 
         super(Version, self).update(**data)
-
-    def __eq__(self, other):
-        """Comparison."""
-        return self.id == other.id and self.name == other.name
 
 
 # GreenHopper
@@ -928,13 +1129,19 @@ class GreenHopperResource(Resource):
     AGILE_BASE_URL = "{server}/rest/{agile_rest_path}/{agile_rest_api_version}/{path}"
 
     GREENHOPPER_REST_PATH = "greenhopper"
-    """ Old, private API. Deprecated and will be removed from JIRA on the 1st February 2016. """
+    """ Old, private API. Deprecated and will be removed from Jira on the 1st February 2016. """
     AGILE_EXPERIMENTAL_REST_PATH = "greenhopper/experimental-api"
-    """ Experimental API available in JIRA Agile 6.7.3 - 6.7.6, basically the same as Public API """
+    """ Experimental API available in Jira Agile 6.7.3 - 6.7.6, basically the same as Public API """
     AGILE_BASE_REST_PATH = "agile"
-    """ Public API introduced in JIRA Agile 6.7.7. """
+    """ Public API introduced in Jira Agile 6.7.7. """
 
-    def __init__(self, path, options, session, raw):
+    def __init__(
+        self,
+        path: str,
+        options: Dict[str, str],
+        session: ResilientSession,
+        raw: Dict[str, Any] = None,
+    ):
         self.self = None
 
         Resource.__init__(self, path, options, session, self.AGILE_BASE_URL)
@@ -948,7 +1155,12 @@ class GreenHopperResource(Resource):
 class Sprint(GreenHopperResource):
     """A GreenHopper sprint."""
 
-    def __init__(self, options, session, raw=None):
+    def __init__(
+        self,
+        options: Dict[str, str],
+        session: ResilientSession,
+        raw: Dict[str, Any] = None,
+    ):
         GreenHopperResource.__init__(self, "sprint/{0}", options, session, raw)
 
     def find(self, id, params=None):
@@ -959,14 +1171,19 @@ class Sprint(GreenHopperResource):
             Resource.find(self, id, params)
         else:
             # Old, private GreenHopper API had non-standard way of loading Sprint
-            url = self._get_url("sprint/%s/edit/model" % id)
+            url = self._get_url(f"sprint/{id}/edit/model")
             self._load(url, params=params, path="sprint")
 
 
 class Board(GreenHopperResource):
     """A GreenHopper board."""
 
-    def __init__(self, options, session, raw=None):
+    def __init__(
+        self,
+        options: Dict[str, str],
+        session: ResilientSession,
+        raw: Dict[str, Any] = None,
+    ):
         path = (
             "rapidview/{0}"
             if options["agile_rest_path"] == self.GREENHOPPER_REST_PATH
@@ -980,7 +1197,7 @@ class Board(GreenHopperResource):
             != GreenHopperResource.GREENHOPPER_REST_PATH
         ):
             raise NotImplementedError(
-                "JIRA Agile Public API does not support Board removal"
+                "Jira Agile Public API does not support Board removal"
             )
 
         Resource.delete(self, params)
@@ -992,7 +1209,12 @@ class Board(GreenHopperResource):
 class Customer(Resource):
     """A Service Desk customer."""
 
-    def __init__(self, options, session, raw=None):
+    def __init__(
+        self,
+        options: Dict[str, str],
+        session: ResilientSession,
+        raw: Dict[str, Any] = None,
+    ):
         Resource.__init__(
             self, "customer", options, session, "{server}/rest/servicedeskapi/{path}"
         )
@@ -1003,7 +1225,12 @@ class Customer(Resource):
 class ServiceDesk(Resource):
     """A Service Desk."""
 
-    def __init__(self, options, session, raw=None):
+    def __init__(
+        self,
+        options: Dict[str, str],
+        session: ResilientSession,
+        raw: Dict[str, Any] = None,
+    ):
         Resource.__init__(
             self,
             "servicedesk/{0}",
@@ -1018,7 +1245,12 @@ class ServiceDesk(Resource):
 class RequestType(Resource):
     """A Service Desk Request Type."""
 
-    def __init__(self, options, session, raw=None):
+    def __init__(
+        self,
+        options: Dict[str, str],
+        session: ResilientSession,
+        raw: Dict[str, Any] = None,
+    ):
         if raw:
             self._parse_raw(raw)
 
@@ -1034,7 +1266,9 @@ class RequestType(Resource):
 # Utilities
 
 
-def dict2resource(raw, top=None, options=None, session=None):
+def dict2resource(
+    raw: Dict[str, Any], top=None, options=None, session=None
+) -> Union["PropertyHolder", Type[Resource]]:
     """Convert a dictionary into a Jira Resource object.
 
     Recursively walks a dict structure, transforming the properties into attributes
@@ -1048,19 +1282,36 @@ def dict2resource(raw, top=None, options=None, session=None):
     for i, j in raw.items():
         if isinstance(j, dict):
             if "self" in j:
-                resource = cls_for_resource(j["self"])(options, session, j)
+                # to try and help mypy know that cls_for_resource can never be 'Resource'
+                resource_class = cast(Type[Resource], cls_for_resource(j["self"]))
+                resource = cast(
+                    Type[Resource],
+                    resource_class(  # type: ignore
+                        options=options, session=session, raw=j  # type: ignore
+                    ),
+                )
                 setattr(top, i, resource)
             elif i == "timetracking":
                 setattr(top, "timetracking", TimeTracking(options, session, j))
             else:
                 setattr(top, i, dict2resource(j, options=options, session=session))
         elif isinstance(j, seqs):
-            seq_list = []
+            j = cast(List[Dict[str, Any]], j)  # help mypy
+            seq_list: List[Any] = []
             for seq_elem in j:
                 if isinstance(seq_elem, dict):
                     if "self" in seq_elem:
-                        resource = cls_for_resource(seq_elem["self"])(
-                            options, session, seq_elem
+                        # to try and help mypy know that cls_for_resource can never be 'Resource'
+                        resource_class = cast(
+                            Type[Resource], cls_for_resource(seq_elem["self"])
+                        )
+                        resource = cast(
+                            Type[Resource],
+                            resource_class(  # type: ignore
+                                options=options,
+                                session=session,
+                                raw=seq_elem,  # type: ignore
+                            ),
                         )
                         seq_list.append(resource)
                     else:
@@ -1075,8 +1326,8 @@ def dict2resource(raw, top=None, options=None, session=None):
     return top
 
 
-resource_class_map = {
-    # JIRA specific resources
+resource_class_map: Dict[str, Type[Resource]] = {
+    # Jira-specific resources
     r"attachment/[^/]+$": Attachment,
     r"component/[^/]+$": Component,
     r"customFieldOption/[^/]+$": CustomFieldOption,
@@ -1097,7 +1348,7 @@ resource_class_map = {
     r"securitylevel/[^/]+$": SecurityLevel,
     r"status/[^/]+$": Status,
     r"statuscategory/[^/]+$": StatusCategory,
-    r"user\?(username|accountId).+$": User,
+    r"user\?(username|key).+$": User,
     r"group\?groupname.+$": Group,
     r"version/[^/]+$": Version,
     # GreenHopper specific resources
@@ -1107,15 +1358,20 @@ resource_class_map = {
 
 
 class UnknownResource(Resource):
-    """A Resource from JIRA that is not (yet) supported."""
+    """A Resource from Jira that is not (yet) supported."""
 
-    def __init__(self, options, session, raw=None):
+    def __init__(
+        self,
+        options: Dict[str, str],
+        session: ResilientSession,
+        raw: Dict[str, Any] = None,
+    ):
         Resource.__init__(self, "unknown{0}", options, session)
         if raw:
             self._parse_raw(raw)
 
 
-def cls_for_resource(resource_literal):
+def cls_for_resource(resource_literal: str) -> Type[Resource]:
     for resource in resource_class_map:
         if re.search(resource, resource_literal):
             return resource_class_map[resource]

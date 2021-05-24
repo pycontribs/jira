@@ -1,29 +1,28 @@
 #!/usr/bin/env python
 
-"""Starts an interactive JIRA session in an ipython terminal.
+"""Starts an interactive Jira session in an ipython terminal.
 
 Script arguments support changing the server and a persistent authentication
 over HTTP BASIC or Kerberos.
 """
 
 import argparse
+import configparser
 import os
 import sys
 import webbrowser
 from getpass import getpass
+from urllib.parse import parse_qsl
 
 import keyring
 import requests
 from oauthlib.oauth1 import SIGNATURE_RSA
 from requests_oauthlib import OAuth1
-from urllib.parse import parse_qsl
 
 from jira import JIRA, __version__
 
-import configparser
-
-
 CONFIG_PATH = os.path.join(os.path.expanduser("~"), ".jira-python", "jirashell.ini")
+SENTINEL = object()
 
 
 def oauth_dance(server, consumer_key, key_cert_data, print_tokens=False, verify=None):
@@ -36,23 +35,25 @@ def oauth_dance(server, consumer_key, key_cert_data, print_tokens=False, verify=
         server + "/plugins/servlet/oauth/request-token", verify=verify, auth=oauth
     )
     request = dict(parse_qsl(r.text))
-    request_token = request["oauth_token"]
-    request_token_secret = request["oauth_token_secret"]
+    request_token = request.get("oauth_token", SENTINEL)
+    request_token_secret = request.get("oauth_token_secret", SENTINEL)
+    if request_token is SENTINEL or request_token_secret is SENTINEL:
+        problem = request.get("oauth_problem")
+        if problem is not None:
+            message = "OAuth error: {}".format(problem)
+        else:
+            message = " ".join(f"{key}:{value}" for key, value in request.items())
+        exit(message)
+
     if print_tokens:
         print("Request tokens received.")
-        print("    Request token:        {}".format(request_token))
-        print("    Request token secret: {}".format(request_token_secret))
+        print(f"    Request token:        {request_token}")
+        print(f"    Request token secret: {request_token_secret}")
 
     # step 2: prompt user to validate
-    auth_url = "{}/plugins/servlet/oauth/authorize?oauth_token={}".format(
-        server, request_token
-    )
+    auth_url = f"{server}/plugins/servlet/oauth/authorize?oauth_token={request_token}"
     if print_tokens:
-        print(
-            "Please visit this URL to authorize the OAuth request:\n\t{}".format(
-                auth_url
-            )
-        )
+        print(f"Please visit this URL to authorize the OAuth request:\n\t{auth_url}")
     else:
         webbrowser.open_new(auth_url)
         print(
@@ -60,9 +61,7 @@ def oauth_dance(server, consumer_key, key_cert_data, print_tokens=False, verify=
         )
 
     approved = input(
-        "Have you authorized this program to connect on your behalf to {}? (y/n)".format(
-            server
-        )
+        f"Have you authorized this program to connect on your behalf to {server}? (y/n)"
     )
 
     if approved.lower() != "y":
@@ -85,8 +84,8 @@ def oauth_dance(server, consumer_key, key_cert_data, print_tokens=False, verify=
 
     if print_tokens:
         print("Access tokens received.")
-        print("    Access token:        {}".format(access["oauth_token"]))
-        print("    Access token secret: {}".format(access["oauth_token_secret"]))
+        print(f"    Access token:        {access['oauth_token']}")
+        print(f"    Access token secret: {access['oauth_token_secret']}")
 
     return {
         "access_token": access["oauth_token"],
@@ -104,7 +103,7 @@ def process_config():
     try:
         parser.read(CONFIG_PATH)
     except configparser.ParsingError as err:
-        print("Couldn't read config file at path: {}\n{}".format(CONFIG_PATH, err))
+        print(f"Couldn't read config file at path: {CONFIG_PATH}\n{err}")
         raise
 
     if parser.has_section("options"):
@@ -144,13 +143,13 @@ def process_config():
 
 def process_command_line():
     parser = argparse.ArgumentParser(
-        description="Start an interactive JIRA shell with the REST API."
+        description="Start an interactive Jira shell with the REST API."
     )
-    jira_group = parser.add_argument_group("JIRA server connection options")
+    jira_group = parser.add_argument_group("Jira server connection options")
     jira_group.add_argument(
         "-s",
         "--server",
-        help="The JIRA instance to connect to, including context path.",
+        help="The Jira instance to connect to, including context path.",
     )
     jira_group.add_argument(
         "-r", "--rest-path", help="The root path of the REST API to use."
@@ -168,7 +167,7 @@ def process_command_line():
 
     basic_auth_group = parser.add_argument_group("BASIC auth options")
     basic_auth_group.add_argument(
-        "-u", "--username", help="The username to connect to this JIRA instance with."
+        "-u", "--username", help="The username to connect to this Jira instance with."
     )
     basic_auth_group.add_argument(
         "-p", "--password", help="The password associated with this user."
@@ -185,14 +184,14 @@ def process_command_line():
         "-od",
         "--oauth-dance",
         action="store_true",
-        help="Start a 3-legged OAuth authentication dance with JIRA.",
+        help="Start a 3-legged OAuth authentication dance with Jira.",
     )
     oauth_group.add_argument("-ck", "--consumer-key", help="OAuth consumer key.")
     oauth_group.add_argument(
         "-k",
         "--key-cert",
         help="Private key to sign OAuth requests with (should be the pair of the public key\
-                                   configured in the JIRA application link)",
+                                   configured in the Jira application link)",
     )
     oauth_group.add_argument(
         "-pt",
@@ -306,7 +305,7 @@ def handle_basic_auth(auth, server):
         print("Getting password from keyring...")
         password = keyring.get_password(server, auth["username"])
         assert password, "No password provided!"
-    return (auth["username"], password)
+    return auth["username"], password
 
 
 def main():
@@ -362,9 +361,9 @@ def main():
             from IPython.frontend.terminal.embed import InteractiveShellEmbed
 
         ip_shell = InteractiveShellEmbed(
-            banner1="<JIRA Shell " + __version__ + " (" + jira.client_info() + ")>"
+            banner1="<Jira Shell " + __version__ + " (" + jira.server_url + ")>"
         )
-        ip_shell("*** JIRA shell active; client is in 'jira'." " Press Ctrl-D to exit.")
+        ip_shell("*** Jira shell active; client is in 'jira'. Press Ctrl-D to exit.")
     except Exception as e:
         print(e, file=sys.stderr)
         return 2

@@ -1,5 +1,5 @@
-all: info clean lint test docs dist upload release
-.PHONY: all docs upload info req dist
+all: info clean lint test docs dist
+.PHONY: all docs info req dist
 
 PACKAGE_NAME := $(shell python setup.py --name)
 PACKAGE_VERSION := $(shell python setup.py --version)
@@ -72,10 +72,9 @@ dist:
 	$(PREFIX)python setup.py sdist bdist_wheel
 
 prepare:
-	@pyenv install -s 3.5.7
 	@pyenv install -s 3.6.9
 	@pyenv install -s 3.7.4
-	@pyenv local 3.5.7 3.6.9 3.7.4
+	@pyenv local 3.6.9 3.7.4
 	@echo "INFO:	=== Preparing to run for package:$(PACKAGE_NAME) platform:$(PLATFORM) py:$(PYTHON_VERSION) dir:$(DIR) ==="
 	#if [ -f ${HOME}/testspace/testspace ]; then ${HOME}/testspace/testspace config url ${TESTSPACE_TOKEN}@pycontribs.testspace.com/jira/tests ; fi;
 
@@ -107,28 +106,3 @@ tag:
 	bumpversion --feature --no-input
 	git push origin master
 	git push --tags
-
-release: req
-ifeq ($(GIT_BRANCH),master)
-	tag
-else
-	upload
-	web
-
-	@echo "INFO:	Skipping release on this branch."
-endif
-
-upload:
-	rm -f dist/*
-ifeq ($(GIT_BRANCH),develop)
-	@echo "INFO:	Upload package to testpypi.python.org"
-	$(PREFIX)python setup.py check --restructuredtext --strict
-	$(PREFIX)python setup.py sdist bdist_wheel
-	$(PREFIX)twine upload --repository-url https://test.pypi.org/legacy/ dist/*
-endif
-ifeq ($(GIT_BRANCH),master)
-	@echo "INFO:	Upload package to pypi.python.org"
-	$(PREFIX)python setup.py check --restructuredtext --strict
-	$(PREFIX)python setup.py sdist bdist_wheel
-	$(PREFIX)twine upload dist/*
-endif
