@@ -52,7 +52,7 @@ packaging==20.9
     #   pytest-sugar
 pluggy==0.13.1
     # via pytest
-pre-commit==2.12.1
+pre-commit==2.13.0
     # via -r test-requirements.in
 py==1.10.0
     # via
