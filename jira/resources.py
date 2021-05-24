@@ -46,6 +46,7 @@ __all__ = (
     "Customer",
     "ServiceDesk",
     "RequestType",
+    "resource_class_map",
 )
 
 logging.getLogger("jira").addHandler(logging.NullHandler())
@@ -122,6 +123,16 @@ class Resource(object):
         "closed",
     )
 
+    # A list of properties that should uniquely identify a Resource object
+    # Each of these properties should be hashable, usually strings
+    _HASH_IDS = (
+        "self",
+        "type",
+        "key",
+        "id",
+        "name",
+    )
+
     def __init__(
         self,
         resource: str,
@@ -180,14 +191,13 @@ class Resource(object):
             return f"<JIRA {self.__class__.__name__} at {id(self)}>"
         return f"<JIRA {self.__class__.__name__}: {', '.join(names)}>"
 
-    def __getattr__(self, item: str):
+    def __getattr__(self, item: str) -> Any:
         """Allow access of attributes via names.
 
         Args:
             item (str): Attribute Name
 
         Raises:
-            KeyError: When the attribute does not exist.
             AttributeError: When attribute does not exist.
 
         Returns:
@@ -196,17 +206,6 @@ class Resource(object):
         try:
             return self[item]  # type: ignore
         except Exception as e:
-            # Make sure pickling doesn't break
-            #   *MORE INFO*: This conditional wouldn't be necessary if __getattr__ wasn't used. But
-            #                since it is in use (no worries), we need to give the pickle.dump*
-            #                methods what they expect back. They expect to either get a KeyError
-            #                exception or a tuple of args to be passed to the __new__ method upon
-            #                unpickling (i.e. pickle.load* methods).
-            #   *NOTE*: if the __new__ method were to be implemented in this class, this may have
-            #           to be removed or changed.
-            if item == "__getnewargs__":
-                raise KeyError(item)
-
             if hasattr(self, "raw") and self.raw is not None and item in self.raw:
                 return self.raw[item]
             else:
@@ -214,18 +213,46 @@ class Resource(object):
                     f"{self.__class__!r} object has no attribute {item!r} ({e})"
                 )
 
-    # def __getstate__(self):
-    #     """
-    #     Pickling the resource; using the raw dict
-    #     """
-    #     return self.raw
-    #
-    # def __setstate__(self, raw_pickled):
-    #     """
-    #     Unpickling of the resource
-    #     """
-    #     self._parse_raw(raw_pickled)
-    #
+    def __getstate__(self) -> Dict[str, Any]:
+        """Pickling the resource."""
+        return vars(self)
+
+    def __setstate__(self, raw_pickled: Dict[str, Any]):
+        """Unpickling of the resource"""
+        # https://stackoverflow.com/a/50888571/7724187
+        vars(self).update(raw_pickled)
+
+    def __hash__(self) -> int:
+        """Hash calculation.
+
+        We try to find unique identifier like properties
+        to form our hash object.
+        Technically 'self', if present, is the unique URL to the object,
+        and should be sufficient to generate a unique hash.
+        """
+        hash_list = []
+        for a in self._HASH_IDS:
+            if hasattr(self, a):
+                hash_list.append(getattr(self, a))
+
+        if hash_list:
+            return hash(tuple(hash_list))
+        else:
+            raise TypeError(f"'{self.__class__}' is not hashable")
+
+    def __eq__(self, other: Any) -> bool:
+        """Default equality test.
+
+        Checks the types look about right and that the relevant
+        attributes that uniquely identify a resource are equal.
+        """
+        return isinstance(other, self.__class__) and all(
+            [
+                getattr(self, a) == getattr(other, a)
+                for a in self._HASH_IDS
+                if hasattr(self, a)
+            ]
+        )
 
     def find(
         self,
@@ -664,10 +691,6 @@ class Issue(Resource):
         """
         return f"{self._options['server']}/browse/{self.key}"
 
-    def __eq__(self, other):
-        """Comparison method."""
-        return other is not None and self.id == other.id
-
 
 class Comment(Resource):
     """An issue comment."""
@@ -938,7 +961,7 @@ class Role(Resource):
         if groups is not None and isinstance(groups, str):
             groups = (groups,)
 
-        data = {"user": users}  # FIXME: groups is not used.
+        data = {"user": users, "group": groups}
         self._session.post(self.self, data=json.dumps(data))
 
 
@@ -1011,14 +1034,6 @@ class User(Resource):
         if raw:
             self._parse_raw(raw)
 
-    def __hash__(self):
-        """Hash calculation."""
-        return hash(str(self.name))
-
-    def __eq__(self, other):
-        """Comparison."""
-        return str(self.name) == str(other.name)
-
 
 class Group(Resource):
     """A Jira user group."""
@@ -1032,14 +1047,6 @@ class Group(Resource):
         Resource.__init__(self, "group?groupname={0}", options, session)
         if raw:
             self._parse_raw(raw)
-
-    def __hash__(self):
-        """Hash calculation."""
-        return hash(str(self.name))
-
-    def __eq__(self, other):
-        """Equality by name."""
-        return str(self.name) == str(other.name)
 
 
 class Version(Resource):
@@ -1105,10 +1112,6 @@ class Version(Resource):
             data[field] = kwargs[field]
 
         super(Version, self).update(**data)
-
-    def __eq__(self, other):
-        """Comparison."""
-        return self.id == other.id and self.name == other.name
 
 
 # GreenHopper

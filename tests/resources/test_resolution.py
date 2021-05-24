@@ -1,4 +1,4 @@
-from tests.conftest import not_on_custom_jira_instance, JiraTestCase
+from tests.conftest import JiraTestCase, not_on_custom_jira_instance
 
 
 @not_on_custom_jira_instance
