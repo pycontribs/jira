@@ -960,9 +960,9 @@ class Role(Resource):
         if users is not None and isinstance(users, str):
             users = (users,)
             data = {"user": users}
-            if groups is not None: 
-                raise NotImplementedError("JIRA can only add users XOR groups") 
-            
+            if groups is not None:
+                raise NotImplementedError("JIRA can only add users XOR groups")
+
         if groups is not None and isinstance(groups, str):
             groups = (groups,)
             data = {"group": groups}
