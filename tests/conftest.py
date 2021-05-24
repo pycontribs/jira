@@ -125,220 +125,209 @@ class JiraTestManager(object):
 
     __shared_state: Dict[Any, Any] = {}
 
-    def __init__(self):
+    def __init__(self, jira_hosted_type="Server"):
         """Instantiate and populate the JIRA instance"""
         self.__dict__ = self.__shared_state
 
         if not self.__dict__:
-            self.initialized = 0
+            self.initialized = False
             self.max_retries = 5
 
-            if "CI_JIRA_URL" in os.environ:
-                self.CI_JIRA_URL = os.environ["CI_JIRA_URL"]
+            if jira_hosted_type and jira_hosted_type == "Cloud":
+                self.set_jira_cloud_details()
             else:
-                self.CI_JIRA_URL = "https://pycontribs.atlassian.net"
-            if "CI_JIRA_ADMIN" in os.environ:
-                self.CI_JIRA_ADMIN = os.environ["CI_JIRA_ADMIN"]
-            else:
-                self.CI_JIRA_ADMIN = "ci-admin"
+                self.set_jira_server_details()
 
-            if "CI_JIRA_ADMIN_PASSWORD" in os.environ:
-                self.CI_JIRA_ADMIN_PASSWORD = os.environ["CI_JIRA_ADMIN_PASSWORD"]
-            else:
-                self.CI_JIRA_ADMIN_PASSWORD = "sd4s3dgec5fhg4tfsds3434"
-
-            if "CI_JIRA_USER" in os.environ:
-                self.CI_JIRA_USER = os.environ["CI_JIRA_USER"]
-            else:
-                self.CI_JIRA_USER = "ci-user"
-
-            if "CI_JIRA_USER_PASSWORD" in os.environ:
-                self.CI_JIRA_USER_PASSWORD = os.environ["CI_JIRA_USER_PASSWORD"]
-            else:
-                self.CI_JIRA_USER_PASSWORD = "sd4s3dgec5fhg4tfsds3434"
-
-            self.CI_JIRA_ISSUE = os.environ.get("CI_JIRA_ISSUE", "Bug")
-
+            jira_class_kwargs = {
+                "server": self.CI_JIRA_URL,
+                "logging": False,
+                "validate": True,
+                "max_retries": self.max_retries,
+            }
             if OAUTH:
-                self.jira_admin = JIRA(
-                    oauth={
-                        "access_token": "hTxcwsbUQiFuFALf7KZHDaeAJIo3tLUK",
-                        "access_token_secret": "aNCLQFP3ORNU6WY7HQISbqbhf0UudDAf",
-                        "consumer_key": CONSUMER_KEY,
-                        "key_cert": KEY_CERT_DATA,
-                    }
-                )
-                self.jira_sysadmin = JIRA(
-                    oauth={
-                        "access_token": "4ul1ETSFo7ybbIxAxzyRal39cTrwEGFv",
-                        "access_token_secret": "K83jBZnjnuVRcfjBflrKyThJa0KSjSs2",
-                        "consumer_key": CONSUMER_KEY,
-                        "key_cert": KEY_CERT_DATA,
-                    },
-                    logging=False,
-                    max_retries=self.max_retries,
-                )
-                self.jira_normal = JIRA(
-                    oauth={
-                        "access_token": "ZVDgYDyIQqJY8IFlQ446jZaURIz5ECiB",
-                        "access_token_secret": "5WbLBybPDg1lqqyFjyXSCsCtAWTwz1eD",
-                        "consumer_key": CONSUMER_KEY,
-                        "key_cert": KEY_CERT_DATA,
-                    }
-                )
+                self.set_oauth_logins()
             else:
-                if self.CI_JIRA_ADMIN:
-                    self.jira_admin = JIRA(
-                        self.CI_JIRA_URL,
-                        basic_auth=(self.CI_JIRA_ADMIN, self.CI_JIRA_ADMIN_PASSWORD),
-                        logging=False,
-                        validate=True,
-                        max_retries=self.max_retries,
-                    )
-                    self.jira_sysadmin = JIRA(
-                        self.CI_JIRA_URL,
-                        basic_auth=(self.CI_JIRA_ADMIN, self.CI_JIRA_ADMIN_PASSWORD),
-                        logging=False,
-                        validate=True,
-                        max_retries=self.max_retries,
-                    )
-                    self.jira_normal = JIRA(
-                        self.CI_JIRA_URL,
-                        basic_auth=(self.CI_JIRA_USER, self.CI_JIRA_USER_PASSWORD),
-                        validate=True,
-                        logging=False,
-                        max_retries=self.max_retries,
-                    )
-                else:
-                    self.jira_admin = JIRA(
-                        self.CI_JIRA_URL,
-                        validate=True,
-                        logging=False,
-                        max_retries=self.max_retries,
-                    )
-                    self.jira_sysadmin = JIRA(
-                        self.CI_JIRA_URL, logging=False, max_retries=self.max_retries
-                    )
-                    self.jira_normal = JIRA(
-                        self.CI_JIRA_URL,
-                        validate=True,
-                        logging=False,
-                        max_retries=self.max_retries,
-                    )
+                self.set_basic_auth_logins(**jira_class_kwargs)
+
             if not self.jira_admin.current_user():
-                self.initialized = 1
+                self.initialized = True
                 sys.exit(3)
 
-            # now we need some data to start with for the tests
-
-            # jira project key is max 10 chars, no letter.
-            # [0] always "Z"
-            # [1-6] username running the tests (hope we will not collide)
-            # [7-8] python version A=0, B=1,..
-            # [9] A,B -- we may need more than one project
-
-            """ `jid` is important for avoiding concurrency problems when
-            executing tests in parallel as we have only one test instance.
-
-            jid length must be less than 9 characters because we may append
-            another one and the Jira Project key length limit is 10.
-            """
-
-            self.jid = get_unique_project_name()
-
-            self.project_a = self.jid + "A"  # old XSS
-            self.project_a_name = "Test user=%s key=%s A" % (
-                getpass.getuser(),
-                self.project_a,
-            )
-            self.project_b = self.jid + "B"  # old BULK
-            self.project_b_name = "Test user=%s key=%s B" % (
-                getpass.getuser(),
-                self.project_b,
-            )
-            self.project_sd = self.jid + "C"
-            self.project_sd_name = "Test user=%s key=%s C" % (
-                getpass.getuser(),
-                self.project_sd,
-            )
-
-            # TODO(ssbarnea): find a way to prevent SecurityTokenMissing for On Demand
-            # https://jira.atlassian.com/browse/JRA-39153
-            try:
-                self.jira_admin.project(self.project_a)
-            except Exception as e:
-                LOGGER.warning(e)
-            else:
-                try:
-                    self.jira_admin.delete_project(self.project_a)
-                except Exception as e:
-                    LOGGER.warning("Failed to delete %s\n%s", self.project_a, e)
-
-            try:
-                self.jira_admin.project(self.project_b)
-            except Exception as e:
-                LOGGER.warning(e)
-            else:
-                try:
-                    self.jira_admin.delete_project(self.project_b)
-                except Exception as e:
-                    LOGGER.warning("Failed to delete %s\n%s", self.project_b, e)
-
-            # wait for the project to be deleted
-            for _ in range(1, 20):
-                try:
-                    self.jira_admin.project(self.project_b)
-                except Exception:
-                    break
-                print("Warning: Project not deleted yet....")
-                sleep(2)
-
-            for _ in range(6):
-                try:
-                    if self.jira_admin.create_project(
-                        self.project_a, self.project_a_name
-                    ):
-                        break
-                except Exception as e:
-                    if "A project with that name already exists" not in str(e):
-                        raise e
-            self.project_a_id = self.jira_admin.project(self.project_a).id
-            self.jira_admin.create_project(self.project_b, self.project_b_name)
-
-            try:
-                self.jira_admin.create_project(self.project_b, self.project_b_name)
-            except Exception:
-                # we care only for the project to exist
-                pass
-            sleep(1)  # keep it here as often Jira will report the
-            # project as missing even after is created
-            self.project_b_issue1_obj = self.jira_admin.create_issue(
-                project=self.project_b,
-                summary="issue 1 from %s" % self.project_b,
-                issuetype=self.CI_JIRA_ISSUE,
-            )
-            self.project_b_issue1 = self.project_b_issue1_obj.key
-
-            self.project_b_issue2_obj = self.jira_admin.create_issue(
-                project=self.project_b,
-                summary="issue 2 from %s" % self.project_b,
-                issuetype={"name": self.CI_JIRA_ISSUE},
-            )
-            self.project_b_issue2 = self.project_b_issue2_obj.key
-
-            self.project_b_issue3_obj = self.jira_admin.create_issue(
-                project=self.project_b,
-                summary="issue 3 from %s" % self.project_b,
-                issuetype={"name": self.CI_JIRA_ISSUE},
-            )
-            self.project_b_issue3 = self.project_b_issue3_obj.key
+            # now we need to create some data to start with for the tests
+            self.create_some_data()
 
         if not hasattr(self, "jira_normal") or not hasattr(self, "jira_admin"):
-            py.test.exit("FATAL: WTF!?")
+            pytest.exit("FATAL: WTF!?")
 
         self.user_admin = self.jira_admin.search_users(self.CI_JIRA_ADMIN)[0]
         self.user_normal = self.jira_admin.search_users(self.CI_JIRA_USER)[0]
-        self.initialized = 1
+        self.initialized = True
+
+    def set_jira_cloud_details(self):
+        self.CI_JIRA_URL = "https://pycontribs.atlassian.net"
+        self.CI_JIRA_ADMIN = "ci-admin"
+        self.CI_JIRA_ADMIN_PASSWORD = "sd4s3dgec5fhg4tfsds3434"
+        self.CI_JIRA_USER = "ci-user"
+        self.CI_JIRA_USER_PASSWORD = "sd4s3dgec5fhg4tfsds3434"
+
+    def set_jira_server_details(self):
+        self.CI_JIRA_URL = os.environ["CI_JIRA_URL"]
+        self.CI_JIRA_ADMIN = os.environ["CI_JIRA_ADMIN"]
+        self.CI_JIRA_ADMIN_PASSWORD = os.environ["CI_JIRA_ADMIN_PASSWORD"]
+        self.CI_JIRA_USER = os.environ["CI_JIRA_USER"]
+        self.CI_JIRA_USER_PASSWORD = os.environ["CI_JIRA_USER_PASSWORD"]
+        self.CI_JIRA_ISSUE = os.environ.get("CI_JIRA_ISSUE", "Bug")
+
+    def set_oauth_logins(self):
+        self.jira_admin = JIRA(
+            oauth={
+                "access_token": "hTxcwsbUQiFuFALf7KZHDaeAJIo3tLUK",
+                "access_token_secret": "aNCLQFP3ORNU6WY7HQISbqbhf0UudDAf",
+                "consumer_key": CONSUMER_KEY,
+                "key_cert": KEY_CERT_DATA,
+            }
+        )
+        self.jira_sysadmin = JIRA(
+            oauth={
+                "access_token": "4ul1ETSFo7ybbIxAxzyRal39cTrwEGFv",
+                "access_token_secret": "K83jBZnjnuVRcfjBflrKyThJa0KSjSs2",
+                "consumer_key": CONSUMER_KEY,
+                "key_cert": KEY_CERT_DATA,
+            },
+            logging=False,
+            max_retries=self.max_retries,
+        )
+        self.jira_normal = JIRA(
+            oauth={
+                "access_token": "ZVDgYDyIQqJY8IFlQ446jZaURIz5ECiB",
+                "access_token_secret": "5WbLBybPDg1lqqyFjyXSCsCtAWTwz1eD",
+                "consumer_key": CONSUMER_KEY,
+                "key_cert": KEY_CERT_DATA,
+            }
+        )
+
+    def set_basic_auth_logins(self, **jira_class_kwargs):
+        if self.CI_JIRA_ADMIN:
+            self.jira_admin = JIRA(
+                basic_auth=(self.CI_JIRA_ADMIN, self.CI_JIRA_ADMIN_PASSWORD),
+                **jira_class_kwargs,
+            )
+            self.jira_sysadmin = JIRA(
+                basic_auth=(self.CI_JIRA_ADMIN, self.CI_JIRA_ADMIN_PASSWORD),
+                **jira_class_kwargs,
+            )
+            self.jira_normal = JIRA(
+                basic_auth=(self.CI_JIRA_USER, self.CI_JIRA_USER_PASSWORD),
+                **jira_class_kwargs,
+            )
+        else:
+            # Setup some un-authenticated users
+            self.jira_admin = JIRA(self.CI_JIRA_URL, **jira_class_kwargs)
+            self.jira_sysadmin = JIRA(self.CI_JIRA_URL, **jira_class_kwargs)
+            self.jira_normal = JIRA(self.CI_JIRA_URL, **jira_class_kwargs)
+
+    def create_some_data(self):
+        """Create some data for the tests"""
+
+        # jira project key is max 10 chars, no letter.
+        # [0] always "Z"
+        # [1-6] username running the tests (hope we will not collide)
+        # [7-8] python version A=0, B=1,..
+        # [9] A,B -- we may need more than one project
+
+        """ `jid` is important for avoiding concurrency problems when
+        executing tests in parallel as we have only one test instance.
+
+        jid length must be less than 9 characters because we may append
+        another one and the Jira Project key length limit is 10.
+        """
+
+        self.jid = get_unique_project_name()
+
+        self.project_a = self.jid + "A"  # old XSS
+        self.project_a_name = "Test user=%s key=%s A" % (
+            getpass.getuser(),
+            self.project_a,
+        )
+        self.project_b = self.jid + "B"  # old BULK
+        self.project_b_name = "Test user=%s key=%s B" % (
+            getpass.getuser(),
+            self.project_b,
+        )
+        self.project_sd = self.jid + "C"
+        self.project_sd_name = "Test user=%s key=%s C" % (
+            getpass.getuser(),
+            self.project_sd,
+        )
+
+        # TODO(ssbarnea): find a way to prevent SecurityTokenMissing for On Demand
+        # https://jira.atlassian.com/browse/JRA-39153
+        try:
+            self.jira_admin.project(self.project_a)
+        except Exception as e:
+            LOGGER.warning(e)
+        else:
+            try:
+                self.jira_admin.delete_project(self.project_a)
+            except Exception as e:
+                LOGGER.warning("Failed to delete %s\n%s", self.project_a, e)
+
+        try:
+            self.jira_admin.project(self.project_b)
+        except Exception as e:
+            LOGGER.warning(e)
+        else:
+            try:
+                self.jira_admin.delete_project(self.project_b)
+            except Exception as e:
+                LOGGER.warning("Failed to delete %s\n%s", self.project_b, e)
+
+        # wait for the project to be deleted
+        for _ in range(1, 20):
+            try:
+                self.jira_admin.project(self.project_b)
+            except Exception:
+                break
+            print("Warning: Project not deleted yet....")
+            sleep(2)
+
+        for _ in range(6):
+            try:
+                if self.jira_admin.create_project(self.project_a, self.project_a_name):
+                    break
+            except Exception as e:
+                if "A project with that name already exists" not in str(e):
+                    raise e
+        self.project_a_id = self.jira_admin.project(self.project_a).id
+        self.jira_admin.create_project(self.project_b, self.project_b_name)
+
+        try:
+            self.jira_admin.create_project(self.project_b, self.project_b_name)
+        except Exception:
+            # we care only for the project to exist
+            pass
+        sleep(1)  # keep it here as often Jira will report the
+        # project as missing even after is created
+        self.project_b_issue1_obj = self.jira_admin.create_issue(
+            project=self.project_b,
+            summary="issue 1 from %s" % self.project_b,
+            issuetype=self.CI_JIRA_ISSUE,
+        )
+        self.project_b_issue1 = self.project_b_issue1_obj.key
+
+        self.project_b_issue2_obj = self.jira_admin.create_issue(
+            project=self.project_b,
+            summary="issue 2 from %s" % self.project_b,
+            issuetype={"name": self.CI_JIRA_ISSUE},
+        )
+        self.project_b_issue2 = self.project_b_issue2_obj.key
+
+        self.project_b_issue3_obj = self.jira_admin.create_issue(
+            project=self.project_b,
+            summary="issue 3 from %s" % self.project_b,
+            issuetype={"name": self.CI_JIRA_ISSUE},
+        )
+        self.project_b_issue3 = self.project_b_issue3_obj.key
 
 
 def find_by_key(seq, key):
