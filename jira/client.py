@@ -2401,30 +2401,39 @@ class JIRA(object):
 
     # Projects
 
-    def projects(self) -> List[Project]:
+    def projects(self, expand: Optional[str] = None) -> List[Project]:
         """Get a list of project Resources from the server visible to the current authenticated user.
+
+        Args:
+            expand (Optional[str]): extra information to fetch for each project
+                                    such as projectKeys and description.
 
         Returns:
             List[Project]
 
         """
-        r_json = self._get_json("project")
+        params = {}
+        if expand is not None:
+            params["expand"] = expand
+        r_json = self._get_json("project", params=params)
         projects = [
             Project(self._options, self._session, raw_project_json)
             for raw_project_json in r_json
         ]
         return projects
 
-    def project(self, id: str) -> Project:
+    def project(self, id: str, expand: Optional[str] = None) -> Project:
         """Get a project Resource from the server.
 
         Args:
             id (str): ID or key of the project to get
+            expand (Optional[str]): extra information to fetch for the project
+                                    such as projectKeys and description.
 
         Returns:
             Project
         """
-        return self._find_for_resource(Project, id)
+        return self._find_for_resource(Project, id, expand=expand)
 
     # non-resource
     @translate_resource_args
