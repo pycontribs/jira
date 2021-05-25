@@ -94,6 +94,7 @@ class ResilientSession(Session):
 
     def __init__(self, timeout=None):
         self.max_retries = 3
+        self.max_retry_delay = 60
         self.timeout = timeout
         super(ResilientSession, self).__init__()
 
@@ -129,7 +130,7 @@ class ResilientSession(Session):
                 msg = "Atlassian's bug https://jira.atlassian.com/browse/JRA-41559"
 
         # Exponential backoff with full jitter.
-        delay = min(60, 10 * 2 ** counter) * random.random()
+        delay = min(self.max_retry_delay, 10 * 2 ** counter) * random.random()
         logging.warning(
             "Got recoverable error from %s %s, will retry [%s/%s] in %ss. Err: %s"
             % (request, url, counter, self.max_retries, delay, msg)
@@ -166,7 +167,8 @@ class ResilientSession(Session):
                 if response.status_code >= 200 and response.status_code <= 299:
                     return response
             except ConnectionError as e:
-                logging.warning(f"{e} while doing {verb.upper()} {url} [{kwargs}]")
+                logging.warning(f"{e} while doing {verb.upper()} {url}")
+
                 exception = e
             retry_number += 1
 
