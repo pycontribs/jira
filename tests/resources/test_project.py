@@ -10,6 +10,20 @@ class ProjectTests(JiraTestCase):
         project = self.jira.project(self.project_b)
         self.assertEqual(project.key, self.project_b)
 
+    def test_project_expand(self):
+        project = self.jira.project(self.project_b)
+        self.assertFalse(hasattr(project, "projectKeys"))
+        project = self.jira.project(self.project_b, expand="projectKeys")
+        self.assertTrue(hasattr(project, "projectKeys"))
+
+    def test_projects_expand(self):
+        projects = self.jira.projects()
+        for project in projects:
+            self.assertFalse(hasattr(project, "projectKeys"))
+        projects = self.jira.projects(expand="projectKeys")
+        for project in projects:
+            self.assertTrue(hasattr(project, "projectKeys"))
+
     # I have no idea what avatars['custom'] is and I get different results every time
     #    def test_project_avatars(self):
     #        avatars = self.jira.project_avatars(self.project_b)
