@@ -4329,6 +4329,49 @@ class JIRA(object):
                 self.AGILE_BASE_URL,
             )
 
+    @translate_resource_args
+    def board_projects(
+        self,
+        board_id: int,
+        startAt: int = 0,
+        maxResults: int = 50
+    ) -> ResultList[Project]:
+        """Get a list of project GreenHopperResources.
+
+        Args:
+            board_id (int): the board to get sprints from
+            extended (bool): Used only by old GreenHopper API to fetch additional information like
+              startDate, endDate, completeDate, much slower because it requires an additional requests for each sprint.
+              New Jira Agile API always returns this information without a need for additional requests.
+            startAt (int): the index of the first sprint to return (0 based)
+            maxResults (int): the maximum number of sprints to return
+
+        Returns:
+            ResultList[Project]: (content depends on API version, but always contains id, key, name)
+            When old GreenHopper private API is used, paging is not enabled,
+            and `startAt`, `maxResults` and `state` parameters are ignored.
+        """
+        params = {}
+
+        if (
+            self._options["agile_rest_path"]
+            == GreenHopperResource.GREENHOPPER_REST_PATH
+        ):
+            raise NotImplementedError(
+                "Jira Agile Public API does not support this request"
+            )
+
+        else:
+            return self._fetch_pages(
+                Project,
+                "values",
+                f"board/{board_id}/project",
+                startAt,
+                maxResults,
+                params,
+                self.AGILE_BASE_URL,
+            )
+
     def sprints_by_name(self, id, extended=False):
         sprints = {}
         for s in self.sprints(id, extended=extended):
