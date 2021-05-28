@@ -89,12 +89,12 @@ pyyaml==5.4.1
     # via
     #   -r test-requirements.in
     #   pre-commit
-requests-mock==1.9.2
-    # via -r test-requirements.in
 requests==2.25.1
     # via
     #   requests-mock
     #   requires.io
+requests_mock==1.9.3
+    # via -r test-requirements.in
 requires.io==0.2.6
     # via -r test-requirements.in
 six==1.15.0
