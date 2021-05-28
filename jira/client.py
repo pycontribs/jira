@@ -4339,12 +4339,12 @@ class JIRA(object):
         """Get a list of project GreenHopperResources.
 
         Args:
-            board_id (int): the board to get sprints from
+            board_id (int): the board to get projects from
             extended (bool): Used only by old GreenHopper API to fetch additional information like
-              startDate, endDate, completeDate, much slower because it requires an additional requests for each sprint.
+              startDate, endDate, completeDate, much slower because it requires an additional requests for each project.
               New Jira Agile API always returns this information without a need for additional requests.
-            startAt (int): the index of the first sprint to return (0 based)
-            maxResults (int): the maximum number of sprints to return
+            startAt (int): the index of the first project to return (0 based)
+            maxResults (int): the maximum number of projects to return
 
         Returns:
             ResultList[Project]: (content depends on API version, but always contains id, key, name)
