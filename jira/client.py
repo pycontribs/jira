@@ -4351,7 +4351,7 @@ class JIRA(object):
             When old GreenHopper private API is used, paging is not enabled,
             and `startAt`, `maxResults` and `state` parameters are ignored.
         """
-        params = {}
+        params: Dict[str, Any] = {}
 
         if (
             self._options["agile_rest_path"]
