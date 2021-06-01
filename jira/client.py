@@ -684,7 +684,12 @@ class JIRA(object):
                     else:
                         # if resource is an empty dictionary we assume no-results
                         break
-
+            # if ‘names’ in expand             
+            if 'names' in resource.keys():
+                return ResultList(
+                    items, start_at_from_response, max_results_from_response, total, is_last, resource['names']
+                )
+            
             return ResultList(
                 items, start_at_from_response, max_results_from_response, total, is_last
             )
