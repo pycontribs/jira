@@ -579,12 +579,27 @@ class Issue(Resource):
                 self.worklogs: List[Worklog] = []
 
         def __init__(self):
+            self.assignee: Optional[UnknownResource] = None
             self.attachment: List[Attachment] = []
             self.comment = self._Comment()
+            self.created: str
             self.description: Optional[str] = None
+            self.duedate: Optional[str] = None
             self.issuelinks: List[IssueLink] = []
+            self.issuetype: IssueType
             self.labels: List[str] = []
-            self.project: Optional[Project] = None
+            self.priority: Priority
+            self.project: Project
+            self.reporter: UnknownResource
+            self.resolution: Optional[Resolution] = None
+            self.security: Optional[Security] = None
+            self.status: Status
+            self.statuscategorychangedate: Optinal[str] = None
+            self.summary: str
+            self.timetracking: TimeTracking
+            self.versions: List[Version] = []
+            self.votes: Votes
+            self.watchers: Watchers
             self.worklog = self._Worklog()
 
     def __init__(
@@ -598,6 +613,7 @@ class Issue(Resource):
         self.fields: Issue._IssueFields
         self.id: str
         self.key: str
+        self.raw: Dict[Any, Any] = {}
         if raw:
             self._parse_raw(raw)
 
