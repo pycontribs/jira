@@ -594,7 +594,7 @@ class Issue(Resource):
             self.resolution: Optional[Resolution] = None
             self.security: Optional[Security] = None
             self.status: Status
-            self.statuscategorychangedate: Optinal[str] = None
+            self.statuscategorychangedate: Optional[str] = None
             self.summary: str
             self.timetracking: TimeTracking
             self.versions: List[Version] = []
@@ -613,9 +613,9 @@ class Issue(Resource):
         self.fields: Issue._IssueFields
         self.id: str
         self.key: str
-        self.raw: Dict[Any, Any] = {}
         if raw:
             self._parse_raw(raw)
+        self.raw: Dict[str, Any] = cast(Dict[str, Any], self.raw)  # _parse_raw will error if raw is None
 
     def update(  # type: ignore[override] # incompatible supertype ignored
         self,
