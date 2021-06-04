@@ -592,7 +592,7 @@ class Issue(Resource):
             self.project: Project
             self.reporter: UnknownResource
             self.resolution: Optional[Resolution] = None
-            self.security: Optional[Security] = None
+            self.security: Optional[SecurityLevel] = None
             self.status: Status
             self.statuscategorychangedate: Optional[str] = None
             self.summary: str
