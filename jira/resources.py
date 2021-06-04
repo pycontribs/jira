@@ -615,7 +615,9 @@ class Issue(Resource):
         self.key: str
         if raw:
             self._parse_raw(raw)
-        self.raw: Dict[str, Any] = cast(Dict[str, Any], self.raw)  # _parse_raw will error if raw is None
+        self.raw: Dict[str, Any] = cast(
+            Dict[str, Any], self.raw
+        )  # _parse_raw will error if raw is None
 
     def update(  # type: ignore[override] # incompatible supertype ignored
         self,
