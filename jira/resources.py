@@ -1255,6 +1255,7 @@ class Customer(Resource):
         )
         if raw:
             self._parse_raw(raw)
+        self.raw: Dict[str, Any] = cast(Dict[str, Any], self.raw)
 
 
 class ServiceDesk(Resource):
@@ -1275,6 +1276,7 @@ class ServiceDesk(Resource):
         )
         if raw:
             self._parse_raw(raw)
+        self.raw: Dict[str, Any] = cast(Dict[str, Any], self.raw)
 
 
 class RequestType(Resource):
@@ -1288,6 +1290,7 @@ class RequestType(Resource):
     ):
         if raw:
             self._parse_raw(raw)
+        self.raw: Dict[str, Any] = cast(Dict[str, Any], self.raw)
 
         Resource.__init__(
             self,
@@ -1404,6 +1407,7 @@ class UnknownResource(Resource):
         Resource.__init__(self, "unknown{0}", options, session)
         if raw:
             self._parse_raw(raw)
+        self.raw: Dict[str, Any] = cast(Dict[str, Any], self.raw)
 
 
 def cls_for_resource(resource_literal: str) -> Type[Resource]:
