@@ -40,7 +40,7 @@ markupsafe==2.0.1
     # via -r test-requirements.in
 mypy-extensions==0.4.3
     # via mypy
-mypy==0.812
+mypy==0.902
     # via -r test-requirements.in
 nodeenv==1.6.0
     # via pre-commit
@@ -109,10 +109,9 @@ termcolor==1.1.0
 toml==0.10.2
     # via
     #   coverage
+    #   mypy
     #   pre-commit
     #   pytest
-typed-ast==1.4.3
-    # via mypy
 typing-extensions==3.10.0.0
     # via mypy
 urllib3==1.26.4
