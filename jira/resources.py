@@ -22,6 +22,8 @@ if TYPE_CHECKING:
 else:
 
     class MyAny(object):
+        """Dummy subclass of base object class for when type checker is not running.
+        """
         pass
 
 
