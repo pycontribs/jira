@@ -192,23 +192,23 @@ class ResilientSession(Session):
         response = cast(Response, response)  # tell mypy only Response-like are here
         return response
 
-    def get(self, url: Union[str, bytes], **kwargs) -> Response:
+    def get(self, url: Union[str, bytes], **kwargs) -> Response:  # type: ignore
         return self.__verb("GET", str(url), **kwargs)
 
-    def post(self, url: Union[str, bytes], data=None, json=None, **kwargs) -> Response:
+    def post(self, url: Union[str, bytes], data=None, json=None, **kwargs) -> Response:  # type: ignore
         return self.__verb("POST", str(url), data=data, json=json, **kwargs)
 
-    def put(self, url: Union[str, bytes], data=None, **kwargs) -> Response:
+    def put(self, url: Union[str, bytes], data=None, **kwargs) -> Response:  # type: ignore
         return self.__verb("PUT", str(url), data=data, **kwargs)
 
-    def delete(self, url: Union[str, bytes], **kwargs) -> Response:
+    def delete(self, url: Union[str, bytes], **kwargs) -> Response:  # type: ignore
         return self.__verb("DELETE", str(url), **kwargs)
 
-    def head(self, url: Union[str, bytes], **kwargs) -> Response:
+    def head(self, url: Union[str, bytes], **kwargs) -> Response:  # type: ignore
         return self.__verb("HEAD", str(url), **kwargs)
 
-    def patch(self, url: Union[str, bytes], data=None, **kwargs) -> Response:
+    def patch(self, url: Union[str, bytes], data=None, **kwargs) -> Response:  # type: ignore
         return self.__verb("PATCH", str(url), data=data, **kwargs)
 
-    def options(self, url: Union[str, bytes], **kwargs) -> Response:
+    def options(self, url: Union[str, bytes], **kwargs) -> Response:  # type: ignore
         return self.__verb("OPTIONS", str(url), **kwargs)
