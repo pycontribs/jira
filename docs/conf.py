@@ -69,7 +69,7 @@ nitpick_ignore = [
     ("py:class", "Response"),
     ("py:mod", "requests-kerberos"),
     ("py:mod", "requests-oauthlib"),
-    ("py:class", "jira.resources.MyAny")
+    ("py:class", "jira.resources.MyAny"),
 ]
 
 # Add any paths that contain templates here, relative to this directory.
