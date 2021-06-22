@@ -18,6 +18,13 @@ from jira.utils import CaseInsensitiveDict, json_loads, threaded_requests
 if TYPE_CHECKING:
     from jira.client import JIRA
 
+    MyAny = Any
+else:
+
+    class MyAny(object):
+        pass
+
+
 __all__ = (
     "Resource",
     "Issue",
@@ -574,7 +581,7 @@ class Filter(Resource):
 class Issue(Resource):
     """A Jira issue."""
 
-    class _IssueFields(object):
+    class _IssueFields(MyAny):
         class _Comment(object):
             def __init__(self) -> None:
                 self.comments: List[Comment] = []
