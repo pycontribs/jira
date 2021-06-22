@@ -57,6 +57,7 @@ autodoc_inherit_docstrings = False
 nitpick_ignore = [
     ("py:class", "JIRA"),  # in jira.resources we only import this class if type
     ("py:obj", "typing.ResourceType"),  # only Py36 has a problem with this reference
+    ("py:class", "jira.resources.MyAny"),  # Dummy subclass for type checking
     # From other packages
     ("py:mod", "filemagic"),
     ("py:mod", "ipython"),
