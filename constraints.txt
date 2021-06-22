@@ -194,7 +194,7 @@ toml==0.10.2
     # via
     #   pytest
     #   pytest-cov
-traitlets==4.3.3
+traitlets==5.0.5
     # via ipython
 typing-extensions==3.10.0.0
     # via importlib-metadata
