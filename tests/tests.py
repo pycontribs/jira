@@ -21,12 +21,7 @@ import requests
 from jira import JIRA, Issue, JIRAError
 from jira.client import ResultList
 from jira.resources import cls_for_resource
-from tests.conftest import (
-    JiraTestCase,
-    broken_test,
-    not_on_custom_jira_instance,
-    rndpassword,
-)
+from tests.conftest import JiraTestCase, rndpassword
 
 LOGGER = logging.getLogger(__name__)
 
@@ -152,7 +147,6 @@ class ApplicationPropertiesTests(JiraTestCase):
         self.assertRaises(JIRAError, self.jira.set_application_property, prop, "666")
 
 
-@not_on_custom_jira_instance
 class FieldsTests(JiraTestCase):
     def test_fields(self):
         fields = self.jira.fields()
@@ -174,11 +168,12 @@ class MyPermissionsTests(JiraTestCase):
         perms = self.jira.my_permissions(projectId=self.test_manager.project_a_id)
         self.assertGreaterEqual(len(perms["permissions"]), 10)
 
-    @broken_test(reason="broken")
     def test_my_permissions_by_issue(self):
-        perms = self.jira.my_permissions(issueKey="ZTRAVISDEB-7")
+        perms = self.jira.my_permissions(issueKey=self.issue_1)
         self.assertGreaterEqual(len(perms["permissions"]), 10)
-        perms = self.jira.my_permissions(issueId="11021")
+        perms = self.jira.my_permissions(
+            issueId=self.test_manager.project_b_issue1_obj.id
+        )
         self.assertGreaterEqual(len(perms["permissions"]), 10)
 
 
@@ -379,10 +374,10 @@ class UserAdministrationTests(JiraTestCase):
         )
 
     def _should_skip_for_pycontribs_instance(self):
-        return True
-        # return self.test_manager.CI_JIRA_ADMIN == "ci-admin" and (
-        #     self.test_manager.CI_JIRA_URL == "https://pycontribs.atlassian.net"
-        # )
+        # return True
+        return self.test_manager.CI_JIRA_ADMIN == "ci-admin" and (
+            self.test_manager.CI_JIRA_URL == "https://pycontribs.atlassian.net"
+        )
 
     def test_add_and_remove_user(self):
         if self._should_skip_for_pycontribs_instance():
@@ -479,8 +474,6 @@ class UserAdministrationTests(JiraTestCase):
             "Found group with name when it should have been deleted. Test Fails.",
         )
 
-    @not_on_custom_jira_instance
-    @broken_test(reason="query may return empty list")
     def test_add_user_to_group(self):
         try:
             self.jira.add_user(

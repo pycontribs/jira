@@ -279,7 +279,7 @@ class JIRA(object):
         "context_path": "/",
         "rest_path": "api",
         "rest_api_version": "2",
-        "agile_rest_path": GreenHopperResource.GREENHOPPER_REST_PATH,
+        "agile_rest_path": "agile",
         "agile_rest_api_version": "1.0",
         "verify": True,
         "resilient": True,
@@ -1232,10 +1232,10 @@ class JIRA(object):
 
         result = {}
         for user in r["users"]["items"]:
-            result[user["id"]] = {
+            result[user["name"]] = {
                 "name": user.get("name"),
-                "id": user.get("id"),
-                "accountId": user.get("accountId"),
+                "key": user.get("key"),
+                "accountId": user.get("accountId", "not for Server"),
                 "fullname": user.get("displayName"),
                 "email": user.get("emailAddress", "hidden"),
                 "active": user.get("active"),
@@ -1790,14 +1790,14 @@ class JIRA(object):
     def add_remote_link(
         self,
         issue: str,
-        destination: Union[Issue, Dict[str, Any]],
+        object: Union[Issue, Dict[str, Any]],
         globalId: Optional[str] = None,
         application: Optional[Dict[str, Any]] = None,
         relationship: Optional[str] = None,
     ) -> RemoteLink:
         """Add a remote link from an issue to an external application and returns a remote link Resource for it.
 
-        ``destination`` should be a dict containing at least ``url`` to the linked external URL and
+        ``object`` should be a dict containing at least ``url`` to the linked external URL and
         ``title`` to display for the link inside Jira.
 
         For definitions of the allowable fields for ``object`` and the keyword arguments ``globalId``, ``application``
@@ -1805,7 +1805,7 @@ class JIRA(object):
 
         Args:
             issue (str): the issue to add the remote link to
-            destination (Union[Issue, Dict[str, Any]]): the link details to add (see the above link for details)
+            object (Union[Issue, Dict[str, Any]]): the link details to add (see the above link for details)
             globalId (Optional[str]): unique ID for the link (see the above link for details)
             application (Optional[Dict[str,Any]]): application information for the link (see the above link for details)
             relationship (Optional[str]): relationship description for the link (see the above link for details)
@@ -1828,13 +1828,13 @@ class JIRA(object):
             )
 
         data: Dict[str, Any] = {}
-        if isinstance(destination, Issue) and destination.raw:
-            data["object"] = {"title": str(destination), "url": destination.permalink()}
+        if isinstance(object, Issue) and object.raw:
+            data["object"] = {"title": str(object), "url": object.permalink()}
             for x in applicationlinks:
-                if x["application"]["displayUrl"] == destination._options["server"]:
+                if x["application"]["displayUrl"] == object._options["server"]:
                     data["globalId"] = "appId=%s&issueId=%s" % (
                         x["application"]["id"],
-                        destination.raw["id"],
+                        object.raw["id"],
                     )
                     data["application"] = {
                         "name": x["application"]["name"],
@@ -1849,18 +1849,18 @@ class JIRA(object):
                 data["globalId"] = globalId
             if application is not None:
                 data["application"] = application
-            data["object"] = destination
+            data["object"] = object
 
         if relationship is not None:
             data["relationship"] = relationship
 
         # check if the link comes from one of the configured application links
-        if isinstance(destination, Issue) and destination.raw:
+        if isinstance(object, Issue) and object.raw:
             for x in applicationlinks:
                 if x["application"]["displayUrl"] == self.server_url:
                     data["globalId"] = "appId=%s&issueId=%s" % (
                         x["application"]["id"],
-                        destination.raw["id"],  # .raw only present on Issue
+                        object.raw["id"],  # .raw only present on Issue
                     )
                     data["application"] = {
                         "name": x["application"]["name"],
@@ -2613,23 +2613,22 @@ class JIRA(object):
 
     # non-resource
     @translate_resource_args
-    def project_roles(self, project: str) -> Dict[str, Dict[str, str]]:
-        """Get a dict of role names to resource locations for a project.
+    def project_roles(self, project: str) -> ResultList[Issue]:
+        """Get a list of roles resources for a project.
 
         Args:
             project (str): ID or key of the project to get roles from
         """
         path = "project/" + project + "/role"
         _rolesdict: Dict[str, str] = self._get_json(path)
-        rolesdict: Dict[str, Dict[str, str]] = {}
+        roles: list = []
 
         for k, v in _rolesdict.items():
-            tmp: Dict[str, str] = {}
-            tmp["id"] = v.split("/")[-1]
-            tmp["url"] = v
-            rolesdict[k] = tmp
-        return rolesdict
-        # TODO(ssbarnea): return a list of Roles()
+            id = v.split("/")[-1]
+            role = self.project_role(project, id)
+            roles.append(role)
+
+        return ResultList(roles, 0, len(roles), len(roles), True)
 
     @translate_resource_args
     def project_role(self, project: str, id: str) -> Role:
@@ -4424,17 +4423,17 @@ class JIRA(object):
     def create_board(
         self,
         name: str,
-        project_ids: Union[str, List[str]],
-        preset: str = "scrum",
+        filterId: int,
+        type: str = "scrum",
         location_type: str = "user",
         location_id: Optional[str] = None,
     ) -> Board:
-        """Create a new board for the ``project_ids``.
+        """Create a new board based on the ``filterId``.
 
         Args:
-            name (str): name of the board
-            project_ids (str): the projects to create the board in
-            preset (str): What preset to use for this board, options: kanban, scrum, diy. (Default: scrum)
+            name (str): name of the board, must be less than 255 characters in Server
+            filterId (int): Id of a filter that the user has permissions to view.
+            type (str): Valid values: scrum, kanban (Default: scrum)
             location_type (str): the location type. Available in cloud. (Default: user)
             location_id (Optional[str]): the id of project that the board should be located under.
              Omit this for a 'user' location_type. Available in cloud.
@@ -4442,31 +4441,22 @@ class JIRA(object):
         Returns:
             Board: The newly created board
         """
-        if (
-            self._options["agile_rest_path"]
-            != GreenHopperResource.GREENHOPPER_REST_PATH
-        ):
+        if self._options["agile_rest_path"] != GreenHopperResource.AGILE_BASE_REST_PATH:
             raise NotImplementedError(
-                "Jira Agile Public API does not support this request"
+                'No API for create_board for agile_rest_path="%s"'
+                % self._options["agile_rest_path"]
             )
 
         payload: Dict[str, Any] = {}
-        if isinstance(project_ids, str):
-            ids = []
-            for p in project_ids.split(","):
-                ids.append(self.project(p).id)
-            project_ids = ",".join(ids)
         if location_id is not None:
             location_id = self.project(location_id).id
         payload["name"] = name
-        if isinstance(project_ids, str):
-            project_ids = project_ids.split(",")  # type: ignore # re-use of variable
-        payload["projectIds"] = project_ids
-        payload["preset"] = preset
+        payload["filterId"] = filterId
+        payload["type"] = type
         if self._is_cloud:
             payload["locationType"] = location_type
             payload["locationId"] = location_id
-        url = self._get_url("rapidview/create/presets", base=self.AGILE_BASE_URL)
+        url = self._get_url("board", base=self.AGILE_BASE_URL)
         r = self._session.post(url, data=json.dumps(payload))
 
         raw_issue_json = json_loads(r)

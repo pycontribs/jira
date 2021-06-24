@@ -3,14 +3,7 @@ import re
 from time import sleep
 
 from jira.exceptions import JIRAError
-from tests.conftest import (
-    JiraTestCase,
-    broken_test,
-    find_by_key,
-    find_by_key_value,
-    not_on_custom_jira_instance,
-    rndstr,
-)
+from tests.conftest import JiraTestCase, find_by_key, find_by_key_value, rndstr
 
 LOGGER = logging.getLogger(__name__)
 
@@ -27,7 +20,6 @@ class IssueTests(JiraTestCase):
         self.assertEqual(issue.key, self.issue_1)
         self.assertEqual(issue.fields.summary, "issue 1 from %s" % self.project_b)
 
-    @broken_test(reason="disabled as it seems to be ignored by jira, returning all")
     def test_issue_field_limiting(self):
         issue = self.jira.issue(self.issue_2, fields="summary,comment")
         self.assertEqual(issue.fields.summary, "issue 2 from %s" % self.project_b)
@@ -57,7 +49,6 @@ class IssueTests(JiraTestCase):
         # testing for changelog is not reliable because it may exist or not based on test order
         # self.assertFalse(hasattr(issue, 'changelog'))
 
-    @not_on_custom_jira_instance
     def test_create_issue_with_fieldargs(self):
         issue = self.jira.create_issue(
             project=self.project_b,
@@ -72,7 +63,6 @@ class IssueTests(JiraTestCase):
         # self.assertEqual(issue.fields.customfield_10022, 'XSS')
         issue.delete()
 
-    @not_on_custom_jira_instance
     def test_create_issue_with_fielddict(self):
         fields = {
             "project": {"key": self.project_b},
@@ -80,7 +70,7 @@ class IssueTests(JiraTestCase):
             "description": "Some new issue for test",
             "issuetype": {"name": "Bug"},
             # 'customfield_10022': 'XSS',
-            "priority": {"name": "Major"},
+            "priority": {"name": "High"},
         }
         issue = self.jira.create_issue(fields=fields)
         self.assertEqual(issue.fields.summary, "Issue created from field dict")
@@ -88,10 +78,9 @@ class IssueTests(JiraTestCase):
         self.assertEqual(issue.fields.issuetype.name, "Bug")
         self.assertEqual(issue.fields.project.key, self.project_b)
         # self.assertEqual(issue.fields.customfield_10022, 'XSS')
-        self.assertEqual(issue.fields.priority.name, "Major")
+        self.assertEqual(issue.fields.priority.name, "High")
         issue.delete()
 
-    @not_on_custom_jira_instance
     def test_create_issue_without_prefetch(self):
         issue = self.jira.create_issue(
             prefetch=False,
@@ -106,7 +95,6 @@ class IssueTests(JiraTestCase):
         assert "fields" not in issue.raw
         issue.delete()
 
-    @not_on_custom_jira_instance
     def test_create_issues(self):
         field_list = [
             {
@@ -115,14 +103,14 @@ class IssueTests(JiraTestCase):
                 "description": "Some new issue for test",
                 "issuetype": {"name": "Bug"},
                 # 'customfield_10022': 'XSS',
-                "priority": {"name": "Major"},
+                "priority": {"name": "High"},
             },
             {
                 "project": {"key": self.project_a},
                 "issuetype": {"name": "Bug"},
                 "summary": "Issue created via bulk create #2",
                 "description": "Another new issue for bulk test",
-                "priority": {"name": "Major"},
+                "priority": {"name": "High"},
             },
         ]
         issues = self.jira.create_issues(field_list=field_list)
@@ -136,7 +124,7 @@ class IssueTests(JiraTestCase):
         )
         self.assertEqual(issues[0]["issue"].fields.issuetype.name, "Bug")
         self.assertEqual(issues[0]["issue"].fields.project.key, self.project_b)
-        self.assertEqual(issues[0]["issue"].fields.priority.name, "Major")
+        self.assertEqual(issues[0]["issue"].fields.priority.name, "High")
         self.assertIsNotNone(
             issues[1]["issue"], "the second issue has not been created"
         )
@@ -148,11 +136,10 @@ class IssueTests(JiraTestCase):
         )
         self.assertEqual(issues[1]["issue"].fields.issuetype.name, "Bug")
         self.assertEqual(issues[1]["issue"].fields.project.key, self.project_a)
-        self.assertEqual(issues[1]["issue"].fields.priority.name, "Major")
+        self.assertEqual(issues[1]["issue"].fields.priority.name, "High")
         for issue in issues:
             issue["issue"].delete()
 
-    @not_on_custom_jira_instance
     def test_create_issues_one_failure(self):
         field_list = [
             {
@@ -161,21 +148,21 @@ class IssueTests(JiraTestCase):
                 "description": "Some new issue for test",
                 "issuetype": {"name": "Bug"},
                 # 'customfield_10022': 'XSS',
-                "priority": {"name": "Major"},
+                "priority": {"name": "High"},
             },
             {
                 "project": {"key": self.project_a},
                 "issuetype": {"name": "InvalidIssueType"},
                 "summary": "This issue will not succeed",
                 "description": "Should not be seen.",
-                "priority": {"name": "Blah"},
+                "priority": {"name": "High"},
             },
             {
                 "project": {"key": self.project_a},
                 "issuetype": {"name": "Bug"},
                 "summary": "However, this one will.",
                 "description": "Should be seen.",
-                "priority": {"name": "Major"},
+                "priority": {"name": "High"},
             },
         ]
         issues = self.jira.create_issues(field_list=field_list)
@@ -187,7 +174,7 @@ class IssueTests(JiraTestCase):
         )
         self.assertEqual(issues[0]["issue"].fields.issuetype.name, "Bug")
         self.assertEqual(issues[0]["issue"].fields.project.key, self.project_b)
-        self.assertEqual(issues[0]["issue"].fields.priority.name, "Major")
+        self.assertEqual(issues[0]["issue"].fields.priority.name, "High")
         self.assertEqual(issues[0]["error"], None)
         self.assertEqual(issues[1]["issue"], None)
         self.assertEqual(issues[1]["error"], {"issuetype": "issue type is required"})
@@ -196,14 +183,13 @@ class IssueTests(JiraTestCase):
         self.assertEqual(issues[2]["issue"].fields.description, "Should be seen.")
         self.assertEqual(issues[2]["issue"].fields.issuetype.name, "Bug")
         self.assertEqual(issues[2]["issue"].fields.project.key, self.project_a)
-        self.assertEqual(issues[2]["issue"].fields.priority.name, "Major")
+        self.assertEqual(issues[2]["issue"].fields.priority.name, "High")
         self.assertEqual(issues[2]["error"], None)
         self.assertEqual(len(issues), 3)
         for issue in issues:
             if issue["issue"] is not None:
                 issue["issue"].delete()
 
-    @not_on_custom_jira_instance
     def test_create_issues_without_prefetch(self):
         field_list = [
             dict(
@@ -230,7 +216,6 @@ class IssueTests(JiraTestCase):
         for issue in issues:
             issue["issue"].delete()
 
-    @not_on_custom_jira_instance
     def test_update_with_fieldargs(self):
         issue = self.jira.create_issue(
             project=self.project_b,
@@ -242,16 +227,15 @@ class IssueTests(JiraTestCase):
         issue.update(
             summary="Updated summary",
             description="Now updated",
-            issuetype={"name": "Story"},
+            issuetype={"name": "Task"},
         )
         self.assertEqual(issue.fields.summary, "Updated summary")
         self.assertEqual(issue.fields.description, "Now updated")
-        self.assertEqual(issue.fields.issuetype.name, "Story")
+        self.assertEqual(issue.fields.issuetype.name, "Task")
         # self.assertEqual(issue.fields.customfield_10022, 'XSS')
         self.assertEqual(issue.fields.project.key, self.project_b)
         issue.delete()
 
-    @not_on_custom_jira_instance
     def test_update_with_fielddict(self):
         issue = self.jira.create_issue(
             project=self.project_b,
@@ -262,16 +246,16 @@ class IssueTests(JiraTestCase):
         fields = {
             "summary": "Issue is updated",
             "description": "it sure is",
-            "issuetype": {"name": "Story"},
+            "issuetype": {"name": "Task"},
             # 'customfield_10022': 'DOC',
-            "priority": {"name": "Major"},
+            "priority": {"name": "High"},
         }
         issue.update(fields=fields)
         self.assertEqual(issue.fields.summary, "Issue is updated")
         self.assertEqual(issue.fields.description, "it sure is")
-        self.assertEqual(issue.fields.issuetype.name, "Story")
+        self.assertEqual(issue.fields.issuetype.name, "Task")
         # self.assertEqual(issue.fields.customfield_10022, 'DOC')
-        self.assertEqual(issue.fields.priority.name, "Major")
+        self.assertEqual(issue.fields.priority.name, "High")
         issue.delete()
 
     def test_update_with_label(self):
@@ -302,7 +286,6 @@ class IssueTests(JiraTestCase):
 
         self.assertRaises(JIRAError, issue.update, fields=fields)
 
-    @not_on_custom_jira_instance
     def test_update_with_notify_false(self):
         issue = self.jira.create_issue(
             project=self.project_b,
@@ -325,29 +308,25 @@ class IssueTests(JiraTestCase):
         issue.delete()
         self.assertRaises(JIRAError, self.jira.issue, key)
 
-    @not_on_custom_jira_instance
     def test_createmeta(self):
         meta = self.jira.createmeta()
         proj = find_by_key(meta["projects"], self.project_b)
         # we assume that this project should allow at least one issue type
         self.assertGreaterEqual(len(proj["issuetypes"]), 1)
 
-    @not_on_custom_jira_instance
     def test_createmeta_filter_by_projectkey_and_name(self):
         meta = self.jira.createmeta(projectKeys=self.project_b, issuetypeNames="Bug")
         self.assertEqual(len(meta["projects"]), 1)
         self.assertEqual(len(meta["projects"][0]["issuetypes"]), 1)
 
-    @not_on_custom_jira_instance
     def test_createmeta_filter_by_projectkeys_and_name(self):
         meta = self.jira.createmeta(
-            projectKeys=(self.project_a, self.project_b), issuetypeNames="Story"
+            projectKeys=(self.project_a, self.project_b), issuetypeNames="Task"
         )
         self.assertEqual(len(meta["projects"]), 2)
         for project in meta["projects"]:
             self.assertEqual(len(project["issuetypes"]), 1)
 
-    @not_on_custom_jira_instance
     def test_createmeta_filter_by_id(self):
         projects = self.jira.projects()
         proja = find_by_key_value(projects, self.project_a)
@@ -461,19 +440,23 @@ class IssueTests(JiraTestCase):
         # self.assertEqual(issue.fields.assignee.name, self.test_manager.CI_JIRA_USER)
         # self.assertEqual(issue.fields.status.id, transition_id)
 
-    @not_on_custom_jira_instance
     def test_agile(self):
         uniq = rndstr()
         board_name = "board-" + uniq
         sprint_name = "sprint-" + uniq
+        filter_name = "filter-" + uniq
 
-        b = self.jira.create_board(board_name, self.project_a)
+        filter = self.jira.create_filter(
+            filter_name, "description", f"project={self.project_b}", True
+        )
+
+        b = self.jira.create_board(board_name, filter.id)
         assert isinstance(b.id, int)
 
         s = self.jira.create_sprint(sprint_name, b.id)
         assert isinstance(s.id, int)
         assert s.name == sprint_name
-        assert s.state == "FUTURE"
+        assert s.state.upper() == "FUTURE"
 
         self.jira.add_issues_to_sprint(s.id, [self.issue_1])
 
@@ -501,3 +484,5 @@ class IssueTests(JiraTestCase):
         sleep(2)
         b.delete()
         # self.jira.delete_board(b.id)
+
+        filter.delete()  # must delete this filter AFTER deleting board referencing the filter
