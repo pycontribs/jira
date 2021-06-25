@@ -1185,6 +1185,17 @@ class Board(GreenHopperResource):
         )
         GreenHopperResource.__init__(self, path, options, session, raw)
 
+    def delete(self, params=None):
+        if (
+            self._options["agile_rest_path"]
+            != GreenHopperResource.GREENHOPPER_REST_PATH
+        ):
+            raise NotImplementedError(
+                "Jira Agile Public API does not support Board removal"
+            )
+
+        Resource.delete(self, params)
+
 
 # Service Desk
 

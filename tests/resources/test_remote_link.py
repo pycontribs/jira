@@ -1,6 +1,8 @@
 from jira.exceptions import JIRAError
 from tests.conftest import JiraTestCase
 
+DEFAULT_NEW_REMOTE_LINK_OBJECT = {"url": "http://google.com", "title": "googlicious!"}
+
 
 class RemoteLinkTests(JiraTestCase):
     def setUp(self):
@@ -13,7 +15,7 @@ class RemoteLinkTests(JiraTestCase):
     def test_remote_links(self):
         self.jira.add_remote_link(
             self.issue_1,
-            object={"url": "http://google.com", "title": "googlicious!"},
+            destination=DEFAULT_NEW_REMOTE_LINK_OBJECT,
         )
         links = self.jira.remote_links(self.issue_1)
         self.assertEqual(len(links), 1)
@@ -24,7 +26,7 @@ class RemoteLinkTests(JiraTestCase):
     def test_remote_links_with_issue_obj(self):
         self.jira.add_remote_link(
             self.issue_1,
-            object={"url": "http://google.com", "title": "googlicious!"},
+            destination=DEFAULT_NEW_REMOTE_LINK_OBJECT,
         )
         links = self.jira.remote_links(self.project_b_issue1_obj)
         self.assertEqual(len(links), 1)
@@ -35,10 +37,15 @@ class RemoteLinkTests(JiraTestCase):
     def test_remote_link(self):
         added_link = self.jira.add_remote_link(
             self.issue_1,
-            object={"url": "http://google.com", "title": "googlicious!"},
+            destination=DEFAULT_NEW_REMOTE_LINK_OBJECT,
+            globalId="python-test:story.of.horse.riding",
+            application={"name": "far too silly", "type": "sketch"},
+            relationship="mousebending",
         )
         link = self.jira.remote_link(self.issue_1, added_link.id)
         self.assertEqual(link.id, added_link.id)
+        self.assertTrue(hasattr(link, "globalId"))
+        self.assertTrue(hasattr(link, "relationship"))
         self.assertTrue(hasattr(link, "application"))
         self.assertTrue(hasattr(link, "object"))
 
@@ -47,10 +54,15 @@ class RemoteLinkTests(JiraTestCase):
     def test_remote_link_with_issue_obj(self):
         added_link = self.jira.add_remote_link(
             self.issue_1,
-            object={"url": "http://google.com", "title": "googlicious!"},
+            destination=DEFAULT_NEW_REMOTE_LINK_OBJECT,
+            globalId="python-test:story.of.horse.riding",
+            application={"name": "far too silly", "type": "sketch"},
+            relationship="mousebending",
         )
         link = self.jira.remote_link(self.project_b_issue1_obj, added_link.id)
         self.assertEqual(link.id, added_link.id)
+        self.assertTrue(hasattr(link, "globalId"))
+        self.assertTrue(hasattr(link, "relationship"))
         self.assertTrue(hasattr(link, "application"))
         self.assertTrue(hasattr(link, "object"))
 
@@ -59,7 +71,7 @@ class RemoteLinkTests(JiraTestCase):
     def test_add_remote_link(self):
         link = self.jira.add_remote_link(
             self.issue_1,
-            object={"url": "http://google.com", "title": "googlicious!"},
+            destination=DEFAULT_NEW_REMOTE_LINK_OBJECT,
             globalId="python-test:story.of.horse.riding",
             application={"name": "far too silly", "type": "sketch"},
             relationship="mousebending",
@@ -67,15 +79,19 @@ class RemoteLinkTests(JiraTestCase):
         # creation response doesn't include full remote link info,
         #  so we fetch it again using the new internal ID
         link = self.jira.remote_link(self.issue_1, link.id)
-        self.assertEqual(link.object.url, "http://google.com")
-        self.assertEqual(link.object.title, "googlicious!")
+        self.assertEqual(link.application.name, "far too silly")
+        self.assertEqual(link.application.type, "sketch")
+        self.assertEqual(link.object.url, DEFAULT_NEW_REMOTE_LINK_OBJECT["url"])
+        self.assertEqual(link.object.title, DEFAULT_NEW_REMOTE_LINK_OBJECT["title"])
+        self.assertEqual(link.relationship, "mousebending")
+        self.assertEqual(link.globalId, "python-test:story.of.horse.riding")
 
         link.delete()
 
     def test_add_remote_link_with_issue_obj(self):
         link = self.jira.add_remote_link(
             self.project_b_issue1_obj,
-            object={"url": "http://google.com", "title": "googlicious!"},
+            destination=DEFAULT_NEW_REMOTE_LINK_OBJECT,
             globalId="python-test:story.of.horse.riding",
             application={"name": "far too silly", "type": "sketch"},
             relationship="mousebending",
@@ -83,15 +99,19 @@ class RemoteLinkTests(JiraTestCase):
         # creation response doesn't include full remote link info,
         #  so we fetch it again using the new internal ID
         link = self.jira.remote_link(self.project_b_issue1_obj, link.id)
-        self.assertEqual(link.object.url, "http://google.com")
-        self.assertEqual(link.object.title, "googlicious!")
+        self.assertEqual(link.application.name, "far too silly")
+        self.assertEqual(link.application.type, "sketch")
+        self.assertEqual(link.object.url, DEFAULT_NEW_REMOTE_LINK_OBJECT["url"])
+        self.assertEqual(link.object.title, DEFAULT_NEW_REMOTE_LINK_OBJECT["title"])
+        self.assertEqual(link.relationship, "mousebending")
+        self.assertEqual(link.globalId, "python-test:story.of.horse.riding")
 
         link.delete()
 
     def test_update_remote_link(self):
         link = self.jira.add_remote_link(
             self.issue_1,
-            object={"url": "http://google.com", "title": "googlicious!"},
+            destination=DEFAULT_NEW_REMOTE_LINK_OBJECT,
             globalId="python-test:story.of.horse.riding",
             application={"name": "far too silly", "type": "sketch"},
             relationship="mousebending",
@@ -99,19 +119,22 @@ class RemoteLinkTests(JiraTestCase):
         # creation response doesn't include full remote link info,
         #  so we fetch it again using the new internal ID
         link = self.jira.remote_link(self.issue_1, link.id)
+        new_link = {"url": "http://yahoo.com", "title": "yahoo stuff"}
         link.update(
-            object={"url": "http://yahoo.com", "title": "yahoo stuff"},
+            object=new_link,
             globalId="python-test:updated.id",
             relationship="cheesing",
         )
-        self.assertEqual(link.object.url, "http://yahoo.com")
-        self.assertEqual(link.object.title, "yahoo stuff")
+        self.assertEqual(link.globalId, "python-test:updated.id")
+        self.assertEqual(link.relationship, "cheesing")
+        self.assertEqual(link.object.url, new_link["url"])
+        self.assertEqual(link.object.title, new_link["title"])
         link.delete()
 
     def test_delete_remote_link(self):
         link = self.jira.add_remote_link(
             self.issue_1,
-            object={"url": "http://google.com", "title": "googlicious!"},
+            destination=DEFAULT_NEW_REMOTE_LINK_OBJECT,
             globalId="python-test:story.of.horse.riding",
             application={"name": "far too silly", "type": "sketch"},
             relationship="mousebending",

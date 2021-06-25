@@ -184,13 +184,11 @@ class ProjectTests(JiraTestCase):
         admin = None
         roles = self.jira.project_roles(self.project_b)
         self.assertGreaterEqual(len(roles), 1)
-        rolenames = {role.name: role for role in roles}
-        self.assertIn(role_name, rolenames)
-        admin = rolenames[role_name]
+        self.assertIn(role_name, roles)
+        admin = roles[role_name]
         self.assertTrue(admin)
-        role = self.jira.project_role(self.project_b, admin.id)
-        self.assertEqual(role.id, admin.id)
-        self.assertEqual(role.name, admin.name)
+        role = self.jira.project_role(self.project_b, admin["id"])
+        self.assertEqual(role.id, int(admin["id"]))
 
         actornames = {actor.name: actor for actor in role.actors}
         actor_admin = "jira-administrators"
@@ -199,6 +197,6 @@ class ProjectTests(JiraTestCase):
         user = self.user_admin
         self.assertIn(user.name, members.keys())
         role.update(users=user.name, groups=actor_admin)
-        role = self.jira.project_role(self.project_b, admin.id)
+        role = self.jira.project_role(self.project_b, int(admin["id"]))
         self.assertIn(user.name, [a.name for a in role.actors])
         self.assertIn(actor_admin, [a.name for a in role.actors])

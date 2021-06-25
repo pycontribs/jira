@@ -3,7 +3,13 @@ import re
 from time import sleep
 
 from jira.exceptions import JIRAError
-from tests.conftest import JiraTestCase, find_by_key, find_by_key_value, rndstr
+from tests.conftest import (
+    JiraTestCase,
+    broken_test,
+    find_by_key,
+    find_by_key_value,
+    rndstr,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -51,10 +57,10 @@ class IssueTests(JiraTestCase):
 
     def test_create_issue_with_fieldargs(self):
         issue = self.jira.create_issue(
-            project=self.project_b,
             summary="Test issue created",
-            description="foo description",
+            project=self.project_b,
             issuetype={"name": "Bug"},
+            description="foo description",
         )  # customfield_10022='XSS'
         self.assertEqual(issue.fields.summary, "Test issue created")
         self.assertEqual(issue.fields.description, "foo description")
@@ -65,10 +71,10 @@ class IssueTests(JiraTestCase):
 
     def test_create_issue_with_fielddict(self):
         fields = {
-            "project": {"key": self.project_b},
             "summary": "Issue created from field dict",
-            "description": "Some new issue for test",
+            "project": {"key": self.project_b},
             "issuetype": {"name": "Bug"},
+            "description": "Some new issue for test",
             # 'customfield_10022': 'XSS',
             "priority": {"name": "High"},
         }
@@ -83,11 +89,11 @@ class IssueTests(JiraTestCase):
 
     def test_create_issue_without_prefetch(self):
         issue = self.jira.create_issue(
-            prefetch=False,
-            project=self.project_b,
             summary="Test issue created",
-            description="some details",
+            project=self.project_b,
             issuetype={"name": "Bug"},
+            description="some details",
+            prefetch=False,
         )  # customfield_10022='XSS'
 
         assert hasattr(issue, "self")
@@ -98,17 +104,17 @@ class IssueTests(JiraTestCase):
     def test_create_issues(self):
         field_list = [
             {
-                "project": {"key": self.project_b},
                 "summary": "Issue created via bulk create #1",
-                "description": "Some new issue for test",
+                "project": {"key": self.project_b},
                 "issuetype": {"name": "Bug"},
+                "description": "Some new issue for test",
                 # 'customfield_10022': 'XSS',
                 "priority": {"name": "High"},
             },
             {
+                "summary": "Issue created via bulk create #2",
                 "project": {"key": self.project_a},
                 "issuetype": {"name": "Bug"},
-                "summary": "Issue created via bulk create #2",
                 "description": "Another new issue for bulk test",
                 "priority": {"name": "High"},
             },
@@ -143,24 +149,24 @@ class IssueTests(JiraTestCase):
     def test_create_issues_one_failure(self):
         field_list = [
             {
-                "project": {"key": self.project_b},
                 "summary": "Issue created via bulk create #1",
-                "description": "Some new issue for test",
+                "project": {"key": self.project_b},
                 "issuetype": {"name": "Bug"},
+                "description": "Some new issue for test",
                 # 'customfield_10022': 'XSS',
                 "priority": {"name": "High"},
             },
             {
+                "summary": "This issue will not succeed",
                 "project": {"key": self.project_a},
                 "issuetype": {"name": "InvalidIssueType"},
-                "summary": "This issue will not succeed",
                 "description": "Should not be seen.",
                 "priority": {"name": "High"},
             },
             {
+                "summary": "However, this one will.",
                 "project": {"key": self.project_a},
                 "issuetype": {"name": "Bug"},
-                "summary": "However, this one will.",
                 "description": "Should be seen.",
                 "priority": {"name": "High"},
             },
@@ -193,16 +199,16 @@ class IssueTests(JiraTestCase):
     def test_create_issues_without_prefetch(self):
         field_list = [
             dict(
+                summary="Test issue #1 created with dicts without prefetch",
                 project=self.project_b,
-                summary="Test issue created",
-                description="some details",
                 issuetype={"name": "Bug"},
+                description="some details",
             ),
             dict(
+                summary="Test issue #2 created with dicts without prefetch",
                 project=self.project_a,
-                summary="Test issue #2",
-                description="foo description",
                 issuetype={"name": "Bug"},
+                description="foo description",
             ),
         ]
         issues = self.jira.create_issues(field_list, prefetch=False)
@@ -218,10 +224,10 @@ class IssueTests(JiraTestCase):
 
     def test_update_with_fieldargs(self):
         issue = self.jira.create_issue(
+            summary="Test issue for updating with fieldargs",
             project=self.project_b,
-            summary="Test issue for updating",
-            description="Will be updated shortly",
             issuetype={"name": "Bug"},
+            description="Will be updated shortly",
         )
         # customfield_10022='XSS')
         issue.update(
@@ -238,8 +244,8 @@ class IssueTests(JiraTestCase):
 
     def test_update_with_fielddict(self):
         issue = self.jira.create_issue(
+            summary="Test issue for updating with fielddict",
             project=self.project_b,
-            summary="Test issue for updating",
             description="Will be updated shortly",
             issuetype={"name": "Bug"},
         )
@@ -260,8 +266,8 @@ class IssueTests(JiraTestCase):
 
     def test_update_with_label(self):
         issue = self.jira.create_issue(
-            project=self.project_b,
             summary="Test issue for updating labels",
+            project=self.project_b,
             description="Label testing",
             issuetype=self.test_manager.CI_JIRA_ISSUE,
         )
@@ -274,8 +280,8 @@ class IssueTests(JiraTestCase):
 
     def test_update_with_bad_label(self):
         issue = self.jira.create_issue(
+            summary="Test issue for updating bad labels",
             project=self.project_b,
-            summary="Test issue for updating labels",
             description="Label testing",
             issuetype=self.test_manager.CI_JIRA_ISSUE,
         )
@@ -288,8 +294,8 @@ class IssueTests(JiraTestCase):
 
     def test_update_with_notify_false(self):
         issue = self.jira.create_issue(
+            summary="Test issue for updating wiith notify false",
             project=self.project_b,
-            summary="Test issue for updating",
             description="Will be updated shortly",
             issuetype={"name": "Bug"},
         )
@@ -299,8 +305,8 @@ class IssueTests(JiraTestCase):
 
     def test_delete(self):
         issue = self.jira.create_issue(
-            project=self.project_b,
             summary="Test issue created",
+            project=self.project_b,
             description="Not long for this world",
             issuetype=self.test_manager.CI_JIRA_ISSUE,
         )
@@ -440,6 +446,9 @@ class IssueTests(JiraTestCase):
         # self.assertEqual(issue.fields.assignee.name, self.test_manager.CI_JIRA_USER)
         # self.assertEqual(issue.fields.status.id, transition_id)
 
+    @broken_test(
+        reason="Greenhopper API doesn't work on standalone docker image with JIRA Server 8.9.0"
+    )
     def test_agile(self):
         uniq = rndstr()
         board_name = "board-" + uniq
