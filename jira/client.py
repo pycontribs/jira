@@ -4440,6 +4440,7 @@ class JIRA(object):
         location_id: Optional[str] = None,
     ) -> Board:
         """Create a new board for the ``project_ids``.
+
         Args:
             name (str): name of the board
             project_ids (str): the projects to create the board in
@@ -4447,6 +4448,7 @@ class JIRA(object):
             location_type (str): the location type. Available in cloud. (Default: user)
             location_id (Optional[str]): the id of project that the board should be located under.
              Omit this for a 'user' location_type. Available in cloud.
+
         Returns:
             Board: The newly created board
         """
