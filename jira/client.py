@@ -44,6 +44,7 @@ import requests
 from pkg_resources import parse_version
 from requests import Response
 from requests.auth import AuthBase
+from requests.structures import CaseInsensitiveDict
 from requests.utils import get_netrc_auth
 
 from jira import __version__
@@ -86,7 +87,7 @@ from jira.resources import (
     Watchers,
     Worklog,
 )
-from jira.utils import CaseInsensitiveDict, json_loads, threaded_requests
+from jira.utils import json_loads, threaded_requests
 
 try:
     # noinspection PyUnresolvedReferences

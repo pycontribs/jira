@@ -67,6 +67,7 @@ nitpick_ignore = [
     ("py:class", "Request"),
     ("py:class", "requests.models.Response"),
     ("py:class", "requests.sessions.Session"),
+    ("py:class", "requests.structures.CaseInsensitiveDict"),
     ("py:class", "Response"),
     ("py:mod", "requests-kerberos"),
     ("py:mod", "requests-oauthlib"),
