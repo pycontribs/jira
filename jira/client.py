@@ -1639,8 +1639,10 @@ class JIRA(object):
         """
         return user.accountId if self._is_cloud else user.name
 
-    def _get_user_id(self, user: str) -> str:
+    def _get_user_id(self, user: Optional[str]) -> Optional[str]:
         """Internal method for translating an user search (str) to an id.
+
+        Return None and -1 unchanged.
 
         This function uses :py:meth:`JIRA.search_users` to find the user
         and then using :py:meth:`JIRA._get_user_identifier` extracts
@@ -1649,7 +1651,8 @@ class JIRA(object):
 
 
         Args:
-            user (str): The search term used for finding a user.
+            user (Optional[str]): The search term used for finding a user.
+              None, '-1' and -1 are equivalent to 'Unassigned'.
 
         Raises:
             JIRAError: If any error occurs.
@@ -1657,6 +1660,8 @@ class JIRA(object):
         Returns:
             str: The Jira user's identifier.
         """
+        if user in (None, -1, "-1"):
+            return user
         try:
             user_obj: User
             if self._is_cloud:
