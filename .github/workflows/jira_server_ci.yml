@@ -12,17 +12,18 @@ on:
 
 jobs:
   test:
-    name: ${{ matrix.os }} / ${{ matrix.python-version }}
+    name: ${{ matrix.os }} / Python ${{ matrix.python-version }} / Jira ${{ matrix.jira-version }}
     runs-on: ${{ matrix.os }}-latest
     strategy:
       matrix:
         os: [Ubuntu]
         python-version: [3.6, 3.7, 3.8, 3.9]
+        jira-version: [8.17.1]
 
     steps:
       - uses: actions/checkout@master
       - name: Start Jira docker instance
-        run: docker run -dit -p 2990:2990 --name jira addono/jira-software-standalone
+        run: docker run -dit -p 2990:2990 --name jira addono/jira-software-standalone --version ${{ matrix.jira-version }}
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
