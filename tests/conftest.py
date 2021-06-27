@@ -21,18 +21,6 @@ TEST_ATTACH_PATH = os.path.join(TEST_ROOT, "tests.py")
 
 LOGGER = logging.getLogger(__name__)
 
-OAUTH = False
-CONSUMER_KEY = "oauth-consumer"
-KEY_CERT_FILE = "/home/bspeakmon/src/atlassian-oauth-examples/rsa.pem"
-KEY_CERT_DATA = None
-try:
-    with open(KEY_CERT_FILE, "r") as cert:
-        KEY_CERT_DATA = cert.read()
-    OAUTH = True
-except Exception:
-    OAUTH = False
-
-
 ON_CUSTOM_JIRA = "CI_JIRA_URL" in os.environ
 
 
@@ -124,7 +112,7 @@ class JiraTestManager(object):
 
     __shared_state: Dict[Any, Any] = {}
 
-    def __init__(self, jira_hosted_type="Server"):
+    def __init__(self, jira_hosted_type=os.environ.get("CI_JIRA_TYPE", "Server")):
         """Instantiate and populate the JIRA instance"""
         self.__dict__ = self.__shared_state
 
@@ -132,7 +120,7 @@ class JiraTestManager(object):
             self.initialized = False
             self.max_retries = 5
 
-            if jira_hosted_type and jira_hosted_type == "Cloud":
+            if jira_hosted_type and jira_hosted_type.upper() == "CLOUD":
                 self.set_jira_cloud_details()
             else:
                 self.set_jira_server_details()
@@ -143,10 +131,8 @@ class JiraTestManager(object):
                 "validate": True,
                 "max_retries": self.max_retries,
             }
-            if OAUTH:
-                self.set_oauth_logins()
-            else:
-                self.set_basic_auth_logins(**jira_class_kwargs)
+
+            self.set_basic_auth_logins(**jira_class_kwargs)
 
             if not self.jira_admin.current_user():
                 self.initialized = True
@@ -164,10 +150,10 @@ class JiraTestManager(object):
 
     def set_jira_cloud_details(self):
         self.CI_JIRA_URL = "https://pycontribs.atlassian.net"
-        self.CI_JIRA_ADMIN = "ci-admin"
-        self.CI_JIRA_ADMIN_PASSWORD = "sd4s3dgec5fhg4tfsds3434"
-        self.CI_JIRA_USER = "ci-user"
-        self.CI_JIRA_USER_PASSWORD = "sd4s3dgec5fhg4tfsds3434"
+        self.CI_JIRA_ADMIN = os.environ["CI_JIRA_CLOUD_ADMIN"]
+        self.CI_JIRA_ADMIN_PASSWORD = os.environ["CI_JIRA_CLOUD_ADMIN_TOKEN"]
+        self.CI_JIRA_USER = os.environ["CI_JIRA_CLOUD_USER"]
+        self.CI_JIRA_USER_PASSWORD = os.environ["CI_JIRA_CLOUD_USER_TOKEN"]
 
     def set_jira_server_details(self):
         self.CI_JIRA_URL = os.environ["CI_JIRA_URL"]
@@ -176,34 +162,6 @@ class JiraTestManager(object):
         self.CI_JIRA_USER = os.environ["CI_JIRA_USER"]
         self.CI_JIRA_USER_PASSWORD = os.environ["CI_JIRA_USER_PASSWORD"]
         self.CI_JIRA_ISSUE = os.environ.get("CI_JIRA_ISSUE", "Bug")
-
-    def set_oauth_logins(self):
-        self.jira_admin = JIRA(
-            oauth={
-                "access_token": "hTxcwsbUQiFuFALf7KZHDaeAJIo3tLUK",
-                "access_token_secret": "aNCLQFP3ORNU6WY7HQISbqbhf0UudDAf",
-                "consumer_key": CONSUMER_KEY,
-                "key_cert": KEY_CERT_DATA,
-            }
-        )
-        self.jira_sysadmin = JIRA(
-            oauth={
-                "access_token": "4ul1ETSFo7ybbIxAxzyRal39cTrwEGFv",
-                "access_token_secret": "K83jBZnjnuVRcfjBflrKyThJa0KSjSs2",
-                "consumer_key": CONSUMER_KEY,
-                "key_cert": KEY_CERT_DATA,
-            },
-            logging=False,
-            max_retries=self.max_retries,
-        )
-        self.jira_normal = JIRA(
-            oauth={
-                "access_token": "ZVDgYDyIQqJY8IFlQ446jZaURIz5ECiB",
-                "access_token_secret": "5WbLBybPDg1lqqyFjyXSCsCtAWTwz1eD",
-                "consumer_key": CONSUMER_KEY,
-                "key_cert": KEY_CERT_DATA,
-            }
-        )
 
     def set_basic_auth_logins(self, **jira_class_kwargs):
         if self.CI_JIRA_ADMIN:
