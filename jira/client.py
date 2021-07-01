@@ -1674,7 +1674,7 @@ class JIRA(object):
 
     # non-resource
     @translate_resource_args
-    def assign_issue(self, issue: Union[int, str], assignee: str) -> bool:
+    def assign_issue(self, issue: Union[int, str], assignee: Optional[str]) -> bool:
         """Assign an issue to a user. None will set it to unassigned. -1 will set it to Automatic.
 
         Args:
@@ -1685,7 +1685,11 @@ class JIRA(object):
             bool
         """
         url = self._get_latest_url("issue/{}/assignee".format(str(issue)))
-        user_id = self._get_user_id(assignee)
+        user_id: Optional[str] = None
+        if assignee is not None:
+            user_id = self._get_user_id(assignee)
+        else:
+            user_id = assignee
         payload = {"accountId": user_id} if self._is_cloud else {"name": user_id}
         r = self._session.put(url, data=json.dumps(payload))
         raise_on_error(r)
