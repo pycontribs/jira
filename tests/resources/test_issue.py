@@ -399,6 +399,14 @@ class IssueTests(JiraTestCase):
             self.jira.issue(self.issue_1).fields.assignee.name, self.user_normal.name
         )
 
+    def test_unassign_issue(self):
+        self.assertTrue(self.jira.assign_issue(self.issue_1, self.user_normal.name))
+        self.assertEqual(
+            self.jira.issue(self.issue_1).fields.assignee.name, self.user_normal.name
+        )
+        self.assertTrue(self.jira.assign_issue(self.issue_1, None))
+        self.assertEqual(self.jira.issue(self.issue_1).fields.assignee, None)
+
     def test_assign_to_bad_issue_raises(self):
         self.assertRaises(JIRAError, self.jira.assign_issue, "NOPE-1", "notauser")
 
