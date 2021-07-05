@@ -168,7 +168,7 @@ six==1.16.0
     #   traitlets
 snowballstemmer==2.1.0
     # via sphinx
-sphinx==4.0.2
+sphinx==4.0.3
     # via
     #   jira (setup.cfg)
     #   sphinx-rtd-theme
