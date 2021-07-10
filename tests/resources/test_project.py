@@ -1,4 +1,4 @@
-from tests.conftest import JiraTestCase, broken_test, find_by_id, rndstr
+from tests.conftest import JiraTestCase, find_by_id, rndstr
 
 
 class ProjectTests(JiraTestCase):
@@ -179,27 +179,24 @@ class ProjectTests(JiraTestCase):
         self.assertEqual(test.name, name)
         version.delete()
 
-    @broken_test(
-        reason="temporary disabled because roles() return a dictionary of role_name:role_url and we have no call to convert it to proper Role()"
-    )
     def test_project_roles(self):
-        project = self.jira.project(self.project_b)
-        role_name = "Developers"
-        dev = None
-        for roles in [
-            self.jira.project_roles(self.project_b),
-            self.jira.project_roles(project),
-        ]:
-            self.assertGreaterEqual(len(roles), 5)
-            self.assertIn("Users", roles)
-            self.assertIn(role_name, roles)
-            dev = roles[role_name]
-        self.assertTrue(dev)
-        role = self.jira.project_role(self.project_b, dev.id)
-        self.assertEqual(role.id, dev.id)
-        self.assertEqual(role.name, dev.name)
-        user = self.test_manager.jira_admin
-        self.assertNotIn(user, role.actors)
-        role.update(users=user, groups=["jira-developers", "jira-users"])
-        role = self.jira.project_role(self.project_b, dev.id)
-        self.assertIn(user, role.actors)
+        role_name = "Administrators"
+        admin = None
+        roles = self.jira.project_roles(self.project_b)
+        self.assertGreaterEqual(len(roles), 1)
+        self.assertIn(role_name, roles)
+        admin = roles[role_name]
+        self.assertTrue(admin)
+        role = self.jira.project_role(self.project_b, admin["id"])
+        self.assertEqual(role.id, int(admin["id"]))
+
+        actornames = {actor.name: actor for actor in role.actors}
+        actor_admin = "jira-administrators"
+        self.assertIn(actor_admin, actornames)
+        members = self.jira.group_members(actor_admin)
+        user = self.user_admin
+        self.assertIn(user.name, members.keys())
+        role.update(users=user.name, groups=actor_admin)
+        role = self.jira.project_role(self.project_b, int(admin["id"]))
+        self.assertIn(user.name, [a.name for a in role.actors])
+        self.assertIn(actor_admin, [a.name for a in role.actors])

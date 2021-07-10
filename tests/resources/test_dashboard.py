@@ -1,19 +1,21 @@
-from tests.conftest import JiraTestCase, not_on_custom_jira_instance
+from tests.conftest import JiraTestCase, broken_test
 
 
-@not_on_custom_jira_instance
 class DashboardTests(JiraTestCase):
     def test_dashboards(self):
         dashboards = self.jira.dashboards()
-        self.assertEqual(len(dashboards), 3)
+        self.assertGreaterEqual(len(dashboards), 1)
 
+    @broken_test(
+        reason="standalone jira docker image has only 1 system dashboard by default"
+    )
     def test_dashboards_filter(self):
         dashboards = self.jira.dashboards(filter="my")
         self.assertEqual(len(dashboards), 2)
         self.assertEqual(dashboards[0].id, "10101")
 
     def test_dashboards_startat(self):
-        dashboards = self.jira.dashboards(startAt=1, maxResults=1)
+        dashboards = self.jira.dashboards(startAt=0, maxResults=1)
         self.assertEqual(len(dashboards), 1)
 
     def test_dashboards_maxresults(self):
@@ -21,6 +23,7 @@ class DashboardTests(JiraTestCase):
         self.assertEqual(len(dashboards), 1)
 
     def test_dashboard(self):
-        dashboard = self.jira.dashboard("10101")
-        self.assertEqual(dashboard.id, "10101")
-        self.assertEqual(dashboard.name, "Another test dashboard")
+        expected_ds = self.jira.dashboards()[0]
+        dashboard = self.jira.dashboard(expected_ds.id)
+        self.assertEqual(dashboard.id, expected_ds.id)
+        self.assertEqual(dashboard.name, expected_ds.name)

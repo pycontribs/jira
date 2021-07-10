@@ -1232,7 +1232,17 @@ class JIRA(object):
 
         result = {}
         for user in r["users"]["items"]:
-            result[user["id"]] = {
+            # 'id' is likely available only in older JIRA Server, it's not available on newer JIRA Server.
+            # 'name' is not available in JIRA Cloud.
+            hasId = user.get("id") is not None and user.get("id") != ""
+            hasName = user.get("name") is not None and user.get("name") != ""
+            result[
+                user["id"]
+                if hasId
+                else user.get("name")
+                if hasName
+                else user.get("accountId")
+            ] = {
                 "name": user.get("name"),
                 "id": user.get("id"),
                 "accountId": user.get("accountId"),
@@ -1800,7 +1810,7 @@ class JIRA(object):
         ``destination`` should be a dict containing at least ``url`` to the linked external URL and
         ``title`` to display for the link inside Jira.
 
-        For definitions of the allowable fields for ``object`` and the keyword arguments ``globalId``, ``application``
+        For definitions of the allowable fields for ``destination`` and the keyword arguments ``globalId``, ``application``
         and ``relationship``, see https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+for+Remote+Issue+Links.
 
         Args:

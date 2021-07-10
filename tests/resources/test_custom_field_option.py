@@ -1,8 +1,7 @@
-from tests.conftest import JiraTestCase, not_on_custom_jira_instance
+from tests.conftest import JiraTestCase
 
 
 class CustomFieldOptionTests(JiraTestCase):
-    @not_on_custom_jira_instance
     def test_custom_field_option(self):
-        option = self.jira.custom_field_option("10001")
+        option = self.jira.custom_field_option("10000")
         self.assertEqual(option.value, "To Do")

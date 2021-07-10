@@ -1,13 +1,12 @@
-from tests.conftest import JiraTestCase, not_on_custom_jira_instance
+from tests.conftest import JiraTestCase
 
 
-@not_on_custom_jira_instance
 class ResolutionTests(JiraTestCase):
     def test_resolutions(self):
         resolutions = self.jira.resolutions()
         self.assertGreaterEqual(len(resolutions), 1)
 
     def test_resolution(self):
-        resolution = self.jira.resolution("2")
-        self.assertEqual(resolution.id, "2")
-        self.assertEqual(resolution.name, "Won't Fix")
+        resolution = self.jira.resolution("10002")
+        self.assertEqual(resolution.id, "10002")
+        self.assertEqual(resolution.name, "Duplicate")
