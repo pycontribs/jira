@@ -198,7 +198,7 @@ traitlets==4.3.3
     # via ipython
 typing-extensions==3.10.0.0
     # via importlib-metadata
-urllib3==1.26.5
+urllib3==1.26.6
     # via requests
 wcwidth==0.2.5
     # via prompt-toolkit
