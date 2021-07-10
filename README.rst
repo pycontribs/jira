@@ -139,6 +139,23 @@ Setup
 .. _pytest: https://docs.pytest.org/en/stable/usage.html#specifying-tests-selecting-tests
 
 
+Jira REST API Reference Links
+=============================
+
+When updating interactions with the Jira REST API please refer to the documentation below. We aim to support both Jira Cloud and Jira Server / Data Center.
+
+1. `Jira Cloud`_                / `Jira Server`_ (main REST API reference)
+2. `Jira Software Cloud`_       / `Jira Software Server`_ (former names include: Jira Agile, Greenhopper)
+3. `Jira Service Desk Cloud`_   / `Jira Service Desk Server`_
+
+.. _`Jira Cloud`: https://developer.atlassian.com/cloud/jira/platform/rest/v2/
+.. _`Jira Server`: https://docs.atlassian.com/software/jira/docs/api/REST/latest/
+.. _`Jira Software Cloud`: https://developer.atlassian.com/cloud/jira/software/rest/
+.. _`Jira Software Server`: https://docs.atlassian.com/jira-software/REST/latest/
+.. _`Jira Service Desk Cloud`: https://docs.atlassian.com/jira-servicedesk/REST/cloud/
+.. _`Jira Service Desk Server`: https://docs.atlassian.com/jira-servicedesk/REST/server/
+
+
 Credits
 -------
 
