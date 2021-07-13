@@ -136,7 +136,7 @@ pytz==2021.1
     # via babel
 pyyaml==5.4.1
     # via jira (setup.cfg)
-requests==2.25.1
+requests==2.26.0
     # via
     #   jira (setup.cfg)
     #   requests-futures
