@@ -1431,3 +1431,9 @@ def cls_for_resource(resource_literal: str) -> Type[Resource]:
 class PropertyHolder(object):
     def __init__(self, raw):
         __bases__ = raw  # noqa
+        
+    def __getitem__(self, item)
+        if item.startswith("_"):
+            raise KeyError(item)
+        else:
+            return getattr(self, item)
