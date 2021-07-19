@@ -83,6 +83,7 @@ from jira.resources import (
     User,
     Version,
     Votes,
+    PermissionScheme,
     Watchers,
     Worklog,
 )
@@ -2018,6 +2019,15 @@ class JIRA(object):
             Votes
         """
         return self._find_for_resource(Votes, issue)
+
+    @translate_resource_args
+    def project_permissionscheme(self, project):
+        """Get a PermissionScheme Resource from the server.
+ 
+        :param project: ID or key of the project to get the permissionscheme for
+        :rtype: PermissionScheme
+        """
+        return self._find_for_resource(PermissionScheme, project)
 
     @translate_resource_args
     def add_vote(self, issue: str) -> Response:
