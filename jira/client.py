@@ -68,6 +68,7 @@ from jira.resources import (
     IssueLink,
     IssueLinkType,
     IssueType,
+    PermissionScheme,
     Priority,
     Project,
     RemoteLink,
@@ -83,7 +84,6 @@ from jira.resources import (
     User,
     Version,
     Votes,
-    PermissionScheme,
     Watchers,
     Worklog,
 )
@@ -2023,7 +2023,7 @@ class JIRA(object):
     @translate_resource_args
     def project_permissionscheme(self, project):
         """Get a PermissionScheme Resource from the server.
- 
+
         :param project: ID or key of the project to get the permissionscheme for
         :rtype: PermissionScheme
         """

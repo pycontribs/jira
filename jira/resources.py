@@ -798,13 +798,17 @@ class Votes(Resource):
             self._parse_raw(raw)
         self.raw: Dict[str, Any] = cast(Dict[str, Any], self.raw)
 
+
 class PermissionScheme(Resource):
     """Permissionscheme information on an project."""
 
     def __init__(self, options, session, raw=None):
-        Resource.__init__(self, "project/{0}/permissionscheme?expand=user", options, session)
+        Resource.__init__(
+            self, "project/{0}/permissionscheme?expand=user", options, session
+        )
         if raw:
             self._parse_raw(raw)
+
 
 class Watchers(Resource):
     """Watcher information on an issue."""
@@ -1399,7 +1403,7 @@ resource_class_map: Dict[str, Type[Resource]] = {
     r"priority/[^/]+$": Priority,
     r"project/[^/]+$": Project,
     r"project/[^/]+/role/[^/]+$": Role,
-    r"project/[^/]+/permissionscheme[^/]+$": PermissionScheme,    
+    r"project/[^/]+/permissionscheme[^/]+$": PermissionScheme,
     r"resolution/[^/]+$": Resolution,
     r"securitylevel/[^/]+$": SecurityLevel,
     r"status/[^/]+$": Status,
