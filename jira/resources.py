@@ -11,9 +11,10 @@ import time
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Type, Union, cast
 
 from requests import Response
+from requests.structures import CaseInsensitiveDict
 
 from jira.resilientsession import ResilientSession
-from jira.utils import CaseInsensitiveDict, json_loads, threaded_requests
+from jira.utils import json_loads, threaded_requests
 
 if TYPE_CHECKING:
     from jira.client import JIRA
