@@ -136,35 +136,27 @@ def test_result_list_if_empty():
     [
         {"headers": {"Content-Type": "application/json;charset=UTF-8"}},
         {"headers": {"random-header": "nice random"}},
-        {},
     ],
-    ids=["overwrite", "new", "none"],
+    ids=["overwrite", "new"],
 )
 def test_headers_unclobbered_update(options_arg, no_fields):
 
+    assert "headers" in options_arg, "test case options must contain headers"
+
     # GIVEN: the headers and the expected value
-    header_to_check: str
-    expected_header_value: str
-    if options_arg:
-        header_to_check = list(options_arg["headers"].keys())[0]
-        expected_header_value = options_arg["headers"][header_to_check]
-    elif "headers" not in options_arg:
-        # when we are checking not proving any headers
-        header_to_check = "Content-Type"
-        expected_header_value = jira.client.JIRA.DEFAULT_OPTIONS["headers"][
-            header_to_check
-        ]
+    header_to_check: str = list(options_arg["headers"].keys())[0]
+    expected_header_value: str = options_arg["headers"][header_to_check]
 
     invariant_header_name: str = "X-Atlassian-Token"
     invariant_header_value: str = jira.client.JIRA.DEFAULT_OPTIONS["headers"][
         invariant_header_name
     ]
-    if options_arg:
-        # We arbitrarily chose a header to check it remains unchanged/unclobbered
-        # so should not be overwritten by a test case
-        assert (
-            invariant_header_name not in options_arg["headers"]
-        ), f"{invariant_header_name} is checked as not being overwritten in this test"
+
+    # We arbitrarily chose a header to check it remains unchanged/unclobbered
+    # so should not be overwritten by a test case
+    assert (
+        invariant_header_name not in options_arg["headers"]
+    ), f"{invariant_header_name} is checked as not being overwritten in this test"
 
     # WHEN: we initialise the JIRA class and get the headers
     jira_client = jira.client.JIRA(
@@ -176,6 +168,30 @@ def test_headers_unclobbered_update(options_arg, no_fields):
 
     session_headers = jira_client._session.headers
 
-    # THEN: we have set the right headers and not affect the defaults
+    # THEN: we have set the right headers and not affect the other headers' defaults
     assert session_headers[header_to_check] == expected_header_value
+    assert session_headers[invariant_header_name] == invariant_header_value
+
+
+def test_headers_unclobbered_update_with_no_provided_headers(no_fields):
+
+    options_arg = {}  # a dict with "headers" not set
+
+    # GIVEN:the headers and the expected value
+    invariant_header_name: str = "X-Atlassian-Token"
+    invariant_header_value: str = jira.client.JIRA.DEFAULT_OPTIONS["headers"][
+        invariant_header_name
+    ]
+
+    # WHEN: we initialise the JIRA class with no provided headers and get the headers
+    jira_client = jira.client.JIRA(
+        server="https://jira.atlasian.com",
+        get_server_info=False,
+        validate=False,
+        options=options_arg,
+    )
+
+    session_headers = jira_client._session.headers
+
+    # THEN: we have not affected the other headers' defaults
     assert session_headers[invariant_header_name] == invariant_header_value
