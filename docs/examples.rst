@@ -125,6 +125,21 @@ To pass additional options to Kerberos auth use dict ``kerberos_options``, e.g.:
 
 .. _jirashell-label:
 
+Headers
+-------
+
+Headers can be provided to the internally used ``requests.Session``.
+If the user provides a header that the :py:class:`jira.client.JIRA` also attempts to set, the user provided header will take preference.
+
+Perhaps you want to use a custom User Agent::
+
+    from requests_toolbelt import user_agent
+
+    jira = JIRA(
+        basic_auth=("email", "API token"),
+        options={"headers": {"User-Agent": user_agent("my_package", "0.0.1")}},
+    )
+
 Issues
 ------
 
