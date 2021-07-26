@@ -26,6 +26,18 @@ class IssueTests(JiraTestCase):
         self.assertEqual(issue.key, self.issue_1)
         self.assertEqual(issue.fields.summary, "issue 1 from %s" % self.project_b)
 
+    def test_issue_get_field(self):
+        issue = self.jira.issue(self.issue_1)
+        self.assertEqual(issue.fields.description, issue.get_field(fieldName="description"))
+
+        self.assertRaisesRegex(
+            AttributeError, ": _something", issue.get_field, "_something"
+        )
+
+        self.assertRaisesRegex(
+            AttributeError, "customfield_1234", issue.get_field, "customfield_1234"
+        )
+
     def test_issue_field_limiting(self):
         issue = self.jira.issue(self.issue_2, fields="summary,comment")
         self.assertEqual(issue.fields.summary, "issue 2 from %s" % self.project_b)

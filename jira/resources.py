@@ -692,6 +692,27 @@ class Issue(Resource):
 
         super(Issue, self).update(async_=async_, jira=jira, notify=notify, fields=data)
 
+    def get_field(self, fieldName: str) -> Any:
+        """Obtain the (parsed) value from the Issue's field.
+
+        Args:
+            fieldName (str): The name of the field to get
+
+        Raises:
+            AttributeError: If the field does not exist or if the field starts with an ``_``
+
+        Returns:
+            Any: Returns the parsed data stored in the field. For example, "project" would be of class :py:class:`Project`
+        """
+
+        if fieldName.startswith("_"):
+            raise AttributeError(
+                f"A issue field_name cannot start with underscore (_): {fieldName}",
+                fieldName,
+            )
+        else:
+            return getattr(self.fields, fieldName)
+
     def add_field_value(self, field: str, value: str):
         """Add a value to a field that supports multiple values, without resetting the existing values.
 
@@ -1431,9 +1452,3 @@ def cls_for_resource(resource_literal: str) -> Type[Resource]:
 class PropertyHolder(object):
     def __init__(self, raw):
         __bases__ = raw  # noqa
-        
-    def __getitem__(self, item)
-        if item.startswith("_"):
-            raise KeyError(item)
-        else:
-            return getattr(self, item)
