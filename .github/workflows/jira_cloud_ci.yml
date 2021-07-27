@@ -49,7 +49,7 @@ jobs:
           python -m pip install --upgrade tox tox-gh-actions
 
       - name: Test with tox
-        run: tox
+        run: tox -e py38 -- -m allow_on_cloud
         env:
           CI_JIRA_TYPE: CLOUD
           CI_JIRA_CLOUD_ADMIN: ${{ secrets.CI_JIRA_CLOUD_ADMIN }}

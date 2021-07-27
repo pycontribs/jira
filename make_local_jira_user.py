@@ -1,6 +1,7 @@
 """Attempts to create a test user,
 as the empty JIRA instance isn't provisioned with one.
 """
+import sys
 import time
 from os import environ
 
@@ -29,6 +30,10 @@ def add_user_to_jira():
 
 
 if __name__ == "__main__":
+    if environ.get("CI_JIRA_TYPE", "Server").upper() == "CLOUD":
+        print("Do not need to create a user for Jira Cloud CI, quitting.")
+        sys.exit()
+
     start_time = time.time()
     timeout_mins = 15
     print(
