@@ -3731,9 +3731,13 @@ class JIRA(object):
             self.log.error(ioe)
         return None
 
-    def current_user(self, field: str = "key") -> str:
+    def current_user(self, field: Optional[str] = None) -> str:
         """Returns the username or emailAddress of the current user. For anonymous
         users it will return a value that evaluates as False.
+
+        Args:
+            field (Optional[str]): the name of the identifier field.
+              Defaults to "accountId" for Jira Cloud, else "key"
 
         Returns:
             str
@@ -3745,6 +3749,9 @@ class JIRA(object):
 
             r_json: Dict[str, str] = json_loads(r)
             self._myself = r_json
+
+        if field is None:
+            field = "accountId" if self._is_cloud else "key"
 
         return self._myself[field]
 
