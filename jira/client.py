@@ -4007,7 +4007,9 @@ class JIRA(object):
         if not template_name:
             # https://confluence.atlassian.com/jirakb/creating-projects-via-rest-api-in-jira-963651978.html
             template_key = (
-                "com.pyxis.greenhopper.jira:basic-software-development-template"
+                "com.pyxis.greenhopper.jira:gh-simplified-basic"
+                if self._is_cloud
+                else "com.pyxis.greenhopper.jira:basic-software-development-template"
             )
 
         # https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-projects/#api-rest-api-2-project-get
