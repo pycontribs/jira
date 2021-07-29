@@ -186,7 +186,7 @@ sphinxcontrib-qthelp==1.0.3
     # via sphinx
 sphinxcontrib-serializinghtml==1.1.5
     # via sphinx
-tenacity==7.0.0
+tenacity==8.0.1
     # via jira (setup.cfg)
 termcolor==1.1.0
     # via pytest-sugar
