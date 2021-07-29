@@ -69,6 +69,11 @@ class JiraTestCase(unittest.TestCase):
         self.project_b = self.test_manager.project_b
         self.project_a = self.test_manager.project_a
 
+    @property
+    def is_jira_cloud_ci(self) -> bool:
+        """is running on Jira Cloud"""
+        return self.test_manager._cloud_ci
+
 
 def rndstr():
     return "".join(random.sample(string.ascii_lowercase, 6))
