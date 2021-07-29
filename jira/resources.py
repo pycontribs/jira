@@ -1088,8 +1088,14 @@ class User(Resource):
         options: Dict[str, str],
         session: ResilientSession,
         raw: Dict[str, Any] = None,
+        *,
+        _query_param: str = "username",
     ):
-        Resource.__init__(self, "user?username={0}", options, session)
+        # Handle self-hosted Jira and Jira Cloud differently
+        if raw and "accountId" in raw["self"]:
+            _query_param = "accountId"
+
+        Resource.__init__(self, f"user?{_query_param}" + "={0}", options, session)
         if raw:
             self._parse_raw(raw)
         self.raw: Dict[str, Any] = cast(Dict[str, Any], self.raw)
@@ -1409,7 +1415,7 @@ resource_class_map: Dict[str, Type[Resource]] = {
     r"securitylevel/[^/]+$": SecurityLevel,
     r"status/[^/]+$": Status,
     r"statuscategory/[^/]+$": StatusCategory,
-    r"user\?(username|key).+$": User,
+    r"user\?(username|key|accountId).+$": User,
     r"group\?groupname.+$": Group,
     r"version/[^/]+$": Version,
     # GreenHopper specific resources

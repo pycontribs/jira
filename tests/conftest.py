@@ -71,6 +71,11 @@ class JiraTestCase(unittest.TestCase):
         self.project_a = self.test_manager.project_a
 
     @property
+    def identifying_user_property(self) -> str:
+        """Literal["accountId", "name"]: Depending on if Jira Cloud or Server"""
+        return "accountId" if self.is_jira_cloud_ci else "name"
+
+    @property
     def is_jira_cloud_ci(self) -> bool:
         """is running on Jira Cloud"""
         return self.test_manager._cloud_ci

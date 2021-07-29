@@ -1,6 +1,7 @@
 import os
 
-from tests.conftest import TEST_ICON_PATH, JiraTestCase
+from jira.resources import User
+from tests.conftest import TEST_ICON_PATH, JiraTestCase, allow_on_cloud
 
 
 class UserTests(JiraTestCase):
@@ -8,9 +9,15 @@ class UserTests(JiraTestCase):
         JiraTestCase.setUp(self)
         self.issue = self.test_manager.project_b_issue3
 
+    @allow_on_cloud
     def test_user(self):
-        user = self.jira.user(self.test_manager.user_admin.name)
-        self.assertTrue(user.name)
+        """Test that a user can be returned and is the right class"""
+        # GIVEN: a User
+        expected_user = self.test_manager.user_admin
+        # WHEN: The user is searched for using its identifying attribute
+        user = self.jira.user(getattr(expected_user, self.identifying_user_property))
+        # THEN: it is of the right type, and has an email address of the right format
+        assert isinstance(user, User)
         self.assertRegex(
             user.emailAddress, r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
         )
