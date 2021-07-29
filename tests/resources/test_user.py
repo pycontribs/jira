@@ -171,9 +171,11 @@ class UserTests(JiraTestCase):
         )
         self.assertGreaterEqual(len(users), 1)
 
+    @allow_on_cloud
     def test_search_allowed_users_for_issue_by_issue(self):
         users = self.jira.search_allowed_users_for_issue("a", issueKey=self.issue)
         self.assertGreaterEqual(len(users), 1)
+        self.assertIsInstance(users[0], User)
 
     def test_search_allowed_users_for_issue_maxresults(self):
         users = self.jira.search_allowed_users_for_issue(
