@@ -3973,31 +3973,31 @@ class JIRA(object):
 
         ps_list: List[Dict[str, Any]]
 
-        if not permissionScheme:
+        if permissionScheme is None:
             ps_list = self.permissionschemes()
             for sec in ps_list:
                 if sec["name"] == "Default Permission Scheme":
                     permissionScheme = sec["id"]
-                break
-            if not permissionScheme:
+                    break
+            if permissionScheme is None and ps_list:
                 permissionScheme = ps_list[0]["id"]
 
-        if not issueSecurityScheme:
+        if issueSecurityScheme is None:
             ps_list = self.issuesecurityschemes()
             for sec in ps_list:
                 if sec["name"] == "Default":  # no idea which one is default
                     issueSecurityScheme = sec["id"]
-                break
-            if not issueSecurityScheme and ps_list:
+                    break
+            if issueSecurityScheme is None and ps_list:
                 issueSecurityScheme = ps_list[0]["id"]
 
-        if not projectCategory:
+        if projectCategory is None:
             ps_list = self.projectcategories()
             for sec in ps_list:
                 if sec["name"] == "Default":  # no idea which one is default
                     projectCategory = sec["id"]
-                break
-            if not projectCategory and ps_list:
+                    break
+            if projectCategory is None and ps_list:
                 projectCategory = ps_list[0]["id"]
         # <beep> Atlassian for failing to provide an API to get projectTemplateKey values
         #  Possible values are just hardcoded and obviously depending on Jira version.
