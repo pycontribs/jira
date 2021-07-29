@@ -3156,7 +3156,7 @@ class JIRA:
         Returns:
             ResultList
         """
-        params = {"username": user}
+        params = {"query" if self._is_cloud else "username": user}
         if issueKey is not None:
             params["issueKey"] = issueKey
         if projectKey is not None:
