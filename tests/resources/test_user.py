@@ -155,11 +155,22 @@ class UserTests(JiraTestCase):
             )
         self.jira.delete_user_avatar(self.test_manager.CI_JIRA_ADMIN, props["id"])
 
+    @allow_on_cloud
     def test_search_users(self):
-        users = self.jira.search_users(self.test_manager.CI_JIRA_ADMIN)
+        # WHEN: the search_users function is called with a requested user
+        if self.is_jira_cloud_ci:
+            users = self.jira.search_users(query=self.test_manager.CI_JIRA_ADMIN)
+        else:
+            users = self.jira.search_users(self.test_manager.CI_JIRA_ADMIN)
+        # THEN: We get a list of User objects
         self.assertGreaterEqual(len(users), 1)
-        usernames = map(lambda user: user.name, users)
-        self.assertIn(self.test_manager.user_admin.name, usernames)
+        self.assertIsInstance(users[0], User)
+        #       and the requested user can be found in this list
+        user_ids = [getattr(user, self.identifying_user_property) for user in users]
+        self.assertIn(
+            getattr(self.test_manager.user_admin, self.identifying_user_property),
+            user_ids,
+        )
 
     def test_search_users_maxresults(self):
         users = self.jira.search_users(self.test_manager.CI_JIRA_USER, maxResults=1)
