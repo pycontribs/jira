@@ -1077,7 +1077,7 @@ class User(Resource):
         session: ResilientSession,
         raw: Dict[str, Any] = None,
     ):
-        Resource.__init__(self, "user?username={0}", options, session)
+        Resource.__init__(self, "user?accountId={0}", options, session)
         if raw:
             self._parse_raw(raw)
         self.raw: Dict[str, Any] = cast(Dict[str, Any], self.raw)
