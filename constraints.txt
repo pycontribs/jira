@@ -54,7 +54,7 @@ importlib-metadata==4.6.1
     #   pytest
 iniconfig==1.1.1
     # via pytest
-ipython==7.16.1
+ipython==7.26.0
     # via jira (setup.cfg)
 ipython-genutils==0.2.0
     # via traitlets
