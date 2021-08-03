@@ -19,7 +19,7 @@ import time
 import urllib
 import warnings
 from collections import OrderedDict
-from collections.abc import Iterable
+from collections.abc import Generator, Iterable
 from functools import lru_cache, wraps
 from io import BufferedReader
 from numbers import Number
@@ -138,7 +138,12 @@ ResourceType = TypeVar("ResourceType", contravariant=True, bound=Resource)
 class ResultList(list, Generic[ResourceType]):
     def __init__(
         self,
+        item_type: Type[ResourceType],
+        items_key: Optional[str],
         iterable: Iterable = None,
+        _request_path: str = None,
+        _params: Dict[str, Any] = None,
+        _base: str = None,
         _startAt: int = 0,
         _maxResults: int = 0,
         _total: Optional[int] = None,
@@ -147,7 +152,13 @@ class ResultList(list, Generic[ResourceType]):
         """
 
         Args:
+            item_type (Type[Resource]): Type of single item.
+            items_key (Optional[str]): Path to the items in JSON returned from server.
+              Set it to None, if response is an array, and not a JSON object.
             iterable (Iterable): [description]. Defaults to None.
+            _request_path (str): path in request URL
+            _params (Dict[str, Any]): Params to be used in all requests. Should not contain startAt and maxResults,
+            _base (str): base URL to use for the requests.
             _startAt (int): Start page. Defaults to 0.
             _maxResults (int): Max results per page. Defaults to 0.
             _total (Optional[int]): Total results from query. Defaults to 0.
@@ -158,6 +169,11 @@ class ResultList(list, Generic[ResourceType]):
         else:
             list.__init__(self)
 
+        self.item_type = item_type
+        self.items_key = items_key
+        self.request_path = _request_path
+        self.params = _params
+        self.base = _base
         self.startAt = _startAt
         self.maxResults = _maxResults
         # Optional parameters:
@@ -808,12 +824,30 @@ class JIRA:
                         break
 
             return ResultList(
-                items, start_at_from_response, max_results_from_response, total, is_last
+                item_type,
+                items_key,
+                items,
+                request_path,
+                params,
+                base,
+                start_at_from_response,
+                max_results_from_response,
+                total,
+                is_last,
             )
         else:  # TODO: unreachable
             # it seems that search_users can return a list() containing a single user!
             return ResultList(
-                [item_type(self._options, self._session, resource)], 0, 1, 1, True
+                item_type,
+                items_key,
+                [item_type(self._options, self._session, resource)],
+                None,
+                None,
+                None,
+                0,
+                1,
+                1,
+                True,
             )
 
     def _get_items_from_page(
@@ -856,6 +890,17 @@ class JIRA:
     def client_info(self) -> str:
         """Get the server this client is connected to."""
         return self.server_url
+
+    # Paginator
+    def paginator(self, result: ResultList[ResourceType]) -> "Paginator":
+        """Helper method to instantiate a Paginator for a ResultList
+
+        Args:
+            result (ResultList[ResourceType]): the result to paginate
+        Returns:
+            Paginator
+        """
+        return Paginator(result, self)
 
     # Universal resource loading
 
@@ -4906,3 +4951,36 @@ class JIRA:
         url = self._get_url("backlog/issue", base=self.AGILE_BASE_URL)
         payload = {"issues": issue_keys}  # TODO: should be list of issues
         return self._session.post(url, data=json.dumps(payload))
+
+
+class Paginator(Generator):
+    def __init__(self, items: ResultList, jira: JIRA) -> None:
+        self.jira = jira
+        self.items = items
+        self.iter = iter(items)
+
+    def send(self, _unused):
+        try:
+            item = next(self.iter)
+        except StopIteration:
+            # Check if we can fetch more
+            if self.items.isLast:
+                raise StopIteration
+            startAt = self.items.startAt + self.items.maxResults
+            if startAt >= self.items.total:
+                raise StopIteration
+            self.items = self.jira._fetch_pages(
+                self.items.item_type,
+                self.items.items_key,
+                self.items.request_path,
+                startAt,
+                self.items.maxResults,
+                self.items.params,
+                self.items.base,
+            )
+            self.iter = iter(self.items)
+            item = next(self.iter)
+        return item
+
+    def throw(self, type=None, value=None, traceback=None):
+        raise StopIteration
