@@ -2923,7 +2923,7 @@ class JIRA(object):
         if username is not None:
             params = {"username": username}
         if query is not None:
-            params = {'query': query}
+            params = {"query": query}
         if project is not None:
             params["project"] = project
         if issueKey is not None:
@@ -2932,7 +2932,9 @@ class JIRA(object):
             params["expand"] = expand
 
         if not username and not query:
-            raise ValueError("Either 'username' or 'query' arguments must be specified.")
+            raise ValueError(
+                "Either 'username' or 'query' arguments must be specified."
+            )
 
         return self._fetch_pages(
             User, None, "user/assignable/search", startAt, maxResults, params
