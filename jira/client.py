@@ -2932,7 +2932,9 @@ class JIRA(object):
             params = {"query": query}
 
         if not username and not query:
-            raise ValueError("Either 'username' or 'query' arguments must be specified.")
+            raise ValueError(
+                "Either 'username' or 'query' arguments must be specified."
+            )
 
         return self._fetch_pages(
             User, None, "user/assignable/search", startAt, maxResults, params
