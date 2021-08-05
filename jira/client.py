@@ -2891,8 +2891,8 @@ class JIRA(object):
 
     def search_assignable_users_for_issues(
         self,
-        username: Optional[str] = None,
         query: Optional[str] = None,
+        username: Optional[str] = None,
         project: Optional[str] = None,
         issueKey: Optional[str] = None,
         expand: Optional[Any] = None,
@@ -2906,8 +2906,8 @@ class JIRA(object):
         assignees, specify an issue key.
 
         Args:
-            username (Optional[str]): A string to match usernames against
             query (Optional[str]): Search term. It can just be the email.
+            username (Optional[str]): A string to match usernames against
             project (Optional[str]): Filter returned users by permission in this project
               (expected if a result will be used to create an issue)
             issueKey (Optional[str]): Filter returned users by this issue
@@ -2920,10 +2920,11 @@ class JIRA(object):
         Returns:
             ResultList
         """
-        if username is not None:
-            params = {"username": username}
+
         if query is not None:
             params = {"query": query}
+        if username is not None:
+            params = {"username": username}
         if project is not None:
             params["project"] = project
         if issueKey is not None:
