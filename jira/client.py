@@ -2922,14 +2922,15 @@ class JIRA(object):
         """
         if username is not None:
             params = {"username": username}
+        if query is not None:
+            params = {"query": query}
         if project is not None:
             params["project"] = project
         if issueKey is not None:
             params["issueKey"] = issueKey
         if expand is not None:
             params["expand"] = expand
-        if query is not None:
-            params = {"query": query}
+
 
         if not username and not query:
             raise ValueError(
