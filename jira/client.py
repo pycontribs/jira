@@ -2931,7 +2931,6 @@ class JIRA(object):
         if expand is not None:
             params["expand"] = expand
 
-
         if not username and not query:
             raise ValueError(
                 "Either 'username' or 'query' arguments must be specified."
