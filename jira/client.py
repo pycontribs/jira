@@ -2900,6 +2900,8 @@ class JIRA(object):
         query: Optional[str] = None,
     ):
         """Get a list of user Resources that match the search string for assigning or creating issues.
+        "username" query parameter is deprecated in Jira Cloud; the expected parameter now is "query", which can just be
+        the full email again. But the "user" parameter is kept for backwards compatibility, i.e. Jira Server/Data Center.
 
         This method is intended to find users that are eligible to create issues in a project or be assigned
         to an existing issue. When searching for eligible creators, specify a project. When searching for eligible
