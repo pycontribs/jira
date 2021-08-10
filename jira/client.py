@@ -2891,21 +2891,24 @@ class JIRA(object):
 
     def search_assignable_users_for_issues(
         self,
-        username: str,
+        username: Optional[str] = None,
         project: Optional[str] = None,
         issueKey: Optional[str] = None,
         expand: Optional[Any] = None,
         startAt: int = 0,
         maxResults: int = 50,
+        query: Optional[str] = None,
     ):
         """Get a list of user Resources that match the search string for assigning or creating issues.
+        "username" query parameter is deprecated in Jira Cloud; the expected parameter now is "query", which can just be
+        the full email again. But the "user" parameter is kept for backwards compatibility, i.e. Jira Server/Data Center.
 
         This method is intended to find users that are eligible to create issues in a project or be assigned
         to an existing issue. When searching for eligible creators, specify a project. When searching for eligible
         assignees, specify an issue key.
 
         Args:
-            username (str): A string to match usernames against
+            username (Optional[str]): A string to match usernames against
             project (Optional[str]): Filter returned users by permission in this project
               (expected if a result will be used to create an issue)
             issueKey (Optional[str]): Filter returned users by this issue
@@ -2914,17 +2917,27 @@ class JIRA(object):
             startAt (int): Index of the first user to return (Default: 0)
             maxResults (int): maximum number of users to return.
               If maxResults evaluates as False, it will try to get all items in batches. (Default: 50)
+            query (Optional[str]): Search term. It can just be the email.
 
         Returns:
             ResultList
         """
-        params = {"username": username}
+        if username is not None:
+            params = {"username": username}
+        if query is not None:
+            params = {"query": query}
         if project is not None:
             params["project"] = project
         if issueKey is not None:
             params["issueKey"] = issueKey
         if expand is not None:
             params["expand"] = expand
+
+        if not username and not query:
+            raise ValueError(
+                "Either 'username' or 'query' arguments must be specified."
+            )
+
         return self._fetch_pages(
             User, None, "user/assignable/search", startAt, maxResults, params
         )
