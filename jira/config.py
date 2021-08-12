@@ -10,28 +10,36 @@ import configparser
 import logging
 import os
 import sys
+from typing import Optional
 
 from jira.client import JIRA
 
 
 def get_jira(
-    profile=None,
-    url="http://localhost:2990",
-    username="admin",
-    password="admin",
+    profile: Optional[str] = None,
+    url: str = "http://localhost:2990",
+    username: str = "admin",
+    password: str = "admin",
     appid=None,
     autofix=False,
-    verify=True,
+    verify: bool = True,
 ):
     """Return a JIRA object by loading the connection details from the `config.ini` file.
 
-    :param profile: The name of the section from config.ini file that stores server config url/username/password
-    :param url: URL of the Jira server
-    :param username: username to use for authentication
-    :param password: password to use for authentication
-    :param verify: boolean indicating whether SSL certificates should be verified
-    :return: JIRA -- an instance to a JIRA object.
-    :raises: EnvironmentError
+    Args:
+        profile (Optional[str]): The name of the section from config.ini file that stores server config url/username/password
+        url (str): URL of the Jira server
+        username (str): username to use for authentication
+        password (str): password to use for authentication
+        appid: appid
+        autofix: autofix
+        verify (bool): boolean indicating whether SSL certificates should be verified
+
+    Returns:
+        JIRA: an instance to a JIRA object.
+
+    Raises:
+        EnvironmentError
 
     Usage:
 
@@ -79,7 +87,7 @@ def get_jira(
 
     config_file = findfile("config.ini")
     if config_file:
-        logging.debug("Found %s config file" % config_file)
+        logging.debug(f"Found {config_file} config file")
 
     if not profile:
         if config_file:

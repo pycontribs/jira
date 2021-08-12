@@ -1,42 +1,90 @@
 API Documentation
 *****************
 
-.. module:: jira
 
 .. contents:: Contents
    :local:
 
-JIRA
-====
+jira package
+============
 
-.. autoclass:: JIRA
+jira.client module
+------------------
 
-Issue
-========
+.. automodule:: jira.client
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
-.. autoclass:: Issue
+jira.config module
+------------------
 
-Priority
-========
+.. automodule:: jira.config
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
-.. autoclass:: Priority
+jira.exceptions module
+----------------------
 
-Comment
-=======
+.. automodule:: jira.exceptions
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
-.. autoclass:: Comment
+jira.jirashell module
+---------------------
 
-Worklog
-=======
+.. automodule:: jira.jirashell
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
-.. autoclass:: Worklog
+jira.resilientsession module
+----------------------------
 
-Watchers
-========
+.. automodule:: jira.resilientsession
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
-.. autoclass:: Watchers
+jira.resources module
+---------------------
 
-JIRAError
-=========
+.. autodata:: jira.client.ResourceType
+   :annotation: = alias of TypeVar(‘ResourceType’, contravariant=True, bound=jira.resources.Resource)
 
-.. autoclass:: JIRAError
+.. automodule:: jira.resources
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :private-members:
+
+.. autoclass:: jira.resources.StatusCategory
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. autoclass:: jira.resources.GreenHopperResource
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. autoclass:: jira.resources.Sprint
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. autoclass:: jira.resources.Board
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+jira.utils module
+-----------------
+
+.. automodule:: jira.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -17,8 +17,9 @@ def add_user_to_jira():
             CI_JIRA_URL,
             basic_auth=(environ["CI_JIRA_ADMIN"], environ["CI_JIRA_ADMIN_PASSWORD"]),
         ).add_user(
-            environ["CI_JIRA_USER"],
-            "user@example.com",
+            username=environ["CI_JIRA_USER"],
+            email="user@example.com",
+            fullname=environ["CI_JIRA_USER_FULL_NAME"],
             password=environ["CI_JIRA_USER_PASSWORD"],
         )
         print("user {}".format(environ["CI_JIRA_USER"]))
