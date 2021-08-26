@@ -47,7 +47,7 @@ idna==2.10
     # via requests
 imagesize==1.2.0
     # via sphinx
-importlib-metadata==4.6.1
+importlib-metadata==4.7.1
     # via
     #   keyring
     #   pluggy
