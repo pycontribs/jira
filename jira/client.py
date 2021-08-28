@@ -354,6 +354,7 @@ class JIRA(object):
                 * verify -- Verify SSL certs. Defaults to ``True``.
                 * client_cert -- a tuple of (cert,key) for the requests library for client side SSL
                 * check_update -- Check whether using the newest python-jira library version.
+                * headers -- a dict to update the default headers the session uses for all API requests.
 
             basic_auth (Union[None, Tuple[str, str]]): A tuple of username and password to use when
               establishing a session via HTTP BASIC authentication.
@@ -421,7 +422,14 @@ class JIRA(object):
 
         self._options: Dict[str, Any] = copy.copy(JIRA.DEFAULT_OPTIONS)
 
+        if "headers" in options:
+            headers = copy.copy(options["headers"])
+            del options["headers"]
+        else:
+            headers = {}
+
         self._options.update(options)
+        self._options["headers"].update(headers)
 
         self._rank = None
 
