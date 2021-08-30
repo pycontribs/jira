@@ -1298,10 +1298,6 @@ class RequestType(Resource):
         session: ResilientSession,
         raw: Dict[str, Any] = None,
     ):
-        if raw:
-            self._parse_raw(raw)
-        self.raw: Dict[str, Any] = cast(Dict[str, Any], self.raw)
-
         Resource.__init__(
             self,
             "servicedesk/{0}/requesttype",
@@ -1310,6 +1306,9 @@ class RequestType(Resource):
             "{server}/rest/servicedeskapi/{path}",
         )
 
+        if raw:
+            self._parse_raw(raw)
+        self.raw: Dict[str, Any] = cast(Dict[str, Any], self.raw)
 
 # Utilities
 
