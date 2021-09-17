@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import getpass
 
 import pytest
@@ -42,7 +41,7 @@ def slug(request, cl_admin):
 
     slug = get_unique_project_name()
 
-    project_name = "Test user={} key={} A".format(getpass.getuser(), slug)
+    project_name = f"Test user={getpass.getuser()} key={slug} A"
 
     try:
         proj = cl_admin.project(slug)

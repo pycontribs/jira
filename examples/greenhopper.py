@@ -14,5 +14,5 @@ boards = gh.boards()
 
 # Get the sprints in a specific board
 board_id = 441
-print("GreenHopper board: {} ({})".format(boards[0].name, board_id))
+print(f"GreenHopper board: {boards[0].name} ({board_id})")
 sprints = gh.sprints(board_id)

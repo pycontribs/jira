@@ -44,10 +44,10 @@ if __name__ == "__main__":
             break
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as ex:
             print(
-                "encountered {} while waiting for the JiraServer docker".format(str(ex))
+                f"encountered {str(ex)} while waiting for the JiraServer docker"
             )
             time.sleep(20)
         if start_time + 60 * timeout_mins < time.time():
             raise TimeoutError(
-                "Jira server wasn't reachable within timeout {}".format(timeout_mins)
+                f"Jira server wasn't reachable within timeout {timeout_mins}"
             )

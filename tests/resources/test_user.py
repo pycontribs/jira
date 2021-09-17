@@ -18,7 +18,7 @@ class UserTests(JiraTestCase):
     def test_search_assignable_users_for_projects(self):
         users = self.jira.search_assignable_users_for_projects(
             self.test_manager.CI_JIRA_ADMIN,
-            "{},{}".format(self.project_a, self.project_b),
+            f"{self.project_a},{self.project_b}",
         )
         self.assertGreaterEqual(len(users), 1)
         usernames = map(lambda user: user.name, users)
@@ -27,7 +27,7 @@ class UserTests(JiraTestCase):
     def test_search_assignable_users_for_projects_maxresults(self):
         users = self.jira.search_assignable_users_for_projects(
             self.test_manager.CI_JIRA_ADMIN,
-            "{},{}".format(self.project_a, self.project_b),
+            f"{self.project_a},{self.project_b}",
             maxResults=1,
         )
         self.assertLessEqual(len(users), 1)
@@ -35,7 +35,7 @@ class UserTests(JiraTestCase):
     def test_search_assignable_users_for_projects_startat(self):
         users = self.jira.search_assignable_users_for_projects(
             self.test_manager.CI_JIRA_ADMIN,
-            "{},{}".format(self.project_a, self.project_b),
+            f"{self.project_a},{self.project_b}",
             startAt=1,
         )
         self.assertGreaterEqual(len(users), 0)

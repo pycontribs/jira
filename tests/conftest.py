@@ -26,7 +26,7 @@ CONSUMER_KEY = "oauth-consumer"
 KEY_CERT_FILE = "/home/bspeakmon/src/atlassian-oauth-examples/rsa.pem"
 KEY_CERT_DATA = None
 try:
-    with open(KEY_CERT_FILE, "r") as cert:
+    with open(KEY_CERT_FILE) as cert:
         KEY_CERT_DATA = cert.read()
     OAUTH = True
 except Exception:
@@ -113,7 +113,7 @@ def get_unique_project_name():
     return "Z" + hashify(identifier)
 
 
-class JiraTestManager(object):
+class JiraTestManager:
     """Instantiate and populate the JIRA instance with data for tests.
 
     Attributes:
