@@ -90,7 +90,7 @@ class ProjectTests(JiraTestCase):
 
     def test_project_components(self):
         proj = self.jira.project(self.project_b)
-        name = "component-%s from project %s" % (proj, rndstr())
+        name = "component-{} from project {}".format(proj, rndstr())
         component = self.jira.create_component(
             name,
             proj,

@@ -399,7 +399,7 @@ class JIRA(object):
         """
         # force a copy of the tuple to be used in __del__() because
         # sys.version_info could have already been deleted in __del__()
-        self.sys_version_info = tuple([i for i in sys.version_info])
+        self.sys_version_info = tuple(i for i in sys.version_info)
 
         if options is None:
             options = {}
@@ -1851,7 +1851,7 @@ class JIRA(object):
             data["object"] = {"title": str(destination), "url": destination.permalink()}
             for x in applicationlinks:
                 if x["application"]["displayUrl"] == destination._options["server"]:
-                    data["globalId"] = "appId=%s&issueId=%s" % (
+                    data["globalId"] = "appId={}&issueId={}".format(
                         x["application"]["id"],
                         destination.raw["id"],
                     )
@@ -1877,7 +1877,7 @@ class JIRA(object):
         if isinstance(destination, Issue) and destination.raw:
             for x in applicationlinks:
                 if x["application"]["displayUrl"] == self.server_url:
-                    data["globalId"] = "appId=%s&issueId=%s" % (
+                    data["globalId"] = "appId={}&issueId={}".format(
                         x["application"]["id"],
                         destination.raw["id"],  # .raw only present on Issue
                     )
@@ -3554,7 +3554,7 @@ class JIRA(object):
                 user = self.session()
                 if user.raw is None:
                     raise JIRAError("Can not log in!")
-                self.authCookie = "%s=%s" % (
+                self.authCookie = "{}={}".format(
                     user.raw["session"]["name"],
                     user.raw["session"]["value"],
                 )

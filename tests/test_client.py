@@ -42,7 +42,7 @@ def slug(request, cl_admin):
 
     slug = get_unique_project_name()
 
-    project_name = "Test user=%s key=%s A" % (getpass.getuser(), slug)
+    project_name = "Test user={} key={} A".format(getpass.getuser(), slug)
 
     try:
         proj = cl_admin.project(slug)

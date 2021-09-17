@@ -12,7 +12,7 @@ jira = JIRA(server="https://jira.atlassian.com")
 projects = jira.projects()
 
 # Sort available project keys, then return the second, third, and fourth keys.
-keys = sorted([project.key for project in projects])[2:5]
+keys = sorted(project.key for project in projects)[2:5]
 
 # Get an issue.
 issue = jira.issue("JRA-1330")
