@@ -49,7 +49,7 @@ class JiraTestCase(unittest.TestCase):
     def setUp(self) -> None:
         """
         This is called before each test. If you want to add more for your tests,
-        Run `JiraTestCase.setUp(self) in your custom setUp() to obtain these.
+        Run `super().setUp() in your custom setUp() to obtain these.
         """
 
         initialized = False

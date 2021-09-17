@@ -4,7 +4,7 @@ from tests.conftest import JiraTestCase, allow_on_cloud
 @allow_on_cloud
 class GroupsTest(JiraTestCase):
     def setUp(self) -> None:
-        JiraTestCase.setUp(self)
+        super().setUp()
         self.group_name = (
             "administrators" if self.is_jira_cloud_ci else "jira-administrators"
         )
