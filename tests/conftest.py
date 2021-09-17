@@ -239,11 +239,11 @@ class JiraTestManager(object):
             )
 
     def _create_project(
-        self, project_key: str, project_name: str, allow_exist: bool = False
+        self, project_key: str, project_name: str, force_recreate: bool = False
     ) -> int:
         """Create a project and return the id"""
 
-        if allow_exist and self._project_exists(project_key):
+        if not force_recreate and self._project_exists(project_key):
             pass
         else:
             self._remove_project(project_key)
@@ -293,7 +293,7 @@ class JiraTestManager(object):
 
         self.project_a_id = self._create_project(self.project_a, self.project_a_name)
         self.project_b_id = self._create_project(
-            self.project_b, self.project_b_name, allow_exist=True
+            self.project_b, self.project_b_name, force_recreate=True
         )
 
         sleep(1)  # keep it here as often Jira will report the
