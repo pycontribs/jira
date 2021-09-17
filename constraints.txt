@@ -85,7 +85,7 @@ pickleshare==0.7.5
     # via ipython
 pluggy==0.13.1
     # via pytest
-prompt-toolkit==3.0.19
+prompt-toolkit==3.0.20
     # via ipython
 ptyprocess==0.7.0
     # via pexpect
