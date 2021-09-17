@@ -22,7 +22,7 @@ chardet==4.0.0
     # via requests
 coverage==5.5
     # via pytest-cov
-cryptography==3.4.7
+cryptography==3.4.8
     # via requests-kerberos
 decorator==5.0.9
     # via
