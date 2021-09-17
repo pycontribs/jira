@@ -1661,16 +1661,18 @@ class JIRA(object):
             user_obj: User
             if self._is_cloud:
                 users = self.search_users(query=user)
-                if len(users) > 1:
-                    matches = [u for u in users if u.key == user]
-                    if len(matches) >= 1:
-                        user_obj = matches[0]
-                    else:
-                        user_obj = users[0]               
-                else:
-                    user_obj = users[0]
             else:
-                user_obj = self.search_users(user=user, maxResults=1)[0]
+                users = self.search_users(user=user)
+            
+            if len(users) > 1:
+                matches = [u for u in users if u.key == user]
+                if len(matches) >= 1:
+                    user_obj = matches[0]
+                else:
+                    user_obj = users[0]               
+            else:
+                user_obj = users[0]
+
         except Exception as e:
             raise JIRAError(str(e))
         return self._get_user_identifier(user_obj)
