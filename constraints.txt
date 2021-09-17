@@ -96,7 +96,7 @@ py==1.10.0
     #   pytest-forked
 pycparser==2.20
     # via cffi
-pygments==2.9.0
+pygments==2.10.0
     # via
     #   ipython
     #   sphinx
