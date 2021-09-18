@@ -172,7 +172,7 @@ sphinx==4.2.0
     # via
     #   jira (setup.cfg)
     #   sphinx-rtd-theme
-sphinx-rtd-theme==0.5.2
+sphinx-rtd-theme==1.0.0
     # via jira (setup.cfg)
 sphinxcontrib-applehelp==1.0.2
     # via sphinx
