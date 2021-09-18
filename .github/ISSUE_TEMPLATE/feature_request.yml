@@ -1,0 +1,32 @@
+name: Feature request
+description: Suggest an idea for this project
+
+body:
+- type: textarea
+  id: problem
+  attributes:
+    label: Problem trying to solve
+    placeholder: "I'm always frustrated when [...]."
+  validations:
+    required: false
+- type: textarea
+  id: solution
+  attributes:
+    label: Possible solution(s)
+    description: "What you would want to happen."
+  validations:
+    required: false
+- type: textarea
+  id: alternatives
+  attributes:
+    label: Alternatives
+    description: "Workarounds, other solutions or features considered."
+  validations:
+    required: false
+- type: textarea
+  id: additional
+  attributes:
+    label: Additional Context
+    description: "Any additional information or screenshots that can help understand the context of the feature request."
+  validations:
+    required: false
