@@ -1310,6 +1310,7 @@ class RequestType(Resource):
             self._parse_raw(raw)
         self.raw: Dict[str, Any] = cast(Dict[str, Any], self.raw)
 
+
 # Utilities
 
 
