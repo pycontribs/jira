@@ -1658,7 +1658,7 @@ class JIRA(object):
             JIRAError: If any error occurs.
 
         Returns:
-            str: The Jira user's identifier.
+            Optional[str]: The Jira user's identifier. Or "-1" and None unchanged.
         """
         if user in (None, -1, "-1"):
             return user
@@ -1675,21 +1675,18 @@ class JIRA(object):
     # non-resource
     @translate_resource_args
     def assign_issue(self, issue: Union[int, str], assignee: Optional[str]) -> bool:
-        """Assign an issue to a user. None will set it to unassigned. -1 will set it to Automatic.
+        """Assign an issue to a user.
 
         Args:
             issue (Union[int,str]): the issue ID or key to assign
-            assignee (str): the user to assign the issue to
+            assignee (str): the user to assign the issue to.
+              None will set it to unassigned. -1 will set it to Automatic.
 
         Returns:
             bool
         """
         url = self._get_latest_url("issue/{}/assignee".format(str(issue)))
-        user_id: Optional[str] = None
-        if assignee is not None:
-            user_id = self._get_user_id(assignee)
-        else:
-            user_id = assignee
+        user_id = self._get_user_id(assignee)
         payload = {"accountId": user_id} if self._is_cloud else {"name": user_id}
         r = self._session.put(url, data=json.dumps(payload))
         raise_on_error(r)

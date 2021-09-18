@@ -384,16 +384,30 @@ class IssueTests(JiraTestCase):
             self.jira.issue(self.issue_1).fields.assignee.name, self.user_normal.name
         )
 
+    def test_assign_to_bad_issue_raises(self):
+        self.assertRaises(JIRAError, self.jira.assign_issue, "NOPE-1", "notauser")
+
     def test_unassign_issue(self):
+        # Given: A user is assigned to an issue
         self.assertTrue(self.jira.assign_issue(self.issue_1, self.user_normal.name))
         self.assertEqual(
             self.jira.issue(self.issue_1).fields.assignee.name, self.user_normal.name
         )
+        # When: we unassign the issue
         self.assertTrue(self.jira.assign_issue(self.issue_1, None))
+        # Then: the issue has an assignee of None
         self.assertEqual(self.jira.issue(self.issue_1).fields.assignee, None)
 
-    def test_assign_to_bad_issue_raises(self):
-        self.assertRaises(JIRAError, self.jira.assign_issue, "NOPE-1", "notauser")
+    def test_assign_issue_automatic(self):
+        # Given: A user is assigned to an issue
+        self.assertTrue(self.jira.assign_issue(self.issue_1, self.user_normal.name))
+        self.assertEqual(
+            self.jira.issue(self.issue_1).fields.assignee.name, self.user_normal.name
+        )
+        # When: we assign the issue to "-1"
+        self.assertTrue(self.jira.assign_issue(self.issue_1, "-1"))
+        # Then: the issue has the default assignee (the admin user)
+        self.assertEqual(self.jira.issue(self.issue_1).fields.assignee, self.user_admin)
 
     def test_editmeta(self):
         expected_fields = {
