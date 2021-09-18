@@ -3752,9 +3752,13 @@ class JIRA(object):
             self.log.error(ioe)
         return None
 
-    def current_user(self, field: str = "key") -> str:
+    def current_user(self, field: Optional[str] = None) -> str:
         """Returns the username or emailAddress of the current user. For anonymous
         users it will return a value that evaluates as False.
+
+        Args:
+            field (Optional[str]): the name of the identifier field.
+              Defaults to "accountId" for Jira Cloud, else "key"
 
         Returns:
             str
@@ -3766,6 +3770,9 @@ class JIRA(object):
 
             r_json: Dict[str, str] = json_loads(r)
             self._myself = r_json
+
+        if field is None:
+            field = "accountId" if self._is_cloud else "key"
 
         return self._myself[field]
 
@@ -3966,31 +3973,31 @@ class JIRA(object):
 
         ps_list: List[Dict[str, Any]]
 
-        if not permissionScheme:
+        if permissionScheme is None:
             ps_list = self.permissionschemes()
             for sec in ps_list:
                 if sec["name"] == "Default Permission Scheme":
                     permissionScheme = sec["id"]
-                break
-            if not permissionScheme:
+                    break
+            if permissionScheme is None and ps_list:
                 permissionScheme = ps_list[0]["id"]
 
-        if not issueSecurityScheme:
+        if issueSecurityScheme is None:
             ps_list = self.issuesecurityschemes()
             for sec in ps_list:
                 if sec["name"] == "Default":  # no idea which one is default
                     issueSecurityScheme = sec["id"]
-                break
-            if not issueSecurityScheme and ps_list:
+                    break
+            if issueSecurityScheme is None and ps_list:
                 issueSecurityScheme = ps_list[0]["id"]
 
-        if not projectCategory:
+        if projectCategory is None:
             ps_list = self.projectcategories()
             for sec in ps_list:
                 if sec["name"] == "Default":  # no idea which one is default
                     projectCategory = sec["id"]
-                break
-            if not projectCategory and ps_list:
+                    break
+            if projectCategory is None and ps_list:
                 projectCategory = ps_list[0]["id"]
         # <beep> Atlassian for failing to provide an API to get projectTemplateKey values
         #  Possible values are just hardcoded and obviously depending on Jira version.
@@ -4000,7 +4007,9 @@ class JIRA(object):
         if not template_name:
             # https://confluence.atlassian.com/jirakb/creating-projects-via-rest-api-in-jira-963651978.html
             template_key = (
-                "com.pyxis.greenhopper.jira:basic-software-development-template"
+                "com.pyxis.greenhopper.jira:gh-simplified-basic"
+                if self._is_cloud
+                else "com.pyxis.greenhopper.jira:basic-software-development-template"
             )
 
         # https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-projects/#api-rest-api-2-project-get
@@ -4063,8 +4072,7 @@ class JIRA(object):
             "key": key,
             "projectTypeKey": ptype,
             "projectTemplateKey": template_key,
-            "lead": assignee,
-            # "leadAccountId": assignee,
+            "leadAccountId" if self._is_cloud else "lead": assignee,
             "assigneeType": "PROJECT_LEAD",
             "description": "",
             # "avatarId": 13946,

@@ -1,0 +1,64 @@
+name: Jira Cloud CI
+
+on:
+  workflow_run:
+    workflows: ["Jira Server CI"]
+    types:
+      - completed
+
+jobs:
+  test:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    name: ${{ matrix.os }} / Python ${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      matrix:
+        os: [Ubuntu]
+        # We only test a single version to prevent concurrent
+        # running of tests influencing one another
+        python-version: [3.8]
+
+    steps:
+      - uses: actions/checkout@master
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Get pip cache dir
+        id: pip-cache
+        run: |
+          echo "::set-output name=dir::$(pip cache dir)"
+      - name: Setup the Pip cache
+        uses: actions/cache@v2
+        with:
+          path: ${{ steps.pip-cache.outputs.dir }}
+          key: >-
+            ${{ runner.os }}-pip-${{ hashFiles('setup.cfg') }}-${{
+            hashFiles('setup.py') }}-${{ hashFiles('tox.ini') }}-${{
+            hashFiles('.pre-commit-config.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+            ${{ runner.os }}-
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update; sudo apt-get install gcc libkrb5-dev
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade tox tox-gh-actions
+
+      - name: Test with tox
+        run: tox -e py38 -- -m allow_on_cloud
+        env:
+          CI_JIRA_TYPE: CLOUD
+          CI_JIRA_CLOUD_ADMIN: ${{ secrets.CI_JIRA_CLOUD_ADMIN }}
+          CI_JIRA_CLOUD_ADMIN_TOKEN: ${{ secrets.CI_JIRA_CLOUD_ADMIN_TOKEN }}
+          CI_JIRA_CLOUD_USER: ${{ secrets.CI_JIRA_CLOUD_USER }}
+          CI_JIRA_CLOUD_USER_TOKEN: ${{ secrets.CI_JIRA_CLOUD_USER_TOKEN }}
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1.0.15
+        with:
+          file: ./coverage.xml
+          name: ${{ runner.os }}-${{ matrix.python-version }}-Cloud
