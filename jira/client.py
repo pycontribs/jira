@@ -2021,7 +2021,7 @@ class JIRA(object):
         return self._find_for_resource(Votes, issue)
 
     @translate_resource_args
-    def project_permissionscheme(self, project):
+    def project_permissionscheme(self, project: str) -> PermissionScheme:
         """Get a PermissionScheme Resource from the server.
 
 
