@@ -2024,8 +2024,12 @@ class JIRA(object):
     def project_permissionscheme(self, project):
         """Get a PermissionScheme Resource from the server.
 
-        :param project: ID or key of the project to get the permissionscheme for
-        :rtype: PermissionScheme
+
+        Args:
+            project (str): ID or key of the project to get the permissionscheme for
+
+        Returns:
+            PermissionScheme: The permission scheme
         """
         return self._find_for_resource(PermissionScheme, project)
 
