@@ -200,3 +200,7 @@ class ProjectTests(JiraTestCase):
         role = self.jira.project_role(self.project_b, int(admin["id"]))
         self.assertIn(user.name, [a.name for a in role.actors])
         self.assertIn(actor_admin, [a.name for a in role.actors])
+
+    def test_project_permissionscheme(self):
+        permissionscheme = self.jira.project_permissionscheme(self.project_b)
+        self.assertEqual(permissionscheme.name, 'Default Permission Scheme')
