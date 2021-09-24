@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import pytest
 from jira.client import QshGenerator
 
 
@@ -8,10 +9,9 @@ class MockRequest(object):
         self.url = url
 
 
-def test_qsh():
-    gen = QshGenerator("http://example.com")
-
-    for method, url, expected in [
+@pytest.mark.parametrize(
+    "method,url,expected",
+    [
         ("GET", "http://example.com", "GET&&"),
         # empty parameter
         ("GET", "http://example.com?key=&key2=A", "GET&&key=&key2=A"),
@@ -31,7 +31,17 @@ def test_qsh():
             "http://example.com?key2=Z+A&key1=X+B&key3=Y&key1=A+B",
             "GET&&key1=A%20B,X%20B&key2=Z%20A&key3=Y",
         ),
-    ]:
-
-        req = MockRequest(method, url)
-        assert gen._generate_qsh(req) == expected
+    ],
+    ids=[
+        "no parameters",
+        "empty parameter",
+        "whitespace",
+        "tilde",
+        "repeated parameters",
+        "repeated parameters with whitespace",
+    ],
+)
+def test_qsh(method, url, expected):
+    gen = QshGenerator("http://example.com")
+    req = MockRequest(method, url)
+    assert gen._generate_qsh(req) == expected
