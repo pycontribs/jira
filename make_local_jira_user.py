@@ -22,7 +22,7 @@ def add_user_to_jira():
             fullname=environ["CI_JIRA_USER_FULL_NAME"],
             password=environ["CI_JIRA_USER_PASSWORD"],
         )
-        print("user {}".format(environ["CI_JIRA_USER"]))
+        print("user", environ["CI_JIRA_USER"])
     except Exception as e:
         if "username already exists" not in str(e):
             raise e
@@ -32,9 +32,8 @@ if __name__ == "__main__":
     start_time = time.time()
     timeout_mins = 15
     print(
-        "waiting for instance of jira to be running, to add a user for CI system:\n timeout = {} mins".format(
-            timeout_mins
-        )
+        "waiting for instance of jira to be running, to add a user for CI system:\n"
+        f" timeout = {timeout_mins} mins"
     )
     while True:
         try:
@@ -43,11 +42,9 @@ if __name__ == "__main__":
             add_user_to_jira()
             break
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as ex:
-            print(
-                "encountered {} while waiting for the JiraServer docker".format(str(ex))
-            )
+            print(f"encountered {ex} while waiting for the JiraServer docker")
             time.sleep(20)
         if start_time + 60 * timeout_mins < time.time():
             raise TimeoutError(
-                "Jira server wasn't reachable within timeout {}".format(timeout_mins)
+                f"Jira server wasn't reachable within timeout {timeout_mins}"
             )

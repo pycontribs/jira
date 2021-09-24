@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """The root of JIRA package namespace."""
 try:
     import pkg_resources

@@ -1,5 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 """
 This module implements a friendly (well, friendlier) interface between the raw JSON
 responses from Jira and the Resource/dict abstractions provided by this library. Users
@@ -173,7 +172,7 @@ class ResultList(list, Generic[ResourceType]):
             return self.iterable[self.current - 1]
 
 
-class QshGenerator(object):
+class QshGenerator:
     def __init__(self, context_path):
         self.context_path = context_path
 
@@ -251,7 +250,7 @@ class JiraCookieAuth(AuthBase):
         self._get_session(self.__auth)
 
 
-class JIRA(object):
+class JIRA:
     """User interface to Jira.
 
     Clients interact with Jira by constructing an instance of this object and calling its methods. For addressable
@@ -399,7 +398,7 @@ class JIRA(object):
         """
         # force a copy of the tuple to be used in __del__() because
         # sys.version_info could have already been deleted in __del__()
-        self.sys_version_info = tuple([i for i in sys.version_info])
+        self.sys_version_info = tuple(i for i in sys.version_info)
 
         if options is None:
             options = {}
@@ -1679,7 +1678,7 @@ class JIRA(object):
         Returns:
             bool
         """
-        url = self._get_latest_url("issue/{}/assignee".format(str(issue)))
+        url = self._get_latest_url(f"issue/{str(issue)}/assignee")
         user_id = self._get_user_id(assignee)
         payload = {"accountId": user_id} if self._is_cloud else {"name": user_id}
         r = self._session.put(url, data=json.dumps(payload))
@@ -1700,7 +1699,7 @@ class JIRA(object):
         params = {}
         if expand is not None:
             params["expand"] = expand
-        r_json = self._get_json("issue/{}/comment".format(str(issue)), params=params)
+        r_json = self._get_json(f"issue/{str(issue)}/comment", params=params)
 
         comments = [
             Comment(self._options, self._session, raw_comment_json)
@@ -1851,7 +1850,7 @@ class JIRA(object):
             data["object"] = {"title": str(destination), "url": destination.permalink()}
             for x in applicationlinks:
                 if x["application"]["displayUrl"] == destination._options["server"]:
-                    data["globalId"] = "appId=%s&issueId=%s" % (
+                    data["globalId"] = "appId={}&issueId={}".format(
                         x["application"]["id"],
                         destination.raw["id"],
                     )
@@ -1877,7 +1876,7 @@ class JIRA(object):
         if isinstance(destination, Issue) and destination.raw:
             for x in applicationlinks:
                 if x["application"]["displayUrl"] == self.server_url:
-                    data["globalId"] = "appId=%s&issueId=%s" % (
+                    data["globalId"] = "appId={}&issueId={}".format(
                         x["application"]["id"],
                         destination.raw["id"],  # .raw only present on Issue
                     )
@@ -3489,7 +3488,7 @@ class JIRA(object):
         else:
             try:
                 return mimetypes.guess_type("f." + str(imghdr.what(0, buff)))[0]
-            except (IOError, TypeError):
+            except (OSError, TypeError):
                 self.log.warning(
                     "Couldn't detect content type of avatar image"
                     ". Specify the 'contentType' parameter explicitly."
@@ -3554,7 +3553,7 @@ class JIRA(object):
                 user = self.session()
                 if user.raw is None:
                     raise JIRAError("Can not log in!")
-                self.authCookie = "%s=%s" % (
+                self.authCookie = "{}={}".format(
                     user.raw["session"]["name"],
                     user.raw["session"]["value"],
                 )
@@ -3748,7 +3747,7 @@ class JIRA(object):
                     file.write(block)
         except JIRAError as je:
             self.log.error(f"Unable to access remote backup file: {je}")
-        except IOError as ioe:
+        except OSError as ioe:
             self.log.error(ioe)
         return None
 

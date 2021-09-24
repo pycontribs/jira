@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import json
 import logging
 import random
@@ -96,7 +95,7 @@ class ResilientSession(Session):
         self.max_retries = 3
         self.max_retry_delay = 60
         self.timeout = timeout
-        super(ResilientSession, self).__init__()
+        super().__init__()
 
         # Indicate our preference for JSON to avoid https://bitbucket.org/bspeakmon/jira-python/issue/46 and https://jira.atlassian.com/browse/JRA-38551
         self.headers.update({"Accept": "application/json,*.*;q=0.9"})
@@ -162,7 +161,7 @@ class ResilientSession(Session):
             response = None
             exception = None
             try:
-                method = getattr(super(ResilientSession, self), verb.lower())
+                method = getattr(super(), verb.lower())
                 response = method(url, timeout=self.timeout, **kwargs)
                 if response.status_code >= 200 and response.status_code <= 299:
                     return response
