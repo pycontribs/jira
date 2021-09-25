@@ -1,9 +1,9 @@
-# -*- coding: utf-8 -*-
 import pytest
+
 from jira.client import QshGenerator
 
 
-class MockRequest(object):
+class MockRequest:
     def __init__(self, method, url):
         self.method = method
         self.url = url
