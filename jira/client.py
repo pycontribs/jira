@@ -4669,14 +4669,36 @@ class JIRA:
         url = self._get_url(f"epics/{epic_id}/add", base=self.AGILE_BASE_URL)
         return self._session.put(url, data=json.dumps(data))
 
-    # TODO(ssbarnea): Both GreenHopper and new Jira Agile API support moving more than one issue.
-    def rank(self, issue: str, next_issue: str) -> Response:
-        """Rank an issue before another using the default Ranking field, the one named 'Rank'.
+    # TODO(ssbarnea): Jira Agile API supports moving more than one issue.
+    def rank(
+        self,
+        issue: str,
+        next_issue: Optional[str] = None,
+        prev_issue: Optional[str] = None,
+    ) -> Response:
+        """Rank an issue before/after another using the default Ranking field, the one named 'Rank'.
+
+        Pass only ONE of `next_issue` or `prev_issue`.
 
         Args:
-            issue (str): issue key of the issue to be ranked before the second one.
-            next_issue (str): issue key of the second issue.
+            issue (str): issue key of the issue to be ranked before/after the second one.
+            next_issue (str): issue key that the first issue is to be ranked before.
+            prev_issue (str): issue key that the first issue is to be ranked after.
         """
+
+        if next_issue is None and prev_issue is None:
+            raise ValueError("One of 'next_issue' or 'prev_issue' must be specified")
+        elif next_issue is not None and prev_issue is not None:
+            raise ValueError(
+                "Only one of 'next_issue' or 'prev_issue' may be specified"
+            )
+        if next_issue is not None:
+            before_or_after = "Before"
+            other_issue = next_issue
+        elif prev_issue is not None:
+            before_or_after = "After"
+            other_issue = prev_issue
+
         if not self._rank:
             for field in self.fields():
                 if field["name"] == "Rank":
@@ -4693,38 +4715,21 @@ class JIRA:
                         # Obsolete since Jira v6.3.13.1
                         self._rank = field["schema"]["customId"]
 
-        if self._options["agile_rest_path"] == GreenHopperResource.AGILE_BASE_REST_PATH:
-            url = self._get_url("issue/rank", base=self.AGILE_BASE_URL)
-            payload = {
-                "issues": [issue],
-                "rankBeforeIssue": next_issue,
-                "rankCustomFieldId": self._rank,
-            }
-            try:
-                return self._session.put(url, data=json.dumps(payload))
-            except JIRAError as e:
-                if e.status_code == 404:
-                    warnings.warn(
-                        "Status code 404 may mean, that too old Jira Agile version is installed."
-                        " At least version 6.7.10 is required."
-                    )
-                raise
-        elif (
-            self._options["agile_rest_path"]
-            == GreenHopperResource.GREENHOPPER_REST_PATH
-        ):
-            data = {
-                "issueKeys": [issue],
-                "rankBeforeKey": next_issue,
-                "customFieldId": self._rank,
-            }
-            url = self._get_url("rank", base=self.AGILE_BASE_URL)
-            return self._session.put(url, data=json.dumps(data))
-        else:
-            raise NotImplementedError(
-                'No API for ranking issues for agile_rest_path="%s"'
-                % self._options["agile_rest_path"]
-            )
+        url = self._get_url("issue/rank", base=self.AGILE_BASE_URL)
+        payload = {
+            "issues": [issue],
+            f"rank{before_or_after}Issue": other_issue,
+            "rankCustomFieldId": self._rank,
+        }
+        try:
+            return self._session.put(url, data=json.dumps(payload))
+        except JIRAError as e:
+            if e.status_code == 404:
+                warnings.warn(
+                    "Status code 404 may mean, that too old Jira Agile version is installed."
+                    " At least version 6.7.10 is required."
+                )
+            raise
 
     def move_to_backlog(self, issue_keys: str) -> Response:
         """Move issues in ``issue_keys`` to the backlog, removing them from all sprints that have not been completed.
