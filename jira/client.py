@@ -37,7 +37,7 @@ from typing import (
     cast,
     no_type_check,
 )
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, quote, urlparse
 
 import requests
 from pkg_resources import parse_version
@@ -177,6 +177,10 @@ class QshGenerator:
         self.context_path = context_path
 
     def __call__(self, req):
+        qsh = self._generate_qsh(req)
+        return hashlib.sha256(qsh.encode("utf-8")).hexdigest()
+
+    def _generate_qsh(self, req):
         parse_result = urlparse(req.url)
 
         path = (
@@ -184,12 +188,21 @@ class QshGenerator:
             if len(self.context_path) > 1
             else parse_result.path
         )
-        # Per Atlassian docs, use %20 for whitespace when generating qsh for URL
-        # https://developer.atlassian.com/cloud/jira/platform/understanding-jwt/#qsh
-        query = "&".join(sorted(parse_result.query.split("&"))).replace("+", "%20")
-        qsh = f"{req.method.upper()}&{path}&{query}"
 
-        return hashlib.sha256(qsh.encode("utf-8")).hexdigest()
+        # create canonical query string according to docs at:
+        # https://developer.atlassian.com/cloud/jira/platform/understanding-jwt-for-connect-apps/#qsh
+        params = parse_qs(parse_result.query, keep_blank_values=True)
+        joined = {
+            key: ",".join(self._sort_and_quote_values(params[key])) for key in params
+        }
+        query = "&".join(f"{key}={joined[key]}" for key in sorted(joined.keys()))
+
+        qsh = f"{req.method.upper()}&{path}&{query}"
+        return qsh
+
+    def _sort_and_quote_values(self, values):
+        ordered_values = sorted(values)
+        return [quote(value, safe="~") for value in ordered_values]
 
 
 class JiraCookieAuth(AuthBase):
