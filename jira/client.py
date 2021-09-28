@@ -68,6 +68,7 @@ from jira.resources import (
     IssueLink,
     IssueLinkType,
     IssueType,
+    PermissionScheme,
     Priority,
     Project,
     RemoteLink,
@@ -2039,6 +2040,19 @@ class JIRA:
             Votes
         """
         return self._find_for_resource(Votes, issue)
+
+    @translate_resource_args
+    def project_permissionscheme(self, project: str) -> PermissionScheme:
+        """Get a PermissionScheme Resource from the server.
+
+
+        Args:
+            project (str): ID or key of the project to get the permissionscheme for
+
+        Returns:
+            PermissionScheme: The permission scheme
+        """
+        return self._find_for_resource(PermissionScheme, project)
 
     @translate_resource_args
     def add_vote(self, issue: str) -> Response:
