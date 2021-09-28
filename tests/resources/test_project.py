@@ -203,4 +203,4 @@ class ProjectTests(JiraTestCase):
 
     def test_project_permissionscheme(self):
         permissionscheme = self.jira.project_permissionscheme(self.project_b)
-        self.assertEqual(permissionscheme.name, 'Default Permission Scheme')
+        self.assertEqual(permissionscheme.name, "Default Permission Scheme")

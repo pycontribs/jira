@@ -810,6 +810,7 @@ class PermissionScheme(Resource):
             self._parse_raw(raw)
         self.raw: Dict[str, Any] = cast(Dict[str, Any], self.raw)
 
+
 class Watchers(Resource):
     """Watcher information on an issue."""
 
