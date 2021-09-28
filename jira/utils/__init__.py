@@ -1,15 +1,18 @@
-# -*- coding: utf-8 -*-
 """Jira utils used internally."""
 import threading
+import warnings
 from typing import Any, Optional, cast
 
 from requests import Response
+from requests.structures import CaseInsensitiveDict as _CaseInsensitiveDict
 
 from jira.resilientsession import raise_on_error
 
 
-class CaseInsensitiveDict(dict):
+class CaseInsensitiveDict(_CaseInsensitiveDict):
     """A case-insensitive ``dict``-like object.
+
+    DEPRECATED: use requests.structures.CaseInsensitiveDict directly.
 
     Implements all methods and operations of
     ``collections.MutableMapping`` as well as dict's ``copy``. Also
@@ -36,32 +39,11 @@ class CaseInsensitiveDict(dict):
 
     """
 
-    def __init__(self, *args, **kw):
-        super(CaseInsensitiveDict, self).__init__(*args, **kw)
-
-        self.itemlist = {}
-        for key, value in super(CaseInsensitiveDict, self).copy().items():
-            if key != key.lower():
-                self[key.lower()] = value
-                self.pop(key, None)
-
-        # self.itemlist[key.lower()] = value
-
-    def __setitem__(self, key, value):
-        """Overwrite [] implementation."""
-        super(CaseInsensitiveDict, self).__setitem__(key.lower(), value)
-
-    # def __iter__(self):
-    #    return iter(self.itemlist)
-
-    # def keys(self):
-    #    return self.itemlist
-
-    # def values(self):
-    #    return [self[key] for key in self]
-
-    # def itervalues(self):
-    #    return (self[key] for key in self)
+    def __init__(self, *args, **kwargs) -> None:
+        warnings.warn(
+            "Use requests.structures.CaseInsensitiveDict directly", DeprecationWarning
+        )
+        super().__init__(*args, **kwargs)
 
 
 def threaded_requests(requests):

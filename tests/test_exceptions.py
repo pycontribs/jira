@@ -16,7 +16,7 @@ PATCH_BASE = "jira.exceptions"
 
 
 class ExceptionsTests(unittest.TestCase):
-    class MockResponse(Response, object):
+    class MockResponse(Response):
         def __init__(
             self,
             headers: dict = None,
@@ -38,7 +38,7 @@ class ExceptionsTests(unittest.TestCase):
         def text(self, new_text):
             self._text = new_text
 
-    class MalformedMockResponse(object):
+    class MalformedMockResponse:
         def __init__(
             self,
             headers: dict = None,

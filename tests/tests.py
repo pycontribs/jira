@@ -119,7 +119,7 @@ class ApplicationPropertiesTests(JiraTestCase):
         for p in props:
             self.assertIsInstance(p, dict)
             self.assertTrue(
-                set(p.keys()).issuperset(set(["type", "name", "value", "key", "id"]))
+                set(p.keys()).issuperset({"type", "name", "value", "key", "id"})
             )
 
     def test_application_property(self):
@@ -325,8 +325,8 @@ class AsyncTests(JiraTestCase):
         items = self.jira._fetch_pages(Issue, "issues", "search", 0, False, params)
         self.assertEqual(len(items), total)
         self.assertEqual(
-            set(item.key for item in items),
-            set(expected_r["key"] for expected_r in expected_results),
+            {item.key for item in items},
+            {expected_r["key"] for expected_r in expected_results},
         )
 
 

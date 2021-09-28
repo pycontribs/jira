@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Jira Python Client documentation build configuration file, created by
 # sphinx-quickstart on Thu May  3 17:01:50 2012.
@@ -57,7 +56,7 @@ autodoc_inherit_docstrings = False
 nitpick_ignore = [
     ("py:class", "JIRA"),  # in jira.resources we only import this class if type
     ("py:obj", "typing.ResourceType"),  # only Py36 has a problem with this reference
-    ("py:class", "jira.resources.MyAny"),  # Dummy subclass for type checking
+    ("py:class", "jira.resources.AnyLike"),  # Dummy subclass for type checking
     # From other packages
     ("py:mod", "filemagic"),
     ("py:mod", "ipython"),
@@ -67,6 +66,7 @@ nitpick_ignore = [
     ("py:class", "Request"),
     ("py:class", "requests.models.Response"),
     ("py:class", "requests.sessions.Session"),
+    ("py:class", "requests.structures.CaseInsensitiveDict"),
     ("py:class", "Response"),
     ("py:mod", "requests-kerberos"),
     ("py:mod", "requests-oauthlib"),
@@ -85,8 +85,8 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
-project = u"jira-python"
-copyright = u"2012, Atlassian Pty Ltd."
+project = "jira-python"
+copyright = "2012, Atlassian Pty Ltd."
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -225,8 +225,8 @@ latex_documents = [
     (
         "index",
         "jirapython.tex",
-        u"jira-python Documentation",
-        u"Atlassian Pty Ltd.",
+        "jira-python Documentation",
+        "Atlassian Pty Ltd.",
         "manual",
     )
 ]
@@ -257,7 +257,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ("index", "jirapython", u"jira-python Documentation", [u"Atlassian Pty Ltd."], 1)
+    ("index", "jirapython", "jira-python Documentation", ["Atlassian Pty Ltd."], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -279,8 +279,8 @@ texinfo_documents = [
     (
         "index",
         "jirapython",
-        u"jira-python Documentation",
-        u"Atlassian Pty Ltd.",
+        "jira-python Documentation",
+        "Atlassian Pty Ltd.",
         "jirapython",
         "One line description of project.",
         "Miscellaneous",

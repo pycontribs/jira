@@ -12,7 +12,7 @@ jira = JIRA(server="https://jira.atlassian.com")
 projects = jira.projects()
 
 # Sort available project keys, then return the second, third, and fourth keys.
-keys = sorted([project.key for project in projects])[2:5]
+keys = sorted(project.key for project in projects)[2:5]
 
 # Get an issue.
 issue = jira.issue("JRA-1330")
@@ -39,7 +39,7 @@ issue.update(fields={"labels": ["AAA", "BBB"]})
 
 # Or modify the List of existing labels. The new label is unicode with no
 # spaces
-issue.fields.labels.append(u"new_text")
+issue.fields.labels.append("new_text")
 issue.update(fields={"labels": issue.fields.labels})
 
 # Send the issue away for good.

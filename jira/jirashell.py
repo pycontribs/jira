@@ -40,7 +40,7 @@ def oauth_dance(server, consumer_key, key_cert_data, print_tokens=False, verify=
     if request_token is SENTINEL or request_token_secret is SENTINEL:
         problem = request.get("oauth_problem")
         if problem is not None:
-            message = "OAuth error: {}".format(problem)
+            message = f"OAuth error: {problem}"
         else:
             message = " ".join(f"{key}:{value}" for key, value in request.items())
         exit(message)
@@ -250,7 +250,7 @@ def process_command_line():
 
     key_cert_data = None
     if args.key_cert:
-        with open(args.key_cert, "r") as key_cert_file:
+        with open(args.key_cert) as key_cert_file:
             key_cert_data = key_cert_file.read()
 
     oauth = {}

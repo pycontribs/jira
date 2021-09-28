@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 This module implements the Resource classes that translate JSON from Jira REST resources
 into usable objects.
@@ -11,17 +10,18 @@ import time
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Type, Union, cast
 
 from requests import Response
+from requests.structures import CaseInsensitiveDict
 
 from jira.resilientsession import ResilientSession
-from jira.utils import CaseInsensitiveDict, json_loads, threaded_requests
+from jira.utils import json_loads, threaded_requests
 
 if TYPE_CHECKING:
     from jira.client import JIRA
 
-    MyAny = Any
+    AnyLike = Any
 else:
 
-    class MyAny(object):
+    class AnyLike:
         """Dummy subclass of base object class for when type checker is not running."""
 
         pass
@@ -91,7 +91,7 @@ def get_error_list(r: Response) -> List[str]:
     return error_list
 
 
-class Resource(object):
+class Resource:
     """Models a URL-addressable resource in the Jira REST API.
 
     All Resource objects provide the following:
@@ -533,7 +533,7 @@ class Component(Resource):
         if moveIssuesTo is not None:
             params["moveIssuesTo"] = moveIssuesTo
 
-        super(Component, self).delete(params)
+        super().delete(params)
 
 
 class CustomFieldOption(Resource):
@@ -584,12 +584,12 @@ class Filter(Resource):
 class Issue(Resource):
     """A Jira issue."""
 
-    class _IssueFields(MyAny):
-        class _Comment(object):
+    class _IssueFields(AnyLike):
+        class _Comment:
             def __init__(self) -> None:
                 self.comments: List[Comment] = []
 
-        class _Worklog(object):
+        class _Worklog:
             def __init__(self) -> None:
                 self.worklogs: List[Worklog] = []
 
@@ -691,7 +691,7 @@ class Issue(Resource):
             else:
                 fields_dict[field] = value
 
-        super(Issue, self).update(async_=async_, jira=jira, notify=notify, fields=data)
+        super().update(async_=async_, jira=jira, notify=notify, fields=data)
 
     def add_field_value(self, field: str, value: str):
         """Add a value to a field that supports multiple values, without resetting the existing values.
@@ -703,7 +703,7 @@ class Issue(Resource):
             value (str): The field's value
 
         """
-        super(Issue, self).update(fields={"update": {field: [{"add": value}]}})
+        super().update(fields={"update": {field: [{"add": value}]}})
 
     def delete(self, deleteSubtasks=False):
         """Delete this issue from the server.
@@ -712,7 +712,7 @@ class Issue(Resource):
             deleteSubtasks (bool): if the issue has subtasks, this argument must be set to true for the call to succeed.
 
         """
-        super(Issue, self).delete(params={"deleteSubtasks": deleteSubtasks})
+        super().delete(params={"deleteSubtasks": deleteSubtasks})
 
     def permalink(self):
         """Get the URL of the issue, the browsable one not the REST one.
@@ -744,7 +744,7 @@ class Comment(Resource):
             data["body"] = body
         if visibility:
             data["visibility"] = visibility
-        super(Comment, self).update(data)
+        super().update(data)
 
 
 class RemoteLink(Resource):
@@ -781,7 +781,7 @@ class RemoteLink(Resource):
         if relationship is not None:
             data["relationship"] = relationship
 
-        super(RemoteLink, self).update(**data)
+        super().update(**data)
 
 
 class Votes(Resource):
@@ -827,7 +827,7 @@ class Watchers(Resource):
 
     def delete(self, username):
         """Remove the specified user from the watchers list."""
-        super(Watchers, self).delete(params={"username": username})
+        super().delete(params={"username": username})
 
 
 class TimeTracking(Resource):
@@ -878,7 +878,7 @@ class Worklog(Resource):
         if increaseBy is not None:
             params["increaseBy"] = increaseBy
 
-        super(Worklog, self).delete(params)
+        super().delete(params)
 
 
 class IssueLink(Resource):
@@ -995,7 +995,7 @@ class Role(Resource):
             },
         }
 
-        super(Role, self).update(**data)
+        super().update(**data)
 
     def add_user(
         self,
@@ -1144,7 +1144,7 @@ class Version(Resource):
         if moveAffectedIssuesTo is not None:
             params["moveAffectedIssuesTo"] = moveAffectedIssuesTo
 
-        return super(Version, self).delete(params)
+        return super().delete(params)
 
     def update(self, **kwargs):
         """
@@ -1173,7 +1173,7 @@ class Version(Resource):
         for field in kwargs:
             data[field] = kwargs[field]
 
-        super(Version, self).update(**data)
+        super().update(**data)
 
 
 # GreenHopper
@@ -1310,10 +1310,6 @@ class RequestType(Resource):
         session: ResilientSession,
         raw: Dict[str, Any] = None,
     ):
-        if raw:
-            self._parse_raw(raw)
-        self.raw: Dict[str, Any] = cast(Dict[str, Any], self.raw)
-
         Resource.__init__(
             self,
             "servicedesk/{0}/requesttype",
@@ -1321,6 +1317,10 @@ class RequestType(Resource):
             session,
             "{server}/rest/servicedeskapi/{path}",
         )
+
+        if raw:
+            self._parse_raw(raw)
+        self.raw: Dict[str, Any] = cast(Dict[str, Any], self.raw)
 
 
 # Utilities
@@ -1442,6 +1442,6 @@ def cls_for_resource(resource_literal: str) -> Type[Resource]:
         return UnknownResource
 
 
-class PropertyHolder(object):
+class PropertyHolder:
     def __init__(self, raw):
         __bases__ = raw  # noqa
