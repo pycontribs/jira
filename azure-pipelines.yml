@@ -21,6 +21,7 @@ steps:
   displayName: 'Use Python $(python.version)'
 
 - script: |
+    sudo apt-get update; sudo apt-get install gcc libkrb5-dev
     python -m pip install --upgrade pip
     pip install tox
   displayName: 'Install dependencies'
