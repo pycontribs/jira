@@ -1,0 +1,102 @@
+name: Bug report
+description: Create a report to help us improve
+
+
+body:
+- type: textarea
+  id: summary
+  attributes:
+    label: Bug summary
+    description: "A clear and concise description of what the bug is."
+  validations:
+    required: true
+- type: checkboxes
+  id: exisitng-issue
+  attributes:
+    label: Is there an existing issue for this?
+    description: Please search to see if an issue already exists for the bug you encountered.
+    options:
+    - label: I have searched the existing issues
+      required: true
+- type: dropdown
+  id: jira-instance-type
+  attributes:
+    label: Jira Instance type
+    options:
+    - Jira Cloud (Hosted by Atlassian)
+    - Jira Server or Data Center (Self-hosted)
+  validations:
+    required: true
+- type: input
+  id: jira-instance-version
+  attributes:
+    label: Jira instance version
+    placeholder: "8.16.1"
+  validations:
+    required: false
+- type: input
+  id: package-version
+  attributes:
+    label: jira-python version
+    description: |
+      The version(s) of the python package used, e.g. "main", "3.0.1".
+      Be sure you have tried the latest release version, as that is only version supported.
+      Testing on the latest "main" is also recommended before submitting a bug report.
+    placeholder: main
+  validations:
+    required: true
+- type: input
+  id: python-version
+  attributes:
+    label: Python Interpreter version
+    description: The version(s) of Python used.
+    placeholder: "3.8"
+  validations:
+    required: true
+- type: checkboxes
+  id: operating-systems
+  attributes:
+    label: Which operating systems have you used?
+    description: You may select more than one.
+    options:
+    - label: Linux
+    - label: macOS
+    - label: Windows
+- type: textarea
+  id: repro
+  attributes:
+    label: Reproduction steps
+    description: "(Python) Code example of how you trigger this bug. Please walk us through it step by step."
+    value: |
+      # 1. Given a Jira client instance
+      jira: JIRA
+      # 2. When I call the function with argument x
+      jira.the_function(x)
+      # 3.
+      ...
+    render: python
+  validations:
+    required: true
+- type: textarea
+  id: stacktrace
+  attributes:
+    label: Stack trace
+    description: "Any trace messages you can provide."
+    render: python
+  validations:
+    required: true
+- type: textarea
+  id: expected
+  attributes:
+    label: Expected behaviour
+    description: "What you expected to happen."
+  validations:
+    required: true
+- type: textarea
+  id: additional
+  attributes:
+    label: Additional Context
+    description: "Any additional information or dependencies that can help diagnose the problem."
+    placeholder: "ipython==7.16.1"
+  validations:
+    required: false
