@@ -5,7 +5,7 @@ updates:
     schedule:
       interval: daily
     open-pull-requests-limit: 10
-    target-branch: master
+    target-branch: main
     labels:
       - "dependencies"
       - "skip-changelog"
