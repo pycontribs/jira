@@ -196,7 +196,7 @@ class JiraTestManager:
 
     def _project_exists(self, project_key: str) -> bool:
         """True if we think the project exists, else False.
-        
+
         Assumes project exists if unknown Jira exception is raised.
         """
         try:
@@ -216,7 +216,7 @@ class JiraTestManager:
 
         # TODO(ssbarnea): find a way to prevent SecurityTokenMissing for On Demand
         # https://jira.atlassian.com/browse/JRA-39153
-        if  self._project_exists(project_key):
+        if self._project_exists(project_key):
             try:
                 self.jira_admin.delete_project(project_key)
             except Exception:
