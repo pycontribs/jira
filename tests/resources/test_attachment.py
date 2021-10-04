@@ -20,7 +20,7 @@ class AttachmentTests(JiraTestCase):
         with open(TEST_ATTACH_PATH, "rb") as f:
             attachment = self.jira.add_attachment(issue, f, "new test attachment")
             new_attachment = self.jira.attachment(attachment.id)
-            msg = "attachment %s of issue %s" % (new_attachment.__dict__, issue)
+            msg = f"attachment {new_attachment.__dict__} of issue {issue}"
             self.assertEqual(new_attachment.filename, "new test attachment", msg=msg)
             self.assertEqual(
                 new_attachment.size, os.path.getsize(TEST_ATTACH_PATH), msg=msg
@@ -34,7 +34,7 @@ class AttachmentTests(JiraTestCase):
             issue, TEST_ATTACH_PATH, "new test attachment"
         )
         new_attachment = self.jira.attachment(attachment.id)
-        msg = "attachment %s of issue %s" % (new_attachment.__dict__, issue)
+        msg = f"attachment {new_attachment.__dict__} of issue {issue}"
         self.assertEqual(new_attachment.filename, "new test attachment", msg=msg)
         self.assertEqual(
             new_attachment.size, os.path.getsize(TEST_ATTACH_PATH), msg=msg

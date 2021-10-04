@@ -16,17 +16,17 @@ Jira Python Library
 
 ------------
 
-.. image:: https://readthedocs.org/projects/jira/badge/?version=master
+.. image:: https://readthedocs.org/projects/jira/badge/?version=main
     :target: https://jira.readthedocs.io/
 
-.. image:: https://codecov.io/gh/pycontribs/jira/branch/master/graph/badge.svg
+.. image:: https://codecov.io/gh/pycontribs/jira/branch/main/graph/badge.svg
     :target: https://codecov.io/gh/pycontribs/jira
 
 .. image:: https://img.shields.io/bountysource/team/pycontribs/activity.svg
     :target: https://www.bountysource.com/teams/pycontribs/issues?tracker_ids=3650997
 
-.. image:: https://requires.io/github/pycontribs/jira/requirements.svg?branch=master
-    :target: https://requires.io/github/pycontribs/jira/requirements/?branch=master
+.. image:: https://requires.io/github/pycontribs/jira/requirements.svg?branch=main
+    :target: https://requires.io/github/pycontribs/jira/requirements/?branch=main
     :alt: Requirements Status
 
 
@@ -81,10 +81,8 @@ See the documentation_ for full details.
 Development
 -----------
 
-Development takes place on GitHub_:
-
-* ``master`` - (default branch) contains the primary development stream. Tags will be used to show latest releases.
-
+Development takes place on GitHub_ using the default repository branch. Each
+version is tagged.
 
 Setup
 =====
@@ -173,11 +171,11 @@ In addition to all the contributors we would like to thank to these companies:
 .. _GitHub: https://github.com/pycontribs/jira
 .. _Navicat: https://www.navicat.com/
 
-.. image:: https://raw.githubusercontent.com/pycontribs/resources/master/logos/x32/logo-atlassian.png
+.. image:: https://raw.githubusercontent.com/pycontribs/resources/main/logos/x32/logo-atlassian.png
    :target: https://www.atlassian.com/
 
-.. image:: https://raw.githubusercontent.com/pycontribs/resources/master/logos/x32/logo-pycharm.png
+.. image:: https://raw.githubusercontent.com/pycontribs/resources/main/logos/x32/logo-pycharm.png
     :target: https://www.jetbrains.com/
 
-.. image:: https://raw.githubusercontent.com/pycontribs/resources/master/logos/x32/logo-navicat.png
+.. image:: https://raw.githubusercontent.com/pycontribs/resources/maain/logos/x32/logo-navicat.png
     :target: https://www.navicat.com/
