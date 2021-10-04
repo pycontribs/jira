@@ -195,6 +195,10 @@ class JiraTestManager:
             raise RuntimeError("CI_JIRA_ADMIN environment variable is not set/empty.")
 
     def _project_exists(self, project_key: str) -> bool:
+        """True if we think the project exists, else False.
+        
+        Assumes project exists if unknown Jira exception is raised.
+        """
         try:
             self.jira_admin.project(project_key)
         except JIRAError as e:  # If the project does not exist a warning is thrown
