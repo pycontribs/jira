@@ -3778,22 +3778,20 @@ class JIRA:
             self.log.error(ioe)
         return None
 
-    def current_user(self, field: str = "key") -> str:
-        """Returns the username or emailAddress of the current user. For anonymous
-        users it will return a value that evaluates as False.
+    def current_user(self):
+        if not hasattr(self, '_serverInfo') or 'username' not in self._serverInfo:
 
-        Returns:
-            str
-        """
-        if not hasattr(self, "_myself"):
+            url = self._get_url('serverInfo')
+            r = self._session.get(url, headers=self._options['headers'])
 
-            url = self._get_url("myself")
-            r = self._session.get(url, headers=self._options["headers"])
-
-            r_json: Dict[str, str] = json_loads(r)
-            self._myself = r_json
-
-        return self._myself[field]
+            r_json = json_loads(r)
+            if 'x-ausername' in r.headers:
+                r_json['username'] = r.headers['x-ausername']
+            else:
+                r_json['username'] = None
+            self._serverInfo = r_json
+            # del r_json['self']  # this isn't really an addressable resource
+        return self._serverInfo['username']
 
     def delete_project(self, pid: Union[str, Project]) -> Optional[bool]:
         """Delete project from Jira.
