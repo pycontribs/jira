@@ -13,6 +13,7 @@ from typing import Any, Dict
 import pytest
 
 from jira import JIRA
+from jira.exceptions import JIRAError
 
 TEST_ROOT = os.path.dirname(__file__)
 TEST_ICON_PATH = os.path.join(TEST_ROOT, "icon.png")
@@ -191,17 +192,15 @@ class JiraTestManager:
                 **jira_class_kwargs,
             )
         else:
-            # Setup some un-authenticated users
-            self.jira_admin = JIRA(self.CI_JIRA_URL, **jira_class_kwargs)
-            self.jira_sysadmin = JIRA(self.CI_JIRA_URL, **jira_class_kwargs)
-            self.jira_normal = JIRA(self.CI_JIRA_URL, **jira_class_kwargs)
+            raise RuntimeError("CI_JIRA_ADMIN environment variable is not set/empty.")
 
     def _project_exists(self, project_key: str) -> bool:
         try:
             self.jira_admin.project(project_key)
-        except Exception as e:  # If the project does not exist a warning is thrown
+        except JIRAError as e:  # If the project does not exist a warning is thrown
             if "No project could be found" in str(e):
                 return False
+            LOGGER.exception("Assuming project '%s' exists.", project_key)
         return True
 
     def _remove_project(self, project_key):
@@ -213,17 +212,11 @@ class JiraTestManager:
 
         # TODO(ssbarnea): find a way to prevent SecurityTokenMissing for On Demand
         # https://jira.atlassian.com/browse/JRA-39153
-        try:
-            self.jira_admin.project(project_key)
-        except Exception as e:  # If the project does not exist a warning is thrown
-            if "No project could be found" not in str(e):
-                raise e
-        else:
-            # if no error is thrown that means the project exists, so we try to delete it
+        if  self._project_exists(project_key):
             try:
                 self.jira_admin.delete_project(project_key)
-            except Exception as e:
-                LOGGER.warning("Failed to delete %s\n%s", project_key, e)
+            except Exception:
+                LOGGER.exception("Failed to delete '%s'.", project_key)
 
         # wait for the project to be deleted
         for _ in range(1, wait_attempts):
@@ -252,7 +245,7 @@ class JiraTestManager:
                 try:
                     if self.jira_admin.create_project(project_key, project_name):
                         break
-                except Exception as e:
+                except JIRAError as e:
                     if "A project with that name already exists" not in str(e):
                         raise e
         return self.jira_admin.project(project_key).id
