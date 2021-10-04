@@ -6,7 +6,7 @@ class StatusCategoryTests(JiraTestCase):
         found = False
         statuscategories = self.jira.statuscategories()
         for statuscategory in statuscategories:
-            if statuscategory.id == 1 and statuscategory.name == u"No Category":
+            if statuscategory.id == 1 and statuscategory.name == "No Category":
                 found = True
                 break
         self.assertTrue(

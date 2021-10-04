@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 #
 # This script will cleanup your jira instance by removing all projects and
 # it is used to clean the CI/CD Jira server used for testing.

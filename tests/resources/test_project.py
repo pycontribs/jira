@@ -90,7 +90,7 @@ class ProjectTests(JiraTestCase):
 
     def test_project_components(self):
         proj = self.jira.project(self.project_b)
-        name = "component-%s from project %s" % (proj, rndstr())
+        name = f"component-{proj} from project {rndstr()}"
         component = self.jira.create_component(
             name,
             proj,
@@ -200,3 +200,7 @@ class ProjectTests(JiraTestCase):
         role = self.jira.project_role(self.project_b, int(admin["id"]))
         self.assertIn(user.name, [a.name for a in role.actors])
         self.assertIn(actor_admin, [a.name for a in role.actors])
+
+    def test_project_permissionscheme(self):
+        permissionscheme = self.jira.project_permissionscheme(self.project_b)
+        self.assertEqual(permissionscheme.name, "Default Permission Scheme")

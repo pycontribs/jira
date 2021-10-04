@@ -104,5 +104,5 @@ docs:
 
 tag:
 	bumpversion --feature --no-input
-	git push origin master
+	git push origin main
 	git push --tags

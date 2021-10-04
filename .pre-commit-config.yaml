@@ -1,7 +1,7 @@
 ---
 repos:
   - repo: https://github.com/python/black
-    rev: 21.6b0
+    rev: 21.9b0
     hooks:
       - id: black
         language_version: python3
@@ -36,19 +36,24 @@ repos:
     hooks:
       - id: flake8
   - repo: https://github.com/pycqa/isort
-    rev: 5.9.1
+    rev: 5.9.3
     hooks:
       - id: isort
         name: isort
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.26.1
+    rev: v1.26.3
     hooks:
       - id: yamllint
         files: \.(yaml|yml)$
   - repo: https://github.com/pre-commit/mirrors-mypy.git
-    rev: v0.902
+    rev: v0.910
     hooks:
       - id: mypy
         additional_dependencies:
           - types-requests
           - types-pkg_resources
+  - repo: https://github.com/asottile/pyupgrade
+    rev: v2.29.0
+    hooks:
+      - id: pyupgrade
+        args: [ --py36-plus ]

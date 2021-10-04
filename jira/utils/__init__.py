@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Jira utils used internally."""
 import threading
 import warnings

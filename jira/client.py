@@ -1,5 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 """
 This module implements a friendly (well, friendlier) interface between the raw JSON
 responses from Jira and the Resource/dict abstractions provided by this library. Users
@@ -38,7 +37,7 @@ from typing import (
     cast,
     no_type_check,
 )
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, quote, urlparse
 
 import requests
 from pkg_resources import parse_version
@@ -69,6 +68,7 @@ from jira.resources import (
     IssueLink,
     IssueLinkType,
     IssueType,
+    PermissionScheme,
     Priority,
     Project,
     RemoteLink,
@@ -173,11 +173,15 @@ class ResultList(list, Generic[ResourceType]):
             return self.iterable[self.current - 1]
 
 
-class QshGenerator(object):
+class QshGenerator:
     def __init__(self, context_path):
         self.context_path = context_path
 
     def __call__(self, req):
+        qsh = self._generate_qsh(req)
+        return hashlib.sha256(qsh.encode("utf-8")).hexdigest()
+
+    def _generate_qsh(self, req):
         parse_result = urlparse(req.url)
 
         path = (
@@ -185,12 +189,21 @@ class QshGenerator(object):
             if len(self.context_path) > 1
             else parse_result.path
         )
-        # Per Atlassian docs, use %20 for whitespace when generating qsh for URL
-        # https://developer.atlassian.com/cloud/jira/platform/understanding-jwt/#qsh
-        query = "&".join(sorted(parse_result.query.split("&"))).replace("+", "%20")
-        qsh = f"{req.method.upper()}&{path}&{query}"
 
-        return hashlib.sha256(qsh.encode("utf-8")).hexdigest()
+        # create canonical query string according to docs at:
+        # https://developer.atlassian.com/cloud/jira/platform/understanding-jwt-for-connect-apps/#qsh
+        params = parse_qs(parse_result.query, keep_blank_values=True)
+        joined = {
+            key: ",".join(self._sort_and_quote_values(params[key])) for key in params
+        }
+        query = "&".join(f"{key}={joined[key]}" for key in sorted(joined.keys()))
+
+        qsh = f"{req.method.upper()}&{path}&{query}"
+        return qsh
+
+    def _sort_and_quote_values(self, values):
+        ordered_values = sorted(values)
+        return [quote(value, safe="~") for value in ordered_values]
 
 
 class JiraCookieAuth(AuthBase):
@@ -251,7 +264,7 @@ class JiraCookieAuth(AuthBase):
         self._get_session(self.__auth)
 
 
-class JIRA(object):
+class JIRA:
     """User interface to Jira.
 
     Clients interact with Jira by constructing an instance of this object and calling its methods. For addressable
@@ -354,6 +367,7 @@ class JIRA(object):
                 * verify -- Verify SSL certs. Defaults to ``True``.
                 * client_cert -- a tuple of (cert,key) for the requests library for client side SSL
                 * check_update -- Check whether using the newest python-jira library version.
+                * headers -- a dict to update the default headers the session uses for all API requests.
 
             basic_auth (Union[None, Tuple[str, str]]): A tuple of username and password to use when
               establishing a session via HTTP BASIC authentication.
@@ -398,7 +412,7 @@ class JIRA(object):
         """
         # force a copy of the tuple to be used in __del__() because
         # sys.version_info could have already been deleted in __del__()
-        self.sys_version_info = tuple([i for i in sys.version_info])
+        self.sys_version_info = tuple(i for i in sys.version_info)
 
         if options is None:
             options = {}
@@ -421,7 +435,14 @@ class JIRA(object):
 
         self._options: Dict[str, Any] = copy.copy(JIRA.DEFAULT_OPTIONS)
 
+        if "headers" in options:
+            headers = copy.copy(options["headers"])
+            del options["headers"]
+        else:
+            headers = {}
+
         self._options.update(options)
+        self._options["headers"].update(headers)
 
         self._rank = None
 
@@ -1671,7 +1692,7 @@ class JIRA(object):
         Returns:
             bool
         """
-        url = self._get_latest_url("issue/{}/assignee".format(str(issue)))
+        url = self._get_latest_url(f"issue/{str(issue)}/assignee")
         user_id = self._get_user_id(assignee)
         payload = {"accountId": user_id} if self._is_cloud else {"name": user_id}
         r = self._session.put(url, data=json.dumps(payload))
@@ -1692,7 +1713,7 @@ class JIRA(object):
         params = {}
         if expand is not None:
             params["expand"] = expand
-        r_json = self._get_json("issue/{}/comment".format(str(issue)), params=params)
+        r_json = self._get_json(f"issue/{str(issue)}/comment", params=params)
 
         comments = [
             Comment(self._options, self._session, raw_comment_json)
@@ -1843,7 +1864,7 @@ class JIRA(object):
             data["object"] = {"title": str(destination), "url": destination.permalink()}
             for x in applicationlinks:
                 if x["application"]["displayUrl"] == destination._options["server"]:
-                    data["globalId"] = "appId=%s&issueId=%s" % (
+                    data["globalId"] = "appId={}&issueId={}".format(
                         x["application"]["id"],
                         destination.raw["id"],
                     )
@@ -1869,7 +1890,7 @@ class JIRA(object):
         if isinstance(destination, Issue) and destination.raw:
             for x in applicationlinks:
                 if x["application"]["displayUrl"] == self.server_url:
-                    data["globalId"] = "appId=%s&issueId=%s" % (
+                    data["globalId"] = "appId={}&issueId={}".format(
                         x["application"]["id"],
                         destination.raw["id"],  # .raw only present on Issue
                     )
@@ -2019,6 +2040,19 @@ class JIRA(object):
             Votes
         """
         return self._find_for_resource(Votes, issue)
+
+    @translate_resource_args
+    def project_permissionscheme(self, project: str) -> PermissionScheme:
+        """Get a PermissionScheme Resource from the server.
+
+
+        Args:
+            project (str): ID or key of the project to get the permissionscheme for
+
+        Returns:
+            PermissionScheme: The permission scheme
+        """
+        return self._find_for_resource(PermissionScheme, project)
 
     @translate_resource_args
     def add_vote(self, issue: str) -> Response:
@@ -2891,21 +2925,24 @@ class JIRA(object):
 
     def search_assignable_users_for_issues(
         self,
-        username: str,
+        username: Optional[str] = None,
         project: Optional[str] = None,
         issueKey: Optional[str] = None,
         expand: Optional[Any] = None,
         startAt: int = 0,
         maxResults: int = 50,
+        query: Optional[str] = None,
     ):
         """Get a list of user Resources that match the search string for assigning or creating issues.
+        "username" query parameter is deprecated in Jira Cloud; the expected parameter now is "query", which can just be
+        the full email again. But the "user" parameter is kept for backwards compatibility, i.e. Jira Server/Data Center.
 
         This method is intended to find users that are eligible to create issues in a project or be assigned
         to an existing issue. When searching for eligible creators, specify a project. When searching for eligible
         assignees, specify an issue key.
 
         Args:
-            username (str): A string to match usernames against
+            username (Optional[str]): A string to match usernames against
             project (Optional[str]): Filter returned users by permission in this project
               (expected if a result will be used to create an issue)
             issueKey (Optional[str]): Filter returned users by this issue
@@ -2914,17 +2951,27 @@ class JIRA(object):
             startAt (int): Index of the first user to return (Default: 0)
             maxResults (int): maximum number of users to return.
               If maxResults evaluates as False, it will try to get all items in batches. (Default: 50)
+            query (Optional[str]): Search term. It can just be the email.
 
         Returns:
             ResultList
         """
-        params = {"username": username}
+        if username is not None:
+            params = {"username": username}
+        if query is not None:
+            params = {"query": query}
         if project is not None:
             params["project"] = project
         if issueKey is not None:
             params["issueKey"] = issueKey
         if expand is not None:
             params["expand"] = expand
+
+        if not username and not query:
+            raise ValueError(
+                "Either 'username' or 'query' arguments must be specified."
+            )
+
         return self._fetch_pages(
             User, None, "user/assignable/search", startAt, maxResults, params
         )
@@ -3468,7 +3515,7 @@ class JIRA(object):
         else:
             try:
                 return mimetypes.guess_type("f." + str(imghdr.what(0, buff)))[0]
-            except (IOError, TypeError):
+            except (OSError, TypeError):
                 self.log.warning(
                     "Couldn't detect content type of avatar image"
                     ". Specify the 'contentType' parameter explicitly."
@@ -3533,7 +3580,7 @@ class JIRA(object):
                 user = self.session()
                 if user.raw is None:
                     raise JIRAError("Can not log in!")
-                self.authCookie = "%s=%s" % (
+                self.authCookie = "{}={}".format(
                     user.raw["session"]["name"],
                     user.raw["session"]["value"],
                 )
@@ -3727,7 +3774,7 @@ class JIRA(object):
                     file.write(block)
         except JIRAError as je:
             self.log.error(f"Unable to access remote backup file: {je}")
-        except IOError as ioe:
+        except OSError as ioe:
             self.log.error(ioe)
         return None
 
