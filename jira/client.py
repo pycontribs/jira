@@ -1660,9 +1660,9 @@ class JIRA(object):
         try:
             user_obj: User
             if self._is_cloud:
-                users = self.search_users(query=user)
+                users = self.search_users(query=user, maxResults=20)
             else:
-                users = self.search_users(user=user)
+                users = self.search_users(user=user, maxResults=20)
 
             if len(users) > 1:
                 matches = [u for u in users if u.key == user]
