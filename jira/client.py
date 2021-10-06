@@ -1666,12 +1666,7 @@ class JIRA(object):
             
             if len(users) > 1:
                 matches = [u for u in users if u.key == user]
-                if len(matches) >= 1:
-                    user_obj = matches[0]
-                else:
-                    user_obj = users[0]               
-            else:
-                user_obj = users[0]
+            user_obj = matches[0] if matches else users[0]
 
         except Exception as e:
             raise JIRAError(str(e))
