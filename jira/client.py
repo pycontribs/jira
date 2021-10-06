@@ -1663,7 +1663,7 @@ class JIRA(object):
                 users = self.search_users(query=user)
             else:
                 users = self.search_users(user=user)
-            
+
             if len(users) > 1:
                 matches = [u for u in users if u.key == user]
             user_obj = matches[0] if matches else users[0]
