@@ -134,7 +134,7 @@ pytest-xdist==2.4.0
     # via jira (setup.cfg)
 pytz==2021.3
     # via babel
-pyyaml==5.4.1
+pyyaml==6.0
     # via jira (setup.cfg)
 requests==2.26.0
     # via
