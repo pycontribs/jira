@@ -43,7 +43,7 @@ filemagic==1.6
     # via jira (setup.cfg)
 flaky==3.7.0
     # via jira (setup.cfg)
-idna==2.10
+idna==3.3
     # via requests
 imagesize==1.2.0
     # via sphinx
