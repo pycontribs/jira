@@ -293,7 +293,7 @@ class JIRA:
         "context_path": "/",
         "rest_path": "api",
         "rest_api_version": "2",
-        "agile_rest_path": GreenHopperResource.GREENHOPPER_REST_PATH,
+        "agile_rest_path": GreenHopperResource.AGILE_BASE_REST_PATH,
         "agile_rest_api_version": "1.0",
         "verify": True,
         "resilient": True,
