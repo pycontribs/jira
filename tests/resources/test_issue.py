@@ -446,6 +446,25 @@ class IssueTests(JiraTestCase):
         # self.assertEqual(issue.fields.assignee.name, self.test_manager.CI_JIRA_USER)
         # self.assertEqual(issue.fields.status.id, transition_id)
 
+    def test_rank(self):
+        def get_issues_ordered_by_rank():
+            """Search for the issues, returned in the order determined by their rank."""
+            return self.jira.search_issues(
+                f"key in ({self.issue_1},{self.issue_2}) ORDER BY Rank ASC"
+            )
+
+        self.jira.rank(self.issue_1, next_issue=self.issue_2)
+        issues = get_issues_ordered_by_rank()
+        assert (issues[0].key, issues[1].key) == (self.issue_1, self.issue_2)
+
+        self.jira.rank(self.issue_2, next_issue=self.issue_1)
+        issues = get_issues_ordered_by_rank()
+        assert (issues[0].key, issues[1].key) == (self.issue_2, self.issue_1)
+
+        self.jira.rank(self.issue_2, prev_issue=self.issue_1)
+        issues = get_issues_ordered_by_rank()
+        assert (issues[0].key, issues[1].key) == (self.issue_1, self.issue_2)
+
     @broken_test(
         reason="Greenhopper API doesn't work on standalone docker image with JIRA Server 8.9.0"
     )

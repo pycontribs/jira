@@ -75,7 +75,7 @@ Usage
 
 See the documentation_ for full details.
 
-.. _documentation: https://jira.readthedocs.org/en/latest/
+.. _documentation: https://jira.readthedocs.org/
 
 
 Development
