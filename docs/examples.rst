@@ -162,6 +162,10 @@ Reassign an issue::
     # requires issue assign permission, which is different from issue editing permission!
     jira.assign_issue(issue, 'newassignee')
 
+If you want to unassign it again, just do::
+
+    jira.assign_issue(issue, None)
+
 Creating issues is easy::
 
     new_issue = jira.create_issue(project='PROJ_key_or_id', summary='New issue from jira-python',
