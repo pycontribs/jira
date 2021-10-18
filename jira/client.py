@@ -279,7 +279,7 @@ class JIRA:
     or ``atlas-run-standalone`` commands. By default, this instance runs at
     ``http://localhost:2990/jira``. The ``options`` argument can be used to set the Jira instance to use.
 
-    Authentication is handled with the ``basic_auth`` argument. If authentication is supplied (and is
+    Authentication is handled with either the ``basic_auth`` or ``token_auth`` argument. If authentication is supplied (and is
     accepted by Jira), the client will remember it for subsequent requests.
 
     For quick command line access to a server, see the ``jirashell`` script included with this distribution.
@@ -326,6 +326,7 @@ class JIRA:
         server: str = None,
         options: Dict[str, Union[str, bool, Any]] = None,
         basic_auth: Union[None, Tuple[str, str]] = None,
+        token_auth: Union[None, str] = None,
         oauth: Dict[str, Any] = None,
         jwt: Dict[str, Any] = None,
         kerberos=False,
@@ -371,6 +372,10 @@ class JIRA:
 
             basic_auth (Union[None, Tuple[str, str]]): A tuple of username and password to use when
               establishing a session via HTTP BASIC authentication.
+
+            token_auth (Union[None, str]): A string to use for bearer token authorization. This will work for Jira Server
+              when Basic Auth has been disabled.
+
             oauth (Optional[Any]): A dict of properties for OAuth authentication. The following properties are required:
 
                 * access_token -- OAuth access token for the user
@@ -464,6 +469,16 @@ class JIRA:
         elif basic_auth:
             self._create_http_basic_session(*basic_auth, timeout=timeout)
             self._session.headers.update(self._options["headers"])
+        elif token_auth:
+            self._create_http_token_session(token_auth, timeout=timeout)
+            # Avoid overwriting the Authorization header the above method sets
+            self._session.headers.update(
+                {
+                    k: v
+                    for k, v in self._options["headers"].items()
+                    if not k == "Authorization"
+                }
+            )
         elif jwt:
             self._create_jwt_session(jwt, timeout)
         elif kerberos:
@@ -3325,6 +3340,27 @@ class JIRA:
         self._session = ResilientSession(timeout=timeout)
         self._session.verify = verify
         self._session.auth = (username, password)
+        client_cert: Tuple[str, str] = self._options["client_cert"]  # to help mypy
+        self._session.cert = client_cert
+
+    def _create_http_token_session(
+        self,
+        token: str,
+        timeout: Optional[Union[Union[float, int], Tuple[float, float]]] = None,
+    ):
+        """Creates a bearer token http session.
+
+        Args:
+            token (str): Bearer token (Personal Access Token) for the session
+            timeout (Optional[int]): If set determines the timeout period for the Session.
+
+        Returns:
+            ResilientSession
+        """
+        verify = bool(self._options["verify"])
+        self._session = ResilientSession(timeout=timeout)
+        self._session.verify = verify
+        self._session.headers.update({"Authorization": f"Bearer {token}"})
         client_cert: Tuple[str, str] = self._options["client_cert"]  # to help mypy
         self._session.cert = client_cert
 
