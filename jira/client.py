@@ -539,8 +539,7 @@ class JIRA:
         self._session = ResilientSession(timeout=timeout)
         self._session.auth = JiraCookieAuth(self._session, self.session, auth)
         self._session.verify = bool(self._options["verify"])
-        client_cert: Tuple[str, str] = self._options["client_cert"]  # to help mypy
-        self._session.cert = client_cert
+        self._session.cert = self._options["client_cert"]
 
     def _check_update_(self):
         """Check if the current version of the library is outdated."""
@@ -3346,6 +3345,7 @@ class JIRA:
         self._session = ResilientSession(timeout)
         self._session.verify = verify
         self._session.auth = oauth_instance
+        self._session.cert = self._options["client_cert"]
 
     def _create_kerberos_session(
         self,
@@ -3373,6 +3373,7 @@ class JIRA:
         self._session.auth = HTTPKerberosAuth(
             mutual_authentication=mutual_authentication
         )
+        self._session.cert = self._options["client_cert"]
 
     @staticmethod
     def _timestamp(dt: datetime.timedelta = None):
@@ -3401,6 +3402,7 @@ class JIRA:
         self._session = ResilientSession(timeout=timeout)
         self._session.verify = bool(self._options["verify"])
         self._session.auth = jwt_auth
+        self._session.cert = self._options["client_cert"]
 
     def _set_avatar(self, params, url, avatar):
         data = {"id": avatar}
