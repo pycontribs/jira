@@ -1,23 +1,31 @@
-name: Jira Server CI
+name: Jira Cloud CI
 
 on:
   workflow_call:
+    secrets:
+      CLOUD_ADMIN:
+        required: true
+      CLOUD_ADMIN_TOKEN:
+        required: true
+      CLOUD_USER:
+        required: true
+      CLOUD_USER_TOKEN:
+        required: true
   workflow_dispatch:
 
 jobs:
   test:
-    name: ${{ matrix.os }} / Python ${{ matrix.python-version }} / Jira ${{ matrix.jira-version }}
+    name: ${{ matrix.os }} / Python ${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}-latest
     strategy:
       matrix:
         os: [Ubuntu]
-        python-version: [3.6, 3.7, 3.8, 3.9]
-        jira-version: [8.17.1]
+        # We only test a single version to prevent concurrent
+        # running of tests influencing one another
+        python-version: [3.8]
 
     steps:
       - uses: actions/checkout@master
-      - name: Start Jira docker instance
-        run: docker run -dit -p 2990:2990 --name jira addono/jira-software-standalone --version ${{ matrix.jira-version }}
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
@@ -46,20 +54,17 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install --upgrade tox tox-gh-actions
 
-      - name: Lint with tox
-        run: tox -e lint
-
       - name: Test with tox
-        run: tox
+        run: tox -e py38 -- -m allow_on_cloud
+        env:
+          CI_JIRA_TYPE: CLOUD
+          CI_JIRA_CLOUD_ADMIN: ${{ secrets.CLOUD_ADMIN }}
+          CI_JIRA_CLOUD_ADMIN_TOKEN: ${{ secrets.CLOUD_ADMIN_TOKEN }}
+          CI_JIRA_CLOUD_USER: ${{ secrets.CLOUD_USER }}
+          CI_JIRA_CLOUD_USER_TOKEN: ${{ secrets.CLOUD_USER_TOKEN }}
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1.0.15
         with:
           file: ./coverage.xml
-          name: ${{ runner.os }}-${{ matrix.python-version }}
-
-      - name: Run tox pkg
-        run: tox -e pkg
-
-      - name: Make docs
-        run: tox -e docs
+          name: ${{ runner.os }}-${{ matrix.python-version }}-Cloud

@@ -11,9 +11,9 @@ from time import sleep
 from typing import Any, Dict
 
 import pytest
-from flaky import flaky
 
 from jira import JIRA
+from jira.exceptions import JIRAError
 
 TEST_ROOT = os.path.dirname(__file__)
 TEST_ICON_PATH = os.path.join(TEST_ROOT, "icon.png")
@@ -21,32 +21,11 @@ TEST_ATTACH_PATH = os.path.join(TEST_ROOT, "tests.py")
 
 LOGGER = logging.getLogger(__name__)
 
-OAUTH = False
-CONSUMER_KEY = "oauth-consumer"
-KEY_CERT_FILE = "/home/bspeakmon/src/atlassian-oauth-examples/rsa.pem"
-KEY_CERT_DATA = None
-try:
-    with open(KEY_CERT_FILE) as cert:
-        KEY_CERT_DATA = cert.read()
-    OAUTH = True
-except Exception:
-    OAUTH = False
 
-
-ON_CUSTOM_JIRA = "CI_JIRA_URL" in os.environ
-
-
-not_on_custom_jira_instance = pytest.mark.skipif(
-    ON_CUSTOM_JIRA, reason="Not applicable for custom Jira instance"
-)
-if ON_CUSTOM_JIRA:
-    LOGGER.info("Picked up custom Jira engine.")
-
-
+allow_on_cloud = pytest.mark.allow_on_cloud
 broken_test = pytest.mark.xfail
 
 
-@flaky  # all have default flaki-ness
 class JiraTestCase(unittest.TestCase):
     """Test case for all Jira tests.
 
@@ -71,15 +50,30 @@ class JiraTestCase(unittest.TestCase):
     def setUp(self) -> None:
         """
         This is called before each test. If you want to add more for your tests,
-        Run `JiraTestCase.setUp(self) in your custom setUp() to obtain these.
+        Run `super().setUp() in your custom setUp() to obtain these.
         """
-        self.test_manager = JiraTestManager()
+
+        initialized = False
+        try:
+            self.test_manager = JiraTestManager()
+            initialized = self.test_manager.initialized
+        except Exception as e:
+            # pytest with flaky swallows any exceptions re-raised in a try, except
+            # so we log any exceptions for aiding debugging
+            LOGGER.exception(e)
+        self.assertTrue(initialized, "Test Manager setUp failed")
+
         self.jira = self.test_manager.jira_admin
         self.jira_normal = self.test_manager.jira_normal
         self.user_admin = self.test_manager.user_admin
         self.user_normal = self.test_manager.user_normal  # use this user where possible
         self.project_b = self.test_manager.project_b
         self.project_a = self.test_manager.project_a
+
+    @property
+    def is_jira_cloud_ci(self) -> bool:
+        """is running on Jira Cloud"""
+        return self.test_manager._cloud_ci
 
 
 def rndstr():
@@ -120,20 +114,23 @@ class JiraTestManager:
         CI_JIRA_ADMIN (str): Admin user account name.
         CI_JIRA_USER (str): Limited user account name.
         max_retries (int): number of retries to perform for recoverable HTTP errors.
+        initialized (bool): if init was successful.
     """
 
     __shared_state: Dict[Any, Any] = {}
 
-    def __init__(self, jira_hosted_type="Server"):
+    def __init__(self, jira_hosted_type=os.environ.get("CI_JIRA_TYPE", "Server")):
         """Instantiate and populate the JIRA instance"""
         self.__dict__ = self.__shared_state
 
         if not self.__dict__:
             self.initialized = False
             self.max_retries = 5
+            self._cloud_ci = False
 
-            if jira_hosted_type and jira_hosted_type == "Cloud":
+            if jira_hosted_type and jira_hosted_type.upper() == "CLOUD":
                 self.set_jira_cloud_details()
+                self._cloud_ci = True
             else:
                 self.set_jira_server_details()
 
@@ -143,10 +140,8 @@ class JiraTestManager:
                 "validate": True,
                 "max_retries": self.max_retries,
             }
-            if OAUTH:
-                self.set_oauth_logins()
-            else:
-                self.set_basic_auth_logins(**jira_class_kwargs)
+
+            self.set_basic_auth_logins(**jira_class_kwargs)
 
             if not self.jira_admin.current_user():
                 self.initialized = True
@@ -158,16 +153,21 @@ class JiraTestManager:
         if not hasattr(self, "jira_normal") or not hasattr(self, "jira_admin"):
             pytest.exit("FATAL: WTF!?")
 
-        self.user_admin = self.jira_admin.search_users(self.CI_JIRA_ADMIN)[0]
-        self.user_normal = self.jira_admin.search_users(self.CI_JIRA_USER)[0]
+        if self._cloud_ci:
+            self.user_admin = self.jira_admin.search_users(query=self.CI_JIRA_ADMIN)[0]
+            self.user_normal = self.jira_admin.search_users(query=self.CI_JIRA_USER)[0]
+        else:
+            self.user_admin = self.jira_admin.search_users(self.CI_JIRA_ADMIN)[0]
+            self.user_normal = self.jira_admin.search_users(self.CI_JIRA_USER)[0]
         self.initialized = True
 
     def set_jira_cloud_details(self):
         self.CI_JIRA_URL = "https://pycontribs.atlassian.net"
-        self.CI_JIRA_ADMIN = "ci-admin"
-        self.CI_JIRA_ADMIN_PASSWORD = "sd4s3dgec5fhg4tfsds3434"
-        self.CI_JIRA_USER = "ci-user"
-        self.CI_JIRA_USER_PASSWORD = "sd4s3dgec5fhg4tfsds3434"
+        self.CI_JIRA_ADMIN = os.environ["CI_JIRA_CLOUD_ADMIN"]
+        self.CI_JIRA_ADMIN_PASSWORD = os.environ["CI_JIRA_CLOUD_ADMIN_TOKEN"]
+        self.CI_JIRA_USER = os.environ["CI_JIRA_CLOUD_USER"]
+        self.CI_JIRA_USER_PASSWORD = os.environ["CI_JIRA_CLOUD_USER_TOKEN"]
+        self.CI_JIRA_ISSUE = os.environ.get("CI_JIRA_ISSUE", "Bug")
 
     def set_jira_server_details(self):
         self.CI_JIRA_URL = os.environ["CI_JIRA_URL"]
@@ -176,34 +176,6 @@ class JiraTestManager:
         self.CI_JIRA_USER = os.environ["CI_JIRA_USER"]
         self.CI_JIRA_USER_PASSWORD = os.environ["CI_JIRA_USER_PASSWORD"]
         self.CI_JIRA_ISSUE = os.environ.get("CI_JIRA_ISSUE", "Bug")
-
-    def set_oauth_logins(self):
-        self.jira_admin = JIRA(
-            oauth={
-                "access_token": "hTxcwsbUQiFuFALf7KZHDaeAJIo3tLUK",
-                "access_token_secret": "aNCLQFP3ORNU6WY7HQISbqbhf0UudDAf",
-                "consumer_key": CONSUMER_KEY,
-                "key_cert": KEY_CERT_DATA,
-            }
-        )
-        self.jira_sysadmin = JIRA(
-            oauth={
-                "access_token": "4ul1ETSFo7ybbIxAxzyRal39cTrwEGFv",
-                "access_token_secret": "K83jBZnjnuVRcfjBflrKyThJa0KSjSs2",
-                "consumer_key": CONSUMER_KEY,
-                "key_cert": KEY_CERT_DATA,
-            },
-            logging=False,
-            max_retries=self.max_retries,
-        )
-        self.jira_normal = JIRA(
-            oauth={
-                "access_token": "ZVDgYDyIQqJY8IFlQ446jZaURIz5ECiB",
-                "access_token_secret": "5WbLBybPDg1lqqyFjyXSCsCtAWTwz1eD",
-                "consumer_key": CONSUMER_KEY,
-                "key_cert": KEY_CERT_DATA,
-            }
-        )
 
     def set_basic_auth_logins(self, **jira_class_kwargs):
         if self.CI_JIRA_ADMIN:
@@ -220,10 +192,67 @@ class JiraTestManager:
                 **jira_class_kwargs,
             )
         else:
-            # Setup some un-authenticated users
-            self.jira_admin = JIRA(self.CI_JIRA_URL, **jira_class_kwargs)
-            self.jira_sysadmin = JIRA(self.CI_JIRA_URL, **jira_class_kwargs)
-            self.jira_normal = JIRA(self.CI_JIRA_URL, **jira_class_kwargs)
+            raise RuntimeError("CI_JIRA_ADMIN environment variable is not set/empty.")
+
+    def _project_exists(self, project_key: str) -> bool:
+        """True if we think the project exists, else False.
+
+        Assumes project exists if unknown Jira exception is raised.
+        """
+        try:
+            self.jira_admin.project(project_key)
+        except JIRAError as e:  # If the project does not exist a warning is thrown
+            if "No project could be found" in str(e):
+                return False
+            LOGGER.exception("Assuming project '%s' exists.", project_key)
+        return True
+
+    def _remove_project(self, project_key):
+        """Ensure if the project exists we delete it first"""
+
+        wait_between_checks_secs = 2
+        time_to_wait_for_delete_secs = 40
+        wait_attempts = int(time_to_wait_for_delete_secs / wait_between_checks_secs)
+
+        # TODO(ssbarnea): find a way to prevent SecurityTokenMissing for On Demand
+        # https://jira.atlassian.com/browse/JRA-39153
+        if self._project_exists(project_key):
+            try:
+                self.jira_admin.delete_project(project_key)
+            except Exception:
+                LOGGER.exception("Failed to delete '%s'.", project_key)
+
+        # wait for the project to be deleted
+        for _ in range(1, wait_attempts):
+            if not self._project_exists(project_key):
+                # If the project does not exist a warning is thrown
+                # so once this is raised we know it is deleted successfully
+                break
+            sleep(wait_between_checks_secs)
+
+        if self._project_exists(project_key):
+            raise TimeoutError(
+                " Project '{project_key}' not deleted after {time_to_wait_for_delete_secs} seconds"
+            )
+
+    def _create_project(
+        self, project_key: str, project_name: str, force_recreate: bool = False
+    ) -> int:
+        """Create a project and return the id"""
+
+        if not force_recreate and self._project_exists(project_key):
+            pass
+        else:
+            self._remove_project(project_key)
+            create_attempts = 6
+            for _ in range(create_attempts):
+                try:
+                    if self.jira_admin.create_project(project_key, project_name):
+                        break
+                except JIRAError as e:
+                    if "A project with that name already exists" not in str(e):
+                        raise e
+        return self.jira_admin.project(project_key).id
 
     def create_some_data(self):
         """Create some data for the tests"""
@@ -259,72 +288,30 @@ class JiraTestManager:
             self.project_sd,
         )
 
-        # TODO(ssbarnea): find a way to prevent SecurityTokenMissing for On Demand
-        # https://jira.atlassian.com/browse/JRA-39153
-        try:
-            self.jira_admin.project(self.project_a)
-        except Exception as e:
-            LOGGER.warning(e)
-        else:
-            try:
-                self.jira_admin.delete_project(self.project_a)
-            except Exception as e:
-                LOGGER.warning("Failed to delete %s\n%s", self.project_a, e)
+        self.project_a_id = self._create_project(self.project_a, self.project_a_name)
+        self.project_b_id = self._create_project(
+            self.project_b, self.project_b_name, force_recreate=True
+        )
 
-        try:
-            self.jira_admin.project(self.project_b)
-        except Exception as e:
-            LOGGER.warning(e)
-        else:
-            try:
-                self.jira_admin.delete_project(self.project_b)
-            except Exception as e:
-                LOGGER.warning("Failed to delete %s\n%s", self.project_b, e)
-
-        # wait for the project to be deleted
-        for _ in range(1, 20):
-            try:
-                self.jira_admin.project(self.project_b)
-            except Exception:
-                break
-            print("Warning: Project not deleted yet....")
-            sleep(2)
-
-        for _ in range(6):
-            try:
-                if self.jira_admin.create_project(self.project_a, self.project_a_name):
-                    break
-            except Exception as e:
-                if "A project with that name already exists" not in str(e):
-                    raise e
-        self.project_a_id = self.jira_admin.project(self.project_a).id
-        self.jira_admin.create_project(self.project_b, self.project_b_name)
-
-        try:
-            self.jira_admin.create_project(self.project_b, self.project_b_name)
-        except Exception:
-            # we care only for the project to exist
-            pass
         sleep(1)  # keep it here as often Jira will report the
         # project as missing even after is created
+
+        project_b_issue_kwargs = {
+            "project": self.project_b,
+            "issuetype": {"name": self.CI_JIRA_ISSUE},
+        }
         self.project_b_issue1_obj = self.jira_admin.create_issue(
-            project=self.project_b,
-            summary="issue 1 from %s" % self.project_b,
-            issuetype=self.CI_JIRA_ISSUE,
+            summary="issue 1 from %s" % self.project_b, **project_b_issue_kwargs
         )
         self.project_b_issue1 = self.project_b_issue1_obj.key
 
         self.project_b_issue2_obj = self.jira_admin.create_issue(
-            project=self.project_b,
-            summary="issue 2 from %s" % self.project_b,
-            issuetype={"name": self.CI_JIRA_ISSUE},
+            summary="issue 2 from %s" % self.project_b, **project_b_issue_kwargs
         )
         self.project_b_issue2 = self.project_b_issue2_obj.key
 
         self.project_b_issue3_obj = self.jira_admin.create_issue(
-            project=self.project_b,
-            summary="issue 3 from %s" % self.project_b,
-            issuetype={"name": self.CI_JIRA_ISSUE},
+            summary="issue 3 from %s" % self.project_b, **project_b_issue_kwargs
         )
         self.project_b_issue3 = self.project_b_issue3_obj.key
 
