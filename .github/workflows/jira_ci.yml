@@ -1,0 +1,24 @@
+name: Jira CI
+
+on:
+  # Trigger the workflow on push or pull request,
+  # but only for the main branch
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  Server:
+    uses: pycontribs/jira/.github/workflows/jira_server_ci.yml@main
+
+  Cloud:
+    needs: Server
+    uses: pycontribs/jira/.github/workflows/jira_cloud_ci.yml@main
+    secrets:
+      CLOUD_ADMIN: ${{ secrets.CI_JIRA_CLOUD_ADMIN }}
+      CLOUD_ADMIN_TOKEN: ${{ secrets.CI_JIRA_CLOUD_ADMIN_TOKEN }}
+      CLOUD_USER: ${{ secrets.CI_JIRA_CLOUD_USER }}
+      CLOUD_USER_TOKEN: ${{ secrets.CI_JIRA_CLOUD_USER_TOKEN }}
