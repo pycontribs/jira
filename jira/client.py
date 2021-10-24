@@ -1652,8 +1652,10 @@ class JIRA:
         """
         return user.accountId if self._is_cloud else user.name
 
-    def _get_user_id(self, user: str) -> str:
+    def _get_user_id(self, user: Optional[str]) -> Optional[str]:
         """Internal method for translating an user search (str) to an id.
+
+        Return None and -1 unchanged.
 
         This function uses :py:meth:`JIRA.search_users` to find the user
         and then using :py:meth:`JIRA._get_user_identifier` extracts
@@ -1662,14 +1664,17 @@ class JIRA:
 
 
         Args:
-            user (str): The search term used for finding a user.
+            user (Optional[str]): The search term used for finding a user.
+              None, '-1' and -1 are equivalent to 'Unassigned'.
 
         Raises:
             JIRAError: If any error occurs.
 
         Returns:
-            str: The Jira user's identifier.
+            Optional[str]: The Jira user's identifier. Or "-1" and None unchanged.
         """
+        if user in (None, -1, "-1"):
+            return user
         try:
             user_obj: User
             if self._is_cloud:
@@ -1682,12 +1687,13 @@ class JIRA:
 
     # non-resource
     @translate_resource_args
-    def assign_issue(self, issue: Union[int, str], assignee: str) -> bool:
-        """Assign an issue to a user. None will set it to unassigned. -1 will set it to Automatic.
+    def assign_issue(self, issue: Union[int, str], assignee: Optional[str]) -> bool:
+        """Assign an issue to a user.
 
         Args:
             issue (Union[int,str]): the issue ID or key to assign
-            assignee (str): the user to assign the issue to
+            assignee (str): the user to assign the issue to.
+              None will set it to unassigned. -1 will set it to Automatic.
 
         Returns:
             bool
