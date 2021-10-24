@@ -361,7 +361,7 @@ class JIRA:
         or ``atlas-run-standalone`` commands. By default, this instance runs at
         ``http://localhost:2990/jira``. The ``options`` argument can be used to set the Jira instance to use.
 
-        Authentication is handled with the ``basic_auth``  or ``token_auth`` argument. 
+        Authentication is handled with the ``basic_auth``  or ``token_auth`` argument.
         If authentication is supplied (and is accepted by Jira), the client will remember it for subsequent requests.
 
         For quick command line access to a server, see the ``jirashell`` script included with this distribution.
@@ -4841,4 +4841,3 @@ class GreenHopper(JIRA):
         JIRA.__init__(
             self, options=options, basic_auth=basic_auth, oauth=oauth, async_=async_
         )
-
