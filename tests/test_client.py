@@ -16,17 +16,17 @@ def prep():
 
 
 @pytest.fixture(scope="module")
-def test_manager():
+def test_manager() -> JiraTestManager:
     return JiraTestManager()
 
 
 @pytest.fixture()
-def cl_admin(test_manager):
+def cl_admin(test_manager: JiraTestManager) -> jira.client.JIRA:
     return test_manager.jira_admin
 
 
 @pytest.fixture()
-def cl_normal(test_manager):
+def cl_normal(test_manager: JiraTestManager) -> jira.client.JIRA:
     return test_manager.jira_normal
 
 
@@ -194,3 +194,24 @@ def test_headers_unclobbered_update_with_no_provided_headers(no_fields):
 
     # THEN: we have not affected the other headers' defaults
     assert session_headers[invariant_header_name] == invariant_header_value
+
+
+def test_token_auth(cl_admin: jira.client.JIRA):
+    """Tests the Personal Access Token authentication works."""
+    # GIVEN: We have a PAT token created by a user.
+    pat_token_request = {
+        "name": "my_new_token",
+        "expirationDuration": 1,
+    }
+    base_url = cl_admin.server_url
+    pat_token_response = cl_admin._session.post(
+        f"{base_url}/rest/pat/latest/tokens", json=pat_token_request
+    ).json()
+    new_token = pat_token_response["rawToken"]
+
+    # WHEN: A new client is authenticated with this token
+    new_jira_client = jira.client.JIRA(token_auth=new_token)
+
+    # THEN: The reported authenticated user of the token
+    # matches the original token creator user.
+    assert cl_admin.myself() == new_jira_client.myself()

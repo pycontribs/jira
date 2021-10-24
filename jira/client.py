@@ -264,6 +264,19 @@ class JiraCookieAuth(AuthBase):
         self._get_session(self.__auth)
 
 
+class TokenAuth(AuthBase):
+    """Bearer Token Authentication"""
+
+    def __init__(self, token: str):
+        # setup any auth-related data here
+        self._token = token
+
+    def __call__(self, r: requests.PreparedRequest):
+        # modify and return the request
+        r.headers["authorization"] = f"Bearer {self._token}"
+        return r
+
+
 class JIRA:
     """User interface to Jira.
 
@@ -325,7 +338,8 @@ class JIRA:
         self,
         server: str = None,
         options: Dict[str, Union[str, bool, Any]] = None,
-        basic_auth: Union[None, Tuple[str, str]] = None,
+        basic_auth: Optional[Tuple[str, str]] = None,
+        token_auth: Optional[str] = None,
         oauth: Dict[str, Any] = None,
         jwt: Dict[str, Any] = None,
         kerberos=False,
@@ -347,8 +361,8 @@ class JIRA:
         or ``atlas-run-standalone`` commands. By default, this instance runs at
         ``http://localhost:2990/jira``. The ``options`` argument can be used to set the Jira instance to use.
 
-        Authentication is handled with the ``basic_auth`` argument. If authentication is supplied (and is
-        accepted by Jira), the client will remember it for subsequent requests.
+        Authentication is handled with the ``basic_auth``  or ``token_auth`` argument.
+        If authentication is supplied (and is accepted by Jira), the client will remember it for subsequent requests.
 
         For quick command line access to a server, see the ``jirashell`` script included with this distribution.
 
@@ -369,8 +383,11 @@ class JIRA:
                 * check_update -- Check whether using the newest python-jira library version.
                 * headers -- a dict to update the default headers the session uses for all API requests.
 
-            basic_auth (Union[None, Tuple[str, str]]): A tuple of username and password to use when
+            basic_auth (Optional[Tuple[str, str]]): A tuple of username and password to use when
               establishing a session via HTTP BASIC authentication.
+
+            token_auth (Optional[str]): A string containing the token necessary for (PAT) bearer token authorization.
+
             oauth (Optional[Any]): A dict of properties for OAuth authentication. The following properties are required:
 
                 * access_token -- OAuth access token for the user
@@ -466,6 +483,8 @@ class JIRA:
             self._session.headers.update(self._options["headers"])
         elif jwt:
             self._create_jwt_session(jwt, timeout)
+        elif token_auth:
+            self._create_token_session(token_auth, timeout)
         elif kerberos:
             self._create_kerberos_session(timeout, kerberos_options=kerberos_options)
         elif auth:
@@ -3411,6 +3430,20 @@ class JIRA:
         self._session = ResilientSession(timeout=timeout)
         self._session.verify = bool(self._options["verify"])
         self._session.auth = jwt_auth
+
+    def _create_token_session(
+        self,
+        token_auth: str,
+        timeout: Optional[Union[Union[float, int], Tuple[float, float]]],
+    ):
+        """
+        Creates token-based session.
+        Header structure: "authorization": "Bearer <token_auth>"
+        """
+        verify = self._options["verify"]
+        self._session = ResilientSession(timeout=timeout)
+        self._session.verify = verify
+        self._session.auth = TokenAuth(token_auth)
 
     def _set_avatar(self, params, url, avatar):
         data = {"id": avatar}
