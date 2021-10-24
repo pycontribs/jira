@@ -1,6 +1,7 @@
 import os
 
-from tests.conftest import TEST_ICON_PATH, JiraTestCase
+from jira.resources import User
+from tests.conftest import TEST_ICON_PATH, JiraTestCase, allow_on_cloud
 
 
 class UserTests(JiraTestCase):
@@ -8,9 +9,15 @@ class UserTests(JiraTestCase):
         JiraTestCase.setUp(self)
         self.issue = self.test_manager.project_b_issue3
 
+    @allow_on_cloud
     def test_user(self):
-        user = self.jira.user(self.test_manager.user_admin.name)
-        self.assertTrue(user.name)
+        """Test that a user can be returned and is the right class"""
+        # GIVEN: a User
+        expected_user = self.test_manager.user_admin
+        # WHEN: The user is searched for using its identifying attribute
+        user = self.jira.user(getattr(expected_user, self.identifying_user_property))
+        # THEN: it is of the right type, and has an email address of the right format
+        assert isinstance(user, User)
         self.assertRegex(
             user.emailAddress, r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
         )
@@ -148,11 +155,22 @@ class UserTests(JiraTestCase):
             )
         self.jira.delete_user_avatar(self.test_manager.CI_JIRA_ADMIN, props["id"])
 
+    @allow_on_cloud
     def test_search_users(self):
-        users = self.jira.search_users(self.test_manager.CI_JIRA_ADMIN)
+        # WHEN: the search_users function is called with a requested user
+        if self.is_jira_cloud_ci:
+            users = self.jira.search_users(query=self.test_manager.CI_JIRA_ADMIN)
+        else:
+            users = self.jira.search_users(self.test_manager.CI_JIRA_ADMIN)
+        # THEN: We get a list of User objects
         self.assertGreaterEqual(len(users), 1)
-        usernames = map(lambda user: user.name, users)
-        self.assertIn(self.test_manager.user_admin.name, usernames)
+        self.assertIsInstance(users[0], User)
+        #       and the requested user can be found in this list
+        user_ids = [getattr(user, self.identifying_user_property) for user in users]
+        self.assertIn(
+            getattr(self.test_manager.user_admin, self.identifying_user_property),
+            user_ids,
+        )
 
     def test_search_users_maxresults(self):
         users = self.jira.search_users(self.test_manager.CI_JIRA_USER, maxResults=1)
@@ -164,9 +182,11 @@ class UserTests(JiraTestCase):
         )
         self.assertGreaterEqual(len(users), 1)
 
+    @allow_on_cloud
     def test_search_allowed_users_for_issue_by_issue(self):
         users = self.jira.search_allowed_users_for_issue("a", issueKey=self.issue)
         self.assertGreaterEqual(len(users), 1)
+        self.assertIsInstance(users[0], User)
 
     def test_search_allowed_users_for_issue_maxresults(self):
         users = self.jira.search_allowed_users_for_issue(
