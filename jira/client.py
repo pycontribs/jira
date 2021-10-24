@@ -383,8 +383,11 @@ class JIRA:
                 * check_update -- Check whether using the newest python-jira library version.
                 * headers -- a dict to update the default headers the session uses for all API requests.
 
-            basic_auth (Union[None, Tuple[str, str]]): A tuple of username and password to use when
+            basic_auth (Optional[Tuple[str, str]]): A tuple of username and password to use when
               establishing a session via HTTP BASIC authentication.
+
+            token_auth (Optional[str]): A string containing the token necessary for (PAT) bearer token authorization.
+
             oauth (Optional[Any]): A dict of properties for OAuth authentication. The following properties are required:
 
                 * access_token -- OAuth access token for the user
@@ -409,8 +412,6 @@ class JIRA:
                 * payload -- dict of fields to be inserted in the JWT payload, e.g. 'iss'
 
                 Example jwt structure: ``{'secret': SHARED_SECRET, 'payload': {'iss': PLUGIN_KEY}}``
-
-            token_auth (str): A string containing the token necessary for (PAT) bearer token authorization.
 
             validate (bool): If true it will validate your credentials first. Remember that if you are accessing Jira
               as anonymous it will fail to instantiate.
