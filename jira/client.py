@@ -264,6 +264,19 @@ class JiraCookieAuth(AuthBase):
         self._get_session(self.__auth)
 
 
+class TokenAuth(AuthBase):
+    """Bearer Token Authentication"""
+
+    def __init__(self, token: str):
+        # setup any auth-related data here
+        self._token = token
+
+    def __call__(self, r: requests.PreparedRequest):
+        # modify and return the request
+        r.headers["authorization"] = f"Bearer {self._token}"
+        return r
+
+
 class JIRA:
     """User interface to Jira.
 
@@ -325,10 +338,10 @@ class JIRA:
         self,
         server: str = None,
         options: Dict[str, Union[str, bool, Any]] = None,
-        basic_auth: Union[None, Tuple[str, str]] = None,
+        basic_auth: Optional[Tuple[str, str]] = None,
+        token_auth: Optional[str] = None,
         oauth: Dict[str, Any] = None,
         jwt: Dict[str, Any] = None,
-        token_auth: str =None,
         kerberos=False,
         kerberos_options: Dict[str, Any] = None,
         validate=False,
@@ -348,8 +361,8 @@ class JIRA:
         or ``atlas-run-standalone`` commands. By default, this instance runs at
         ``http://localhost:2990/jira``. The ``options`` argument can be used to set the Jira instance to use.
 
-        Authentication is handled with the ``basic_auth`` argument. If authentication is supplied (and is
-        accepted by Jira), the client will remember it for subsequent requests.
+        Authentication is handled with the ``basic_auth``  or ``token_auth`` argument. 
+        If authentication is supplied (and is accepted by Jira), the client will remember it for subsequent requests.
 
         For quick command line access to a server, see the ``jirashell`` script included with this distribution.
 
@@ -397,7 +410,7 @@ class JIRA:
 
                 Example jwt structure: ``{'secret': SHARED_SECRET, 'payload': {'iss': PLUGIN_KEY}}``
 
-            token_auth (str): A string containg the token necessary for (PAT) token authorization.
+            token_auth (str): A string containing the token necessary for (PAT) bearer token authorization.
 
             validate (bool): If true it will validate your credentials first. Remember that if you are accessing Jira
               as anonymous it will fail to instantiate.
@@ -3417,7 +3430,11 @@ class JIRA:
         self._session.verify = bool(self._options["verify"])
         self._session.auth = jwt_auth
 
-    def _create_token_session(self, token_auth: str, timeout):
+    def _create_token_session(
+        self,
+        token_auth: str,
+        timeout: Optional[Union[Union[float, int], Tuple[float, float]]],
+    ):
         """
         Creates token-based session.
         Header structure: "authorization": "Bearer <token_auth>"
@@ -3425,8 +3442,7 @@ class JIRA:
         verify = self._options["verify"]
         self._session = ResilientSession(timeout=timeout)
         self._session.verify = verify
-        token_auth = TokenAuth(token_auth)
-        self._session.auth = token_auth
+        self._session.auth = TokenAuth(token_auth)
 
     def _set_avatar(self, params, url, avatar):
         data = {"id": avatar}
@@ -4826,13 +4842,3 @@ class GreenHopper(JIRA):
             self, options=options, basic_auth=basic_auth, oauth=oauth, async_=async_
         )
 
-class TokenAuth(AuthBase):
-    """Token Authentication"""
-    def __init__(self, token: str):
-        # setup any auth-related data here
-        self._token = token
-
-    def __call__(self, r):
-        # modify and return the request
-        r.headers['authorization'] = "Bearer " + self._token
-        return r
