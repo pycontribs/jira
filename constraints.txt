@@ -100,7 +100,7 @@ pygments==2.10.0
     # via
     #   ipython
     #   sphinx
-pyjwt==2.1.0
+pyjwt==2.3.0
     # via
     #   jira (setup.cfg)
     #   requests-jwt
