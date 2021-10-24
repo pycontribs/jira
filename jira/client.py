@@ -477,6 +477,9 @@ class JIRA:
             self._session = ResilientSession(timeout=timeout)
             self._session.verify = verify
 
+        # Add the client authentication certificate to the request if configured
+        self._add_client_cert_to_session()
+
         self._session.headers.update(self._options["headers"])
 
         if "cookies" in self._options:
@@ -539,8 +542,6 @@ class JIRA:
         self._session = ResilientSession(timeout=timeout)
         self._session.auth = JiraCookieAuth(self._session, self.session, auth)
         self._session.verify = bool(self._options["verify"])
-        client_cert: Tuple[str, str] = self._options["client_cert"]  # to help mypy
-        self._session.cert = client_cert
 
     def _check_update_(self):
         """Check if the current version of the library is outdated."""
@@ -3325,8 +3326,6 @@ class JIRA:
         self._session = ResilientSession(timeout=timeout)
         self._session.verify = verify
         self._session.auth = (username, password)
-        client_cert: Tuple[str, str] = self._options["client_cert"]  # to help mypy
-        self._session.cert = client_cert
 
     def _create_oauth_session(
         self, oauth, timeout: Optional[Union[Union[float, int], Tuple[float, float]]]
@@ -3373,6 +3372,13 @@ class JIRA:
         self._session.auth = HTTPKerberosAuth(
             mutual_authentication=mutual_authentication
         )
+
+    def _add_client_cert_to_session(self):
+        """
+        Adds the client certificate to the request if configured through the constructor.
+        """
+        client_cert: Tuple[str, str] = self._options["client_cert"]  # to help mypy
+        self._session.cert = client_cert
 
     @staticmethod
     def _timestamp(dt: datetime.timedelta = None):

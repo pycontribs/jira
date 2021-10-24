@@ -32,7 +32,7 @@ repos:
         require_serial: false
         additional_dependencies: []
   - repo: https://github.com/PyCQA/flake8
-    rev: 3.9.2
+    rev: 4.0.1
     hooks:
       - id: flake8
   - repo: https://github.com/pycqa/isort
@@ -46,7 +46,7 @@ repos:
       - id: yamllint
         files: \.(yaml|yml)$
   - repo: https://github.com/pre-commit/mirrors-mypy.git
-    rev: v0.910
+    rev: v0.910-1
     hooks:
       - id: mypy
         additional_dependencies:
