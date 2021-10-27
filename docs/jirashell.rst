@@ -1,8 +1,8 @@
 jirashell
 *********
 
-There is no substitute for play. The only way to really know a service, an API or a package is to explore it, poke at
-it, and bang your elbows -- trial and error. A REST design is especially well-suited to active exploration, and the
+There is no substitute for play. The only way to really know a service, API or package is to explore it, poke at
+it, and bang your elbows -- trial and error. A REST design is especially well-suited for active exploration, and the
 ``jirashell`` script (installed automatically when you use pip) is designed to help you do exactly that.
 
 Run it from the command line::

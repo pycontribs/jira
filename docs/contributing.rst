@@ -17,7 +17,7 @@ Discussion and support
 We encourage all who wish to discuss by using https://community.atlassian.com/t5/tag/jira-python/tg-p
 
 Keep in mind to use the jira-python tag when you add a new question. This will
-assure that the project maintainers will get notified about your question.
+ensure that the project maintainers will get notified about your question.
 
 
 Contributing Code
@@ -25,9 +25,9 @@ Contributing Code
 
 * Patches should be:
     * concise
-    * works across all supported versions of Python.
+    * work across all supported versions of Python.
     * follows the existing style of the code base (PEP-8).
-    * has comments included as needed.
+    * included comments as required.
 
 * Great Patch has:
     * A test case that demonstrates the previous flaw that now passes with the included patch.

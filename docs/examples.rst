@@ -55,7 +55,7 @@ Using this method, authentication happens during the initialization of the objec
 the retrieved session cookie will be used in future requests. Upon cookie expiration, authentication will happen again transparently.
 
 .. warning::
-    This way of authentication is not supported anymore on Jira Cloud. You can find the deprecation notice `here <https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-basic-auth-and-cookie-based-auth>`_.
+    This method of authentication is no longer supported on Jira Cloud. You can find the deprecation notice `here <https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-basic-auth-and-cookie-based-auth>`_.
 
     For Jira Cloud use the basic_auth= :ref:`basic-auth-api-token` authentication
 
@@ -70,7 +70,7 @@ Pass a tuple of (username, password) to the ``basic_auth`` constructor argument:
     auth_jira = JIRA(basic_auth=('username', 'password'))
 
 .. warning::
-    This way of authentication is not supported anymore on Jira Cloud. You can find the deprecation notice `here <https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-basic-auth-and-cookie-based-auth>`_
+    This way of authentication is no longer supported on Jira Cloud. You can find the deprecation notice `here <https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-basic-auth-and-cookie-based-auth>`_
 
     For Jira Cloud use the basic_auth= :ref:`basic-auth-api-token` authentication
 
@@ -131,7 +131,7 @@ Headers
 Headers can be provided to the internally used ``requests.Session``.
 If the user provides a header that the :py:class:`jira.client.JIRA` also attempts to set, the user provided header will take preference.
 
-Perhaps you want to use a custom User Agent::
+For example if you want to use a custom User Agent::
 
     from requests_toolbelt import user_agent
 
@@ -241,7 +241,7 @@ Updating components::
 Fields
 ------
 
-Example about accessing the worklogs::
+Example for accessing the worklogs::
 
     issue.fields.worklog.worklogs                                 # list of Worklog objects
     issue.fields.worklog.worklogs[0].author
@@ -282,17 +282,17 @@ to quickly find the issues you want::
 Comments
 --------
 
-Comments, like issues, are objects. Get at issue comments through the parent Issue object or the ``JIRA`` object's
+Comments, like issues, are objects. Access issue comments through the parent Issue object or the ``JIRA`` object's
 dedicated method::
 
     comments_a = issue.fields.comment.comments
     comments_b = jira.comments(issue) # comments_b == comments_a
 
-Get an individual comment if you know its ID::
+Obtain an individual comment if you know its ID::
 
     comment = jira.comment('JRA-1330', '10234')
 
-Get comment author name and comment creation timestamp if you know its ID::
+Obtain comment author name and comment creation timestamp if you know its ID::
 
     author = jira.comment('JRA-1330', '10234').author.displayName
     time = jira.comment('JRA-1330', '10234').created
@@ -374,8 +374,8 @@ Attachments
 -----------
 
 Attachments let user add files to issues. First you'll need an issue to which the attachment will be uploaded.
-Next, you'll need file itself, that is going to be attachment. File could be file-like object or string, representing
-path on local machine. Also you can select final name of the attachment if you don't like original.
+Next, you'll need the file itself that is going to be attachment. File could be a file-like object or string, representing
+path on the local machine. You can also modify the final name of the attachment if you don't like original.
 Here are some examples::
 
     # upload file from `/some/path/attachment.txt`
