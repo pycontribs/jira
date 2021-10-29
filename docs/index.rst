@@ -25,12 +25,9 @@ Documentation is also available in
 `Dash
 <dash-feed://https%3A%2F%2Fjira.readthedocs.io%2Fen%2Flatest%2Fjira.xml>`_ format.
 
-
-
 The source is stored at https://github.com/pycontribs/jira.
 
-Until someone will find a better way to generate the release notes you can read
-https://github.com/pycontribs/jira/blob/main/CHANGELOG which is generated based on git commit messages.
+The release history and notes and can be found at https://github.com/pycontribs/jira/releases
 
 Indices and tables
 ******************
