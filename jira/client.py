@@ -3828,15 +3828,15 @@ class JIRA:
         return None
 
     def current_user(self, field: Optional[str] = None) -> str:
-        """Returns the username or emailAddress of the current user. For anonymous
-        users it will return a value that evaluates as False.
+        """Return the `accountId` (Cloud) else `username` of the current user.
+        For anonymous users it will return a value that evaluates as False.
 
         Args:
             field (Optional[str]): the name of the identifier field.
-              Defaults to "accountId" for Jira Cloud, else "key"
+              Defaults to "accountId" for Jira Cloud, else "username"
 
         Returns:
-            str
+            str: User's `accountId` (Cloud) else `username`.
         """
         if not hasattr(self, "_myself"):
 
@@ -3847,7 +3847,7 @@ class JIRA:
             self._myself = r_json
 
         if field is None:
-            field = "accountId" if self._is_cloud else "key"
+            field = "accountId" if self._is_cloud else "username"
 
         return self._myself[field]
 
