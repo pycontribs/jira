@@ -3847,7 +3847,7 @@ class JIRA:
             self._myself = r_json
 
         if field is None:
-            # Note: For Self-Hosted 'displayName' can be changed, 
+            # Note: For Self-Hosted 'displayName' can be changed,
             # but 'name' and 'key' cannot, so should be identifying properties.
             field = "accountId" if self._is_cloud else "name"
 
