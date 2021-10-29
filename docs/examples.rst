@@ -70,7 +70,7 @@ Pass a tuple of (username, password) to the ``basic_auth`` constructor argument:
     auth_jira = JIRA(basic_auth=('username', 'password'))
 
 .. warning::
-    This way of authentication is no longer supported on Jira Cloud. You can find the deprecation notice `here <https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-basic-auth-and-cookie-based-auth>`_
+    This method of authentication is no longer supported on Jira Cloud. You can find the deprecation notice `here <https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-basic-auth-and-cookie-based-auth>`_
 
     For Jira Cloud use the basic_auth= :ref:`basic-auth-api-token` authentication
 
@@ -374,7 +374,7 @@ Attachments
 -----------
 
 Attachments let user add files to issues. First you'll need an issue to which the attachment will be uploaded.
-Next, you'll need the file itself that is going to be attachment. File could be a file-like object or string, representing
+Next, you'll need the file itself that is going to be attachment. The file could be a file-like object or string, representing
 path on the local machine. You can also modify the final name of the attachment if you don't like original.
 Here are some examples::
 

@@ -27,6 +27,8 @@ Documentation is also available in
 
 The source is stored at https://github.com/pycontribs/jira.
 
+The release history and notes and can be found at https://github.com/pycontribs/jira/releases
+
 Indices and tables
 ******************
 
