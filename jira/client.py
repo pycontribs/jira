@@ -100,7 +100,6 @@ try:
 except ImportError:
     pass
 
-
 LOG = _logging.getLogger("jira")
 LOG.addHandler(_logging.NullHandler())
 
@@ -123,7 +122,7 @@ def translate_resource_args(func: Callable):
 
 
 def _field_worker(
-    fields: Dict[str, Any] = None, **fieldargs: Any
+        fields: Dict[str, Any] = None, **fieldargs: Any
 ) -> Union[Dict[str, Dict[str, Any]], Dict[str, Dict[str, str]]]:
     if fields is not None:
         return {"fields": fields}
@@ -135,12 +134,12 @@ ResourceType = TypeVar("ResourceType", contravariant=True, bound=Resource)
 
 class ResultList(list, Generic[ResourceType]):
     def __init__(
-        self,
-        iterable: Iterable = None,
-        _startAt: int = 0,
-        _maxResults: int = 0,
-        _total: Optional[int] = None,
-        _isLast: Optional[bool] = None,
+            self,
+            iterable: Iterable = None,
+            _startAt: int = 0,
+            _maxResults: int = 0,
+            _total: Optional[int] = None,
+            _isLast: Optional[bool] = None,
     ) -> None:
         """
 
@@ -185,7 +184,7 @@ class QshGenerator:
         parse_result = urlparse(req.url)
 
         path = (
-            parse_result.path[len(self.context_path) :]
+            parse_result.path[len(self.context_path):]
             if len(self.context_path) > 1
             else parse_result.path
         )
@@ -215,7 +214,7 @@ class JiraCookieAuth(AuthBase):
     """
 
     def __init__(
-        self, session: ResilientSession, _get_session: Callable, auth: Tuple[str, str]
+            self, session: ResilientSession, _get_session: Callable, auth: Tuple[str, str]
     ):
         """Cookie Based Authentication
 
@@ -309,6 +308,7 @@ class JIRA:
         "agile_rest_path": GreenHopperResource.AGILE_BASE_REST_PATH,
         "agile_rest_api_version": "1.0",
         "verify": True,
+        "server_ca": None,
         "resilient": True,
         "async": False,
         "async_workers": 5,
@@ -335,24 +335,24 @@ class JIRA:
     AGILE_BASE_URL = GreenHopperResource.AGILE_BASE_URL
 
     def __init__(
-        self,
-        server: str = None,
-        options: Dict[str, Union[str, bool, Any]] = None,
-        basic_auth: Optional[Tuple[str, str]] = None,
-        token_auth: Optional[str] = None,
-        oauth: Dict[str, Any] = None,
-        jwt: Dict[str, Any] = None,
-        kerberos=False,
-        kerberos_options: Dict[str, Any] = None,
-        validate=False,
-        get_server_info: bool = True,
-        async_: bool = False,
-        async_workers: int = 5,
-        logging: bool = True,
-        max_retries: int = 3,
-        proxies: Any = None,
-        timeout: Optional[Union[Union[float, int], Tuple[float, float]]] = None,
-        auth: Tuple[str, str] = None,
+            self,
+            server: str = None,
+            options: Dict[str, Union[str, bool, Any]] = None,
+            basic_auth: Optional[Tuple[str, str]] = None,
+            token_auth: Optional[str] = None,
+            oauth: Dict[str, Any] = None,
+            jwt: Dict[str, Any] = None,
+            kerberos=False,
+            kerberos_options: Dict[str, Any] = None,
+            validate=False,
+            get_server_info: bool = True,
+            async_: bool = False,
+            async_workers: int = 5,
+            logging: bool = True,
+            max_retries: int = 3,
+            proxies: Any = None,
+            timeout: Optional[Union[Union[float, int], Tuple[float, float]]] = None,
+            auth: Tuple[str, str] = None,
     ):
         """Construct a Jira client instance.
 
@@ -379,6 +379,8 @@ class JIRA:
                 * agile_rest_path - the REST path to use for Jira Agile requests. Defaults to ``greenhopper`` (old, private
                   API). Check :py:class:`jira.resources.GreenHopperResource` for other supported values.
                 * verify -- Verify SSL certs. Defaults to ``True``.
+                * server_ca -- the path to the certificate authority for the server SSL certificate. Ignored if 'verify'
+                  is set to ``False``. Defaults to ``None``.
                 * client_cert -- a tuple of (cert,key) for the requests library for client side SSL
                 * check_update -- Check whether using the newest python-jira library version.
                 * headers -- a dict to update the default headers the session uses for all API requests.
@@ -499,6 +501,8 @@ class JIRA:
         # Add the client authentication certificate to the request if configured
         self._add_client_cert_to_session()
 
+        self._set_server_verification()
+
         self._session.headers.update(self._options["headers"])
 
         if "cookies" in self._options:
@@ -516,7 +520,7 @@ class JIRA:
             user = self.session()
             if user.raw is None:
                 auth_method = (
-                    oauth or basic_auth or jwt or kerberos or auth or "anonymous"
+                        oauth or basic_auth or jwt or kerberos or auth or "anonymous"
                 )
                 raise JIRAError(f"Can not log in with {str(auth_method)}")
 
@@ -554,9 +558,9 @@ class JIRA:
         return self.deploymentType in ("Cloud",)
 
     def _create_cookie_auth(
-        self,
-        auth: Tuple[str, str],
-        timeout: Optional[Union[Union[float, int], Tuple[float, float]]],
+            self,
+            auth: Tuple[str, str],
+            timeout: Optional[Union[Union[float, int], Tuple[float, float]]],
     ):
         self._session = ResilientSession(timeout=timeout)
         self._session.auth = JiraCookieAuth(self._session, self.session, auth)
@@ -616,14 +620,14 @@ class JIRA:
         return sprint_field_id
 
     def _fetch_pages(
-        self,
-        item_type: Type[ResourceType],
-        items_key: Optional[str],
-        request_path: str,
-        startAt: int = 0,
-        maxResults: int = 50,
-        params: Dict[str, Any] = None,
-        base: str = JIRA_BASE_URL,
+            self,
+            item_type: Type[ResourceType],
+            items_key: Optional[str],
+            request_path: str,
+            startAt: int = 0,
+            maxResults: int = 50,
+            params: Dict[str, Any] = None,
+            base: str = JIRA_BASE_URL,
     ) -> ResultList[ResourceType]:
         """Fetch from a paginated end point.
 
@@ -683,9 +687,9 @@ class JIRA:
                 page_size = max_results_from_response or len(items)
                 page_start = (startAt or start_at_from_response or 0) + page_size
                 if (
-                    async_class is not None
-                    and not is_last
-                    and (total is not None and len(items) < total)
+                        async_class is not None
+                        and not is_last
+                        and (total is not None and len(items) < total)
                 ):
                     async_fetches = []
                     future_session = async_class(
@@ -707,10 +711,10 @@ class JIRA:
                             )
                             items.extend(next_items_page)
                 while (
-                    async_class is None
-                    and not is_last
-                    and (total is None or page_start < total)
-                    and len(next_items_page) == page_size
+                        async_class is None
+                        and not is_last
+                        and (total is None or page_start < total)
+                        and len(next_items_page) == page_size
                 ):
                     page_params["startAt"] = page_start
                     page_params["maxResults"] = page_size
@@ -737,10 +741,10 @@ class JIRA:
             )
 
     def _get_items_from_page(
-        self,
-        item_type: Type[ResourceType],
-        items_key: Optional[str],
-        resource: Dict[str, Any],
+            self,
+            item_type: Type[ResourceType],
+            items_key: Optional[str],
+            resource: Dict[str, Any],
     ) -> List[ResourceType]:
         try:
             return [
@@ -761,7 +765,7 @@ class JIRA:
     # Universal resource loading
 
     def find(
-        self, resource_format: str, ids: Union[Tuple[str, str], int, str] = ""
+            self, resource_format: str, ids: Union[Tuple[str, str], int, str] = ""
     ) -> Resource:
         """Find Resource object for any addressable resource on the server.
 
@@ -805,7 +809,7 @@ class JIRA:
 
     # non-resource
     def application_properties(
-        self, key: str = None
+            self, key: str = None
     ) -> Union[Dict[str, str], List[Dict[str, str]]]:
         """Return the mutable server application properties.
 
@@ -876,7 +880,7 @@ class JIRA:
 
     @translate_resource_args
     def add_attachment(
-        self, issue: str, attachment: Union[str, BufferedReader], filename: str = None
+            self, issue: str, attachment: Union[str, BufferedReader], filename: str = None
     ) -> Attachment:
         """Attach an attachment to an issue and returns a Resource for it.
 
@@ -986,13 +990,13 @@ class JIRA:
 
     @translate_resource_args
     def create_component(
-        self,
-        name: str,
-        project: str,
-        description=None,
-        leadUserName=None,
-        assigneeType=None,
-        isAssigneeTypeValid=False,
+            self,
+            name: str,
+            project: str,
+            description=None,
+            leadUserName=None,
+            assigneeType=None,
+            isAssigneeTypeValid=False,
     ) -> Component:
         """Create a component inside a project and return a Resource for it.
 
@@ -1064,7 +1068,7 @@ class JIRA:
     # Dashboards
 
     def dashboards(
-        self, filter=None, startAt=0, maxResults=20
+            self, filter=None, startAt=0, maxResults=20
     ) -> ResultList[Dashboard]:
         """Return a ResultList of Dashboard resources and a ``total`` count.
 
@@ -1132,11 +1136,11 @@ class JIRA:
         return filters
 
     def create_filter(
-        self,
-        name: str = None,
-        description: str = None,
-        jql: str = None,
-        favourite: bool = None,
+            self,
+            name: str = None,
+            description: str = None,
+            jql: str = None,
+            favourite: bool = None,
     ):
         """Create a new filter and return a filter Resource for it.
 
@@ -1166,12 +1170,12 @@ class JIRA:
         return Filter(self._options, self._session, raw=raw_filter_json)
 
     def update_filter(
-        self,
-        filter_id,
-        name: str = None,
-        description: str = None,
-        jql: str = None,
-        favourite: bool = None,
+            self,
+            filter_id,
+            name: str = None,
+            description: str = None,
+            jql: str = None,
+            favourite: bool = None,
     ):
         """Update a filter and return a filter Resource for it.
 
@@ -1218,10 +1222,10 @@ class JIRA:
 
     # non-resource
     def groups(
-        self,
-        query: Optional[str] = None,
-        exclude: Optional[Any] = None,
-        maxResults: int = 9999,
+            self,
+            query: Optional[str] = None,
+            exclude: Optional[Any] = None,
+            maxResults: int = 9999,
     ) -> List[str]:
         """Return a list of groups matching the specified criteria.
 
@@ -1338,10 +1342,10 @@ class JIRA:
     # Issues
 
     def issue(
-        self,
-        id: Union[Issue, str],
-        fields: Optional[str] = None,
-        expand: Optional[str] = None,
+            self,
+            id: Union[Issue, str],
+            fields: Optional[str] = None,
+            expand: Optional[str] = None,
     ) -> Issue:
         """Get an issue Resource from the server.
 
@@ -1367,10 +1371,10 @@ class JIRA:
         return issue
 
     def create_issue(
-        self,
-        fields: Optional[Dict[str, Any]] = None,
-        prefetch: bool = True,
-        **fieldargs,
+            self,
+            fields: Optional[Dict[str, Any]] = None,
+            prefetch: bool = True,
+            **fieldargs,
     ) -> Issue:
         """Create a new issue and return an issue Resource for it.
 
@@ -1420,7 +1424,7 @@ class JIRA:
             return Issue(self._options, self._session, raw=raw_issue_json)
 
     def create_issues(
-        self, field_list: List[Dict[str, Any]], prefetch: bool = True
+            self, field_list: List[Dict[str, Any]], prefetch: bool = True
     ) -> List[Dict[str, Any]]:
         """Bulk create new issues and return an issue Resource for each successfully created issue.
 
@@ -1562,7 +1566,7 @@ class JIRA:
 
     @no_type_check  # FIXME: This function does not do what it wants to with fieldargs
     def create_customer_request(
-        self, fields: Dict[str, Any] = None, prefetch: bool = True, **fieldargs
+            self, fields: Dict[str, Any] = None, prefetch: bool = True, **fieldargs
     ) -> Issue:
         """Create a new customer request and return an issue Resource for it.
 
@@ -1616,12 +1620,12 @@ class JIRA:
             return Issue(self._options, self._session, raw=raw_issue_json)
 
     def createmeta(
-        self,
-        projectKeys: Optional[Union[Tuple[str, str], str]] = None,
-        projectIds: Union[List, Tuple[str, str]] = [],
-        issuetypeIds: Optional[List[str]] = None,
-        issuetypeNames: Optional[str] = None,
-        expand: Optional[str] = None,
+            self,
+            projectKeys: Optional[Union[Tuple[str, str], str]] = None,
+            projectIds: Union[List, Tuple[str, str]] = [],
+            issuetypeIds: Optional[List[str]] = None,
+            issuetypeNames: Optional[str] = None,
+            expand: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Get the metadata required to create issues, optionally filtered by projects and issue types.
 
@@ -1749,7 +1753,7 @@ class JIRA:
 
     @translate_resource_args
     def comment(
-        self, issue: str, comment: str, expand: Optional[str] = None
+            self, issue: str, comment: str, expand: Optional[str] = None
     ) -> Comment:
         """Get a comment Resource from the server for the specified ID.
 
@@ -1762,11 +1766,11 @@ class JIRA:
 
     @translate_resource_args
     def add_comment(
-        self,
-        issue: str,
-        body: str,
-        visibility: Optional[Dict[str, str]] = None,
-        is_internal: bool = False,
+            self,
+            issue: str,
+            body: str,
+            visibility: Optional[Dict[str, str]] = None,
+            is_internal: bool = False,
     ) -> Comment:
         """Add a comment from the current authenticated user on the specified issue and return a Resource for it.
 
@@ -1846,12 +1850,12 @@ class JIRA:
     # removed the @translate_resource_args because it prevents us from finding
     # information for building a proper link
     def add_remote_link(
-        self,
-        issue: str,
-        destination: Union[Issue, Dict[str, Any]],
-        globalId: Optional[str] = None,
-        application: Optional[Dict[str, Any]] = None,
-        relationship: Optional[str] = None,
+            self,
+            issue: str,
+            destination: Union[Issue, Dict[str, Any]],
+            globalId: Optional[str] = None,
+            application: Optional[Dict[str, Any]] = None,
+            relationship: Optional[str] = None,
     ) -> RemoteLink:
         """Add a remote link from an issue to an external application and returns a remote link Resource for it.
 
@@ -1981,7 +1985,7 @@ class JIRA:
         ]
 
     def find_transitionid_by_name(
-        self, issue: str, transition_name: str
+            self, issue: str, transition_name: str
     ) -> Optional[int]:
         """Get a transitionid available on the specified issue to the current user.
 
@@ -2002,13 +2006,13 @@ class JIRA:
 
     @translate_resource_args
     def transition_issue(
-        self,
-        issue: str,
-        transition: str,
-        fields: Optional[Dict[str, Any]] = None,
-        comment: Optional[str] = None,
-        worklog: Optional[str] = None,
-        **fieldargs,
+            self,
+            issue: str,
+            transition: str,
+            fields: Optional[Dict[str, Any]] = None,
+            comment: Optional[str] = None,
+            worklog: Optional[str] = None,
+            **fieldargs,
     ):
         """Perform a transition on an issue.
 
@@ -2173,16 +2177,16 @@ class JIRA:
 
     @translate_resource_args
     def add_worklog(
-        self,
-        issue,
-        timeSpent: (Optional[str]) = None,
-        timeSpentSeconds: (Optional[str]) = None,
-        adjustEstimate: (Optional[str]) = None,
-        newEstimate: (Optional[str]) = None,
-        reduceBy: (Optional[str]) = None,
-        comment: (Optional[str]) = None,
-        started: (Optional[datetime.datetime]) = None,
-        user: (Optional[str]) = None,
+            self,
+            issue,
+            timeSpent: (Optional[str]) = None,
+            timeSpentSeconds: (Optional[str]) = None,
+            adjustEstimate: (Optional[str]) = None,
+            newEstimate: (Optional[str]) = None,
+            reduceBy: (Optional[str]) = None,
+            comment: (Optional[str]) = None,
+            started: (Optional[datetime.datetime]) = None,
+            user: (Optional[str]) = None,
     ) -> Worklog:
         """Add a new worklog entry on an issue and return a Resource for it.
 
@@ -2244,11 +2248,11 @@ class JIRA:
 
     @translate_resource_args
     def create_issue_link(
-        self,
-        type: Union[str, IssueLinkType],
-        inwardIssue: str,
-        outwardIssue: str,
-        comment: Optional[Dict[str, Any]] = None,
+            self,
+            type: Union[str, IssueLinkType],
+            inwardIssue: str,
+            outwardIssue: str,
+            comment: Optional[Dict[str, Any]] = None,
     ) -> Response:
         """Create a link between two issues.
 
@@ -2391,8 +2395,8 @@ class JIRA:
         if hasattr(service_desk, "id"):
             service_desk = service_desk.id
         url = (
-            self.server_url
-            + f"/rest/servicedeskapi/servicedesk/{service_desk}/requesttype"
+                self.server_url
+                + f"/rest/servicedeskapi/servicedesk/{service_desk}/requesttype"
         )
         headers = {"X-ExperimentalApi": "opt-in"}
         r_json = json_loads(self._session.get(url, headers=headers))
@@ -2414,11 +2418,11 @@ class JIRA:
 
     # non-resource
     def my_permissions(
-        self,
-        projectKey: Optional[str] = None,
-        projectId: Optional[str] = None,
-        issueKey: Optional[str] = None,
-        issueId: Optional[str] = None,
+            self,
+            projectKey: Optional[str] = None,
+            projectId: Optional[str] = None,
+            issueKey: Optional[str] = None,
+            issueId: Optional[str] = None,
     ) -> Dict[str, Dict[str, Dict[str, str]]]:
         """Get a dict of all available permissions on the server.
 
@@ -2518,13 +2522,13 @@ class JIRA:
 
     @translate_resource_args
     def create_temp_project_avatar(
-        self,
-        project: str,
-        filename: str,
-        size: int,
-        avatar_img: bytes,
-        contentType: str = None,
-        auto_confirm: bool = False,
+            self,
+            project: str,
+            filename: str,
+            size: int,
+            avatar_img: bytes,
+            contentType: str = None,
+            auto_confirm: bool = False,
     ):
         """Register an image file as a project avatar.
 
@@ -2649,7 +2653,7 @@ class JIRA:
 
     @translate_resource_args
     def get_project_version_by_name(
-        self, project: str, version_name: str
+            self, project: str, version_name: str
     ) -> Optional[Version]:
         """Get a version Resource by its name present on a project.
 
@@ -2744,14 +2748,14 @@ class JIRA:
     # Search
 
     def search_issues(
-        self,
-        jql_str: str,
-        startAt: int = 0,
-        maxResults: int = 50,
-        validate_query: bool = True,
-        fields: Optional[Union[str, List[str]]] = None,
-        expand: Optional[str] = None,
-        json_result: bool = False,
+            self,
+            jql_str: str,
+            startAt: int = 0,
+            maxResults: int = 50,
+            validate_query: bool = True,
+            fields: Optional[Union[str, List[str]]] = None,
+            expand: Optional[str] = None,
+            json_result: bool = False,
     ) -> Union[List[Dict[str, Any]], ResultList[Issue]]:
         """Get a :class:`~jira.client.ResultList` of issue Resources matching a JQL search string.
 
@@ -2928,7 +2932,7 @@ class JIRA:
         return user
 
     def search_assignable_users_for_projects(
-        self, username: str, projectKeys: str, startAt: int = 0, maxResults: int = 50
+            self, username: str, projectKeys: str, startAt: int = 0, maxResults: int = 50
     ) -> ResultList:
         """Get a list of user Resources that match the search string and can be assigned issues for projects.
 
@@ -2954,14 +2958,14 @@ class JIRA:
         )
 
     def search_assignable_users_for_issues(
-        self,
-        username: Optional[str] = None,
-        project: Optional[str] = None,
-        issueKey: Optional[str] = None,
-        expand: Optional[Any] = None,
-        startAt: int = 0,
-        maxResults: int = 50,
-        query: Optional[str] = None,
+            self,
+            username: Optional[str] = None,
+            project: Optional[str] = None,
+            issueKey: Optional[str] = None,
+            expand: Optional[Any] = None,
+            startAt: int = 0,
+            maxResults: int = 50,
+            query: Optional[str] = None,
     ):
         """Get a list of user Resources that match the search string for assigning or creating issues.
         "username" query parameter is deprecated in Jira Cloud; the expected parameter now is "query", which can just be
@@ -3016,13 +3020,13 @@ class JIRA:
         return self._get_json("user/avatars", params={"username": username})
 
     def create_temp_user_avatar(
-        self,
-        user: str,
-        filename: str,
-        size: int,
-        avatar_img: bytes,
-        contentType: Any = None,
-        auto_confirm: bool = False,
+            self,
+            user: str,
+            filename: str,
+            size: int,
+            avatar_img: bytes,
+            contentType: Any = None,
+            auto_confirm: bool = False,
     ):
         """Register an image file as a user avatar.
 
@@ -3118,13 +3122,13 @@ class JIRA:
         return self._session.delete(url, params=params)
 
     def search_users(
-        self,
-        user: Optional[str] = None,
-        startAt: int = 0,
-        maxResults: int = 50,
-        includeActive: bool = True,
-        includeInactive: bool = False,
-        query: Optional[str] = None,
+            self,
+            user: Optional[str] = None,
+            startAt: int = 0,
+            maxResults: int = 50,
+            includeActive: bool = True,
+            includeInactive: bool = False,
+            query: Optional[str] = None,
     ) -> ResultList[User]:
         """Get a list of user Resources that match the specified search string.
         "username" query parameter is deprecated in Jira Cloud; the expected parameter now is "query", which can just be the full
@@ -3155,12 +3159,12 @@ class JIRA:
         return self._fetch_pages(User, None, "user/search", startAt, maxResults, params)
 
     def search_allowed_users_for_issue(
-        self,
-        user: str,
-        issueKey: str = None,
-        projectKey: str = None,
-        startAt: int = 0,
-        maxResults: int = 50,
+            self,
+            user: str,
+            issueKey: str = None,
+            projectKey: str = None,
+            startAt: int = 0,
+            maxResults: int = 50,
     ) -> ResultList:
         """Get a list of user Resources that match a username string and have browse permission for the issue or project.
 
@@ -3188,14 +3192,14 @@ class JIRA:
 
     @translate_resource_args
     def create_version(
-        self,
-        name: str,
-        project: str,
-        description: str = None,
-        releaseDate: Any = None,
-        startDate: Any = None,
-        archived: bool = False,
-        released: bool = False,
+            self,
+            name: str,
+            project: str,
+            description: str = None,
+            releaseDate: Any = None,
+            startDate: Any = None,
+            archived: bool = False,
+            released: bool = False,
     ) -> Version:
         """Create a version in a project and return a Resource for it.
 
@@ -3330,10 +3334,10 @@ class JIRA:
 
     # Utilities
     def _create_http_basic_session(
-        self,
-        username: str,
-        password: str,
-        timeout: Optional[Union[Union[float, int], Tuple[float, float]]] = None,
+            self,
+            username: str,
+            password: str,
+            timeout: Optional[Union[Union[float, int], Tuple[float, float]]] = None,
     ):
         """Creates a basic http session.
 
@@ -3351,7 +3355,7 @@ class JIRA:
         self._session.auth = (username, password)
 
     def _create_oauth_session(
-        self, oauth, timeout: Optional[Union[Union[float, int], Tuple[float, float]]]
+            self, oauth, timeout: Optional[Union[Union[float, int], Tuple[float, float]]]
     ):
         verify = bool(self._options["verify"])
 
@@ -3370,9 +3374,9 @@ class JIRA:
         self._session.auth = oauth_instance
 
     def _create_kerberos_session(
-        self,
-        timeout: Optional[Union[Union[float, int], Tuple[float, float]]],
-        kerberos_options=None,
+            self,
+            timeout: Optional[Union[Union[float, int], Tuple[float, float]]],
+            kerberos_options=None,
     ):
         verify = bool(self._options["verify"])
         if kerberos_options is None:
@@ -3403,6 +3407,25 @@ class JIRA:
         client_cert: Tuple[str, str] = self._options["client_cert"]  # to help mypy
         self._session.cert = client_cert
 
+    def _set_server_verification(self):
+        """
+        Sets the Session verify value based on the 'verify' and 'server_ca' options provided
+        """
+        verify = bool(self._options["verify"])
+        # Check if the verify is set to 'True' and a server_ca is provided
+        if verify and self._options['server_ca'] is not None:
+            # Confirm that the path exists for the server_ca
+            ca_path = os.path.abspath((self._options['server_ca']).strip())
+            if os.path.exists(ca_path) and os.path.isfile(ca_path):
+                verify = self._options['server_ca']
+            else:
+                # Log the error since the server_ca was provided but is not valid
+                self.log.fatal(f'The provided server certificate authority ({ca_path}) is not valid')
+
+        # Set the verify property of the Session object
+        self._session.verify = verify
+
+
     @staticmethod
     def _timestamp(dt: datetime.timedelta = None):
         t = datetime.datetime.utcnow()
@@ -3411,7 +3434,7 @@ class JIRA:
         return calendar.timegm(t.timetuple())
 
     def _create_jwt_session(
-        self, jwt, timeout: Optional[Union[Union[float, int], Tuple[float, float]]]
+            self, jwt, timeout: Optional[Union[Union[float, int], Tuple[float, float]]]
     ):
         try:
             jwt_auth = JWTAuth(jwt["secret"], alg="HS256")
@@ -3432,9 +3455,9 @@ class JIRA:
         self._session.auth = jwt_auth
 
     def _create_token_session(
-        self,
-        token_auth: str,
-        timeout: Optional[Union[Union[float, int], Tuple[float, float]]],
+            self,
+            token_auth: str,
+            timeout: Optional[Union[Union[float, int], Tuple[float, float]]],
     ):
         """
         Creates token-based session.
@@ -3480,7 +3503,7 @@ class JIRA:
         return base.format(**options)
 
     def _get_json(
-        self, path: str, params: Dict[str, Any] = None, base: str = JIRA_BASE_URL
+            self, path: str, params: Dict[str, Any] = None, base: str = JIRA_BASE_URL
     ):
         """Get the json for a given path and params.
 
@@ -3503,7 +3526,7 @@ class JIRA:
         return r_json
 
     def _find_for_resource(
-        self, resource_cls: Any, ids: Union[Tuple[str, str], int, str], expand=None
+            self, resource_cls: Any, ids: Union[Tuple[str, str], int, str], expand=None
     ) -> Any:
         """Uses the find method of the provided Resource class
 
@@ -3634,8 +3657,8 @@ class JIRA:
                     user.raw["session"]["value"],
                 )
             url = (
-                self._options["server"]
-                + f"/admin/rest/um/1/user/deactivate?username={username}"
+                    self._options["server"]
+                    + f"/admin/rest/um/1/user/deactivate?username={username}"
             )
             # We can't use our existing session here - this endpoint is fragile and objects to extra headers
             try:
@@ -3714,8 +3737,8 @@ class JIRA:
             return 503  # type: ignore # FIXME: is this a bug?
 
         if (
-            not r.text.find("To perform the re-index now, please go to the")
-            and force is False
+                not r.text.find("To perform the re-index now, please go to the")
+                and force is False
         ):
             return True
 
@@ -3839,7 +3862,6 @@ class JIRA:
             str
         """
         if not hasattr(self, "_myself"):
-
             url = self._get_url("myself")
             r = self._session.get(url, headers=self._options["headers"])
 
@@ -4011,19 +4033,19 @@ class JIRA:
         return data
 
     def create_project(
-        self,
-        key: str,
-        name: str = None,
-        assignee: str = None,
-        ptype: str = "software",
-        template_name: str = None,
-        avatarId=None,
-        issueSecurityScheme=None,
-        permissionScheme=None,
-        projectCategory=None,
-        notificationScheme=10000,
-        categoryId=None,
-        url: str = "",
+            self,
+            key: str,
+            name: str = None,
+            assignee: str = None,
+            ptype: str = "software",
+            template_name: str = None,
+            avatarId=None,
+            issueSecurityScheme=None,
+            permissionScheme=None,
+            projectCategory=None,
+            notificationScheme=10000,
+            categoryId=None,
+            url: str = "",
     ):
         """Create a project with the specified parameters.
 
@@ -4168,16 +4190,16 @@ class JIRA:
         return r_json
 
     def add_user(
-        self,
-        username: str,
-        email: str,
-        directoryId: int = 1,
-        password: str = None,
-        fullname: str = None,
-        notify: bool = False,
-        active: bool = True,
-        ignore_existing: bool = False,
-        application_keys: Optional[List] = None,
+            self,
+            username: str,
+            email: str,
+            directoryId: int = 1,
+            password: str = None,
+            fullname: str = None,
+            notify: bool = False,
+            active: bool = True,
+            ignore_existing: bool = False,
+            application_keys: Optional[List] = None,
     ):
         """Create a new Jira user.
 
@@ -4227,16 +4249,16 @@ class JIRA:
             if e.response:
                 err = e.response.json()["errors"]
                 if (
-                    "username" in err
-                    and err["username"] == "A user with that username already exists."
-                    and ignore_existing
+                        "username" in err
+                        and err["username"] == "A user with that username already exists."
+                        and ignore_existing
                 ):
                     return True
             raise e
         return True
 
     def add_user_to_group(
-        self, username: str, group: str
+            self, username: str, group: str
     ) -> Union[bool, Dict[str, Any]]:
         """Add a user to an existing group.
 
@@ -4310,12 +4332,12 @@ class JIRA:
 
     @translate_resource_args
     def boards(
-        self,
-        startAt: int = 0,
-        maxResults: int = 50,
-        type: str = None,
-        name: str = None,
-        projectKeyOrID=None,
+            self,
+            startAt: int = 0,
+            maxResults: int = 50,
+            type: str = None,
+            name: str = None,
+            projectKeyOrID=None,
     ) -> ResultList[Board]:
         """Get a list of board resources.
 
@@ -4340,8 +4362,8 @@ class JIRA:
             params["projectKeyOrId"] = projectKeyOrID
 
         if (
-            self._options["agile_rest_path"]
-            == GreenHopperResource.GREENHOPPER_REST_PATH
+                self._options["agile_rest_path"]
+                == GreenHopperResource.GREENHOPPER_REST_PATH
         ):
             # Old, private API did not support pagination, all records were present in response,
             #   and no parameters were supported.
@@ -4372,12 +4394,12 @@ class JIRA:
 
     @translate_resource_args
     def sprints(
-        self,
-        board_id: int,
-        extended: bool = False,
-        startAt: int = 0,
-        maxResults: int = 50,
-        state: str = None,
+            self,
+            board_id: int,
+            extended: bool = False,
+            startAt: int = 0,
+            maxResults: int = 50,
+            state: str = None,
     ) -> ResultList[Sprint]:
         """Get a list of sprint GreenHopperResources.
 
@@ -4401,8 +4423,8 @@ class JIRA:
             params["state"] = state
 
         if (
-            self._options["agile_rest_path"]
-            == GreenHopperResource.GREENHOPPER_REST_PATH
+                self._options["agile_rest_path"]
+                == GreenHopperResource.GREENHOPPER_REST_PATH
         ):
             r_json: Dict[str, Any] = self._get_json(
                 "sprintquery/%s?includeHistoricSprints=true&includeFutureSprints=true"
@@ -4463,8 +4485,8 @@ class JIRA:
             payload["endDate"] = endDate
         if state:
             if (
-                self._options["agile_rest_path"]
-                == GreenHopperResource.GREENHOPPER_REST_PATH
+                    self._options["agile_rest_path"]
+                    == GreenHopperResource.GREENHOPPER_REST_PATH
             ):
                 raise NotImplementedError(
                     "Public Jira API does not support state update"
@@ -4537,12 +4559,12 @@ class JIRA:
         board.delete()
 
     def create_board(
-        self,
-        name: str,
-        project_ids: Union[str, List[str]],
-        preset: str = "scrum",
-        location_type: str = "user",
-        location_id: Optional[str] = None,
+            self,
+            name: str,
+            project_ids: Union[str, List[str]],
+            preset: str = "scrum",
+            location_type: str = "user",
+            location_id: Optional[str] = None,
     ) -> Board:
         """Create a new board for the ``project_ids``.
 
@@ -4558,8 +4580,8 @@ class JIRA:
             Board: The newly created board
         """
         if (
-            self._options["agile_rest_path"]
-            != GreenHopperResource.GREENHOPPER_REST_PATH
+                self._options["agile_rest_path"]
+                != GreenHopperResource.GREENHOPPER_REST_PATH
         ):
             raise NotImplementedError(
                 "Jira Agile Public API does not support this request"
@@ -4588,11 +4610,11 @@ class JIRA:
         return Board(self._options, self._session, raw=raw_issue_json)
 
     def create_sprint(
-        self,
-        name: str,
-        board_id: int,
-        startDate: Optional[Any] = None,
-        endDate: Optional[Any] = None,
+            self,
+            name: str,
+            board_id: int,
+            startDate: Optional[Any] = None,
+            endDate: Optional[Any] = None,
     ) -> Sprint:
         """Create a new sprint for the ``board_id``.
 
@@ -4613,8 +4635,8 @@ class JIRA:
 
         raw_issue_json: Dict[str, Any]
         if (
-            self._options["agile_rest_path"]
-            == GreenHopperResource.GREENHOPPER_REST_PATH
+                self._options["agile_rest_path"]
+                == GreenHopperResource.GREENHOPPER_REST_PATH
         ):
             url = self._get_url(f"sprint/{board_id}", base=self.AGILE_BASE_URL)
             r = self._session.post(url)
@@ -4677,8 +4699,8 @@ class JIRA:
                     )
                 raise
         elif (
-            self._options["agile_rest_path"]
-            == GreenHopperResource.GREENHOPPER_REST_PATH
+                self._options["agile_rest_path"]
+                == GreenHopperResource.GREENHOPPER_REST_PATH
         ):
             # In old, private API the function does not exist anymore and we need to use
             # issue.update() to perform this operation
@@ -4701,7 +4723,7 @@ class JIRA:
             )
 
     def add_issues_to_epic(
-        self, epic_id: str, issue_keys: str, ignore_epics: bool = True
+            self, epic_id: str, issue_keys: str, ignore_epics: bool = True
     ) -> Response:
         """Add the issues in ``issue_keys`` to the ``epic_id``.
 
@@ -4712,8 +4734,8 @@ class JIRA:
 
         """
         if (
-            self._options["agile_rest_path"]
-            != GreenHopperResource.GREENHOPPER_REST_PATH
+                self._options["agile_rest_path"]
+                != GreenHopperResource.GREENHOPPER_REST_PATH
         ):
             # TODO(ssbarnea): simulate functionality using issue.update()?
             raise NotImplementedError(
@@ -4728,10 +4750,10 @@ class JIRA:
 
     # TODO(ssbarnea): Jira Agile API supports moving more than one issue.
     def rank(
-        self,
-        issue: str,
-        next_issue: Optional[str] = None,
-        prev_issue: Optional[str] = None,
+            self,
+            issue: str,
+            next_issue: Optional[str] = None,
+            prev_issue: Optional[str] = None,
     ) -> Response:
         """Rank an issue before/after another using the default Ranking field, the one named 'Rank'.
 
@@ -4760,14 +4782,14 @@ class JIRA:
             for field in self.fields():
                 if field["name"] == "Rank":
                     if (
-                        field["schema"]["custom"]
-                        == "com.pyxis.greenhopper.jira:gh-lexo-rank"
+                            field["schema"]["custom"]
+                            == "com.pyxis.greenhopper.jira:gh-lexo-rank"
                     ):
                         self._rank = field["schema"]["customId"]
                         break
                     elif (
-                        field["schema"]["custom"]
-                        == "com.pyxis.greenhopper.jira:gh-global-rank"
+                            field["schema"]["custom"]
+                            == "com.pyxis.greenhopper.jira:gh-global-rank"
                     ):
                         # Obsolete since Jira v6.3.13.1
                         self._rank = field["schema"]["customId"]
@@ -4810,8 +4832,8 @@ class JIRA:
                     )
                 raise
         elif (
-            self._options["agile_rest_path"]
-            == GreenHopperResource.GREENHOPPER_REST_PATH
+                self._options["agile_rest_path"]
+                == GreenHopperResource.GREENHOPPER_REST_PATH
         ):
             # In old, private API the function does not exist anymore and we need to use
             # issue.update() to perform this operation
