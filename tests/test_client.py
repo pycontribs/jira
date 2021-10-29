@@ -215,3 +215,20 @@ def test_token_auth(cl_admin: jira.client.JIRA):
     # THEN: The reported authenticated user of the token
     # matches the original token creator user.
     assert cl_admin.myself() == new_jira_client.myself()
+
+
+def test_cookie_auth(test_manager: JiraTestManager):
+    """Test Cookie based authentication works.
+
+    NOTE: this is deprecated in Cloud and is not recommended in Server.
+    https://developer.atlassian.com/cloud/jira/platform/jira-rest-api-cookie-based-authentication/
+    https://developer.atlassian.com/server/jira/platform/cookie-based-authentication/
+    """
+    # GIVEN: the username and password
+    # WHEN: We create a session with cookie auth for the same server
+    cookie_auth_jira = jira.client.JIRA(
+        server=test_manager.CI_JIRA_URL,
+        auth=(test_manager.CI_JIRA_ADMIN, test_manager.CI_JIRA_ADMIN_PASSWORD),
+    )
+    # THEN: We get the same result from the API
+    assert test_manager.jira_admin.myself() == cookie_auth_jira.myself()
