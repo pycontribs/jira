@@ -494,9 +494,7 @@ class JIRA:
             # always log in for cookie based auth, as we need a first request to be logged in
             validate = True
         else:
-            verify = bool(self._options["verify"])
             self._session = ResilientSession(timeout=timeout)
-            self._session.verify = verify
 
         # Add the client authentication certificate to the request if configured
         self._add_client_cert_to_session()
@@ -564,7 +562,6 @@ class JIRA:
     ):
         self._session = ResilientSession(timeout=timeout)
         self._session.auth = JiraCookieAuth(self._session, self.session, auth)
-        self._session.verify = bool(self._options["verify"])
 
     def _check_update_(self):
         """Check if the current version of the library is outdated."""
@@ -3349,16 +3346,12 @@ class JIRA:
         Returns:
             ResilientSession
         """
-        verify = bool(self._options["verify"])
         self._session = ResilientSession(timeout=timeout)
-        self._session.verify = verify
         self._session.auth = (username, password)
 
     def _create_oauth_session(
             self, oauth, timeout: Optional[Union[Union[float, int], Tuple[float, float]]]
     ):
-        verify = bool(self._options["verify"])
-
         from oauthlib.oauth1 import SIGNATURE_RSA
         from requests_oauthlib import OAuth1
 
@@ -3370,7 +3363,6 @@ class JIRA:
             resource_owner_secret=oauth["access_token_secret"],
         )
         self._session = ResilientSession(timeout)
-        self._session.verify = verify
         self._session.auth = oauth_instance
 
     def _create_kerberos_session(
@@ -3378,7 +3370,6 @@ class JIRA:
             timeout: Optional[Union[Union[float, int], Tuple[float, float]]],
             kerberos_options=None,
     ):
-        verify = bool(self._options["verify"])
         if kerberos_options is None:
             kerberos_options = {}
 
@@ -3395,7 +3386,6 @@ class JIRA:
             )
 
         self._session = ResilientSession(timeout=timeout)
-        self._session.verify = verify
         self._session.auth = HTTPKerberosAuth(
             mutual_authentication=mutual_authentication
         )
@@ -3412,12 +3402,18 @@ class JIRA:
         Sets the Session verify value based on the 'verify' and 'server_ca' options provided
         """
         verify = bool(self._options["verify"])
+
+        # Warn on a False setting which means server certificate verification is disabled
+        if not verify:
+            self.log.warning('Disabling server certificate authority checks is not recommended in production environments')
+
         # Check if the verify is set to 'True' and a server_ca is provided
         if verify and self._options['server_ca'] is not None:
             # Confirm that the path exists for the server_ca
             ca_path = os.path.abspath((self._options['server_ca']).strip())
             if os.path.exists(ca_path) and os.path.isfile(ca_path):
-                verify = self._options['server_ca']
+                verify = ca_path
+                self.log.info(f'Setting server certificate authority verification to {ca_path}')
             else:
                 # Log the error since the server_ca was provided but is not valid
                 self.log.fatal(f'The provided server certificate authority ({ca_path}) is not valid')
@@ -3451,7 +3447,6 @@ class JIRA:
         for f in jwt["payload"].items():
             jwt_auth.add_field(f[0], f[1])
         self._session = ResilientSession(timeout=timeout)
-        self._session.verify = bool(self._options["verify"])
         self._session.auth = jwt_auth
 
     def _create_token_session(
@@ -3463,9 +3458,7 @@ class JIRA:
         Creates token-based session.
         Header structure: "authorization": "Bearer <token_auth>"
         """
-        verify = self._options["verify"]
         self._session = ResilientSession(timeout=timeout)
-        self._session.verify = verify
         self._session.auth = TokenAuth(token_auth)
 
     def _set_avatar(self, params, url, avatar):
