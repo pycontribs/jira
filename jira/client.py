@@ -496,7 +496,7 @@ class JIRA:
         # Add the client authentication certificate to the request if configured
         self._add_client_cert_to_session()
         # Add the SSL Cert to the request if configured
-        self._add_ssl_cert_to_session()
+        self._add_ssl_cert_verif_strategy_to_session()
 
         self._session.headers.update(self._options["headers"])
 
@@ -3389,17 +3389,25 @@ class JIRA:
         )
 
     def _add_client_cert_to_session(self):
+        """Adds the client certificate to the session.
+        If configured through the constructor.
+
+        https://docs.python-requests.org/en/master/user/advanced/#client-side-certificates
+        - str: a single file (containing the private key and the certificate)
+        - Tuple[str,str] a tuple of both files’ paths
         """
-        Adds the client certificate to the request if configured through the constructor.
-        """
-        client_cert: Tuple[str, str] = self._options["client_cert"]  # to help mypy
+        client_cert: Union[str, Tuple[str, str]] = self._options["client_cert"]
         self._session.cert = client_cert
 
-    def _add_ssl_cert_to_session(self):
+    def _add_ssl_cert_verif_strategy_to_session(self):
+        """Adds verification strategy for host SSL certificates.
+        If configured through the constructor.
+
+        https://docs.python-requests.org/en/master/user/advanced/#ssl-cert-verification
+        - str: Path to a `CA_BUNDLE` file or directory with certificates of trusted CAs.
+        - bool: True/False
         """
-        Adds the client certificate to the request if configured through the constructor.
-        """
-        ssl_cert: Union[bool, str] = self._options["verify"]  # to help mypy
+        ssl_cert: Union[bool, str] = self._options["verify"]
         self._session.verify = ssl_cert
 
     @staticmethod
