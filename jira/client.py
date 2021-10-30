@@ -379,7 +379,10 @@ class JIRA:
                 * agile_rest_path - the REST path to use for Jira Agile requests. Defaults to ``greenhopper`` (old, private
                   API). Check :py:class:`jira.resources.GreenHopperResource` for other supported values.
                 * verify (Union[bool, str]) -- Verify SSL certs. Defaults to ``True``.
-                * client_cert -- a tuple of (cert,key) for the requests library for client side SSL
+                  Or path to to a CA_BUNDLE file or directory with certificates of trusted CAs,
+                  for the `requests` library to use.
+                * client_cert (Union[str, Tuple[str,str]]) -- Path to file with both cert and key or
+                  a tuple of (cert,key), for the `requests` library to use for client side SSL.
                 * check_update -- Check whether using the newest python-jira library version.
                 * headers -- a dict to update the default headers the session uses for all API requests.
 
