@@ -537,11 +537,22 @@ class JIRA:
             self._check_update_()
             JIRA.checked_version = True
 
-        self._fields = {}
+        self._fields_cache_value: Dict[str, str] = {}  # access via self._fields_cache
+
+    @property
+    def _fields_cache(self) -> Dict[str, str]:
+        """Cached dictionary of {Field Name: Field ID}. Lazy loaded."""
+        if not self._fields_cache_value:
+            self._update_fields_cache()
+        return self._fields_cache_value
+
+    def _update_fields_cache(self):
+        """Update the cache used for `self._fields_cache`."""
+        self._fields_cache_value = {}
         for f in self.fields():
             if "clauseNames" in f:
                 for name in f["clauseNames"]:
-                    self._fields[name] = f["id"]
+                    self._fields_cache_value[name] = f["id"]
 
     @property
     def server_url(self) -> str:
@@ -2780,11 +2791,11 @@ class JIRA:
         # this will translate JQL field names to REST API Name
         # most people do know the JQL names so this will help them use the API easier
         untranslate = {}  # use to add friendly aliases when we get the results back
-        if self._fields:
+        if self._fields_cache:
             for i, field in enumerate(fields):
-                if field in self._fields:
-                    untranslate[self._fields[field]] = fields[i]
-                    fields[i] = self._fields[field]
+                if field in self._fields_cache:
+                    untranslate[self._fields_cache[field]] = fields[i]
+                    fields[i] = self._fields_cache[field]
 
         search_params = {
             "jql": jql_str,
