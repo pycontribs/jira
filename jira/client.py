@@ -382,8 +382,11 @@ class JIRA:
                 * rest_api_version -- the version of the REST resources under rest_path to use. Defaults to ``2``.
                 * agile_rest_path - the REST path to use for Jira Agile requests. Defaults to ``greenhopper`` (old, private
                   API). Check :py:class:`jira.resources.GreenHopperResource` for other supported values.
-                * verify -- Verify SSL certs. Defaults to ``True``.
-                * client_cert -- a tuple of (cert,key) for the requests library for client side SSL
+                * verify (Union[bool, str]) -- Verify SSL certs. Defaults to ``True``.
+                  Or path to to a CA_BUNDLE file or directory with certificates of trusted CAs,
+                  for the `requests` library to use.
+                * client_cert (Union[str, Tuple[str,str]]) -- Path to file with both cert and key or
+                  a tuple of (cert,key), for the `requests` library to use for client side SSL.
                 * check_update -- Check whether using the newest python-jira library version.
                 * headers -- a dict to update the default headers the session uses for all API requests.
 
@@ -484,7 +487,6 @@ class JIRA:
             self._create_oauth_session(oauth, timeout)
         elif basic_auth:
             self._create_http_basic_session(*basic_auth, timeout=timeout)
-            self._session.headers.update(self._options["headers"])
         elif jwt:
             self._create_jwt_session(jwt, timeout)
         elif token_auth:
@@ -496,12 +498,12 @@ class JIRA:
             # always log in for cookie based auth, as we need a first request to be logged in
             validate = True
         else:
-            verify = bool(self._options["verify"])
             self._session = ResilientSession(timeout=timeout)
-            self._session.verify = verify
 
         # Add the client authentication certificate to the request if configured
         self._add_client_cert_to_session()
+        # Add the SSL Cert to the request if configured
+        self._add_ssl_cert_verif_strategy_to_session()
 
         self._session.headers.update(self._options["headers"])
 
@@ -541,11 +543,22 @@ class JIRA:
             self._check_update_()
             JIRA.checked_version = True
 
-        self._fields = {}
+        self._fields_cache_value: Dict[str, str] = {}  # access via self._fields_cache
+
+    @property
+    def _fields_cache(self) -> Dict[str, str]:
+        """Cached dictionary of {Field Name: Field ID}. Lazy loaded."""
+        if not self._fields_cache_value:
+            self._update_fields_cache()
+        return self._fields_cache_value
+
+    def _update_fields_cache(self):
+        """Update the cache used for `self._fields_cache`."""
+        self._fields_cache_value = {}
         for f in self.fields():
             if "clauseNames" in f:
                 for name in f["clauseNames"]:
-                    self._fields[name] = f["id"]
+                    self._fields_cache_value[name] = f["id"]
 
     @property
     def server_url(self) -> str:
@@ -573,7 +586,6 @@ class JIRA:
             session_api_url="{server}{auth_url}".format(**self._options),
             auth=auth,
         )
-        self._session.verify = bool(self._options["verify"])
 
     def _check_update_(self):
         """Check if the current version of the library is outdated."""
@@ -2793,11 +2805,11 @@ class JIRA:
         # this will translate JQL field names to REST API Name
         # most people do know the JQL names so this will help them use the API easier
         untranslate = {}  # use to add friendly aliases when we get the results back
-        if self._fields:
+        if self._fields_cache:
             for i, field in enumerate(fields):
-                if field in self._fields:
-                    untranslate[self._fields[field]] = fields[i]
-                    fields[i] = self._fields[field]
+                if field in self._fields_cache:
+                    untranslate[self._fields_cache[field]] = fields[i]
+                    fields[i] = self._fields_cache[field]
 
         search_params = {
             "jql": jql_str,
@@ -3358,15 +3370,12 @@ class JIRA:
         Returns:
             ResilientSession
         """
-        verify = bool(self._options["verify"])
         self._session = ResilientSession(timeout=timeout)
-        self._session.verify = verify
         self._session.auth = (username, password)
 
     def _create_oauth_session(
         self, oauth, timeout: Optional[Union[Union[float, int], Tuple[float, float]]]
     ):
-        verify = bool(self._options["verify"])
 
         from oauthlib.oauth1 import SIGNATURE_RSA
         from requests_oauthlib import OAuth1
@@ -3379,7 +3388,6 @@ class JIRA:
             resource_owner_secret=oauth["access_token_secret"],
         )
         self._session = ResilientSession(timeout)
-        self._session.verify = verify
         self._session.auth = oauth_instance
 
     def _create_kerberos_session(
@@ -3387,7 +3395,6 @@ class JIRA:
         timeout: Optional[Union[Union[float, int], Tuple[float, float]]],
         kerberos_options=None,
     ):
-        verify = bool(self._options["verify"])
         if kerberos_options is None:
             kerberos_options = {}
 
@@ -3404,17 +3411,31 @@ class JIRA:
             )
 
         self._session = ResilientSession(timeout=timeout)
-        self._session.verify = verify
         self._session.auth = HTTPKerberosAuth(
             mutual_authentication=mutual_authentication
         )
 
     def _add_client_cert_to_session(self):
+        """Adds the client certificate to the session.
+        If configured through the constructor.
+
+        https://docs.python-requests.org/en/master/user/advanced/#client-side-certificates
+        - str: a single file (containing the private key and the certificate)
+        - Tuple[str,str] a tuple of both files’ paths
         """
-        Adds the client certificate to the request if configured through the constructor.
-        """
-        client_cert: Tuple[str, str] = self._options["client_cert"]  # to help mypy
+        client_cert: Union[str, Tuple[str, str]] = self._options["client_cert"]
         self._session.cert = client_cert
+
+    def _add_ssl_cert_verif_strategy_to_session(self):
+        """Adds verification strategy for host SSL certificates.
+        If configured through the constructor.
+
+        https://docs.python-requests.org/en/master/user/advanced/#ssl-cert-verification
+        - str: Path to a `CA_BUNDLE` file or directory with certificates of trusted CAs.
+        - bool: True/False
+        """
+        ssl_cert: Union[bool, str] = self._options["verify"]
+        self._session.verify = ssl_cert
 
     @staticmethod
     def _timestamp(dt: datetime.timedelta = None):
@@ -3441,7 +3462,6 @@ class JIRA:
         for f in jwt["payload"].items():
             jwt_auth.add_field(f[0], f[1])
         self._session = ResilientSession(timeout=timeout)
-        self._session.verify = bool(self._options["verify"])
         self._session.auth = jwt_auth
 
     def _create_token_session(
@@ -3453,9 +3473,7 @@ class JIRA:
         Creates token-based session.
         Header structure: "authorization": "Bearer <token_auth>"
         """
-        verify = self._options["verify"]
         self._session = ResilientSession(timeout=timeout)
-        self._session.verify = verify
         self._session.auth = TokenAuth(token_auth)
 
     def _set_avatar(self, params, url, avatar):
