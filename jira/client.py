@@ -3967,7 +3967,6 @@ class JIRA:
 
         url = self._options["server"] + "/rest/api/3/label"
 
-        print(f"using url = {url}")
         r = self._session.get(url)
         data = json_loads(r)["values"]
 
