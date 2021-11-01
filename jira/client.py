@@ -261,6 +261,7 @@ class JiraCookieAuth(AuthBase):
             response.status_code == 401
             and self._retry_counter_401 < self._max_allowed_401_retries
         ):
+            LOG.info("Trying to refresh the cookie auth session...")
             self.init_session()
             response = self.process_original_request(response.request.copy())
         return response
