@@ -1,7 +1,7 @@
 import getpass
+from unittest import mock
 
 import pytest
-from unittest import mock
 
 import jira.client
 from jira.exceptions import JIRAError
