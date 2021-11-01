@@ -1,13 +1,11 @@
 import getpass
 
 import pytest
+from unittest import mock
 
 import jira.client
 from jira.exceptions import JIRAError
 from tests.conftest import JiraTestManager, get_unique_project_name
-
-# from tenacity import retry
-# from tenacity import wait_incrementing
 
 
 @pytest.fixture()
@@ -232,3 +230,22 @@ def test_cookie_auth(test_manager: JiraTestManager):
     )
     # THEN: We get the same result from the API
     assert test_manager.jira_admin.myself() == cookie_auth_jira.myself()
+
+
+def test_cookie_auth_retry():
+    """Test Cookie based authentication retry logic works."""
+    # GIVEN: arguments that will cause a 401 error
+    auth_class = jira.client.JiraCookieAuth
+    reset_func = jira.client.JiraCookieAuth._reset_401_retry_counter
+    new_options = jira.client.JIRA.DEFAULT_OPTIONS.copy()
+    new_options["auth_url"] = "/401"
+    with pytest.raises(JIRAError):
+        with mock.patch.object(auth_class, reset_func.__name__) as mock_reset_func:
+            # WHEN: We create a session with cookie auth
+            jira.client.JIRA(
+                server="https://httpstat.us",
+                options=new_options,
+                auth=("user", "pass"),
+            )
+    # THEN: We don't get a RecursionError and only call the reset_function once
+    mock_reset_func.assert_called_once()
