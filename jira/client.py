@@ -227,10 +227,18 @@ class JiraCookieAuth(AuthBase):
         self._session = session
         self._session_api_url = session_api_url  # e.g ."/rest/auth/1/session"
         self.__auth = auth
+        self._retry_counter_401 = 0
+        self._max_allowed_401_retries = 1  # 401 aren't recoverable with retries really
 
     @property
     def cookies(self):
         return self._session.cookies
+
+    def _increment_401_retry_counter(self):
+        self._retry_counter_401 += 1
+
+    def _reset_401_retry_counter(self):
+        self._retry_counter_401 = 0
 
     def __call__(self, request: requests.PreparedRequest):
         request.register_hook("response", self.handle_401)
@@ -243,14 +251,18 @@ class JiraCookieAuth(AuthBase):
         r = self._session.post(
             self._session_api_url, data=json.dumps(authentication_data)
         )
-        r.raise_for_status()
+        self._increment_401_retry_counter()
+        r.raise_for_status()  # raise any bad http errors
+        self._reset_401_retry_counter()  # nothing raised, so we can reset.
 
     def handle_401(self, response: requests.Response, **kwargs):
         """Refresh cookies if the session cookie has expired. Then retry the request."""
-        if response.status_code != 401:
-            return response
-        self.init_session()
-        response = self.process_original_request(response.request.copy())
+        if (
+            response.status_code == 401
+            and self._retry_counter_401 < self._max_allowed_401_retries
+        ):
+            self.init_session()
+            response = self.process_original_request(response.request.copy())
         return response
 
     def process_original_request(self, original_request: requests.PreparedRequest):
