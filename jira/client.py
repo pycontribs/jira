@@ -210,58 +210,75 @@ class JiraCookieAuth(AuthBase):
     """Jira Cookie Authentication
 
     Allows using cookie authentication as described by
-    https://developer.atlassian.com/jiradev/jira-apis/jira-rest-apis/jira-rest-api-tutorials/jira-rest-api-example-cookie-based-authentication
-
+    https://developer.atlassian.com/server/jira/platform/cookie-based-authentication/
     """
 
     def __init__(
-        self, session: ResilientSession, _get_session: Callable, auth: Tuple[str, str]
+        self, session: ResilientSession, session_api_url: str, auth: Tuple[str, str]
     ):
         """Cookie Based Authentication
 
         Args:
             session (ResilientSession): The Session object to communicate with the API.
-            _get_session (Callable): The function that returns a :py_class:``User``
-            auth (Tuple[str, str]): The username, password tuple
+            session_api_url (str): The session api url to use.
+            auth (Tuple[str, str]): The username, password tuple.
         """
-        self._session = session
-        self._get_session = _get_session
-        self.__auth = auth
 
-    def handle_401(self, response, **kwargs):
-        if response.status_code != 401:
-            return response
-        self.init_session()
-        response = self.process_original_request(response.request.copy())
+        self._session = session
+        self._session_api_url = session_api_url  # e.g ."/rest/auth/1/session"
+        self.__auth = auth
+        self._retry_counter_401 = 0
+        self._max_allowed_401_retries = 1  # 401 aren't recoverable with retries really
+
+    @property
+    def cookies(self):
+        return self._session.cookies
+
+    def _increment_401_retry_counter(self):
+        self._retry_counter_401 += 1
+
+    def _reset_401_retry_counter(self):
+        self._retry_counter_401 = 0
+
+    def __call__(self, request: requests.PreparedRequest):
+        request.register_hook("response", self.handle_401)
+        return request
+
+    def init_session(self):
+        """Initialise the Session object's cookies, so we can use the session cookie."""
+        username, password = self.__auth
+        authentication_data = {"username": username, "password": password}
+        r = self._session.post(  # this also goes through the handle_401() hook
+            self._session_api_url, data=json.dumps(authentication_data)
+        )
+        r.raise_for_status()
+
+    def handle_401(self, response: requests.Response, **kwargs):
+        """Refresh cookies if the session cookie has expired. Then retry the request."""
+        if (
+            response.status_code == 401
+            and self._retry_counter_401 < self._max_allowed_401_retries
+        ):
+            LOG.info("Trying to refresh the cookie auth session...")
+            self._increment_401_retry_counter()
+            self.init_session()
+            response = self.process_original_request(response.request.copy())
+        self._reset_401_retry_counter()
         return response
 
-    def process_original_request(self, original_request):
+    def process_original_request(self, original_request: requests.PreparedRequest):
         self.update_cookies(original_request)
         return self.send_request(original_request)
 
-    def update_cookies(self, original_request):
+    def update_cookies(self, original_request: requests.PreparedRequest):
         # Cookie header needs first to be deleted for the header to be updated using
         # the prepare_cookies method. See request.PrepareRequest.prepare_cookies
         if "Cookie" in original_request.headers:
             del original_request.headers["Cookie"]
         original_request.prepare_cookies(self.cookies)
 
-    def init_session(self):
-        self.start_session()
-
-    def __call__(self, request):
-        request.register_hook("response", self.handle_401)
-        return request
-
-    def send_request(self, request):
+    def send_request(self, request: requests.PreparedRequest):
         return self._session.send(request)
-
-    @property
-    def cookies(self):
-        return self._session.cookies
-
-    def start_session(self):
-        self._get_session(self.__auth)
 
 
 class TokenAuth(AuthBase):
@@ -571,8 +588,17 @@ class JIRA:
         auth: Tuple[str, str],
         timeout: Optional[Union[Union[float, int], Tuple[float, float]]],
     ):
+        warnings.warn(
+            "Use OAuth or Token based authentication "
+            + "instead of Cookie based Authentication.",
+            DeprecationWarning,
+        )
         self._session = ResilientSession(timeout=timeout)
-        self._session.auth = JiraCookieAuth(self._session, self.session, auth)
+        self._session.auth = JiraCookieAuth(
+            session=self._session,
+            session_api_url="{server}{auth_url}".format(**self._options),
+            auth=auth,
+        )
 
     def _check_update_(self):
         """Check if the current version of the library is outdated."""
