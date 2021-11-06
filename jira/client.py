@@ -182,6 +182,10 @@ class ResultList(list, Generic[ResourceType]):
         return super().__iter__()
 
     # fmt: off
+    # The mypy error we ignore is about returning a contravariant type.
+    # As this class is a List of a generic 'Resource' class
+    # this is the right way to specify that the output is the same as which
+    # the class was initialized with.
     @overload
     def __getitem__(self, i: SupportsIndex) -> ResourceType: ...  # type:ignore[misc]
     @overload
