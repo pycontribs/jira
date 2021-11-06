@@ -187,10 +187,10 @@ class ResultList(list, Generic[ResourceType]):
     # this is the right way to specify that the output is the same as which
     # the class was initialized with.
     @overload
-    def __getitem__(self, i: SupportsIndex) -> ResourceType: ...  # type:ignore[misc]
+    def __getitem__(self, i: SupportsIndex) -> ResourceType: ...  # type:ignore[misc]  # noqa: E704
     @overload
-    def __getitem__(self, s: slice) -> List[ResourceType]: ...  # type:ignore[misc]
-    def __getitem__(self, slice_or_index):
+    def __getitem__(self, s: slice) -> List[ResourceType]: ...  # type:ignore[misc]  # noqa: E704
+    def __getitem__(self, slice_or_index): # noqa: E301,E261
         return list.__getitem__(self, slice_or_index)
     # fmt: on
 
