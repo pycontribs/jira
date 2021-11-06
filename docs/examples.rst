@@ -8,9 +8,9 @@ Here's a quick usage example:
 
 .. literalinclude:: ../examples/basic_use.py
 
-Another example shows how to authenticate with your Jira username and password:
+Another example with methods to authenticate with your Jira:
 
-.. literalinclude:: ../examples/basic_auth.py
+.. literalinclude:: ../examples/auth.py
 
 This example shows how to work with GreenHopper:
 
@@ -23,7 +23,7 @@ Quickstart
 Initialization
 --------------
 
-Everything goes through the ``JIRA`` object, so make one::
+Everything goes through the :py:class:`jira.client.JIRA` object, so make one::
 
     from jira import JIRA
 
@@ -40,12 +40,17 @@ Authentication
 --------------
 
 At initialization time, jira-python can optionally create an HTTP BASIC or use OAuth 1.0a access tokens for user
-authentication. These sessions will apply to all subsequent calls to the ``JIRA`` object.
+authentication. These sessions will apply to all subsequent calls to the  :py:class:`jira.client.JIRA` object.
 
 The library is able to load the credentials from inside the ~/.netrc file, so put them there instead of keeping them in your source code.
 
 Cookie Based Authentication
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. warning::
+    This method of authentication is no longer supported on Jira Cloud. You can find the deprecation notice `here <https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-basic-auth-and-cookie-based-auth>`_.
+
+    For Jira Cloud use the basic_auth= :ref:`basic-auth-api-token` authentication
 
 Pass a tuple of (username, password) to the ``auth`` constructor argument::
 
@@ -54,10 +59,6 @@ Pass a tuple of (username, password) to the ``auth`` constructor argument::
 Using this method, authentication happens during the initialization of the object. If the authentication is successful,
 the retrieved session cookie will be used in future requests. Upon cookie expiration, authentication will happen again transparently.
 
-.. warning::
-    This method of authentication is no longer supported on Jira Cloud. You can find the deprecation notice `here <https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-basic-auth-and-cookie-based-auth>`_.
-
-    For Jira Cloud use the basic_auth= :ref:`basic-auth-api-token` authentication
 
 HTTP BASIC
 ^^^^^^^^^^
@@ -65,23 +66,29 @@ HTTP BASIC
 (username, password)
 """"""""""""""""""""
 
-Pass a tuple of (username, password) to the ``basic_auth`` constructor argument::
-
-    auth_jira = JIRA(basic_auth=('username', 'password'))
-
 .. warning::
     This method of authentication is no longer supported on Jira Cloud. You can find the deprecation notice `here <https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-basic-auth-and-cookie-based-auth>`_
 
-    For Jira Cloud use the basic_auth= :ref:`basic-auth-api-token` authentication
+    For Jira Cloud use the basic_auth= :ref:`basic-auth-api-token` authentication.
+    For Self Hosted Jira (Server, Data Center), consider the `Token Auth`_ authentication.
+
+Pass a tuple of (username, password) to the ``basic_auth`` constructor argument::
+
+    auth_jira = JIRA(basic_auth=('username', 'password'))
 
 .. _basic-auth-api-token:
 
 (username, api_token)
 """""""""""""""""""""
 
-Or pass a tuple of (email, api_token) to the ``basic_auth`` constructor argument (JIRA cloud)::
+
+Or pass a tuple of (email, api_token) to the ``basic_auth`` constructor argument (JIRA Cloud)::
 
     auth_jira = JIRA(basic_auth=('email', 'API token'))
+
+.. seealso::
+    For Self Hosted Jira (Server, Data Center), refer to the `Token Auth`_ Section.
+
 
 OAuth
 ^^^^^
@@ -111,6 +118,32 @@ Pass a dict of OAuth properties to the ``oauth`` constructor argument::
 
 See https://confluence.atlassian.com/display/JIRA/Configuring+OAuth+Authentication+for+an+Application+Link for details
 on configuring an OAuth provider for Jira.
+
+Token Auth
+^^^^^^^^^^
+
+
+Jira Cloud
+""""""""""
+
+This is also referred to as an API Token in the
+`Jira Cloud documentation <https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/>`_ ::
+
+
+.. code-block:: python
+
+    auth_jira = JIRA(basic_auth=('email', 'API token'))
+
+
+Jira Self Hosted (incl. Jira Server/Data Center)
+""""""""""""""""""""""""""""""""""""""""""""""""
+
+This is also referred to as Personal Access Tokens (PATs) in the
+`Self-Hosted Documentation <https://confluence.atlassian.com/enterprise/using-personal-access-tokens-1026032365.html>`_.
+The is available from Jira Core >= 8.14::
+
+    auth_jira = JIRA(token_auth='API token')
+
 
 Kerberos
 ^^^^^^^^
