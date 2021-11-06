@@ -177,5 +177,5 @@ In addition to all the contributors we would like to thank to these companies:
 .. image:: https://raw.githubusercontent.com/pycontribs/resources/main/logos/x32/logo-pycharm.png
     :target: https://www.jetbrains.com/
 
-.. image:: https://raw.githubusercontent.com/pycontribs/resources/maain/logos/x32/logo-navicat.png
+.. image:: https://raw.githubusercontent.com/pycontribs/resources/main/logos/x32/logo-navicat.png
     :target: https://www.navicat.com/
