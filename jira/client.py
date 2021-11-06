@@ -28,6 +28,7 @@ from typing import (
     Callable,
     Dict,
     Generic,
+    Iterator,
     List,
     Optional,
     Tuple,
@@ -36,6 +37,7 @@ from typing import (
     Union,
     cast,
     no_type_check,
+    overload,
 )
 from urllib.parse import parse_qs, quote, urlparse
 
@@ -100,6 +102,10 @@ try:
 except ImportError:
     pass
 
+try:
+    from typing import SupportsIndex  # type:ignore[attr-defined] # Py38+
+except ImportError:
+    from typing_extensions import SupportsIndex
 
 LOG = _logging.getLogger("jira")
 LOG.addHandler(_logging.NullHandler())
@@ -136,7 +142,7 @@ ResourceType = TypeVar("ResourceType", contravariant=True, bound=Resource)
 class ResultList(list, Generic[ResourceType]):
     def __init__(
         self,
-        iterable: Iterable = None,
+        iterable: Iterable[ResourceType] = None,
         _startAt: int = 0,
         _maxResults: int = 0,
         _total: Optional[int] = None,
@@ -162,15 +168,27 @@ class ResultList(list, Generic[ResourceType]):
         self.isLast = _isLast
         self.total = _total if _total is not None else len(self)
 
-        self.iterable: List = list(iterable) if iterable else []
+        self.iterable: List[ResourceType] = list(iterable) if iterable else []
         self.current = self.startAt
 
-    def __next__(self) -> Type[ResourceType]:
+    def __next__(self) -> ResourceType:  # type:ignore[misc]
         self.current += 1
         if self.current > self.total:
             raise StopIteration
         else:
             return self.iterable[self.current - 1]
+
+    def __iter__(self) -> Iterator[ResourceType]:
+        return super().__iter__()
+
+    # fmt: off
+    @overload
+    def __getitem__(self, i: SupportsIndex) -> ResourceType: ...  # type:ignore[misc]
+    @overload
+    def __getitem__(self, s: slice) -> List[ResourceType]: ...  # type:ignore[misc]
+    def __getitem__(self, slice_or_index):
+        return list.__getitem__(self, slice_or_index)
+    # fmt: on
 
 
 class QshGenerator:
