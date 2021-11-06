@@ -20,7 +20,7 @@ cffi==1.15.0
     # via cryptography
 chardet==4.0.0
     # via requests
-coverage==6.0.2
+coverage==6.1.1
     # via pytest-cov
 cryptography==35.0.0
     # via requests-kerberos
