@@ -142,7 +142,7 @@ ResourceType = TypeVar("ResourceType", contravariant=True, bound=Resource)
 class ResultList(list, Generic[ResourceType]):
     def __init__(
         self,
-        iterable: Iterable[ResourceType] = None,
+        iterable: Iterable = None,
         _startAt: int = 0,
         _maxResults: int = 0,
         _total: Optional[int] = None,
