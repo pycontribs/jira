@@ -106,7 +106,7 @@ pyjwt==2.3.0
     #   requests-jwt
 pykerberos==1.2.1
     # via requests-kerberos
-pyparsing==2.4.7
+pyparsing==3.0.5
     # via packaging
 pytest==6.2.5
     # via
