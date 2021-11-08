@@ -94,7 +94,7 @@ py==1.11.0
     #   jira (setup.cfg)
     #   pytest
     #   pytest-forked
-pycparser==2.20
+pycparser==2.21
     # via cffi
 pygments==2.10.0
     # via
