@@ -23,7 +23,7 @@ jobs:
         python-version: 3.8
 
     - name: Install build dependencies
-      run: >-
+      run: |
         sudo apt-get update
         sudo apt-get install gcc libkrb5-dev
         python3 -m pip install --user tox
