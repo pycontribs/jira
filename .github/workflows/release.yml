@@ -1,18 +1,12 @@
 name: release
 
 on:
-  workflow_call:
-    # https://docs.github.com/en/actions/learn-github-actions/workflow-syntax-for-github-actions#onworkflow_callinputs
-    inputs:
-      pypi:
-        description: Publish to PyPI registry
-        default: false
-        type: boolean
+  release:
+    types: [published]
 
 jobs:
   pypi:
     name: Publish to PyPI registry
-    if: "${{ inputs.pypi }}"
     environment: release
     runs-on: ubuntu-20.04
 
@@ -23,7 +17,6 @@ jobs:
       TOX_PARALLEL_NO_SPINNER: 1
 
     steps:
-
     - name: Switch to using Python 3.8 by default
       uses: actions/setup-python@v2
       with:
@@ -44,12 +37,16 @@ jobs:
       run: python -m tox
 
     - name: Publish to test.pypi.org
+      if: >-  # "create" workflows run separately from "push" & "pull_request"
+        github.event_name == 'release'
       uses: pypa/gh-action-pypi-publish@master
       with:
         password: ${{ secrets.testpypi_password }}
         repository_url: https://test.pypi.org/legacy/
 
     - name: Publish to pypi.org
+      if: >-  # "create" workflows run separately from "push" & "pull_request"
+        github.event_name == 'release'
       uses: pypa/gh-action-pypi-publish@master
       with:
         password: ${{ secrets.pypi_password }}
