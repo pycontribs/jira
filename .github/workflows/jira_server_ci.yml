@@ -1,4 +1,4 @@
-name: Jira Server CI
+name: server
 
 on:
   workflow_call:
@@ -6,12 +6,12 @@ on:
 
 jobs:
   test:
-    name: ${{ matrix.os }} / Python ${{ matrix.python-version }} / Jira ${{ matrix.jira-version }}
-    runs-on: ${{ matrix.os }}-latest
+    name: py${{ matrix.python-version }}-jira${{ matrix.jira-version }}
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [Ubuntu]
-        python-version: [3.6, 3.7, 3.8, 3.9]
+        os: [ubuntu-latest]
+        python-version: ["3.6", "3.7", "3.8", "3.9"]
         jira-version: [8.17.1]
 
     steps:

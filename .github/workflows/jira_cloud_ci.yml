@@ -1,4 +1,4 @@
-name: Jira Cloud CI
+name: cloud
 
 on:
   workflow_call:
@@ -15,14 +15,14 @@ on:
 
 jobs:
   test:
-    name: ${{ matrix.os }} / Python ${{ matrix.python-version }}
-    runs-on: ${{ matrix.os }}-latest
+    name: py${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [Ubuntu]
+        os: [ubuntu-latest]
         # We only test a single version to prevent concurrent
         # running of tests influencing one another
-        python-version: [3.8]
+        python-version: ["3.8"]
 
     steps:
       - uses: actions/checkout@master
