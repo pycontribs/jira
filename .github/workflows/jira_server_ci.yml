@@ -58,8 +58,8 @@ jobs:
           file: ./coverage.xml
           name: ${{ runner.os }}-${{ matrix.python-version }}
 
-      - name: Run tox pkg
-        run: tox -e pkg
+      - name: Run tox packaging
+        run: tox -e packaging
 
       - name: Make docs
         run: tox -e docs
