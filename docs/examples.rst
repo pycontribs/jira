@@ -57,7 +57,7 @@ the retrieved session cookie will be used in future requests. Upon cookie expira
 .. warning::
     This method of authentication is no longer supported on Jira Cloud. You can find the deprecation notice `here <https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-basic-auth-and-cookie-based-auth>`_.
 
-    For Jira Cloud use the basic_auth= :ref:`basic-auth-api-token` authentication
+    For Jira Cloud use the token_auth= :ref:`token-auth-api-token` authentication
 
 HTTP BASIC
 ^^^^^^^^^^
@@ -72,16 +72,16 @@ Pass a tuple of (username, password) to the ``basic_auth`` constructor argument:
 .. warning::
     This method of authentication is no longer supported on Jira Cloud. You can find the deprecation notice `here <https://developer.atlassian.com/cloud/jira/platform/deprecation-notice-basic-auth-and-cookie-based-auth>`_
 
-    For Jira Cloud use the basic_auth= :ref:`basic-auth-api-token` authentication
+    For Jira Cloud use the token_auth= :ref:`token-auth-api-token` authentication
 
-.. _basic-auth-api-token:
+.. _token-auth-api-token:
 
-(username, api_token)
+api_token
 """""""""""""""""""""
 
-Or pass a tuple of (email, api_token) to the ``basic_auth`` constructor argument (JIRA cloud)::
+Or pass a string of api_token to the ``token_auth`` constructor argument (JIRA cloud)::
 
-    auth_jira = JIRA(basic_auth=('email', 'API token'))
+    auth_jira = JIRA(token_auth='API token')
 
 OAuth
 ^^^^^
