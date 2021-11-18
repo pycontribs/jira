@@ -9,7 +9,7 @@ import configparser
 import logging
 import os
 import sys
-from typing import Optional
+from typing import Optional, Union
 
 from jira.client import JIRA
 
@@ -21,7 +21,7 @@ def get_jira(
     password: str = "admin",
     appid=None,
     autofix=False,
-    verify: bool = True,
+    verify: Union[bool, str] = True,
 ):
     """Return a JIRA object by loading the connection details from the `config.ini` file.
 
@@ -32,7 +32,9 @@ def get_jira(
         password (str): password to use for authentication
         appid: appid
         autofix: autofix
-        verify (bool): boolean indicating whether SSL certificates should be verified
+        verify (Union[bool, str]): boolean indicating whether SSL certificates should be
+            verified, or path to a CA_BUNDLE file or directory with certificates of
+            trusted CAs.
 
     Returns:
         JIRA: an instance to a JIRA object.
@@ -73,13 +75,18 @@ def get_jira(
                 return possible
         return None
 
+    if isinstance(verify, bool):
+        verify = "yes" if verify else "no"
+    else:
+        verify = verify
+
     config = configparser.ConfigParser(
         defaults={
             "user": None,
             "pass": None,
             "appid": appid,
             "autofix": autofix,
-            "verify": "yes" if verify else "no",
+            "verify": verify,
         },
         allow_no_value=True,
     )
@@ -104,8 +111,10 @@ def get_jira(
             password = config.get(profile, "pass")
             appid = config.get(profile, "appid")
             autofix = config.get(profile, "autofix")
-            verify = config.getboolean(profile, "verify")
-
+            try:
+                verify = config.getboolean(profile, "verify")
+            except ValueError:
+                verify = config.get(profile, "verify")
         else:
             raise OSError(
                 "%s was not able to locate the config.ini file in current directory, user home directory or PYTHONPATH."
