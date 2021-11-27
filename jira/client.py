@@ -1579,7 +1579,6 @@ class JIRA:
         url = self.server_url + "/rest/servicedeskapi/servicedesk"
         headers = {"X-ExperimentalApi": "opt-in"}
         r_json = json_loads(self._session.get(url, headers=headers))
-        print(r_json)
         projects = [
             ServiceDesk(self._options, self._session, raw_project_json)
             for raw_project_json in r_json["values"]
