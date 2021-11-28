@@ -537,7 +537,7 @@ class JIRA:
                 auth_method = (
                     oauth or basic_auth or jwt or kerberos or auth or "anonymous"
                 )
-                raise JIRAError(f'Can not log in with {auth_method}')
+                raise JIRAError(f"Can not log in with {auth_method}")
 
         self.deploymentType = None
         if get_server_info:
@@ -1754,7 +1754,7 @@ class JIRA:
         Returns:
             bool
         """
-        url = self._get_latest_url(f'issue/{issue}/assignee')
+        url = self._get_latest_url(f"issue/{issue}/assignee")
         user_id = self._get_user_id(assignee)
         payload = {"accountId": user_id} if self._is_cloud else {"name": user_id}
         r = self._session.put(url, data=json.dumps(payload))
@@ -1775,7 +1775,7 @@ class JIRA:
         params = {}
         if expand is not None:
             params["expand"] = expand
-        r_json = self._get_json(f'issue/{issue}/comment', params=params)
+        r_json = self._get_json(f"issue/{issue}/comment", params=params)
 
         comments = [
             Comment(self._options, self._session, raw_comment_json)
