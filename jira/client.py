@@ -3606,15 +3606,14 @@ class JIRA:
         """
         if self._magic is not None:
             return self._magic.id_buffer(buff)
-        else:
-            try:
-                return mimetypes.guess_type("f." + str(imghdr.what(0, buff)))[0]
-            except (OSError, TypeError):
-                self.log.warning(
-                    "Couldn't detect content type of avatar image"
-                    ". Specify the 'contentType' parameter explicitly."
-                )
-                return None
+        try:
+            return mimetypes.guess_type("f." + str(imghdr.what(0, buff)))[0]
+        except (OSError, TypeError):
+            self.log.warning(
+                "Couldn't detect content type of avatar image"
+                ". Specify the 'contentType' parameter explicitly."
+            )
+            return None
 
     def rename_user(self, old_user: str, new_user: str):
         """Rename a Jira user.
@@ -3655,9 +3654,8 @@ class JIRA:
         r = self._session.delete(url)
         if 200 <= r.status_code <= 299:
             return True
-        else:
-            self.log.error(r.status_code)
-            return False
+        self.log.error(r.status_code)
+        return False
 
     def deactivate_user(self, username: str) -> Union[str, int]:
         """Disable/deactivate the user.
@@ -3695,11 +3693,10 @@ class JIRA:
                 )
                 if r.status_code == 200:
                     return True
-                else:
-                    self.log.warning(
-                        f"Got response from deactivating {username}: {r.status_code}"
-                    )
-                    return r.status_code
+                self.log.warning(
+                    f"Got response from deactivating {username}: {r.status_code}"
+                )
+                return r.status_code
             except Exception as e:
                 self.log.error(f"Error Deactivating {username}: {e}")
                 raise JIRAError(f"Error Deactivating {username}: {e}")
@@ -3723,11 +3720,10 @@ class JIRA:
                 )
                 if r.status_code == 200:
                     return True
-                else:
-                    self.log.warning(
-                        f"Got response from deactivating {username}: {r.status_code}"
-                    )
-                    return r.status_code
+                self.log.warning(
+                    f"Got response from deactivating {username}: {r.status_code}"
+                )
+                return r.status_code
             except Exception as e:
                 self.log.error(f"Error Deactivating {username}: {e}")
                 raise JIRAError(f"Error Deactivating {username}: {e}")
@@ -3746,11 +3742,7 @@ class JIRA:
         """
         # /secure/admin/IndexAdmin.jspa
         # /secure/admin/jira/IndexProgress.jspa?taskId=1
-        if background:
-            indexingStrategy = "background"
-        else:
-            indexingStrategy = "stoptheworld"
-
+        indexingStrategy = "background" if background else "stoptheworld"
         url = self.server_url + "/secure/admin/jira/IndexReIndex.jspa"
 
         r = self._session.get(url, headers=self._options["headers"])
@@ -3760,7 +3752,7 @@ class JIRA:
 
         if (
             not r.text.find("To perform the re-index now, please go to the")
-            and force is False
+            and not force
         ):
             return True
 
@@ -3794,9 +3786,8 @@ class JIRA:
             r = self._session.post(url, headers=self._options["headers"], data=payload)
             if r.status_code == 200:
                 return True
-            else:
-                self.log.warning(f"Got {r.status_code} response from calling backup.")
-                return r.status_code
+            self.log.warning(f"Got {r.status_code} response from calling backup.")
+            return r.status_code
         except Exception as e:
             self.log.error("I see %s", e)
 
