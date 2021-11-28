@@ -28,6 +28,7 @@ from typing import (
     Callable,
     Dict,
     Generic,
+    Iterator,
     List,
     Optional,
     Tuple,
@@ -36,6 +37,7 @@ from typing import (
     Union,
     cast,
     no_type_check,
+    overload,
 )
 from urllib.parse import parse_qs, quote, urlparse
 
@@ -100,6 +102,10 @@ try:
 except ImportError:
     pass
 
+try:
+    from typing import SupportsIndex  # type:ignore[attr-defined] # Py38+
+except ImportError:
+    from typing_extensions import SupportsIndex
 
 LOG = _logging.getLogger("jira")
 LOG.addHandler(_logging.NullHandler())
@@ -162,15 +168,31 @@ class ResultList(list, Generic[ResourceType]):
         self.isLast = _isLast
         self.total = _total if _total is not None else len(self)
 
-        self.iterable: List = list(iterable) if iterable else []
+        self.iterable: List[ResourceType] = list(iterable) if iterable else []
         self.current = self.startAt
 
-    def __next__(self) -> Type[ResourceType]:
+    def __next__(self) -> ResourceType:  # type:ignore[misc]
         self.current += 1
         if self.current > self.total:
             raise StopIteration
         else:
             return self.iterable[self.current - 1]
+
+    def __iter__(self) -> Iterator[ResourceType]:
+        return super().__iter__()
+
+    # fmt: off
+    # The mypy error we ignore is about returning a contravariant type.
+    # As this class is a List of a generic 'Resource' class
+    # this is the right way to specify that the output is the same as which
+    # the class was initialized with.
+    @overload
+    def __getitem__(self, i: SupportsIndex) -> ResourceType: ...  # type:ignore[misc]  # noqa: E704
+    @overload
+    def __getitem__(self, s: slice) -> List[ResourceType]: ...  # type:ignore[misc]  # noqa: E704
+    def __getitem__(self, slice_or_index): # noqa: E301,E261
+        return list.__getitem__(self, slice_or_index)
+    # fmt: on
 
 
 class QshGenerator:
