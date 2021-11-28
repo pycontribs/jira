@@ -1,5 +1,5 @@
-# This script shows how to connect to a Jira instance with a
-# username and password over HTTP BASIC authentication.
+"""Some simple authentication examples.
+"""
 
 from collections import Counter
 from typing import cast
@@ -8,11 +8,16 @@ from jira import JIRA
 from jira.client import ResultList
 from jira.resources import Issue
 
-# By default, the client will connect to a Jira instance started from the Atlassian Plugin SDK.
-# See
-# https://developer.atlassian.com/display/DOCS/Installing+the+Atlassian+Plugin+SDK
-# for details.
-jira = JIRA(basic_auth=("admin", "admin"))  # a username/password tuple
+# Some Authentication Methods
+jira = JIRA(
+    basic_auth=("admin", "admin"),  # a username/password tuple [Not recommended]
+    # basic_auth=("email", "API token"),  # Jira Cloud: a username/token tuple
+    # token_auth="API token",  # Self-Hosted Jira (e.g. Server): the PAT token
+    # auth=("admin", "admin"),  # a username/password tuple for cookie auth [Not recommended]
+)
+
+# Who has authenticated
+myself = jira.myself()
 
 # Get the mutable application properties for this server (requires
 # jira-system-administrators permission)
