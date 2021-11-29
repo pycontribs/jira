@@ -471,7 +471,7 @@ class JIRA:
         """
         # force a copy of the tuple to be used in __del__() because
         # sys.version_info could have already been deleted in __del__()
-        self.sys_version_info = tuple(i for i in sys.version_info)
+        self.sys_version_info = tuple(sys.version_info)
 
         if options is None:
             options = {}
@@ -559,7 +559,7 @@ class JIRA:
                 auth_method = (
                     oauth or basic_auth or jwt or kerberos or auth or "anonymous"
                 )
-                raise JIRAError(f"Can not log in with {str(auth_method)}")
+                raise JIRAError(f"Can not log in with {auth_method}")
 
         self.deploymentType = None
         if get_server_info:
@@ -663,7 +663,6 @@ class JIRA:
         if "<!-- SecurityTokenMissing -->" in content:
             self.log.warning("Got SecurityTokenMissing")
             raise JIRAError(f"SecurityTokenMissing: {content}")
-            return False
         return True
 
     def _get_sprint_field_id(self):
@@ -1457,13 +1456,13 @@ class JIRA:
 
         p = data["fields"]["project"]
 
-        if isinstance(p, str) or isinstance(p, int):
+        if isinstance(p, (str, int)):
             data["fields"]["project"] = {"id": self.project(str(p)).id}
 
         p = data["fields"]["issuetype"]
         if isinstance(p, int):
             data["fields"]["issuetype"] = {"id": p}
-        if isinstance(p, str) or isinstance(p, int):
+        if isinstance(p, (str, int)):
             data["fields"]["issuetype"] = {"id": self.issue_type_by_name(str(p)).id}
 
         url = self._get_url("issue")
@@ -1500,7 +1499,7 @@ class JIRA:
             issue_data: Dict[str, Any] = _field_worker(field_dict)
             p = issue_data["fields"]["project"]
 
-            if isinstance(p, str) or isinstance(p, int):
+            if isinstance(p, (str, int)):
                 issue_data["fields"]["project"] = {"id": self.project(str(p)).id}
 
             p = issue_data["fields"]["issuetype"]
@@ -1601,7 +1600,6 @@ class JIRA:
         url = self.server_url + "/rest/servicedeskapi/servicedesk"
         headers = {"X-ExperimentalApi": "opt-in"}
         r_json = json_loads(self._session.get(url, headers=headers))
-        print(r_json)
         projects = [
             ServiceDesk(self._options, self._session, raw_project_json)
             for raw_project_json in r_json["values"]
@@ -1650,7 +1648,7 @@ class JIRA:
         p = data["serviceDeskId"]
         service_desk = None
 
-        if isinstance(p, str) or isinstance(p, int):
+        if isinstance(p, (str, int)):
             service_desk = self.service_desk(p)
         elif isinstance(p, ServiceDesk):
             service_desk = p
@@ -1778,7 +1776,7 @@ class JIRA:
         Returns:
             bool
         """
-        url = self._get_latest_url(f"issue/{str(issue)}/assignee")
+        url = self._get_latest_url(f"issue/{issue}/assignee")
         user_id = self._get_user_id(assignee)
         payload = {"accountId": user_id} if self._is_cloud else {"name": user_id}
         r = self._session.put(url, data=json.dumps(payload))
@@ -1799,7 +1797,7 @@ class JIRA:
         params = {}
         if expand is not None:
             params["expand"] = expand
-        r_json = self._get_json(f"issue/{str(issue)}/comment", params=params)
+        r_json = self._get_json(f"issue/{issue}/comment", params=params)
 
         comments = [
             Comment(self._options, self._session, raw_comment_json)
@@ -3630,15 +3628,14 @@ class JIRA:
         """
         if self._magic is not None:
             return self._magic.id_buffer(buff)
-        else:
-            try:
-                return mimetypes.guess_type("f." + str(imghdr.what(0, buff)))[0]
-            except (OSError, TypeError):
-                self.log.warning(
-                    "Couldn't detect content type of avatar image"
-                    ". Specify the 'contentType' parameter explicitly."
-                )
-                return None
+        try:
+            return mimetypes.guess_type("f." + str(imghdr.what(0, buff)))[0]
+        except (OSError, TypeError):
+            self.log.warning(
+                "Couldn't detect content type of avatar image"
+                ". Specify the 'contentType' parameter explicitly."
+            )
+            return None
 
     def rename_user(self, old_user: str, new_user: str):
         """Rename a Jira user.
@@ -3679,9 +3676,8 @@ class JIRA:
         r = self._session.delete(url)
         if 200 <= r.status_code <= 299:
             return True
-        else:
-            self.log.error(r.status_code)
-            return False
+        self.log.error(r.status_code)
+        return False
 
     def deactivate_user(self, username: str) -> Union[str, int]:
         """Disable/deactivate the user.
@@ -3719,11 +3715,10 @@ class JIRA:
                 )
                 if r.status_code == 200:
                     return True
-                else:
-                    self.log.warning(
-                        f"Got response from deactivating {username}: {r.status_code}"
-                    )
-                    return r.status_code
+                self.log.warning(
+                    f"Got response from deactivating {username}: {r.status_code}"
+                )
+                return r.status_code
             except Exception as e:
                 self.log.error(f"Error Deactivating {username}: {e}")
                 raise JIRAError(f"Error Deactivating {username}: {e}")
@@ -3747,11 +3742,10 @@ class JIRA:
                 )
                 if r.status_code == 200:
                     return True
-                else:
-                    self.log.warning(
-                        f"Got response from deactivating {username}: {r.status_code}"
-                    )
-                    return r.status_code
+                self.log.warning(
+                    f"Got response from deactivating {username}: {r.status_code}"
+                )
+                return r.status_code
             except Exception as e:
                 self.log.error(f"Error Deactivating {username}: {e}")
                 raise JIRAError(f"Error Deactivating {username}: {e}")
@@ -3770,11 +3764,7 @@ class JIRA:
         """
         # /secure/admin/IndexAdmin.jspa
         # /secure/admin/jira/IndexProgress.jspa?taskId=1
-        if background:
-            indexingStrategy = "background"
-        else:
-            indexingStrategy = "stoptheworld"
-
+        indexingStrategy = "background" if background else "stoptheworld"
         url = self.server_url + "/secure/admin/jira/IndexReIndex.jspa"
 
         r = self._session.get(url, headers=self._options["headers"])
@@ -3784,7 +3774,7 @@ class JIRA:
 
         if (
             not r.text.find("To perform the re-index now, please go to the")
-            and force is False
+            and not force
         ):
             return True
 
@@ -3818,9 +3808,8 @@ class JIRA:
             r = self._session.post(url, headers=self._options["headers"], data=payload)
             if r.status_code == 200:
                 return True
-            else:
-                self.log.warning(f"Got {r.status_code} response from calling backup.")
-                return r.status_code
+            self.log.warning(f"Got {r.status_code} response from calling backup.")
+            return r.status_code
         except Exception as e:
             self.log.error("I see %s", e)
 
