@@ -204,7 +204,7 @@ tomli==1.2.2
     # via coverage
 traitlets==4.3.3
     # via ipython
-typing-extensions==3.10.0.2
+typing-extensions==4.0.1
     # via importlib-metadata
 urllib3==1.26.7
     # via requests
