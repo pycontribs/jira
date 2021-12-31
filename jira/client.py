@@ -2915,12 +2915,25 @@ class JIRA:
     # Status
 
     def statuses(self) -> List[Status]:
-        """Get a list of status Resources from the server.
+        """Get a list of all status Resources from the server.
 
         Returns:
             List[Status]
         """
         r_json = self._get_json("status")
+        statuses = [
+            Status(self._options, self._session, raw_stat_json)
+            for raw_stat_json in r_json
+        ]
+        return statuses
+
+    def projectstatuses(self, projectIdOrKey: str) -> List[Status]:
+        """Get a list of statuses available within a project from the server.
+
+        Returns:
+            List[Status]
+        """
+        r_json = self._get_json("project/{projectIdOrKey}/statuses")
         statuses = [
             Status(self._options, self._session, raw_stat_json)
             for raw_stat_json in r_json
