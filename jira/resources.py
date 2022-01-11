@@ -1292,6 +1292,7 @@ class BoardConfiguration(GreenHopperResource):
             )
         Resource.find(self, id, params)
 
+
 # Service Desk
 
 
