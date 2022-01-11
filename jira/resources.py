@@ -1266,6 +1266,32 @@ class Board(GreenHopperResource):
         Resource.delete(self, params)
 
 
+class BoardConfiguration(GreenHopperResource):
+    """Configuration for a Greenhopper board."""
+
+    def __init__(
+        self,
+        options: Dict[str, str],
+        session: ResilientSession,
+        raw: Dict[str, Any] = None,
+    ):
+        if options["agile_rest_path"] == self.GREENHOPPER_REST_PATH:
+            raise NotImplementedError(
+                "Jira private API does not support Board Configuration"
+            )
+        path = "board/{0}/configuration"
+        GreenHopperResource.__init__(self, path, options, session, raw)
+
+    def find(self, id, params=None):
+        if (
+            self._options["agile_rest_path"]
+            == GreenHopperResource.GREENHOPPER_REST_PATH
+        ):
+            raise NotImplementedError(
+                "Jira private API does not support Board Configuration"
+            )
+        Resource.find(self, id, params)
+
 # Service Desk
 
 
