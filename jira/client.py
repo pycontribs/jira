@@ -1,4 +1,3 @@
-#!/usr/bin/python
 """
 This module implements a friendly (well, friendlier) interface between the raw JSON
 responses from Jira and the Resource/dict abstractions provided by this library. Users
