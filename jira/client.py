@@ -2927,18 +2927,18 @@ class JIRA:
         ]
         return statuses
 
-    def project_statuses(self, projectIdOrKey: str) -> List[Status]:
-        """Get a list of statuses available within a project from the server.
+    def project_statuses_by_issue_type(self, projectIdOrKey: str) -> List[IssueType]:
+        """Get a list of issue types available within the project with available statuses within each issue type, as each project has a set of valid issue types and each issue type has a set of valid statuses.
 
         Returns:
-            List[Status]
+            List[IssueType]
         """
         r_json = self._get_json(f"project/{projectIdOrKey}/statuses")
-        statuses = [
-            Status(self._options, self._session, raw_stat_json)
+        issue_types = [
+            IssueType(self._options, self._session, raw_stat_json)
             for raw_stat_json in r_json
         ]
-        return statuses
+        return issue_types
 
     def status(self, id: str) -> Status:
         """Get a status Resource from the server.
