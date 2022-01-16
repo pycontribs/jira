@@ -2933,7 +2933,7 @@ class JIRA:
         Returns:
             List[Status]
         """
-        r_json = self._get_json("project/{projectIdOrKey}/statuses")
+        r_json = self._get_json(f"project/{projectIdOrKey}/statuses")
         statuses = [
             Status(self._options, self._session, raw_stat_json)
             for raw_stat_json in r_json
