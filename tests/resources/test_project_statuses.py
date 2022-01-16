@@ -13,6 +13,6 @@ class ProjectStatusesTests(JiraTestCase):
         # test statues id
         self_status_id = self.jira.status(project_status.id).id
         self.assertEqual(self_status_id, project_status.id)
-        # test statues name 
+        # test statues name
         self_status_name = self.jira.status(project_status.name).name
         self.assertEqual(self_status_name, project_status.name)
