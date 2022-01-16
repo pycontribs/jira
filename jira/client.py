@@ -2927,7 +2927,7 @@ class JIRA:
         ]
         return statuses
 
-    def projectstatuses(self, projectIdOrKey: str) -> List[Status]:
+    def project_statuses(self, projectIdOrKey: str) -> List[Status]:
         """Get a list of statuses available within a project from the server.
 
         Returns:
