@@ -2812,7 +2812,7 @@ class JIRA:
         fields: Optional[Union[str, List[str]]] = None,
         expand: Optional[str] = None,
         json_result: bool = False,
-    ) -> Union[List[Dict[str, Any]], ResultList[Issue]]:
+    ) -> Union[Dict[str, Any], ResultList[Issue]]:
         """Get a :class:`~jira.client.ResultList` of issue Resources matching a JQL search string.
 
         Args:
