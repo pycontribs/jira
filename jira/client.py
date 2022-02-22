@@ -71,6 +71,7 @@ from jira.resources import (
     IssueType,
     PermissionScheme,
     Priority,
+    PriorityScheme,
     Project,
     RemoteLink,
     RequestType,
@@ -2139,6 +2140,21 @@ class JIRA:
             PermissionScheme: The permission scheme
         """
         return self._find_for_resource(PermissionScheme, project)
+
+
+    @translate_resource_args
+    def project_priorityscheme(self, project: str) -> PriorityScheme:
+        """Get a PriorityScheme Resource from the server.
+
+
+        Args:
+            project (str): ID or key of the project to get the PriorityScheme for
+
+        Returns:
+            PriorityScheme,: The priority scheme
+        """
+        return self._find_for_resource(PriorityScheme, project)
+
 
     @translate_resource_args
     def add_vote(self, issue: str) -> Response:

@@ -44,6 +44,7 @@ __all__ = (
     "IssueLinkType",
     "IssueType",
     "Priority",
+    "PriorityScheme",
     "Version",
     "Role",
     "Resolution",
@@ -810,6 +811,16 @@ class PermissionScheme(Resource):
             self._parse_raw(raw)
         self.raw: Dict[str, Any] = cast(Dict[str, Any], self.raw)
 
+class PriorityScheme(Resource):
+    """PriorityScheme information on an project."""
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(
+            self, "project/{0}/priorityscheme?expand=user", options, session
+        )
+        if raw:
+            self._parse_raw(raw)
+        self.raw: Dict[str, Any] = cast(Dict[str, Any], self.raw)
 
 class Watchers(Resource):
     """Watcher information on an issue."""
@@ -1407,6 +1418,7 @@ resource_class_map: Dict[str, Type[Resource]] = {
     r"issueLink/[^/]+$": IssueLink,
     r"issueLinkType/[^/]+$": IssueLinkType,
     r"issuetype/[^/]+$": IssueType,
+    r"project/[^/]+/priorityscheme[^/]+$": PriorityScheme,
     r"priority/[^/]+$": Priority,
     r"project/[^/]+$": Project,
     r"project/[^/]+/role/[^/]+$": Role,
