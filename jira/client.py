@@ -2141,7 +2141,6 @@ class JIRA:
         """
         return self._find_for_resource(PermissionScheme, project)
 
-
     @translate_resource_args
     def project_priorityscheme(self, project: str) -> PriorityScheme:
         """Get a PriorityScheme Resource from the server.
@@ -2154,7 +2153,6 @@ class JIRA:
             PriorityScheme,: The priority scheme
         """
         return self._find_for_resource(PriorityScheme, project)
-
 
     @translate_resource_args
     def add_vote(self, issue: str) -> Response:
