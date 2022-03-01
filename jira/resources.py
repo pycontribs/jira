@@ -43,6 +43,7 @@ __all__ = (
     "IssueLink",
     "IssueLinkType",
     "IssueType",
+    "NotificationScheme",
     "Priority",
     "PriorityScheme",
     "Version",
@@ -799,6 +800,16 @@ class Votes(Resource):
             self._parse_raw(raw)
         self.raw: Dict[str, Any] = cast(Dict[str, Any], self.raw)
 
+class NotificationScheme(Resource):
+    """NotificationScheme information on an project."""
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(
+            self, "project/{0}/notificationscheme?expand=user", options, session
+        )
+        if raw:
+            self._parse_raw(raw)
+        self.raw: Dict[str, Any] = cast(Dict[str, Any], self.raw)
 
 class PermissionScheme(Resource):
     """Permissionscheme information on an project."""
@@ -1420,6 +1431,7 @@ resource_class_map: Dict[str, Type[Resource]] = {
     r"issueLink/[^/]+$": IssueLink,
     r"issueLinkType/[^/]+$": IssueLinkType,
     r"issuetype/[^/]+$": IssueType,
+    r"project/[^/]+/notificationscheme[^/]+$": NotificationScheme,
     r"project/[^/]+/priorityscheme[^/]+$": PriorityScheme,
     r"priority/[^/]+$": Priority,
     r"project/[^/]+$": Project,

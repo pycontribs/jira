@@ -69,6 +69,7 @@ from jira.resources import (
     IssueLink,
     IssueLinkType,
     IssueType,
+    NotificationScheme,
     PermissionScheme,
     Priority,
     PriorityScheme,
@@ -2127,6 +2128,19 @@ class JIRA:
             Votes
         """
         return self._find_for_resource(Votes, issue)
+
+    @translate_resource_args
+    def project_notificationscheme(self, project: str) -> NotificationScheme:
+        """Get a NotificationScheme Resource from the server.
+
+
+        Args:
+            project (str): ID or key of the project to get the NotificationScheme for
+
+        Returns:
+            NotificationScheme,: The notification scheme
+        """
+        return self._find_for_resource(NotificationScheme, project)
 
     @translate_resource_args
     def project_permissionscheme(self, project: str) -> PermissionScheme:
