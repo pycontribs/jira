@@ -89,6 +89,7 @@ from jira.resources import (
     Version,
     Votes,
     Watchers,
+    WorkflowScheme,
     Worklog,
 )
 from jira.utils import json_loads, threaded_requests

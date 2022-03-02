@@ -48,6 +48,7 @@ __all__ = (
     "Priority",
     "PriorityScheme",
     "Version",
+    "WorkflowScheme"
     "Role",
     "Resolution",
     "SecurityLevel",
@@ -1442,17 +1443,15 @@ resource_class_map: Dict[str, Type[Resource]] = {
     r"issue/[^/]+/worklog/[^/]+$": Worklog,
     r"issueLink/[^/]+$": IssueLink,
     r"issueLinkType/[^/]+$": IssueLinkType,
-<<<<<<< Updated upstream
-=======
-    r"project/[^/]+/issuesecuritylevelscheme[^/]+$": IssueSecurityLevelScheme,
->>>>>>> Stashed changes
     r"issuetype/[^/]+$": IssueType,
+    r"project/[^/]+/issuesecuritylevelscheme[^/]+$": IssueSecurityLevelScheme,
     r"project/[^/]+/notificationscheme[^/]+$": NotificationScheme,
     r"project/[^/]+/priorityscheme[^/]+$": PriorityScheme,
     r"priority/[^/]+$": Priority,
     r"project/[^/]+$": Project,
     r"project/[^/]+/role/[^/]+$": Role,
     r"project/[^/]+/permissionscheme[^/]+$": PermissionScheme,
+    r"project/[^/]+/workflowscheme[^/]+$": WorkflowScheme,
     r"resolution/[^/]+$": Resolution,
     r"securitylevel/[^/]+$": SecurityLevel,
     r"status/[^/]+$": Status,
