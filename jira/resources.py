@@ -42,6 +42,7 @@ __all__ = (
     "Worklog",
     "IssueLink",
     "IssueLinkType",
+    "IssueSecurityLevelScheme",
     "IssueType",
     "NotificationScheme",
     "Priority",
@@ -800,6 +801,17 @@ class Votes(Resource):
             self._parse_raw(raw)
         self.raw: Dict[str, Any] = cast(Dict[str, Any], self.raw)
 
+class IssueSecurityLevelScheme(Resource):
+    """IssueSecurityLevelScheme information on an project."""
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(
+            self, "project/{0}/issuesecuritylevelscheme?expand=user", options, session
+        )
+        if raw:
+            self._parse_raw(raw)
+        self.raw: Dict[str, Any] = cast(Dict[str, Any], self.raw)
+
 class NotificationScheme(Resource):
     """NotificationScheme information on an project."""
 
@@ -1430,6 +1442,10 @@ resource_class_map: Dict[str, Type[Resource]] = {
     r"issue/[^/]+/worklog/[^/]+$": Worklog,
     r"issueLink/[^/]+$": IssueLink,
     r"issueLinkType/[^/]+$": IssueLinkType,
+<<<<<<< Updated upstream
+=======
+    r"project/[^/]+/issuesecuritylevelscheme[^/]+$": IssueSecurityLevelScheme,
+>>>>>>> Stashed changes
     r"issuetype/[^/]+$": IssueType,
     r"project/[^/]+/notificationscheme[^/]+$": NotificationScheme,
     r"project/[^/]+/priorityscheme[^/]+$": PriorityScheme,

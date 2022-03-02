@@ -68,6 +68,7 @@ from jira.resources import (
     Issue,
     IssueLink,
     IssueLinkType,
+    IssueSecurityLevelScheme,
     IssueType,
     NotificationScheme,
     PermissionScheme,
@@ -2128,6 +2129,19 @@ class JIRA:
             Votes
         """
         return self._find_for_resource(Votes, issue)
+
+    @translate_resource_args
+    def project_issuesecuritylevelscheme(self, project: str) -> IssueSecurityLevelScheme:
+        """Get a IssueSecurityLevelScheme Resource from the server.
+
+
+        Args:
+            project (str): ID or key of the project to get the IssueSecurityLevelScheme for
+
+        Returns:
+            IssueSecurityLevelScheme,: The notification scheme
+        """
+        return self._find_for_resource(IssueSecurityLevelScheme, project)
 
     @translate_resource_args
     def project_notificationscheme(self, project: str) -> NotificationScheme:
