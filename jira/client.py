@@ -1729,7 +1729,11 @@ class JIRA:
         """
         return user.accountId if self._is_cloud else user.name
 
-    def _get_user_id(self, user: Optional[str]) -> Optional[str]:
+    def _get_user_id(
+        self,
+        user: Optional[Union[int, str]],
+        lookup_user: bool = True,
+    ) -> Optional[str]:
         """Internal method for translating an user search (str) to an id.
 
         Return None and -1 unchanged.
@@ -1750,7 +1754,7 @@ class JIRA:
         Returns:
             Optional[str]: The Jira user's identifier. Or "-1" and None unchanged.
         """
-        if user in (None, -1, "-1"):
+        if user in (None, -1, "-1") or not lookup_user:
             return user
         try:
             user_obj: User
@@ -1764,19 +1768,27 @@ class JIRA:
 
     # non-resource
     @translate_resource_args
-    def assign_issue(self, issue: Union[int, str], assignee: Optional[str]) -> bool:
+    def assign_issue(
+        self,
+        issue: Union[int, str],
+        assignee: Optional[str],
+        lookup_user: bool = True,
+    ) -> bool:
         """Assign an issue to a user.
 
         Args:
             issue (Union[int,str]): the issue ID or key to assign
             assignee (str): the user to assign the issue to.
               None will set it to unassigned. -1 will set it to Automatic.
+            lookup_user (bool): If the assignee should be searched before use.
+              If True, the assignee will be searched for and the first result
+              used. If False, the assignee will be used as-is.
 
         Returns:
             bool
         """
         url = self._get_latest_url(f"issue/{issue}/assignee")
-        user_id = self._get_user_id(assignee)
+        user_id = self._get_user_id(assignee, lookup_user)
         payload = {"accountId": user_id} if self._is_cloud else {"name": user_id}
         r = self._session.put(url, data=json.dumps(payload))
         raise_on_error(r)
@@ -2186,19 +2198,25 @@ class JIRA:
         return self._session.post(url, data=json.dumps(watcher))
 
     @translate_resource_args
-    def remove_watcher(self, issue: str, watcher: str) -> Response:
+    def remove_watcher(
+        self,
+        issue: str,
+        watcher: str,
+        lookup_user: bool = True,
+    ) -> Response:
         """Remove a user from an issue's watch list.
 
         Args:
             issue (str): ID or key of the issue affected
             watcher (str): name of the user to remove from the watchers list
+            lookup_user (bool): If the watcher should be searched for
 
         Returns:
             Response
         """
         url = self._get_url("issue/" + str(issue) + "/watchers")
         # https://docs.atlassian.com/software/jira/docs/api/REST/8.13.6/#api/2/issue-removeWatcher
-        user_id = self._get_user_id(watcher)
+        user_id = self._get_user_id(watcher, lookup_user)
         payload = {"accountId": user_id} if self._is_cloud else {"username": user_id}
         result = self._session.delete(url, params=payload)
         return result
