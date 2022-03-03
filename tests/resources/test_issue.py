@@ -28,7 +28,9 @@ class IssueTests(JiraTestCase):
 
     def test_issue_get_field(self):
         issue = self.jira.issue(self.issue_1)
-        self.assertEqual(issue.fields.description, issue.get_field(fieldName="description"))
+        self.assertEqual(
+            issue.fields.description, issue.get_field(fieldName="description")
+        )
 
         self.assertRaisesRegex(
             AttributeError, ": _something", issue.get_field, "_something"
