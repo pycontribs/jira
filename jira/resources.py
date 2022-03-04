@@ -802,6 +802,18 @@ class Votes(Resource):
             self._parse_raw(raw)
         self.raw: Dict[str, Any] = cast(Dict[str, Any], self.raw)
 
+class IssueTypeScheme(Resource):
+    """An issue type scheme."""
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(
+            self, "issuetypescheme", options, session
+        )
+        if raw:
+            self._parse_raw(raw)
+        self.raw: Dict[str, Any] = cast(Dict[str, Any], self.raw)
+
+
 class IssueSecurityLevelScheme(Resource):
     """IssueSecurityLevelScheme information on an project."""
 
@@ -1444,6 +1456,7 @@ resource_class_map: Dict[str, Type[Resource]] = {
     r"issueLink/[^/]+$": IssueLink,
     r"issueLinkType/[^/]+$": IssueLinkType,
     r"issuetype/[^/]+$": IssueType,
+    r"issuetypescheme/[^/]+$": IssueTypeScheme,
     r"project/[^/]+/issuesecuritylevelscheme[^/]+$": IssueSecurityLevelScheme,
     r"project/[^/]+/notificationscheme[^/]+$": NotificationScheme,
     r"project/[^/]+/priorityscheme[^/]+$": PriorityScheme,

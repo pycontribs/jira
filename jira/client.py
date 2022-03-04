@@ -4027,6 +4027,16 @@ class JIRA:
         return data["permissionSchemes"]
 
     @lru_cache(maxsize=None)
+    def issuetypeschemes(self):
+
+        url = self._get_url("issuetypescheme")
+
+        r = self._session.get(url)
+        data: Dict[str, Any] = json_loads(r)
+
+        return data["schemes"]
+
+    @lru_cache(maxsize=None)
     def issuesecurityschemes(self):
 
         url = self._get_url("issuesecurityschemes")
@@ -4110,6 +4120,12 @@ class JIRA:
         data = json_loads(r)
 
         self.permissionschemes.cache_clear()
+        return data
+
+    def get_project_issue_type_scheme(self, id):
+        url = self._get_url(f"issuetypescheme/{id}/associations")
+        r = self._session.get(url)
+        data = json_loads(r)
         return data
 
     def create_project(
