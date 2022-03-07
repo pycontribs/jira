@@ -707,7 +707,7 @@ class Issue(Resource):
 
         if fieldName.startswith("_"):
             raise AttributeError(
-                f"A issue field_name cannot start with underscore (_): {fieldName}",
+                f"An issue field_name cannot start with underscore (_): {fieldName}",
                 fieldName,
             )
         else:
