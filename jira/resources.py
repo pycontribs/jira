@@ -692,7 +692,7 @@ class Issue(Resource):
 
         super(Issue, self).update(async_=async_, jira=jira, notify=notify, fields=data)
 
-    def get_field(self, fieldName: str) -> Any:
+    def get_field(self, field_name: str) -> Any:
         """Obtain the (parsed) value from the Issue's field.
 
         Args:
