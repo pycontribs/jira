@@ -32,13 +32,11 @@ class IssueTests(JiraTestCase):
             issue.fields.description, issue.get_field(fieldName="description")
         )
 
-        self.assertRaisesRegex(
-            AttributeError, ": _something", issue.get_field, "_something"
-        )
+        with self.assertRaisesRegex(AttributeError, ": _something"):
+            issue.get_field("_something")
 
-        self.assertRaisesRegex(
-            AttributeError, "customfield_1234", issue.get_field, "customfield_1234"
-        )
+        with self.assertRaisesRegex(AttributeError, "customfield_1234"):
+            issue.get_field("customfield_1234")
 
     def test_issue_field_limiting(self):
         issue = self.jira.issue(self.issue_2, fields="summary,comment")
