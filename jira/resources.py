@@ -696,7 +696,7 @@ class Issue(Resource):
         """Obtain the (parsed) value from the Issue's field.
 
         Args:
-            fieldName (str): The name of the field to get
+            field_name (str): The name of the field to get
 
         Raises:
             AttributeError: If the field does not exist or if the field starts with an ``_``
@@ -705,13 +705,13 @@ class Issue(Resource):
             Any: Returns the parsed data stored in the field. For example, "project" would be of class :py:class:`Project`
         """
 
-        if fieldName.startswith("_"):
+        if field_name.startswith("_"):
             raise AttributeError(
-                f"An issue field_name cannot start with underscore (_): {fieldName}",
-                fieldName,
+                f"An issue field_name cannot start with underscore (_): {field_name}",
+                field_name,
             )
         else:
-            return getattr(self.fields, fieldName)
+            return getattr(self.fields, field_name)
 
     def add_field_value(self, field: str, value: str):
         """Add a value to a field that supports multiple values, without resetting the existing values.
