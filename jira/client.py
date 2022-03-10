@@ -580,7 +580,7 @@ class JIRA:
             JIRA.checked_version = True
 
         self._fields_cache_value: Dict[str, str] = {}  # access via self._fields_cache
-    
+
     @contextlib.contextmanager
     def disable_internal_user_lookup(self):
         self._internal_user_lookup = False
