@@ -2,8 +2,8 @@ from tests.conftest import JiraTestCase
 
 
 class ProjectStatusesByIssueTypeTests(JiraTestCase):
-    def test_project_statuses_by_issue_type(self):
-        issue_types = self.jira.project_statuses_by_issue_type(self.project_a)
+    def test_issue_types_for_project(self):
+        issue_types = self.jira.issue_types_for_project(self.project_a)
 
         # should have at least one issue type within the project
         self.assertGreater(len(issue_types), 0)

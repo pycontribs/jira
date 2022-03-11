@@ -2916,6 +2916,9 @@ class JIRA:
     def statuses(self) -> List[Status]:
         """Get a list of all status Resources from the server.
 
+        Refer to :py:meth:`JIRA.issue_types_for_project` for getting statuses 
+        for a specific issue type within a specific project.
+
         Returns:
             List[Status]
         """
@@ -2926,8 +2929,11 @@ class JIRA:
         ]
         return statuses
 
-    def project_statuses_by_issue_type(self, projectIdOrKey: str) -> List[IssueType]:
-        """Get a list of issue types available within the project with available statuses within each issue type, as each project has a set of valid issue types and each issue type has a set of valid statuses.
+    def issue_types_for_project(self, projectIdOrKey: str) -> List[IssueType]:
+        """Get a list of issue types available within the project.
+
+        Each project has a set of valid issue types and each issue type has a set of valid statuses.
+        The valid statuses for a given issue type can be extracted via: `issue_type_x.statuses`
 
         Returns:
             List[IssueType]
