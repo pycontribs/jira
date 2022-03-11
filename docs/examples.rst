@@ -129,9 +129,6 @@ Jira Cloud
 This is also referred to as an API Token in the
 `Jira Cloud documentation <https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/>`_ ::
 
-
-.. code-block:: python
-
     auth_jira = JIRA(basic_auth=('email', 'API token'))
 
 

@@ -1,4 +1,3 @@
-#!/usr/bin/python
 """
 This module implements a friendly (well, friendlier) interface between the raw JSON
 responses from Jira and the Resource/dict abstractions provided by this library. Users
@@ -4861,11 +4860,11 @@ class JIRA:
                 )
             raise
 
-    def move_to_backlog(self, issue_keys: str) -> Response:
+    def move_to_backlog(self, issue_keys: List[str]) -> Response:
         """Move issues in ``issue_keys`` to the backlog, removing them from all sprints that have not been completed.
 
         Args:
-            issue_keys (str): the issues to move to the backlog
+            issue_keys (List[str]): the issues to move to the backlog
 
         Raises:
             JIRAError: If moving issues to backlog fails
