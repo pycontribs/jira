@@ -86,7 +86,7 @@ packaging==21.2
     #   pytest
     #   pytest-sugar
     #   sphinx
-parso==0.8.2
+parso==0.8.3
     # via jedi
 pexpect==4.8.0
     # via ipython
@@ -137,7 +137,7 @@ pytest-instafail==0.4.2
     # via jira (setup.cfg)
 pytest-sugar==0.9.4
     # via jira (setup.cfg)
-pytest-timeout==2.0.1
+pytest-timeout==2.1.0
     # via jira (setup.cfg)
 pytest-xdist==2.4.0
     # via jira (setup.cfg)
