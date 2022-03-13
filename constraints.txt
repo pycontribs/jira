@@ -81,7 +81,7 @@ oauthlib==3.1.1
     # via
     #   jira (setup.cfg)
     #   requests-oauthlib
-packaging==21.2
+packaging==21.3
     # via
     #   pytest
     #   pytest-sugar
@@ -131,7 +131,7 @@ pytest-cache==1.0
     # via jira (setup.cfg)
 pytest-cov==3.0.0
     # via jira (setup.cfg)
-pytest-forked==1.3.0
+pytest-forked==1.4.0
     # via pytest-xdist
 pytest-instafail==0.4.2
     # via jira (setup.cfg)
@@ -160,7 +160,7 @@ requests-futures==1.0.0
     # via jira (setup.cfg)
 requests-jwt==0.5.3
     # via jira (setup.cfg)
-requests-kerberos==0.13.0
+requests-kerberos==0.14.0
     # via jira (setup.cfg)
 requests-mock==1.9.3
     # via jira (setup.cfg)
