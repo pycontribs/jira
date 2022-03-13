@@ -48,7 +48,7 @@ filemagic==1.6
     # via jira (setup.cfg)
 flaky==3.7.0
     # via jira (setup.cfg)
-gssapi==1.7.2
+gssapi==1.7.3
     # via pyspnego
 idna==3.3
     # via requests
