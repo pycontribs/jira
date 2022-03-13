@@ -73,7 +73,7 @@ keyring==23.2.1
     # via jira (setup.cfg)
 krb5==0.3.0
     # via pyspnego
-markupsafe==2.0.1
+markupsafe==2.1.0
     # via
     #   jinja2
     #   jira (setup.cfg)
