@@ -77,7 +77,7 @@ markupsafe==2.0.1
     # via
     #   jinja2
     #   jira (setup.cfg)
-oauthlib==3.1.1
+oauthlib==3.2.0
     # via
     #   jira (setup.cfg)
     #   requests-oauthlib
