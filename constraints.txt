@@ -48,7 +48,7 @@ filemagic==1.6
     # via jira (setup.cfg)
 flaky==3.7.0
     # via jira (setup.cfg)
-gssapi==1.7.2
+gssapi==1.7.3
     # via pyspnego
 idna==3.3
     # via requests
@@ -145,7 +145,7 @@ pytz==2021.3
     # via babel
 pyyaml==6.0
     # via jira (setup.cfg)
-requests==2.26.0
+requests==2.27.1
     # via
     #   jira (setup.cfg)
     #   requests-futures
@@ -210,7 +210,7 @@ urllib3==1.26.8
     # via requests
 wcwidth==0.2.5
     # via prompt-toolkit
-wheel==0.37.0
+wheel==0.37.1
     # via jira (setup.cfg)
 xmlrunner==1.7.7
     # via jira (setup.cfg)
