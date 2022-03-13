@@ -65,7 +65,7 @@ ipython==7.16.1
     # via jira (setup.cfg)
 ipython-genutils==0.2.0
     # via traitlets
-jedi==0.18.0
+jedi==0.18.1
     # via ipython
 jinja2==3.0.3
     # via sphinx
