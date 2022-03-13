@@ -174,7 +174,7 @@ six==1.16.0
     # via
     #   requests-mock
     #   traitlets
-snowballstemmer==2.1.0
+snowballstemmer==2.2.0
     # via sphinx
 sphinx==4.4.0
     # via
