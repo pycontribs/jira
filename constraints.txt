@@ -200,7 +200,7 @@ termcolor==1.1.0
     # via pytest-sugar
 toml==0.10.2
     # via pytest
-tomli==1.2.2
+tomli==1.2.3
     # via coverage
 traitlets==4.3.3
     # via ipython
