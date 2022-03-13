@@ -131,7 +131,7 @@ pytest-cache==1.0
     # via jira (setup.cfg)
 pytest-cov==3.0.0
     # via jira (setup.cfg)
-pytest-forked==1.3.0
+pytest-forked==1.4.0
     # via pytest-xdist
 pytest-instafail==0.4.2
     # via jira (setup.cfg)
