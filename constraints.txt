@@ -94,7 +94,7 @@ pickleshare==0.7.5
     # via ipython
 pluggy==1.0.0
     # via pytest
-prompt-toolkit==3.0.22
+prompt-toolkit==3.0.28
     # via ipython
 ptyprocess==0.7.0
     # via pexpect
@@ -117,7 +117,7 @@ pyparsing==2.4.7
     # via packaging
 pyspnego==0.3.1
     # via requests-kerberos
-pytest==6.2.5
+pytest==7.0.1
     # via
     #   jira (setup.cfg)
     #   pytest-cache
@@ -174,7 +174,7 @@ six==1.16.0
     # via
     #   requests-mock
     #   traitlets
-snowballstemmer==2.1.0
+snowballstemmer==2.2.0
     # via sphinx
 sphinx==4.4.0
     # via
@@ -206,7 +206,7 @@ traitlets==4.3.3
     # via ipython
 typing-extensions==4.1.1
     # via importlib-metadata
-urllib3==1.26.7
+urllib3==1.26.8
     # via requests
 wcwidth==0.2.5
     # via prompt-toolkit
