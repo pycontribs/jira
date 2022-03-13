@@ -22,7 +22,7 @@ charset-normalizer==2.0.12
     # via requests
 coverage==6.1.2
     # via pytest-cov
-cryptography==35.0.0
+cryptography==36.0.1
     # via
     #   pyspnego
     #   requests-kerberos
