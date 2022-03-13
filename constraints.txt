@@ -22,7 +22,7 @@ charset-normalizer==2.0.12
     # via requests
 coverage==6.1.2
     # via pytest-cov
-cryptography==35.0.0
+cryptography==36.0.1
     # via
     #   pyspnego
     #   requests-kerberos
@@ -210,7 +210,7 @@ urllib3==1.26.7
     # via requests
 wcwidth==0.2.5
     # via prompt-toolkit
-wheel==0.37.0
+wheel==0.37.1
     # via jira (setup.cfg)
 xmlrunner==1.7.7
     # via jira (setup.cfg)
