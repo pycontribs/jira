@@ -8,7 +8,7 @@ alabaster==0.7.12
     # via sphinx
 appnope==0.1.2
     # via ipython
-attrs==21.2.0
+attrs==21.4.0
     # via pytest
 babel==2.9.1
     # via sphinx
@@ -65,7 +65,7 @@ ipython==7.16.1
     # via jira (setup.cfg)
 ipython-genutils==0.2.0
     # via traitlets
-jedi==0.18.0
+jedi==0.18.1
     # via ipython
 jinja2==3.0.3
     # via sphinx
@@ -113,7 +113,7 @@ pyjwt==2.3.0
     # via
     #   jira (setup.cfg)
     #   requests-jwt
-pyparsing==2.4.7
+pyparsing==3.0.7
     # via packaging
 pyspnego==0.3.1
     # via requests-kerberos
