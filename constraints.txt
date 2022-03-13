@@ -28,7 +28,7 @@ cryptography==35.0.0
     #   requests-kerberos
 dataclasses==0.8
     # via pyspnego
-decorator==5.1.0
+decorator==5.1.1
     # via
     #   gssapi
     #   ipython
