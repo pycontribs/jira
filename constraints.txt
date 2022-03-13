@@ -71,7 +71,7 @@ jinja2==3.0.3
     # via sphinx
 keyring==23.2.1
     # via jira (setup.cfg)
-krb5==0.2.0
+krb5==0.3.0
     # via pyspnego
 markupsafe==2.0.1
     # via
@@ -81,7 +81,7 @@ oauthlib==3.1.1
     # via
     #   jira (setup.cfg)
     #   requests-oauthlib
-packaging==21.2
+packaging==21.3
     # via
     #   pytest
     #   pytest-sugar
@@ -160,7 +160,7 @@ requests-futures==1.0.0
     # via jira (setup.cfg)
 requests-jwt==0.5.3
     # via jira (setup.cfg)
-requests-kerberos==0.13.0
+requests-kerberos==0.14.0
     # via jira (setup.cfg)
 requests-mock==1.9.3
     # via jira (setup.cfg)
