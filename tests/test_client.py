@@ -62,6 +62,18 @@ def no_fields(monkeypatch):
     monkeypatch.setattr(jira.client.JIRA, "fields", lambda *args, **kwargs: [])
 
 
+def test_disable_internal_user_lookup(cl_normal: jira.client.JIRA):
+    # GIVEN: a username which may or may not exist
+    username: str = "a"
+
+    # WHEN: We attempt to look it up with the disable_internal_user_lookup() context
+    with cl_normal.disable_internal_user_lookup():
+        result = cl_normal._get_user_id()
+
+    # THEN: The original username is returned without attempting to look it up
+    assert result == username
+
+
 def test_delete_project(cl_admin, cl_normal, slug):
 
     assert cl_admin.delete_project(slug)

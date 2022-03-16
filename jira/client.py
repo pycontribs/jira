@@ -583,6 +583,19 @@ class JIRA:
 
     @contextlib.contextmanager
     def disable_internal_user_lookup(self):
+        """Return a context manager which disables internal username searches.
+
+        This creates a context which turns off the internal username search
+        that various methods of the client use. This allows re-using a known
+        good username across multiple operations, such as one returned by
+        :py:meth:`JIRA.search_users`.
+
+        An example usage would be to search for a given user, then bulk assign
+        tickets to them using :py:meth:`JIRA.assign_issue`.
+
+        Return
+            contextlib._GeneratorContextManager
+        """
         self._internal_user_lookup = False
         try:
             yield True
