@@ -68,7 +68,7 @@ def test_disable_internal_user_lookup(cl_normal: jira.client.JIRA):
 
     # WHEN: We attempt to look it up with the disable_internal_user_lookup() context
     with cl_normal.disable_internal_user_lookup():
-        result = cl_normal._get_user_id()
+        result = cl_normal._get_user_id(username)
 
     # THEN: The original username is returned without attempting to look it up
     assert result == username

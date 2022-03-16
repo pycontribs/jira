@@ -590,6 +590,15 @@ class JIRA:
         good username across multiple operations, such as one returned by
         :py:meth:`JIRA.search_users`.
 
+        :Example:
+            .. code-block::python
+                # Bulk assigning tickets to a known user, saving internal lookup time
+                my_user_id = "user_x"
+                issue_list = ... # Some list of issues
+                with jira_client.disable_internal_user_lookup():
+                    for issue in issue_list:
+                        jira_client.assign_issue(issue, my_user_id)
+
         An example usage would be to search for a given user, then bulk assign
         tickets to them using :py:meth:`JIRA.assign_issue`.
 
@@ -598,7 +607,7 @@ class JIRA:
         """
         self._internal_user_lookup = False
         try:
-            yield True
+            yield
         finally:
             self._internal_user_lookup = True
 
