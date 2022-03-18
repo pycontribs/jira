@@ -2132,7 +2132,9 @@ class JIRA:
         return self._find_for_resource(Votes, issue)
 
     @translate_resource_args
-    def project_issuesecuritylevelscheme(self, project: str) -> IssueSecurityLevelScheme:
+    def project_issuesecuritylevelscheme(
+        self, project: str
+    ) -> IssueSecurityLevelScheme:
         """Get a IssueSecurityLevelScheme Resource from the server.
 
 

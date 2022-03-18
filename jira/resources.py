@@ -48,8 +48,7 @@ __all__ = (
     "Priority",
     "PriorityScheme",
     "Version",
-    "WorkflowScheme"
-    "Role",
+    "WorkflowScheme" "Role",
     "Resolution",
     "SecurityLevel",
     "Status",
@@ -802,13 +801,12 @@ class Votes(Resource):
             self._parse_raw(raw)
         self.raw: Dict[str, Any] = cast(Dict[str, Any], self.raw)
 
+
 class IssueTypeScheme(Resource):
     """An issue type scheme."""
 
     def __init__(self, options, session, raw=None):
-        Resource.__init__(
-            self, "issuetypescheme", options, session
-        )
+        Resource.__init__(self, "issuetypescheme", options, session)
         if raw:
             self._parse_raw(raw)
         self.raw: Dict[str, Any] = cast(Dict[str, Any], self.raw)
@@ -825,6 +823,7 @@ class IssueSecurityLevelScheme(Resource):
             self._parse_raw(raw)
         self.raw: Dict[str, Any] = cast(Dict[str, Any], self.raw)
 
+
 class NotificationScheme(Resource):
     """NotificationScheme information on an project."""
 
@@ -835,6 +834,7 @@ class NotificationScheme(Resource):
         if raw:
             self._parse_raw(raw)
         self.raw: Dict[str, Any] = cast(Dict[str, Any], self.raw)
+
 
 class PermissionScheme(Resource):
     """Permissionscheme information on an project."""
