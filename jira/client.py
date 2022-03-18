@@ -2186,6 +2186,19 @@ class JIRA:
         return self._find_for_resource(PriorityScheme, project)
 
     @translate_resource_args
+    def project_workflowscheme(self, project: str) -> WorkflowScheme:
+        """Get a WorkflowScheme Resource from the server.
+
+
+        Args:
+            project (str): ID or key of the project to get the WorkflowScheme for
+
+        Returns:
+            WorkflowScheme,: The priority scheme
+        """
+        return self._find_for_resource(WorkflowScheme, project)
+
+    @translate_resource_args
     def add_vote(self, issue: str) -> Response:
         """Register a vote for the current authenticated user on an issue.
 

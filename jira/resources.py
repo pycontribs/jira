@@ -48,7 +48,8 @@ __all__ = (
     "Priority",
     "PriorityScheme",
     "Version",
-    "WorkflowScheme" "Role",
+    "WorkflowScheme",
+    "Role",
     "Resolution",
     "SecurityLevel",
     "Status",
@@ -854,6 +855,18 @@ class PriorityScheme(Resource):
     def __init__(self, options, session, raw=None):
         Resource.__init__(
             self, "project/{0}/priorityscheme?expand=user", options, session
+        )
+        if raw:
+            self._parse_raw(raw)
+        self.raw: Dict[str, Any] = cast(Dict[str, Any], self.raw)
+
+
+class WorkflowScheme(Resource):
+    """WorkflowScheme information on an project."""
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(
+            self, "project/{0}/workflowscheme?expand=user", options, session
         )
         if raw:
             self._parse_raw(raw)
