@@ -14,7 +14,7 @@ logging.getLogger("requests").setLevel(logging.INFO)
 logging.getLogger("urllib3").setLevel(logging.INFO)
 logging.getLogger("jira").setLevel(logging.DEBUG)
 
-CI_JIRA_URL = os.environ["CI_JIRA_URL"]                 # https://pycontribs.atlassian.net
+CI_JIRA_URL = os.environ["CI_JIRA_URL"]  # https://pycontribs.atlassian.net
 CI_JIRA_ADMIN = os.environ["CI_JIRA_ADMIN"]
 CI_JIRA_ADMIN_TOKEN = os.environ["CI_JIRA_ADMIN_TOKEN"]
 
