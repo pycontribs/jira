@@ -214,7 +214,9 @@ class ProjectTests(JiraTestCase):
         self.assertEqual(notificationscheme.name, "Default Notification Scheme")
 
     def test_project_issuesecuritylevelscheme(self):
-        issuesecuritylevelscheme = self.jira.project_issuesecuritylevelscheme(self.project_b)
+        issuesecuritylevelscheme = self.jira.project_issuesecuritylevelscheme(
+            self.project_b
+        )
         self.assertEqual(issuesecuritylevelscheme.name, "None")
 
     def test_project_issuetypescheme(self):
