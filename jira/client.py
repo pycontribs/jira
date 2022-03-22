@@ -70,6 +70,7 @@ from jira.resources import (
     IssueLinkType,
     IssueSecurityLevelScheme,
     IssueType,
+    IssueTypeScheme,
     NotificationScheme,
     PermissionScheme,
     Priority,
