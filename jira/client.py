@@ -2181,7 +2181,7 @@ class JIRA:
             project (str): ID or key of the project to get the PriorityScheme for
 
         Returns:
-            PriorityScheme,: The priority scheme
+            PriorityScheme: The priority scheme
         """
         return self._find_for_resource(PriorityScheme, project)
 
@@ -4042,7 +4042,8 @@ class JIRA:
         return data["permissionSchemes"]
 
     @lru_cache(maxsize=None)
-    def issuetypeschemes(self):
+    def issue_type_schemes(self) -> List[IssueTypeScheme]:
+        """get all issue type schemes defined"""
 
         url = self._get_url("issuetypescheme")
 
