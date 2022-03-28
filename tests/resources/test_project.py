@@ -217,10 +217,8 @@ class ProjectTests(JiraTestCase):
     def test_project_issue_security_level_scheme(self):
         # 404s are thrown when a project does not have an issue security scheme
         # associated with it explicitly
-        with self.assertRaises(JIRAError) as je:
-            issuesecuritylevelscheme = self.jira.project_issue_security_level_scheme(
-                self.project_b
-            )
+        with self.assertRaises(JIRAError):
+            self.jira.project_issue_security_level_scheme(self.project_b)
 
     def test_project_workflow_scheme(self):
         workflowscheme = self.jira.project_workflow_scheme(self.project_b)
