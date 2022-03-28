@@ -46,7 +46,7 @@ for s in j.permissionschemes():
     else:
         logging.info("Permission scheme: %s" % s["name"])
 
-for s in j.issuesecurityschemes():
+for s in j.issue_security_level_schemes():
     if " for Project" in s["name"]:
         logging.info("Deleting issue security scheme: %s", s["name"])
         j.delete_permissionscheme(s["id"])
@@ -74,7 +74,7 @@ for s in j.avatars("project"):
 #     else:
 #         logging.error(s)
 
-for s in j.notificationschemes():
+for s in j.notification_schemes():
     logging.info("NotificationScheme: %s", s)
 
 # TODO(ssbarnea): "Default Issue Security Scheme"
