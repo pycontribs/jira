@@ -1,5 +1,5 @@
-from tests.conftest import JiraTestCase, find_by_id, rndstr
 from jira import JIRAError
+from tests.conftest import JiraTestCase, find_by_id, rndstr
 
 
 class ProjectTests(JiraTestCase):
@@ -224,4 +224,7 @@ class ProjectTests(JiraTestCase):
 
     def test_project_workflow_scheme(self):
         workflowscheme = self.jira.project_workflow_scheme(self.project_b)
-        self.assertEqual(workflowscheme.name, f"{self.project_b}: Software Simplified Workflow Scheme")
+        self.assertEqual(
+            workflowscheme.name,
+            f"{self.project_b}: Software Simplified Workflow Scheme",
+        )
