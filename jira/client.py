@@ -2133,7 +2133,7 @@ class JIRA:
         return self._find_for_resource(Votes, issue)
 
     @translate_resource_args
-    def project_issuesecuritylevelscheme(
+    def project_issue_security_level_scheme(
         self, project: str
     ) -> IssueSecurityLevelScheme:
         """Get a IssueSecurityLevelScheme Resource from the server.
@@ -2143,12 +2143,12 @@ class JIRA:
             project (str): ID or key of the project to get the IssueSecurityLevelScheme for
 
         Returns:
-            IssueSecurityLevelScheme,: The notification scheme
+            IssueSecurityLevelScheme: The issue security level scheme
         """
         return self._find_for_resource(IssueSecurityLevelScheme, project)
 
     @translate_resource_args
-    def project_notificationscheme(self, project: str) -> NotificationScheme:
+    def project_notification_scheme(self, project: str) -> NotificationScheme:
         """Get a NotificationScheme Resource from the server.
 
 
@@ -2156,7 +2156,7 @@ class JIRA:
             project (str): ID or key of the project to get the NotificationScheme for
 
         Returns:
-            NotificationScheme,: The notification scheme
+            NotificationScheme: The notification scheme
         """
         return self._find_for_resource(NotificationScheme, project)
 
@@ -2174,7 +2174,7 @@ class JIRA:
         return self._find_for_resource(PermissionScheme, project)
 
     @translate_resource_args
-    def project_priorityscheme(self, project: str) -> PriorityScheme:
+    def project_priority_scheme(self, project: str) -> PriorityScheme:
         """Get a PriorityScheme Resource from the server.
 
 
@@ -2187,7 +2187,7 @@ class JIRA:
         return self._find_for_resource(PriorityScheme, project)
 
     @translate_resource_args
-    def project_workflowscheme(self, project: str) -> WorkflowScheme:
+    def project_workflow_scheme(self, project: str) -> WorkflowScheme:
         """Get a WorkflowScheme Resource from the server.
 
 
@@ -2195,7 +2195,7 @@ class JIRA:
             project (str): ID or key of the project to get the WorkflowScheme for
 
         Returns:
-            WorkflowScheme,: The priority scheme
+            WorkflowScheme: The workflow scheme
         """
         return self._find_for_resource(WorkflowScheme, project)
 
@@ -4054,7 +4054,7 @@ class JIRA:
         return data["schemes"]
 
     @lru_cache(maxsize=None)
-    def issuesecurityschemes(self):
+    def issue_security_level_schemes(self):
 
         url = self._get_url("issuesecurityschemes")
 
@@ -4084,7 +4084,7 @@ class JIRA:
         return data["system"]
 
     @lru_cache(maxsize=None)
-    def notificationschemes(self):
+    def notification_schemes(self):
         # TODO(ssbarnea): implement pagination support
         url = self._get_url("notificationscheme")
 
@@ -4102,7 +4102,7 @@ class JIRA:
         return data["values"]
 
     @lru_cache(maxsize=None)
-    def workflowscheme(self):
+    def workflow_scheme(self):
         # TODO(ssbarnea): implement pagination support
         url = self._get_url("workflowschemes")
 
@@ -4139,7 +4139,7 @@ class JIRA:
         self.permissionschemes.cache_clear()
         return data
 
-    def get_project_issue_type_scheme(self, id):
+    def get_issue_type_scheme_associations(self, id):
         url = self._get_url(f"issuetypescheme/{id}/associations")
         r = self._session.get(url)
         data = json_loads(r)
@@ -4193,7 +4193,7 @@ class JIRA:
                 permissionScheme = ps_list[0]["id"]
 
         if issueSecurityScheme is None:
-            ps_list = self.issuesecurityschemes()
+            ps_list = self.issue_security_level_schemes()
             for sec in ps_list:
                 if sec["name"] == "Default":  # no idea which one is default
                     issueSecurityScheme = sec["id"]
