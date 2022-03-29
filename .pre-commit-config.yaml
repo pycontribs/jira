@@ -46,7 +46,7 @@ repos:
       - id: yamllint
         files: \.(yaml|yml)$
   - repo: https://github.com/pre-commit/mirrors-mypy.git
-    rev: v0.942
+    rev: v0.931
     hooks:
       - id: mypy
         additional_dependencies:
@@ -54,7 +54,7 @@ repos:
           - types-pkg_resources
         args: [--no-strict-optional, --ignore-missing-imports, --show-error-codes]
   - repo: https://github.com/asottile/pyupgrade
-    rev: v2.31.1
+    rev: v2.31.0
     hooks:
       - id: pyupgrade
         args: [ --py36-plus ]
