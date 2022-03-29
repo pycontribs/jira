@@ -582,7 +582,7 @@ class JIRA:
         self._fields_cache_value: Dict[str, str] = {}  # access via self._fields_cache
 
     @contextlib.contextmanager
-    def disable_internal_user_lookup(self):
+    def disable_internal_user_lookup(self) -> Iterable[None]:
         """Return a context manager which disables internal username searches.
 
         This creates a context which turns off the internal username search
@@ -598,9 +598,6 @@ class JIRA:
                 with jira_client.disable_internal_user_lookup():
                     for issue in issue_list:
                         jira_client.assign_issue(issue, my_user_id)
-
-        An example usage would be to search for a given user, then bulk assign
-        tickets to them using :py:meth:`JIRA.assign_issue`.
 
         Return
             contextlib._GeneratorContextManager
