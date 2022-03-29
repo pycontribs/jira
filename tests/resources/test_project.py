@@ -216,7 +216,9 @@ class ProjectTests(JiraTestCase):
 
     def test_project_issue_security_level_scheme(self):
         # 404s are thrown when a project does not have an issue security scheme
-        # associated with it explicitly
+        # associated with it explicitly. There are no ReST APIs for creating an
+        # issue security scheme programmatically, so there is no way to test
+        # this on the fly.
         with self.assertRaises(JIRAError):
             self.jira.project_issue_security_level_scheme(self.project_b)
 
