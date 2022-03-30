@@ -44,6 +44,7 @@ __all__ = (
     "IssueLinkType",
     "IssueSecurityLevelScheme",
     "IssueType",
+    "IssueTypeScheme",
     "NotificationScheme",
     "Priority",
     "PriorityScheme",
