@@ -20,7 +20,7 @@ cffi==1.15.0
     # via cryptography
 charset-normalizer==2.0.12
     # via requests
-coverage==6.1.2
+coverage==6.3.2
     # via pytest-cov
 cryptography==36.0.1
     # via
