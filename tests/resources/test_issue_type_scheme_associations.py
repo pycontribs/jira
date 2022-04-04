@@ -12,7 +12,6 @@ class IssueTypeSchemeAssociationTests(JiraTestCase):
             # As long as one of these schemes is associated with a project-like object
             # we're probably ok.
             if len(associations) > 0:
-                print(associations[0].get("id"))
                 self.assertTrue(associations[0].get("id", False))
                 self.assertTrue(associations[0].get("key", False))
                 self.assertTrue(associations[0].get("lead", False))
