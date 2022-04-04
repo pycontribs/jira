@@ -4054,7 +4054,7 @@ class JIRA:
         return data["schemes"]
 
     @lru_cache(maxsize=None)
-    def issue_security_level_schemes(self):
+    def issue_securityschemes(self):
 
         url = self._get_url("issuesecurityschemes")
 
@@ -4084,7 +4084,7 @@ class JIRA:
         return data["system"]
 
     @lru_cache(maxsize=None)
-    def notification_schemes(self):
+    def notificationschemes(self):
         # TODO(ssbarnea): implement pagination support
         url = self._get_url("notificationscheme")
 
@@ -4102,7 +4102,7 @@ class JIRA:
         return data["values"]
 
     @lru_cache(maxsize=None)
-    def workflow_scheme(self):
+    def workflowscheme(self):
         # TODO(ssbarnea): implement pagination support
         url = self._get_url("workflowschemes")
 
@@ -4193,7 +4193,7 @@ class JIRA:
                 permissionScheme = ps_list[0]["id"]
 
         if issueSecurityScheme is None:
-            ps_list = self.issue_security_level_schemes()
+            ps_list = self.issue_securityschemes()
             for sec in ps_list:
                 if sec["name"] == "Default":  # no idea which one is default
                     issueSecurityScheme = sec["id"]

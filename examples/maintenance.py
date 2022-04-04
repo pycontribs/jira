@@ -14,7 +14,7 @@ logging.getLogger("requests").setLevel(logging.INFO)
 logging.getLogger("urllib3").setLevel(logging.INFO)
 logging.getLogger("jira").setLevel(logging.DEBUG)
 
-CI_JIRA_URL = os.environ["CI_JIRA_URL"]  # https://pycontribs.atlassian.net
+CI_JIRA_URL = os.environ["CI_JIRA_URL"]
 CI_JIRA_ADMIN = os.environ["CI_JIRA_ADMIN"]
 CI_JIRA_ADMIN_TOKEN = os.environ["CI_JIRA_ADMIN_TOKEN"]
 
@@ -46,7 +46,7 @@ for s in j.permissionschemes():
     else:
         logging.info("Permission scheme: %s" % s["name"])
 
-for s in j.issue_security_level_schemes():
+for s in j.issue_securityschemes():
     if " for Project" in s["name"]:
         logging.info("Deleting issue security scheme: %s", s["name"])
         j.delete_permissionscheme(s["id"])
@@ -74,7 +74,7 @@ for s in j.avatars("project"):
 #     else:
 #         logging.error(s)
 
-for s in j.notification_schemes():
+for s in j.notificationschemes():
     logging.info("NotificationScheme: %s", s)
 
 # TODO(ssbarnea): "Default Issue Security Scheme"
