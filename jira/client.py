@@ -2188,7 +2188,6 @@ class JIRA:
     def project_workflow_scheme(self, project: str) -> WorkflowScheme:
         """Get a WorkflowScheme Resource from the server.
 
-
         Args:
             project (str): ID or key of the project to get the WorkflowScheme for
 
