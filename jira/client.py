@@ -68,9 +68,13 @@ from jira.resources import (
     Issue,
     IssueLink,
     IssueLinkType,
+    IssueSecurityLevelScheme,
     IssueType,
+    IssueTypeScheme,
+    NotificationScheme,
     PermissionScheme,
     Priority,
+    PriorityScheme,
     Project,
     RemoteLink,
     RequestType,
@@ -86,6 +90,7 @@ from jira.resources import (
     Version,
     Votes,
     Watchers,
+    WorkflowScheme,
     Worklog,
 )
 from jira.utils import json_loads, threaded_requests
@@ -2134,6 +2139,32 @@ class JIRA:
         return self._find_for_resource(Votes, issue)
 
     @translate_resource_args
+    def project_issue_security_level_scheme(
+        self, project: str
+    ) -> IssueSecurityLevelScheme:
+        """Get a IssueSecurityLevelScheme Resource from the server.
+
+        Args:
+            project (str): ID or key of the project to get the IssueSecurityLevelScheme for
+
+        Returns:
+            IssueSecurityLevelScheme: The issue security level scheme
+        """
+        return self._find_for_resource(IssueSecurityLevelScheme, project)
+
+    @translate_resource_args
+    def project_notification_scheme(self, project: str) -> NotificationScheme:
+        """Get a NotificationScheme Resource from the server.
+
+        Args:
+            project (str): ID or key of the project to get the NotificationScheme for
+
+        Returns:
+            NotificationScheme: The notification scheme
+        """
+        return self._find_for_resource(NotificationScheme, project)
+
+    @translate_resource_args
     def project_permissionscheme(self, project: str) -> PermissionScheme:
         """Get a PermissionScheme Resource from the server.
 
@@ -2145,6 +2176,30 @@ class JIRA:
             PermissionScheme: The permission scheme
         """
         return self._find_for_resource(PermissionScheme, project)
+
+    @translate_resource_args
+    def project_priority_scheme(self, project: str) -> PriorityScheme:
+        """Get a PriorityScheme Resource from the server.
+
+        Args:
+            project (str): ID or key of the project to get the PriorityScheme for
+
+        Returns:
+            PriorityScheme: The priority scheme
+        """
+        return self._find_for_resource(PriorityScheme, project)
+
+    @translate_resource_args
+    def project_workflow_scheme(self, project: str) -> WorkflowScheme:
+        """Get a WorkflowScheme Resource from the server.
+
+        Args:
+            project (str): ID or key of the project to get the WorkflowScheme for
+
+        Returns:
+            WorkflowScheme: The workflow scheme
+        """
+        return self._find_for_resource(WorkflowScheme, project)
 
     @translate_resource_args
     def add_vote(self, issue: str) -> Response:
@@ -3990,6 +4045,21 @@ class JIRA:
         return data["permissionSchemes"]
 
     @lru_cache(maxsize=None)
+    def issue_type_schemes(self) -> List[IssueTypeScheme]:
+        """Get all issue type schemes defined (Admin required).
+
+        Returns:
+            List[IssueTypeScheme]: All the Issue Type Schemes available to the currently logged in user.
+        """
+
+        url = self._get_url("issuetypescheme")
+
+        r = self._session.get(url)
+        data: Dict[str, Any] = json_loads(r)
+
+        return data["schemes"]
+
+    @lru_cache(maxsize=None)
     def issuesecurityschemes(self):
 
         url = self._get_url("issuesecurityschemes")
@@ -4073,6 +4143,20 @@ class JIRA:
         data = json_loads(r)
 
         self.permissionschemes.cache_clear()
+        return data
+
+    def get_issue_type_scheme_associations(self, id: str) -> List[Project]:
+        """For the specified issue type scheme, returns all of the associated projects. (Admin required)
+
+        Args:
+            id (str): The issue type scheme id.
+
+        Returns:
+            List[Project]: Associated Projects for the Issue Type Scheme.
+        """
+        url = self._get_url(f"issuetypescheme/{id}/associations")
+        r = self._session.get(url)
+        data = json_loads(r)
         return data
 
     def create_project(

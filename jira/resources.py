@@ -42,9 +42,14 @@ __all__ = (
     "Worklog",
     "IssueLink",
     "IssueLinkType",
+    "IssueSecurityLevelScheme",
     "IssueType",
+    "IssueTypeScheme",
+    "NotificationScheme",
     "Priority",
+    "PriorityScheme",
     "Version",
+    "WorkflowScheme",
     "Role",
     "Resolution",
     "SecurityLevel",
@@ -820,12 +825,70 @@ class Votes(Resource):
         self.raw: Dict[str, Any] = cast(Dict[str, Any], self.raw)
 
 
+class IssueTypeScheme(Resource):
+    """An issue type scheme."""
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(self, "issuetypescheme", options, session)
+        if raw:
+            self._parse_raw(raw)
+        self.raw: Dict[str, Any] = cast(Dict[str, Any], self.raw)
+
+
+class IssueSecurityLevelScheme(Resource):
+    """IssueSecurityLevelScheme information on an project."""
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(
+            self, "project/{0}/issuesecuritylevelscheme?expand=user", options, session
+        )
+        if raw:
+            self._parse_raw(raw)
+        self.raw: Dict[str, Any] = cast(Dict[str, Any], self.raw)
+
+
+class NotificationScheme(Resource):
+    """NotificationScheme information on an project."""
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(
+            self, "project/{0}/notificationscheme?expand=user", options, session
+        )
+        if raw:
+            self._parse_raw(raw)
+        self.raw: Dict[str, Any] = cast(Dict[str, Any], self.raw)
+
+
 class PermissionScheme(Resource):
     """Permissionscheme information on an project."""
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(
             self, "project/{0}/permissionscheme?expand=user", options, session
+        )
+        if raw:
+            self._parse_raw(raw)
+        self.raw: Dict[str, Any] = cast(Dict[str, Any], self.raw)
+
+
+class PriorityScheme(Resource):
+    """PriorityScheme information on an project."""
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(
+            self, "project/{0}/priorityscheme?expand=user", options, session
+        )
+        if raw:
+            self._parse_raw(raw)
+        self.raw: Dict[str, Any] = cast(Dict[str, Any], self.raw)
+
+
+class WorkflowScheme(Resource):
+    """WorkflowScheme information on an project."""
+
+    def __init__(self, options, session, raw=None):
+        Resource.__init__(
+            self, "project/{0}/workflowscheme?expand=user", options, session
         )
         if raw:
             self._parse_raw(raw)
@@ -1428,10 +1491,15 @@ resource_class_map: Dict[str, Type[Resource]] = {
     r"issueLink/[^/]+$": IssueLink,
     r"issueLinkType/[^/]+$": IssueLinkType,
     r"issuetype/[^/]+$": IssueType,
+    r"issuetypescheme/[^/]+$": IssueTypeScheme,
+    r"project/[^/]+/issuesecuritylevelscheme[^/]+$": IssueSecurityLevelScheme,
+    r"project/[^/]+/notificationscheme[^/]+$": NotificationScheme,
+    r"project/[^/]+/priorityscheme[^/]+$": PriorityScheme,
     r"priority/[^/]+$": Priority,
     r"project/[^/]+$": Project,
     r"project/[^/]+/role/[^/]+$": Role,
     r"project/[^/]+/permissionscheme[^/]+$": PermissionScheme,
+    r"project/[^/]+/workflowscheme[^/]+$": WorkflowScheme,
     r"resolution/[^/]+$": Resolution,
     r"securitylevel/[^/]+$": SecurityLevel,
     r"status/[^/]+$": Status,

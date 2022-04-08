@@ -1,3 +1,4 @@
+from jira import JIRAError
 from tests.conftest import JiraTestCase, find_by_id, rndstr
 
 
@@ -201,6 +202,29 @@ class ProjectTests(JiraTestCase):
         self.assertIn(user.name, [a.name for a in role.actors])
         self.assertIn(actor_admin, [a.name for a in role.actors])
 
-    def test_project_permissionscheme(self):
+    def test_project_permission_scheme(self):
         permissionscheme = self.jira.project_permissionscheme(self.project_b)
         self.assertEqual(permissionscheme.name, "Default Permission Scheme")
+
+    def test_project_priority_scheme(self):
+        priorityscheme = self.jira.project_priority_scheme(self.project_b)
+        self.assertEqual(priorityscheme.name, "Default priority scheme")
+
+    def test_project_notification_scheme(self):
+        notificationscheme = self.jira.project_notification_scheme(self.project_b)
+        self.assertEqual(notificationscheme.name, "Default Notification Scheme")
+
+    def test_project_issue_security_level_scheme(self):
+        # 404s are thrown when a project does not have an issue security scheme
+        # associated with it explicitly. There are no ReST APIs for creating an
+        # issue security scheme programmatically, so there is no way to test
+        # this on the fly.
+        with self.assertRaises(JIRAError):
+            self.jira.project_issue_security_level_scheme(self.project_b)
+
+    def test_project_workflow_scheme(self):
+        workflowscheme = self.jira.project_workflow_scheme(self.project_b)
+        self.assertEqual(
+            workflowscheme.name,
+            f"{self.project_b}: Software Simplified Workflow Scheme",
+        )
