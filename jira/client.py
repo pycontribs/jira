@@ -4139,7 +4139,15 @@ class JIRA:
         self.permissionschemes.cache_clear()
         return data
 
-    def get_issue_type_scheme_associations(self, id):
+    def get_issue_type_scheme_associations(self, id: str) -> List[Project]:
+    """For the specified issue type scheme, returns all of the associated projects. (Admin required)
+    
+    Args:
+        id (str): The issue type scheme id.
+        
+    Returns:
+        List[Project]: Associated Projects for the Issue Type Scheme.
+    """
         url = self._get_url(f"issuetypescheme/{id}/associations")
         r = self._session.get(url)
         data = json_loads(r)
