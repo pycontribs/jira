@@ -2151,7 +2151,6 @@ class JIRA:
     def project_notification_scheme(self, project: str) -> NotificationScheme:
         """Get a NotificationScheme Resource from the server.
 
-
         Args:
             project (str): ID or key of the project to get the NotificationScheme for
 
