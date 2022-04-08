@@ -2138,7 +2138,6 @@ class JIRA:
     ) -> IssueSecurityLevelScheme:
         """Get a IssueSecurityLevelScheme Resource from the server.
 
-
         Args:
             project (str): ID or key of the project to get the IssueSecurityLevelScheme for
 
