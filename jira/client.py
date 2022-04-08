@@ -2177,7 +2177,6 @@ class JIRA:
     def project_priority_scheme(self, project: str) -> PriorityScheme:
         """Get a PriorityScheme Resource from the server.
 
-
         Args:
             project (str): ID or key of the project to get the PriorityScheme for
 
