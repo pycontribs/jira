@@ -46,7 +46,7 @@ for s in j.permissionschemes():
     else:
         logging.info("Permission scheme: %s" % s["name"])
 
-for s in j.issue_securityschemes():
+for s in j.issuesecurityschemes():
     if " for Project" in s["name"]:
         logging.info("Deleting issue security scheme: %s", s["name"])
         j.delete_permissionscheme(s["id"])

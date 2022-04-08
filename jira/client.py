@@ -4054,7 +4054,7 @@ class JIRA:
         return data["schemes"]
 
     @lru_cache(maxsize=None)
-    def issue_securityschemes(self):
+    def issuesecurityschemes(self):
 
         url = self._get_url("issuesecurityschemes")
 
@@ -4193,7 +4193,7 @@ class JIRA:
                 permissionScheme = ps_list[0]["id"]
 
         if issueSecurityScheme is None:
-            ps_list = self.issue_securityschemes()
+            ps_list = self.issuesecurityschemes()
             for sec in ps_list:
                 if sec["name"] == "Default":  # no idea which one is default
                     issueSecurityScheme = sec["id"]
