@@ -6,7 +6,7 @@ repos:
       - id: black
         language_version: python3
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.1.0
+    rev: v4.2.0
     hooks:
       - id: end-of-file-fixer
       - id: trailing-whitespace
@@ -46,7 +46,7 @@ repos:
       - id: yamllint
         files: \.(yaml|yml)$
   - repo: https://github.com/pre-commit/mirrors-mypy.git
-    rev: v0.931
+    rev: v0.942
     hooks:
       - id: mypy
         additional_dependencies:
@@ -54,7 +54,7 @@ repos:
           - types-pkg_resources
         args: [--no-strict-optional, --ignore-missing-imports, --show-error-codes]
   - repo: https://github.com/asottile/pyupgrade
-    rev: v2.31.0
+    rev: v2.32.0
     hooks:
       - id: pyupgrade
         args: [--py38-plus]
