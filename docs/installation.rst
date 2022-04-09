@@ -28,7 +28,7 @@ Source packages are also available at PyPI:
 Dependencies
 ============
 
-Python >3.5 is required.
+Python >=3.8 is required.
 
 - :py:mod:`requests` - `python-requests <https://pypi.org/project/requests/>`_ library handles the HTTP business. Usually, the latest version available at time of release is the minimum version required; at this writing, that version is 1.2.0, but any version >= 1.0.0 should work.
 - :py:mod:`requests-oauthlib` - Used to implement OAuth. The latest version as of this writing is 1.3.0.

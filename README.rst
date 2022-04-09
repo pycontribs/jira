@@ -97,7 +97,7 @@ Setup
     * Run tests
         - ``tox``
     * Run tests for one env only
-        - ``tox -e py37``
+        - ``tox -e py38``
     * Specify what tests to run with pytest_
         - ``tox -e py39 -- tests/resources/test_attachment.py``
     * Debug tests with breakpoints by disabling the coverage plugin, with the ``--no-cov`` argument.
