@@ -1266,20 +1266,21 @@ class Version(Resource):
         super().update(**data)
 
 
-# GreenHopper
+# Agile
+
+# class GreenHopperResource(Resource):
+#     def __init__(self, *args, **kwargs):
+#         DeprecationWarning("Use AgileResource")
+#         super().__init__(*args, **kwargs)
 
 
-class GreenHopperResource(Resource):
-    """A generic GreenHopper resource."""
+class AgileResource(Resource):
+    """A generic Agile resource. Also known as Jira Agile Server, Jira Software and formerly GreenHopper."""
 
     AGILE_BASE_URL = "{server}/rest/{agile_rest_path}/{agile_rest_api_version}/{path}"
 
-    GREENHOPPER_REST_PATH = "greenhopper"
-    """ Old, private API. Deprecated and will be removed from Jira on the 1st February 2016. """
-    AGILE_EXPERIMENTAL_REST_PATH = "greenhopper/experimental-api"
-    """ Experimental API available in Jira Agile 6.7.3 - 6.7.6, basically the same as Public API """
     AGILE_BASE_REST_PATH = "agile"
-    """ Public API introduced in Jira Agile 6.7.7. """
+    """Public API introduced in Jira Agile 6.7.7."""
 
     def __init__(
         self,
@@ -1293,14 +1294,11 @@ class GreenHopperResource(Resource):
         Resource.__init__(self, path, options, session, self.AGILE_BASE_URL)
         if raw:
             self._parse_raw(raw)
-            # Old GreenHopper API did not contain self - create it for backward compatibility.
-            if not self.self:
-                self.self = self._get_url(path.format(raw["id"]))
         self.raw: Dict[str, Any] = cast(Dict[str, Any], self.raw)
 
 
-class Sprint(GreenHopperResource):
-    """A GreenHopper sprint."""
+class Sprint(AgileResource):
+    """An Agile sprint."""
 
     def __init__(
         self,
@@ -1308,22 +1306,11 @@ class Sprint(GreenHopperResource):
         session: ResilientSession,
         raw: Dict[str, Any] = None,
     ):
-        GreenHopperResource.__init__(self, "sprint/{0}", options, session, raw)
-
-    def find(self, id, params=None):
-        if (
-            self._options["agile_rest_path"]
-            != GreenHopperResource.GREENHOPPER_REST_PATH
-        ):
-            Resource.find(self, id, params)
-        else:
-            # Old, private GreenHopper API had non-standard way of loading Sprint
-            url = self._get_url(f"sprint/{id}/edit/model")
-            self._load(url, params=params, path="sprint")
+        AgileResource.__init__(self, "sprint/{0}", options, session, raw)
 
 
-class Board(GreenHopperResource):
-    """A GreenHopper board."""
+class Board(AgileResource):
+    """An Agile board."""
 
     def __init__(
         self,
@@ -1331,23 +1318,7 @@ class Board(GreenHopperResource):
         session: ResilientSession,
         raw: Dict[str, Any] = None,
     ):
-        path = (
-            "rapidview/{0}"
-            if options["agile_rest_path"] == self.GREENHOPPER_REST_PATH
-            else "board/{id}"
-        )
-        GreenHopperResource.__init__(self, path, options, session, raw)
-
-    def delete(self, params=None):
-        if (
-            self._options["agile_rest_path"]
-            != GreenHopperResource.GREENHOPPER_REST_PATH
-        ):
-            raise NotImplementedError(
-                "Jira Agile Public API does not support Board removal"
-            )
-
-        Resource.delete(self, params)
+        AgileResource.__init__(self, "board/{id}", options, session, raw)
 
 
 # Service Desk
@@ -1507,7 +1478,7 @@ resource_class_map: Dict[str, Type[Resource]] = {
     r"user\?(username|key|accountId).+$": User,
     r"group\?groupname.+$": Group,
     r"version/[^/]+$": Version,
-    # GreenHopper specific resources
+    # Agile specific resources
     r"sprints/[^/]+$": Sprint,
     r"views/[^/]+$": Board,
 }

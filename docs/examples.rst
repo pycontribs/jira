@@ -12,9 +12,9 @@ Another example with methods to authenticate with your Jira:
 
 .. literalinclude:: ../examples/auth.py
 
-This example shows how to work with GreenHopper:
+This example shows how to work with Jira Agile / Jira Software (formerly GreenHopper):
 
-.. literalinclude:: ../examples/greenhopper.py
+.. literalinclude:: ../examples/agile.py
 
 
 Quickstart
