@@ -29,6 +29,7 @@ from typing import (
     Generic,
     Iterator,
     List,
+    Literal,
     Optional,
     Tuple,
     Type,
@@ -1195,7 +1196,7 @@ class JIRA:
         description: str = None,
         jql: str = None,
         favourite: bool = None,
-    ):
+    ) -> Filter:
         """Create a new filter and return a filter Resource for it.
 
         Args:
@@ -4615,41 +4616,50 @@ class JIRA:
     def create_board(
         self,
         name: str,
-        project_ids: Union[str, List[str]],
+        filter_id: str,
+        project_ids: str = None,
         preset: str = "scrum",
-        location_type: str = "user",
+        location_type: Literal["user", "project"] = "user",
         location_id: Optional[str] = None,
     ) -> Board:
         """Create a new board for the ``project_ids``.
 
         Args:
-            name (str): name of the board
-            project_ids (str): the projects to create the board in
-            preset (str): What preset to use for this board, options: kanban, scrum, diy. (Default: scrum)
-            location_type (str): the location type. Available in cloud. (Default: user)
-            location_id (Optional[str]): the id of project that the board should be located under.
-             Omit this for a 'user' location_type. Available in cloud.
+            name (str): name of the Board (<255 characters).
+            filter_id (str): the Filter to use to create the Board.
+              Note: if the user does not have the 'Create shared objects' permission and tries to create
+              a shared board, a private board will be created instead
+              (remember that board sharing depends on the filter sharing).
+            project_ids (str): Deprecated. See location_id.
+            preset (str): What preset/type to use for this Board, options: kanban, scrum, agility. (Default: scrum)
+            location_type (str): the location type. Available in Cloud. (Default: user)
+            location_id (Optional[str]):  aka ``projectKeyOrId``.
+              The id of Project that the Board should be located under.
+              Omit this for a 'user' location_type. Available in Cloud.
 
         Returns:
             Board: The newly created board
         """
         payload: Dict[str, Any] = {}
-        if isinstance(project_ids, str):
-            ids = []
-            for p in project_ids.split(","):
-                ids.append(self.project(p).id)
-            project_ids = ",".join(ids)
+
+        if project_ids is not None:
+            DeprecationWarning(
+                "project_ids is deprecated and ignored. "
+                + "Use filter_id and location_id with `location_type='project'`"
+            )
+
         if location_id is not None:
             location_id = self.project(location_id).id
+
         payload["name"] = name
-        if isinstance(project_ids, str):
-            project_ids = project_ids.split(",")  # type: ignore # re-use of variable
-        payload["projectIds"] = project_ids
-        payload["preset"] = preset
+        payload["filterId"] = filter_id
+        payload["type"] = preset
         if self._is_cloud:
-            payload["locationType"] = location_type
-            payload["locationId"] = location_id
-        url = self._get_url("rapidview/create/presets", base=self.AGILE_BASE_URL)
+            payload["location"] = {"type": location_type}
+            if location_type not in ("user",):
+                payload["location"].update({"projectKeyOrId": location_id})
+
+        url = self._get_url("board", base=self.AGILE_BASE_URL)
         r = self._session.post(url, data=json.dumps(payload))
 
         raw_issue_json = json_loads(r)

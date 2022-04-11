@@ -1268,11 +1268,6 @@ class Version(Resource):
 
 # Agile
 
-# class GreenHopperResource(Resource):
-#     def __init__(self, *args, **kwargs):
-#         DeprecationWarning("Use AgileResource")
-#         super().__init__(*args, **kwargs)
-
 
 class AgileResource(Resource):
     """A generic Agile resource. Also known as Jira Agile Server, Jira Software and formerly GreenHopper."""
