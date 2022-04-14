@@ -4631,7 +4631,7 @@ class JIRA:
             f"rapid/charts/sprintreport?rapidViewId={board_id}&sprintId={sprint_id}",
             base=self.AGILE_BASE_URL,
         )
-        return data["contents"]["incompletedIssuesEstimateSum"]["value"]
+        return data["contents"]["issuesNotCompletedEstimateSum"]["value"]
 
     def removed_issues(self, board_id: str, sprint_id: str):
         """Return the completed issues for the sprint."""
