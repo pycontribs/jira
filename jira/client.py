@@ -41,7 +41,7 @@ from typing import (
 from urllib.parse import parse_qs, quote, urlparse
 
 import requests
-from pkg_resources import parse_version
+from packaging.version import parse as parse_version
 from requests import Response
 from requests.auth import AuthBase
 from requests.structures import CaseInsensitiveDict

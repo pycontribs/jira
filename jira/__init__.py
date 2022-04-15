@@ -1,8 +1,8 @@
 """The root of JIRA package namespace."""
 try:
-    import pkg_resources
+    import importlib.metadata
 
-    __version__ = pkg_resources.get_distribution("jira").version
+    __version__ = importlib.metadata.version("jira")
 except Exception:
     __version__ = "unknown"
 
