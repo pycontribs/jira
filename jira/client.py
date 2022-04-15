@@ -4717,7 +4717,7 @@ class JIRA:
         Returns:
             Response
         """
-        url = self._get_url("sprint/%s/issue" % sprint_id, base=self.AGILE_BASE_URL)
+        url = self._get_url(f"sprint/{sprint_id}/issue", base=self.AGILE_BASE_URL)
         payload = {"issues": issue_keys}
         return self._session.post(url, data=json.dumps(payload))
 
@@ -4738,7 +4738,7 @@ class JIRA:
         data["issues"] = issue_keys  # TODO: List[str]
         if ignore_epics is not None:
             DeprecationWarning("`ignore_epics` is Deprecated")
-        url = self._get_url("epics/%s/issue" % epic_id, base=self.AGILE_BASE_URL)
+        url = self._get_url(f"epics/{epic_id}/issue", base=self.AGILE_BASE_URL)
         return self._session.put(url, data=json.dumps(data))
 
     def rank(
