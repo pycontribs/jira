@@ -2870,7 +2870,7 @@ class JIRA:
         startAt: int = 0,
         maxResults: int = 50,
         validate_query: bool = True,
-        fields: Optional[Union[str, List[str]]] = None,
+        fields: Optional[Union[str, List[str]]] = "*all",
         expand: Optional[str] = None,
         json_result: bool = False,
     ) -> Union[List[Dict[str, Any]], ResultList[Issue]]:
@@ -2895,8 +2895,6 @@ class JIRA:
         """
         if isinstance(fields, str):
             fields = fields.split(",")
-        else:
-            fields = list(fields or [])
 
         # this will translate JQL field names to REST API Name
         # most people do know the JQL names so this will help them use the API easier

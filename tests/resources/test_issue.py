@@ -26,6 +26,29 @@ class IssueTests(JiraTestCase):
         self.assertEqual(issue.key, self.issue_1)
         self.assertEqual(issue.fields.summary, "issue 1 from %s" % self.project_b)
 
+    def test_issue_search_finds_issue(self):
+        issues = self.jira.search_issues("key=%s" % self.issue_1)
+        self.assertEqual(self.issue_1, issues[0].key)
+
+    def test_issue_search_return_type(self):
+        issues = self.jira.search_issues("key=%s" % self.issue_1)
+        self.assertIsInstance(issues, list)
+        issues = self.jira.search_issues("key=%s" % self.issue_1, json_result=True)
+        self.assertIsInstance(issues, dict)
+
+    def test_issue_search_only_includes_provided_fields(self):
+        issues = self.jira.search_issues(
+            "key=%s" % self.issue_1, fields="comment,assignee"
+        )
+        self.assertTrue(hasattr(issues[0].fields, "comment"))
+        self.assertTrue(hasattr(issues[0].fields, "assignee"))
+        self.assertFalse(hasattr(issues[0].fields, "reporter"))
+
+    def test_issue_search_default_behaviour_included_fields(self):
+        issues = self.jira.search_issues("key=%s" % self.issue_1)
+        self.assertTrue(hasattr(issues[0].fields, "reporter"))
+        self.assertTrue(hasattr(issues[0].fields, "comment"))
+
     def test_issue_get_field(self):
         issue = self.jira.issue(self.issue_1)
         self.assertEqual(
