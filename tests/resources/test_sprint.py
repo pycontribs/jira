@@ -1,9 +1,9 @@
 from contextlib import contextmanager
+from functools import lru_cache
 from typing import Iterator, Tuple
 
 from jira.resources import Board, Filter, Sprint
 from tests.conftest import JiraTestCase, rndstr
-from functools import lru_cache
 
 
 class SprintTests(JiraTestCase):
