@@ -3,6 +3,7 @@ from typing import Iterator, Tuple
 
 from jira.resources import Board, Filter, Sprint
 from tests.conftest import JiraTestCase, rndstr
+from functools import lru_cache
 
 
 class SprintTests(JiraTestCase):
@@ -46,6 +47,19 @@ class SprintTests(JiraTestCase):
             if sprint is not None:
                 sprint.delete()
 
+    @lru_cache
+    def _sprint_customfield(self) -> str:
+        """Helper method to return the customfield_ name for a sprint.
+        This is needed as it is implemented as a plugin to Jira, (Jira Agile).
+        """
+        sprint_field_name = "Sprint"
+        sprint_field_id = [
+            f["schema"]["customId"]
+            for f in self.jira.fields()
+            if f["name"] == sprint_field_name
+        ][0]
+        return f"customfield_{sprint_field_id}"
+
     def test_create_and_delete(self):
         # GIVEN: the board and filter
         # WHEN: we create the sprint
@@ -63,16 +77,22 @@ class SprintTests(JiraTestCase):
             # WHEN: we add an issue to the sprint
             self.jira.add_issues_to_sprint(sprint.id, [self.issue_1])
 
-            sprint_field_name = "Sprint"
-            sprint_field_id = [
-                f["schema"]["customId"]
-                for f in self.jira.fields()
-                if f["name"] == sprint_field_name
-            ][0]
-            sprint_customfield = f"customfield_{sprint_field_id}"
-
             updated_issue_1 = self.jira.issue(self.issue_1)
-            serialised_sprint = getattr(updated_issue_1.fields, sprint_customfield)[0]
+            serialised_sprint = updated_issue_1.get_field(self._sprint_customfield())[0]
 
             # THEN: We find this sprint in the Sprint field of the Issue
             assert f"[id={sprint.id}," in serialised_sprint
+
+    def test_move_issue_to_backlog(self):
+        with self._create_sprint() as sprint:
+            # GIVEN: we have an issue in a sprint
+            self.jira.add_issues_to_sprint(sprint.id, [self.issue_1])
+            updated_issue_1 = self.jira.issue(self.issue_1)
+            assert updated_issue_1.get_field(self._sprint_customfield()) is not None
+
+            # WHEN: We move it to the backlog
+            self.jira.move_to_backlog([updated_issue_1.key])
+            updated_issue_1 = self.jira.issue(updated_issue_1)
+
+            # THEN: There is no longer the sprint assigned
+            assert updated_issue_1.get_field(self._sprint_customfield()) is None
