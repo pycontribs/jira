@@ -95,4 +95,5 @@ class SprintTests(JiraTestCase):
             updated_issue_1 = self.jira.issue(updated_issue_1)
 
             # THEN: There is no longer the sprint assigned
+            updated_issue_1 = self.jira.issue(self.issue_1)
             assert updated_issue_1.get_field(self._sprint_customfield()) is None
