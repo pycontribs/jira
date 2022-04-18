@@ -19,7 +19,7 @@ Python library to work with Jira APIs
     api
 
 This documents the ``jira`` python package (version |release|), a Python library designed to ease the use of the
-Jira REST API. Some basic support for the GreenHopper REST API also exists.
+Jira REST API. Some basic support for the Jira Agile / Jira Software REST API also exists.
 
 Documentation is also available in
 `Dash

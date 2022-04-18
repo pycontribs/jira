@@ -1,15 +1,7 @@
 import logging
-import re
-from time import sleep
 
 from jira.exceptions import JIRAError
-from tests.conftest import (
-    JiraTestCase,
-    broken_test,
-    find_by_key,
-    find_by_key_value,
-    rndstr,
-)
+from tests.conftest import JiraTestCase, find_by_key, find_by_key_value
 
 LOGGER = logging.getLogger(__name__)
 
@@ -521,53 +513,3 @@ class IssueTests(JiraTestCase):
         self.jira.rank(self.issue_2, prev_issue=self.issue_1)
         issues = get_issues_ordered_by_rank()
         assert (issues[0].key, issues[1].key) == (self.issue_1, self.issue_2)
-
-    @broken_test(
-        reason="Greenhopper API doesn't work on standalone docker image with JIRA Server 8.9.0"
-    )
-    def test_agile(self):
-        uniq = rndstr()
-        board_name = "board-" + uniq
-        sprint_name = "sprint-" + uniq
-        filter_name = "filter-" + uniq
-
-        filter = self.jira.create_filter(
-            filter_name, "description", f"project={self.project_b}", True
-        )
-
-        b = self.jira.create_board(board_name, filter.id)
-        assert isinstance(b.id, int)
-
-        s = self.jira.create_sprint(sprint_name, b.id)
-        assert isinstance(s.id, int)
-        assert s.name == sprint_name
-        assert s.state.upper() == "FUTURE"
-
-        self.jira.add_issues_to_sprint(s.id, [self.issue_1])
-
-        sprint_field_name = "Sprint"
-        sprint_field_id = [
-            f["schema"]["customId"]
-            for f in self.jira.fields()
-            if f["name"] == sprint_field_name
-        ][0]
-        sprint_customfield = "customfield_" + str(sprint_field_id)
-
-        updated_issue_1 = self.jira.issue(self.issue_1)
-        serialised_sprint = getattr(updated_issue_1.fields, sprint_customfield)[0]
-
-        # Too hard to serialise the sprint object. Performing simple regex match instead.
-        assert re.search(r"\[id=" + str(s.id) + ",", serialised_sprint)
-
-        # self.jira.add_issues_to_sprint(s.id, self.issue_2)
-
-        # self.jira.rank(self.issue_2, self.issue_1)
-
-        sleep(2)  # avoid https://travis-ci.org/pycontribs/jira/jobs/176561534#L516
-        s.delete()
-
-        sleep(2)
-        b.delete()
-        # self.jira.delete_board(b.id)
-
-        filter.delete()  # must delete this filter AFTER deleting board referencing the filter

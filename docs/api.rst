@@ -65,7 +65,7 @@ jira.resources module
    :undoc-members:
    :show-inheritance:
 
-.. autoclass:: jira.resources.GreenHopperResource
+.. autoclass:: jira.resources.AgileResource
    :members:
    :undoc-members:
    :show-inheritance:
