@@ -56,11 +56,11 @@ def threaded_requests(requests):
             th.join()
 
 
-def json_loads(r: Optional[Response]) -> Any:
+def json_loads(resp: Optional[Response]) -> Any:
     """Attempts to load json the result of a response
 
     Args:
-        r (Optional[Response]): The Response object
+        resp (Optional[Response]): The Response object
 
     Raises:
         JIRAError: via :py:func:`jira.resilientsession.raise_on_error`
@@ -68,12 +68,12 @@ def json_loads(r: Optional[Response]) -> Any:
     Returns:
         Union[List[Dict[str, Any]], Dict[str, Any]]: the json
     """
-    raise_on_error(r)  # if 'r' is None, will raise an error here
-    r = cast(Response, r)  # tell mypy only Response-like are here
+    raise_on_error(resp)  # if 'r' is None, will raise an error here
+    resp = cast(Response, resp)  # tell mypy only Response-like are here
     try:
-        return r.json()
+        return resp.json()
     except ValueError:
         # json.loads() fails with empty bodies
-        if not r.text:
+        if not resp.text:
             return {}
         raise

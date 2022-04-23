@@ -47,10 +47,11 @@ from requests import Response
 from requests.auth import AuthBase
 from requests.structures import CaseInsensitiveDict
 from requests.utils import get_netrc_auth
+from requests_toolbelt import MultipartEncoder
 
 from jira import __version__
 from jira.exceptions import JIRAError
-from jira.resilientsession import ResilientSession, raise_on_error
+from jira.resilientsession import ResilientSession
 from jira.resources import (
     AgileResource,
     Attachment,
@@ -91,12 +92,6 @@ from jira.resources import (
     Worklog,
 )
 from jira.utils import json_loads, threaded_requests
-
-try:
-    # noinspection PyUnresolvedReferences
-    from requests_toolbelt import MultipartEncoder
-except ImportError:
-    pass
 
 try:
     from requests_jwt import JWTAuth
@@ -991,18 +986,17 @@ class JIRA:
                     fields={"file": (fname, attachment, "application/octet-stream")}
                 )
 
-            m = file_stream()
             try:
+                encoded_data = file_stream()
                 r = self._session.post(
                     url,
-                    data=m,
+                    data=file_stream,  # type: ignore[arg-type] # ResilientSession converts
                     headers=CaseInsensitiveDict(
                         {
-                            "content-type": m.content_type,
+                            "content-type": encoded_data.content_type,
                             "X-Atlassian-Token": "no-check",
                         }
                     ),
-                    retry_data=file_stream,
                 )
             finally:
                 if close_attachment:
@@ -1785,8 +1779,7 @@ class JIRA:
         url = self._get_latest_url(f"issue/{issue}/assignee")
         user_id = self._get_user_id(assignee)
         payload = {"accountId": user_id} if self._is_cloud else {"name": user_id}
-        r = self._session.put(url, data=json.dumps(payload))
-        raise_on_error(r)
+        self._session.put(url, data=json.dumps(payload))
         return True
 
     @translate_resource_args
@@ -2676,7 +2669,9 @@ class JIRA:
             headers["content-type"] = self._get_mime_type(avatar_img)
 
         url = self._get_url("project/" + project + "/avatar/temporary")
-        r = self._session.post(url, params=params, headers=headers, data=avatar_img)
+        r = self._session.post(
+            url, params=json.dumps(params), headers=headers, data=avatar_img
+        )
 
         cropping_properties: Dict[str, Any] = json_loads(r)
         if auto_confirm:
@@ -3178,7 +3173,9 @@ class JIRA:
             headers["content-type"] = self._get_mime_type(avatar_img)
 
         url = self._get_url("user/avatar/temporary")
-        r = self._session.post(url, params=params, headers=headers, data=avatar_img)
+        r = self._session.post(
+            url, params=json.dumps(params), headers=headers, data=avatar_img
+        )
 
         cropping_properties: Dict[str, Any] = json_loads(r)
         if auto_confirm:
@@ -3701,8 +3698,7 @@ class JIRA:
             # raw displayName
             self.log.debug(f"renaming {self.user(old_user).emailAddress}")
 
-            r = self._session.put(url, params=params, data=json.dumps(payload))
-            raise_on_error(r)
+            self._session.put(url, params=params, data=json.dumps(payload))
         else:
             raise NotImplementedError(
                 "Support for renaming users in Jira " "< 6.0.0 has been removed."
