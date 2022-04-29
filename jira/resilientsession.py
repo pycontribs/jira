@@ -98,6 +98,10 @@ class ResilientSession(Session):
         """Do any pre-processing of our own and return the updated kwargs (deepcopy)."""
         kwargs = copy.deepcopy(_kwargs)
 
+        request_headers = self.headers.copy()
+        request_headers.update(_kwargs.get("headers", {}))
+        kwargs["headers"] = request_headers
+
         data = _kwargs.get("data", {})
         if isinstance(data, dict):
             # mypy ensures we don't do this,
@@ -201,8 +205,12 @@ class ResilientSession(Session):
         if isinstance(response, ConnectionError):
             LOG.warning(
                 f"Got ConnectionError [{response}] errno:{response.errno} on {request_method} "
-                + f"{url}\n{vars(response)}\n{response.__dict__}"  # type: ignore[str-bytes-safe]
+                + f"{url}\n"  # type: ignore[str-bytes-safe]
             )
+            if LOG.level > logging.DEBUG:
+                LOG.warning(
+                    "Response headers for ConnectionError are only printed for log level DEBUG. "
+                )
 
         if isinstance(response, Response):
             if response.status_code in [429]:
@@ -241,8 +249,15 @@ class ResilientSession(Session):
                 % (request_method, url, counter, self.max_retries, delay, msg)  # type: ignore[str-bytes-safe]
             )
             if isinstance(response, Response):
-                LOG.debug("response.headers: %s", response.headers)
-                LOG.debug("response.body: %s", response.content)
+                LOG.debug(
+                    "Dumping Response headers and body. "
+                    + f"Log level debug in '{__name__}' is not safe for production code!"
+                )
+                LOG.debug(
+                    "response.headers:\n%s",
+                    json.dumps(dict(response.headers), indent=4),
+                )
+                LOG.debug("response.body:\n%s", response.content)
             time.sleep(delay)
 
         return is_recoverable
