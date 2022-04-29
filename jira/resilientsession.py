@@ -88,7 +88,7 @@ def raise_on_error(r: Optional[Response], verb="???", **kwargs):
 class ResilientSession(Session):
     """This class is supposed to retry requests that do return temporary errors.
 
-    At this moment it supports: 502, 503, 504
+    At this moment it supports: 429
     """
 
     def __init__(self, timeout=None):
@@ -113,11 +113,23 @@ class ResilientSession(Session):
                 f"Got ConnectionError [{response}] errno:{response.errno} on {request} {url}\n{vars(response)}\n{response.__dict__}"
             )
         if isinstance(response, Response):
-            if response.status_code in [502, 503, 504, 401]:
-                # 401 UNAUTHORIZED still randomly returned by Atlassian Cloud as of 2017-01-16
+            if response.status_code in [429]:
+                number_of_tokens_issued_per_interval = response.headers[
+                    "X-RateLimit-FillRate"
+                ]
+                token_issuing_rate_interval_seconds = response.headers[
+                    "X-RateLimit-Interval-Seconds"
+                ]
+                maximum_number_of_tokens = response.headers["X-RateLimit-Limit"]
+                retry_after = response.headers["retry-after"]
                 msg = f"{response.status_code} {response.reason}"
-                # 2019-07-25: Disabled recovery for codes above^
-                return False
+                logging.warning(
+                    f"Request rate limited by Jira: request should be retried after {retry_after} seconds.\n"
+                    + f"{number_of_tokens_issued_per_interval} tokens are issued every {token_issuing_rate_interval_seconds} seconds. "
+                    + f"You can accumulate up to {maximum_number_of_tokens} tokens.\n"
+                    + "Consider adding an exemption for the user as explained in: "
+                    + "https://confluence.atlassian.com/adminjiraserver/improving-instance-stability-with-rate-limiting-983794911.html"
+                )
             elif not (
                 response.status_code == 200
                 and len(response.content) == 0
