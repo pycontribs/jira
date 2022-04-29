@@ -12,7 +12,7 @@ from typing_extensions import TypeGuard
 
 from jira.exceptions import JIRAError
 
-LOG = logging.getLogger("jira")
+LOG = logging.getLogger(__name__)
 
 
 def raise_on_error(resp: Optional[Response], **kwargs) -> TypeGuard[Response]:
@@ -224,7 +224,7 @@ class ResilientSession(Session):
                 maximum_number_of_tokens = response.headers["X-RateLimit-Limit"]
                 retry_after = response.headers["retry-after"]
                 msg = f"{response.status_code} {response.reason}"
-                logging.warning(
+                LOG.warning(
                     f"Request rate limited by Jira: request should be retried after {retry_after} seconds.\n"
                     + f"{number_of_tokens_issued_per_interval} tokens are issued every {token_issuing_rate_interval_seconds} seconds. "
                     + f"You can accumulate up to {maximum_number_of_tokens} tokens.\n"
