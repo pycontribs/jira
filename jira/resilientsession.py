@@ -217,10 +217,11 @@ class ResilientSession(Session):
         Returns:
             bool: True if the request should be retried.
         """
-        is_recoverable = True  # Controls return value AND whether we delay or not
+        is_recoverable = False  # Controls return value AND whether we delay or not, Not-recoverable by default
         msg = str(response)
 
         if isinstance(response, ConnectionError):
+            is_recoverable = True
             LOG.warning(
                 f"Got ConnectionError [{response}] errno:{response.errno} on {request_method} "
                 + f"{url}\n"  # type: ignore[str-bytes-safe]
@@ -232,7 +233,6 @@ class ResilientSession(Session):
 
         if isinstance(response, Response):
             if response.status_code in [429]:
-                is_recoverable = False
                 number_of_tokens_issued_per_interval = response.headers[
                     "X-RateLimit-FillRate"
                 ]
