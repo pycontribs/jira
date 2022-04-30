@@ -152,6 +152,7 @@ class ResilientSession(Session):
             try:
                 response = super().request(method, url, **processed_kwargs)
                 if response.ok:
+                    self.__handle_known_ok_response_errors(response)
                     return response
             # Can catch further exceptions as required below
             except ConnectionError as e:
@@ -177,6 +178,23 @@ class ResilientSession(Session):
         else:
             # Shouldn't reach here...(but added for mypy's benefit)
             raise RuntimeError("Expected a Response or Exception to raise!")
+
+    def __handle_known_ok_response_errors(self, response: Response):
+        """Responses that report ok may also have errors.
+
+        We can either log the error or raise the error as appropriate here.
+
+        Args:
+            response (Response): The response.
+        """
+        if not response.ok:
+            return  # We use self.__recoverable() to handle these
+        if (
+            len(response.content) == 0
+            and "X-Seraph-LoginReason" in response.headers
+            and "AUTHENTICATED_FAILED" in response.headers["X-Seraph-LoginReason"]
+        ):
+            LOG.warning("Atlassian's bug https://jira.atlassian.com/browse/JRA-41559")
 
     def __recoverable(
         self,
@@ -231,15 +249,6 @@ class ResilientSession(Session):
                     + "Consider adding an exemption for the user as explained in: "
                     + "https://confluence.atlassian.com/adminjiraserver/improving-instance-stability-with-rate-limiting-983794911.html"
                 )
-            elif not (
-                response.status_code == 200
-                and len(response.content) == 0
-                and "X-Seraph-LoginReason" in response.headers
-                and "AUTHENTICATED_FAILED" in response.headers["X-Seraph-LoginReason"]
-            ):
-                is_recoverable = False
-            else:
-                msg = "Atlassian's bug https://jira.atlassian.com/browse/JRA-41559"
 
         if is_recoverable:
             # Exponential backoff with full jitter.
