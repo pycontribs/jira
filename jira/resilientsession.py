@@ -234,6 +234,7 @@ class ResilientSession(Session):
 
         if isinstance(response, Response):
             if response.status_code in [429]:
+                is_recoverable = True
                 number_of_tokens_issued_per_interval = response.headers[
                     "X-RateLimit-FillRate"
                 ]

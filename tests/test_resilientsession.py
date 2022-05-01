@@ -71,15 +71,15 @@ status_codes_retries_test_data = [
 ]
 
 
-@patch("requests.Session.get")
-@patch("time.sleep")
+@patch("requests.Session.request")
+@patch(f"{jira.resilientsession.__name__}.time.sleep")
 @pytest.mark.parametrize(
     "status_code,expected_number_of_retries,expected_number_of_sleep_invocations",
     status_codes_retries_test_data,
 )
 def test_status_codes_retries(
     mocked_sleep_method: Mock,
-    mocked_get_method: Mock,
+    mocked_request_method: Mock,
     status_code: int,
     expected_number_of_retries: int,
     expected_number_of_sleep_invocations: int,
@@ -90,11 +90,11 @@ def test_status_codes_retries(
     mocked_response.headers["X-RateLimit-Interval-Seconds"] = "1"
     mocked_response.headers["retry-after"] = "1"
     mocked_response.headers["X-RateLimit-Limit"] = "1"
-    mocked_get_method.return_value = mocked_response
+    mocked_request_method.return_value = mocked_response
     session: jira.resilientsession.ResilientSession = (
         jira.resilientsession.ResilientSession()
     )
     with pytest.raises(JIRAError):
         session.get("mocked_url")
-    assert mocked_get_method.call_count == expected_number_of_retries
+    assert mocked_request_method.call_count == expected_number_of_retries
     assert mocked_sleep_method.call_count == expected_number_of_sleep_invocations
