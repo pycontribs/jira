@@ -2656,7 +2656,7 @@ class JIRA:
         if size != size_from_file:
             size = size_from_file
 
-        params = {"filename": filename, "size": size}
+        params: Dict[str, Union[int, str]] = {"filename": filename, "size": size}
 
         headers: Dict[str, Any] = {"X-Atlassian-Token": "no-check"}
         if contentType is not None:
@@ -2666,9 +2666,7 @@ class JIRA:
             headers["content-type"] = self._get_mime_type(avatar_img)
 
         url = self._get_url("project/" + project + "/avatar/temporary")
-        r = self._session.post(
-            url, params=json.dumps(params), headers=headers, data=avatar_img
-        )
+        r = self._session.post(url, params=params, headers=headers, data=avatar_img)
 
         cropping_properties: Dict[str, Any] = json_loads(r)
         if auto_confirm:
@@ -3159,7 +3157,11 @@ class JIRA:
         # remove path from filename
         filename = os.path.split(filename)[1]
 
-        params = {"username": user, "filename": filename, "size": size}
+        params: Dict[str, Union[str, int]] = {
+            "username": user,
+            "filename": filename,
+            "size": size,
+        }
 
         headers: Dict[str, Any]
         headers = {"X-Atlassian-Token": "no-check"}
@@ -3170,9 +3172,7 @@ class JIRA:
             headers["content-type"] = self._get_mime_type(avatar_img)
 
         url = self._get_url("user/avatar/temporary")
-        r = self._session.post(
-            url, params=json.dumps(params), headers=headers, data=avatar_img
-        )
+        r = self._session.post(url, params=params, headers=headers, data=avatar_img)
 
         cropping_properties: Dict[str, Any] = json_loads(r)
         if auto_confirm:
