@@ -3,16 +3,26 @@ import json
 import logging
 import random
 import time
-from typing import Any, Callable, Optional, Union
+from typing import Optional, Union
 
 from requests import Response, Session
 from requests.exceptions import ConnectionError
-from requests_toolbelt import MultipartEncoder
 from typing_extensions import TypeGuard
 
 from jira.exceptions import JIRAError
 
 LOG = logging.getLogger(__name__)
+
+
+class PrepareRequestForRetry(metaclass=abc.ABCMeta):
+    @abc.abstractmethod
+    def prepare(self, original_request_kwargs) -> dict:
+        return original_request_kwargs
+
+
+class PassthroughRetryPrepare(PrepareRequestForRetry):
+    def prepare(self, original_request_kwargs) -> dict:
+        return super().prepare(original_request_kwargs)
 
 
 def raise_on_error(resp: Optional[Response], **kwargs) -> TypeGuard[Response]:
@@ -95,8 +105,8 @@ class ResilientSession(Session):
         self.headers.update({"Accept": "application/json,*.*;q=0.9"})
 
     def _jira_prepare(self, **_kwargs) -> dict:
-        """Do any pre-processing of our own and return the updated kwargs (deepcopy)."""
-        kwargs = copy.deepcopy(_kwargs)
+        """Do any pre-processing of our own and return the updated kwargs."""
+        kwargs = _kwargs.copy()
 
         request_headers = self.headers.copy()
         request_headers.update(_kwargs.get("headers", {}))
@@ -107,24 +117,16 @@ class ResilientSession(Session):
             # mypy ensures we don't do this,
             # but for people subclassing we should preserve old behaviour
             kwargs["data"] = json.dumps(data)
-        elif callable(data):
-            self._handle_stream(data)
 
         return kwargs
 
-    def _handle_stream(self, data_callable: Callable) -> Any:
-        """Workaround retrying a stream by passing in a callable that produces the data.
-
-        Args:
-            data_callable (Callable): The callable that produces the requests' data.
-
-        Returns:
-            Any: The requests' data.
-        """
-        if isinstance(data_callable, MultipartEncoder):
-            return data_callable()
-
-    def request(self, method: str, url: Union[str, bytes], **_kwargs) -> Response:  # type: ignore[override]
+    def request(  # type: ignore[override] # An intentionally different override
+        self,
+        method: str,
+        url: Union[str, bytes],
+        _prepare_retry_method: PrepareRequestForRetry = PassthroughRetryPrepare(),
+        **_kwargs,
+    ) -> Response:
         """This is an intentional override of `Session.request()` to inject some error handling and retry logic.
 
         Raises:
@@ -164,8 +166,7 @@ class ResilientSession(Session):
             if is_retrying() and self.__recoverable(
                 response_or_exception, url, method.upper(), retry_number
             ):
-                if isinstance(_kwargs.get("data"), MultipartEncoder):
-                    kwargs = self._jira_prepare(**_kwargs)
+                _prepare_retry_method.prepare(processed_kwargs)
             else:
                 retry_number = self.max_retries + 1  # exit the while loop, as above max
 
@@ -228,7 +229,7 @@ class ResilientSession(Session):
             )
             if LOG.level > logging.DEBUG:
                 LOG.warning(
-                    "Response headers for ConnectionError are only printed for log level DEBUG. "
+                    "Response headers for ConnectionError are only printed for log level DEBUG."
                 )
 
         if isinstance(response, Response):

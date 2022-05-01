@@ -35,7 +35,6 @@ from typing import (
     Type,
     TypeVar,
     Union,
-    cast,
     no_type_check,
     overload,
 )
@@ -51,7 +50,7 @@ from requests_toolbelt import MultipartEncoder
 
 from jira import __version__
 from jira.exceptions import JIRAError
-from jira.resilientsession import ResilientSession
+from jira.resilientsession import PrepareRequestForRetry, ResilientSession
 from jira.resources import (
     AgileResource,
     Attachment,
@@ -949,58 +948,55 @@ class JIRA:
         """
         close_attachment = False
         if isinstance(attachment, str):
-            attachment: BufferedReader = open(attachment, "rb")  # type: ignore
-            attachment = cast(BufferedReader, attachment)
+            attachment_io = open(attachment, "rb")  # type: ignore
             close_attachment = True
-        elif isinstance(attachment, BufferedReader) and attachment.mode != "rb":
-            self.log.warning(
-                "%s was not opened in 'rb' mode, attaching file may fail."
-                % attachment.name
-            )
-
-        url = self._get_url("issue/" + str(issue) + "/attachments")
+        else:
+            attachment_io = attachment
+            if isinstance(attachment, BufferedReader) and attachment.mode != "rb":
+                self.log.warning(
+                    "%s was not opened in 'rb' mode, attaching file may fail."
+                    % attachment.name
+                )
 
         fname = filename
         if not fname and isinstance(attachment, BufferedReader):
             fname = os.path.basename(attachment.name)
 
-        if "MultipartEncoder" not in globals():
-            method = "old"
-            try:
-                r = self._session.post(
-                    url,
-                    files={"file": (fname, attachment, "application/octet-stream")},
-                    headers=CaseInsensitiveDict(
-                        {"content-type": None, "X-Atlassian-Token": "no-check"}
-                    ),
-                )
-            finally:
-                if close_attachment:
-                    attachment.close()
-        else:
-            method = "MultipartEncoder"
+        def generate_multipartencoded_request_args() -> Tuple[
+            MultipartEncoder, CaseInsensitiveDict
+        ]:
+            """Returns MultipartEncoder stream of attachment, and the header."""
+            attachment_io.seek(0)
+            encoded_data = MultipartEncoder(
+                fields={"file": (fname, attachment_io, "application/octet-stream")}
+            )
+            request_headers = CaseInsensitiveDict(
+                {
+                    "content-type": encoded_data.content_type,
+                    "X-Atlassian-Token": "no-check",
+                }
+            )
+            return encoded_data, request_headers
 
-            def file_stream() -> MultipartEncoder:
-                """Returns files stream of attachment."""
-                return MultipartEncoder(
-                    fields={"file": (fname, attachment, "application/octet-stream")}
-                )
+        class RetryableMultipartEncoder(PrepareRequestForRetry):
+            def prepare(self, original_request_kwargs) -> dict:
+                encoded_data, request_headers = generate_multipartencoded_request_args()
+                original_request_kwargs["data"] = encoded_data
+                original_request_kwargs["headers"] = request_headers
+                return super().prepare(original_request_kwargs)
 
-            try:
-                encoded_data = file_stream()
-                r = self._session.post(
-                    url,
-                    data=file_stream,  # type: ignore[arg-type] # ResilientSession converts
-                    headers=CaseInsensitiveDict(
-                        {
-                            "content-type": encoded_data.content_type,
-                            "X-Atlassian-Token": "no-check",
-                        }
-                    ),
-                )
-            finally:
-                if close_attachment:
-                    attachment.close()
+        url = self._get_url(f"issue/{issue}/attachments")
+        try:
+            encoded_data, request_headers = generate_multipartencoded_request_args()
+            r = self._session.post(
+                url,
+                data=encoded_data,
+                headers=request_headers,
+                _prepare_retry_method=RetryableMultipartEncoder(),  # type: ignore[call-arg] # ResilientSession handles
+            )
+        finally:
+            if close_attachment:
+                attachment_io.close()
 
         js: Union[Dict[str, Any], List[Dict[str, Any]]] = json_loads(r)
         if not js or not isinstance(js, Iterable):
@@ -1010,8 +1006,9 @@ class JIRA:
         )
         if jira_attachment.size == 0:
             raise JIRAError(
-                "Added empty attachment via %s method?!: r: %s\nattachment: %s"
-                % (method, r, jira_attachment)
+                "Added empty attachment?!: r: {}\nattachment: {}".format(
+                    r, jira_attachment
+                )
             )
         return jira_attachment
 
