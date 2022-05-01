@@ -49,7 +49,7 @@ def raise_on_error(resp: Optional[Response], **kwargs) -> TypeGuard[Response]:
             error = resp.headers["x-authentication-denied-reason"]
         elif resp.text:
             try:
-                resp_data = json.loads(resp.text)
+                resp_data = resp.json()
                 if "message" in resp_data:
                     # Jira 5.1 errors
                     error = resp_data["message"]
