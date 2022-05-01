@@ -43,7 +43,7 @@ def raise_on_error(resp: Optional[Response], **kwargs) -> TypeGuard[Response]:
     if resp is None:
         raise JIRAError(None, **kwargs)
 
-    if not resp.ok:  # equivalent to .status_code < 400 & >200
+    if not resp.ok:  # equivalent to .status_code < 400 & >=200
         error = ""
         if resp.status_code == 403 and "x-authentication-denied-reason" in resp.headers:
             error = resp.headers["x-authentication-denied-reason"]
