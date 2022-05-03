@@ -3,7 +3,7 @@ import json
 import logging
 import random
 import time
-from typing import Optional, Union
+from typing import Any, Dict, Optional, Union
 
 from requests import Response, Session
 from requests.exceptions import ConnectionError
@@ -43,39 +43,8 @@ def raise_on_error(resp: Optional[Response], **kwargs) -> TypeGuard[Response]:
     if resp is None:
         raise JIRAError(None, **kwargs)
 
-    if not resp.ok:  # equivalent to .status_code < 400 & >=200
-        error = ""
-        if resp.status_code == 403 and "x-authentication-denied-reason" in resp.headers:
-            error = resp.headers["x-authentication-denied-reason"]
-        elif resp.text:
-            try:
-                resp_data = resp.json()
-                if "message" in resp_data:
-                    # Jira 5.1 errors
-                    error = resp_data["message"]
-                elif (
-                    "errorMessages" in resp_data and len(resp_data["errorMessages"]) > 0
-                ):
-                    # Jira 5.0.x error messages sometimes come wrapped in this array
-                    # Sometimes this is present but empty
-                    errorMessages = resp_data["errorMessages"]
-                    if isinstance(errorMessages, (list, tuple)):
-                        error = errorMessages[0]
-                    else:
-                        error = errorMessages
-                # Catching only 'errors' that are dict. See https://github.com/pycontribs/jira/issues/350
-                elif (
-                    "errors" in resp_data
-                    and len(resp_data["errors"]) > 0
-                    and isinstance(resp_data["errors"], dict)
-                ):
-                    # Jira 6.x error messages are found in this array.
-                    error_list = resp_data["errors"].values()
-                    error = ", ".join(error_list)
-                else:
-                    error = resp.text
-            except ValueError:
-                error = resp.text
+    if not resp.ok:  # equivalent to .status_code < 400 & >200
+        error = parse_error_msg(resp=resp)
 
         raise JIRAError(
             error,
@@ -87,6 +56,51 @@ def raise_on_error(resp: Optional[Response], **kwargs) -> TypeGuard[Response]:
         )
 
     return True  # if no exception was raised, we have a valid Response
+
+
+def parse_error_msg(resp: Response) -> str:
+    """Parse a Jira Error message from the Response.
+
+    https://developer.atlassian.com/cloud/jira/platform/rest/v2/intro/#status-codes
+
+    Args:
+        resp (Response): The Jira API request's response.
+
+    Returns:
+        str: The error message parsed from the Response. An empty string if no error.
+    """
+    resp_data: Dict[str, Any] = {}  # json parsed from the response
+    parsed_error = ""  # error message parsed from the response
+
+    if resp.status_code == 403 and "x-authentication-denied-reason" in resp.headers:
+        parsed_error = resp.headers["x-authentication-denied-reason"]
+    elif resp.text:
+        try:
+            resp_data = resp.json()
+        except ValueError:
+            parsed_error = resp.text
+
+    if "message" in resp_data:
+        # Jira 5.1 errors
+        parsed_error = resp_data["message"]
+    elif "errorMessages" in resp_data:
+        # Jira 5.0.x error messages sometimes come wrapped in this array
+        # Sometimes this is present but empty
+        error_messages = resp_data["errorMessages"]
+        if len(error_messages) > 0:
+            if isinstance(error_messages, (list, tuple)):
+                parsed_error = error_messages[0]
+            else:
+                parsed_error = error_messages
+    elif "errors" in resp_data:
+        resp_errors = resp_data["errors"]
+        if len(resp_errors) > 0 and isinstance(resp_errors, dict):
+            # Catching only 'errors' that are dict. See https://github.com/pycontribs/jira/issues/350
+            # Jira 6.x error messages are found in this array.
+            error_list = resp_errors.values()
+            parsed_error = ", ".join(error_list)
+
+    return parsed_error
 
 
 class ResilientSession(Session):
