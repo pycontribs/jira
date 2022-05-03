@@ -109,10 +109,17 @@ class ResilientSession(Session):
     :py:meth:`__recoverable` handles all retry-able errors.
     """
 
-    def __init__(self, timeout=None):
-        self.max_retries = 3
-        self.max_retry_delay = 60
-        self.timeout = timeout
+    def __init__(self, timeout=None, max_retries: int = 3, max_retry_delay: int = 60):
+        """A Session subclass catered for the Jira API with exponential delaying retry.
+
+        Args:
+            timeout (Optional[int]): Timeout. Defaults to None.
+            max_retries (int): Max number of times to retry a request. Defaults to 3.
+            max_retry_delay (int): Max delay allowed between retries. Defaults to 60.
+        """
+        self.timeout = timeout  # TODO: Unused?
+        self.max_retries = max_retries
+        self.max_retry_delay = max_retry_delay
         super().__init__()
 
         # Indicate our preference for JSON to avoid https://bitbucket.org/bspeakmon/jira-python/issue/46 and https://jira.atlassian.com/browse/JRA-38551
