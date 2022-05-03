@@ -219,6 +219,7 @@ class ResilientSession(Session):
         counter: int = 1,
     ):
         """Return whether the request is recoverable and hence should be retried.
+        Exponentially delays if recoverable.
 
         At this moment it supports: 429
 
@@ -227,7 +228,7 @@ class ResilientSession(Session):
               Note: the response here is expected to be ``not response.ok``.
             url (Union[str, bytes]): The URL.
             request_method (str): The request method.
-            counter (int, optional): The retry counter. Defaults to 1.
+            counter (int, optional): The retry counter to use when calculating the exponential delay. Defaults to 1.
 
         Returns:
             bool: True if the request should be retried.
