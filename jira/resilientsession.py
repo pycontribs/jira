@@ -36,7 +36,7 @@ def raise_on_error(resp: Optional[Response], **kwargs) -> TypeGuard[Response]:
         JIRAError: for unhandled 400 status codes.
 
     Returns:
-        bool: True if the passed in Response is all good.
+        TypeGuard[Response]: True if the passed in Response is all good.
     """
     request = kwargs.get("request", None)
 
