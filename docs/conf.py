@@ -70,7 +70,8 @@ nitpick_ignore = [
     ("py:class", "Response"),
     ("py:mod", "requests-kerberos"),
     ("py:mod", "requests-oauthlib"),
-    ("py:class", "typing_extensions.TypeGuard"),
+    ("py:class", "typing_extensions.TypeGuard"),  # Py38 not happy with this typehint
+    ("py:class", "TypeGuard"),  # Py38 not happy with 'TypeGuard' in docstring
 ]
 
 # Add any paths that contain templates here, relative to this directory.
