@@ -1000,15 +1000,14 @@ class JIRA:
 
         js: Union[Dict[str, Any], List[Dict[str, Any]]] = json_loads(r)
         if not js or not isinstance(js, Iterable):
-            raise JIRAError(f"Unable to parse JSON: {js}")
+            raise JIRAError(f"Unable to parse JSON: {js}. Failed to add attachment?")
         jira_attachment = Attachment(
             self._options, self._session, js[0] if isinstance(js, List) else js
         )
         if jira_attachment.size == 0:
             raise JIRAError(
-                "Added empty attachment?!: r: {}\nattachment: {}".format(
-                    r, jira_attachment
-                )
+                "Added empty attachment?!: "
+                + f"Response: {r}\nAttachment: {jira_attachment}"
             )
         return jira_attachment
 
