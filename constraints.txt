@@ -205,7 +205,7 @@ traitlets==5.1.1
     # via
     #   ipython
     #   matplotlib-inline
-typing-extensions==4.1.1
+typing-extensions==4.2.0
     # via jira (setup.cfg)
 urllib3==1.26.9
     # via requests
