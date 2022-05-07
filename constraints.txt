@@ -110,7 +110,7 @@ pyjwt==2.3.0
     #   requests-jwt
 pyparsing==3.0.7
     # via packaging
-pyspnego==0.5.1
+pyspnego==0.5.2
     # via requests-kerberos
 pytest==7.1.1
     # via
