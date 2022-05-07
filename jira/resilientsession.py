@@ -125,21 +125,21 @@ class ResilientSession(Session):
         # Indicate our preference for JSON to avoid https://bitbucket.org/bspeakmon/jira-python/issue/46 and https://jira.atlassian.com/browse/JRA-38551
         self.headers.update({"Accept": "application/json,*.*;q=0.9"})
 
-    def _jira_prepare(self, **_kwargs) -> dict:
+    def _jira_prepare(self, **original_kwargs) -> dict:
         """Do any pre-processing of our own and return the updated kwargs."""
-        kwargs = _kwargs.copy()
+        prepared_kwargs = original_kwargs.copy()
 
         request_headers = self.headers.copy()
-        request_headers.update(_kwargs.get("headers", {}))
-        kwargs["headers"] = request_headers
+        request_headers.update(original_kwargs.get("headers", {}))
+        prepared_kwargs["headers"] = request_headers
 
-        data = _kwargs.get("data", {})
+        data = original_kwargs.get("data", {})
         if isinstance(data, dict):
             # mypy ensures we don't do this,
             # but for people subclassing we should preserve old behaviour
-            kwargs["data"] = json.dumps(data)
+            prepared_kwargs["data"] = json.dumps(data)
 
-        return kwargs
+        return prepared_kwargs
 
     def request(  # type: ignore[override] # An intentionally different override
         self,
