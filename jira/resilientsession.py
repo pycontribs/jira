@@ -89,7 +89,7 @@ def parse_error_msg(resp: Response) -> str:
         error_messages = resp_data["errorMessages"]
         if len(error_messages) > 0:
             if isinstance(error_messages, (list, tuple)):
-                parsed_error = error_messages[0]
+                parsed_error = "\n".join(error_messages)
             else:
                 parsed_error = error_messages
     elif "errors" in resp_data:
