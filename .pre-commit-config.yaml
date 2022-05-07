@@ -46,7 +46,7 @@ repos:
       - id: yamllint
         files: \.(yaml|yml)$
   - repo: https://github.com/pre-commit/mirrors-mypy.git
-    rev: v0.942
+    rev: v0.950
     hooks:
       - id: mypy
         additional_dependencies:
