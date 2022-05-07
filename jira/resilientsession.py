@@ -146,7 +146,7 @@ class ResilientSession(Session):
         method: str,
         url: Union[str, bytes],
         _prepare_retry_method: PrepareRequestForRetry = PassthroughRetryPrepare(),
-        **_kwargs,
+        **kwargs,
     ) -> Response:
         """This is an intentional override of `Session.request()` to inject some error handling and retry logic.
 
@@ -162,7 +162,7 @@ class ResilientSession(Session):
         response: Optional[Response] = None
         response_or_exception: Optional[Union[ConnectionError, Response]]
 
-        processed_kwargs = self._jira_prepare(**_kwargs)
+        processed_kwargs = self._jira_prepare(**kwargs)
 
         def is_retrying() -> bool:
             """Helper method to say if we should still be retrying."""
