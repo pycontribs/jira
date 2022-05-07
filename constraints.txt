@@ -100,7 +100,7 @@ py==1.11.0
     #   pytest-forked
 pycparser==2.21
     # via cffi
-pygments==2.11.2
+pygments==2.12.0
     # via
     #   ipython
     #   sphinx
