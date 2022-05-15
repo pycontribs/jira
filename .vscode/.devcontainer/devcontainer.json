@@ -64,7 +64,8 @@
 		"ms-vscode-remote.remote-containers",
 		"hbenl.vscode-test-explorer",
 		"trond-snekvik.simple-rst",
-		"wayou.vscode-todo-highlight"
+		"wayou.vscode-todo-highlight",
+		"ms-azuretools.vscode-docker"
 	],
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	"forwardPorts": [
