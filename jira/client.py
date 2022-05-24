@@ -1760,6 +1760,9 @@ class JIRA:
             else:
                 users = self.search_users(user=user, maxResults=20)
 
+            if len(users) < 1:
+                return
+
             matches = []
             if len(users) > 1:
                 matches = [u for u in users if self._get_user_identifier(u) == user]
