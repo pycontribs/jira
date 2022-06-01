@@ -332,7 +332,8 @@ Adding, editing and deleting comments is similarly straightforward::
     comment = jira.add_comment('JRA-1330', 'new comment')    # no Issue object required
     comment = jira.add_comment(issue, 'new comment', visibility={'type': 'role', 'value': 'Administrators'})  # for admins only
 
-    comment.update(body = 'updated comment body')
+    comment.update(body='updated comment body')
+    comment.update(body='updated comment body but no mail notification', notify=False)
     comment.delete()
 
 Transitions
