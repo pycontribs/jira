@@ -763,14 +763,45 @@ class Comment(Resource):
             self._parse_raw(raw)
         self.raw: Dict[str, Any] = cast(Dict[str, Any], self.raw)
 
-    def update(self, fields=None, async_=None, jira=None, body="", visibility=None):
-        """Update a comment"""
-        data = {}
+    def update(  # type: ignore[override]
+        # The above ignore is added because we've added new parameters and order of parameters is different.
+        # Will need to be solved in a major version bump.
+        self,
+        fields: Optional[Dict[str, Any]] = None,
+        async_: Optional[bool] = None,
+        jira: "JIRA" = None,
+        body: str = "",
+        visibility: Optional[Dict[str, str]] = None,
+        is_internal: bool = False,
+        notify: bool = True,
+    ):
+        """Update a comment
+
+        Keyword arguments are marshalled into a dict before being sent.
+
+        Args:
+            fields (Optional[Dict[str, Any]]): DEPRECATED => a comment doesn't have fields
+            async_ (Optional[bool]): If True the request will be added to the queue, so it can be executed later using async_run()
+            jira (jira.client.JIRA): Instance of Jira Client
+            visibility (Optional[Dict[str, str]]): a dict containing two entries: "type" and "value".
+              "type" is 'role' (or 'group' if the Jira server has configured
+              comment visibility for groups) and 'value' is the name of the role
+              (or group) to which viewing of this comment will be restricted.
+            body (str): New text of the comment
+            is_internal (bool): Defines whether a comment has to be marked as 'Internal' in Jira Service Desk (Default: False)
+            notify (bool): Whether to notify users about the update. (Default: True)
+        """
+        data: Dict[str, Any] = {}
         if body:
             data["body"] = body
         if visibility:
             data["visibility"] = visibility
-        super().update(data)
+        if is_internal:
+            data["properties"] = [
+                {"key": "sd.public.comment", "value": {"internal": is_internal}}
+            ]
+
+        super().update(async_=async_, jira=jira, notify=notify, fields=data)
 
 
 class RemoteLink(Resource):
