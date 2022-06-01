@@ -1852,22 +1852,16 @@ class JIRA:
         data: Dict[str, Any] = {"body": body}
 
         if is_internal:
-            data.update(
-                {
-                    "properties": [
-                        {"key": "sd.public.comment", "value": {"internal": is_internal}}
-                    ]
-                }
-            )
-
+            data["properties"] = [
+                {"key": "sd.public.comment", "value": {"internal": is_internal}}
+            ]
         if visibility is not None:
             data["visibility"] = visibility
 
         url = self._get_url("issue/" + str(issue) + "/comment")
         r = self._session.post(url, data=json.dumps(data))
 
-        comment = Comment(self._options, self._session, raw=json_loads(r))
-        return comment
+        return Comment(self._options, self._session, raw=json_loads(r))
 
     # non-resource
     @translate_resource_args
