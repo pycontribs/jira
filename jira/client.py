@@ -3143,6 +3143,11 @@ class JIRA:
         Returns:
             ResultList
         """
+        if not username and not query:
+            raise ValueError(
+                "Either 'username' or 'query' arguments must be specified."
+            )
+
         if username is not None:
             params = {"username": username}
         if query is not None:
@@ -3153,11 +3158,6 @@ class JIRA:
             params["issueKey"] = issueKey
         if expand is not None:
             params["expand"] = expand
-
-        if not username and not query:
-            raise ValueError(
-                "Either 'username' or 'query' arguments must be specified."
-            )
 
         return self._fetch_pages(
             User,
