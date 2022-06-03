@@ -12,11 +12,12 @@ import logging
 import os
 import pickle
 from time import sleep
-from typing import cast
+from typing import Optional, cast
 from unittest import mock
 
 import pytest
 import requests
+from parameterized import parameterized
 
 from jira import JIRA, Issue, JIRAError
 from jira.client import ResultList
@@ -296,37 +297,74 @@ class AsyncTests(JiraTestCase):
             get_server_info=False,
         )
 
-    def test_fetch_pages(self):
+    @parameterized.expand(
+        [
+            (
+                0,
+                26,
+                None,
+                False,
+            ),  # original behaviour, fetch all with jira's original return size (here 10)
+            (0, 26, 20, False),  # set batch size to 20
+            (5, 26, 20, False),  # test start_at
+            (5, 26, 20, 50),  # test maxResults set (one request)
+        ]
+    )
+    def test_fetch_pages(
+        self, start_at: int, total: int, batch_size: Optional[int], max_results: int
+    ):
         """Tests that the JIRA._fetch_pages method works as expected."""
         params = {"startAt": 0}
-        total = 26
+        batch_size = batch_size or 10
+        expected_calls = _calculate_calls_for_fetch_pages(
+            "https://jira.atlassian.com/rest/api/2/search",
+            start_at,
+            total,
+            max_results,
+            batch_size,
+        )
         expected_results = []
         for i in range(0, total):
             result = _create_issue_result_json(i, "summary %s" % i, key="KEY-%s" % i)
             expected_results.append(result)
-        result_one = _create_issue_search_results_json(
-            expected_results[:10], max_results=10, total=total
-        )
-        result_two = _create_issue_search_results_json(
-            expected_results[10:20], max_results=10, total=total
-        )
-        result_three = _create_issue_search_results_json(
-            expected_results[20:], max_results=6, total=total
-        )
+
+        if not max_results:
+            mocked_api_results = []
+            for i in range(start_at, total, batch_size):
+                mocked_api_result = _create_issue_search_results_json(
+                    expected_results[i : i + batch_size],
+                    max_results=batch_size,
+                    total=total,
+                )
+                mocked_api_results.append(mocked_api_result)
+        else:
+            mocked_api_results = [
+                _create_issue_search_results_json(
+                    expected_results[start_at : max_results + start_at],
+                    max_results=max_results,
+                    total=total,
+                )
+            ]
+
         mock_session = mock.Mock(name="mock_session")
         responses = mock.Mock(name="responses")
         responses.content = "_filler_"
-        responses.json.side_effect = [result_one, result_two, result_three]
+        responses.json.side_effect = mocked_api_results
         responses.status_code = 200
         mock_session.request.return_value = responses
         mock_session.get.return_value = responses
         self.jira._session.close()
         self.jira._session = mock_session
-        items = self.jira._fetch_pages(Issue, "issues", "search", 0, False, params)
-        self.assertEqual(len(items), total)
+        items = self.jira._fetch_pages(
+            Issue, "issues", "search", start_at, max_results, batch_size, params=params
+        )
+
+        actual_calls = [[kall[1], kall[2]] for kall in self.jira._session.method_calls]
+        self.assertEqual(actual_calls, expected_calls)
+        self.assertEqual(len(items), total - start_at)
         self.assertEqual(
             {item.key for item in items},
-            {expected_r["key"] for expected_r in expected_results},
+            {expected_r["key"] for expected_r in expected_results[start_at:]},
         )
 
 
@@ -348,6 +386,23 @@ def _create_issue_search_results_json(issues, **kwargs):
         "total": kwargs.get("total", len(issues)),
         "issues": issues,
     }
+
+
+def _calculate_calls_for_fetch_pages(
+    url: str, start_at: int, total: int, max_results: int, batch_size: int
+):
+    """Returns expected query parameters for specified search-issues arguments."""
+
+    if not max_results:
+        call_list = []
+        for i in range(start_at, total, batch_size):
+            call_ = [(url,), {"params": {"startAt": i, "maxResults": batch_size}}]
+            call_list.append(call_)
+    else:
+        call_list = [
+            [(url,), {"params": {"startAt": start_at, "maxResults": max_results}}]
+        ]
+    return call_list
 
 
 class WebsudoTests(JiraTestCase):

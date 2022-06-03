@@ -681,6 +681,7 @@ class JIRA:
         request_path: str,
         startAt: int = 0,
         maxResults: int = 50,
+        batch_size: Optional[int] = None,
         params: Dict[str, Any] = None,
         base: str = JIRA_BASE_URL,
     ) -> ResultList[ResourceType]:
@@ -694,6 +695,9 @@ class JIRA:
             startAt (int): index of the first record to be fetched. (Default: 0)
             maxResults (int): Maximum number of items to return.
               If maxResults evaluates as False, it will try to get all items in batches. (Default:50)
+            batch_size (Optional[int]): Size of batches, only used if maxResults evaluates as False.
+              If not specified, the JIRA-instance's default size will be used. Strongly recommended to use a value over
+              100 for larger requests.
             params (Dict[str, Any]): Params to be used in all requests. Should not contain startAt and maxResults,
               as they will be added for each request created from this function.
             base (str): base URL to use for the requests.
@@ -716,6 +720,8 @@ class JIRA:
             page_params["startAt"] = startAt
         if maxResults:
             page_params["maxResults"] = maxResults
+        elif batch_size is not None:
+            page_params["maxResults"] = batch_size
 
         resource = self._get_json(request_path, params=page_params, base=base)
         next_items_page = self._get_items_from_page(item_type, items_key, resource)
@@ -740,6 +746,13 @@ class JIRA:
             # If maxResults evaluates as False, get all items in batches
             if not maxResults:
                 page_size = max_results_from_response or len(items)
+                if batch_size is not None and page_size < batch_size:
+                    self.log.warning(
+                        "'batch_size' set to %s, but only received %s items in batch. Falling back to %s.",
+                        batch_size,
+                        page_size,
+                        page_size,
+                    )
                 page_start = (startAt or start_at_from_response or 0) + page_size
                 if (
                     async_class is not None
@@ -771,6 +784,9 @@ class JIRA:
                     and (total is None or page_start < total)
                     and len(next_items_page) == page_size
                 ):
+                    page_params = (
+                        params.copy() if params else {}
+                    )  # Hack necessary for mock-calls to not change
                     page_params["startAt"] = page_start
                     page_params["maxResults"] = page_size
                     resource = self._get_json(
@@ -1123,7 +1139,7 @@ class JIRA:
     # Dashboards
 
     def dashboards(
-        self, filter=None, startAt=0, maxResults=20
+        self, filter=None, startAt=0, maxResults=20, batch_size: Optional[int] = None
     ) -> ResultList[Dashboard]:
         """Return a ResultList of Dashboard resources and a ``total`` count.
 
@@ -1131,6 +1147,9 @@ class JIRA:
             filter (Optional[str]): either "favourite" or "my", the type of dashboards to return
             startAt (int): index of the first dashboard to return (Default: 0)
             maxResults (int): maximum number of dashboards to return. If maxResults evaluates as False, it will try to get all items in batches. (Default: 20)
+            batch_size (Optional[int]): Size of batches, only used if maxResults evaluates as False.
+              If not specified, the JIRA-instance's default size will be used. Strongly recommended to use a value over
+              100 for larger requests.
 
         Returns:
             ResultList
@@ -1139,7 +1158,13 @@ class JIRA:
         if filter is not None:
             params["filter"] = filter
         return self._fetch_pages(
-            Dashboard, "dashboards", "dashboard", startAt, maxResults, params
+            Dashboard,
+            "dashboards",
+            "dashboard",
+            startAt,
+            maxResults,
+            batch_size,
+            params,
         )
 
     def dashboard(self, id: str) -> Dashboard:
@@ -2869,6 +2894,7 @@ class JIRA:
         fields: Optional[Union[str, List[str]]] = "*all",
         expand: Optional[str] = None,
         json_result: bool = False,
+        batch_size: Optional[int] = None,
     ) -> Union[List[Dict[str, Any]], ResultList[Issue]]:
         """Get a :class:`~jira.client.ResultList` of issue Resources matching a JQL search string.
 
@@ -2884,6 +2910,9 @@ class JIRA:
             expand (Optional[str]): extra information to fetch inside each resource
             json_result (bool): JSON response will be returned when this parameter is set to True.
               Otherwise, :class:`~jira.client.ResultList` will be returned.
+            batch_size (Optional[int]): Size of batches, only used if maxResults evaluates as False.
+              If not specified, the JIRA-instance's default size will be used. Strongly recommended to use a value over
+              100 for larger requests.
 
         Returns:
             Union[Dict,ResultList]: Dict if ``json_result=True``
@@ -2921,7 +2950,7 @@ class JIRA:
             return r_json
 
         issues = self._fetch_pages(
-            Issue, "issues", "search", startAt, maxResults, search_params
+            Issue, "issues", "search", startAt, maxResults, batch_size, search_params
         )
 
         if untranslate:
@@ -3043,7 +3072,12 @@ class JIRA:
         return user
 
     def search_assignable_users_for_projects(
-        self, username: str, projectKeys: str, startAt: int = 0, maxResults: int = 50
+        self,
+        username: str,
+        projectKeys: str,
+        startAt: int = 0,
+        maxResults: int = 50,
+        batch_size: Optional[int] = None,
     ) -> ResultList:
         """Get a list of user Resources that match the search string and can be assigned issues for projects.
 
@@ -3053,6 +3087,9 @@ class JIRA:
             startAt (int): Index of the first user to return (Default: 0)
             maxResults (int): Maximum number of users to return.
               If maxResults evaluates as False, it will try to get all users in batches. (Default: 50)
+            batch_size (Optional[int]): Size of batches, only used if maxResults evaluates as False.
+              If not specified, the JIRA-instance's default size will be used. Strongly recommended to use a value over
+              100 for larger requests.
 
         Returns:
             ResultList
@@ -3065,6 +3102,7 @@ class JIRA:
             "user/assignable/multiProjectSearch",
             startAt,
             maxResults,
+            batch_size,
             params,
         )
 
@@ -3077,6 +3115,7 @@ class JIRA:
         startAt: int = 0,
         maxResults: int = 50,
         query: Optional[str] = None,
+        batch_size: Optional[int] = None,
     ):
         """Get a list of user Resources that match the search string for assigning or creating issues.
         "username" query parameter is deprecated in Jira Cloud; the expected parameter now is "query", which can just be
@@ -3097,6 +3136,9 @@ class JIRA:
             maxResults (int): maximum number of users to return.
               If maxResults evaluates as False, it will try to get all items in batches. (Default: 50)
             query (Optional[str]): Search term. It can just be the email.
+            batch_size (Optional[int]): Size of batches, only used if maxResults evaluates as False.
+              If not specified, the JIRA-instance's default size will be used. Strongly recommended to use a value over
+              100 for larger requests.
 
         Returns:
             ResultList
@@ -3118,7 +3160,13 @@ class JIRA:
             )
 
         return self._fetch_pages(
-            User, None, "user/assignable/search", startAt, maxResults, params
+            User,
+            None,
+            "user/assignable/search",
+            startAt,
+            maxResults,
+            batch_size,
+            params,
         )
 
     # non-resource
@@ -3240,6 +3288,7 @@ class JIRA:
         includeActive: bool = True,
         includeInactive: bool = False,
         query: Optional[str] = None,
+        batch_size: Optional[int] = None,
     ) -> ResultList[User]:
         """Get a list of user Resources that match the specified search string.
         "username" query parameter is deprecated in Jira Cloud; the expected parameter now is "query", which can just be the full
@@ -3253,6 +3302,9 @@ class JIRA:
             includeActive (bool): If true, then active users are included in the results. (Default: True)
             includeInactive (bool): If true, then inactive users are included in the results. (Default: False)
             query (Optional[str]): Search term. It can just be the email.
+            batch_size (Optional[int]): Size of batches, only used if maxResults evaluates as False.
+              If not specified, the JIRA-instance's default size will be used. Strongly recommended to use a value over
+              100 for larger requests.
 
         Returns:
             ResultList[User]
@@ -3267,7 +3319,9 @@ class JIRA:
             "includeInactive": includeInactive,
         }
 
-        return self._fetch_pages(User, None, "user/search", startAt, maxResults, params)
+        return self._fetch_pages(
+            User, None, "user/search", startAt, maxResults, batch_size, params
+        )
 
     def search_allowed_users_for_issue(
         self,
@@ -3276,6 +3330,7 @@ class JIRA:
         projectKey: str = None,
         startAt: int = 0,
         maxResults: int = 50,
+        batch_size: Optional[int] = None,
     ) -> ResultList:
         """Get a list of user Resources that match a username string and have browse permission for the issue or project.
 
@@ -3286,6 +3341,9 @@ class JIRA:
             startAt (int): index of the first user to return. (Default: 0)
             maxResults (int): maximum number of users to return.
               If maxResults evaluates as False, it will try to get all items in batches. (Default: 50)
+            batch_size (Optional[int]): Size of batches, only used if maxResults evaluates as False.
+              If not specified, the JIRA-instance's default size will be used. Strongly recommended to use a value over
+              100 for larger requests.
 
         Returns:
             ResultList
@@ -3296,7 +3354,7 @@ class JIRA:
         if projectKey is not None:
             params["projectKey"] = projectKey
         return self._fetch_pages(
-            User, None, "user/viewissue/search", startAt, maxResults, params
+            User, None, "user/viewissue/search", startAt, maxResults, batch_size, params
         )
 
     # Versions
@@ -4458,6 +4516,7 @@ class JIRA:
         type: str = None,
         name: str = None,
         projectKeyOrID=None,
+        batch_size: Optional[int] = None,
     ) -> ResultList[Board]:
         """Get a list of board resources.
 
@@ -4467,6 +4526,9 @@ class JIRA:
             type: Filters results to boards of the specified type. Valid values: scrum, kanban.
             name: Filters results to boards that match or partially match the specified name.
             projectKeyOrID: Filters results to boards that match the specified project key or ID.
+            batch_size (Optional[int]): Size of batches, only used if maxResults evaluates as False.
+              If not specified, the JIRA-instance's default size will be used. Strongly recommended to use a value over
+              100 for larger requests.
 
         Returns:
             ResultList[Board]
@@ -4485,6 +4547,7 @@ class JIRA:
             "board",
             startAt,
             maxResults,
+            batch_size,
             params,
             base=self.AGILE_BASE_URL,
         )
@@ -4497,6 +4560,7 @@ class JIRA:
         startAt: int = 0,
         maxResults: int = 50,
         state: str = None,
+        batch_size: Optional[int] = None,
     ) -> ResultList[Sprint]:
         """Get a list of sprint Resources.
 
@@ -4507,6 +4571,9 @@ class JIRA:
             maxResults (int): the maximum number of sprints to return
             state (str): Filters results to sprints in specified states. Valid values: `future`, `active`, `closed`.
               You can define multiple states separated by commas
+            batch_size (Optional[int]): Size of batches, only used if maxResults evaluates as False.
+              If not specified, the JIRA-instance's default size will be used. Strongly recommended to use a value over
+              100 for larger requests.
 
         Returns:
             ResultList[Sprint]: List of sprints.
@@ -4524,6 +4591,7 @@ class JIRA:
             f"board/{board_id}/sprint",
             startAt,
             maxResults,
+            batch_size,
             params,
             self.AGILE_BASE_URL,
         )
