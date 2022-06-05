@@ -68,7 +68,7 @@ def json_loads(resp: Optional[Response]) -> Any:
     Returns:
         Union[List[Dict[str, Any]], Dict[str, Any]]: the json
     """
-    raise_on_error(resp)  # if 'r' is None, will raise an error here
+    raise_on_error(resp)  # if 'resp' is None, will raise an error here
     resp = cast(Response, resp)  # tell mypy only Response-like are here
     try:
         return resp.json()
