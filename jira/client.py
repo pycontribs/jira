@@ -1,8 +1,7 @@
 """
-This module implements a friendly (well, friendlier) interface between the raw JSON
-responses from Jira and the Resource/dict abstractions provided by this library. Users
-will construct a JIRA object as described below. Full API documentation can be found
-at: https://jira.readthedocs.io/en/latest/
+This module implements a friendly (well, friendlier) interface between the raw JSON responses from Jira and the Resource/dict
+abstractions provided by this library. Users will construct a JIRA object as described below. Full API documentation can be found at:
+https://jira.readthedocs.io/en/latest/
 """
 import calendar
 import copy
@@ -176,10 +175,8 @@ class ResultList(list, Generic[ResourceType]):
         return super().__iter__()
 
     # fmt: off
-    # The mypy error we ignore is about returning a contravariant type.
-    # As this class is a List of a generic 'Resource' class
-    # this is the right way to specify that the output is the same as which
-    # the class was initialized with.
+    # The mypy error we ignore is about returning a contravariant type. As this class is a List of a generic 'Resource' class
+    # this is the right way to specify that the output is the same as which the class was initialized with.
     @overload
     def __getitem__(self, i: SupportsIndex) -> ResourceType: ...  # type:ignore[misc]  # noqa: E704
     @overload
@@ -225,8 +222,7 @@ class QshGenerator:
 class JiraCookieAuth(AuthBase):
     """Jira Cookie Authentication
 
-    Allows using cookie authentication as described by
-    https://developer.atlassian.com/server/jira/platform/cookie-based-authentication/
+    Allows using cookie authentication as described by https://developer.atlassian.com/server/jira/platform/cookie-based-authentication/
     """
 
     def __init__(
@@ -269,8 +265,15 @@ class JiraCookieAuth(AuthBase):
         )
         r.raise_for_status()
 
-    def handle_401(self, response: requests.Response, **kwargs):
-        """Refresh cookies if the session cookie has expired. Then retry the request."""
+    def handle_401(self, response: requests.Response, **kwargs) -> requests.Response:
+        """Refresh cookies if the session cookie has expired. Then retry the request.
+
+        Args:
+            response (requests.Response): the response with the possible 401 to handle
+
+        Returns:
+            requests.Response
+        """
         if (
             response.status_code == 401
             and self._retry_counter_401 < self._max_allowed_401_retries
@@ -287,8 +290,8 @@ class JiraCookieAuth(AuthBase):
         return self.send_request(original_request)
 
     def update_cookies(self, original_request: requests.PreparedRequest):
-        # Cookie header needs first to be deleted for the header to be updated using
-        # the prepare_cookies method. See request.PrepareRequest.prepare_cookies
+        # Cookie header needs first to be deleted for the header to be updated using the prepare_cookies method.
+        # See request.PrepareRequest.prepare_cookies
         if "Cookie" in original_request.headers:
             del original_request.headers["Cookie"]
         original_request.prepare_cookies(self.cookies)
@@ -313,20 +316,19 @@ class TokenAuth(AuthBase):
 class JIRA:
     """User interface to Jira.
 
-    Clients interact with Jira by constructing an instance of this object and calling its methods. For addressable
-    resources in Jira -- those with "self" links -- an appropriate subclass of :py:class:`jira.resources.Resource` will be returned
-    with customized ``update()`` and ``delete()`` methods, along with attribute access to fields. This means that calls
-    of the form ``issue.fields.summary`` will be resolved into the proper lookups to return the JSON value at that
-    mapping. Methods that do not return resources will return a dict constructed from the JSON response or a scalar
-    value; see each method's documentation for details on what that method returns.
+    Clients interact with Jira by constructing an instance of this object and calling its methods.
+    For addressable resources in Jira -- those with "self" links -- an appropriate subclass of :py:class:`jira.resources.Resource`
+    will be returned with customized ``update()`` and ``delete()`` methods, along with attribute access to fields.
+    This means that calls of the form ``issue.fields.summary`` will be resolved into the proper lookups to return the JSON value at that
+    mapping. Methods that do not return resources will return a dict constructed from the JSON response or a scalar value;
+    see each method's documentation for details on what that method returns.
 
-    Without any arguments, this client will connect anonymously to the Jira instance
-    started by the Atlassian Plugin SDK from one of the 'atlas-run', ``atlas-debug``,
-    or ``atlas-run-standalone`` commands. By default, this instance runs at
-    ``http://localhost:2990/jira``. The ``options`` argument can be used to set the Jira instance to use.
+    Without any arguments, this client will connect anonymously to the Jira instance started by the Atlassian Plugin SDK from one of the
+    'atlas-run', ``atlas-debug`` or ``atlas-run-standalone`` commands. By default, this instance runs at ``http://localhost:2990/jira``.
+    The ``options`` argument can be used to set the Jira instance to use.
 
-    Authentication is handled with the ``basic_auth`` argument. If authentication is supplied (and is
-    accepted by Jira), the client will remember it for subsequent requests.
+    Authentication is handled with the ``basic_auth`` argument. If authentication is supplied (and is accepted by Jira),
+    the client will remember it for subsequent requests.
 
     For quick command line access to a server, see the ``jirashell`` script included with this distribution.
 
@@ -393,9 +395,8 @@ class JIRA:
     ):
         """Construct a Jira client instance.
 
-        Without any arguments, this client will connect anonymously to the Jira instance
-        started by the Atlassian Plugin SDK from one of the 'atlas-run', ``atlas-debug``,
-        or ``atlas-run-standalone`` commands. By default, this instance runs at
+        Without any arguments, this client will connect anonymously to the Jira instance started by the Atlassian Plugin SDK from one
+        of the 'atlas-run', ``atlas-debug`` or ``atlas-run-standalone`` commands. By default, this instance runs at
         ``http://localhost:2990/jira``. The ``options`` argument can be used to set the Jira instance to use.
 
         Authentication is handled with the ``basic_auth``  or ``token_auth`` argument.
@@ -415,10 +416,9 @@ class JIRA:
                 * rest_api_version -- the version of the REST resources under rest_path to use. Defaults to ``2``.
                 * agile_rest_path - the REST path to use for Jira Agile requests. Defaults to ``agile``.
                 * verify (Union[bool, str]) -- Verify SSL certs. Defaults to ``True``.
-                  Or path to to a CA_BUNDLE file or directory with certificates of trusted CAs,
-                  for the `requests` library to use.
-                * client_cert (Union[str, Tuple[str,str]]) -- Path to file with both cert and key or
-                  a tuple of (cert,key), for the `requests` library to use for client side SSL.
+                  Or path to a CA_BUNDLE file or directory with certificates of trusted CAs, for the `requests` library to use.
+                * client_cert (Union[str, Tuple[str,str]]) -- Path to file with both cert and key or a tuple of (cert,key),
+                  for the `requests` library to use for client side SSL.
                 * check_update -- Check whether using the newest python-jira library version.
                 * headers -- a dict to update the default headers the session uses for all API requests.
 
@@ -452,11 +452,11 @@ class JIRA:
 
                 Example jwt structure: ``{'secret': SHARED_SECRET, 'payload': {'iss': PLUGIN_KEY}}``
 
-            validate (bool): If true it will validate your credentials first. Remember that if you are accessing Jira
-              as anonymous it will fail to instantiate.
-            get_server_info (bool): If true it will fetch server version info first to determine if some API calls
-              are available.
+            validate (bool): Validates your credentials first. Remember that if you are accessing Jira as anonymous it will fail.
+              (Default: False).
+            get_server_info (bool): Fetches server version info first to determine if some API calls are available. (Default: True).
             async_ (bool): To enable async requests for those actions where we implemented it, like issue update() or delete().
+              (Default: False).
             async_workers (int): Set the number of worker threads for async operations.
             timeout (Optional[Union[Union[float, int], Tuple[float, float]]]): Set a read/connect timeout for the underlying
               calls to Jira (default: None).
@@ -464,14 +464,13 @@ class JIRA:
             max_retries (int): Sets the amount Retries for the HTTP sessions initiated by the client. (Default: 3)
             proxies (Optional[Any]): Sets the proxies for the HTTP session.
             auth (Optional[Tuple[str,str]]): Set a cookie auth token if this is required.
-            logging (bool): Determine whether or not logging should be enabled. (Default: True)
+            logging (bool): Enables loglevel to info => else critical. (Default: True)
             default_batch_sizes (Optional[Dict[Type[Resource], Optional[int]]]): Manually specify the batch-sizes for
               the paginated retrieval of different item types. `Resource` is used as a fallback for every item type not
               specified. If an item type is mapped to `None` no fallback occurs, instead the JIRA-backend will use its
               default batch-size. By default all Resources will be queried in batches of 100. E.g., setting this to
               ``{Issue: 500, Resource: None}`` will make :py:meth:`search_issues` query Issues in batches of 500, while
               every other item type's batch-size will be controlled by the backend. (Default: None)
-
         """
         # force a copy of the tuple to be used in __del__() because
         # sys.version_info could have already been deleted in __del__()
@@ -604,7 +603,11 @@ class JIRA:
 
     @property
     def server_url(self) -> str:
-        """Return the server url"""
+        """Return the server url
+
+        Returns:
+            str
+        """
         return str(self._options["server"])
 
     @property
@@ -657,16 +660,13 @@ class JIRA:
             try:
                 session.close()
             except TypeError:
-                # TypeError: "'NoneType' object is not callable"
-                # Could still happen here because other references are also
-                # in the process to be torn down, see warning section in
-                # https://docs.python.org/2/reference/datamodel.html#object.__del__
+                # TypeError: "'NoneType' object is not callable" Could still happen here because other references are also
+                # in the process to be torn down, see warning section in https://docs.python.org/2/reference/datamodel.html#object.__del__
                 pass
             self._session = None
 
     def _check_for_html_error(self, content: str):
-        # Jira has the bad habit of returning errors in pages with 200 and
-        # embedding the error in a huge webpage.
+        # Jira has the bad habit of returning errors in pages with 200 and embedding the error in a huge webpage.
         if "<!-- SecurityTokenMissing -->" in content:
             self.log.warning("Got SecurityTokenMissing")
             raise JIRAError(f"SecurityTokenMissing: {content}")
@@ -862,17 +862,13 @@ class JIRA:
     ) -> Resource:
         """Find Resource object for any addressable resource on the server.
 
-        This method is a universal resource locator for any REST-ful resource in Jira. The
-        argument ``resource_format`` is a string of the form ``resource``, ``resource/{0}``,
-        ``resource/{0}/sub``, ``resource/{0}/sub/{1}``, etc. The format placeholders will be
-        populated from the ``ids`` argument if present. The existing authentication session
-        will be used.
+        This method is a universal resource locator for any REST-ful resource in Jira. The argument ``resource_format`` is a string of
+        the form ``resource``, ``resource/{0}``, ``resource/{0}/sub``, ``resource/{0}/sub/{1}``, etc. The format placeholders will be
+        populated from the ``ids`` argument if present. The existing authentication session will be used.
 
-        The return value is an untyped Resource object, which will not support specialized
-        :py:meth:`.Resource.update` or :py:meth:`.Resource.delete` behavior. Moreover, it will
-        not know to return an issue Resource if the client uses the resource issue path. For this
-        reason, it is intended to support resources that are not included in the standard
-        Atlassian REST API.
+        The return value is an untyped Resource object, which will not support specialized :py:meth:`.Resource.update` or
+        :py:meth:`.Resource.delete` behavior. Moreover, it will not know to return an issue Resource if the client uses the resource issue
+        path. For this reason, it is intended to support resources that are not included in the standard Atlassian REST API.
 
         Args:
             resource_format (str): the subpath to the resource string
@@ -973,19 +969,21 @@ class JIRA:
 
     @translate_resource_args
     def add_attachment(
-        self, issue: str, attachment: Union[str, BufferedReader], filename: str = None
+        self,
+        issue: Union[str, int],
+        attachment: Union[str, BufferedReader],
+        filename: str = None,
     ) -> Attachment:
         """Attach an attachment to an issue and returns a Resource for it.
 
-        The client will *not* attempt to open or validate the attachment; it expects a file-like object to be ready
-        for its use. The user is still responsible for tidying up (e.g., closing the file, killing the socket, etc.)
+        The client will *not* attempt to open or validate the attachment; it expects a file-like object to be ready for its use.
+        The user is still responsible for tidying up (e.g., closing the file, killing the socket, etc.)
 
         Args:
-            issue (str): the issue to attach the attachment to
+            issue (Union[str, int]): the issue to attach the attachment to
             attachment (Union[str,BufferedReader]): file-like object to attach to the issue, also works if it is a string with the filename.
-            filename (str): optional name for the attached file. If omitted, the file object's ``name`` attribute
-              is used. If you acquired the file-like object by any other method than ``open()``, make sure
-              that a name is specified in one way or the other.
+            filename (str): optional name for the attached file. If omitted, the file object's ``name`` attribute is used. If you acquired
+              the file-like object by any other method than ``open()``, make sure that a name is specified in one way or the other.
 
         Returns:
             Attachment
@@ -1166,7 +1164,8 @@ class JIRA:
         Args:
             filter (Optional[str]): either "favourite" or "my", the type of dashboards to return
             startAt (int): index of the first dashboard to return (Default: 0)
-            maxResults (int): maximum number of dashboards to return. If maxResults evaluates as False, it will try to get all items in batches. (Default: 20)
+            maxResults (int): maximum number of dashboards to return. If maxResults set to False, it will try to get all items in batches.
+              (Default: 20)
 
         Returns:
             ResultList
@@ -1408,8 +1407,7 @@ class JIRA:
         """
         url = self._get_latest_url("group")
 
-        # implementation based on
-        # https://docs.atlassian.com/jira/REST/ondemand/#d2e5173
+        # implementation based on https://docs.atlassian.com/jira/REST/ondemand/#d2e5173
 
         x = OrderedDict()
 
@@ -1430,8 +1428,7 @@ class JIRA:
         Returns:
             bool: Returns True on success.
         """
-        # implementation based on
-        # https://docs.atlassian.com/jira/REST/ondemand/#d2e5173
+        # implementation based on https://docs.atlassian.com/jira/REST/ondemand/#d2e5173
         url = self._get_latest_url("group")
         x = {"groupname": groupname}
         self._session.delete(url, params=x)
@@ -1476,22 +1473,20 @@ class JIRA:
     ) -> Issue:
         """Create a new issue and return an issue Resource for it.
 
-        Each keyword argument (other than the predefined ones) is treated as a field name and the argument's value
-        is treated as the intended value for that field -- if the fields argument is used, all other keyword arguments
-        will be ignored.
+        Each keyword argument (other than the predefined ones) is treated as a field name and the argument's value is treated as the
+        intended value for that field -- if the fields argument is used, all other keyword arguments will be ignored.
 
-        By default, the client will immediately reload the issue Resource created by this method in order to return
-        a complete Issue object to the caller; this behavior can be controlled through the 'prefetch' argument.
+        By default, the client will immediately reload the issue Resource created by this method in order to return a complete
+        Issue object to the caller; this behavior can be controlled through the 'prefetch' argument.
 
-        Jira projects may contain many different issue types. Some issue screens have different requirements for
-        fields in a new issue. This information is available through the 'createmeta' method. Further examples are
-        available here: https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Create+Issue
+        Jira projects may contain many issue types. Some issue screens have different requirements for fields in a new issue.
+        This information is available through the 'createmeta' method.
+        Further examples are available here: https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Create+Issue
 
         Args:
             fields (Optional[Dict[str, Any]]): a dict containing field names and the values to use. If present, all other keyword arguments
               will be ignored
-            prefetch (bool): whether to reload the created issue Resource so that all of its data is present in the value
-              returned from this method
+            prefetch (bool): reload the created issue Resource so all of its data is present in the value returned (Default: True)
         Returns:
             Issue
         """
@@ -1537,8 +1532,8 @@ class JIRA:
         Args:
             field_list (List[Dict[str, Any]]): a list of dicts each containing field names and the values to use. Each dict
               is an individual issue to create and is subject to its minimum requirements.
-            prefetch (bool): whether to reload the created issue Resource for each created issue so that all
-              of its data is present in the value returned from this method.
+            prefetch (bool): reload the created issue Resource so all of its data is present in the value returned (Default: True)
+
         Returns:
             List[Dict[str, Any]]
 
@@ -1673,22 +1668,21 @@ class JIRA:
     ) -> Issue:
         """Create a new customer request and return an issue Resource for it.
 
-        Each keyword argument (other than the predefined ones) is treated as a field name and the argument's value
-        is treated as the intended value for that field -- if the fields argument is used, all other keyword arguments
-        will be ignored.
+        Each keyword argument (other than the predefined ones) is treated as a field name and the argument's value is treated as the
+        intended value for that field -- if the fields argument is used, all other keyword arguments will be ignored.
 
-        By default, the client will immediately reload the issue Resource created by this method in order to return
-        a complete Issue object to the caller; this behavior can be controlled through the 'prefetch' argument.
+        By default, the client will immediately reload the issue Resource created by this method in order to return a complete Issue
+        object to the caller; this behavior can be controlled through the 'prefetch' argument.
 
-        Jira projects may contain many different issue types. Some issue screens have different requirements for
-        fields in a new issue. This information is available through the 'createmeta' method. Further examples are
-        available here: https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Create+Issue
+        Jira projects may contain many different issue types. Some issue screens have different requirements for fields in a new issue.
+        This information is available through the 'createmeta' method.
+        Further examples are available here: https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Create+Issue
 
         Args:
             fields (Dict[str, Any]): a dict containing field names and the values to use. If present, all other keyword arguments
               will be ignored
-            prefetch (bool): whether to reload the created issue Resource so that all of its data is present in the value
-              returned from this method
+            prefetch (bool): reload the created issue Resource so all of its data is present in the value returned (Default: True)
+
         Returns:
             Issue
         """
@@ -1734,17 +1728,13 @@ class JIRA:
 
         Args:
             projectKeys (Optional[Union[Tuple[str, str], str]]): keys of the projects to filter the results with.
-              Can be a single value or a comma-delimited string. May be combined
-              with projectIds.
-            projectIds (Union[List, Tuple[str, str]]): IDs of the projects to filter the results with. Can
-              be a single value or a comma-delimited string. May be combined with
-              projectKeys.
+              Can be a single value or a comma-delimited string. May be combined with projectIds.
+            projectIds (Union[List, Tuple[str, str]]): IDs of the projects to filter the results with.
+              Can be a single value or a comma-delimited string. May be combined with projectKeys.
             issuetypeIds (Optional[List[str]]): IDs of the issue types to filter the results with.
-              Can be a single value or a comma-delimited string. May be combined
-              with issuetypeNames.
-            issuetypeNames (Optional[str]): Names of the issue types to filter the results
-              with. Can be a single value or a comma-delimited string. May be
-              combined with issuetypeIds.
+              Can be a single value or a comma-delimited string. May be combined with issuetypeNames.
+            issuetypeNames (Optional[str]): Names of the issue types to filter the results with.
+              Can be a single value or a comma-delimited string. May be combined with issuetypeIds.
             expand (Optional[str]): extra information to fetch inside each resource.
         Returns:
             Dict[str, Any]
@@ -1767,7 +1757,6 @@ class JIRA:
 
     def _get_user_identifier(self, user: User) -> str:
         """Get the unique identifier depending on the deployment type.
-
         - Cloud: 'accountId'
         - Self Hosted: 'name' (equivalent to username)
 
@@ -1784,11 +1773,8 @@ class JIRA:
 
         Return None and -1 unchanged.
 
-        This function uses :py:meth:`JIRA.search_users` to find the user
-        and then using :py:meth:`JIRA._get_user_identifier` extracts
-        the relevant identifier property depending on whether
-        the instance is a Cloud or self-hosted Instance.
-
+        This function uses :py:meth:`JIRA.search_users` to find the user and then using :py:meth:`JIRA._get_user_identifier` extracts
+        the relevant identifier property depending on whether the instance is a Cloud or self-hosted Instance.
 
         Args:
             user (Optional[str]): The search term used for finding a user.
@@ -1885,16 +1871,13 @@ class JIRA:
     ) -> Comment:
         """Add a comment from the current authenticated user on the specified issue and return a Resource for it.
 
-        The issue identifier and comment body are required.
-
         Args:
-            issue (str): ID or key of the issue to add the comment to
+            issue: (Union[str, int]): ID or key of the issue to add the comment to
             body (str): Text of the comment to add
             visibility (Optional[Dict[str, str]]): a dict containing two entries: "type" and "value".
-              "type" is 'role' (or 'group' if the Jira server has configured
-              comment visibility for groups) and 'value' is the name of the role
-              (or group) to which viewing of this comment will be restricted.
-            is_internal (bool): Defines whether a comment has to be marked as 'Internal' in Jira Service Desk (Default: False)
+              "type" is 'role' (or 'group' if the Jira server has configured comment visibility for groups)
+              "value" is the name of the role (or group) to which viewing of this comment will be restricted.
+            is_internal (bool): Mark the comment as 'Internal' in Jira Service Desk (Default: False)
 
         Returns:
             Comment: the created comment
@@ -1952,8 +1935,7 @@ class JIRA:
         """
         return self._find_for_resource(RemoteLink, (issue, id))
 
-    # removed the @translate_resource_args because it prevents us from finding
-    # information for building a proper link
+    # removed the @translate_resource_args because it prevents us from finding information for building a proper link
     def add_remote_link(
         self,
         issue: str,
@@ -1984,10 +1966,8 @@ class JIRA:
             applicationlinks: List[Dict] = self.applicationlinks()
         except JIRAError as e:
             applicationlinks = []
-            # In many (if not most) configurations, non-admin users are
-            # not allowed to list applicationlinks; if we aren't allowed,
-            # let's let people try to add remote links anyway, we just
-            # won't be able to be quite as helpful.
+            # In many (if not most) configurations, non-admin users are not allowed to list applicationlinks;
+            # if we aren't allowed let's let people try to add remote links anyway, we just won't be able to be quite as helpful.
             warnings.warn(
                 "Unable to gather applicationlinks; you will not be able "
                 "to add links to remote issues: (%s) %s" % (e.status_code, e.text),
@@ -2044,14 +2024,13 @@ class JIRA:
     def add_simple_link(self, issue: str, object: Dict[str, Any]):
         """Add a simple remote link from an issue to web resource.
 
-        This avoids the admin access problems from add_remote_link by just
-        using a simple object and presuming all fields are correct and not
-        requiring more complex ``application`` data.
+        This avoids the admin access problems from add_remote_link by just using a simple object and presuming all fields are correct
+        and not requiring more complex ``application`` data.
 
-        ``object`` should be a dict containing at least ``url`` to the
-        linked external URL and ``title`` to display for the link inside Jira.
+        ``object`` should be a dict containing at least ``url`` to the linked external URL and ``title`` to display for the link inside Jira
 
-        For definitions of the allowable fields for ``object`` , see https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+for+Remote+Issue+Links.
+        For definitions of the allowable fields for ``object`` ,
+        see https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+for+Remote+Issue+Links.
 
         Args:
             issue (str): the issue to add the remote link to
@@ -2461,13 +2440,10 @@ class JIRA:
             type (Union[str,IssueLinkType]): the type of link to create
             inwardIssue: the issue to link from
             outwardIssue: the issue to link to
-            comment (Optional[Dict[str, Any]]):  a comment to add to the issues with the link.
-              Should be a dict containing ``body`` and ``visibility`` fields: ``body`` being
-              the text of the comment and ``visibility`` being a dict containing
-              two entries: ``type`` and ``value``. ``type`` is ``role`` (or
-              ``group`` if the Jira server has configured comment visibility for
-              groups) and ``value`` is the name of the role (or group) to which
-              viewing of this comment will be restricted.
+            comment (Optional[Dict[str, Any]]):  a comment to add to the issues with the link. Should be a dict containing ``body`` and
+              ``visibility`` fields: ``body`` being the text of the comment and ``visibility`` being a dict containing two entries:
+              ``type`` and ``value``. ``type`` is ``role`` (or ``group`` if the Jira server has configured comment visibility for groups)
+              and ``value`` is the name of the role (or group) to which viewing of this comment will be restricted.
 
         Returns:
             Response
@@ -2537,7 +2513,6 @@ class JIRA:
 
         Returns:
             IssueLinkType
-
         """
         return self._find_for_resource(IssueLinkType, id)
 
@@ -2548,7 +2523,6 @@ class JIRA:
 
         Returns:
             List[IssueType]
-
         """
         r_json = self._get_json("issuetype")
         issue_types = [
@@ -2696,8 +2670,7 @@ class JIRA:
         """Get a list of project Resources from the server visible to the current authenticated user.
 
         Args:
-            expand (Optional[str]): extra information to fetch for each project
-                                    such as projectKeys and description.
+            expand (Optional[str]): extra information to fetch for each project such as projectKeys and description.
 
         Returns:
             List[Project]
@@ -2718,8 +2691,7 @@ class JIRA:
 
         Args:
             id (str): ID or key of the project to get
-            expand (Optional[str]): extra information to fetch for the project
-                                    such as projectKeys and description.
+            expand (Optional[str]): extra information to fetch for the project such as projectKeys and description.
 
         Returns:
             Project
@@ -2750,17 +2722,16 @@ class JIRA:
 
         The avatar created is temporary and must be confirmed before it can be used.
 
-        Avatar images are specified by a filename, size, and file object. By default, the client will attempt to
-        autodetect the picture's content type: this mechanism relies on libmagic and will not work out of the box
-        on Windows systems (see https://filemagic.readthedocs.io/en/latest/guide.html for details on how to install
-        support). The ``contentType`` argument can be used to explicitly set the value (note that Jira will reject any
-        type other than the well-known ones for images, e.g. ``image/jpg``, ``image/png``, etc.)
+        Avatar images are specified by a filename, size, and file object. By default, the client will attempt to autodetect the picture's
+        content type: this mechanism relies on libmagic and will not work out of the box on Windows systems
+        (see https://filemagic.readthedocs.io/en/latest/guide.html for details on how to install support).
+        The ``contentType`` argument can be used to explicitly set the value (note that Jira will reject any type other than the
+        well-known ones for images, e.g. ``image/jpg``, ``image/png``, etc.)
 
-        This method returns a dict of properties that can be used to crop a subarea of a larger image for use. This
-        dict should be saved and passed to :py:meth:`confirm_project_avatar` to finish the avatar creation process. If
-        you want to cut out the middleman and confirm the avatar with Jira's default cropping, pass the 'auto_confirm'
-        argument with a truthy value and :py:meth:`confirm_project_avatar` will be called for you before this method
-        returns.
+        This method returns a dict of properties that can be used to crop a subarea of a larger image for use. This dict should be saved
+        and passed to :py:meth:`confirm_project_avatar` to finish the avatar creation process. If you want to cut out the middleman and
+        confirm the avatar with Jira's default cropping, pass the 'auto_confirm' argument with a truthy value and
+        :py:meth:`confirm_project_avatar` will be called for you before this method returns.
 
         Args:
             project (str): ID or key of the project to create the avatar in
@@ -2797,10 +2768,9 @@ class JIRA:
     def confirm_project_avatar(self, project: str, cropping_properties: Dict[str, Any]):
         """Confirm the temporary avatar image previously uploaded with the specified cropping.
 
-        After a successful registry with :py:meth:`create_temp_project_avatar`, use this method to confirm the avatar
-        for use. The final avatar can be a subarea of the uploaded image, which is customized with the
-        ``cropping_properties``: the return value of :py:meth:`create_temp_project_avatar` should be used for this
-        argument.
+        After a successful registry with :py:meth:`create_temp_project_avatar`, use this method to confirm the avatar for use.
+        The final avatar can be a subarea of the uploaded image, which is customized with the ``cropping_properties``:
+        the return value of :py:meth:`create_temp_project_avatar` should be used for this argument.
 
         Args:
             project (str): ID or key of the project to confirm the avatar in
@@ -2978,15 +2948,13 @@ class JIRA:
         Args:
             jql_str (str): The JQL search string.
             startAt (int): Index of the first issue to return. (Default: 0)
-            maxResults (int): Maximum number of issues to return. Total number of results
-              is available in the ``total`` attribute of the returned :class:`~jira.client.ResultList`.
-              If maxResults evaluates as False, it will try to get all issues in batches. (Default: 50)
-            validate_query (bool): Whether or not the query should be validated. (Default: True)
+            maxResults (int): Maximum number of issues to return. Total number of results is available in the ``total`` attribute of
+              the returned :class:`ResultList`. If maxResults evaluates to False, it will try to get all issues in batches. (Default: 50)
+            validate_query (bool): Validate the query. (Default: True)
             fields (Optional[Union[str, List[str]]]): comma-separated string or list of issue fields to include in the results.
               Default is to include all fields.
             expand (Optional[str]): extra information to fetch inside each resource
-            json_result (bool): JSON response will be returned when this parameter is set to True.
-              Otherwise, :class:`~jira.client.ResultList` will be returned.
+            json_result (bool): Return a JSON response. When set to False a :class:`ResultList` will be returned. (Default: False)
 
         Returns:
             Union[Dict,ResultList]: Dict if ``json_result=True``
@@ -2997,8 +2965,7 @@ class JIRA:
         elif fields is None:
             fields = ["*all"]
 
-        # this will translate JQL field names to REST API Name
-        # most people do know the JQL names so this will help them use the API easier
+        # this will translate JQL field names to REST API Name most people do know the JQL names so this will help them use the API easier
         untranslate = {}  # use to add friendly aliases when we get the results back
         if self._fields_cache:
             for i, field in enumerate(fields):
@@ -3186,12 +3153,11 @@ class JIRA:
         query: Optional[str] = None,
     ):
         """Get a list of user Resources that match the search string for assigning or creating issues.
-        "username" query parameter is deprecated in Jira Cloud; the expected parameter now is "query", which can just be
-        the full email again. But the "user" parameter is kept for backwards compatibility, i.e. Jira Server/Data Center.
+        "username" query parameter is deprecated in Jira Cloud; the expected parameter now is "query", which can just be the full email
+        again. But the "user" parameter is kept for backwards compatibility, i.e. Jira Server/Data Center.
 
-        This method is intended to find users that are eligible to create issues in a project or be assigned
-        to an existing issue. When searching for eligible creators, specify a project. When searching for eligible
-        assignees, specify an issue key.
+        This method is intended to find users that are eligible to create issues in a project or be assigned to an existing issue.
+        When searching for eligible creators, specify a project. When searching for eligible assignees, specify an issue key.
 
         Args:
             username (Optional[str]): A string to match usernames against
@@ -3253,20 +3219,18 @@ class JIRA:
     ):
         """Register an image file as a user avatar.
 
-        The avatar created is temporary and must be confirmed before it can
-        be used.
+        The avatar created is temporary and must be confirmed before it can be used.
 
-        Avatar images are specified by a filename, size, and file object. By default, the client will attempt to
-        autodetect the picture's content type: this mechanism relies on ``libmagic`` and will not work out of the box
-        on Windows systems (see http://filemagic.readthedocs.org/en/latest/guide.html for details on how to install
-        support). The ``contentType`` argument can be used to explicitly set the value (note that Jira will reject any
-        type other than the well-known ones for images, e.g. ``image/jpg``, ``image/png``, etc.)
+        Avatar images are specified by a filename, size, and file object. By default, the client will attempt to autodetect the picture's
+        content type: this mechanism relies on ``libmagic`` and will not work out of the box on Windows systems
+        (see http://filemagic.readthedocs.org/en/latest/guide.html for details on how to install support). The ``contentType`` argument can
+        be used to explicitly set the value
+        (note that Jira will reject any type other than the well-known ones for images, e.g. ``image/jpg``, ``image/png``, etc.)
 
-        This method returns a dict of properties that can be used to crop a subarea of a larger image for use. This
-        dict should be saved and passed to :py:meth:`confirm_user_avatar` to finish the avatar creation process. If you
-        want to cut out the middleman and confirm the avatar with Jira's default cropping, pass the ``auto_confirm``
-        argument with a truthy value and :py:meth:`confirm_user_avatar` will be called for you before this method
-        returns.
+        This method returns a dict of properties that can be used to crop a subarea of a larger image for use. This dict should be saved
+        and passed to :py:meth:`confirm_user_avatar` to finish the avatar creation process. If you want to cut out the middleman and
+        confirm the avatar with Jira's default cropping, pass the ``auto_confirm`` argument with a truthy value and
+        :py:meth:`confirm_user_avatar` will be called for you before this method returns.
 
         Args:
             user (str): User to register the avatar for
@@ -3311,10 +3275,9 @@ class JIRA:
     def confirm_user_avatar(self, user: str, cropping_properties: Dict[str, Any]):
         """Confirm the temporary avatar image previously uploaded with the specified cropping.
 
-        After a successful registry with :py:meth:`create_temp_user_avatar`, use this method to confirm the avatar for
-        use. The final avatar can be a subarea of the uploaded image, which is customized with the
-        ``cropping_properties``: the return value of :py:meth:`create_temp_user_avatar` should be used for this
-        argument.
+        After a successful registry with :py:meth:`create_temp_user_avatar`, use this method to confirm the avatar for use.
+        The final avatar can be a subarea of the uploaded image, which is customized with the ``cropping_properties``:
+        the return value of :py:meth:`create_temp_user_avatar` should be used for this argument.
 
         Args:
             user (str): the user to confirm the avatar for
@@ -3777,8 +3740,7 @@ class JIRA:
         Args:
             resource_cls (Any): Any instance of :py:class`Resource`
             ids (Union[Tuple[str, str], int, str]): The arguments to the Resource's ``find()``
-            expand ([type], optional): The value for the expand property in the Resource's
-              ``find()`` params. Defaults to None.
+            expand ([type], optional): The value for the expand property in the Resource's ``find()`` params. Defaults to None.
 
         Raises:
             JIRAError: If the Resource cannot be found
@@ -4788,9 +4750,8 @@ class JIRA:
         Args:
             name (str): name of the Board (<255 characters).
             filter_id (str): the Filter to use to create the Board.
-              Note: if the user does not have the 'Create shared objects' permission and tries to create
-              a shared board, a private board will be created instead
-              (remember that board sharing depends on the filter sharing).
+              Note: if the user does not have the 'Create shared objects' permission and tries to create a shared board,
+              a private board will be created instead (remember that board sharing depends on the filter sharing).
             project_ids (str): Deprecated. See location_id.
             preset (str): What preset/type to use for this Board, options: kanban, scrum, agility. (Default: scrum)
             location_type (str): the location type. Available in Cloud. (Default: user)
@@ -4863,13 +4824,10 @@ class JIRA:
 
         The sprint must be started but not completed.
 
-        If a sprint was completed, then have to also edit the history of the
-        issue so that it was added to the sprint before it was completed,
-        preferably before it started. A completed sprint's issues also all have
-        a resolution set before the completion date.
+        If a sprint was completed, then have to also edit the history of the issue so that it was added to the sprint before it was
+        completed, preferably before it started. A completed sprint's issues also all have a resolution set before the completion date.
 
-        If a sprint was not started, then have to edit the marker and copy the
-        rank of each issue too.
+        If a sprint was not started, then have to edit the marker and copy the rank of each issue too.
 
         Args:
             sprint_id (int): the sprint to add issues to
