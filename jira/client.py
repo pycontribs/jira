@@ -979,7 +979,9 @@ class JIRA:
             return encoded_data, request_headers
 
         class RetryableMultipartEncoder(PrepareRequestForRetry):
-            def prepare(self, original_request_kwargs) -> dict:
+            def prepare(
+                self, original_request_kwargs: CaseInsensitiveDict
+            ) -> CaseInsensitiveDict:
                 encoded_data, request_headers = generate_multipartencoded_request_args()
                 original_request_kwargs["data"] = encoded_data
                 original_request_kwargs["headers"] = request_headers
@@ -992,7 +994,7 @@ class JIRA:
                 url,
                 data=encoded_data,
                 headers=request_headers,
-                _prepare_retry_method=RetryableMultipartEncoder(),  # type: ignore[call-arg] # ResilientSession handles
+                _prepare_retry_class=RetryableMultipartEncoder(),  # type: ignore[call-arg] # ResilientSession handles
             )
         finally:
             if close_attachment:

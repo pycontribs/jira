@@ -7,6 +7,7 @@ from typing import Any, Dict, Optional, Union
 
 from requests import Response, Session
 from requests.exceptions import ConnectionError
+from requests.structures import CaseInsensitiveDict
 from typing_extensions import TypeGuard
 
 from jira.exceptions import JIRAError
@@ -15,13 +16,32 @@ LOG = logging.getLogger(__name__)
 
 
 class PrepareRequestForRetry(metaclass=abc.ABCMeta):
+    """This class allows for the manipulation of the Request keyword arguments before a retry.
+
+    The :py:meth:`.prepare` handles the processing of the Request keyword arguments.
+    """
+
     @abc.abstractmethod
-    def prepare(self, original_request_kwargs) -> dict:
+    def prepare(
+        self, original_request_kwargs: CaseInsensitiveDict
+    ) -> CaseInsensitiveDict:
+        """Process the Request's keyword arguments before retrying the Request.
+
+        Args:
+            original_request_kwargs (CaseInsensitiveDict): The keyword arguments of the Request.
+
+        Returns:
+            CaseInsensitiveDict: The new keyword arguments to use in the retried Request.
+        """
         return original_request_kwargs
 
 
 class PassthroughRetryPrepare(PrepareRequestForRetry):
-    def prepare(self, original_request_kwargs) -> dict:
+    """Returns the Request's keyword arguments unchanged, when no change needs to be made before a retry."""
+
+    def prepare(
+        self, original_request_kwargs: CaseInsensitiveDict
+    ) -> CaseInsensitiveDict:
         return super().prepare(original_request_kwargs)
 
 
@@ -145,7 +165,7 @@ class ResilientSession(Session):
         self,
         method: str,
         url: Union[str, bytes],
-        _prepare_retry_method: PrepareRequestForRetry = PassthroughRetryPrepare(),
+        _prepare_retry_class: PrepareRequestForRetry = PassthroughRetryPrepare(),
         **kwargs,
     ) -> Response:
         """This is an intentional override of `Session.request()` to inject some error handling and retry logic.
@@ -187,7 +207,7 @@ class ResilientSession(Session):
             if is_retrying() and self.__recoverable(
                 response_or_exception, url, method.upper(), retry_number
             ):
-                _prepare_retry_method.prepare(processed_kwargs)
+                _prepare_retry_class.prepare(processed_kwargs)  # type: ignore[arg-type] # Dict and CaseInsensitiveDict are fine here
             else:
                 retry_number = self.max_retries + 1  # exit the while loop, as above max
 
