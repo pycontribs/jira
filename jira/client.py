@@ -1852,22 +1852,16 @@ class JIRA:
         data: Dict[str, Any] = {"body": body}
 
         if is_internal:
-            data.update(
-                {
-                    "properties": [
-                        {"key": "sd.public.comment", "value": {"internal": is_internal}}
-                    ]
-                }
-            )
-
+            data["properties"] = [
+                {"key": "sd.public.comment", "value": {"internal": is_internal}}
+            ]
         if visibility is not None:
             data["visibility"] = visibility
 
         url = self._get_url("issue/" + str(issue) + "/comment")
         r = self._session.post(url, data=json.dumps(data))
 
-        comment = Comment(self._options, self._session, raw=json_loads(r))
-        return comment
+        return Comment(self._options, self._session, raw=json_loads(r))
 
     # non-resource
     @translate_resource_args
@@ -4330,16 +4324,16 @@ class JIRA:
             directoryId (int): The directory ID the new user should be a part of (Default: 1)
             password (Optional[str]): Optional, the password for the new user
             fullname (Optional[str]): Optional, the full name of the new user
-            notify (bool): Whether or not to send a notification to the new user. (Default: False)
-            active (bool): Whether or not to make the new user active upon creation. (Default: True)
-            ignore_existing (bool): Whether or not to ignore and existing user. (Default: False)
-            applicationKeys (Optional[list]): Keys of products user should have access to
+            notify (bool): Whether to send a notification to the new user. (Default: False)
+            active (bool): Whether to make the new user active upon creation. (Default: True)
+            ignore_existing (bool): Whether to ignore and existing user. (Default: False)
+            application_keys (Optional[list]): Keys of products user should have access to
 
         Raises:
             JIRAError:  If username already exists and `ignore_existing` has not been set to `True`.
 
         Returns:
-            bool: Whether or not the user creation was successful.
+            bool: Whether the user creation was successful.
 
 
         """
