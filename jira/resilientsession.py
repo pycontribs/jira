@@ -145,6 +145,12 @@ class ResilientSession(Session):
         # Indicate our preference for JSON to avoid https://bitbucket.org/bspeakmon/jira-python/issue/46 and https://jira.atlassian.com/browse/JRA-38551
         self.headers.update({"Accept": "application/json,*.*;q=0.9"})
 
+        # Warn users on instantiation the debug level shouldn't be used for prod
+        LOG.debug(
+            "WARNING: On error, will dump Response headers and body to logs. "
+            + f"Log level debug in '{__name__}' is not safe for production code!"
+        )
+
     def _jira_prepare(self, **original_kwargs) -> dict:
         """Do any pre-processing of our own and return the updated kwargs."""
         prepared_kwargs = original_kwargs.copy()
@@ -302,10 +308,6 @@ class ResilientSession(Session):
                 % (request_method, url, counter, self.max_retries, delay, msg)  # type: ignore[str-bytes-safe]
             )
             if isinstance(response, Response):
-                LOG.debug(
-                    "Dumping Response headers and body. "
-                    + f"Log level debug in '{__name__}' is not safe for production code!"
-                )
                 LOG.debug(
                     "response.headers:\n%s",
                     json.dumps(dict(response.headers), indent=4),
