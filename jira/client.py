@@ -265,8 +265,15 @@ class JiraCookieAuth(AuthBase):
         )
         r.raise_for_status()
 
-    def handle_401(self, response: requests.Response, **kwargs):
-        """Refresh cookies if the session cookie has expired. Then retry the request."""
+    def handle_401(self, response: requests.Response, **kwargs) -> requests.Response:
+        """Refresh cookies if the session cookie has expired. Then retry the request.
+
+        Args:
+            response (requests.Response): the response with the possible 401 to handle
+
+        Returns:
+            requests.Response
+        """
         if (
             response.status_code == 401
             and self._retry_counter_401 < self._max_allowed_401_retries
@@ -596,7 +603,11 @@ class JIRA:
 
     @property
     def server_url(self) -> str:
-        """Return the server url"""
+        """Return the server url
+
+        Returns:
+            str
+        """
         return str(self._options["server"])
 
     @property
@@ -1316,9 +1327,9 @@ class JIRA:
             query (Optional[str]): filter groups by name with this string
             exclude (Optional[Any]): filter out groups by name with this string
             maxResults (int): maximum results to return. (Default: 9999)
+
         Returns:
             List[str]
-
         """
         params: Dict[str, Any] = {}
         groups = []
@@ -1434,6 +1445,7 @@ class JIRA:
             id (Union[Issue, str]): ID or key of the issue to get
             fields (Optional[str]): comma-separated string of issue fields to include in the results
             expand (Optional[str]): extra information to fetch inside each resource
+
         Returns:
             Issue
         """
@@ -1521,7 +1533,6 @@ class JIRA:
             prefetch (bool): reload the created issue Resource so all of its data is present in the value returned (Default: True)
         Returns:
             List[Dict[str, Any]]
-
         """
         data: Dict[str, List] = {"issueUpdates": []}
         for field_dict in field_list:
@@ -1601,9 +1612,9 @@ class JIRA:
         Args:
             email (str): Customer Email
             displayName (str): Customer display name
+
         Returns:
             Customer
-
         """
         url = self.server_url + "/rest/servicedeskapi/customer"
         headers = {"X-ExperimentalApi": "opt-in"}
@@ -1624,7 +1635,6 @@ class JIRA:
 
         Returns:
             List[ServiceDesk]
-
         """
         url = self.server_url + "/rest/servicedeskapi/servicedesk"
         headers = {"X-ExperimentalApi": "opt-in"}
@@ -1643,7 +1653,6 @@ class JIRA:
 
         Returns:
             ServiceDesk
-
         """
         return self._find_for_resource(ServiceDesk, id)
 
@@ -1667,6 +1676,7 @@ class JIRA:
             fields (Dict[str, Any]): a dict containing field names and the values to use. If present, all other keyword arguments
               will be ignored
             prefetch (bool): reload the created issue Resource so all of its data is present in the value returned (Default: True)
+
         Returns:
             Issue
         """
@@ -1720,9 +1730,9 @@ class JIRA:
             issuetypeNames (Optional[str]): Names of the issue types to filter the results with.
               Can be a single value or a comma-delimited string. May be combined with issuetypeIds.
             expand (Optional[str]): extra information to fetch inside each resource.
+
         Returns:
             Dict[str, Any]
-
         """
         params: Dict[str, Any] = {}
         if projectKeys is not None:
@@ -1865,7 +1875,6 @@ class JIRA:
 
         Returns:
             Comment: the created comment
-
         """
         data: Dict[str, Any] = {"body": body}
 
@@ -1891,7 +1900,6 @@ class JIRA:
 
         Returns:
             Dict[str, Dict[str, Dict[str, Any]]]
-
         """
         return self._get_json("issue/" + str(issue) + "/editmeta")
 
@@ -1900,7 +1908,10 @@ class JIRA:
         """Get a list of remote link Resources from an issue.
 
         Args:
-            issue (str): the issue to get remote links from
+            issue (Union[str, int]): the issue to get remote links from
+
+        Returns:
+            List[RemoteLink]
         """
         r_json = self._get_json("issue/" + str(issue) + "/remotelink")
         remote_links = [
@@ -1910,12 +1921,15 @@ class JIRA:
         return remote_links
 
     @translate_resource_args
-    def remote_link(self, issue: str, id: str) -> RemoteLink:
+    def remote_link(self, issue: Union[str, int], id: str) -> RemoteLink:
         """Get a remote link Resource from the server.
 
         Args:
-            issue (str): the issue holding the remote link
+            issue (Union[str, int]): the issue holding the remote link
             id (str): ID of the remote link
+
+        Returns:
+            RemoteLink
         """
         return self._find_for_resource(RemoteLink, (issue, id))
 
@@ -2032,11 +2046,13 @@ class JIRA:
 
     # non-resource
     @translate_resource_args
-    def transitions(self, issue: str, id: Optional[str] = None, expand=None):
+    def transitions(
+        self, issue: Union[str, int], id: Optional[str] = None, expand=None
+    ):
         """Get a list of the transitions available on the specified issue to the current user.
 
         Args:
-            issue (str): ID or key of the issue to get the transitions from
+            issue (Union[str, int]): ID or key of the issue to get the transitions from
             id (Optional[str]): if present, get only the transition matching this ID
             expand (Optional): extra information to fetch inside each transition
 
@@ -2053,15 +2069,18 @@ class JIRA:
         ]
 
     def find_transitionid_by_name(
-        self, issue: str, transition_name: str
+        self, issue: Union[str, int], transition_name: str
     ) -> Optional[int]:
         """Get a transitionid available on the specified issue to the current user.
 
         Look at https://developer.atlassian.com/static/rest/jira/6.1.html#d2e1074 for json reference
 
         Args:
-            issue (str): ID or key of the issue to get the transitions from
-            trans_name (str): iname of transition we are looking for
+            issue (Union[str, int]): ID or key of the issue to get the transitions from
+            transition_name (str): name of transition we are looking for
+
+        Returns:
+            Optional[int]: returns the id is found None when it's not
         """
         transitions_json = self.transitions(issue)
         id: Optional[int] = None
@@ -2172,7 +2191,6 @@ class JIRA:
     def project_permissionscheme(self, project: str) -> PermissionScheme:
         """Get a PermissionScheme Resource from the server.
 
-
         Args:
             project (str): ID or key of the project to get the permissionscheme for
 
@@ -2246,6 +2264,9 @@ class JIRA:
         Args:
             issue (str): ID or key of the issue affected
             watcher (str): name of the user to add to the watchers list
+
+        Returns:
+            Response
         """
         url = self._get_url("issue/" + str(issue) + "/watchers")
         return self._session.post(url, data=json.dumps(watcher))
@@ -2291,6 +2312,7 @@ class JIRA:
         Args:
             issue (str): ID or key of the issue to get the worklog from
             id (str): ID of the worklog to get
+
         Returns:
             Worklog
         """
@@ -2322,6 +2344,7 @@ class JIRA:
             comment (Optional[str]): optional worklog comment
             started (Optional[datetime.datetime]): Moment when the work is logged, if not specified will default to now
             user (Optional[str]): the user ID or name to use for this worklog
+
         Returns:
             Worklog
         """
@@ -2465,11 +2488,14 @@ class JIRA:
         url = self._get_url("issueLink") + "/" + id
         return self._session.delete(url)
 
-    def issue_link(self, id: str):
+    def issue_link(self, id: str) -> IssueLink:
         """Get an issue link Resource from the server.
 
         Args:
             id (str): ID of the issue link to get
+
+        Returns:
+            IssueLink
         """
         return self._find_for_resource(IssueLink, id)
 
@@ -2625,12 +2651,11 @@ class JIRA:
 
     # Priorities
 
-    def priorities(self):
+    def priorities(self) -> List[Priority]:
         """Get a list of priority Resources from the server.
 
         Returns:
             List[Priority]
-
         """
         r_json = self._get_json("priority")
         priorities = [
@@ -2647,7 +2672,6 @@ class JIRA:
 
         Returns:
             Priority
-
         """
         return self._find_for_resource(Priority, id)
 
@@ -2661,7 +2685,6 @@ class JIRA:
 
         Returns:
             List[Project]
-
         """
         params = {}
         if expand is not None:
@@ -2786,6 +2809,9 @@ class JIRA:
         Args:
             project (str): ID or key of the project to delete the avatar from
             avatar (str): ID of the avatar to delete
+
+        Returns:
+            Response
         """
         url = self._get_url("project/" + project + "/avatar/" + avatar)
         return self._session.delete(url)
@@ -2851,9 +2877,6 @@ class JIRA:
             project (str): ID or key of the project to get versions from
             old_name (str): old name of the version to rename
             new_name (str): new name of the version to rename
-
-        Returns:
-            None
         """
         version = self.get_project_version_by_name(project, old_name)
         if version:
@@ -2866,6 +2889,9 @@ class JIRA:
 
         Args:
             project (str): ID or key of the project to get roles from
+
+        Returns:
+            Dict[str, Dict[str, str]]
         """
         path = "project/" + project + "/role"
         _rolesdict: Dict[str, str] = self._get_json(path)
@@ -2886,6 +2912,9 @@ class JIRA:
         Args:
             project (str): ID or key of the project to get the role from
             id (str): ID of the role to get
+
+        Returns:
+            Role
         """
         if isinstance(id, Number):
             id = f"{id}"
@@ -2898,7 +2927,6 @@ class JIRA:
 
         Returns:
             List[Resolution]
-
         """
         r_json = self._get_json("resolution")
         resolutions = [
@@ -2945,7 +2973,6 @@ class JIRA:
 
         Returns:
             Union[Dict,ResultList]: Dict if ``json_result=True``
-
         """
         if isinstance(fields, str):
             fields = fields.split(",")
@@ -2997,6 +3024,9 @@ class JIRA:
 
         Args:
             id (str): ID of the security level to get
+
+        Returns:
+            SecurityLevel
         """
         return self._find_for_resource(SecurityLevel, id)
 
@@ -3020,7 +3050,11 @@ class JIRA:
         return j
 
     def myself(self) -> Dict[str, Any]:
-        """Get a dict of server information for this Jira instance."""
+        """Get a dict of server information for this Jira instance.
+
+        Returns:
+            Dict[str, Any]
+        """
         return self._get_json("myself")
 
     # Status
@@ -3072,7 +3106,6 @@ class JIRA:
 
         Returns:
             StatusCategory
-
         """
         return self._find_for_resource(StatusCategory, id)
 
@@ -3117,7 +3150,6 @@ class JIRA:
 
         Returns:
             ResultList
-
         """
         params = {"username": username, "projectKeys": projectKeys}
         return self._fetch_pages(
@@ -3192,6 +3224,9 @@ class JIRA:
 
         Args:
             username (str): the username to get avatars for
+
+        Returns:
+            Dict[str, Any]
         """
         return self._get_json("user/avatars", params={"username": username})
 
@@ -3282,17 +3317,23 @@ class JIRA:
         Args:
             username (str): the user to set the avatar for
             avatar (str): ID of the avatar to set
+
+        Returns:
+            Response
         """
         return self._set_avatar(
             {"username": username}, self._get_url("user/avatar"), avatar
         )
 
-    def delete_user_avatar(self, username: str, avatar: str):
+    def delete_user_avatar(self, username: str, avatar: str) -> Response:
         """Delete a user's avatar.
 
         Args:
             username (str): the user to delete the avatar from
             avatar (str): ID of the avatar to remove
+
+        Returns:
+            Response
         """
         params = {"username": username}
         url = self._get_url("user/avatar/" + avatar)
@@ -3521,7 +3562,11 @@ class JIRA:
         return user
 
     def kill_session(self) -> Response:
-        """Destroy the session of the current authenticated user."""
+        """Destroy the session of the current authenticated user.
+
+        Returns:
+            Response
+        """
         url = self.server_url + "/rest/auth/latest/session"
         return self._session.delete(url)
 
@@ -3708,7 +3753,6 @@ class JIRA:
 
         Returns:
             Union[Dict[str, Any], List[Dict[str, str]]]
-
         """
         url = self._get_url(path, base)
         r = self._session.get(url, params=params)
@@ -3773,7 +3817,6 @@ class JIRA:
 
         Returns:
             Optional[str]: the MIME type
-
         """
         if self._magic is not None:
             return self._magic.id_buffer(buff)
@@ -3792,7 +3835,6 @@ class JIRA:
         Args:
             old_user (str): Old username login
             new_user (str): New username login
-
         """
         if self._version > (6, 0, 0):
             url = self._get_latest_url("user")
@@ -3816,7 +3858,6 @@ class JIRA:
 
         Returns:
             bool: Success of user deletion
-
         """
 
         url = self._get_latest_url(f"user/?username={username}")
@@ -3942,14 +3983,17 @@ class JIRA:
         self.log.error("Failed to reindex jira, probably a bug.")
         return False
 
-    def backup(self, filename: str = "backup.zip", attachments: bool = False):
+    def backup(
+        self, filename: str = "backup.zip", attachments: bool = False
+    ) -> Optional[Union[bool, int]]:
         """Will call jira export to backup as zipped xml. Returning with success does not mean that the backup process finished.
 
         Args:
             filename (str): the filename for the backup (Default: "backup.zip")
             attachments (bool): Also backup attachments (Default: False)
+
         Returns:
-            Union[bool, int]: Returns True if successful else it returns the statuscode of the Response
+            Union[bool, int]: Returns True if successful else it returns the statuscode of the Response or False
         """
         payload: Any  # _session.post is pretty open
         if self._is_cloud:
@@ -3967,11 +4011,15 @@ class JIRA:
             return r.status_code
         except Exception as e:
             self.log.error("I see %s", e)
+        return False
 
-    def backup_progress(self):
+    def backup_progress(self) -> Optional[Dict[str, Any]]:
         """Return status of cloud backup as a dict.
 
         Is there a way to get progress for Server version?
+
+        Returns:
+            Optional[Dict[str, Any]]
         """
         epoch_time = int(time.time() * 1000)
         if self._is_cloud:
@@ -3991,8 +4039,7 @@ class JIRA:
                 root = etree.fromstring(r.text)
             except etree.ParseError as pe:
                 self.log.warning(
-                    "Unable to find backup info.  You probably need to initiate a new backup. %s"
-                    % pe
+                    f"Unable to find backup info. You probably need to initiate a new backup. {pe}"
                 )
                 return None
             for k in root.keys():
@@ -4281,7 +4328,6 @@ class JIRA:
 
         Returns:
             Union[bool,int]: Should evaluate to False if it fails otherwise it will be the new project id.
-
         """
         template_key = None
 
@@ -4441,8 +4487,6 @@ class JIRA:
 
         Returns:
             bool: Whether the user creation was successful.
-
-
         """
         if not fullname:
             fullname = username
@@ -4503,12 +4547,15 @@ class JIRA:
         else:
             return r
 
-    def remove_user_from_group(self, username: str, groupname: str):
+    def remove_user_from_group(self, username: str, groupname: str) -> bool:
         """Remove a user from a group.
 
         Args:
             username (str): The user to remove from the group.
             groupname (str): The group that the user will be removed from.
+
+        Returns:
+            bool
         """
         url = self._get_latest_url("group/user")
         x = {"groupname": groupname, "username": username}
@@ -4522,7 +4569,6 @@ class JIRA:
 
         Returns:
             List[Dict[str,Any]]: List of current user roles
-
         """
         # https://developer.atlassian.com/cloud/jira/platform/rest/v3/?utm_source=%2Fcloud%2Fjira%2Fplatform%2Frest%2F&utm_medium=302#api-rest-api-3-role-get
 
@@ -4679,7 +4725,11 @@ class JIRA:
         return data["contents"]["incompletedIssuesEstimateSum"]["value"]
 
     def removed_issues(self, board_id: str, sprint_id: str):
-        """Return the completed issues for the sprint."""
+        """Return the completed issues for the sprint.
+
+        Returns:
+            List[Issue]
+        """
         r_json: Dict[str, Any] = self._get_json(
             f"rapid/charts/sprintreport?rapidViewId={board_id}&sprintId={sprint_id}",
             base=self.AGILE_BASE_URL,
@@ -4700,12 +4750,15 @@ class JIRA:
         return data["contents"]["puntedIssuesEstimateSum"]["value"]
 
     # TODO(ssbarnea): remove sprint_info() method, sprint() method suit the convention more
-    def sprint_info(self, board_id: str, sprint_id: str) -> Optional[Dict[str, Any]]:
+    def sprint_info(self, board_id: str, sprint_id: str) -> Dict[str, Any]:
         """Return the information about a sprint.
 
         Args:
             board_id (str): the board retrieving issues from. Deprecated and ignored.
             sprint_id (str): the sprint retrieving issues from
+
+        Returns:
+            Dict[str, Any]
         """
         sprint = Sprint(self._options, self._session)
         sprint.find(sprint_id)
@@ -4847,6 +4900,8 @@ class JIRA:
               to add to the epic
             ignore_epics (bool): Deprecated.
 
+        Returns:
+            Response
         """
         data: Dict[str, Any] = {}
         data["issues"] = (
@@ -4871,6 +4926,9 @@ class JIRA:
             issue (str): issue key of the issue to be ranked before/after the second one.
             next_issue (str): issue key that the first issue is to be ranked before.
             prev_issue (str): issue key that the first issue is to be ranked after.
+
+        Returns:
+            Response
         """
         # TODO: Jira Agile API supports moving more than one issue.
 
@@ -4919,6 +4977,9 @@ class JIRA:
 
         Raises:
             JIRAError: If moving issues to backlog fails
+
+        Returns:
+            Response
         """
         url = self._get_url("backlog/issue", base=self.AGILE_BASE_URL)
         payload = {"issues": issue_keys}  # TODO: should be list of issues
