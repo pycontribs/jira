@@ -98,3 +98,12 @@ def test_status_codes_retries(
         session.get("mocked_url")
     assert mocked_request_method.call_count == expected_number_of_retries
     assert mocked_sleep_method.call_count == expected_number_of_sleep_invocations
+
+
+def test_passthrough_class():
+    # GIVEN: The passthrough class and a dict of request args
+    passthrough_class = jira.resilientsession.PassthroughRetryPrepare()
+    my_kwargs = {"nice": "arguments"}
+    # WHEN: the dict of request args are prepared
+    # THEN: The exact same dict is returned
+    assert passthrough_class.prepare(my_kwargs) is my_kwargs
