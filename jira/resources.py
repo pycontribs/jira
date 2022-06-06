@@ -244,7 +244,6 @@ class Resource:
         Args:
             id (Union[Tuple[str, str], int, str]): id
             params (Optional[Dict[str, str]]): params
-
         """
 
         if params is None:
@@ -642,7 +641,6 @@ class Issue(Resource):
             notify (bool): query parameter notifyUsers. Notify watchers about the update. (Default: True).
               Admin or project admin permissions are required to disable the notification.
             fieldargs (dict): keyword arguments will generally be merged into fields, except lists, which will be merged into updates
-
         """
         data = {}
         if fields is not None:
@@ -705,7 +703,6 @@ class Issue(Resource):
         Args:
             field (str): The field name
             value (str): The field's value
-
         """
         super().update(fields={"update": {field: [{"add": value}]}})
 
@@ -844,7 +841,7 @@ class IssueTypeScheme(Resource):
 
 
 class IssueSecurityLevelScheme(Resource):
-    """IssueSecurityLevelScheme information on an project."""
+    """IssueSecurityLevelScheme information on a project."""
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(
@@ -856,7 +853,7 @@ class IssueSecurityLevelScheme(Resource):
 
 
 class NotificationScheme(Resource):
-    """NotificationScheme information on an project."""
+    """NotificationScheme information on a project."""
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(
@@ -868,7 +865,7 @@ class NotificationScheme(Resource):
 
 
 class PermissionScheme(Resource):
-    """Permissionscheme information on an project."""
+    """Permissionscheme information on a project."""
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(
@@ -880,7 +877,7 @@ class PermissionScheme(Resource):
 
 
 class PriorityScheme(Resource):
-    """PriorityScheme information on an project."""
+    """PriorityScheme information on a project."""
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(
@@ -892,7 +889,7 @@ class PriorityScheme(Resource):
 
 
 class WorkflowScheme(Resource):
-    """WorkflowScheme information on an project."""
+    """WorkflowScheme information on a project."""
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(
@@ -1028,7 +1025,7 @@ class IssueLinkType(Resource):
 
 
 class IssueType(Resource):
-    """Type of an issue."""
+    """Type of issue."""
 
     def __init__(
         self,
