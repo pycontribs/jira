@@ -1,6 +1,5 @@
 """
-This module implements the Resource classes that translate JSON from Jira REST resources
-into usable objects.
+This module implements the Resource classes that translate JSON from Jira REST resources into usable objects.
 """
 
 import json
@@ -88,14 +87,13 @@ class Resource:
     * ``issue/{0}/votes``
     * ``issue/{0}/comment/{1}``
 
-    where the bracketed numerals are placeholders for ID values that are filled in from the
-    ``ids`` parameter to ``find()``.
+    where the bracketed numerals are placeholders for ID values that are filled in from the ``ids`` parameter to ``find()``.
     """
 
     JIRA_BASE_URL = "{server}/rest/{rest_path}/{rest_api_version}/{path}"
 
-    # A prioritized list of the keys in self.raw most likely to contain a human
-    # readable name or identifier, or that offer other key information.
+    # A prioritized list of the keys in self.raw most likely to contain a human readable name or identifier,
+    # or that offer other key information.
     _READABLE_IDS = (
         "displayName",
         "key",
@@ -110,8 +108,7 @@ class Resource:
         "closed",
     )
 
-    # A list of properties that should uniquely identify a Resource object
-    # Each of these properties should be hashable, usually strings
+    # A list of properties that should uniquely identify a Resource object Each of these properties should be hashable, usually strings
     _HASH_IDS = (
         "self",
         "type",
@@ -141,8 +138,7 @@ class Resource:
         self._session = session
         self._base_url = base_url
 
-        # Explicitly define as None so we know when a resource has actually
-        # been loaded
+        # Explicitly define as None, so we know when a resource has actually been loaded
         self.raw: Optional[Dict[str, Any]] = None
 
     def __str__(self) -> str:
@@ -212,10 +208,8 @@ class Resource:
     def __hash__(self) -> int:
         """Hash calculation.
 
-        We try to find unique identifier like properties
-        to form our hash object.
-        Technically 'self', if present, is the unique URL to the object,
-        and should be sufficient to generate a unique hash.
+        We try to find unique identifier like properties to form our hash object.
+        Technically 'self', if present, is the unique URL to the object, and should be sufficient to generate a unique hash.
         """
         hash_list = []
         for a in self._HASH_IDS:
@@ -230,8 +224,7 @@ class Resource:
     def __eq__(self, other: Any) -> bool:
         """Default equality test.
 
-        Checks the types look about right and that the relevant
-        attributes that uniquely identify a resource are equal.
+        Checks the types look about right and that the relevant attributes that uniquely identify a resource are equal.
         """
         return isinstance(other, self.__class__) and all(
             [
@@ -302,9 +295,8 @@ class Resource:
     ):
         """Update this resource on the server.
 
-        Keyword arguments are marshalled into a dict before being sent. If this
-        resource doesn't support ``PUT``, a :py:exc:`.JIRAError` will be raised; subclasses that specialize this method
-        will only raise errors in case of user error.
+        Keyword arguments are marshalled into a dict before being sent. If this resource doesn't support ``PUT``, a :py:exc:`.JIRAError`
+        will be raised; subclasses that specialize this method will only raise errors in case of user error.
 
         Args:
             fields (Optional[Dict[str, Any]]): Fields which should be updated for the object.
@@ -408,9 +400,8 @@ class Resource:
     def delete(self, params: Optional[Dict[str, Any]] = None) -> Optional[Response]:
         """Delete this resource from the server, passing the specified query parameters.
 
-        If this resource doesn't support ``DELETE``, a :py:exc:`.JIRAError`
-        will be raised; subclasses that specialize this method will only raise errors
-        in case of user error.
+        If this resource doesn't support ``DELETE``, a :py:exc:`.JIRAError` will be raised; subclasses that specialize this method will
+        only raise errors in case of user error.
 
         Args:
             params: Parameters for the delete request.
@@ -635,22 +626,20 @@ class Issue(Resource):
     ):
         """Update this issue on the server.
 
-        Each keyword argument (other than the predefined ones) is treated as a field name and the argument's value
-        is treated as the intended value for that field -- if the fields argument is used, all other keyword arguments
-        will be ignored.
+        Each keyword argument (other than the predefined ones) is treated as a field name and the argument's value is treated as the
+        intended value for that field -- if the fields argument is used, all other keyword arguments will be ignored.
 
-        Jira projects may contain many different issue types. Some issue screens have different requirements for
-        fields in an issue. This information is available through the :py:meth:`.JIRA.editmeta` method. Further examples
-        are available here: https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Edit+issues
+        Jira projects may contain many different issue types. Some issue screens have different requirements for fields in an issue.
+        This information is available through the :py:meth:`.JIRA.editmeta` method.
+        Further examples are available here: https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Edit+issues
 
         Args:
             fields (Dict[str,Any]): a dict containing field names and the values to use
-            update (Dict[str,Any]): a dict containing update operations to apply
+            update (Dict[str,Any]): a dict containing update the operations to apply
             notify (bool): query parameter notifyUsers. If true send the email with notification that the issue was updated
               to users that watch it. Admin or project admin permissions are required to disable the notification.
             jira (Optional[jira.client.JIRA]): JIRA instance.
-            fieldargs (dict): keyword arguments will generally be merged into fields, except lists,
-              which will be merged into updates
+            fieldargs (dict): keyword arguments will generally be merged into fields, except lists, which will be merged into updates
 
         """
         data = {}
@@ -771,9 +760,8 @@ class Comment(Resource):
             async_ (Optional[bool]): If True the request will be added to the queue, so it can be executed later using async_run()
             jira (jira.client.JIRA): Instance of Jira Client
             visibility (Optional[Dict[str, str]]): a dict containing two entries: "type" and "value".
-              "type" is 'role' (or 'group' if the Jira server has configured
-              comment visibility for groups) and 'value' is the name of the role
-              (or group) to which viewing of this comment will be restricted.
+              "type" is 'role' (or 'group' if the Jira server has configured comment visibility for groups)
+              "value" is the name of the role (or group) to which viewing of this comment will be restricted.
             body (str): New text of the comment
             is_internal (bool): Defines whether a comment has to be marked as 'Internal' in Jira Service Desk (Default: False)
             notify (bool): Whether to notify users about the update. (Default: True)
@@ -808,8 +796,8 @@ class RemoteLink(Resource):
     def update(self, object, globalId=None, application=None, relationship=None):
         """Update a RemoteLink. 'object' is required.
 
-        For definitions of the allowable fields for 'object' and the keyword arguments 'globalId', 'application' and
-        'relationship', see https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+for+Remote+Issue+Links.
+        For definitions of the allowable fields for 'object' and the keyword arguments 'globalId', 'application' and 'relationship',
+        see https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+for+Remote+Issue+Links.
 
         Args:
             object: the link details to add (see the above link for details)
@@ -1264,10 +1252,8 @@ class Version(Resource):
         issues it is attached to.
 
         Args:
-            moveFixIssuesTo: in issues for which this version is a fix
-              version, add this argument version to the fix version list
-            moveAffectedIssuesTo: in issues for which this version is an
-              affected version, add this argument version to the affected version list
+            moveFixIssuesTo: in issues for which this version is a fix version, add this version to the fix version list
+            moveAffectedIssuesTo: in issues for which this version is an affected version, add this version to the affected version list
         """
 
         params = {}
@@ -1429,9 +1415,8 @@ def dict2resource(
 ) -> Union["PropertyHolder", Type[Resource]]:
     """Convert a dictionary into a Jira Resource object.
 
-    Recursively walks a dict structure, transforming the properties into attributes
-    on a new ``Resource`` object of the appropriate type (if a ``self`` link is present)
-    or a ``PropertyHolder`` object (if no ``self`` link is present).
+    Recursively walks a dict structure, transforming the properties into attributes on a new ``Resource`` object of the appropriate type
+    (if a ``self`` link is present) or a ``PropertyHolder`` object (if no ``self`` link is present).
     """
     if top is None:
         top = PropertyHolder()
