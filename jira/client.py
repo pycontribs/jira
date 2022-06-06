@@ -4712,7 +4712,27 @@ class JIRA:
                 )
         return sprints
 
-    def update_sprint(self, id, name=None, startDate=None, endDate=None, state=None):
+    def update_sprint(
+        self,
+        id: Union[str, int],
+        name: Optional[str] = None,
+        startDate: Optional[Any] = None,
+        endDate: Optional[Any] = None,
+        state: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Updates the sprint with the given values
+
+        Args:
+            id (Union[str, int]): The id of the sprint to update
+            name (Optional[str]): The name to update your sprint to
+            startDate (Optional[Any]): The start date for the sprint
+            endDate (Optional[Any]): The start date for the sprint
+            state: (Optional[str]): The start date for the sprint
+
+        Returns:
+            Dict[str, Any]
+        """
+
         payload = {}
         if name:
             payload["name"] = name
