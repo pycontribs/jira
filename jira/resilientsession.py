@@ -190,11 +190,11 @@ class ResilientSession(Session):
 
         processed_kwargs = self._jira_prepare(**kwargs)
 
-        def is_retrying() -> bool:
+        def is_allowed_to_retry() -> bool:
             """Helper method to say if we should still be retrying."""
             return retry_number <= self.max_retries
 
-        while is_retrying():
+        while is_allowed_to_retry():
             response = None
             exception = None
 
@@ -210,7 +210,7 @@ class ResilientSession(Session):
             # Decide if we should keep retrying
             response_or_exception = response if response is not None else exception
             retry_number += 1
-            if is_retrying() and self.__recoverable(
+            if is_allowed_to_retry() and self.__recoverable(
                 response_or_exception, url, method.upper(), retry_number
             ):
                 _prepare_retry_class.prepare(processed_kwargs)  # type: ignore[arg-type] # Dict and CaseInsensitiveDict are fine here
