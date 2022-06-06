@@ -61,7 +61,7 @@ def raise_on_error(resp: Optional[Response], **kwargs) -> TypeGuard[Response]:
     request = kwargs.get("request", None)
 
     if resp is None:
-        raise JIRAError(None, **kwargs)
+        raise JIRAError("Empty Response!", response=resp, **kwargs)
 
     if not resp.ok:
         error = parse_error_msg(resp=resp)
