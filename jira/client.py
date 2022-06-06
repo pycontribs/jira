@@ -969,7 +969,10 @@ class JIRA:
 
     @translate_resource_args
     def add_attachment(
-        self, issue: str, attachment: Union[str, BufferedReader], filename: str = None
+        self,
+        issue: Union[str, int],
+        attachment: Union[str, BufferedReader],
+        filename: str = None,
     ) -> Attachment:
         """Attach an attachment to an issue and returns a Resource for it.
 
@@ -977,7 +980,7 @@ class JIRA:
         The user is still responsible for tidying up (e.g., closing the file, killing the socket, etc.)
 
         Args:
-            issue (str): the issue to attach the attachment to
+            issue (Union[str, int]): the issue to attach the attachment to
             attachment (Union[str,BufferedReader]): file-like object to attach to the issue, also works if it is a string with the filename.
             filename (str): optional name for the attached file. If omitted, the file object's ``name`` attribute is used. If you acquired
               the file-like object by any other method than ``open()``, make sure that a name is specified in one way or the other.
@@ -1858,7 +1861,7 @@ class JIRA:
     @translate_resource_args
     def add_comment(
         self,
-        issue: str,
+        issue: Union[str, int],
         body: str,
         visibility: Optional[Dict[str, str]] = None,
         is_internal: bool = False,
@@ -1866,7 +1869,7 @@ class JIRA:
         """Add a comment from the current authenticated user on the specified issue and return a Resource for it.
 
         Args:
-            issue: (Union[str, int]): ID or key of the issue to add the comment to
+            issue (Union[str, int]): ID or key of the issue to add the comment to
             body (str): Text of the comment to add
             visibility (Optional[Dict[str, str]]): a dict containing two entries: "type" and "value".
               "type" is 'role' (or 'group' if the Jira server has configured comment visibility for groups)
@@ -1896,7 +1899,7 @@ class JIRA:
         """Get the edit metadata for an issue.
 
         Args:
-            issue (str): the issue to get metadata for
+            issue (Union[str, int]): the issue to get metadata for
 
         Returns:
             Dict[str, Dict[str, Dict[str, Any]]]
@@ -2094,7 +2097,7 @@ class JIRA:
     @translate_resource_args
     def transition_issue(
         self,
-        issue: str,
+        issue: Union[str, int],
         transition: str,
         fields: Optional[Dict[str, Any]] = None,
         comment: Optional[str] = None,
@@ -2108,7 +2111,7 @@ class JIRA:
         will be ignored. Field values will be set on the issue as part of the transition process.
 
         Args:
-            issue (str): ID or key of the issue to perform the transition on
+            issue (Union[str, int]): ID or key of the issue to perform the transition on
             transition (str): ID or name of the transition to perform
             fields (Optional[Dict[str,Any]]): a dict containing field names and the values to use.
             comment (Optional[str]): String to add as comment to the issue when performing the transition.
@@ -2151,11 +2154,11 @@ class JIRA:
         return r_json
 
     @translate_resource_args
-    def votes(self, issue: str) -> Votes:
+    def votes(self, issue: Union[str, int]) -> Votes:
         """Get a votes Resource from the server.
 
         Args:
-            issue (str): ID or key of the issue to get the votes for
+            issue (Union[str, int]): ID or key of the issue to get the votes for
         Returns:
             Votes
         """
@@ -2224,11 +2227,11 @@ class JIRA:
         return self._find_for_resource(WorkflowScheme, project)
 
     @translate_resource_args
-    def add_vote(self, issue: str) -> Response:
+    def add_vote(self, issue: Union[str, int]) -> Response:
         """Register a vote for the current authenticated user on an issue.
 
         Args:
-            issue (str): ID or key of the issue to vote on
+            issue (Union[str, int]): ID or key of the issue to vote on
 
         Returns:
             Response
@@ -2237,32 +2240,33 @@ class JIRA:
         return self._session.post(url)
 
     @translate_resource_args
-    def remove_vote(self, issue: str):
+    def remove_vote(self, issue: Union[str, int]):
         """Remove the current authenticated user's vote from an issue.
 
         Args:
-            issue (str): ID or key of the issue to remove vote on
+            issue (Union[str, int]): ID or key of the issue to remove vote on
         """
         url = self._get_url("issue/" + str(issue) + "/votes")
         self._session.delete(url)
 
     @translate_resource_args
-    def watchers(self, issue: str) -> Watchers:
+    def watchers(self, issue: Union[str, int]) -> Watchers:
         """Get a watchers Resource from the server for an issue.
 
         Args:
-            issue (str): ID or key of the issue to get the watchers for
+            issue (Union[str, int]): ID or key of the issue to get the watchers for
+
         Returns:
             Watchers
         """
         return self._find_for_resource(Watchers, issue)
 
     @translate_resource_args
-    def add_watcher(self, issue: str, watcher: str) -> Response:
+    def add_watcher(self, issue: Union[str, int], watcher: str) -> Response:
         """Add a user to an issue's watchers list.
 
         Args:
-            issue (str): ID or key of the issue affected
+            issue (Union[str, int]): ID or key of the issue affected
             watcher (str): name of the user to add to the watchers list
 
         Returns:
@@ -2272,11 +2276,11 @@ class JIRA:
         return self._session.post(url, data=json.dumps(watcher))
 
     @translate_resource_args
-    def remove_watcher(self, issue: str, watcher: str) -> Response:
+    def remove_watcher(self, issue: Union[str, int], watcher: str) -> Response:
         """Remove a user from an issue's watch list.
 
         Args:
-            issue (str): ID or key of the issue affected
+            issue (Union[str, int]): ID or key of the issue affected
             watcher (str): name of the user to remove from the watchers list
 
         Returns:
@@ -2290,11 +2294,11 @@ class JIRA:
         return result
 
     @translate_resource_args
-    def worklogs(self, issue: str) -> List[Worklog]:
+    def worklogs(self, issue: Union[str, int]) -> List[Worklog]:
         """Get a list of worklog Resources from the server for an issue.
 
         Args:
-            issue (str): ID or key of the issue to get worklogs from
+            issue (Union[str, int]): ID or key of the issue to get worklogs from
         Returns:
             List[Worklog]
         """
@@ -2306,11 +2310,11 @@ class JIRA:
         return worklogs
 
     @translate_resource_args
-    def worklog(self, issue: str, id: str) -> Worklog:
+    def worklog(self, issue: Union[str, int], id: str) -> Worklog:
         """Get a specific worklog Resource from the server.
 
         Args:
-            issue (str): ID or key of the issue to get the worklog from
+            issue (Union[str, int]): ID or key of the issue to get the worklog from
             id (str): ID of the worklog to get
 
         Returns:
@@ -2321,7 +2325,7 @@ class JIRA:
     @translate_resource_args
     def add_worklog(
         self,
-        issue,
+        issue: Union[str, int],
         timeSpent: (Optional[str]) = None,
         timeSpentSeconds: (Optional[str]) = None,
         adjustEstimate: (Optional[str]) = None,
@@ -2334,7 +2338,7 @@ class JIRA:
         """Add a new worklog entry on an issue and return a Resource for it.
 
         Args:
-            issue (str): the issue to add the worklog to
+            issue (Union[str, int]): the issue to add the worklog to
             timeSpent (Optional[str]): a worklog entry with this amount of time spent, e.g. "2d"
             timeSpentSeconds (Optional[str]): a worklog entry with this amount of time spent in seconds
             adjustEstimate (Optional[str]):  allows the user to provide specific instructions to update
@@ -3764,7 +3768,10 @@ class JIRA:
         return r_json
 
     def _find_for_resource(
-        self, resource_cls: Any, ids: Union[Tuple[str, str], int, str], expand=None
+        self,
+        resource_cls: Any,
+        ids: Union[Tuple[str, str], Tuple[Union[str, int], str], int, str],
+        expand=None,
     ) -> Any:
         """Uses the find method of the provided Resource class
 
