@@ -300,9 +300,10 @@ class Resource:
 
         Args:
             fields (Optional[Dict[str, Any]]): Fields which should be updated for the object.
-            async_ (bool): If true the request will be added to the queue so it can be executed later using async_run()
+            async_ (bool): The request will be added to the queue, so it can be executed later using async_run()
             jira (jira.client.JIRA): Instance of Jira Client
-            notify (bool): Whether or not to notify users about the update. (Default: True)
+            notify (bool): query parameter notifyUsers. Notify watchers about the update. (Default: True).
+              Admin or project admin permissions are required to disable the notification.
             kwargs (Any): extra arguments to the PUT request.
         """
         if async_ is None:
@@ -636,9 +637,10 @@ class Issue(Resource):
         Args:
             fields (Dict[str,Any]): a dict containing field names and the values to use
             update (Dict[str,Any]): a dict containing update the operations to apply
-            notify (bool): query parameter notifyUsers. If true send the email with notification that the issue was updated
-              to users that watch it. Admin or project admin permissions are required to disable the notification.
+            async_ (Optional[bool]): to add the request to the queue, so it can be executed later using async_run()
             jira (Optional[jira.client.JIRA]): JIRA instance.
+            notify (bool): query parameter notifyUsers. Notify watchers about the update. (Default: True).
+              Admin or project admin permissions are required to disable the notification.
             fieldargs (dict): keyword arguments will generally be merged into fields, except lists, which will be merged into updates
 
         """
@@ -711,8 +713,7 @@ class Issue(Resource):
         """Delete this issue from the server.
 
         Args:
-            deleteSubtasks (bool): if the issue has subtasks, this argument must be set to true for the call to succeed.
-
+            deleteSubtasks (bool): Also delete subtasks. If any are present the Issue won't be deleted (Default: True)
         """
         super().delete(params={"deleteSubtasks": deleteSubtasks})
 
@@ -757,14 +758,15 @@ class Comment(Resource):
 
         Args:
             fields (Optional[Dict[str, Any]]): DEPRECATED => a comment doesn't have fields
-            async_ (Optional[bool]): If True the request will be added to the queue, so it can be executed later using async_run()
+            async_ (Optional[bool]): to add the request to the queue, so it can be executed later using async_run()
             jira (jira.client.JIRA): Instance of Jira Client
             visibility (Optional[Dict[str, str]]): a dict containing two entries: "type" and "value".
               "type" is 'role' (or 'group' if the Jira server has configured comment visibility for groups)
               "value" is the name of the role (or group) to which viewing of this comment will be restricted.
             body (str): New text of the comment
-            is_internal (bool): Defines whether a comment has to be marked as 'Internal' in Jira Service Desk (Default: False)
-            notify (bool): Whether to notify users about the update. (Default: True)
+            is_internal (bool): Mark the comment as 'Internal' in Jira Service Desk (Default: False)
+            notify (bool): query parameter notifyUsers. Notify watchers about the update. (Default: True).
+              Admin or project admin permissions are required to disable the notification.
         """
         data: Dict[str, Any] = {}
         if body:
