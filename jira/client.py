@@ -1824,15 +1824,17 @@ class JIRA:
         return True
 
     @translate_resource_args
-    def comments(self, issue: str, expand: Optional[str] = None) -> List[Comment]:
-        """Get a list of comment Resources.
+    def comments(
+        self, issue: Union[int, str], expand: Optional[str] = None
+    ) -> List[Comment]:
+        """Get a list of comment Resources of the issue provided.
 
-        :param issue: the issue to get comments from
-        :type issue: str
-        :param expand: extra information to fetch for each comment
-                       such as renderedBody and properties.
-        :type expand: str
-        :rtype: List[Comment]
+        Args:
+            issue (Union[int, str]): the issue ID or key to get the comments from
+            expand (Optional[str]): extra information to fetch for each comment such as renderedBody and properties.
+
+        Returns:
+            List[Comment]
         """
         params = {}
         if expand is not None:
@@ -1847,14 +1849,17 @@ class JIRA:
 
     @translate_resource_args
     def comment(
-        self, issue: str, comment: str, expand: Optional[str] = None
+        self, issue: Union[int, str], comment: str, expand: Optional[str] = None
     ) -> Comment:
         """Get a comment Resource from the server for the specified ID.
 
-        :param issue: ID or key of the issue to get the comment from
-        :param comment: ID of the comment to get
-        :param expand: extra information to fetch for comment
-                       such as renderedBody and properties.
+        Args:
+            issue (Union[int, str]): the issue ID or key to get the comment from
+            comment (str): ID of the comment to get
+            expand (Optional[str]): extra information to fetch for each comment such as renderedBody and properties.
+
+        Returns:
+            Comment
         """
         return self._find_for_resource(Comment, (issue, comment), expand=expand)
 
