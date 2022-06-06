@@ -1238,7 +1238,7 @@ class JIRA:
 
         Args:
             name (str): name of the new filter
-            description (str): useful human readable description of the new filter
+            description (str): Useful human-readable description of the new filter
             jql (str): query string that defines the filter
             favourite (bool): Add this filter to the current user's favorites (Default: None)
 
@@ -1273,7 +1273,7 @@ class JIRA:
 
         Args:
             name (Optional[str]): name of the new filter
-            description (Optional[str]): useful human readable description of the new filter
+            description (Optional[str]): Useful human-readable description of the new filter
             jql (Optional[str]): query string that defines the filter
             favourite (Optional[bool]): add this filter to the current user's favorites (Default: None)
 
@@ -1593,7 +1593,7 @@ class JIRA:
         return issue_list
 
     def supports_service_desk(self):
-        """Returns whether or not the Jira instance supports service desk.
+        """Returns if the Jira instance supports service desk.
 
         Returns:
             bool
@@ -1668,7 +1668,7 @@ class JIRA:
         By default, the client will immediately reload the issue Resource created by this method in order to return a complete Issue
         object to the caller; this behavior can be controlled through the 'prefetch' argument.
 
-        Jira projects may contain many different issue types. Some issue screens have different requirements for fields in a new issue.
+        Jira projects may contain many issue types. Some issue screens have different requirements for fields in a new issue.
         This information is available through the 'createmeta' method.
         Further examples are available here: https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Create+Issue
 
@@ -1763,7 +1763,7 @@ class JIRA:
         return user.accountId if self._is_cloud else user.name
 
     def _get_user_id(self, user: Optional[str]) -> Optional[str]:
-        """Internal method for translating an user search (str) to an id.
+        """Internal method for translating a user search (str) to an id.
 
         Return None and -1 unchanged.
 
@@ -1807,7 +1807,7 @@ class JIRA:
         """Assign an issue to a user.
 
         Args:
-            issue (Union[int,str]): the issue ID or key to assign
+            issue (Union[int, str]): the issue ID or key to assign
             assignee (str): the user to assign the issue to.
               None will set it to unassigned. -1 will set it to Automatic.
 
@@ -2112,7 +2112,7 @@ class JIRA:
             transition (str): ID or name of the transition to perform
             fields (Optional[Dict[str,Any]]): a dict containing field names and the values to use.
             comment (Optional[str]): String to add as comment to the issue when performing the transition.
-            workload (Optional[str]): String to add as time spent on the issue when performing the transition.
+            worklog (Optional[str]): String to add as time spent on the issue when performing the transition.
             **fieldargs: If present, all other keyword arguments will be ignored
         """
         transitionId: Optional[int] = None
