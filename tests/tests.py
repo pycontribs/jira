@@ -356,32 +356,31 @@ DEFAULT_NEW_REMOTE_LINK_OBJECT = {"url": "http://google.com", "title": "googlici
 class ClientRemoteLinkTests(JiraTestCase):
     def setUp(self):
         JiraTestCase.setUp(self)
-        self.issue_1 = self.test_manager.project_b_issue1
-        self.project_b_issue1_obj = self.test_manager.project_b_issue1_obj
+        self.issue_key = self.test_manager.project_b_issue1
 
     def test_delete_remote_link_by_internal_id(self):
         link = self.jira.add_remote_link(
-            self.issue_1,
+            self.issue_key,
             destination=DEFAULT_NEW_REMOTE_LINK_OBJECT,
         )
         _id = link.id
-        self.jira.delete_remote_link(self.issue_1, internal_id=_id)
-        self.assertRaises(JIRAError, self.jira.remote_link, self.issue_1, _id)
+        self.jira.delete_remote_link(self.issue_key, internal_id=_id)
+        self.assertRaises(JIRAError, self.jira.remote_link, self.issue_key, _id)
 
     def test_delete_remote_link_by_global_id(self):
         link = self.jira.add_remote_link(
-            self.issue_1,
+            self.issue_key,
             destination=DEFAULT_NEW_REMOTE_LINK_OBJECT,
             globalId="python-test:story.of.sasquatch.riding",
         )
         _id = link.id
         self.jira.delete_remote_link(
-            self.issue_1, global_id="python-test:story.of.sasquatch.riding"
+            self.issue_key, global_id="python-test:story.of.sasquatch.riding"
         )
-        self.assertRaises(JIRAError, self.jira.remote_link, self.issue_1, _id)
+        self.assertRaises(JIRAError, self.jira.remote_link, self.issue_key, _id)
 
     def test_delete_remote_link_with_invalid_args(self):
-        self.assertRaises(ValueError, self.jira.delete_remote_link, self.issue_1)
+        self.assertRaises(ValueError, self.jira.delete_remote_link, self.issue_key)
 
 
 class WebsudoTests(JiraTestCase):
