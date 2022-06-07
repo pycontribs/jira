@@ -12,7 +12,7 @@ import logging
 import os
 import pickle
 from time import sleep
-from typing import Optional, cast
+from typing import cast
 from unittest import mock
 
 import pytest
@@ -21,7 +21,7 @@ from parameterized import parameterized
 
 from jira import JIRA, Issue, JIRAError
 from jira.client import ResultList
-from jira.resources import cls_for_resource
+from jira.resources import Resource, cls_for_resource
 from tests.conftest import JiraTestCase, rndpassword
 
 LOGGER = logging.getLogger(__name__)
@@ -302,20 +302,23 @@ class AsyncTests(JiraTestCase):
             (
                 0,
                 26,
-                None,
+                {Issue: None},
                 False,
-            ),  # original behaviour, fetch all with jira's original return size (here 10)
-            (0, 26, 20, False),  # set batch size to 20
-            (5, 26, 20, False),  # test start_at
-            (5, 26, 20, 50),  # test maxResults set (one request)
+            ),  # original behaviour, fetch all with jira's original return size
+            (0, 26, {Issue: 20}, False),  # set batch size to 20
+            (5, 26, {Issue: 20}, False),  # test start_at
+            (5, 26, {Issue: 20}, 50),  # test maxResults set (one request)
         ]
     )
     def test_fetch_pages(
-        self, start_at: int, total: int, batch_size: Optional[int], max_results: int
+        self, start_at: int, total: int, default_batch_sizes: dict, max_results: int
     ):
         """Tests that the JIRA._fetch_pages method works as expected."""
         params = {"startAt": 0}
-        batch_size = batch_size or 10
+        self.jira._options["default_batch_size"] = default_batch_sizes
+        batch_size = (
+            self.jira._get_batch_size(Issue) or 10
+        )  # 10 -> mimicked JIRA-backend default if we did not specify it
         expected_calls = _calculate_calls_for_fetch_pages(
             "https://jira.atlassian.com/rest/api/2/search",
             start_at,
@@ -356,7 +359,7 @@ class AsyncTests(JiraTestCase):
         self.jira._session.close()
         self.jira._session = mock_session
         items = self.jira._fetch_pages(
-            Issue, "issues", "search", start_at, max_results, batch_size, params=params
+            Issue, "issues", "search", start_at, max_results, params=params
         )
 
         actual_calls = [[kall[1], kall[2]] for kall in self.jira._session.method_calls]
@@ -366,6 +369,25 @@ class AsyncTests(JiraTestCase):
             {item.key for item in items},
             {expected_r["key"] for expected_r in expected_results[start_at:]},
         )
+
+
+@parameterized.expand(
+    [
+        ({Resource: 1, Issue: 2}, Issue, 2),
+        ({Resource: 1, Issue: 2}, Resource, 1),
+        ({Resource: 1, Issue: None}, Issue, None),
+        ({Resource: 1}, Issue, 1),
+        ({Resource: 1}, Issue, 1),
+    ]
+)
+def test_get_batch_size(default_batch_sizes, item_type, expected):
+    class BatchSizeMock:
+        def __init__(self, batch_sizes):
+            self._options = {"default_batch_size": batch_sizes}
+
+    batch_size_mock = BatchSizeMock(default_batch_sizes)
+
+    assert JIRA._get_batch_size(batch_size_mock, item_type) == expected
 
 
 def _create_issue_result_json(issue_id, summary, key, **kwargs):
