@@ -473,9 +473,16 @@ class JIRA:
             proxies (Optional[Any]): Sets the proxies for the HTTP session.
             auth (Optional[Tuple[str,str]]): Set a cookie auth token if this is required.
             logging (bool): Determine whether or not logging should be enabled. (Default: True)
+            default_batch_sizes (Optional[Dict[ResourceType, Optional[int]]]): Manually specify the batch-sizes for the paginated retrieval of different item types.
+              `Resource` is used as a fallback for every item type not specified. If a item type is mapped to `None` no fallback occurs, instead the JIRA-Backend will use its default batch-size.
+              By default Issues will be queried in batches of 500, all other item types (`Resource`-key) will be queried in batches of 100.
+              Above standard configuration could be manually supplied by setting this parameter:
+                ``{Issue: 500, Resource: 100}``
+              (Default: None)
         """
         # force a copy of the tuple to be used in __del__() because
         # sys.version_info could have already been deleted in __del__()
+
         self.sys_version_info = tuple(sys.version_info)
         if options is None:
             options = {}
@@ -496,7 +503,7 @@ class JIRA:
         LOG.setLevel(_logging.INFO if logging else _logging.CRITICAL)
         self.log = LOG
 
-        self._options: Dict[str, Any] = copy.copy(JIRA.DEFAULT_OPTIONS)
+        self._options: Dict[str, Any] = copy.deepcopy(JIRA.DEFAULT_OPTIONS)
 
         if default_batch_sizes:
             self._options["default_batch_size"].update(default_batch_sizes)
@@ -831,12 +838,21 @@ class JIRA:
             raise KeyError(str(e) + " : " + json.dumps(resource))
 
     def _get_batch_size(self, item_type: Type[ResourceType]) -> Optional[int]:
+        """
+        Return the batch size for the given resource type from the options.
+
+        Check if specified item-type has a mapped batch-size, else try to fallback to batch-size assigned to `Resource`, else fallback to Backend-determined batch-size.
+
+        Returns:
+           Optional[int]: The batch size to use. When the configured batch size is None, the batch size should be determined by the JIRA-Backend.
+        """
         batch_sizes: Dict[Type[Resource], Optional[int]] = self._options[
             "default_batch_size"
         ]
         try:
             item_type_batch_size = batch_sizes[item_type]
         except KeyError:
+            # Cannot find Resource-key -> Fallback to letting JIRA-Backend determine batch-size (=None)
             item_type_batch_size = batch_sizes.get(Resource, None)
         return item_type_batch_size
 

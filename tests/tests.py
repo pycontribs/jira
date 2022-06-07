@@ -12,7 +12,7 @@ import logging
 import os
 import pickle
 from time import sleep
-from typing import cast
+from typing import Optional, cast
 from unittest import mock
 
 import pytest
@@ -21,7 +21,7 @@ from parameterized import parameterized
 
 from jira import JIRA, Issue, JIRAError
 from jira.client import ResultList
-from jira.resources import Resource, cls_for_resource
+from jira.resources import Dashboard, Resource, cls_for_resource
 from tests.conftest import JiraTestCase, rndpassword
 
 LOGGER = logging.getLogger(__name__)
@@ -287,6 +287,9 @@ class SessionTests(JiraTestCase):
         self.assertTrue(False, "Instantiation of invalid JIRA instance succeeded.")
 
 
+MIMICKED_BACKEND_BATCH_SIZE = 10
+
+
 class AsyncTests(JiraTestCase):
     def setUp(self):
         self.jira = JIRA(
@@ -316,16 +319,16 @@ class AsyncTests(JiraTestCase):
         """Tests that the JIRA._fetch_pages method works as expected."""
         params = {"startAt": 0}
         self.jira._options["default_batch_size"] = default_batch_sizes
-        batch_size = (
-            self.jira._get_batch_size(Issue) or 10
-        )  # 10 -> mimicked JIRA-backend default if we did not specify it
+        batch_size = self.jira._get_batch_size(Issue)
         expected_calls = _calculate_calls_for_fetch_pages(
             "https://jira.atlassian.com/rest/api/2/search",
             start_at,
             total,
             max_results,
             batch_size,
+            MIMICKED_BACKEND_BATCH_SIZE,
         )
+        batch_size = batch_size or MIMICKED_BACKEND_BATCH_SIZE
         expected_results = []
         for i in range(0, total):
             result = _create_issue_result_json(i, "summary %s" % i, key="KEY-%s" % i)
@@ -371,23 +374,25 @@ class AsyncTests(JiraTestCase):
         )
 
 
-@parameterized.expand(
+@pytest.mark.parametrize(
+    "default_batch_sizes, item_type, expected",
     [
-        ({Resource: 1, Issue: 2}, Issue, 2),
-        ({Resource: 1, Issue: 2}, Resource, 1),
-        ({Resource: 1, Issue: None}, Issue, None),
-        ({Resource: 1}, Issue, 1),
-        ({Resource: 1}, Issue, 1),
-    ]
+        ({Issue: 2}, Issue, 2),
+        ({Resource: 1}, Resource, 1),
+        (
+            {Resource: 1, Issue: None},
+            Issue,
+            None,
+        ),  # None -> backend determines batch-size
+        ({Resource: 1}, Dashboard, 1),  # fallback working correctly
+        ({}, Issue, 500),  # default value for Issue
+        ({}, Resource, 100),  # default value for everything else
+    ],
 )
-def test_get_batch_size(default_batch_sizes, item_type, expected):
-    class BatchSizeMock:
-        def __init__(self, batch_sizes):
-            self._options = {"default_batch_size": batch_sizes}
+def test_get_batch_size(default_batch_sizes, item_type, expected, no_fields):
+    jira = JIRA(default_batch_sizes=default_batch_sizes, get_server_info=False)
 
-    batch_size_mock = BatchSizeMock(default_batch_sizes)
-
-    assert JIRA._get_batch_size(batch_size_mock, item_type) == expected
+    assert jira._get_batch_size(item_type) == expected
 
 
 def _create_issue_result_json(issue_id, summary, key, **kwargs):
@@ -411,14 +416,29 @@ def _create_issue_search_results_json(issues, **kwargs):
 
 
 def _calculate_calls_for_fetch_pages(
-    url: str, start_at: int, total: int, max_results: int, batch_size: int
+    url: str,
+    start_at: int,
+    total: int,
+    max_results: int,
+    batch_size: Optional[int],
+    default: Optional[int] = 10,
 ):
     """Returns expected query parameters for specified search-issues arguments."""
-
     if not max_results:
         call_list = []
-        for i in range(start_at, total, batch_size):
-            call_ = [(url,), {"params": {"startAt": i, "maxResults": batch_size}}]
+        if batch_size is None:
+            # for the first request with batch-size is `None` we specifically cannot/don't want to set it but let
+            # the server specify it (here we mimic a server-default of 10 issues per batch).
+            call_ = [(url,), {"params": {"startAt": start_at}}]
+            call_list.append(call_)
+            start_at += default
+            batch_size = default
+        for index, start_at in enumerate(range(start_at, total, batch_size)):
+            call_ = [
+                (url,),
+                {"params": {"startAt": start_at, "maxResults": batch_size}},
+            ]
+
             call_list.append(call_)
     else:
         call_list = [
