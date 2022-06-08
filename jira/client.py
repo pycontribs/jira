@@ -397,7 +397,7 @@ class JIRA:
         proxies: Any = None,
         timeout: Optional[Union[Union[float, int], Tuple[float, float]]] = None,
         auth: Tuple[str, str] = None,
-        default_batch_sizes: Optional[Dict[Type[ResourceType], Optional[int]]] = None,
+        default_batch_sizes: Optional[Dict[Type[Resource], Optional[int]]] = None,
     ):
         """Construct a Jira client instance.
 
@@ -473,7 +473,7 @@ class JIRA:
             proxies (Optional[Any]): Sets the proxies for the HTTP session.
             auth (Optional[Tuple[str,str]]): Set a cookie auth token if this is required.
             logging (bool): Determine whether or not logging should be enabled. (Default: True)
-            default_batch_sizes (Optional[Dict[Type[ResourceType], Optional[int]]]): Manually specify the batch-sizes for the paginated retrieval of different item types.
+            default_batch_sizes (Optional[Dict[Type[Resource], Optional[int]]]): Manually specify the batch-sizes for the paginated retrieval of different item types.
               `Resource` is used as a fallback for every item type not specified. If a item type is mapped to `None` no fallback occurs, instead the JIRA-Backend will use its default batch-size.
               By default Issues will be queried in batches of 500, all other item types (`Resource`-key) will be queried in batches of 100.
               Above standard configuration could be manually supplied by setting this parameter to: ``{Issue: 500, Resource: 100}``
