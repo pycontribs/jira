@@ -368,7 +368,6 @@ class JIRA:
         },
         "default_batch_size": {
             Resource: 100,
-            Issue: 500,
         },
     }
 
@@ -473,11 +472,12 @@ class JIRA:
             proxies (Optional[Any]): Sets the proxies for the HTTP session.
             auth (Optional[Tuple[str,str]]): Set a cookie auth token if this is required.
             logging (bool): Determine whether or not logging should be enabled. (Default: True)
-            default_batch_sizes (Optional[Dict[Type[Resource], Optional[int]]]): Manually specify the batch-sizes for the paginated retrieval of different item types.
-              `Resource` is used as a fallback for every item type not specified. If a item type is mapped to `None` no fallback occurs, instead the JIRA-Backend will use its default batch-size.
-              By default Issues will be queried in batches of 500, all other item types (`Resource`-key) will be queried in batches of 100.
-              Above standard configuration could be manually supplied by setting this parameter to: ``{Issue: 500, Resource: 100}``
-              (Default: None)
+            default_batch_sizes (Optional[Dict[Type[Resource], Optional[int]]]): Manually specify the batch-sizes for
+              the paginated retrieval of different item types. `Resource` is used as a fallback for every item type not
+              specified. If a item type is mapped to `None` no fallback occurs, instead the JIRA-Backend will use its
+              default batch-size. By default all Resources will be queried in batches of 100. E.g., setting this to
+              ``{Issue: 500, Resources: None}`` will make :py:meth:`search_issues` query Issues in batches of 500, while
+              every other item type's batch-size will be controlled by the backend. (Default: None)
 
         """
         # force a copy of the tuple to be used in __del__() because

@@ -383,10 +383,18 @@ class AsyncTests(JiraTestCase):
             {Resource: 1, Issue: None},
             Issue,
             None,
-        ),  # None -> backend determines batch-size
-        ({Resource: 1}, Dashboard, 1),  # fallback working correctly
-        ({}, Issue, 500),  # default value for Issue
-        ({}, Resource, 100),  # default value for everything else
+        ),
+        ({Resource: 1}, Dashboard, 1),
+        ({}, Issue, 100),
+        ({}, Resource, 100),
+    ],
+    ids=[
+        "modify Issue default",
+        "modify Resource default",
+        "let backend decide for Issue",
+        "fallback",
+        "default for Issue",
+        "default value for everything else",
     ],
 )
 def test_get_batch_size(default_batch_sizes, item_type, expected, no_fields):
