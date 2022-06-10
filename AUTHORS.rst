@@ -7,6 +7,7 @@ Development Team (PyContribs)
 
 Patches and Suggestions
 ```````````````````````
+- Jannik Meinecke <jannik.meinecke@mercedes-benz.com> on behalf of MBition GmbH
 - ... and many others.
 
 Thank you!
