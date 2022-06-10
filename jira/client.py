@@ -474,9 +474,9 @@ class JIRA:
             logging (bool): Determine whether or not logging should be enabled. (Default: True)
             default_batch_sizes (Optional[Dict[Type[Resource], Optional[int]]]): Manually specify the batch-sizes for
               the paginated retrieval of different item types. `Resource` is used as a fallback for every item type not
-              specified. If a item type is mapped to `None` no fallback occurs, instead the JIRA-Backend will use its
+              specified. If an item type is mapped to `None` no fallback occurs, instead the JIRA-backend will use its
               default batch-size. By default all Resources will be queried in batches of 100. E.g., setting this to
-              ``{Issue: 500, Resources: None}`` will make :py:meth:`search_issues` query Issues in batches of 500, while
+              ``{Issue: 500, Resource: None}`` will make :py:meth:`search_issues` query Issues in batches of 500, while
               every other item type's batch-size will be controlled by the backend. (Default: None)
 
         """
