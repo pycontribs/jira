@@ -16,7 +16,7 @@ babel==2.10.1
     # via sphinx
 backcall==0.2.0
     # via ipython
-certifi==2021.10.8
+certifi==2022.5.18.1
     # via requests
 cffi==1.15.0
     # via cryptography
