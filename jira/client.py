@@ -35,7 +35,6 @@ from typing import (
     Type,
     TypeVar,
     Union,
-    cast,
     no_type_check,
     overload,
 )
@@ -47,10 +46,11 @@ from requests import Response
 from requests.auth import AuthBase
 from requests.structures import CaseInsensitiveDict
 from requests.utils import get_netrc_auth
+from requests_toolbelt import MultipartEncoder
 
 from jira import __version__
 from jira.exceptions import JIRAError
-from jira.resilientsession import ResilientSession, raise_on_error
+from jira.resilientsession import PrepareRequestForRetry, ResilientSession
 from jira.resources import (
     AgileResource,
     Attachment,
@@ -91,12 +91,6 @@ from jira.resources import (
     Worklog,
 )
 from jira.utils import json_loads, threaded_requests
-
-try:
-    # noinspection PyUnresolvedReferences
-    from requests_toolbelt import MultipartEncoder
-except ImportError:
-    pass
 
 try:
     from requests_jwt import JWTAuth
@@ -954,70 +948,68 @@ class JIRA:
         """
         close_attachment = False
         if isinstance(attachment, str):
-            attachment: BufferedReader = open(attachment, "rb")  # type: ignore
-            attachment = cast(BufferedReader, attachment)
+            attachment_io = open(attachment, "rb")  # type: ignore
             close_attachment = True
-        elif isinstance(attachment, BufferedReader) and attachment.mode != "rb":
-            self.log.warning(
-                "%s was not opened in 'rb' mode, attaching file may fail."
-                % attachment.name
-            )
-
-        url = self._get_url("issue/" + str(issue) + "/attachments")
+        else:
+            attachment_io = attachment
+            if isinstance(attachment, BufferedReader) and attachment.mode != "rb":
+                self.log.warning(
+                    "%s was not opened in 'rb' mode, attaching file may fail."
+                    % attachment.name
+                )
 
         fname = filename
         if not fname and isinstance(attachment, BufferedReader):
             fname = os.path.basename(attachment.name)
 
-        if "MultipartEncoder" not in globals():
-            method = "old"
-            try:
-                r = self._session.post(
-                    url,
-                    files={"file": (fname, attachment, "application/octet-stream")},
-                    headers=CaseInsensitiveDict(
-                        {"content-type": None, "X-Atlassian-Token": "no-check"}
-                    ),
-                )
-            finally:
-                if close_attachment:
-                    attachment.close()
-        else:
-            method = "MultipartEncoder"
+        def generate_multipartencoded_request_args() -> Tuple[
+            MultipartEncoder, CaseInsensitiveDict
+        ]:
+            """Returns MultipartEncoder stream of attachment, and the header."""
+            attachment_io.seek(0)
+            encoded_data = MultipartEncoder(
+                fields={"file": (fname, attachment_io, "application/octet-stream")}
+            )
+            request_headers = CaseInsensitiveDict(
+                {
+                    "content-type": encoded_data.content_type,
+                    "X-Atlassian-Token": "no-check",
+                }
+            )
+            return encoded_data, request_headers
 
-            def file_stream() -> MultipartEncoder:
-                """Returns files stream of attachment."""
-                return MultipartEncoder(
-                    fields={"file": (fname, attachment, "application/octet-stream")}
-                )
+        class RetryableMultipartEncoder(PrepareRequestForRetry):
+            def prepare(
+                self, original_request_kwargs: CaseInsensitiveDict
+            ) -> CaseInsensitiveDict:
+                encoded_data, request_headers = generate_multipartencoded_request_args()
+                original_request_kwargs["data"] = encoded_data
+                original_request_kwargs["headers"] = request_headers
+                return super().prepare(original_request_kwargs)
 
-            m = file_stream()
-            try:
-                r = self._session.post(
-                    url,
-                    data=m,
-                    headers=CaseInsensitiveDict(
-                        {
-                            "content-type": m.content_type,
-                            "X-Atlassian-Token": "no-check",
-                        }
-                    ),
-                    retry_data=file_stream,
-                )
-            finally:
-                if close_attachment:
-                    attachment.close()
+        url = self._get_url(f"issue/{issue}/attachments")
+        try:
+            encoded_data, request_headers = generate_multipartencoded_request_args()
+            r = self._session.post(
+                url,
+                data=encoded_data,
+                headers=request_headers,
+                _prepare_retry_class=RetryableMultipartEncoder(),  # type: ignore[call-arg] # ResilientSession handles
+            )
+        finally:
+            if close_attachment:
+                attachment_io.close()
 
         js: Union[Dict[str, Any], List[Dict[str, Any]]] = json_loads(r)
         if not js or not isinstance(js, Iterable):
-            raise JIRAError(f"Unable to parse JSON: {js}")
+            raise JIRAError(f"Unable to parse JSON: {js}. Failed to add attachment?")
         jira_attachment = Attachment(
             self._options, self._session, js[0] if isinstance(js, List) else js
         )
         if jira_attachment.size == 0:
             raise JIRAError(
-                "Added empty attachment via %s method?!: r: %s\nattachment: %s"
-                % (method, r, jira_attachment)
+                "Added empty attachment?!: "
+                + f"Response: {r}\nAttachment: {jira_attachment}"
             )
         return jira_attachment
 
@@ -1785,8 +1777,7 @@ class JIRA:
         url = self._get_latest_url(f"issue/{issue}/assignee")
         user_id = self._get_user_id(assignee)
         payload = {"accountId": user_id} if self._is_cloud else {"name": user_id}
-        r = self._session.put(url, data=json.dumps(payload))
-        raise_on_error(r)
+        self._session.put(url, data=json.dumps(payload))
         return True
 
     @translate_resource_args
@@ -2666,7 +2657,7 @@ class JIRA:
         if size != size_from_file:
             size = size_from_file
 
-        params = {"filename": filename, "size": size}
+        params: Dict[str, Union[int, str]] = {"filename": filename, "size": size}
 
         headers: Dict[str, Any] = {"X-Atlassian-Token": "no-check"}
         if contentType is not None:
@@ -3167,7 +3158,11 @@ class JIRA:
         # remove path from filename
         filename = os.path.split(filename)[1]
 
-        params = {"username": user, "filename": filename, "size": size}
+        params: Dict[str, Union[str, int]] = {
+            "username": user,
+            "filename": filename,
+            "size": size,
+        }
 
         headers: Dict[str, Any]
         headers = {"X-Atlassian-Token": "no-check"}
@@ -3701,8 +3696,7 @@ class JIRA:
             # raw displayName
             self.log.debug(f"renaming {self.user(old_user).emailAddress}")
 
-            r = self._session.put(url, params=params, data=json.dumps(payload))
-            raise_on_error(r)
+            self._session.put(url, params=params, data=json.dumps(payload))
         else:
             raise NotImplementedError(
                 "Support for renaming users in Jira " "< 6.0.0 has been removed."
