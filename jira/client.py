@@ -3086,10 +3086,11 @@ class JIRA:
         Returns:
             ResultList
         """
+        params = {}
         if username is not None:
-            params = {"username": username}
+            params["username"] = username
         if query is not None:
-            params = {"query": query}
+            params["query"] = query
         if project is not None:
             params["project"] = project
         if issueKey is not None:
