@@ -5,6 +5,7 @@ Also, this simplifies the scripts by not having to write the same initialization
 
 """
 import configparser
+import copy
 import logging
 import os
 import sys
@@ -120,7 +121,7 @@ def get_jira(
                 % __name__
             )
 
-    options = JIRA.DEFAULT_OPTIONS
+    options = copy.copy(JIRA.DEFAULT_OPTIONS)
     options["server"] = url
     options["autofix"] = autofix
     options["appid"] = appid
