@@ -5,6 +5,7 @@ will construct a JIRA object as described below. Full API documentation can be f
 at: https://jira.readthedocs.io/en/latest/
 """
 import calendar
+import contextlib
 import copy
 import datetime
 import hashlib
@@ -497,6 +498,7 @@ class JIRA:
         self._options.update(options)
         self._options["headers"].update(headers)
 
+        self._internal_user_lookup = True
         self._rank = None
 
         # Rip off trailing slash since all urls depend on that
@@ -573,6 +575,33 @@ class JIRA:
             JIRA.checked_version = True
 
         self._fields_cache_value: Dict[str, str] = {}  # access via self._fields_cache
+
+    @contextlib.contextmanager
+    def disable_internal_user_lookup(self) -> Iterable[None]:
+        """Return a context manager which disables internal username searches.
+
+        This creates a context which turns off the internal username search
+        that various methods of the client use. This allows re-using a known
+        good username across multiple operations, such as one returned by
+        :py:meth:`JIRA.search_users`.
+
+        :Example:
+            .. code-block::python
+                # Bulk assigning tickets to a known user, saving internal lookup time
+                my_user_id = "user_x"
+                issue_list = ... # Some list of issues
+                with jira_client.disable_internal_user_lookup():
+                    for issue in issue_list:
+                        jira_client.assign_issue(issue, my_user_id)
+
+        Return
+            contextlib._GeneratorContextManager
+        """
+        self._internal_user_lookup = False
+        try:
+            yield
+        finally:
+            self._internal_user_lookup = True
 
     @property
     def _fields_cache(self) -> Dict[str, str]:
@@ -1722,7 +1751,7 @@ class JIRA:
         """
         return user.accountId if self._is_cloud else user.name
 
-    def _get_user_id(self, user: Optional[str]) -> Optional[str]:
+    def _get_user_id(self, user: Optional[Union[int, str]]) -> Optional[str]:
         """Internal method for translating an user search (str) to an id.
 
         Return None and -1 unchanged.
@@ -1743,7 +1772,7 @@ class JIRA:
         Returns:
             Optional[str]: The Jira user's identifier. Or "-1" and None unchanged.
         """
-        if user in (None, -1, "-1"):
+        if user in (None, -1, "-1") or not self._internal_user_lookup:
             return user
         try:
             user_obj: User
