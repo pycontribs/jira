@@ -1,5 +1,6 @@
 """
-This module implements the Resource classes that translate JSON from Jira REST resources into usable objects.
+This module implements the Resource classes that translate JSON from Jira REST
+resources into usable objects.
 """
 
 import json
@@ -92,8 +93,8 @@ class Resource:
 
     JIRA_BASE_URL = "{server}/rest/{rest_path}/{rest_api_version}/{path}"
 
-    # A prioritized list of the keys in self.raw most likely to contain a human readable name or identifier,
-    # or that offer other key information.
+    # A prioritized list of the keys in self.raw most likely to contain a human
+    # readable name or identifier, or that offer other key information.
     _READABLE_IDS = (
         "displayName",
         "key",
@@ -108,7 +109,8 @@ class Resource:
         "closed",
     )
 
-    # A list of properties that should uniquely identify a Resource object Each of these properties should be hashable, usually strings
+    # A list of properties that should uniquely identify a Resource object Each of
+    # these properties should be hashable, usually strings
     _HASH_IDS = (
         "self",
         "type",
@@ -142,7 +144,7 @@ class Resource:
         self.raw: Optional[Dict[str, Any]] = None
 
     def __str__(self) -> str:
-        """Return the first value we find that is likely to be human readable.
+        """Return the first value we find that is likely to be human-readable.
 
         Returns:
             str

@@ -175,8 +175,9 @@ class ResultList(list, Generic[ResourceType]):
         return super().__iter__()
 
     # fmt: off
-    # The mypy error we ignore is about returning a contravariant type. As this class is a List of a generic 'Resource' class
-    # this is the right way to specify that the output is the same as which the class was initialized with.
+    # The mypy error we ignore is about returning a contravariant type. As this class
+    # is a List of a generic 'Resource' class this is the right way to specify that the
+    # output is the same as which the class was initialized with.
     @overload
     def __getitem__(self, i: SupportsIndex) -> ResourceType: ...  # type:ignore[misc]  # noqa: E704
     @overload
@@ -290,8 +291,8 @@ class JiraCookieAuth(AuthBase):
         return self.send_request(original_request)
 
     def update_cookies(self, original_request: requests.PreparedRequest):
-        # Cookie header needs first to be deleted for the header to be updated using the prepare_cookies method.
-        # See request.PrepareRequest.prepare_cookies
+        # Cookie header needs first to be deleted for the header to be updated using the
+        # prepare_cookies method. See request.PrepareRequest.prepare_cookies
         if "Cookie" in original_request.headers:
             del original_request.headers["Cookie"]
         original_request.prepare_cookies(self.cookies)
@@ -660,13 +661,15 @@ class JIRA:
             try:
                 session.close()
             except TypeError:
-                # TypeError: "'NoneType' object is not callable" Could still happen here because other references are also
-                # in the process to be torn down, see warning section in https://docs.python.org/2/reference/datamodel.html#object.__del__
+                # TypeError: "'NoneType' object is not callable" Could still happen here
+                # because other references are also in the process to be torn down,
+                # see warning section in https://docs.python.org/2/reference/datamodel.html#object.__del__
                 pass
             self._session = None
 
     def _check_for_html_error(self, content: str):
-        # Jira has the bad habit of returning errors in pages with 200 and embedding the error in a huge webpage.
+        # Jira has the bad habit of returning errors in pages with 200 and embedding the
+        # error in a huge webpage.
         if "<!-- SecurityTokenMissing -->" in content:
             self.log.warning("Got SecurityTokenMissing")
             raise JIRAError(f"SecurityTokenMissing: {content}")
@@ -1375,8 +1378,8 @@ class JIRA:
 
         result = {}
         for user in r["users"]["items"]:
-            # 'id' is likely available only in older JIRA Server, it's not available on newer JIRA Server.
-            # 'name' is not available in JIRA Cloud.
+            # 'id' is likely available only in older JIRA Server, it's not available on
+            # newer JIRA Server. 'name' is not available in JIRA Cloud.
             hasId = user.get("id") is not None and user.get("id") != ""
             hasName = user.get("name") is not None and user.get("name") != ""
             result[
@@ -1559,7 +1562,8 @@ class JIRA:
         try:
             r = self._session.post(url, data=json.dumps(data))
             raw_issue_json = json_loads(r)
-        # Catching case where none of the issues has been created. See https://github.com/pycontribs/jira/issues/350
+        # Catching case where none of the issues has been created.
+        # See https://github.com/pycontribs/jira/issues/350
         except JIRAError as je:
             if je.status_code == 400 and je.response:
                 raw_issue_json = json.loads(je.response.text)
@@ -1941,7 +1945,8 @@ class JIRA:
         """
         return self._find_for_resource(RemoteLink, (issue, id))
 
-    # removed the @translate_resource_args because it prevents us from finding information for building a proper link
+    # removed the @translate_resource_args because it prevents us from finding
+    # information for building a proper link
     def add_remote_link(
         self,
         issue: str,
@@ -2988,7 +2993,8 @@ class JIRA:
         elif fields is None:
             fields = ["*all"]
 
-        # this will translate JQL field names to REST API Name most people do know the JQL names so this will help them use the API easier
+        # this will translate JQL field names to REST API Name most people do know the
+        # JQL names so this will help them use the API easier
         untranslate = {}  # use to add friendly aliases when we get the results back
         if self._fields_cache:
             for i, field in enumerate(fields):
@@ -3890,7 +3896,8 @@ class JIRA:
             Union[str, int]
         """
         if self._is_cloud:
-            # Disabling users now needs cookie auth in the Cloud - see https://jira.atlassian.com/browse/ID-6230
+            # Disabling users now needs cookie auth in the Cloud -
+            # see https://jira.atlassian.com/browse/ID-6230
             if "authCookie" not in vars(self):
                 user = self.session()
                 if user.raw is None:
@@ -3903,7 +3910,8 @@ class JIRA:
                 self._options["server"]
                 + f"/admin/rest/um/1/user/deactivate?username={username}"
             )
-            # We can't use our existing session here - this endpoint is fragile and objects to extra headers
+            # We can't use our existing session here
+            # this endpoint is fragile and objects to extra headers
             try:
                 r = requests.post(
                     url,
@@ -4591,8 +4599,8 @@ class JIRA:
         return data
 
     # Experimental
-    # Experimental support for iDalko Grid, expect API to change as it's using private APIs currently
-    # https://support.idalko.com/browse/IGRID-1017
+    # Experimental support for iDalko Grid, expect API to change as it's using private
+    # APIs currently https://support.idalko.com/browse/IGRID-1017
     def get_igrid(self, issueid: str, customfield: str, schemeid: str):
         url = self.server_url + "/rest/idalko-igrid/1.0/datagrid/data"
         if str(customfield).isdigit():
