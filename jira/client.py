@@ -436,7 +436,7 @@ class JIRA:
                 * key_cert -- private key file to sign requests with (should be the pair of the public key supplied to
                   Jira in the OAuth application link)
 
-            kerberos (bool): If true it will enable Kerberos authentication.
+            kerberos (bool): True to enable Kerberos authentication.
             kerberos_options (Optional[Dict[str,str]]): A dict of properties for Kerberos authentication.
               The following properties are possible:
 
@@ -453,10 +453,10 @@ class JIRA:
 
                 Example jwt structure: ``{'secret': SHARED_SECRET, 'payload': {'iss': PLUGIN_KEY}}``
 
-            validate (bool): Validates your credentials first. Remember that if you are accessing Jira as anonymous it will fail.
+            validate (bool): True makes your credentials first to be validated. Remember that if you are accessing Jira as anonymous it will fail.
               (Default: False).
-            get_server_info (bool): Fetches server version info first to determine if some API calls are available. (Default: True).
-            async_ (bool): To enable async requests for those actions where we implemented it, like issue update() or delete().
+            get_server_info (bool): True fetches server version info first to determine if some API calls are available. (Default: True).
+            async_ (bool): True enables async requests for those actions where we implemented it, like issue update() or delete().
               (Default: False).
             async_workers (int): Set the number of worker threads for async operations.
             timeout (Optional[Union[Union[float, int], Tuple[float, float]]]): Set a read/connect timeout for the underlying
@@ -465,7 +465,7 @@ class JIRA:
             max_retries (int): Sets the amount Retries for the HTTP sessions initiated by the client. (Default: 3)
             proxies (Optional[Any]): Sets the proxies for the HTTP session.
             auth (Optional[Tuple[str,str]]): Set a cookie auth token if this is required.
-            logging (bool): Enables loglevel to info => else critical. (Default: True)
+            logging (bool): True enables loglevel to info => else critical. (Default: True)
             default_batch_sizes (Optional[Dict[Type[Resource], Optional[int]]]): Manually specify the batch-sizes for
               the paginated retrieval of different item types. `Resource` is used as a fallback for every item type not
               specified. If an item type is mapped to `None` no fallback occurs, instead the JIRA-backend will use its
@@ -1098,7 +1098,7 @@ class JIRA:
             description (str): a description of the component
             leadUserName (Optional[str]): the username of the user responsible for this component
             assigneeType (Optional[str]): see the ComponentBean.AssigneeType class for valid values
-            isAssigneeTypeValid (bool): boolean specifying whether the assignee type is acceptable (Default: False)
+            isAssigneeTypeValid (bool): True specifies whether the assignee type is acceptable (Default: False)
 
         Returns:
             Component
@@ -1246,7 +1246,7 @@ class JIRA:
             name (str): name of the new filter
             description (str): Useful human-readable description of the new filter
             jql (str): query string that defines the filter
-            favourite (bool): Add this filter to the current user's favorites (Default: None)
+            favourite (bool): True adds this filter to the current user's favorites (Default: None)
 
         Returns:
             Filter
@@ -1490,7 +1490,7 @@ class JIRA:
         Args:
             fields (Optional[Dict[str, Any]]): a dict containing field names and the values to use. If present, all other keyword arguments
               will be ignored
-            prefetch (bool): reload the created issue Resource so all of its data is present in the value returned (Default: True)
+            prefetch (bool): True reloads the created issue Resource so all of its data is present in the value returned (Default: True)
         Returns:
             Issue
         """
@@ -1536,7 +1536,7 @@ class JIRA:
         Args:
             field_list (List[Dict[str, Any]]): a list of dicts each containing field names and the values to use. Each dict
               is an individual issue to create and is subject to its minimum requirements.
-            prefetch (bool): reload the created issue Resource so all of its data is present in the value returned (Default: True)
+            prefetch (bool): True reloads the created issue Resource so all of its data is present in the value returned (Default: True)
         Returns:
             List[Dict[str, Any]]
         """
@@ -1682,7 +1682,7 @@ class JIRA:
         Args:
             fields (Dict[str, Any]): a dict containing field names and the values to use. If present, all other keyword arguments
               will be ignored
-            prefetch (bool): reload the created issue Resource so all of its data is present in the value returned (Default: True)
+            prefetch (bool): True reloads the created issue Resource so all of its data is present in the value returned (Default: True)
 
         Returns:
             Issue
@@ -1883,7 +1883,7 @@ class JIRA:
             visibility (Optional[Dict[str, str]]): a dict containing two entries: "type" and "value".
               "type" is 'role' (or 'group' if the Jira server has configured comment visibility for groups)
               "value" is the name of the role (or group) to which viewing of this comment will be restricted.
-            is_internal (bool): Mark the comment as 'Internal' in Jira Service Desk (Default: False)
+            is_internal (bool): True marks the comment as 'Internal' in Jira Service Desk (Default: False)
 
         Returns:
             Comment: the created comment
@@ -2519,7 +2519,7 @@ class JIRA:
         """Get a list of issue link type Resources from the server.
 
         Args:
-            force (bool): force an update of the cached IssueLinkTypes. (Default: False)
+            force (bool): True forces an update of the cached IssueLinkTypes. (Default: False)
 
         Returns:
             List[IssueLinkType]
@@ -2763,7 +2763,7 @@ class JIRA:
             size (int): size of the avatar file
             avatar_img (bytes): file-like object holding the avatar
             contentType (str): explicit specification for the avatar image's content-type
-            auto_confirm (bool): whether to automatically confirm the temporary avatar by calling
+            auto_confirm (bool): True to automatically confirm the temporary avatar by calling
               :py:meth:`confirm_project_avatar` with the return value of this method. (Default: False)
         """
         size_from_file = os.path.getsize(filename)
@@ -2979,11 +2979,11 @@ class JIRA:
             startAt (int): Index of the first issue to return. (Default: 0)
             maxResults (int): Maximum number of issues to return. Total number of results is available in the ``total`` attribute of
               the returned :class:`ResultList`. If maxResults evaluates to False, it will try to get all issues in batches. (Default: 50)
-            validate_query (bool): Validate the query. (Default: True)
+            validate_query (bool): True to validate the query. (Default: True)
             fields (Optional[Union[str, List[str]]]): comma-separated string or list of issue fields to include in the results.
               Default is to include all fields.
             expand (Optional[str]): extra information to fetch inside each resource
-            json_result (bool): Return a JSON response. When set to False a :class:`ResultList` will be returned. (Default: False)
+            json_result (bool): True to return a JSON response. When set to False a :class:`ResultList` will be returned. (Default: False)
 
         Returns:
             Union[Dict,ResultList]: Dict if ``json_result=True``
@@ -3275,7 +3275,7 @@ class JIRA:
             size (int): size of the avatar file
             avatar_img (bytes): file-like object containing the avatar
             contentType (Optional[Any]): explicit specification for the avatar image's content-type
-            auto_confirm (bool): whether to automatically confirm the temporary avatar by calling
+            auto_confirm (bool): True to automatically confirm the temporary avatar by calling
               :py:meth:`confirm_user_avatar` with the return value of this method. (Default: False)
 
         """
@@ -3402,8 +3402,8 @@ class JIRA:
             startAt (int): index of the first user to return.
             maxResults (int): maximum number of users to return.
               If maxResults evaluates as False, it will try to get all items in batches.
-            includeActive (bool): Active users will be included in the results. (Default: True)
-            includeInactive (bool): Inactive users will be included in the results. (Default: False)
+            includeActive (bool): True to include active users in the results. (Default: True)
+            includeInactive (bool): True to include inactive users in the results. (Default: False)
             query (Optional[str]): Search term. It can just be the email.
 
         Returns:
@@ -3472,8 +3472,8 @@ class JIRA:
             description (str): a description of the version
             releaseDate (Optional[Any]): the release date assigned to the version
             startDate (Optional[Any]): The start date for the version
-            archived (bool): Create an archived version. (Default: False)
-            released (bool): Create a released version. (Default: False)
+            archived (bool): True to create an archived version. (Default: False)
+            released (bool): True to create a released version. (Default: False)
 
         Returns:
             Version
@@ -3965,8 +3965,8 @@ class JIRA:
         If you call reindex() without any parameters it will perform a background reindex only if Jira thinks it should do it.
 
         Args:
-            force (bool): reindex even if Jira doesn't say this is needed. (Default: False)
-            background (bool): reindex in background, slower but does not impact the users. (Default: True)
+            force (bool): True to reindex even if Jira doesn't say this is needed. (Default: False)
+            background (bool): True to reindex in background, slower but does not impact the users. (Default: True)
 
         Returns:
             bool: True if reindexing is in progress or not needed
@@ -4010,7 +4010,7 @@ class JIRA:
 
         Args:
             filename (str): the filename for the backup (Default: "backup.zip")
-            attachments (bool): Also backup attachments (Default: False)
+            attachments (bool): True to also backup attachments (Default: False)
 
         Returns:
             Union[bool, int]: Returns True if successful else it returns the statuscode of the Response or False
@@ -4497,9 +4497,9 @@ class JIRA:
             directoryId (int): The directory ID the new user should be a part of (Default: 1)
             password (Optional[str]): Optional, the password for the new user
             fullname (Optional[str]): Optional, the full name of the new user
-            notify (bool): Send a notification to the new user. (Default: False)
-            active (bool): Make the new user active upon creation. (Default: True)
-            ignore_existing (bool): Ignore existing users. (Default: False)
+            notify (bool): True to send a notification to the new user. (Default: False)
+            active (bool): True to make the new user active upon creation. (Default: True)
+            ignore_existing (bool): True to ignore existing users. (Default: False)
             application_keys (Optional[list]): Keys of products user should have access to
 
         Raises:

@@ -301,9 +301,9 @@ class Resource:
 
         Args:
             fields (Optional[Dict[str, Any]]): Fields which should be updated for the object.
-            async_ (bool): The request will be added to the queue, so it can be executed later using async_run()
+            async_ (bool): True to add the request to the queue, so it can be executed later using async_run()
             jira (jira.client.JIRA): Instance of Jira Client
-            notify (bool): query parameter notifyUsers. Notify watchers about the update. (Default: True).
+            notify (bool): True to notify watchers about the update, sets parameter notifyUsers. (Default: True).
               Admin or project admin permissions are required to disable the notification.
             kwargs (Any): extra arguments to the PUT request.
         """
@@ -640,7 +640,7 @@ class Issue(Resource):
             update (Dict[str,Any]): a dict containing update the operations to apply
             async_ (Optional[bool]): to add the request to the queue, so it can be executed later using async_run()
             jira (Optional[jira.client.JIRA]): JIRA instance.
-            notify (bool): query parameter notifyUsers. Notify watchers about the update. (Default: True).
+            notify (bool): True to notify watchers about the update, sets parameter notifyUsers. (Default: True).
               Admin or project admin permissions are required to disable the notification.
             fieldargs (dict): keyword arguments will generally be merged into fields, except lists, which will be merged into updates
         """
@@ -712,7 +712,7 @@ class Issue(Resource):
         """Delete this issue from the server.
 
         Args:
-            deleteSubtasks (bool): Also delete subtasks. If any are present the Issue won't be deleted (Default: True)
+            deleteSubtasks (bool): True to also delete subtasks. If any are present the Issue won't be deleted (Default: True)
         """
         super().delete(params={"deleteSubtasks": deleteSubtasks})
 
@@ -763,8 +763,8 @@ class Comment(Resource):
               "type" is 'role' (or 'group' if the Jira server has configured comment visibility for groups)
               "value" is the name of the role (or group) to which viewing of this comment will be restricted.
             body (str): New text of the comment
-            is_internal (bool): Mark the comment as 'Internal' in Jira Service Desk (Default: False)
-            notify (bool): query parameter notifyUsers. Notify watchers about the update. (Default: True).
+            is_internal (bool): True to mark the comment as 'Internal' in Jira Service Desk (Default: False)
+            notify (bool): True to notify watchers about the update, sets parameter notifyUsers. (Default: True).
               Admin or project admin permissions are required to disable the notification.
         """
         data: Dict[str, Any] = {}
