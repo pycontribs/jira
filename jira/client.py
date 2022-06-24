@@ -3028,12 +3028,12 @@ class JIRA:
         return user
 
     def search_assignable_users_for_projects(
-        self, username: str, projectKeys: str, startAt: int = 0, maxResults: int = 50
+        self, query: str, projectKeys: str, startAt: int = 0, maxResults: int = 50
     ) -> ResultList:
         """Get a list of user Resources that match the search string and can be assigned issues for projects.
 
         Args:
-            username (str): A string to match usernames against
+            query (str): A string to match users against
             projectKeys (str): Comma-separated list of project keys to check for issue assignment permissions
             startAt (int): Index of the first user to return (Default: 0)
             maxResults (int): Maximum number of users to return.
@@ -3043,7 +3043,7 @@ class JIRA:
             ResultList
 
         """
-        params = {"username": username, "projectKeys": projectKeys}
+        params = {"query": query, "projectKeys": projectKeys}
         return self._fetch_pages(
             User,
             None,
