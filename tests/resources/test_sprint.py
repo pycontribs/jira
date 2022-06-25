@@ -2,6 +2,9 @@ from contextlib import contextmanager
 from functools import lru_cache
 from typing import Iterator, Tuple
 
+import pytest as pytest
+
+from jira.exceptions import JIRAError
 from jira.resources import Board, Filter, Sprint
 from tests.conftest import JiraTestCase, rndstr
 
@@ -14,9 +17,9 @@ class SprintTests(JiraTestCase):
         self.issue_3 = self.test_manager.project_b_issue3
 
         uniq = rndstr()
-        self.board_name = "board-" + uniq
-        self.sprint_name = "sprint-" + uniq
-        self.filter_name = "filter-" + uniq
+        self.board_name = f"board-{uniq}"
+        self.sprint_name = f"sprint-{uniq}"
+        self.filter_name = f"filter-{uniq}"
 
         self.board, self.filter = self._create_board_and_filter()
 
@@ -97,3 +100,11 @@ class SprintTests(JiraTestCase):
             # THEN: There is no longer the sprint assigned
             updated_issue_1 = self.jira.issue(self.issue_1)
             assert updated_issue_1.get_field(self._sprint_customfield()) is None
+
+    def test_two_sprints_with_the_same_name_raise_a_jirra_error_when_sprints_by_name_is_called(
+        self,
+    ):
+        with self._create_sprint():
+            with self._create_sprint():
+                with pytest.raises(JIRAError):
+                    self.jira.sprints_by_name(self.board.id)
