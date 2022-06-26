@@ -4516,7 +4516,7 @@ class JIRA:
             self.AGILE_BASE_URL,
         )
 
-    def sprints_by_name(self, id, extended=False, state=None):
+    def sprints_by_name(self, id: Union[str,int], extended: bool = False, state: str = None) -> Dict[str, Dict[str, Any]]:
         """Get a dictionary of sprint Resources where the name of the sprint is the key.
 
         Args:
