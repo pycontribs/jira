@@ -101,7 +101,7 @@ class SprintTests(JiraTestCase):
             updated_issue_1 = self.jira.issue(self.issue_1)
             assert updated_issue_1.get_field(self._sprint_customfield()) is None
 
-    def test_two_sprints_with_the_same_name_raise_a_jirra_error_when_sprints_by_name_is_called(
+    def test_two_sprints_with_the_same_name_raise_a_jira_error_when_sprints_by_name_is_called(
         self,
     ):
         with self._create_sprint():
