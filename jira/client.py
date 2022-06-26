@@ -4526,7 +4526,7 @@ class JIRA:
               You can define multiple states separated by commas
 
         Returns:
-            dict: dictionary of sprints with the sprint name as key
+            Dict[str, Dict[str, Any]]: dictionary of sprints with the sprint name as key
         """
         sprints = {}
         for s in self.sprints(id, extended=extended, state=state):
