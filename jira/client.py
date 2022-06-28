@@ -4575,13 +4575,29 @@ class JIRA:
             self.AGILE_BASE_URL,
         )
 
-    def sprints_by_name(self, id, extended=False):
+    def sprints_by_name(
+        self, id: Union[str, int], extended: bool = False, state: str = None
+    ) -> Dict[str, Dict[str, Any]]:
+        """Get a dictionary of sprint Resources where the name of the sprint is the key.
+
+        Args:
+            board_id (int): the board to get sprints from
+            extended (bool): Deprecated.
+            state (str): Filters results to sprints in specified states. Valid values: `future`, `active`, `closed`.
+              You can define multiple states separated by commas
+
+        Returns:
+            Dict[str, Dict[str, Any]]: dictionary of sprints with the sprint name as key
+        """
         sprints = {}
-        for s in self.sprints(id, extended=extended):
+        for s in self.sprints(id, extended=extended, state=state):
             if s.name not in sprints:
                 sprints[s.name] = s.raw
             else:
-                raise Exception
+                raise JIRAError(
+                    f"There are multiple sprints defined with the name {s.name} on board id {id},\n"
+                    f"returning a dict with sprint names as a key, assumes unique names for each sprint"
+                )
         return sprints
 
     def update_sprint(self, id, name=None, startDate=None, endDate=None, state=None):
