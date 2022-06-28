@@ -360,6 +360,9 @@ class JIRA:
             # 'Expires': 'Thu, 01 Jan 1970 00:00:00 GMT'
             "X-Atlassian-Token": "no-check",
         },
+        "default_batch_size": {
+            Resource: 100,
+        },
     }
 
     checked_version = False
@@ -387,6 +390,7 @@ class JIRA:
         proxies: Any = None,
         timeout: Optional[Union[Union[float, int], Tuple[float, float]]] = None,
         auth: Tuple[str, str] = None,
+        default_batch_sizes: Optional[Dict[Type[Resource], Optional[int]]] = None,
     ):
         """Construct a Jira client instance.
 
@@ -462,11 +466,18 @@ class JIRA:
             proxies (Optional[Any]): Sets the proxies for the HTTP session.
             auth (Optional[Tuple[str,str]]): Set a cookie auth token if this is required.
             logging (bool): Determine whether or not logging should be enabled. (Default: True)
+            default_batch_sizes (Optional[Dict[Type[Resource], Optional[int]]]): Manually specify the batch-sizes for
+              the paginated retrieval of different item types. `Resource` is used as a fallback for every item type not
+              specified. If an item type is mapped to `None` no fallback occurs, instead the JIRA-backend will use its
+              default batch-size. By default all Resources will be queried in batches of 100. E.g., setting this to
+              ``{Issue: 500, Resource: None}`` will make :py:meth:`search_issues` query Issues in batches of 500, while
+              every other item type's batch-size will be controlled by the backend. (Default: None)
+
         """
         # force a copy of the tuple to be used in __del__() because
         # sys.version_info could have already been deleted in __del__()
-        self.sys_version_info = tuple(sys.version_info)
 
+        self.sys_version_info = tuple(sys.version_info)
         if options is None:
             options = {}
             if server and isinstance(server, dict):
@@ -486,7 +497,10 @@ class JIRA:
         LOG.setLevel(_logging.INFO if logging else _logging.CRITICAL)
         self.log = LOG
 
-        self._options: Dict[str, Any] = copy.copy(JIRA.DEFAULT_OPTIONS)
+        self._options: Dict[str, Any] = copy.deepcopy(JIRA.DEFAULT_OPTIONS)
+
+        if default_batch_sizes:
+            self._options["default_batch_size"].update(default_batch_sizes)
 
         if "headers" in options:
             headers = copy.copy(options["headers"])
@@ -710,6 +724,8 @@ class JIRA:
             page_params["startAt"] = startAt
         if maxResults:
             page_params["maxResults"] = maxResults
+        elif batch_size := self._get_batch_size(item_type):
+            page_params["maxResults"] = batch_size
 
         resource = self._get_json(request_path, params=page_params, base=base)
         next_items_page = self._get_items_from_page(item_type, items_key, resource)
@@ -734,6 +750,13 @@ class JIRA:
             # If maxResults evaluates as False, get all items in batches
             if not maxResults:
                 page_size = max_results_from_response or len(items)
+                if batch_size is not None and page_size < batch_size:
+                    self.log.warning(
+                        "'batch_size' set to %s, but only received %s items in batch. Falling back to %s.",
+                        batch_size,
+                        page_size,
+                        page_size,
+                    )
                 page_start = (startAt or start_at_from_response or 0) + page_size
                 if (
                     async_class is not None
@@ -765,6 +788,9 @@ class JIRA:
                     and (total is None or page_start < total)
                     and len(next_items_page) == page_size
                 ):
+                    page_params = (
+                        params.copy() if params else {}
+                    )  # Hack necessary for mock-calls to not change
                     page_params["startAt"] = page_start
                     page_params["maxResults"] = page_size
                     resource = self._get_json(
@@ -804,6 +830,25 @@ class JIRA:
         except KeyError as e:
             # improving the error text so we know why it happened
             raise KeyError(str(e) + " : " + json.dumps(resource))
+
+    def _get_batch_size(self, item_type: Type[ResourceType]) -> Optional[int]:
+        """
+        Return the batch size for the given resource type from the options.
+
+        Check if specified item-type has a mapped batch-size, else try to fallback to batch-size assigned to `Resource`, else fallback to Backend-determined batch-size.
+
+        Returns:
+           Optional[int]: The batch size to use. When the configured batch size is None, the batch size should be determined by the JIRA-Backend.
+        """
+        batch_sizes: Dict[Type[Resource], Optional[int]] = self._options[
+            "default_batch_size"
+        ]
+        try:
+            item_type_batch_size = batch_sizes[item_type]
+        except KeyError:
+            # Cannot find Resource-key -> Fallback to letting JIRA-Backend determine batch-size (=None)
+            item_type_batch_size = batch_sizes.get(Resource, None)
+        return item_type_batch_size
 
     # Information about this client
 
@@ -1131,7 +1176,12 @@ class JIRA:
         if filter is not None:
             params["filter"] = filter
         return self._fetch_pages(
-            Dashboard, "dashboards", "dashboard", startAt, maxResults, params
+            Dashboard,
+            "dashboards",
+            "dashboard",
+            startAt,
+            maxResults,
+            params,
         )
 
     def dashboard(self, id: str) -> Dashboard:
@@ -3028,7 +3078,11 @@ class JIRA:
         return user
 
     def search_assignable_users_for_projects(
-        self, username: str, projectKeys: str, startAt: int = 0, maxResults: int = 50
+        self,
+        username: str,
+        projectKeys: str,
+        startAt: int = 0,
+        maxResults: int = 50,
     ) -> ResultList:
         """Get a list of user Resources that match the search string and can be assigned issues for projects.
 
@@ -3086,6 +3140,11 @@ class JIRA:
         Returns:
             ResultList
         """
+        if not username and not query:
+            raise ValueError(
+                "Either 'username' or 'query' arguments must be specified."
+            )
+
         if username is not None:
             params = {"username": username}
         if query is not None:
@@ -3097,13 +3156,13 @@ class JIRA:
         if expand is not None:
             params["expand"] = expand
 
-        if not username and not query:
-            raise ValueError(
-                "Either 'username' or 'query' arguments must be specified."
-            )
-
         return self._fetch_pages(
-            User, None, "user/assignable/search", startAt, maxResults, params
+            User,
+            None,
+            "user/assignable/search",
+            startAt,
+            maxResults,
+            params,
         )
 
     # non-resource

@@ -343,3 +343,13 @@ def find_by_name(seq, name):
     for seq_item in seq:
         if seq_item["name"] == name:
             return seq_item
+
+
+@pytest.fixture()
+def no_fields(monkeypatch):
+    """When we want to test the __init__ method of the jira.client.JIRA
+    we don't need any external calls to get the fields.
+
+    We don't need the features of a MagicMock, hence we don't use it here.
+    """
+    monkeypatch.setattr(JIRA, "fields", lambda *args, **kwargs: [])
