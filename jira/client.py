@@ -16,6 +16,7 @@ import os
 import re
 import sys
 import time
+import urllib
 import warnings
 from collections import OrderedDict
 from collections.abc import Iterable
@@ -3279,6 +3280,36 @@ class JIRA:
         params = {"username": username}
         url = self._get_url("user/avatar/" + avatar)
         return self._session.delete(url, params=params)
+
+    @translate_resource_args
+    def delete_remote_link(
+        self,
+        issue: Union[str, Issue],
+        *,
+        internal_id: Optional[str] = None,
+        global_id: Optional[str] = None,
+    ) -> Response:
+        """Delete remote link from issue by internalId or globalId.
+
+        Args:
+            issue (str): Key (or Issue) of Issue
+            internal_id (Optional[str]): InternalID of the remote link to delete
+            global_id (Optional[str]): GlobalID of the remote link to delete
+
+        Returns:
+            Response
+        """
+        if not ((internal_id is None) ^ (global_id is None)):
+            raise ValueError("Must supply either 'internal_id' XOR 'global_id'.")
+
+        if internal_id is not None:
+            url = self._get_url(f"issue/{issue}/remotelink/{internal_id}")
+        elif global_id is not None:
+            # stop "&" and other special characters in global_id from messing around with the query
+            global_id = urllib.parse.quote(global_id, safe="")
+            url = self._get_url(f"issue/{issue}/remotelink?globalId={global_id}")
+
+        return self._session.delete(url)
 
     def search_users(
         self,
