@@ -91,7 +91,7 @@ pickleshare==0.7.5
     # via ipython
 pluggy==1.0.0
     # via pytest
-prompt-toolkit==3.0.29
+prompt-toolkit==3.0.30
     # via ipython
 pure-eval==0.2.2
     # via stack-data
