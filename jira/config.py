@@ -31,9 +31,8 @@ def get_jira(
         password (str): password to use for authentication
         appid: appid
         autofix: autofix
-        verify (Union[bool, str]): boolean indicating whether SSL certificates should be
-            verified, or path to a CA_BUNDLE file or directory with certificates of
-            trusted CAs.
+        verify (Union[bool, str]): True to indicate whether SSL certificates should be verified or
+            str path to a CA_BUNDLE file or directory with certificates of trusted CAs. (Default: ``True``)
 
     Returns:
         JIRA: an instance to a JIRA object.

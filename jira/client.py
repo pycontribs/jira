@@ -148,7 +148,7 @@ class ResultList(list, Generic[ResourceType]):
             _startAt (int): Start page. Defaults to 0.
             _maxResults (int): Max results per page. Defaults to 0.
             _total (Optional[int]): Total results from query. Defaults to 0.
-            _isLast (Optional[bool]): Last Page? Defaults to None.
+            _isLast (Optional[bool]): True to mark this page is the last page? (Default: ``None``). see https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/#expansion:~:text=for%20all%20operations.-,isLast,-indicates%20whether%20the
         """
         if iterable is not None:
             list.__init__(self, iterable)
@@ -409,14 +409,14 @@ class JIRA:
 
         Args:
             server (Optional[str]): The server address and context path to use. Defaults to ``http://localhost:2990/jira``.
-            options (Optional[Dict[str, Any]]): Specify the server and properties this client will use.
+            options (Optional[Dict[str, bool, Any]]): Specify the server and properties this client will use.
               Use a dict with any of the following properties:
 
                 * server -- the server address and context path to use. Defaults to ``http://localhost:2990/jira``.
                 * rest_path -- the root REST path to use. Defaults to ``api``, where the Jira REST resources live.
                 * rest_api_version -- the version of the REST resources under rest_path to use. Defaults to ``2``.
                 * agile_rest_path - the REST path to use for Jira Agile requests. Defaults to ``agile``.
-                * verify (Union[bool, str]) -- Verify SSL certs. Defaults to ``True``.
+                * verify (Union[bool, str]) -- Verify SSL certs. (Default: ``True``).
                   Or path to a CA_BUNDLE file or directory with certificates of trusted CAs, for the `requests` library to use.
                 * client_cert (Union[str, Tuple[str,str]]) -- Path to file with both cert and key or a tuple of (cert,key),
                   for the `requests` library to use for client side SSL.
@@ -453,19 +453,15 @@ class JIRA:
 
                 Example jwt structure: ``{'secret': SHARED_SECRET, 'payload': {'iss': PLUGIN_KEY}}``
 
-            validate (bool): True makes your credentials first to be validated. Remember that if you are accessing Jira as anonymous it will fail.
-              (Default: False).
-            get_server_info (bool): True fetches server version info first to determine if some API calls are available. (Default: True).
-            async_ (bool): True enables async requests for those actions where we implemented it, like issue update() or delete().
-              (Default: False).
+            validate (bool): True makes your credentials first to be validated. Remember that if you are accessing Jira as anonymous it will fail. (Default: ``False``).
+            get_server_info (bool): True fetches server version info first to determine if some API calls are available. (Default: ``True``).
+            async_ (bool): True enables async requests for those actions where we implemented it, like issue update() or delete(). (Default: ``False``).
             async_workers (int): Set the number of worker threads for async operations.
-            timeout (Optional[Union[Union[float, int], Tuple[float, float]]]): Set a read/connect timeout for the underlying
-              calls to Jira (default: None).
-              Obviously this means that you cannot rely on the return code when this is enabled.
-            max_retries (int): Sets the amount Retries for the HTTP sessions initiated by the client. (Default: 3)
+            timeout (Optional[Union[Union[float, int], Tuple[float, float]]]): Set a read/connect timeout for the underlying Obviously this means that you cannot rely on the return code when this is enabled.
+            max_retries (int): Sets the amount Retries for the HTTP sessions initiated by the client. (Default: ``3``)
             proxies (Optional[Any]): Sets the proxies for the HTTP session.
             auth (Optional[Tuple[str,str]]): Set a cookie auth token if this is required.
-            logging (bool): True enables loglevel to info => else critical. (Default: True)
+            logging (bool): True enables loglevel to info => else critical. (Default: ``True``)
             default_batch_sizes (Optional[Dict[Type[Resource], Optional[int]]]): Manually specify the batch-sizes for
               the paginated retrieval of different item types. `Resource` is used as a fallback for every item type not
               specified. If an item type is mapped to `None` no fallback occurs, instead the JIRA-backend will use its
@@ -701,7 +697,7 @@ class JIRA:
             items_key (Optional[str]): Path to the items in JSON returned from server.
               Set it to None, if response is an array, and not a JSON object.
             request_path (str): path in request URL
-            startAt (int): index of the first record to be fetched. (Default: 0)
+            startAt (int): index of the first record to be fetched. (Default: ``0``)
             maxResults (int): Maximum number of items to return.
               If maxResults evaluates as False, it will try to get all items in batches. (Default:50)
             params (Dict[str, Any]): Params to be used in all requests. Should not contain startAt and maxResults,
@@ -1098,7 +1094,7 @@ class JIRA:
             description (str): a description of the component
             leadUserName (Optional[str]): the username of the user responsible for this component
             assigneeType (Optional[str]): see the ComponentBean.AssigneeType class for valid values
-            isAssigneeTypeValid (bool): True specifies whether the assignee type is acceptable (Default: False)
+            isAssigneeTypeValid (bool): True specifies whether the assignee type is acceptable (Default: ``False``)
 
         Returns:
             Component
@@ -1166,9 +1162,8 @@ class JIRA:
 
         Args:
             filter (Optional[str]): either "favourite" or "my", the type of dashboards to return
-            startAt (int): index of the first dashboard to return (Default: 0)
-            maxResults (int): maximum number of dashboards to return. If maxResults set to False, it will try to get all items in batches.
-              (Default: 20)
+            startAt (int): index of the first dashboard to return (Default: ``0``)
+            maxResults (int): maximum number of dashboards to return. If maxResults set to False, it will try to get all items in batches. (Default: ``20``)
 
         Returns:
             ResultList
@@ -1246,7 +1241,7 @@ class JIRA:
             name (str): name of the new filter
             description (str): Useful human-readable description of the new filter
             jql (str): query string that defines the filter
-            favourite (bool): True adds this filter to the current user's favorites (Default: None)
+            favourite (Optional[bool]): True adds this filter to the current user's favorites (Default: ``None``)
 
         Returns:
             Filter
@@ -1281,7 +1276,7 @@ class JIRA:
             name (Optional[str]): name of the new filter
             description (Optional[str]): Useful human-readable description of the new filter
             jql (Optional[str]): query string that defines the filter
-            favourite (Optional[bool]): add this filter to the current user's favorites (Default: None)
+            favourite (Optional[bool]): True to add this filter to the current user's favorites (Default: ``None``)
 
         """
         filter = self.filter(filter_id)
@@ -1332,7 +1327,7 @@ class JIRA:
         Args:
             query (Optional[str]): filter groups by name with this string
             exclude (Optional[Any]): filter out groups by name with this string
-            maxResults (int): maximum results to return. (Default: 9999)
+            maxResults (int): maximum results to return. (Default: ``9999``)
 
         Returns:
             List[str]
@@ -1490,7 +1485,7 @@ class JIRA:
         Args:
             fields (Optional[Dict[str, Any]]): a dict containing field names and the values to use. If present, all other keyword arguments
               will be ignored
-            prefetch (bool): True reloads the created issue Resource so all of its data is present in the value returned (Default: True)
+            prefetch (bool): True reloads the created issue Resource so all of its data is present in the value returned (Default: ``True``)
         Returns:
             Issue
         """
@@ -1536,7 +1531,7 @@ class JIRA:
         Args:
             field_list (List[Dict[str, Any]]): a list of dicts each containing field names and the values to use. Each dict
               is an individual issue to create and is subject to its minimum requirements.
-            prefetch (bool): True reloads the created issue Resource so all of its data is present in the value returned (Default: True)
+            prefetch (bool): True reloads the created issue Resource so all of its data is present in the value returned (Default: ``True``)
         Returns:
             List[Dict[str, Any]]
         """
@@ -1682,7 +1677,7 @@ class JIRA:
         Args:
             fields (Dict[str, Any]): a dict containing field names and the values to use. If present, all other keyword arguments
               will be ignored
-            prefetch (bool): True reloads the created issue Resource so all of its data is present in the value returned (Default: True)
+            prefetch (bool): True reloads the created issue Resource so all of its data is present in the value returned (Default: ``True``)
 
         Returns:
             Issue
@@ -1883,7 +1878,7 @@ class JIRA:
             visibility (Optional[Dict[str, str]]): a dict containing two entries: "type" and "value".
               "type" is 'role' (or 'group' if the Jira server has configured comment visibility for groups)
               "value" is the name of the role (or group) to which viewing of this comment will be restricted.
-            is_internal (bool): True marks the comment as 'Internal' in Jira Service Desk (Default: False)
+            is_internal (bool): True marks the comment as 'Internal' in Jira Service Desk (Default: ``False``)
 
         Returns:
             Comment: the created comment
@@ -2519,7 +2514,7 @@ class JIRA:
         """Get a list of issue link type Resources from the server.
 
         Args:
-            force (bool): True forces an update of the cached IssueLinkTypes. (Default: False)
+            force (bool): True forces an update of the cached IssueLinkTypes. (Default: ``False``)
 
         Returns:
             List[IssueLinkType]
@@ -2764,7 +2759,7 @@ class JIRA:
             avatar_img (bytes): file-like object holding the avatar
             contentType (str): explicit specification for the avatar image's content-type
             auto_confirm (bool): True to automatically confirm the temporary avatar by calling
-              :py:meth:`confirm_project_avatar` with the return value of this method. (Default: False)
+              :py:meth:`confirm_project_avatar` with the return value of this method. (Default: ``False``)
         """
         size_from_file = os.path.getsize(filename)
         if size != size_from_file:
@@ -2976,14 +2971,14 @@ class JIRA:
 
         Args:
             jql_str (str): The JQL search string.
-            startAt (int): Index of the first issue to return. (Default: 0)
+            startAt (int): Index of the first issue to return. (Default: ``0``)
             maxResults (int): Maximum number of issues to return. Total number of results is available in the ``total`` attribute of
-              the returned :class:`ResultList`. If maxResults evaluates to False, it will try to get all issues in batches. (Default: 50)
-            validate_query (bool): True to validate the query. (Default: True)
+              the returned :class:`ResultList`. If maxResults evaluates to False, it will try to get all issues in batches. (Default: ``50``)
+            validate_query (bool): True to validate the query. (Default: ``True``)
             fields (Optional[Union[str, List[str]]]): comma-separated string or list of issue fields to include in the results.
               Default is to include all fields.
             expand (Optional[str]): extra information to fetch inside each resource
-            json_result (bool): True to return a JSON response. When set to False a :class:`ResultList` will be returned. (Default: False)
+            json_result (bool): True to return a JSON response. When set to False a :class:`ResultList` will be returned. (Default: ``False``)
 
         Returns:
             Union[Dict,ResultList]: Dict if ``json_result=True``
@@ -3159,9 +3154,9 @@ class JIRA:
         Args:
             username (str): A string to match usernames against
             projectKeys (str): Comma-separated list of project keys to check for issue assignment permissions
-            startAt (int): Index of the first user to return (Default: 0)
+            startAt (int): Index of the first user to return (Default: ``0``)
             maxResults (int): Maximum number of users to return.
-              If maxResults evaluates as False, it will try to get all users in batches. (Default: 50)
+              If maxResults evaluates as False, it will try to get all users in batches. (Default: ``50``)
 
         Returns:
             ResultList
@@ -3200,9 +3195,9 @@ class JIRA:
             issueKey (Optional[str]): Filter returned users by this issue
               (expected if a result will be used to edit this issue)
             expand (Optional[Any]): Extra information to fetch inside each resource
-            startAt (int): Index of the first user to return (Default: 0)
+            startAt (int): Index of the first user to return (Default: ``0``)
             maxResults (int): maximum number of users to return.
-              If maxResults evaluates as False, it will try to get all items in batches. (Default: 50)
+              If maxResults evaluates as False, it will try to get all items in batches. (Default: ``50``)
             query (Optional[str]): Search term. It can just be the email.
 
         Returns:
@@ -3276,7 +3271,7 @@ class JIRA:
             avatar_img (bytes): file-like object containing the avatar
             contentType (Optional[Any]): explicit specification for the avatar image's content-type
             auto_confirm (bool): True to automatically confirm the temporary avatar by calling
-              :py:meth:`confirm_user_avatar` with the return value of this method. (Default: False)
+              :py:meth:`confirm_user_avatar` with the return value of this method. (Default: ``False``)
 
         """
         size_from_file = os.path.getsize(filename)
@@ -3402,8 +3397,8 @@ class JIRA:
             startAt (int): index of the first user to return.
             maxResults (int): maximum number of users to return.
               If maxResults evaluates as False, it will try to get all items in batches.
-            includeActive (bool): True to include active users in the results. (Default: True)
-            includeInactive (bool): True to include inactive users in the results. (Default: False)
+            includeActive (bool): True to include active users in the results. (Default: ``True``)
+            includeInactive (bool): True to include inactive users in the results. (Default: ``False``)
             query (Optional[str]): Search term. It can just be the email.
 
         Returns:
@@ -3435,9 +3430,9 @@ class JIRA:
             user (str): a string to match usernames against.
             issueKey (Optional[str]): find users with browse permission for this issue.
             projectKey (Optional[str]): find users with browse permission for this project.
-            startAt (int): index of the first user to return. (Default: 0)
+            startAt (int): index of the first user to return. (Default: ``0``)
             maxResults (int): maximum number of users to return.
-              If maxResults evaluates as False, it will try to get all items in batches. (Default: 50)
+              If maxResults evaluates as False, it will try to get all items in batches. (Default: ``50``)
 
         Returns:
             ResultList
@@ -3472,8 +3467,8 @@ class JIRA:
             description (str): a description of the version
             releaseDate (Optional[Any]): the release date assigned to the version
             startDate (Optional[Any]): The start date for the version
-            archived (bool): True to create an archived version. (Default: False)
-            released (bool): True to create a released version. (Default: False)
+            archived (bool): True to create an archived version. (Default: ``False``)
+            released (bool): True to create a released version. (Default: ``False``)
 
         Returns:
             Version
@@ -3965,8 +3960,8 @@ class JIRA:
         If you call reindex() without any parameters it will perform a background reindex only if Jira thinks it should do it.
 
         Args:
-            force (bool): True to reindex even if Jira doesn't say this is needed. (Default: False)
-            background (bool): True to reindex in background, slower but does not impact the users. (Default: True)
+            force (bool): True to reindex even if Jira doesn't say this is needed. (Default: ``False``)
+            background (bool): True to reindex in background, slower but does not impact the users. (Default: ``True``)
 
         Returns:
             bool: True if reindexing is in progress or not needed
@@ -4010,7 +4005,7 @@ class JIRA:
 
         Args:
             filename (str): the filename for the backup (Default: "backup.zip")
-            attachments (bool): True to also backup attachments (Default: False)
+            attachments (bool): True to also backup attachments (Default: ``False``)
 
         Returns:
             Union[bool, int]: Returns True if successful else it returns the statuscode of the Response or False
@@ -4494,12 +4489,12 @@ class JIRA:
         Args:
             username (str): the username of the new user
             email (str): email address of the new user
-            directoryId (int): The directory ID the new user should be a part of (Default: 1)
+            directoryId (int): The directory ID the new user should be a part of (Default: ``1``)
             password (Optional[str]): Optional, the password for the new user
             fullname (Optional[str]): Optional, the full name of the new user
-            notify (bool): True to send a notification to the new user. (Default: False)
-            active (bool): True to make the new user active upon creation. (Default: True)
-            ignore_existing (bool): True to ignore existing users. (Default: False)
+            notify (bool): True to send a notification to the new user. (Default: ``False``)
+            active (bool): True to make the new user active upon creation. (Default: ``True``)
+            ignore_existing (bool): True to ignore existing users. (Default: ``False``)
             application_keys (Optional[list]): Keys of products user should have access to
 
         Raises:
@@ -4840,8 +4835,8 @@ class JIRA:
               Note: if the user does not have the 'Create shared objects' permission and tries to create a shared board,
               a private board will be created instead (remember that board sharing depends on the filter sharing).
             project_ids (str): Deprecated. See location_id.
-            preset (str): What preset/type to use for this Board, options: kanban, scrum, agility. (Default: scrum)
-            location_type (str): the location type. Available in Cloud. (Default: user)
+            preset (str): What preset/type to use for this Board, options: kanban, scrum, agility. (Default: "scrum")
+            location_type (str): the location type. Available in Cloud. (Default: "user")
             location_id (Optional[str]):  aka ``projectKeyOrId``.
               The id of Project that the Board should be located under.
               Omit this for a 'user' location_type. Available in Cloud.
