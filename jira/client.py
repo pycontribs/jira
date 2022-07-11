@@ -1804,7 +1804,7 @@ class JIRA:
                 users = self.search_users(user=user, maxResults=20)
 
             if len(users) < 1:
-                return
+                raise JIRAError(f"No matching user found for: '{user}'")
 
             matches = []
             if len(users) > 1:
