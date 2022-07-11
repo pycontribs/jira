@@ -22,7 +22,7 @@ cffi==1.15.0
     # via cryptography
 charset-normalizer==2.0.12
     # via requests
-colorama==0.4.4
+colorama==0.4.5
     # via
     #   ipython
     #   pytest
@@ -112,7 +112,7 @@ pyjwt==2.4.0
     #   requests-jwt
 pyparsing==3.0.7
     # via packaging
-pyspnego==0.5.2
+pyspnego==0.5.3
     # via requests-kerberos
 pytest==7.1.1
     # via
