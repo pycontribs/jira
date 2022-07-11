@@ -332,8 +332,19 @@ Adding, editing and deleting comments is similarly straightforward::
     comment = jira.add_comment('JRA-1330', 'new comment')    # no Issue object required
     comment = jira.add_comment(issue, 'new comment', visibility={'type': 'role', 'value': 'Administrators'})  # for admins only
 
-    comment.update(body = 'updated comment body')
+    comment.update(body='updated comment body')
+    comment.update(body='updated comment body but no mail notification', notify=False)
     comment.delete()
+
+Get all images from a comment::
+
+    issue = jira.issue('JRA-1330')
+    regex_for_png = re.compile(r'\!(\S+?\.(jpg|png|bmp))\|?\S*?\!')
+    pngs_used_in_comment = regex_for_png.findall(issue.fields.comment.comments[0].body)
+    for attachment in issue.fields.attachment:
+        if attachment.filename in pngs_used_in_comment:
+            with open(attachment.filename, 'wb') as f:
+                f.write(attachment.get())
 
 Transitions
 -----------

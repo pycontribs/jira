@@ -16,6 +16,7 @@ import os
 import re
 import sys
 import time
+import urllib
 import warnings
 from collections import OrderedDict
 from collections.abc import Iterable
@@ -35,7 +36,6 @@ from typing import (
     Type,
     TypeVar,
     Union,
-    cast,
     no_type_check,
     overload,
 )
@@ -47,10 +47,11 @@ from requests import Response
 from requests.auth import AuthBase
 from requests.structures import CaseInsensitiveDict
 from requests.utils import get_netrc_auth
+from requests_toolbelt import MultipartEncoder
 
 from jira import __version__
 from jira.exceptions import JIRAError
-from jira.resilientsession import ResilientSession, raise_on_error
+from jira.resilientsession import PrepareRequestForRetry, ResilientSession
 from jira.resources import (
     AgileResource,
     Attachment,
@@ -91,12 +92,6 @@ from jira.resources import (
     Worklog,
 )
 from jira.utils import json_loads, threaded_requests
-
-try:
-    # noinspection PyUnresolvedReferences
-    from requests_toolbelt import MultipartEncoder
-except ImportError:
-    pass
 
 try:
     from requests_jwt import JWTAuth
@@ -366,6 +361,9 @@ class JIRA:
             # 'Expires': 'Thu, 01 Jan 1970 00:00:00 GMT'
             "X-Atlassian-Token": "no-check",
         },
+        "default_batch_size": {
+            Resource: 100,
+        },
     }
 
     checked_version = False
@@ -393,6 +391,7 @@ class JIRA:
         proxies: Any = None,
         timeout: Optional[Union[Union[float, int], Tuple[float, float]]] = None,
         auth: Tuple[str, str] = None,
+        default_batch_sizes: Optional[Dict[Type[Resource], Optional[int]]] = None,
     ):
         """Construct a Jira client instance.
 
@@ -468,11 +467,18 @@ class JIRA:
             proxies (Optional[Any]): Sets the proxies for the HTTP session.
             auth (Optional[Tuple[str,str]]): Set a cookie auth token if this is required.
             logging (bool): Determine whether or not logging should be enabled. (Default: True)
+            default_batch_sizes (Optional[Dict[Type[Resource], Optional[int]]]): Manually specify the batch-sizes for
+              the paginated retrieval of different item types. `Resource` is used as a fallback for every item type not
+              specified. If an item type is mapped to `None` no fallback occurs, instead the JIRA-backend will use its
+              default batch-size. By default all Resources will be queried in batches of 100. E.g., setting this to
+              ``{Issue: 500, Resource: None}`` will make :py:meth:`search_issues` query Issues in batches of 500, while
+              every other item type's batch-size will be controlled by the backend. (Default: None)
+
         """
         # force a copy of the tuple to be used in __del__() because
         # sys.version_info could have already been deleted in __del__()
-        self.sys_version_info = tuple(sys.version_info)
 
+        self.sys_version_info = tuple(sys.version_info)
         if options is None:
             options = {}
             if server and isinstance(server, dict):
@@ -492,7 +498,10 @@ class JIRA:
         LOG.setLevel(_logging.INFO if logging else _logging.CRITICAL)
         self.log = LOG
 
-        self._options: Dict[str, Any] = copy.copy(JIRA.DEFAULT_OPTIONS)
+        self._options: Dict[str, Any] = copy.deepcopy(JIRA.DEFAULT_OPTIONS)
+
+        if default_batch_sizes:
+            self._options["default_batch_size"].update(default_batch_sizes)
 
         if "headers" in options:
             headers = copy.copy(options["headers"])
@@ -716,6 +725,8 @@ class JIRA:
             page_params["startAt"] = startAt
         if maxResults:
             page_params["maxResults"] = maxResults
+        elif batch_size := self._get_batch_size(item_type):
+            page_params["maxResults"] = batch_size
 
         resource = self._get_json(request_path, params=page_params, base=base)
         next_items_page = self._get_items_from_page(item_type, items_key, resource)
@@ -740,6 +751,13 @@ class JIRA:
             # If maxResults evaluates as False, get all items in batches
             if not maxResults:
                 page_size = max_results_from_response or len(items)
+                if batch_size is not None and page_size < batch_size:
+                    self.log.warning(
+                        "'batch_size' set to %s, but only received %s items in batch. Falling back to %s.",
+                        batch_size,
+                        page_size,
+                        page_size,
+                    )
                 page_start = (startAt or start_at_from_response or 0) + page_size
                 if (
                     async_class is not None
@@ -771,6 +789,9 @@ class JIRA:
                     and (total is None or page_start < total)
                     and len(next_items_page) == page_size
                 ):
+                    page_params = (
+                        params.copy() if params else {}
+                    )  # Hack necessary for mock-calls to not change
                     page_params["startAt"] = page_start
                     page_params["maxResults"] = page_size
                     resource = self._get_json(
@@ -810,6 +831,25 @@ class JIRA:
         except KeyError as e:
             # improving the error text so we know why it happened
             raise KeyError(str(e) + " : " + json.dumps(resource))
+
+    def _get_batch_size(self, item_type: Type[ResourceType]) -> Optional[int]:
+        """
+        Return the batch size for the given resource type from the options.
+
+        Check if specified item-type has a mapped batch-size, else try to fallback to batch-size assigned to `Resource`, else fallback to Backend-determined batch-size.
+
+        Returns:
+           Optional[int]: The batch size to use. When the configured batch size is None, the batch size should be determined by the JIRA-Backend.
+        """
+        batch_sizes: Dict[Type[Resource], Optional[int]] = self._options[
+            "default_batch_size"
+        ]
+        try:
+            item_type_batch_size = batch_sizes[item_type]
+        except KeyError:
+            # Cannot find Resource-key -> Fallback to letting JIRA-Backend determine batch-size (=None)
+            item_type_batch_size = batch_sizes.get(Resource, None)
+        return item_type_batch_size
 
     # Information about this client
 
@@ -954,70 +994,68 @@ class JIRA:
         """
         close_attachment = False
         if isinstance(attachment, str):
-            attachment: BufferedReader = open(attachment, "rb")  # type: ignore
-            attachment = cast(BufferedReader, attachment)
+            attachment_io = open(attachment, "rb")  # type: ignore
             close_attachment = True
-        elif isinstance(attachment, BufferedReader) and attachment.mode != "rb":
-            self.log.warning(
-                "%s was not opened in 'rb' mode, attaching file may fail."
-                % attachment.name
-            )
-
-        url = self._get_url("issue/" + str(issue) + "/attachments")
+        else:
+            attachment_io = attachment
+            if isinstance(attachment, BufferedReader) and attachment.mode != "rb":
+                self.log.warning(
+                    "%s was not opened in 'rb' mode, attaching file may fail."
+                    % attachment.name
+                )
 
         fname = filename
         if not fname and isinstance(attachment, BufferedReader):
             fname = os.path.basename(attachment.name)
 
-        if "MultipartEncoder" not in globals():
-            method = "old"
-            try:
-                r = self._session.post(
-                    url,
-                    files={"file": (fname, attachment, "application/octet-stream")},
-                    headers=CaseInsensitiveDict(
-                        {"content-type": None, "X-Atlassian-Token": "no-check"}
-                    ),
-                )
-            finally:
-                if close_attachment:
-                    attachment.close()
-        else:
-            method = "MultipartEncoder"
+        def generate_multipartencoded_request_args() -> Tuple[
+            MultipartEncoder, CaseInsensitiveDict
+        ]:
+            """Returns MultipartEncoder stream of attachment, and the header."""
+            attachment_io.seek(0)
+            encoded_data = MultipartEncoder(
+                fields={"file": (fname, attachment_io, "application/octet-stream")}
+            )
+            request_headers = CaseInsensitiveDict(
+                {
+                    "content-type": encoded_data.content_type,
+                    "X-Atlassian-Token": "no-check",
+                }
+            )
+            return encoded_data, request_headers
 
-            def file_stream() -> MultipartEncoder:
-                """Returns files stream of attachment."""
-                return MultipartEncoder(
-                    fields={"file": (fname, attachment, "application/octet-stream")}
-                )
+        class RetryableMultipartEncoder(PrepareRequestForRetry):
+            def prepare(
+                self, original_request_kwargs: CaseInsensitiveDict
+            ) -> CaseInsensitiveDict:
+                encoded_data, request_headers = generate_multipartencoded_request_args()
+                original_request_kwargs["data"] = encoded_data
+                original_request_kwargs["headers"] = request_headers
+                return super().prepare(original_request_kwargs)
 
-            m = file_stream()
-            try:
-                r = self._session.post(
-                    url,
-                    data=m,
-                    headers=CaseInsensitiveDict(
-                        {
-                            "content-type": m.content_type,
-                            "X-Atlassian-Token": "no-check",
-                        }
-                    ),
-                    retry_data=file_stream,
-                )
-            finally:
-                if close_attachment:
-                    attachment.close()
+        url = self._get_url(f"issue/{issue}/attachments")
+        try:
+            encoded_data, request_headers = generate_multipartencoded_request_args()
+            r = self._session.post(
+                url,
+                data=encoded_data,
+                headers=request_headers,
+                _prepare_retry_class=RetryableMultipartEncoder(),  # type: ignore[call-arg] # ResilientSession handles
+            )
+        finally:
+            if close_attachment:
+                attachment_io.close()
 
         js: Union[Dict[str, Any], List[Dict[str, Any]]] = json_loads(r)
         if not js or not isinstance(js, Iterable):
-            raise JIRAError(f"Unable to parse JSON: {js}")
+            raise JIRAError(f"Unable to parse JSON: {js}. Failed to add attachment?")
         jira_attachment = Attachment(
             self._options, self._session, js[0] if isinstance(js, List) else js
         )
         if jira_attachment.size == 0:
             raise JIRAError(
-                "Added empty attachment via %s method?!: r: %s\nattachment: %s"
-                % (method, r, jira_attachment)
+                "Added empty attachment?!: "
+                + f"Response: {r}\nAttachment: {jira_attachment}"
             )
         return jira_attachment
 
@@ -1139,7 +1177,12 @@ class JIRA:
         if filter is not None:
             params["filter"] = filter
         return self._fetch_pages(
-            Dashboard, "dashboards", "dashboard", startAt, maxResults, params
+            Dashboard,
+            "dashboards",
+            "dashboard",
+            startAt,
+            maxResults,
+            params,
         )
 
     def dashboard(self, id: str) -> Dashboard:
@@ -1788,8 +1831,7 @@ class JIRA:
         url = self._get_latest_url(f"issue/{issue}/assignee")
         user_id = self._get_user_id(assignee)
         payload = {"accountId": user_id} if self._is_cloud else {"name": user_id}
-        r = self._session.put(url, data=json.dumps(payload))
-        raise_on_error(r)
+        self._session.put(url, data=json.dumps(payload))
         return True
 
     @translate_resource_args
@@ -1855,22 +1897,16 @@ class JIRA:
         data: Dict[str, Any] = {"body": body}
 
         if is_internal:
-            data.update(
-                {
-                    "properties": [
-                        {"key": "sd.public.comment", "value": {"internal": is_internal}}
-                    ]
-                }
-            )
-
+            data["properties"] = [
+                {"key": "sd.public.comment", "value": {"internal": is_internal}}
+            ]
         if visibility is not None:
             data["visibility"] = visibility
 
         url = self._get_url("issue/" + str(issue) + "/comment")
         r = self._session.post(url, data=json.dumps(data))
 
-        comment = Comment(self._options, self._session, raw=json_loads(r))
-        return comment
+        return Comment(self._options, self._session, raw=json_loads(r))
 
     # non-resource
     @translate_resource_args
@@ -2675,7 +2711,7 @@ class JIRA:
         if size != size_from_file:
             size = size_from_file
 
-        params = {"filename": filename, "size": size}
+        params: Dict[str, Union[int, str]] = {"filename": filename, "size": size}
 
         headers: Dict[str, Any] = {"X-Atlassian-Token": "no-check"}
         if contentType is not None:
@@ -3046,7 +3082,11 @@ class JIRA:
         return user
 
     def search_assignable_users_for_projects(
-        self, username: str, projectKeys: str, startAt: int = 0, maxResults: int = 50
+        self,
+        username: str,
+        projectKeys: str,
+        startAt: int = 0,
+        maxResults: int = 50,
     ) -> ResultList:
         """Get a list of user Resources that match the search string and can be assigned issues for projects.
 
@@ -3104,6 +3144,11 @@ class JIRA:
         Returns:
             ResultList
         """
+        if not username and not query:
+            raise ValueError(
+                "Either 'username' or 'query' arguments must be specified."
+            )
+
         if username is not None:
             params = {"username": username}
         if query is not None:
@@ -3115,13 +3160,13 @@ class JIRA:
         if expand is not None:
             params["expand"] = expand
 
-        if not username and not query:
-            raise ValueError(
-                "Either 'username' or 'query' arguments must be specified."
-            )
-
         return self._fetch_pages(
-            User, None, "user/assignable/search", startAt, maxResults, params
+            User,
+            None,
+            "user/assignable/search",
+            startAt,
+            maxResults,
+            params,
         )
 
     # non-resource
@@ -3176,7 +3221,11 @@ class JIRA:
         # remove path from filename
         filename = os.path.split(filename)[1]
 
-        params = {"username": user, "filename": filename, "size": size}
+        params: Dict[str, Union[str, int]] = {
+            "username": user,
+            "filename": filename,
+            "size": size,
+        }
 
         headers: Dict[str, Any]
         headers = {"X-Atlassian-Token": "no-check"}
@@ -3234,6 +3283,36 @@ class JIRA:
         params = {"username": username}
         url = self._get_url("user/avatar/" + avatar)
         return self._session.delete(url, params=params)
+
+    @translate_resource_args
+    def delete_remote_link(
+        self,
+        issue: Union[str, Issue],
+        *,
+        internal_id: Optional[str] = None,
+        global_id: Optional[str] = None,
+    ) -> Response:
+        """Delete remote link from issue by internalId or globalId.
+
+        Args:
+            issue (str): Key (or Issue) of Issue
+            internal_id (Optional[str]): InternalID of the remote link to delete
+            global_id (Optional[str]): GlobalID of the remote link to delete
+
+        Returns:
+            Response
+        """
+        if not ((internal_id is None) ^ (global_id is None)):
+            raise ValueError("Must supply either 'internal_id' XOR 'global_id'.")
+
+        if internal_id is not None:
+            url = self._get_url(f"issue/{issue}/remotelink/{internal_id}")
+        elif global_id is not None:
+            # stop "&" and other special characters in global_id from messing around with the query
+            global_id = urllib.parse.quote(global_id, safe="")
+            url = self._get_url(f"issue/{issue}/remotelink?globalId={global_id}")
+
+        return self._session.delete(url)
 
     def search_users(
         self,
@@ -3710,8 +3789,7 @@ class JIRA:
             # raw displayName
             self.log.debug(f"renaming {self.user(old_user).emailAddress}")
 
-            r = self._session.put(url, params=params, data=json.dumps(payload))
-            raise_on_error(r)
+            self._session.put(url, params=params, data=json.dumps(payload))
         else:
             raise NotImplementedError(
                 "Support for renaming users in Jira " "< 6.0.0 has been removed."
@@ -4333,16 +4411,16 @@ class JIRA:
             directoryId (int): The directory ID the new user should be a part of (Default: 1)
             password (Optional[str]): Optional, the password for the new user
             fullname (Optional[str]): Optional, the full name of the new user
-            notify (bool): Whether or not to send a notification to the new user. (Default: False)
-            active (bool): Whether or not to make the new user active upon creation. (Default: True)
-            ignore_existing (bool): Whether or not to ignore and existing user. (Default: False)
-            applicationKeys (Optional[list]): Keys of products user should have access to
+            notify (bool): Whether to send a notification to the new user. (Default: False)
+            active (bool): Whether to make the new user active upon creation. (Default: True)
+            ignore_existing (bool): Whether to ignore and existing user. (Default: False)
+            application_keys (Optional[list]): Keys of products user should have access to
 
         Raises:
             JIRAError:  If username already exists and `ignore_existing` has not been set to `True`.
 
         Returns:
-            bool: Whether or not the user creation was successful.
+            bool: Whether the user creation was successful.
 
 
         """
@@ -4531,13 +4609,29 @@ class JIRA:
             self.AGILE_BASE_URL,
         )
 
-    def sprints_by_name(self, id, extended=False):
+    def sprints_by_name(
+        self, id: Union[str, int], extended: bool = False, state: str = None
+    ) -> Dict[str, Dict[str, Any]]:
+        """Get a dictionary of sprint Resources where the name of the sprint is the key.
+
+        Args:
+            board_id (int): the board to get sprints from
+            extended (bool): Deprecated.
+            state (str): Filters results to sprints in specified states. Valid values: `future`, `active`, `closed`.
+              You can define multiple states separated by commas
+
+        Returns:
+            Dict[str, Dict[str, Any]]: dictionary of sprints with the sprint name as key
+        """
         sprints = {}
-        for s in self.sprints(id, extended=extended):
+        for s in self.sprints(id, extended=extended, state=state):
             if s.name not in sprints:
                 sprints[s.name] = s.raw
             else:
-                raise Exception
+                raise JIRAError(
+                    f"There are multiple sprints defined with the name {s.name} on board id {id},\n"
+                    f"returning a dict with sprint names as a key, assumes unique names for each sprint"
+                )
         return sprints
 
     def update_sprint(self, id, name=None, startDate=None, endDate=None, state=None):

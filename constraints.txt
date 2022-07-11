@@ -16,20 +16,20 @@ babel==2.10.1
     # via sphinx
 backcall==0.2.0
     # via ipython
-certifi==2021.10.8
+certifi==2022.5.18.1
     # via requests
 cffi==1.15.0
     # via cryptography
 charset-normalizer==2.0.12
     # via requests
-colorama==0.4.4
+colorama==0.4.5
     # via
     #   ipython
     #   pytest
     #   sphinx
-coverage==6.3.2
+coverage==6.4.1
     # via pytest-cov
-cryptography==37.0.1
+cryptography==37.0.2
     # via
     #   pyspnego
     #   requests-kerberos
@@ -83,6 +83,8 @@ packaging==21.3
     #   pytest
     #   pytest-sugar
     #   sphinx
+parameterized==0.8.1
+    # via jira (setup.cfg)
 parso==0.8.3
     # via jedi
 pickleshare==0.7.5
@@ -104,7 +106,7 @@ pygments==2.12.0
     # via
     #   ipython
     #   sphinx
-pyjwt==2.3.0
+pyjwt==2.4.0
     # via
     #   jira (setup.cfg)
     #   requests-jwt
@@ -142,7 +144,7 @@ pywin32-ctypes==0.2.0
     # via keyring
 pyyaml==6.0
     # via jira (setup.cfg)
-requests==2.27.1
+requests==2.28.1
     # via
     #   jira (setup.cfg)
     #   requests-futures
@@ -173,7 +175,7 @@ six==1.16.0
     #   requests-mock
 snowballstemmer==2.2.0
     # via sphinx
-sphinx==4.5.0
+sphinx==5.0.2
     # via
     #   jira (setup.cfg)
     #   sphinx-rtd-theme

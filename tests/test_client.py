@@ -52,16 +52,6 @@ def slug(request, cl_admin):
     return slug
 
 
-@pytest.fixture()
-def no_fields(monkeypatch):
-    """When we want to test the __init__ method of the jira.client.JIRA
-    we don't need any external calls to get the fields.
-
-    We don't need the features of a MagicMock, hence we don't use it here.
-    """
-    monkeypatch.setattr(jira.client.JIRA, "fields", lambda *args, **kwargs: [])
-
-
 def test_delete_project(cl_admin, cl_normal, slug):
 
     assert cl_admin.delete_project(slug)
