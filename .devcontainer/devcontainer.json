@@ -1,0 +1,84 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
+// https://github.com/microsoft/vscode-dev-containers/tree/v0.231.5/containers/ubuntu
+{
+	"name": "Ubuntu",
+	"build": {
+		"dockerfile": "Dockerfile",
+		// Update 'VARIANT' to pick an Ubuntu version: hirsute, focal, bionic
+		// Use hirsute or bionic on local arm64/Apple Silicon.
+		"args": {
+			"VARIANT": "focal"
+		}
+	},
+	// Set *default* container specific settings.json values on container create.
+	"settings": {
+		"[python]": {
+			"editor.codeActionsOnSave": {
+				"source.organizeImports": true,
+				"editor.formatOnSave": true,
+			},
+			"editor.formatOnSave": true, // Required to actually format on save
+		},
+		"editor.rulers": [
+			80, // default color or as customized (with "editorRuler.foreground")
+			{
+				"column": 88,
+				"color": "#ff000065"
+			},
+		],
+		"python.defaultInterpreterPath": "/usr/local/python/bin/python",
+		"python.formatting.provider": "black",
+		"python.linting.mypyEnabled": true,
+		"python.linting.mypyPath": "mypy",
+		"python.linting.mypyArgs": [
+			"--follow-imports=silent",
+			"--ignore-missing-imports",
+			"--show-column-numbers",
+			"--show-error-codes"
+		],
+		"python.linting.ignorePatterns": [
+			"**/site-packages/",
+			".vscode/*.py",
+			"**/.tox/",
+			"*.pyi",
+			"**/dist/"
+		],
+		"search.exclude": {
+			"**/build/lib/*": true,
+			"**/dist/*": true,
+		},
+		"python.testing.pytestArgs": [
+			"--no-cov",
+			"-v",
+			"tests/"
+		],
+		"python.testing.pytestEnabled": true,
+		"python.testing.pytestPath": "pytest",
+	},
+	// Add the IDs of extensions you want installed when the container is created.
+	"extensions": [
+		"njpwerner.autodocstring",
+		"yzhang.markdown-all-in-one",
+		"ms-python.python",
+		"littlefoxteam.vscode-python-test-adapter",
+		"ms-vscode-remote.remote-containers",
+		"hbenl.vscode-test-explorer",
+		"trond-snekvik.simple-rst",
+		"wayou.vscode-todo-highlight",
+		"ms-azuretools.vscode-docker"
+	],
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	"forwardPorts": [
+		// The jira server instance we run via docker is exposed on:
+		2990
+	],
+	// Use 'postCreateCommand' to run commands after the container is created.
+	"postCreateCommand": "./.devcontainer/post_create.sh",
+	// Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
+	// "remoteUser": "vscode",
+	"features": {
+		"docker-in-docker": "latest",
+		"git": "latest",
+		"python": "3.10"
+	}
+}
