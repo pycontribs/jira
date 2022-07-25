@@ -101,7 +101,7 @@ except ImportError:
 try:
     from typing import SupportsIndex  # type:ignore[attr-defined] # Py38+
 except ImportError:
-    from typing_extensions import SupportsIndex
+    from typing import SupportsIndex
 
 LOG = _logging.getLogger("jira")
 LOG.addHandler(_logging.NullHandler())
