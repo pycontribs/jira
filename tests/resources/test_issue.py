@@ -37,9 +37,16 @@ class IssueTests(JiraTestCase):
         self.assertFalse(hasattr(issues[0].fields, "reporter"))
 
     def test_issue_search_default_behaviour_included_fields(self):
-        issues = self.jira.search_issues("key=%s" % self.issue_1)
+        search_str = f"key={self.issue_1}"
+        issues = self.jira.search_issues(search_str)
         self.assertTrue(hasattr(issues[0].fields, "reporter"))
         self.assertTrue(hasattr(issues[0].fields, "comment"))
+
+        # fields=None should be valid and return all fields (ie. default behavior)
+        self.assertEqual(
+            self.jira.search_issues(search_str),
+            self.jira.search_issues(search_str, fields=None),
+        )
 
     def test_issue_get_field(self):
         issue = self.jira.issue(self.issue_1)
