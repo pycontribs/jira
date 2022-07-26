@@ -32,6 +32,7 @@ from typing import (
     List,
     Literal,
     Optional,
+    SupportsIndex,
     Tuple,
     Type,
     TypeVar,
@@ -98,10 +99,6 @@ try:
 except ImportError:
     pass
 
-try:
-    from typing import SupportsIndex  # type:ignore[attr-defined] # Py38+
-except ImportError:
-    from typing import SupportsIndex
 
 LOG = _logging.getLogger("jira")
 LOG.addHandler(_logging.NullHandler())
