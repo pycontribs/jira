@@ -37,7 +37,7 @@ decorator==5.1.1
     # via ipython
 defusedxml==0.7.1
     # via jira (setup.cfg)
-docutils==0.18.1
+docutils==0.17.1
     # via
     #   jira (setup.cfg)
     #   sphinx
