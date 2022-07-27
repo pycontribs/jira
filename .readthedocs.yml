@@ -8,8 +8,10 @@ build:
   tools:
     python: "3.8"
   jobs:
-    pre_install:
-      - export PIP_CONSTRAINT=constraints.txt
+    # Work-around to actually constrain dependencies
+    # https://github.com/readthedocs/readthedocs.org/issues/7258#issuecomment-1094978683
+    post_install:
+      - python -m pip install --upgrade --upgrade-strategy eager --no-cache-dir .[docs] -c constraints.txt
 
 python:
   install:
