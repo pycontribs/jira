@@ -175,7 +175,7 @@ six==1.16.0
     #   requests-mock
 snowballstemmer==2.2.0
     # via sphinx
-sphinx==5.0.2
+sphinx==5.1.1
     # via
     #   jira (setup.cfg)
     #   sphinx-rtd-theme
