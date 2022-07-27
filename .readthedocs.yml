@@ -7,10 +7,12 @@ build:
   os: ubuntu-22.04
   tools:
     python: "3.8"
+  jobs:
+    pre_install:
+      - export PIP_CONSTRAINT=constraints.txt
 
 python:
   install:
-    # PIP_CONSTRAINT has been set as env variable in the RTD web interface
     - method: pip
       path: .
       extra_requirements:
