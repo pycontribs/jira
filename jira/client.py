@@ -1005,8 +1005,8 @@ class JIRA:
                 )
 
         fname = filename
-        if not fname and isinstance(attachment, BufferedReader):
-            fname = os.path.basename(attachment.name)
+        if not fname and isinstance(attachment_io, BufferedReader):
+            fname = os.path.basename(attachment_io.name)
 
         def generate_multipartencoded_request_args() -> Tuple[
             MultipartEncoder, CaseInsensitiveDict
