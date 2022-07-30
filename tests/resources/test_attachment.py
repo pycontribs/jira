@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from tests.conftest import TEST_ATTACH_PATH, JiraTestCase
 
@@ -30,6 +31,14 @@ class AttachmentTests(JiraTestCase):
 
     def test_2_add_remove_attachment_using_filename(self):
         issue = self.jira.issue(self.issue_1)
+        attachment_no_filename_specified = self.jira.add_attachment(
+            issue,
+            TEST_ATTACH_PATH,
+        )
+        new_attachment = self.jira.attachment(attachment_no_filename_specified.id)
+        msg = f"attachment, no filename specified {new_attachment.__dict__} of issue {issue}"
+        self.assertEqual(new_attachment.filename, Path(TEST_ATTACH_PATH).name, msg=msg)
+        #
         attachment = self.jira.add_attachment(
             issue, TEST_ATTACH_PATH, "new test attachment"
         )
