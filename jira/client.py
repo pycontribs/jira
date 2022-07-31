@@ -66,6 +66,7 @@ from jira.resources import (
     Issue,
     IssueLink,
     IssueLinkType,
+    IssueProperty,
     IssueSecurityLevelScheme,
     IssueType,
     IssueTypeScheme,
@@ -2395,6 +2396,49 @@ class JIRA:
         r = self._session.post(url, params=params, data=json.dumps(data))
 
         return Worklog(self._options, self._session, json_loads(r))
+
+    # Issue properties
+
+    @translate_resource_args
+    def issue_properties(self, issue: str) -> List[IssueProperty]:
+        """Get a list of issue property Resource from the server for an issue.
+
+        Args:
+            issue (str): ID or key of the issue to get properties from
+
+        Returns:
+            List[IssueProperty]
+        """
+        r_json = self._get_json("issue/" + str(issue) + "/properties")
+        properties = [self.issue_property(issue, key["key"]) for key in r_json["keys"]]
+        return properties
+
+    @translate_resource_args
+    def issue_property(self, issue: str, key: str) -> IssueProperty:
+        """Get a specific issue property Resource from the server.
+
+        Args:
+            issue (str): ID or key of the issue to get the property from
+            key (str): Key of the property to get
+        Returns:
+            IssueProperty
+        """
+        return self._find_for_resource(IssueProperty, (issue, key))
+
+    @translate_resource_args
+    def add_issue_property(self, issue: str, key: str, data) -> Response:
+        """Add or update a specific issue property Resource.
+
+        Args:
+            issue (str): ID or key of the issue to set the property to
+            key (str): Key of the property to set
+            data: The data to set for the property
+        Returns:
+            Response
+        """
+
+        url = self._get_url("issue/" + issue + "/properties/" + key)
+        return self._session.put(url, data=json.dumps(data))
 
     # Issue links
 

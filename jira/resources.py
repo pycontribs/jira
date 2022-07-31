@@ -42,6 +42,7 @@ __all__ = (
     "Worklog",
     "IssueLink",
     "IssueLinkType",
+    "IssueProperty",
     "IssueSecurityLevelScheme",
     "IssueType",
     "IssueTypeScheme",
@@ -290,6 +291,20 @@ class Resource:
         else:
             path = self._resource.format(id)
         url = self._get_url(path)
+        self._find_by_url(url, params)
+
+    def _find_by_url(
+        self,
+        url: str,
+        params: Optional[Dict[str, str]] = None,
+    ):
+        """Finds a resource on the specified url.
+
+        Args:
+            url (str): url
+            params (Optional[Dict[str, str]]): params
+
+        """
         self._load(url, params=params)
 
     def _get_url(self, path: str) -> str:
@@ -996,6 +1011,30 @@ class Worklog(Resource):
         super().delete(params)
 
 
+class IssueProperty(Resource):
+    """Custom data against an issue."""
+
+    def __init__(
+        self,
+        options: Dict[str, str],
+        session: ResilientSession,
+        raw: Dict[str, Any] = None,
+    ):
+        Resource.__init__(self, "issue/{0}/properties/{1}", options, session)
+        if raw:
+            self._parse_raw(raw)
+        self.raw: Dict[str, Any] = cast(Dict[str, Any], self.raw)
+
+    def _find_by_url(
+        self,
+        url: str,
+        params: Optional[Dict[str, str]] = None,
+    ):
+        super()._find_by_url(url, params)
+        # An IssueProperty never returns "self" identifier, set it
+        self.self = url
+
+
 class IssueLink(Resource):
     """Link between two issues."""
 
@@ -1485,6 +1524,7 @@ resource_class_map: Dict[str, Type[Resource]] = {
     r"issue/[^/]+/votes$": Votes,
     r"issue/[^/]+/watchers$": Watchers,
     r"issue/[^/]+/worklog/[^/]+$": Worklog,
+    r"issue/[^/]+/properties/[^/]+$": IssueProperty,
     r"issueLink/[^/]+$": IssueLink,
     r"issueLinkType/[^/]+$": IssueLinkType,
     r"issuetype/[^/]+$": IssueType,
