@@ -2953,9 +2953,7 @@ class JIRA:
                     "All issues cannot be fetched at once, when json_result parameter is set",
                     Warning,
                 )
-            r_json: Dict[str, Any] = self._get_json(
-                "search", params=search_params
-            )
+            r_json: Dict[str, Any] = self._get_json("search", params=search_params)
             return r_json
 
         issues = self._fetch_pages(
