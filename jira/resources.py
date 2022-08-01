@@ -298,12 +298,13 @@ class Resource:
         url: str,
         params: Optional[Dict[str, str]] = None,
     ):
-        """Finds a resource on the specified url.
+        """Finds a resource on the specified url. The resource is loaded
+        with the JSON data returned by doing a request on the specified
+        url.
 
         Args:
             url (str): url
             params (Optional[Dict[str, str]]): params
-
         """
         self._load(url, params=params)
 

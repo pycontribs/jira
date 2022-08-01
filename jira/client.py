@@ -2409,7 +2409,7 @@ class JIRA:
         Returns:
             List[IssueProperty]
         """
-        r_json = self._get_json("issue/" + str(issue) + "/properties")
+        r_json = self._get_json(f"issue/{issue}/properties")
         properties = [self.issue_property(issue, key["key"]) for key in r_json["keys"]]
         return properties
 
@@ -2437,7 +2437,7 @@ class JIRA:
             Response
         """
 
-        url = self._get_url("issue/" + issue + "/properties/" + key)
+        url = self._get_url(f"issue/{issue}/properties/{key}")
         return self._session.put(url, data=json.dumps(data))
 
     # Issue links
