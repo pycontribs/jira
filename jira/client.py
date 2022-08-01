@@ -135,19 +135,14 @@ def _field_worker(
 ResourceType = TypeVar("ResourceType", contravariant=True, bound=Resource)
 
 
-class ResultList(list, Generic[ResourceType]):
+class PageRequest:
     def __init__(
         self,
         item_type: Type[ResourceType],
         items_key: Optional[str],
-        iterable: Iterable = None,
-        _request_path: str = None,
-        _params: Dict[str, Any] = None,
-        _base: str = None,
-        _startAt: int = 0,
-        _maxResults: int = 0,
-        _total: Optional[int] = None,
-        _isLast: Optional[bool] = None,
+        request_path: str = None,
+        params: Dict[str, Any] = None,
+        base: str = None,
     ) -> None:
         """
 
@@ -155,10 +150,31 @@ class ResultList(list, Generic[ResourceType]):
             item_type (Type[Resource]): Type of single item.
             items_key (Optional[str]): Path to the items in JSON returned from server.
               Set it to None, if response is an array, and not a JSON object.
+            request_path (str): path in request URL
+            params (Dict[str, Any]): Params to be used in all requests. Should not contain startAt and maxResults,
+            base (str): base URL to use for the requests.
+        """
+        self.item_type = item_type
+        self.items_key = items_key
+        self.request_path = request_path
+        self.params = params
+        self.base = base
+
+
+class ResultList(list, Generic[ResourceType]):
+    def __init__(
+        self,
+        iterable: Iterable = None,
+        _startAt: int = 0,
+        _maxResults: int = 0,
+        _total: Optional[int] = None,
+        _isLast: Optional[bool] = None,
+        _page_request: Optional[PageRequest] = None,
+    ) -> None:
+        """
+
+        Args:
             iterable (Iterable): [description]. Defaults to None.
-            _request_path (str): path in request URL
-            _params (Dict[str, Any]): Params to be used in all requests. Should not contain startAt and maxResults,
-            _base (str): base URL to use for the requests.
             _startAt (int): Start page. Defaults to 0.
             _maxResults (int): Max results per page. Defaults to 0.
             _total (Optional[int]): Total results from query. Defaults to 0.
@@ -169,16 +185,12 @@ class ResultList(list, Generic[ResourceType]):
         else:
             list.__init__(self)
 
-        self.item_type = item_type
-        self.items_key = items_key
-        self.request_path = _request_path
-        self.params = _params
-        self.base = _base
         self.startAt = _startAt
         self.maxResults = _maxResults
         # Optional parameters:
         self.isLast = _isLast
         self.total = _total if _total is not None else len(self)
+        self.page_request = _page_request
 
         self.iterable: List[ResourceType] = list(iterable) if iterable else []
         self.current = self.startAt
@@ -744,6 +756,7 @@ class JIRA:
         elif batch_size := self._get_batch_size(item_type):
             page_params["maxResults"] = batch_size
 
+        page_request = PageRequest(item_type, items_key, request_path, params, base)
         resource = self._get_json(request_path, params=page_params, base=base)
         next_items_page = self._get_items_from_page(item_type, items_key, resource)
         items = next_items_page
@@ -824,30 +837,17 @@ class JIRA:
                         break
 
             return ResultList(
-                item_type,
-                items_key,
                 items,
-                request_path,
-                params,
-                base,
                 start_at_from_response,
                 max_results_from_response,
                 total,
                 is_last,
+                page_request,
             )
         else:  # TODO: unreachable
             # it seems that search_users can return a list() containing a single user!
             return ResultList(
-                item_type,
-                items_key,
-                [item_type(self._options, self._session, resource)],
-                None,
-                None,
-                None,
-                0,
-                1,
-                1,
-                True,
+                [item_type(self._options, self._session, resource)], 0, 1, 1, True
             )
 
     def _get_items_from_page(
@@ -4969,14 +4969,16 @@ class Paginator(Generator):
             startAt = self.items.startAt + self.items.maxResults
             if startAt >= self.items.total:
                 raise StopIteration
+            if not self.items.page_request:
+                raise StopIteration
             self.items = self.jira._fetch_pages(
-                self.items.item_type,
-                self.items.items_key,
-                self.items.request_path,
+                self.items.page_request.item_type,
+                self.items.page_request.items_key,
+                self.items.page_request.request_path,
                 startAt,
                 self.items.maxResults,
-                self.items.params,
-                self.items.base,
+                self.items.page_request.params,
+                self.items.page_request.base,
             )
             self.iter = iter(self.items)
             item = next(self.iter)
