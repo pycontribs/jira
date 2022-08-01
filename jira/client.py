@@ -2905,7 +2905,7 @@ class JIRA:
         fields: Optional[Union[str, List[str]]] = "*all",
         expand: Optional[str] = None,
         json_result: bool = False,
-    ) -> Union[List[Dict[str, Any]], ResultList[Issue]]:
+    ) -> Union[Dict[str, Any], ResultList[Issue]]:
         """Get a :class:`~jira.client.ResultList` of issue Resources matching a JQL search string.
 
         Args:
@@ -2953,9 +2953,7 @@ class JIRA:
                     "All issues cannot be fetched at once, when json_result parameter is set",
                     Warning,
                 )
-            r_json: List[Dict[str, Any]] = self._get_json(
-                "search", params=search_params
-            )
+            r_json: Dict[str, Any] = self._get_json("search", params=search_params)
             return r_json
 
         issues = self._fetch_pages(
