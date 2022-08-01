@@ -1423,7 +1423,7 @@ def dict2resource(
     or a ``PropertyHolder`` object (if no ``self`` link is present).
     """
     if top is None:
-        top = PropertyHolder(raw)
+        top = PropertyHolder()
 
     seqs = tuple, list, set, frozenset
     for i, j in raw.items():
@@ -1535,5 +1535,4 @@ def cls_for_resource(resource_literal: str) -> Type[Resource]:
 
 
 class PropertyHolder:
-    def __init__(self, raw):
-        __bases__ = raw  # noqa
+    """An object for storing named attributes."""
