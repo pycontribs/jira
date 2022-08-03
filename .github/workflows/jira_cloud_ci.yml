@@ -15,6 +15,7 @@ on:
 
 jobs:
   test:
+    environment: cloud
     name: py${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -28,7 +29,7 @@ jobs:
       - uses: actions/checkout@master
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -37,7 +38,7 @@ jobs:
         run: |
           echo "::set-output name=dir::$(pip cache dir)"
       - name: Setup the Pip cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{ steps.pip-cache.outputs.dir }}
           key: >-
@@ -64,7 +65,7 @@ jobs:
           CI_JIRA_CLOUD_USER_TOKEN: ${{ secrets.CLOUD_USER_TOKEN }}
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1.0.15
+        uses: codecov/codecov-action@v3.1.0
         with:
           file: ./coverage.xml
           name: ${{ runner.os }}-${{ matrix.python-version }}-Cloud

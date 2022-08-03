@@ -12,9 +12,9 @@ Another example with methods to authenticate with your Jira:
 
 .. literalinclude:: ../examples/auth.py
 
-This example shows how to work with GreenHopper:
+This example shows how to work with Jira Agile / Jira Software (formerly GreenHopper):
 
-.. literalinclude:: ../examples/greenhopper.py
+.. literalinclude:: ../examples/agile.py
 
 
 Quickstart
@@ -128,9 +128,6 @@ Jira Cloud
 
 This is also referred to as an API Token in the
 `Jira Cloud documentation <https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/>`_ ::
-
-
-.. code-block:: python
 
     auth_jira = JIRA(basic_auth=('email', 'API token'))
 
@@ -335,8 +332,19 @@ Adding, editing and deleting comments is similarly straightforward::
     comment = jira.add_comment('JRA-1330', 'new comment')    # no Issue object required
     comment = jira.add_comment(issue, 'new comment', visibility={'type': 'role', 'value': 'Administrators'})  # for admins only
 
-    comment.update(body = 'updated comment body')
+    comment.update(body='updated comment body')
+    comment.update(body='updated comment body but no mail notification', notify=False)
     comment.delete()
+
+Get all images from a comment::
+
+    issue = jira.issue('JRA-1330')
+    regex_for_png = re.compile(r'\!(\S+?\.(jpg|png|bmp))\|?\S*?\!')
+    pngs_used_in_comment = regex_for_png.findall(issue.fields.comment.comments[0].body)
+    for attachment in issue.fields.attachment:
+        if attachment.filename in pngs_used_in_comment:
+            with open(attachment.filename, 'wb') as f:
+                f.write(attachment.get())
 
 Transitions
 -----------

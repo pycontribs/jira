@@ -1,4 +1,3 @@
-#!/usr/bin/python
 """
 This module implements a friendly (well, friendlier) interface between the raw JSON
 responses from Jira and the Resource/dict abstractions provided by this library. Users
@@ -17,6 +16,7 @@ import os
 import re
 import sys
 import time
+import urllib
 import warnings
 from collections import OrderedDict
 from collections.abc import Iterable
@@ -30,32 +30,31 @@ from typing import (
     Generic,
     Iterator,
     List,
+    Literal,
     Optional,
+    SupportsIndex,
     Tuple,
     Type,
     TypeVar,
     Union,
-    cast,
     no_type_check,
     overload,
 )
 from urllib.parse import parse_qs, quote, urlparse
 
 import requests
-from pkg_resources import parse_version
+from packaging.version import parse as parse_version
 from requests import Response
 from requests.auth import AuthBase
 from requests.structures import CaseInsensitiveDict
 from requests.utils import get_netrc_auth
+from requests_toolbelt import MultipartEncoder
 
 from jira import __version__
-
-# GreenHopper specific resources
 from jira.exceptions import JIRAError
-from jira.resilientsession import ResilientSession, raise_on_error
-
-# Jira-specific resources
+from jira.resilientsession import PrepareRequestForRetry, ResilientSession
 from jira.resources import (
+    AgileResource,
     Attachment,
     Board,
     Comment,
@@ -64,14 +63,17 @@ from jira.resources import (
     CustomFieldOption,
     Dashboard,
     Filter,
-    GreenHopperResource,
     Group,
     Issue,
     IssueLink,
     IssueLinkType,
+    IssueSecurityLevelScheme,
     IssueType,
+    IssueTypeScheme,
+    NotificationScheme,
     PermissionScheme,
     Priority,
+    PriorityScheme,
     Project,
     RemoteLink,
     RequestType,
@@ -87,25 +89,16 @@ from jira.resources import (
     Version,
     Votes,
     Watchers,
+    WorkflowScheme,
     Worklog,
 )
 from jira.utils import json_loads, threaded_requests
-
-try:
-    # noinspection PyUnresolvedReferences
-    from requests_toolbelt import MultipartEncoder
-except ImportError:
-    pass
 
 try:
     from requests_jwt import JWTAuth
 except ImportError:
     pass
 
-try:
-    from typing import SupportsIndex  # type:ignore[attr-defined] # Py38+
-except ImportError:
-    from typing_extensions import SupportsIndex
 
 LOG = _logging.getLogger("jira")
 LOG.addHandler(_logging.NullHandler())
@@ -345,7 +338,7 @@ class JIRA:
         "context_path": "/",
         "rest_path": "api",
         "rest_api_version": "2",
-        "agile_rest_path": GreenHopperResource.AGILE_BASE_REST_PATH,
+        "agile_rest_path": AgileResource.AGILE_BASE_REST_PATH,
         "agile_rest_api_version": "1.0",
         "verify": True,
         "resilient": True,
@@ -365,13 +358,16 @@ class JIRA:
             # 'Expires': 'Thu, 01 Jan 1970 00:00:00 GMT'
             "X-Atlassian-Token": "no-check",
         },
+        "default_batch_size": {
+            Resource: 100,
+        },
     }
 
     checked_version = False
 
     # TODO(ssbarnea): remove these two variables and use the ones defined in resources
     JIRA_BASE_URL = Resource.JIRA_BASE_URL
-    AGILE_BASE_URL = GreenHopperResource.AGILE_BASE_URL
+    AGILE_BASE_URL = AgileResource.AGILE_BASE_URL
 
     def __init__(
         self,
@@ -392,6 +388,7 @@ class JIRA:
         proxies: Any = None,
         timeout: Optional[Union[Union[float, int], Tuple[float, float]]] = None,
         auth: Tuple[str, str] = None,
+        default_batch_sizes: Optional[Dict[Type[Resource], Optional[int]]] = None,
     ):
         """Construct a Jira client instance.
 
@@ -415,8 +412,7 @@ class JIRA:
                 * server -- the server address and context path to use. Defaults to ``http://localhost:2990/jira``.
                 * rest_path -- the root REST path to use. Defaults to ``api``, where the Jira REST resources live.
                 * rest_api_version -- the version of the REST resources under rest_path to use. Defaults to ``2``.
-                * agile_rest_path - the REST path to use for Jira Agile requests. Defaults to ``greenhopper`` (old, private
-                  API). Check :py:class:`jira.resources.GreenHopperResource` for other supported values.
+                * agile_rest_path - the REST path to use for Jira Agile requests. Defaults to ``agile``.
                 * verify (Union[bool, str]) -- Verify SSL certs. Defaults to ``True``.
                   Or path to to a CA_BUNDLE file or directory with certificates of trusted CAs,
                   for the `requests` library to use.
@@ -468,11 +464,18 @@ class JIRA:
             proxies (Optional[Any]): Sets the proxies for the HTTP session.
             auth (Optional[Tuple[str,str]]): Set a cookie auth token if this is required.
             logging (bool): Determine whether or not logging should be enabled. (Default: True)
+            default_batch_sizes (Optional[Dict[Type[Resource], Optional[int]]]): Manually specify the batch-sizes for
+              the paginated retrieval of different item types. `Resource` is used as a fallback for every item type not
+              specified. If an item type is mapped to `None` no fallback occurs, instead the JIRA-backend will use its
+              default batch-size. By default all Resources will be queried in batches of 100. E.g., setting this to
+              ``{Issue: 500, Resource: None}`` will make :py:meth:`search_issues` query Issues in batches of 500, while
+              every other item type's batch-size will be controlled by the backend. (Default: None)
+
         """
         # force a copy of the tuple to be used in __del__() because
         # sys.version_info could have already been deleted in __del__()
-        self.sys_version_info = tuple(sys.version_info)
 
+        self.sys_version_info = tuple(sys.version_info)
         if options is None:
             options = {}
             if server and isinstance(server, dict):
@@ -492,7 +495,10 @@ class JIRA:
         LOG.setLevel(_logging.INFO if logging else _logging.CRITICAL)
         self.log = LOG
 
-        self._options: Dict[str, Any] = copy.copy(JIRA.DEFAULT_OPTIONS)
+        self._options: Dict[str, Any] = copy.deepcopy(JIRA.DEFAULT_OPTIONS)
+
+        if default_batch_sizes:
+            self._options["default_batch_size"].update(default_batch_sizes)
 
         if "headers" in options:
             headers = copy.copy(options["headers"])
@@ -716,6 +722,8 @@ class JIRA:
             page_params["startAt"] = startAt
         if maxResults:
             page_params["maxResults"] = maxResults
+        elif batch_size := self._get_batch_size(item_type):
+            page_params["maxResults"] = batch_size
 
         resource = self._get_json(request_path, params=page_params, base=base)
         next_items_page = self._get_items_from_page(item_type, items_key, resource)
@@ -740,6 +748,13 @@ class JIRA:
             # If maxResults evaluates as False, get all items in batches
             if not maxResults:
                 page_size = max_results_from_response or len(items)
+                if batch_size is not None and page_size < batch_size:
+                    self.log.warning(
+                        "'batch_size' set to %s, but only received %s items in batch. Falling back to %s.",
+                        batch_size,
+                        page_size,
+                        page_size,
+                    )
                 page_start = (startAt or start_at_from_response or 0) + page_size
                 if (
                     async_class is not None
@@ -771,6 +786,9 @@ class JIRA:
                     and (total is None or page_start < total)
                     and len(next_items_page) == page_size
                 ):
+                    page_params = (
+                        params.copy() if params else {}
+                    )  # Hack necessary for mock-calls to not change
                     page_params["startAt"] = page_start
                     page_params["maxResults"] = page_size
                     resource = self._get_json(
@@ -810,6 +828,25 @@ class JIRA:
         except KeyError as e:
             # improving the error text so we know why it happened
             raise KeyError(str(e) + " : " + json.dumps(resource))
+
+    def _get_batch_size(self, item_type: Type[ResourceType]) -> Optional[int]:
+        """
+        Return the batch size for the given resource type from the options.
+
+        Check if specified item-type has a mapped batch-size, else try to fallback to batch-size assigned to `Resource`, else fallback to Backend-determined batch-size.
+
+        Returns:
+           Optional[int]: The batch size to use. When the configured batch size is None, the batch size should be determined by the JIRA-Backend.
+        """
+        batch_sizes: Dict[Type[Resource], Optional[int]] = self._options[
+            "default_batch_size"
+        ]
+        try:
+            item_type_batch_size = batch_sizes[item_type]
+        except KeyError:
+            # Cannot find Resource-key -> Fallback to letting JIRA-Backend determine batch-size (=None)
+            item_type_batch_size = batch_sizes.get(Resource, None)
+        return item_type_batch_size
 
     # Information about this client
 
@@ -954,70 +991,68 @@ class JIRA:
         """
         close_attachment = False
         if isinstance(attachment, str):
-            attachment: BufferedReader = open(attachment, "rb")  # type: ignore
-            attachment = cast(BufferedReader, attachment)
+            attachment_io = open(attachment, "rb")  # type: ignore
             close_attachment = True
-        elif isinstance(attachment, BufferedReader) and attachment.mode != "rb":
-            self.log.warning(
-                "%s was not opened in 'rb' mode, attaching file may fail."
-                % attachment.name
-            )
-
-        url = self._get_url("issue/" + str(issue) + "/attachments")
+        else:
+            attachment_io = attachment
+            if isinstance(attachment, BufferedReader) and attachment.mode != "rb":
+                self.log.warning(
+                    "%s was not opened in 'rb' mode, attaching file may fail."
+                    % attachment.name
+                )
 
         fname = filename
-        if not fname and isinstance(attachment, BufferedReader):
-            fname = os.path.basename(attachment.name)
+        if not fname and isinstance(attachment_io, BufferedReader):
+            fname = os.path.basename(attachment_io.name)
 
-        if "MultipartEncoder" not in globals():
-            method = "old"
-            try:
-                r = self._session.post(
-                    url,
-                    files={"file": (fname, attachment, "application/octet-stream")},
-                    headers=CaseInsensitiveDict(
-                        {"content-type": None, "X-Atlassian-Token": "no-check"}
-                    ),
-                )
-            finally:
-                if close_attachment:
-                    attachment.close()
-        else:
-            method = "MultipartEncoder"
+        def generate_multipartencoded_request_args() -> Tuple[
+            MultipartEncoder, CaseInsensitiveDict
+        ]:
+            """Returns MultipartEncoder stream of attachment, and the header."""
+            attachment_io.seek(0)
+            encoded_data = MultipartEncoder(
+                fields={"file": (fname, attachment_io, "application/octet-stream")}
+            )
+            request_headers = CaseInsensitiveDict(
+                {
+                    "content-type": encoded_data.content_type,
+                    "X-Atlassian-Token": "no-check",
+                }
+            )
+            return encoded_data, request_headers
 
-            def file_stream() -> MultipartEncoder:
-                """Returns files stream of attachment."""
-                return MultipartEncoder(
-                    fields={"file": (fname, attachment, "application/octet-stream")}
-                )
+        class RetryableMultipartEncoder(PrepareRequestForRetry):
+            def prepare(
+                self, original_request_kwargs: CaseInsensitiveDict
+            ) -> CaseInsensitiveDict:
+                encoded_data, request_headers = generate_multipartencoded_request_args()
+                original_request_kwargs["data"] = encoded_data
+                original_request_kwargs["headers"] = request_headers
+                return super().prepare(original_request_kwargs)
 
-            m = file_stream()
-            try:
-                r = self._session.post(
-                    url,
-                    data=m,
-                    headers=CaseInsensitiveDict(
-                        {
-                            "content-type": m.content_type,
-                            "X-Atlassian-Token": "no-check",
-                        }
-                    ),
-                    retry_data=file_stream,
-                )
-            finally:
-                if close_attachment:
-                    attachment.close()
+        url = self._get_url(f"issue/{issue}/attachments")
+        try:
+            encoded_data, request_headers = generate_multipartencoded_request_args()
+            r = self._session.post(
+                url,
+                data=encoded_data,
+                headers=request_headers,
+                _prepare_retry_class=RetryableMultipartEncoder(),  # type: ignore[call-arg] # ResilientSession handles
+            )
+        finally:
+            if close_attachment:
+                attachment_io.close()
 
         js: Union[Dict[str, Any], List[Dict[str, Any]]] = json_loads(r)
         if not js or not isinstance(js, Iterable):
-            raise JIRAError(f"Unable to parse JSON: {js}")
+            raise JIRAError(f"Unable to parse JSON: {js}. Failed to add attachment?")
         jira_attachment = Attachment(
             self._options, self._session, js[0] if isinstance(js, List) else js
         )
         if jira_attachment.size == 0:
             raise JIRAError(
-                "Added empty attachment via %s method?!: r: %s\nattachment: %s"
-                % (method, r, jira_attachment)
+                "Added empty attachment?!: "
+                + f"Response: {r}\nAttachment: {jira_attachment}"
             )
         return jira_attachment
 
@@ -1139,7 +1174,12 @@ class JIRA:
         if filter is not None:
             params["filter"] = filter
         return self._fetch_pages(
-            Dashboard, "dashboards", "dashboard", startAt, maxResults, params
+            Dashboard,
+            "dashboards",
+            "dashboard",
+            startAt,
+            maxResults,
+            params,
         )
 
     def dashboard(self, id: str) -> Dashboard:
@@ -1196,7 +1236,7 @@ class JIRA:
         description: str = None,
         jql: str = None,
         favourite: bool = None,
-    ):
+    ) -> Filter:
         """Create a new filter and return a filter Resource for it.
 
         Args:
@@ -1756,9 +1796,18 @@ class JIRA:
         try:
             user_obj: User
             if self._is_cloud:
-                user_obj = self.search_users(query=user, maxResults=1)[0]
+                users = self.search_users(query=user, maxResults=20)
             else:
-                user_obj = self.search_users(user=user, maxResults=1)[0]
+                users = self.search_users(user=user, maxResults=20)
+
+            if len(users) < 1:
+                raise JIRAError(f"No matching user found for: '{user}'")
+
+            matches = []
+            if len(users) > 1:
+                matches = [u for u in users if self._get_user_identifier(u) == user]
+            user_obj = matches[0] if matches else users[0]
+
         except Exception as e:
             raise JIRAError(str(e))
         return self._get_user_identifier(user_obj)
@@ -1779,8 +1828,7 @@ class JIRA:
         url = self._get_latest_url(f"issue/{issue}/assignee")
         user_id = self._get_user_id(assignee)
         payload = {"accountId": user_id} if self._is_cloud else {"name": user_id}
-        r = self._session.put(url, data=json.dumps(payload))
-        raise_on_error(r)
+        self._session.put(url, data=json.dumps(payload))
         return True
 
     @translate_resource_args
@@ -1846,22 +1894,16 @@ class JIRA:
         data: Dict[str, Any] = {"body": body}
 
         if is_internal:
-            data.update(
-                {
-                    "properties": [
-                        {"key": "sd.public.comment", "value": {"internal": is_internal}}
-                    ]
-                }
-            )
-
+            data["properties"] = [
+                {"key": "sd.public.comment", "value": {"internal": is_internal}}
+            ]
         if visibility is not None:
             data["visibility"] = visibility
 
         url = self._get_url("issue/" + str(issue) + "/comment")
         r = self._session.post(url, data=json.dumps(data))
 
-        comment = Comment(self._options, self._session, raw=json_loads(r))
-        return comment
+        return Comment(self._options, self._session, raw=json_loads(r))
 
     # non-resource
     @translate_resource_args
@@ -2129,6 +2171,32 @@ class JIRA:
         return self._find_for_resource(Votes, issue)
 
     @translate_resource_args
+    def project_issue_security_level_scheme(
+        self, project: str
+    ) -> IssueSecurityLevelScheme:
+        """Get a IssueSecurityLevelScheme Resource from the server.
+
+        Args:
+            project (str): ID or key of the project to get the IssueSecurityLevelScheme for
+
+        Returns:
+            IssueSecurityLevelScheme: The issue security level scheme
+        """
+        return self._find_for_resource(IssueSecurityLevelScheme, project)
+
+    @translate_resource_args
+    def project_notification_scheme(self, project: str) -> NotificationScheme:
+        """Get a NotificationScheme Resource from the server.
+
+        Args:
+            project (str): ID or key of the project to get the NotificationScheme for
+
+        Returns:
+            NotificationScheme: The notification scheme
+        """
+        return self._find_for_resource(NotificationScheme, project)
+
+    @translate_resource_args
     def project_permissionscheme(self, project: str) -> PermissionScheme:
         """Get a PermissionScheme Resource from the server.
 
@@ -2140,6 +2208,30 @@ class JIRA:
             PermissionScheme: The permission scheme
         """
         return self._find_for_resource(PermissionScheme, project)
+
+    @translate_resource_args
+    def project_priority_scheme(self, project: str) -> PriorityScheme:
+        """Get a PriorityScheme Resource from the server.
+
+        Args:
+            project (str): ID or key of the project to get the PriorityScheme for
+
+        Returns:
+            PriorityScheme: The priority scheme
+        """
+        return self._find_for_resource(PriorityScheme, project)
+
+    @translate_resource_args
+    def project_workflow_scheme(self, project: str) -> WorkflowScheme:
+        """Get a WorkflowScheme Resource from the server.
+
+        Args:
+            project (str): ID or key of the project to get the WorkflowScheme for
+
+        Returns:
+            WorkflowScheme: The workflow scheme
+        """
+        return self._find_for_resource(WorkflowScheme, project)
 
     @translate_resource_args
     def add_vote(self, issue: str) -> Response:
@@ -2616,7 +2708,7 @@ class JIRA:
         if size != size_from_file:
             size = size_from_file
 
-        params = {"filename": filename, "size": size}
+        params: Dict[str, Union[int, str]] = {"filename": filename, "size": size}
 
         headers: Dict[str, Any] = {"X-Atlassian-Token": "no-check"}
         if contentType is not None:
@@ -2810,10 +2902,10 @@ class JIRA:
         startAt: int = 0,
         maxResults: int = 50,
         validate_query: bool = True,
-        fields: Optional[Union[str, List[str]]] = None,
+        fields: Optional[Union[str, List[str]]] = "*all",
         expand: Optional[str] = None,
         json_result: bool = False,
-    ) -> Union[List[Dict[str, Any]], ResultList[Issue]]:
+    ) -> Union[Dict[str, Any], ResultList[Issue]]:
         """Get a :class:`~jira.client.ResultList` of issue Resources matching a JQL search string.
 
         Args:
@@ -2835,8 +2927,8 @@ class JIRA:
         """
         if isinstance(fields, str):
             fields = fields.split(",")
-        else:
-            fields = list(fields or [])
+        elif fields is None:
+            fields = ["*all"]
 
         # this will translate JQL field names to REST API Name
         # most people do know the JQL names so this will help them use the API easier
@@ -2861,9 +2953,7 @@ class JIRA:
                     "All issues cannot be fetched at once, when json_result parameter is set",
                     Warning,
                 )
-            r_json: List[Dict[str, Any]] = self._get_json(
-                "search", params=search_params
-            )
+            r_json: Dict[str, Any] = self._get_json("search", params=search_params)
             return r_json
 
         issues = self._fetch_pages(
@@ -2989,7 +3079,11 @@ class JIRA:
         return user
 
     def search_assignable_users_for_projects(
-        self, username: str, projectKeys: str, startAt: int = 0, maxResults: int = 50
+        self,
+        username: str,
+        projectKeys: str,
+        startAt: int = 0,
+        maxResults: int = 50,
     ) -> ResultList:
         """Get a list of user Resources that match the search string and can be assigned issues for projects.
 
@@ -3047,6 +3141,11 @@ class JIRA:
         Returns:
             ResultList
         """
+        if not username and not query:
+            raise ValueError(
+                "Either 'username' or 'query' arguments must be specified."
+            )
+
         if username is not None:
             params = {"username": username}
         if query is not None:
@@ -3058,13 +3157,13 @@ class JIRA:
         if expand is not None:
             params["expand"] = expand
 
-        if not username and not query:
-            raise ValueError(
-                "Either 'username' or 'query' arguments must be specified."
-            )
-
         return self._fetch_pages(
-            User, None, "user/assignable/search", startAt, maxResults, params
+            User,
+            None,
+            "user/assignable/search",
+            startAt,
+            maxResults,
+            params,
         )
 
     # non-resource
@@ -3119,7 +3218,11 @@ class JIRA:
         # remove path from filename
         filename = os.path.split(filename)[1]
 
-        params = {"username": user, "filename": filename, "size": size}
+        params: Dict[str, Union[str, int]] = {
+            "username": user,
+            "filename": filename,
+            "size": size,
+        }
 
         headers: Dict[str, Any]
         headers = {"X-Atlassian-Token": "no-check"}
@@ -3177,6 +3280,36 @@ class JIRA:
         params = {"username": username}
         url = self._get_url("user/avatar/" + avatar)
         return self._session.delete(url, params=params)
+
+    @translate_resource_args
+    def delete_remote_link(
+        self,
+        issue: Union[str, Issue],
+        *,
+        internal_id: Optional[str] = None,
+        global_id: Optional[str] = None,
+    ) -> Response:
+        """Delete remote link from issue by internalId or globalId.
+
+        Args:
+            issue (str): Key (or Issue) of Issue
+            internal_id (Optional[str]): InternalID of the remote link to delete
+            global_id (Optional[str]): GlobalID of the remote link to delete
+
+        Returns:
+            Response
+        """
+        if not ((internal_id is None) ^ (global_id is None)):
+            raise ValueError("Must supply either 'internal_id' XOR 'global_id'.")
+
+        if internal_id is not None:
+            url = self._get_url(f"issue/{issue}/remotelink/{internal_id}")
+        elif global_id is not None:
+            # stop "&" and other special characters in global_id from messing around with the query
+            global_id = urllib.parse.quote(global_id, safe="")
+            url = self._get_url(f"issue/{issue}/remotelink?globalId={global_id}")
+
+        return self._session.delete(url)
 
     def search_users(
         self,
@@ -3653,8 +3786,7 @@ class JIRA:
             # raw displayName
             self.log.debug(f"renaming {self.user(old_user).emailAddress}")
 
-            r = self._session.put(url, params=params, data=json.dumps(payload))
-            raise_on_error(r)
+            self._session.put(url, params=params, data=json.dumps(payload))
         else:
             raise NotImplementedError(
                 "Support for renaming users in Jira " "< 6.0.0 has been removed."
@@ -3985,6 +4117,21 @@ class JIRA:
         return data["permissionSchemes"]
 
     @lru_cache(maxsize=None)
+    def issue_type_schemes(self) -> List[IssueTypeScheme]:
+        """Get all issue type schemes defined (Admin required).
+
+        Returns:
+            List[IssueTypeScheme]: All the Issue Type Schemes available to the currently logged in user.
+        """
+
+        url = self._get_url("issuetypescheme")
+
+        r = self._session.get(url)
+        data: Dict[str, Any] = json_loads(r)
+
+        return data["schemes"]
+
+    @lru_cache(maxsize=None)
     def issuesecurityschemes(self):
 
         url = self._get_url("issuesecurityschemes")
@@ -4068,6 +4215,20 @@ class JIRA:
         data = json_loads(r)
 
         self.permissionschemes.cache_clear()
+        return data
+
+    def get_issue_type_scheme_associations(self, id: str) -> List[Project]:
+        """For the specified issue type scheme, returns all of the associated projects. (Admin required)
+
+        Args:
+            id (str): The issue type scheme id.
+
+        Returns:
+            List[Project]: Associated Projects for the Issue Type Scheme.
+        """
+        url = self._get_url(f"issuetypescheme/{id}/associations")
+        r = self._session.get(url)
+        data = json_loads(r)
         return data
 
     def create_project(
@@ -4247,16 +4408,16 @@ class JIRA:
             directoryId (int): The directory ID the new user should be a part of (Default: 1)
             password (Optional[str]): Optional, the password for the new user
             fullname (Optional[str]): Optional, the full name of the new user
-            notify (bool): Whether or not to send a notification to the new user. (Default: False)
-            active (bool): Whether or not to make the new user active upon creation. (Default: True)
-            ignore_existing (bool): Whether or not to ignore and existing user. (Default: False)
-            applicationKeys (Optional[list]): Keys of products user should have access to
+            notify (bool): Whether to send a notification to the new user. (Default: False)
+            active (bool): Whether to make the new user active upon creation. (Default: True)
+            ignore_existing (bool): Whether to ignore and existing user. (Default: False)
+            application_keys (Optional[list]): Keys of products user should have access to
 
         Raises:
             JIRAError:  If username already exists and `ignore_existing` has not been set to `True`.
 
         Returns:
-            bool: Whether or not the user creation was successful.
+            bool: Whether the user creation was successful.
 
 
         """
@@ -4363,9 +4524,8 @@ class JIRA:
         r = self._session.get(url, headers=self._options["headers"], params=params)
         return json_loads(r)
 
-    # Jira Agile specific methods (GreenHopper)
     """
-    Define the functions that interact with GreenHopper.
+    Define the functions that interact with Jira Agile.
     """
 
     @translate_resource_args
@@ -4388,8 +4548,6 @@ class JIRA:
 
         Returns:
             ResultList[Board]
-
-        When old GreenHopper private API is used, paging is not enabled and all parameters are ignored.
         """
         params = {}
         if type:
@@ -4399,118 +4557,78 @@ class JIRA:
         if projectKeyOrID:
             params["projectKeyOrId"] = projectKeyOrID
 
-        if (
-            self._options["agile_rest_path"]
-            == GreenHopperResource.GREENHOPPER_REST_PATH
-        ):
-            # Old, private API did not support pagination, all records were present in response,
-            #   and no parameters were supported.
-            if startAt or maxResults or params:
-                warnings.warn(
-                    "Old private GreenHopper API is used, all parameters will be ignored.",
-                    Warning,
-                )
-
-            r_json: Dict[str, Any] = self._get_json(
-                "rapidviews/list", base=self.AGILE_BASE_URL
-            )
-            boards = [
-                Board(self._options, self._session, raw_boards_json)
-                for raw_boards_json in r_json["views"]
-            ]
-            return ResultList(boards, 0, len(boards), len(boards), True)
-        else:
-            return self._fetch_pages(
-                Board,
-                "values",
-                "board",
-                startAt,
-                maxResults,
-                params,
-                base=self.AGILE_BASE_URL,
-            )
+        return self._fetch_pages(
+            Board,
+            "values",
+            "board",
+            startAt,
+            maxResults,
+            params,
+            base=self.AGILE_BASE_URL,
+        )
 
     @translate_resource_args
     def sprints(
         self,
         board_id: int,
-        extended: bool = False,
+        extended: Optional[bool] = None,
         startAt: int = 0,
         maxResults: int = 50,
         state: str = None,
     ) -> ResultList[Sprint]:
-        """Get a list of sprint GreenHopperResources.
+        """Get a list of sprint Resources.
 
         Args:
             board_id (int): the board to get sprints from
-            extended (bool): Used only by old GreenHopper API to fetch additional information like
-              startDate, endDate, completeDate, much slower because it requires an additional requests for each sprint.
-              New Jira Agile API always returns this information without a need for additional requests.
+            extended (bool): Deprecated.
             startAt (int): the index of the first sprint to return (0 based)
             maxResults (int): the maximum number of sprints to return
             state (str): Filters results to sprints in specified states. Valid values: `future`, `active`, `closed`.
               You can define multiple states separated by commas
 
         Returns:
-            ResultList[Sprint]: (content depends on API version, but always contains id, name, state, startDate and endDate)
-            When old GreenHopper private API is used, paging is not enabled,
-            and `startAt`, `maxResults` and `state` parameters are ignored.
+            ResultList[Sprint]: List of sprints.
         """
         params = {}
         if state:
             params["state"] = state
 
-        if (
-            self._options["agile_rest_path"]
-            == GreenHopperResource.GREENHOPPER_REST_PATH
-        ):
-            r_json: Dict[str, Any] = self._get_json(
-                "sprintquery/%s?includeHistoricSprints=true&includeFutureSprints=true"
-                % board_id,
-                base=self.AGILE_BASE_URL,
-            )
+        if extended is not None:
+            DeprecationWarning("The `extended` argument is deprecated")
 
-            if params:
-                warnings.warn(
-                    "Old private GreenHopper API is used, parameters %s will be ignored."
-                    % params,
-                    Warning,
-                )
+        return self._fetch_pages(
+            Sprint,
+            "values",
+            f"board/{board_id}/sprint",
+            startAt,
+            maxResults,
+            params,
+            self.AGILE_BASE_URL,
+        )
 
-            if extended:
-                sprints = [
-                    Sprint(
-                        self._options,
-                        self._session,
-                        self.sprint_info("", raw_sprints_json["id"]),
-                    )
-                    for raw_sprints_json in r_json["sprints"]
-                ]
-            else:
-                sprints = [
-                    Sprint(self._options, self._session, raw_sprints_json)
-                    for raw_sprints_json in r_json["sprints"]
-                ]
+    def sprints_by_name(
+        self, id: Union[str, int], extended: bool = False, state: str = None
+    ) -> Dict[str, Dict[str, Any]]:
+        """Get a dictionary of sprint Resources where the name of the sprint is the key.
 
-            return ResultList(sprints, 0, len(sprints), len(sprints), True)
-        else:
-            return self._fetch_pages(
-                Sprint,
-                "values",
-                f"board/{board_id}/sprint",
-                startAt,
-                maxResults,
-                params,
-                self.AGILE_BASE_URL,
-            )
+        Args:
+            board_id (int): the board to get sprints from
+            extended (bool): Deprecated.
+            state (str): Filters results to sprints in specified states. Valid values: `future`, `active`, `closed`.
+              You can define multiple states separated by commas
 
-    def sprints_by_name(self, id, extended=False):
+        Returns:
+            Dict[str, Dict[str, Any]]: dictionary of sprints with the sprint name as key
+        """
         sprints = {}
-        for s in self.sprints(id, extended=extended):
+        for s in self.sprints(id, extended=extended, state=state):
             if s.name not in sprints:
                 sprints[s.name] = s.raw
             else:
-                raise Exception
+                raise JIRAError(
+                    f"There are multiple sprints defined with the name {s.name} on board id {id},\n"
+                    f"returning a dict with sprint names as a key, assumes unique names for each sprint"
+                )
         return sprints
 
     def update_sprint(self, id, name=None, startDate=None, endDate=None, state=None):
@@ -4522,13 +4640,6 @@ class JIRA:
         if endDate:
             payload["endDate"] = endDate
         if state:
-            if (
-                self._options["agile_rest_path"]
-                == GreenHopperResource.GREENHOPPER_REST_PATH
-            ):
-                raise NotImplementedError(
-                    "Public Jira API does not support state update"
-                )
             payload["state"] = state
 
         url = self._get_url(f"sprint/{id}", base=self.AGILE_BASE_URL)
@@ -4599,49 +4710,50 @@ class JIRA:
     def create_board(
         self,
         name: str,
-        project_ids: Union[str, List[str]],
+        filter_id: str,
+        project_ids: str = None,
         preset: str = "scrum",
-        location_type: str = "user",
+        location_type: Literal["user", "project"] = "user",
         location_id: Optional[str] = None,
     ) -> Board:
         """Create a new board for the ``project_ids``.
 
         Args:
-            name (str): name of the board
-            project_ids (str): the projects to create the board in
-            preset (str): What preset to use for this board, options: kanban, scrum, diy. (Default: scrum)
-            location_type (str): the location type. Available in cloud. (Default: user)
-            location_id (Optional[str]): the id of project that the board should be located under.
-             Omit this for a 'user' location_type. Available in cloud.
+            name (str): name of the Board (<255 characters).
+            filter_id (str): the Filter to use to create the Board.
+              Note: if the user does not have the 'Create shared objects' permission and tries to create
+              a shared board, a private board will be created instead
+              (remember that board sharing depends on the filter sharing).
+            project_ids (str): Deprecated. See location_id.
+            preset (str): What preset/type to use for this Board, options: kanban, scrum, agility. (Default: scrum)
+            location_type (str): the location type. Available in Cloud. (Default: user)
+            location_id (Optional[str]):  aka ``projectKeyOrId``.
+              The id of Project that the Board should be located under.
+              Omit this for a 'user' location_type. Available in Cloud.
 
         Returns:
             Board: The newly created board
         """
-        if (
-            self._options["agile_rest_path"]
-            != GreenHopperResource.GREENHOPPER_REST_PATH
-        ):
-            raise NotImplementedError(
-                "Jira Agile Public API does not support this request"
+        payload: Dict[str, Any] = {}
+
+        if project_ids is not None:
+            DeprecationWarning(
+                "project_ids is deprecated and ignored. "
+                + "Use filter_id and location_id with `location_type='project'`"
             )
 
-        payload: Dict[str, Any] = {}
-        if isinstance(project_ids, str):
-            ids = []
-            for p in project_ids.split(","):
-                ids.append(self.project(p).id)
-            project_ids = ",".join(ids)
         if location_id is not None:
             location_id = self.project(location_id).id
+
         payload["name"] = name
-        if isinstance(project_ids, str):
-            project_ids = project_ids.split(",")  # type: ignore # re-use of variable
-        payload["projectIds"] = project_ids
-        payload["preset"] = preset
+        payload["filterId"] = filter_id
+        payload["type"] = preset
         if self._is_cloud:
-            payload["locationType"] = location_type
-            payload["locationId"] = location_id
-        url = self._get_url("rapidview/create/presets", base=self.AGILE_BASE_URL)
+            payload["location"] = {"type": location_type}
+            if location_type not in ("user",):
+                payload["location"].update({"projectKeyOrId": location_id})
+
+        url = self._get_url("board", base=self.AGILE_BASE_URL)
         r = self._session.post(url, data=json.dumps(payload))
 
         raw_issue_json = json_loads(r)
@@ -4672,35 +4784,10 @@ class JIRA:
             payload["endDate"] = endDate
 
         raw_issue_json: Dict[str, Any]
-        if (
-            self._options["agile_rest_path"]
-            == GreenHopperResource.GREENHOPPER_REST_PATH
-        ):
-            url = self._get_url(f"sprint/{board_id}", base=self.AGILE_BASE_URL)
-            r = self._session.post(url)
-            raw_issue_json = json_loads(r)
-            """ now r contains something like:
-            {
-                  "id": 742,
-                  "name": "Sprint 89",
-                  "state": "FUTURE",
-                  "linkedPagesCount": 0,
-                  "startDate": "None",
-                  "endDate": "None",
-                  "completeDate": "None",
-                  "remoteLinks": []
-            }"""
-
-            url = self._get_url(
-                f"sprint/{raw_issue_json['id']}", base=self.AGILE_BASE_URL
-            )
-            r = self._session.put(url, data=json.dumps(payload))
-            raw_issue_json = json_loads(r)
-        else:
-            url = self._get_url("sprint", base=self.AGILE_BASE_URL)
-            payload["originBoardId"] = board_id
-            r = self._session.post(url, data=json.dumps(payload))
-            raw_issue_json = json_loads(r)
+        url = self._get_url("sprint", base=self.AGILE_BASE_URL)
+        payload["originBoardId"] = board_id
+        r = self._session.post(url, data=json.dumps(payload))
+        raw_issue_json = json_loads(r)
 
         return Sprint(self._options, self._session, raw=raw_issue_json)
 
@@ -4724,69 +4811,30 @@ class JIRA:
         Returns:
             Response
         """
-        if self._options["agile_rest_path"] == GreenHopperResource.AGILE_BASE_REST_PATH:
-            url = self._get_url(f"sprint/{sprint_id}/issue", base=self.AGILE_BASE_URL)
-            payload = {"issues": issue_keys}
-            try:
-                return self._session.post(url, data=json.dumps(payload))
-            except JIRAError as e:
-                if e.status_code == 404:
-                    warnings.warn(
-                        "Status code 404 may mean, that too old Jira Agile version is installed."
-                        " At least version 6.7.10 is required."
-                    )
-                raise
-        elif (
-            self._options["agile_rest_path"]
-            == GreenHopperResource.GREENHOPPER_REST_PATH
-        ):
-            # In old, private API the function does not exist anymore and we need to use
-            # issue.update() to perform this operation
-            # Workaround based on https://answers.atlassian.com/questions/277651/jira-agile-rest-api-example
-
-            sprint_field_id = self._get_sprint_field_id()
-
-            data = {
-                "idOrKeys": issue_keys,
-                "customFieldId": sprint_field_id,
-                "sprintId": sprint_id,
-                "addToBacklog": False,
-            }
-            url = self._get_url("sprint/rank", base=self.AGILE_BASE_URL)
-            return self._session.put(url, data=json.dumps(data))
-        else:
-            raise NotImplementedError(
-                'No API for adding issues to sprint for agile_rest_path="%s"'
-                % self._options["agile_rest_path"]
-            )
+        url = self._get_url(f"sprint/{sprint_id}/issue", base=self.AGILE_BASE_URL)
+        payload = {"issues": issue_keys}
+        return self._session.post(url, data=json.dumps(payload))
 
     def add_issues_to_epic(
-        self, epic_id: str, issue_keys: str, ignore_epics: bool = True
+        self, epic_id: str, issue_keys: str, ignore_epics: bool = None
     ) -> Response:
         """Add the issues in ``issue_keys`` to the ``epic_id``.
+
+        Issues can only exist in one Epic!
 
         Args:
             epic_id (str): The ID for the epic where issues should be added.
             issue_keys (str): The issues to add to the epic
-            ignore_epics (bool): ignore any issues listed in ``issue_keys`` that are epics. (Default: True)
+            ignore_epics (bool): Deprecated.
 
         """
-        if (
-            self._options["agile_rest_path"]
-            != GreenHopperResource.GREENHOPPER_REST_PATH
-        ):
-            # TODO(ssbarnea): simulate functionality using issue.update()?
-            raise NotImplementedError(
-                "Jira Agile Public API does not support this request"
-            )
-
         data: Dict[str, Any] = {}
-        data["issueKeys"] = issue_keys
-        data["ignoreEpics"] = ignore_epics
-        url = self._get_url(f"epics/{epic_id}/add", base=self.AGILE_BASE_URL)
+        data["issues"] = issue_keys  # TODO: List[str]
+        if ignore_epics is not None:
+            DeprecationWarning("`ignore_epics` is Deprecated")
+        url = self._get_url(f"epics/{epic_id}/issue", base=self.AGILE_BASE_URL)
         return self._session.put(url, data=json.dumps(data))
 
-    # TODO(ssbarnea): Jira Agile API supports moving more than one issue.
     def rank(
         self,
         issue: str,
@@ -4802,6 +4850,7 @@ class JIRA:
             next_issue (str): issue key that the first issue is to be ranked before.
             prev_issue (str): issue key that the first issue is to be ranked after.
         """
+        # TODO: Jira Agile API supports moving more than one issue.
 
         if next_issue is None and prev_issue is None:
             raise ValueError("One of 'next_issue' or 'prev_issue' must be specified")
@@ -4838,67 +4887,17 @@ class JIRA:
             f"rank{before_or_after}Issue": other_issue,
             "rankCustomFieldId": self._rank,
         }
-        try:
-            return self._session.put(url, data=json.dumps(payload))
-        except JIRAError as e:
-            if e.status_code == 404:
-                warnings.warn(
-                    "Status code 404 may mean, that too old Jira Agile version is installed."
-                    " At least version 6.7.10 is required."
-                )
-            raise
+        return self._session.put(url, data=json.dumps(payload))
 
-    def move_to_backlog(self, issue_keys: str) -> Response:
+    def move_to_backlog(self, issue_keys: List[str]) -> Response:
         """Move issues in ``issue_keys`` to the backlog, removing them from all sprints that have not been completed.
 
         Args:
-            issue_keys (str): the issues to move to the backlog
+            issue_keys (List[str]): the issues to move to the backlog
 
         Raises:
             JIRAError: If moving issues to backlog fails
         """
-        if self._options["agile_rest_path"] == GreenHopperResource.AGILE_BASE_REST_PATH:
-            url = self._get_url("backlog/issue", base=self.AGILE_BASE_URL)
-            payload = {"issues": issue_keys}
-            try:
-                return self._session.post(url, data=json.dumps(payload))
-            except JIRAError as e:
-                if e.status_code == 404:
-                    warnings.warn(
-                        "Status code 404 may mean, that too old Jira Agile version is installed."
-                        " At least version 6.7.10 is required."
-                    )
-                raise
-        elif (
-            self._options["agile_rest_path"]
-            == GreenHopperResource.GREENHOPPER_REST_PATH
-        ):
-            # In old, private API the function does not exist anymore and we need to use
-            # issue.update() to perform this operation
-            # Workaround based on https://answers.atlassian.com/questions/277651/jira-agile-rest-api-example
-
-            sprint_field_id = self._get_sprint_field_id()
-
-            data = {
-                "idOrKeys": issue_keys,
-                "customFieldId": sprint_field_id,
-                "addToBacklog": True,
-            }
-            url = self._get_url("sprint/rank", base=self.AGILE_BASE_URL)
-            return self._session.put(url, data=json.dumps(data))
-        else:
-            raise NotImplementedError(
-                'No API for moving issues to backlog for agile_rest_path="%s"'
-                % self._options["agile_rest_path"]
-            )
-
-
-class GreenHopper(JIRA):
-    def __init__(self, options=None, basic_auth=None, oauth=None, async_=None):
-        warnings.warn(
-            "GreenHopper() class is deprecated, just use JIRA() instead.",
-            DeprecationWarning,
-        )
-        JIRA.__init__(
-            self, options=options, basic_auth=basic_auth, oauth=oauth, async_=async_
-        )
+        url = self._get_url("backlog/issue", base=self.AGILE_BASE_URL)
+        payload = {"issues": issue_keys}  # TODO: should be list of issues
+        return self._session.post(url, data=json.dumps(payload))

@@ -16,11 +16,11 @@ logging.getLogger("jira").setLevel(logging.DEBUG)
 
 CI_JIRA_URL = os.environ["CI_JIRA_URL"]
 CI_JIRA_ADMIN = os.environ["CI_JIRA_ADMIN"]
-CI_JIRA_ADMIN_PASSWORD = os.environ["CI_JIRA_ADMIN_PASSWORD"]
+CI_JIRA_ADMIN_TOKEN = os.environ["CI_JIRA_ADMIN_TOKEN"]
 
 j = JIRA(
     CI_JIRA_URL,
-    basic_auth=(CI_JIRA_ADMIN, CI_JIRA_ADMIN_PASSWORD),
+    basic_auth=(CI_JIRA_ADMIN, CI_JIRA_ADMIN_TOKEN),
     logging=True,
     validate=True,
     async_=True,
