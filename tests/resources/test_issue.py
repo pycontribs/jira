@@ -264,7 +264,7 @@ class IssueTests(JiraTestCase):
         issue = self.jira.create_issue(
             summary="Test issue created using an integer issuetype",
             project=self.project_b,
-            issuetype=int(dyn_it.id)
+            issuetype=int(dyn_it.id),
         )
         self.assertEqual(issue.get_field("issuetype").name, dyn_it.name)
 
