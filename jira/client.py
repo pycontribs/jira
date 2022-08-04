@@ -1502,7 +1502,7 @@ class JIRA:
         p = data["fields"]["issuetype"]
         if isinstance(p, int):
             data["fields"]["issuetype"] = {"id": p}
-        if isinstance(p, str):
+        elif isinstance(p, str):
             data["fields"]["issuetype"] = {"id": self.issue_type_by_name(str(p)).id}
 
         url = self._get_url("issue")
