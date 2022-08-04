@@ -256,6 +256,18 @@ class IssueTests(JiraTestCase):
         for issue in issues:
             issue["issue"].delete()
 
+    def test_create_issue_with_integer_issuetype(self):
+        # take first existing issuetype to avoid problems due to hardcoded name/id later
+        issue_types_resolved = self.jira.issue_types()
+        dyn_it = issue_types_resolved[0]
+
+        issue = self.jira.create_issue(
+            summary="Test issue created using an integer issuetype",
+            project=self.project_b,
+            issuetype=int(dyn_it.id),
+        )
+        self.assertEqual(issue.get_field("issuetype").name, dyn_it.name)
+
     def test_update_with_fieldargs(self):
         issue = self.jira.create_issue(
             summary="Test issue for updating with fieldargs",
