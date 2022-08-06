@@ -302,7 +302,8 @@ def handle_basic_auth(auth, server):
     else:
         print("Getting password from keyring...")
         password = keyring.get_password(server, auth["username"])
-        assert password, "No password provided!"
+        if not password:
+            raise ValueError("No password provided!")
     return auth["username"], password
 
 
