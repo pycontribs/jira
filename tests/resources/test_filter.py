@@ -1,3 +1,6 @@
+from contextlib import contextmanager
+from typing import Optional
+
 from tests.conftest import JiraTestCase, rndstr
 
 
@@ -7,43 +10,62 @@ class FilterTests(JiraTestCase):
         self.issue_1 = self.test_manager.project_b_issue1
         self.issue_2 = self.test_manager.project_b_issue2
 
+        self.filter_jql: str = f"project = {self.project_b} AND component is not EMPTY"
+        self.filter_name: str = "some filter " + rndstr()
+        self.filter_desc: str = "just some new test filter"
+        self.filter_favourite: Optional[bool] = False
+
+    @contextmanager
+    def make_filter(self, **kwargs):
+        try:
+            new_filter = self.jira.create_filter(
+                name=kwargs.pop("name", self.filter_name),
+                description=kwargs.pop("description", self.filter_desc),
+                jql=kwargs.pop("jql", self.filter_jql),
+                favourite=kwargs.pop("favourite", self.filter_favourite),
+            )
+            if len(kwargs):
+                raise ValueError("Incorrect kwarg used !")
+            yield new_filter
+        finally:
+            new_filter.delete()
+
     def test_filter(self):
-        jql = f"project = {self.project_b} and component is not empty"
-        name = "same filter " + rndstr()
-        myfilter = self.jira.create_filter(
-            name=name, description="just some new test filter", jql=jql, favourite=False
-        )
-        self.assertEqual(myfilter.name, name)
-        self.assertEqual(myfilter.owner.name, self.test_manager.user_admin.name)
-        myfilter.delete()
+        with self.make_filter() as myfilter:
+            self.assertEqual(myfilter.name, self.filter_name)
+            self.assertEqual(myfilter.owner.name, self.test_manager.user_admin.name)
 
     def test_favourite_filters(self):
-        # filters = self.jira.favourite_filters()
-        jql = f"project = {self.project_b} and component is not empty"
-        name = "filter-to-fav-" + rndstr()
-        myfilter = self.jira.create_filter(
-            name=name, description="just some new test filter", jql=jql, favourite=True
-        )
-        new_filters = self.jira.favourite_filters()
-
-        assert name in [f.name for f in new_filters]
-        myfilter.delete()
+        filter_name = f"filter-to-fav-{self.filter_name}"
+        with self.make_filter(name=filter_name, favourite=True):
+            new_filters = self.jira.favourite_filters()
+            assert filter_name in [f.name for f in new_filters]
 
     def test_filter_update_empty_description(self):
-        jql = f"project = {self.project_b} and component is not empty"
-        name = "same filter " + rndstr()
-        myfilter = self.jira.create_filter(
-            name=name, description=None, jql=jql, favourite=None
-        )
-        self.jira.update_filter(
-            myfilter.id,
-            name=f"new_{name}",
-            description=None,
-            jql=f"{jql} ORDER BY created ASC",
-            favourite=None,
-        )
+        new_jql = f"{self.filter_jql} ORDER BY created ASC"
+        new_name = f"new_{self.filter_name}"
+        with self.make_filter(description=None) as myfilter:
+            self.jira.update_filter(
+                myfilter.id,
+                name=new_name,
+                description=None,
+                jql=new_jql,
+                favourite=None,
+            )
+            updated_filter = self.jira.filter(myfilter.id)
+            assert updated_filter.name == new_name
+            assert updated_filter.jql == new_jql
+            assert not hasattr(updated_filter, "description")
 
-        updated_filter = self.jira.filter(myfilter.id)
-        assert updated_filter.name.startswith("new_")
-        assert not hasattr(updated_filter, "description")
-        myfilter.delete()
+    def test_filter_update_empty_description_with_new_description(self):
+        new_desc = "new description"
+        with self.make_filter(description=None) as myfilter:
+            self.jira.update_filter(
+                myfilter.id,
+                name=myfilter.name,
+                description=new_desc,
+                jql=myfilter.jql,
+                favourite=None,
+            )
+            updated_filter = self.jira.filter(myfilter.id)
+            assert updated_filter.description == new_desc
