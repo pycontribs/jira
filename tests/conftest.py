@@ -278,20 +278,11 @@ class JiraTestManager:
         self.jid = get_unique_project_name()
 
         self.project_a = self.jid + "A"  # old XSS
-        self.project_a_name = "Test user={} key={} A".format(
-            getpass.getuser(),
-            self.project_a,
-        )
+        self.project_a_name = f"Test user={getpass.getuser()} key={self.project_a} A"
         self.project_b = self.jid + "B"  # old BULK
-        self.project_b_name = "Test user={} key={} B".format(
-            getpass.getuser(),
-            self.project_b,
-        )
+        self.project_b_name = f"Test user={getpass.getuser()} key={self.project_b} B"
         self.project_sd = self.jid + "C"
-        self.project_sd_name = "Test user={} key={} C".format(
-            getpass.getuser(),
-            self.project_sd,
-        )
+        self.project_sd_name = f"Test user={getpass.getuser()} key={self.project_sd} C"
 
         self.project_a_id = self._create_project(self.project_a, self.project_a_name)
         self.project_b_id = self._create_project(
@@ -306,17 +297,17 @@ class JiraTestManager:
             "issuetype": {"name": self.CI_JIRA_ISSUE},
         }
         self.project_b_issue1_obj = self.jira_admin.create_issue(
-            summary="issue 1 from %s" % self.project_b, **project_b_issue_kwargs
+            summary=f"issue 1 from {self.project_b}", **project_b_issue_kwargs
         )
         self.project_b_issue1 = self.project_b_issue1_obj.key
 
         self.project_b_issue2_obj = self.jira_admin.create_issue(
-            summary="issue 2 from %s" % self.project_b, **project_b_issue_kwargs
+            summary=f"issue 2 from {self.project_b}", **project_b_issue_kwargs
         )
         self.project_b_issue2 = self.project_b_issue2_obj.key
 
         self.project_b_issue3_obj = self.jira_admin.create_issue(
-            summary="issue 3 from %s" % self.project_b, **project_b_issue_kwargs
+            summary=f"issue 3 from {self.project_b}", **project_b_issue_kwargs
         )
         self.project_b_issue3 = self.project_b_issue3_obj.key
 
