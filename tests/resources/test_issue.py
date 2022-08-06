@@ -16,7 +16,7 @@ class IssueTests(JiraTestCase):
     def test_issue(self):
         issue = self.jira.issue(self.issue_1)
         self.assertEqual(issue.key, self.issue_1)
-        self.assertEqual(issue.fields.summary, "issue 1 from %s" % self.project_b)
+        self.assertEqual(issue.fields.summary, f"issue 1 from {self.project_b}")
 
     def test_issue_search_finds_issue(self):
         issues = self.jira.search_issues("key=%s" % self.issue_1)
@@ -62,7 +62,7 @@ class IssueTests(JiraTestCase):
 
     def test_issue_field_limiting(self):
         issue = self.jira.issue(self.issue_2, fields="summary,comment")
-        self.assertEqual(issue.fields.summary, "issue 2 from %s" % self.project_b)
+        self.assertEqual(issue.fields.summary, f"issue 2 from {self.project_b}")
         comment1 = self.jira.add_comment(issue, "First comment")
         comment2 = self.jira.add_comment(issue, "Second comment")
         comment3 = self.jira.add_comment(issue, "Third comment")
@@ -77,7 +77,7 @@ class IssueTests(JiraTestCase):
     def test_issue_equal(self):
         issue1 = self.jira.issue(self.issue_1)
         issue2 = self.jira.issue(self.issue_2)
-        issues = self.jira.search_issues("key=%s" % self.issue_1)
+        issues = self.jira.search_issues(f"key={self.issue_1}")
         self.assertTrue(issue1 is not None)
         self.assertTrue(issue1 == issues[0])
         self.assertFalse(issue2 == issues[0])

@@ -12,5 +12,5 @@ class StatusTests(JiraTestCase):
                 s = self.jira.status(status.id)
                 self.assertEqual(s.id, status.id)
                 break
-        self.assertTrue(found, "Status Done not found. [%s]" % statuses)
+        self.assertTrue(found, f"Status Done not found. [{statuses}]")
         self.assertGreater(len(statuses), 0)

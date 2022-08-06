@@ -184,7 +184,7 @@ class SearchTests(JiraTestCase):
         self.issue = self.test_manager.project_b_issue1
 
     def test_search_issues(self):
-        issues = self.jira.search_issues("project=%s" % self.project_b)
+        issues = self.jira.search_issues(f"project={self.project_b}")
         issues = cast(ResultList[Issue], issues)
         self.assertLessEqual(len(issues), 50)  # default maxResults
         for issue in issues:
@@ -195,7 +195,7 @@ class SearchTests(JiraTestCase):
         try:
             self.jira._options["async"] = True
             issues = self.jira.search_issues(
-                "project=%s" % self.project_b, maxResults=False
+                f"project={self.project_b}", maxResults=False
             )
             issues = cast(ResultList[Issue], issues)
             self.assertEqual(len(issues), issues.total)
@@ -205,20 +205,18 @@ class SearchTests(JiraTestCase):
             self.jira._options["async"] = original_val
 
     def test_search_issues_maxresults(self):
-        issues = self.jira.search_issues("project=%s" % self.project_b, maxResults=10)
+        issues = self.jira.search_issues(f"project={self.project_b}", maxResults=10)
         self.assertLessEqual(len(issues), 10)
 
     def test_search_issues_startat(self):
         issues = self.jira.search_issues(
-            "project=%s" % self.project_b, startAt=2, maxResults=10
+            f"project={self.project_b}", startAt=2, maxResults=10
         )
         self.assertGreaterEqual(len(issues), 1)
         # we know that project_b should have at least 3 issues
 
     def test_search_issues_field_limiting(self):
-        issues = self.jira.search_issues(
-            "key=%s" % self.issue, fields="summary,comment"
-        )
+        issues = self.jira.search_issues(f"key={self.issue}", fields="summary,comment")
         issues = cast(ResultList[Issue], issues)
         self.assertTrue(hasattr(issues[0].fields, "summary"))
         self.assertTrue(hasattr(issues[0].fields, "comment"))
@@ -226,7 +224,7 @@ class SearchTests(JiraTestCase):
         self.assertFalse(hasattr(issues[0].fields, "progress"))
 
     def test_search_issues_expand(self):
-        issues = self.jira.search_issues("key=%s" % self.issue, expand="changelog")
+        issues = self.jira.search_issues(f"key={self.issue}", expand="changelog")
         issues = cast(ResultList[Issue], issues)
         # self.assertTrue(hasattr(issues[0], 'names'))
         self.assertEqual(len(issues), 1)
@@ -331,7 +329,7 @@ class AsyncTests(JiraTestCase):
         batch_size = batch_size or MIMICKED_BACKEND_BATCH_SIZE
         expected_results = []
         for i in range(0, total):
-            result = _create_issue_result_json(i, "summary %s" % i, key="KEY-%s" % i)
+            result = _create_issue_result_json(i, f"summary {i}", key=f"KEY-{i}")
             expected_results.append(result)
 
         if not max_results:
@@ -406,10 +404,10 @@ def test_get_batch_size(default_batch_sizes, item_type, expected, no_fields):
 def _create_issue_result_json(issue_id, summary, key, **kwargs):
     """Returns a minimal json object for an issue."""
     return {
-        "id": "%s" % issue_id,
+        "id": f"{issue_id}",
         "summary": summary,
         "key": key,
-        "self": kwargs.get("self", "http://example.com/%s" % issue_id),
+        "self": kwargs.get("self", f"http://example.com/{issue_id}"),
     }
 
 
@@ -499,10 +497,10 @@ class WebsudoTests(JiraTestCase):
 class UserAdministrationTests(JiraTestCase):
     def setUp(self):
         JiraTestCase.setUp(self)
-        self.test_username = "test_%s" % self.test_manager.project_a
-        self.test_email = "%s@example.com" % self.test_username
+        self.test_username = f"test_{self.test_manager.project_a}"
+        self.test_email = f"{self.test_username}@example.com"
         self.test_password = rndpassword()
-        self.test_groupname = "testGroupFor_%s" % self.test_manager.project_a
+        self.test_groupname = f"testGroupFor_{self.test_manager.project_a}"
 
     def _skip_pycontribs_instance(self):
         pytest.skip(

@@ -8,7 +8,7 @@ class FilterTests(JiraTestCase):
         self.issue_2 = self.test_manager.project_b_issue2
 
     def test_filter(self):
-        jql = "project = %s and component is not empty" % self.project_b
+        jql = f"project = {self.project_b} and component is not empty"
         name = "same filter " + rndstr()
         myfilter = self.jira.create_filter(
             name=name, description="just some new test filter", jql=jql, favourite=False
@@ -19,7 +19,7 @@ class FilterTests(JiraTestCase):
 
     def test_favourite_filters(self):
         # filters = self.jira.favourite_filters()
-        jql = "project = %s and component is not empty" % self.project_b
+        jql = f"project = {self.project_b} and component is not empty"
         name = "filter-to-fav-" + rndstr()
         myfilter = self.jira.create_filter(
             name=name, description="just some new test filter", jql=jql, favourite=True
