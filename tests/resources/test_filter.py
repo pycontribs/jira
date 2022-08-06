@@ -28,3 +28,22 @@ class FilterTests(JiraTestCase):
 
         assert name in [f.name for f in new_filters]
         myfilter.delete()
+
+    def test_filter_update_empty_description(self):
+        jql = f"project = {self.project_b} and component is not empty"
+        name = "same filter " + rndstr()
+        myfilter = self.jira.create_filter(
+            name=name, description=None, jql=jql, favourite=None
+        )
+        self.jira.update_filter(
+            myfilter.id,
+            name=f"new_{name}",
+            description=None,
+            jql=f"{jql} ORDER BY created ASC",
+            favourite=None,
+        )
+
+        updated_filter = self.jira.filter(myfilter.id)
+        assert updated_filter.name.startswith("new_")
+        assert not hasattr(updated_filter, "description")
+        myfilter.delete()

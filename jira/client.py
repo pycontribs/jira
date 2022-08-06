@@ -1284,7 +1284,8 @@ class JIRA:
         filter = self.filter(filter_id)
         data = {}
         data["name"] = name or filter.name
-        data["description"] = description or filter.description
+        if hasattr(filter, "description"):  # Jira omits if created with =None !
+            data["description"] = description or filter.description
         data["jql"] = jql or filter.jql
         data["favourite"] = favourite or filter.favourite
 
