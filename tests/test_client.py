@@ -64,9 +64,7 @@ def test_delete_inexistent_project(cl_admin):
 
     assert "No project could be found with key" in str(
         ex.value
-    ) or f'Parameter pid="{slug}" is not a Project, projectID or slug' in str(
-        ex.value
-    )
+    ) or f'Parameter pid="{slug}" is not a Project, projectID or slug' in str(ex.value)
 
 
 def test_templates(cl_admin):

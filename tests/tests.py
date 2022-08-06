@@ -216,9 +216,7 @@ class SearchTests(JiraTestCase):
         # we know that project_b should have at least 3 issues
 
     def test_search_issues_field_limiting(self):
-        issues = self.jira.search_issues(
-            f"key={self.issue}", fields="summary,comment"
-        )
+        issues = self.jira.search_issues(f"key={self.issue}", fields="summary,comment")
         issues = cast(ResultList[Issue], issues)
         self.assertTrue(hasattr(issues[0].fields, "summary"))
         self.assertTrue(hasattr(issues[0].fields, "comment"))
