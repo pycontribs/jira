@@ -15,6 +15,7 @@ src_paths = ["jira", "tests"]
 [tool.pytest.ini_options]
 minversion = "6.0"
 testpaths = ["tests"]
+python_files = ["test_*.py", "tests.py"]
 addopts = '''-p no:xdist --durations=10 --tb=long -rxX -v --color=yes
              --junitxml=build/results.xml
              --cov-report=xml --cov jira'''
