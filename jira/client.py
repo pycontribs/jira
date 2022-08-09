@@ -4818,7 +4818,7 @@ class JIRA:
         return self._session.post(url, data=json.dumps(payload))
 
     def add_issues_to_epic(
-        self, epic_id: str, issue_keys: str, ignore_epics: bool = None
+        self, epic_id: str, issue_keys: Union[str, List[str]], ignore_epics: bool = None
     ) -> Response:
         """Add the issues in ``issue_keys`` to the ``epic_id``.
 
@@ -4826,12 +4826,15 @@ class JIRA:
 
         Args:
             epic_id (str): The ID for the epic where issues should be added.
-            issue_keys (str): The issues to add to the epic
+            issue_keys (Union[str, List[str]]): The list (or comma separated str) of issues
+              to add to the epic
             ignore_epics (bool): Deprecated.
 
         """
         data: Dict[str, Any] = {}
-        data["issues"] = issue_keys  # TODO: List[str]
+        data["issues"] = (
+            issue_keys.split(",") if isinstance(issue_keys, str) else list(issue_keys)
+        )
         if ignore_epics is not None:
             DeprecationWarning("`ignore_epics` is Deprecated")
         url = self._get_url(f"epics/{epic_id}/issue", base=self.AGILE_BASE_URL)
