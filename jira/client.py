@@ -4835,7 +4835,7 @@ class JIRA:
         if ignore_epics is not None:
             DeprecationWarning("`ignore_epics` is Deprecated")
         url = self._get_url(f"epics/{epic_id}/issue", base=self.AGILE_BASE_URL)
-        return self._session.put(url, data=json.dumps(data))
+        return self._session.post(url, data=json.dumps(data))
 
     def rank(
         self,
