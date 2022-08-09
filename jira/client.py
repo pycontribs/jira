@@ -1498,14 +1498,20 @@ class JIRA:
 
         p = data["fields"]["project"]
 
+        project_id = None
         if isinstance(p, (str, int)):
-            data["fields"]["project"] = {"id": self.project(str(p)).id}
+            project_id = self.project(str(p)).id
+            data["fields"]["project"] = {"id": project_id}
 
         p = data["fields"]["issuetype"]
         if isinstance(p, int):
             data["fields"]["issuetype"] = {"id": p}
         elif isinstance(p, str):
-            data["fields"]["issuetype"] = {"id": self.issue_type_by_name(str(p)).id}
+            data["fields"]["issuetype"] = {
+                "id": self.issue_type_by_name(
+                    str(p), project=str(project_id) if project_id else None
+                ).id
+            }
 
         url = self._get_url("issue")
         r = self._session.post(url, data=json.dumps(data))
@@ -2518,15 +2524,21 @@ class JIRA:
         """
         return self._find_for_resource(IssueType, id)
 
-    def issue_type_by_name(self, name: str) -> IssueType:
+    def issue_type_by_name(self, name: str, project: Optional[str] = None) -> IssueType:
         """
         Args:
             name (str): Name of the issue type
+            project (str): Key or ID of the project. If set, only issue types available for that project will be looked up
 
         Returns:
             IssueType
         """
-        matching_issue_types = [it for it in self.issue_types() if it.name == name]
+        if project:
+            issue_types = self.project(project, expand="issueTypes").issueTypes
+        else:
+            issue_types = self.issue_types()
+
+        matching_issue_types = [it for it in issue_types if it.name == name]
         if len(matching_issue_types) == 1:
             return matching_issue_types[0]
         elif len(matching_issue_types) == 0:
