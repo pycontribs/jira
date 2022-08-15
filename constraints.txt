@@ -8,7 +8,7 @@ alabaster==0.7.12
     # via sphinx
 asttokens==2.0.5
     # via stack-data
-atomicwrites==1.4.0
+atomicwrites==1.4.1
     # via pytest
 attrs==21.4.0
     # via pytest
@@ -132,7 +132,7 @@ pytest-forked==1.4.0
     # via pytest-xdist
 pytest-instafail==0.4.2
     # via jira (setup.cfg)
-pytest-sugar==0.9.4
+pytest-sugar==0.9.5
     # via jira (setup.cfg)
 pytest-timeout==2.1.0
     # via jira (setup.cfg)
