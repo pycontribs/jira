@@ -56,7 +56,7 @@ idna==3.3
     # via requests
 imagesize==1.4.1
     # via sphinx
-importlib-metadata==4.11.3
+importlib-metadata==4.12.0
     # via keyring
 iniconfig==1.1.1
     # via pytest
