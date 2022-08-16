@@ -6,13 +6,13 @@
 #
 alabaster==0.7.12
     # via sphinx
-asttokens==2.0.5
+asttokens==2.0.8
     # via stack-data
 atomicwrites==1.4.1
     # via pytest
 attrs==21.4.0
     # via pytest
-babel==2.10.1
+babel==2.10.3
     # via sphinx
 backcall==0.2.0
     # via ipython
@@ -20,14 +20,14 @@ certifi==2022.6.15
     # via requests
 cffi==1.15.0
     # via cryptography
-charset-normalizer==2.0.12
+charset-normalizer==2.1.0
     # via requests
 colorama==0.4.5
     # via
     #   ipython
     #   pytest
     #   sphinx
-coverage==6.4.1
+coverage==6.4.4
     # via pytest-cov
 cryptography==37.0.2
     # via
@@ -132,7 +132,7 @@ pytest-forked==1.4.0
     # via pytest-xdist
 pytest-instafail==0.4.2
     # via jira (setup.cfg)
-pytest-sugar==0.9.4
+pytest-sugar==0.9.5
     # via jira (setup.cfg)
 pytest-timeout==2.1.0
     # via jira (setup.cfg)
@@ -207,7 +207,7 @@ traitlets==5.1.1
     # via
     #   ipython
     #   matplotlib-inline
-typing-extensions==4.2.0
+typing-extensions==4.3.0
     # via jira (setup.cfg)
 urllib3==1.26.9
     # via requests
