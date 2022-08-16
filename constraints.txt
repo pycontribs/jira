@@ -10,7 +10,7 @@ asttokens==2.0.8
     # via stack-data
 atomicwrites==1.4.1
     # via pytest
-attrs==21.4.0
+attrs==22.1.0
     # via pytest
 babel==2.10.3
     # via sphinx
