@@ -18,7 +18,7 @@ backcall==0.2.0
     # via ipython
 certifi==2022.6.15
     # via requests
-cffi==1.15.0
+cffi==1.15.1
     # via cryptography
 charset-normalizer==2.1.0
     # via requests
