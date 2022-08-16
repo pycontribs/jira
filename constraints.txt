@@ -138,7 +138,7 @@ pytest-timeout==2.1.0
     # via jira (setup.cfg)
 pytest-xdist==2.5.0
     # via jira (setup.cfg)
-pytz==2022.1
+pytz==2022.2.1
     # via babel
 pywin32-ctypes==0.2.0
     # via keyring
