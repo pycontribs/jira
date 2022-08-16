@@ -209,7 +209,7 @@ traitlets==5.1.1
     #   matplotlib-inline
 typing-extensions==4.3.0
     # via jira (setup.cfg)
-urllib3==1.26.9
+urllib3==1.26.11
     # via requests
 wcwidth==0.2.5
     # via prompt-toolkit
