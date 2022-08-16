@@ -132,7 +132,7 @@ pytest-forked==1.4.0
     # via pytest-xdist
 pytest-instafail==0.4.2
     # via jira (setup.cfg)
-pytest-sugar==0.9.4
+pytest-sugar==0.9.5
     # via jira (setup.cfg)
 pytest-timeout==2.1.0
     # via jira (setup.cfg)
