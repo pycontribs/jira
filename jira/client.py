@@ -2630,6 +2630,7 @@ class JIRA:
         projectId: Optional[str] = None,
         issueKey: Optional[str] = None,
         issueId: Optional[str] = None,
+        permissions: Optional[str] = None,
     ) -> Dict[str, Dict[str, Dict[str, str]]]:
         """Get a dict of all available permissions on the server.
 
@@ -2638,6 +2639,7 @@ class JIRA:
             projectId (Optional[str]): limit returned permissions to the specified project
             issueKey (Optional[str]): limit returned permissions to the specified issue
             issueId (Optional[str]): limit returned permissions to the specified issue
+            permissions (Optional[str]): limit returned permissions to the specified csv permission keys (cloud required field)
 
         Returns:
             Dict[str, Dict[str, Dict[str, str]]]
@@ -2651,6 +2653,9 @@ class JIRA:
             params["issueKey"] = issueKey
         if issueId is not None:
             params["issueId"] = issueId
+        if permissions is not None:
+            params["permissions"] = permissions
+
         return self._get_json("mypermissions", params=params)
 
     # Priorities
