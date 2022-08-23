@@ -37,17 +37,10 @@ Contributing Code
 Testing
 *******
 
-To test code run::
+Using tox::
 
-    make test-all
-
-This will run the code in a virtual environment, and will test across the
-versions of python which are installed. It will also install tox if it is
-not already installed.
-
-Alternatively if you do not have make you can always run::
-
-    pip install tox
+    python -m pip install pipx
+    pipx install tox
     tox
 
 Issues and Feature Requests
@@ -56,41 +49,13 @@ Issues and Feature Requests
 * Check to see if there's an existing issue/pull request for the
   bug/feature. All issues are at https://github.com/pycontribs/jira/issues
   and pull requests are at https://github.com/pycontribs/jira/pulls.
-* If there isn't an existing issue there, please file an issue. The ideal
-  report includes:
+* If there isn't an existing issue there, please file an issue.
 
-  * A description of the problem/suggestion.
-  * How to recreate the bug.
-  * If relevant, including the versions of your:
-
-    * Python interpreter (3.8, etc)
-    * jira-python
-    * Operating System and Version (Windows 7, OS X 10.10, Ubuntu 14.04, etc.)
-    * IPython if using jirashell
-    * Optionally of the other dependencies involved
+  * An example template is provided: https://github.com/pycontribs/jira/blob/main/.github/ISSUE_TEMPLATE/bug_report.yml
 
   * If possible, create a pull request with a (failing) test case demonstrating
     what's wrong. This makes the process for fixing bugs quicker & gets issues
     resolved sooner.
-  * Here is an template
-    ::
-
-        Description: <SUMMARIZE ISSUE>
-
-        Python Interpreter: <VERSION>
-        jira-python: <VERSION>
-        OS: <OPERATING SYSTEM>
-        IPython (Optional): <VERSION>
-        Other Dependencies:
-
-        Steps To Reproduce:
-            1. <STEP>
-            2. <STEP>
-            3. <STEP>
-            ...
-
-        Stack Trace:
-            <TRACE>
 
 
 Issues

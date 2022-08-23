@@ -1,9 +1,6 @@
 Installation
 ************
 
-.. contents:: Contents
-   :local:
-
 The easiest (and best) way to install jira-python is through `pip <https://pip.pypa.io/>`_::
 
     $ pip install jira
@@ -23,7 +20,6 @@ Source packages are also available at PyPI:
 
     https://pypi.python.org/pypi/jira/
 
-.. _Dependencies:
 
 Dependencies
 ============
