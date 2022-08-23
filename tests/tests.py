@@ -22,7 +22,7 @@ from parameterized import parameterized
 from jira import JIRA, Issue, JIRAError
 from jira.client import ResultList
 from jira.resources import Dashboard, Resource, cls_for_resource
-from tests.conftest import JiraTestCase, rndpassword
+from tests.conftest import JiraTestCase, allow_on_cloud, rndpassword
 
 LOGGER = logging.getLogger(__name__)
 
@@ -180,6 +180,7 @@ class MyPermissionsServerTests(JiraTestCase):
         self.assertGreaterEqual(len(perms["permissions"]), 10)
 
 
+@allow_on_cloud
 class MyPermissionsCloudTests(JiraTestCase):
     def setUp(self):
         super().setUp()
