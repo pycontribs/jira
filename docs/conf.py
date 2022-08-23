@@ -27,6 +27,8 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
+    # External
+    "sphinx_copybutton",
 ]
 
 intersphinx_mapping = {
