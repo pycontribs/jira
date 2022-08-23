@@ -234,4 +234,3 @@ yanc==0.3.3
     # via jira (setup.cfg)
 zipp==3.8.1
     # via importlib-metadata
-
