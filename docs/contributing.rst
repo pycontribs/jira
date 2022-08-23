@@ -39,6 +39,10 @@ Testing
 
 Using tox::
 
+Using tox
+
+.. code-block::bash
+
     python -m pip install pipx
     pipx install tox
     tox
@@ -51,7 +55,10 @@ Issues and Feature Requests
   and pull requests are at https://github.com/pycontribs/jira/pulls.
 * If there isn't an existing issue there, please file an issue.
 
-  * An example template is provided: https://github.com/pycontribs/jira/blob/main/.github/ISSUE_TEMPLATE/bug_report.yml
+  * An example template is provided for:
+
+    * Bugs: https://github.com/pycontribs/jira/blob/main/.github/ISSUE_TEMPLATE/bug_report.yml
+    * Features: https://github.com/pycontribs/jira/blob/main/.github/ISSUE_TEMPLATE/feature_request.yml
 
   * If possible, create a pull request with a (failing) test case demonstrating
     what's wrong. This makes the process for fixing bugs quicker & gets issues

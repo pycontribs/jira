@@ -5,9 +5,15 @@ There is no substitute for play. The only way to really know a service, API or p
 it, and bang your elbows -- trial and error. A REST design is especially well-suited for active exploration, and the
 ``jirashell`` script (installed automatically when you use pip) is designed to help you do exactly that.
 
-Run it from the command line::
+.. code-block:: bash
 
-    $ jirashell -s https://jira.atlassian.com
+    pip install jira[cli]
+
+Run it from the command line
+
+.. code-block:: bash
+
+    jirashell -s https://jira.atlassian.com
     <Jira Shell (https://jira.atlassian.com)>
 
     *** Jira shell active; client is in 'jira'. Press Ctrl-D to exit.
@@ -18,12 +24,17 @@ This is a specialized Python interpreter (built on IPython) that lets you explor
 Python code is acceptable input. The shell builds a ``JIRA`` client object for you (based on the launch parameters) and
 stores it in the ``jira`` object.
 
-Try getting an issue::
+Try getting an issue
+
+.. code-block:: bash
 
     In [1]: issue = jira.issue('JRA-1330')
 
 ``issue`` now contains a reference to an issue ``Resource``. To see the available properties and methods, hit the TAB
-key::
+key
+
+
+.. code-block:: bash
 
     In [2]: issue.
     issue.delete  issue.fields  issue.id      issue.raw     issue.update
