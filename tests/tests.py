@@ -157,8 +157,6 @@ class FieldsTests(JiraTestCase):
 class MyPermissionsServerTests(JiraTestCase):
     def setUp(self):
         super().setUp()
-        if self.jira._is_cloud:
-            self.skipTest("server only test class")
         self.issue_1 = self.test_manager.project_b_issue1
 
     def test_my_permissions(self):
