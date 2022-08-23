@@ -159,7 +159,7 @@ class ResilientSession(Session):
         request_headers.update(original_kwargs.get("headers", {}))
         prepared_kwargs["headers"] = request_headers
 
-        data = original_kwargs.get("data", {})
+        data = original_kwargs.get("data", None)
         if isinstance(data, dict):
             # mypy ensures we don't do this,
             # but for people subclassing we should preserve old behaviour
