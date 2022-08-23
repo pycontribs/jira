@@ -37,8 +37,6 @@ Contributing Code
 Testing
 *******
 
-Using tox::
-
 Using tox
 
 .. code-block::bash
