@@ -180,6 +180,7 @@ class MyPermissionsServerTests(JiraTestCase):
         self.assertGreaterEqual(len(perms["permissions"]), 10)
 
 
+@allow_on_cloud
 class MyPermissionsCloudTests(JiraTestCase):
     def setUp(self):
         super().setUp()
