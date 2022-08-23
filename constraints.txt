@@ -189,8 +189,11 @@ sphinx==5.1.1
     #   furo
     #   jira (setup.cfg)
     #   sphinx-basic-ng
+    #   sphinx-copybutton
 sphinx-basic-ng==0.0.1a12
     # via furo
+sphinx-copybutton==0.5.0
+    # via jira (setup.cfg)
 sphinxcontrib-applehelp==1.0.2
     # via sphinx
 sphinxcontrib-devhelp==1.0.2
@@ -232,5 +235,3 @@ yanc==0.3.3
 zipp==3.8.1
     # via importlib-metadata
 
-# The following packages are considered to be unsafe in a requirements file:
-# setuptools
