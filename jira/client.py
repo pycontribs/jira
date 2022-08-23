@@ -2634,6 +2634,10 @@ class JIRA:
     ) -> Dict[str, Dict[str, Dict[str, str]]]:
         """Get a dict of all available permissions on the server.
 
+        ``permissions`` is a comma-separated value list of permission keys that is
+        required in Jira Cloud. For possible and allowable permission values, see
+        https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-permission-schemes/#built-in-permissions
+
         Args:
             projectKey (Optional[str]): limit returned permissions to the specified project
             projectId (Optional[str]): limit returned permissions to the specified project
