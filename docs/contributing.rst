@@ -42,21 +42,21 @@ Dev Container
 
 We utilise Docker in order to generate a test Jira Server instance.
 
-This can be run manually, or automated using VS Code Dev Containers.
+This can be run manually, or automated using VS Code Dev Containers:
 
-Open the folder of the repository with VS Code and ensure you have Docker running and
-the ``ms-azuretools.vscode-docker`` and ``ms-vscode-remote.remote-containers``
-extensions installed.
-
-You should be able to do ``View >> Command Palette`` (or equivalent) and search for:
-``Remote-containers: Rebuild and Reopen in container``.
+#. Open the folder of the repository with VS Code
+#. Ensure you have Docker running
+#. Ensure you have the ``ms-azuretools.vscode-docker`` and ``ms-vscode-remote.remote-containers``
+   extensions installed.
+#. You should be able to do ``View >> Command Palette`` (or equivalent) and search for:
+   ``Remote-containers: Rebuild and Reopen in container``.
 
 This will use the ``.devcontainer\Dockerfile`` as a base image with configurations
 dictated by ``.devcontainer\devcontainer.json``.
 
 .. TIP::
   The Docker extension can be used to monitor the progress of the Jira server build,
-  it takes a while!
+  it takes a while! The tests will only run once the server is up and reachable on: http://localhost:2990/jira
 
 
 Running Tests
