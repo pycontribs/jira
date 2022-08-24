@@ -37,18 +37,78 @@ Contributing Code
 Testing
 *******
 
+Dev Container
++++++++++++++
+
 We utilise Docker in order to generate a test Jira Server instance.
 
-We additionally run
+This can be run manually, or automated using VS Code Dev Containers.
 
+Open the folder of the repository with VS Code and ensure you have Docker running and
+the ``ms-azuretools.vscode-docker`` and ``ms-vscode-remote.remote-containers``
+extensions installed.
+
+You should be able to do ``View >> Command Palette`` (or equivalent) and search for:
+``Remote-containers: Rebuild and Reopen in container``.
+
+This will use the ``.devcontainer\Dockerfile`` as a base image with configurations
+dictated by ``.devcontainer\devcontainer.json``.
+
+.. TIP::
+  The Docker extension can be used to monitor the progress of the Jira server build,
+  it takes a while!
+
+
+Running Tests
++++++++++++++
 
 Using tox
 
-.. code-block::bash
+.. code-block:: bash
 
     python -m pip install pipx
     pipx install tox
     tox
+
+* Lint
+    - ``tox -e lint``
+* Run tests
+    - ``tox``
+* Run tests for one env only
+    - ``tox -e py38``
+* Specify what tests to run with pytest_
+    - ``tox -e py39 -- tests/resources/test_attachment.py``
+    - ``tox -e py38 -- -m allow_on_cloud`` (Run only the cloud tests)
+* Debug tests with breakpoints by disabling the coverage plugin, with the ``--no-cov`` argument.
+    - Example for VSCode on Windows :
+
+    .. code-block:: java
+
+        {
+            "name": "Pytest",
+            "type": "python",
+            "request": "launch",
+            "python": ".tox\\py39\\Scripts\\python.exe",
+            "module": "pytest",
+            "env": {
+                "CI_JIRA_URL": "http://localhost:2990/jira",
+                "CI_JIRA_ADMIN": "admin",
+                "CI_JIRA_ADMIN_PASSWORD": "admin",
+                "CI_JIRA_USER": "jira_user",
+                "CI_JIRA_USER_FULL_NAME": "Newly Created CI User",
+                "CI_JIRA_USER_PASSWORD": "jira",
+                "CI_JIRA_ISSUE": "Task",
+                "PYTEST_TIMEOUT": "0", // Don't timeout
+            },
+            "args": [
+                // "-v",
+                "--no-cov", // running coverage affects breakpoints
+                "tests/resources/test_attachment.py"
+            ]
+        }
+
+.. _pytest: https://docs.pytest.org/en/stable/usage.html#specifying-tests-selecting-tests
+
 
 Issues and Feature Requests
 ***************************
