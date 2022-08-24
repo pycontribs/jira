@@ -157,8 +157,6 @@ class FieldsTests(JiraTestCase):
 class MyPermissionsServerTests(JiraTestCase):
     def setUp(self):
         super().setUp()
-        if self.jira._is_cloud:
-            self.skipTest("server only test class")
         self.issue_1 = self.test_manager.project_b_issue1
 
     def test_my_permissions(self):
@@ -213,6 +211,10 @@ class MyPermissionsCloudTests(JiraTestCase):
             permissions=self.permission_keys,
         )
         self.assertEqual(len(perms["permissions"]), 3)
+
+    def test_missing_required_param_my_permissions_raises_exception(self):
+        with self.assertRaises(JIRAError):
+            self.jira.my_permissions()
 
     def test_invalid_param_my_permissions_raises_exception(self):
         with self.assertRaises(JIRAError):

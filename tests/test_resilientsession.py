@@ -107,3 +107,22 @@ def test_passthrough_class():
     # WHEN: the dict of request args are prepared
     # THEN: The exact same dict is returned
     assert passthrough_class.prepare(my_kwargs) is my_kwargs
+
+
+@patch("requests.Session.request")
+def test_unspecified_body_remains_unspecified(mocked_request_method: Mock):
+    # Disable retries for this test.
+    session = jira.resilientsession.ResilientSession(max_retries=0)
+    # Data is not specified here.
+    session.get(url="mocked_url")
+    kwargs = mocked_request_method.call_args.kwargs
+    assert "data" not in kwargs
+
+
+@patch("requests.Session.request")
+def test_nonempty_body_is_forwarded(mocked_request_method: Mock):
+    # Disable retries for this test.
+    session = jira.resilientsession.ResilientSession(max_retries=0)
+    session.get(url="mocked_url", data={"some": "fake-data"})
+    kwargs = mocked_request_method.call_args.kwargs
+    assert kwargs["data"] == '{"some": "fake-data"}'
