@@ -22,7 +22,7 @@ from parameterized import parameterized
 from jira import JIRA, Issue, JIRAError
 from jira.client import ResultList
 from jira.resources import Dashboard, Resource, cls_for_resource
-from tests.conftest import JiraTestCase, rndpassword
+from tests.conftest import JiraTestCase, allow_on_cloud, rndpassword
 
 LOGGER = logging.getLogger(__name__)
 
@@ -154,9 +154,9 @@ class FieldsTests(JiraTestCase):
         self.assertGreater(len(fields), 10)
 
 
-class MyPermissionsTests(JiraTestCase):
+class MyPermissionsServerTests(JiraTestCase):
     def setUp(self):
-        JiraTestCase.setUp(self)
+        super().setUp()
         self.issue_1 = self.test_manager.project_b_issue1
 
     def test_my_permissions(self):
@@ -176,6 +176,49 @@ class MyPermissionsTests(JiraTestCase):
             issueId=self.test_manager.project_b_issue1_obj.id
         )
         self.assertGreaterEqual(len(perms["permissions"]), 10)
+
+
+@allow_on_cloud
+class MyPermissionsCloudTests(JiraTestCase):
+    def setUp(self):
+        super().setUp()
+        if not self.jira._is_cloud:
+            self.skipTest("cloud only test class")
+        self.issue_1 = self.test_manager.project_b_issue1
+        self.permission_keys = "BROWSE_PROJECTS,CREATE_ISSUES,ADMINISTER_PROJECTS"
+
+    def test_my_permissions(self):
+        perms = self.jira.my_permissions(permissions=self.permission_keys)
+        self.assertEqual(len(perms["permissions"]), 3)
+
+    def test_my_permissions_by_project(self):
+        perms = self.jira.my_permissions(
+            projectKey=self.test_manager.project_a, permissions=self.permission_keys
+        )
+        self.assertEqual(len(perms["permissions"]), 3)
+        perms = self.jira.my_permissions(
+            projectId=self.test_manager.project_a_id, permissions=self.permission_keys
+        )
+        self.assertEqual(len(perms["permissions"]), 3)
+
+    def test_my_permissions_by_issue(self):
+        perms = self.jira.my_permissions(
+            issueKey=self.issue_1, permissions=self.permission_keys
+        )
+        self.assertEqual(len(perms["permissions"]), 3)
+        perms = self.jira.my_permissions(
+            issueId=self.test_manager.project_b_issue1_obj.id,
+            permissions=self.permission_keys,
+        )
+        self.assertEqual(len(perms["permissions"]), 3)
+
+    def test_missing_required_param_my_permissions_raises_exception(self):
+        with self.assertRaises(JIRAError):
+            self.jira.my_permissions()
+
+    def test_invalid_param_my_permissions_raises_exception(self):
+        with self.assertRaises(JIRAError):
+            self.jira.my_permissions("INVALID_PERMISSION")
 
 
 class SearchTests(JiraTestCase):
