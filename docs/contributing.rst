@@ -37,6 +37,11 @@ Contributing Code
 Testing
 *******
 
+We utilise Docker in order to generate a test Jira Server instance.
+
+We additionally run
+
+
 Using tox
 
 .. code-block::bash

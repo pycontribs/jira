@@ -26,7 +26,7 @@ stores it in the ``jira`` object.
 
 Try getting an issue
 
-.. code-block:: bash
+.. code-block:: python
 
     In [1]: issue = jira.issue('JRA-1330')
 
@@ -34,7 +34,7 @@ Try getting an issue
 key
 
 
-.. code-block:: bash
+.. code-block:: python
 
     In [2]: issue.
     issue.delete  issue.fields  issue.id      issue.raw     issue.update
