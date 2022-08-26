@@ -16,7 +16,7 @@ which pip can also set up for you::
     $ pip -E jira_python install jira
     $ workon jira_python
 
-Doing this creates a private Python "installation" that you can freely upgrade, degrade or break without putting
+Doing this creates a private Python "installation" that you can freely upgrade, downgrade or break without putting
 the critical components of your system at risk.
 
 Source packages are also available at PyPI:
