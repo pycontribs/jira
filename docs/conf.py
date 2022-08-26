@@ -265,9 +265,7 @@ man_pages = [
 napoleon_google_docstring = True
 napoleon_numpy_docstring = False  # Explicitly prefer Google style docstring
 napoleon_use_param = True  # for type hint support
-napoleon_use_rtype = (
-    False  # False to output the return type inline with the description.
-)
+napoleon_use_rtype = False  # False so the return type is inline with the description.
 
 # -- Options for Texinfo output ------------------------------------------------
 
