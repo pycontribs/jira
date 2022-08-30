@@ -4327,7 +4327,7 @@ class JIRA:
 
         ps_list: List[Dict[str, Any]]
 
-        if permissionScheme is None:
+        if permissionScheme is None and not self._is_cloud:
             ps_list = self.permissionschemes()
             for sec in ps_list:
                 if sec["name"] == "Default Permission Scheme":
@@ -4430,12 +4430,13 @@ class JIRA:
             "assigneeType": "PROJECT_LEAD",
             "description": "",
             # "avatarId": 13946,
-            "permissionScheme": int(permissionScheme),
             "notificationScheme": notificationScheme,
             "url": url,
         }
         if issueSecurityScheme:
             payload["issueSecurityScheme"] = int(issueSecurityScheme)
+        if permissionScheme:
+            payload["permissionScheme"] = int(permissionScheme)
         if projectCategory:
             payload["categoryId"] = int(projectCategory)
 
