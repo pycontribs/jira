@@ -91,6 +91,10 @@ Setup
 
 Automatic (VS Code)
 ```````````````````
+.. image:: https://img.shields.io/static/v1?label=Remote%20-%20Containers&message=Open&color=blue&logo=visualstudiocode
+    :target: https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/pycontribs/jira
+    :alt: Open in Remote - Containers
+    
 Follow the instructions in the `contributing guide`_, which will describe how to use the dev container
 that will automatically setup a suitable environment.
 
