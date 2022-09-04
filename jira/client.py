@@ -4328,8 +4328,9 @@ class JIRA:
         ps_list: List[Dict[str, Any]]
 
         if permissionScheme is None and self._is_cloud:
-            # Let Jira decide the default field due to issues in handling the field
-            # https://community.atlassian.com/t5/Jira-questions/Using-Default-Permission-Scheme-with-Create-Project-API-causes/qaq-p/1862489
+            # Let Jira Cloud decide the default field due to issues in handling the
+            # field. See https://bit.ly/3ALVqgo
+            pass
         elif permissionScheme is None:
             ps_list = self.permissionschemes()
             for sec in ps_list:
