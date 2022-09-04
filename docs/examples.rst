@@ -1,9 +1,6 @@
 Examples
 ********
 
-.. contents:: Contents
-   :local:
-
 Here's a quick usage example:
 
 .. literalinclude:: ../examples/basic_use.py

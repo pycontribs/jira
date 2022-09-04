@@ -37,18 +37,78 @@ Contributing Code
 Testing
 *******
 
-To test code run::
+Dev Container
++++++++++++++
 
-    make test-all
+We utilise Docker in order to generate a test Jira Server instance.
 
-This will run the code in a virtual environment, and will test across the
-versions of python which are installed. It will also install tox if it is
-not already installed.
+This can be run manually, or automated using VS Code Dev Containers:
 
-Alternatively if you do not have make you can always run::
+#. Open the folder of the repository with VS Code
+#. Ensure you have Docker running
+#. Ensure you have the ``ms-azuretools.vscode-docker`` and ``ms-vscode-remote.remote-containers``
+   extensions installed.
+#. You should be able to do ``View >> Command Palette`` (or equivalent) and search for:
+   ``Remote-containers: Rebuild and Reopen in container``.
 
-    pip install tox
+This will use the ``.devcontainer\Dockerfile`` as a base image with configurations
+dictated by ``.devcontainer\devcontainer.json``.
+
+.. TIP::
+  The Docker extension can be used to monitor the progress of the Jira server build,
+  it takes a while! The tests will only run once the server is up and reachable on: http://localhost:2990/jira
+
+
+Running Tests
++++++++++++++
+
+Using tox
+
+.. code-block:: bash
+
+    python -m pip install pipx
+    pipx install tox
     tox
+
+* Lint
+    - ``tox -e lint``
+* Run tests
+    - ``tox``
+* Run tests for one env only
+    - ``tox -e py38``
+* Specify what tests to run with pytest_
+    - ``tox -e py39 -- tests/resources/test_attachment.py``
+    - ``tox -e py38 -- -m allow_on_cloud`` (Run only the cloud tests)
+* Debug tests with breakpoints by disabling the coverage plugin, with the ``--no-cov`` argument.
+    - Example for VSCode on Windows :
+
+    .. code-block:: java
+
+        {
+            "name": "Pytest",
+            "type": "python",
+            "request": "launch",
+            "python": ".tox\\py39\\Scripts\\python.exe",
+            "module": "pytest",
+            "env": {
+                "CI_JIRA_URL": "http://localhost:2990/jira",
+                "CI_JIRA_ADMIN": "admin",
+                "CI_JIRA_ADMIN_PASSWORD": "admin",
+                "CI_JIRA_USER": "jira_user",
+                "CI_JIRA_USER_FULL_NAME": "Newly Created CI User",
+                "CI_JIRA_USER_PASSWORD": "jira",
+                "CI_JIRA_ISSUE": "Task",
+                "PYTEST_TIMEOUT": "0", // Don't timeout
+            },
+            "args": [
+                // "-v",
+                "--no-cov", // running coverage affects breakpoints
+                "tests/resources/test_attachment.py"
+            ]
+        }
+
+.. _pytest: https://docs.pytest.org/en/stable/usage.html#specifying-tests-selecting-tests
+
 
 Issues and Feature Requests
 ***************************
@@ -56,41 +116,16 @@ Issues and Feature Requests
 * Check to see if there's an existing issue/pull request for the
   bug/feature. All issues are at https://github.com/pycontribs/jira/issues
   and pull requests are at https://github.com/pycontribs/jira/pulls.
-* If there isn't an existing issue there, please file an issue. The ideal
-  report includes:
+* If there isn't an existing issue there, please file an issue.
 
-  * A description of the problem/suggestion.
-  * How to recreate the bug.
-  * If relevant, including the versions of your:
+  * An example template is provided for:
 
-    * Python interpreter (3.8, etc)
-    * jira-python
-    * Operating System and Version (Windows 7, OS X 10.10, Ubuntu 14.04, etc.)
-    * IPython if using jirashell
-    * Optionally of the other dependencies involved
+    * Bugs: https://github.com/pycontribs/jira/blob/main/.github/ISSUE_TEMPLATE/bug_report.yml
+    * Features: https://github.com/pycontribs/jira/blob/main/.github/ISSUE_TEMPLATE/feature_request.yml
 
   * If possible, create a pull request with a (failing) test case demonstrating
     what's wrong. This makes the process for fixing bugs quicker & gets issues
     resolved sooner.
-  * Here is an template
-    ::
-
-        Description: <SUMMARIZE ISSUE>
-
-        Python Interpreter: <VERSION>
-        jira-python: <VERSION>
-        OS: <OPERATING SYSTEM>
-        IPython (Optional): <VERSION>
-        Other Dependencies:
-
-        Steps To Reproduce:
-            1. <STEP>
-            2. <STEP>
-            3. <STEP>
-            ...
-
-        Stack Trace:
-            <TRACE>
 
 
 Issues
