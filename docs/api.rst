@@ -1,10 +1,6 @@
 API Documentation
 *****************
 
-
-.. contents:: Contents
-   :local:
-
 jira package
 ============
 
