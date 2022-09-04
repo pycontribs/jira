@@ -47,7 +47,7 @@ execnet==1.9.0
     # via
     #   pytest-cache
     #   pytest-xdist
-executing==0.10.0
+executing==1.0.0
     # via stack-data
 filemagic==1.6
     # via jira (setup.cfg)
