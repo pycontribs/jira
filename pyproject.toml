@@ -1,10 +1,39 @@
 [build-system]
-requires = [
-  "setuptools >= 41.0.0",
-  "setuptools_scm >= 1.15.0",
-  "setuptools_scm_git_archive >= 1.0",
-  "wheel",
-]
+requires = ["setuptools >= 60.0.0", "setuptools_scm[toml] >= 7.0.0"]
 build-backend = "setuptools.build_meta"
-[project]
-requires-python = ">=3.8"
+
+# Setuptools config
+# Equivalent to use_scm_version=True
+[tool.setuptools_scm]
+
+# Tool Config
+[tool.isort]
+profile = "black"
+src_paths = ["jira", "tests"]
+
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+testpaths = ["tests"]
+python_files = ["test_*.py", "tests.py"]
+addopts = '''-p no:xdist --durations=10 --tb=long -rxX -v --color=yes
+             --junitxml=build/results.xml
+             --cov-report=xml --cov jira'''
+
+# these are important for distributed testing, to speedup their execution we minimize what we sync
+rsyncdirs = ". jira demo docs"
+rsyncignore = ".git"
+
+# pytest-timeout, delete_project on jira cloud takes >70s
+timeout = 80
+
+# avoid useless warnings related to coverage skips
+filterwarnings = ["ignore::pytest.PytestWarning"]
+
+markers = ["allow_on_cloud: opt in for the test to run on Jira Cloud"]
+
+
+[tool.mypy]
+python_version = 3.8
+warn_unused_configs = true
+namespace_packages = true

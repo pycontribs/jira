@@ -1,4 +1,0 @@
-gcc [platform:rpm]
-krb5-devel [platform:rpm]
-krb5-workstation [platform:rpm]
-python3-devel [platform:rpm]
