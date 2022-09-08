@@ -137,7 +137,7 @@ class ResilientSession(Session):
             max_retries (int): Max number of times to retry a request. Defaults to 3.
             max_retry_delay (int): Max delay allowed between retries. Defaults to 60.
         """
-        self.timeout = timeout  # TODO: Unused?
+        self.timeout = timeout
         self.max_retries = max_retries
         self.max_retry_delay = max_retry_delay
         super().__init__()
@@ -199,7 +199,9 @@ class ResilientSession(Session):
             exception = None
 
             try:
-                response = super().request(method, url, **processed_kwargs)
+                response = super().request(
+                    method, url, timeout=self.timeout, **processed_kwargs
+                )
                 if response.ok:
                     self.__handle_known_ok_response_errors(response)
                     return response
