@@ -5914,6 +5914,23 @@ class JIRA:
 
         return issues
 
+    def completed_issues(self, board_id: str, sprint_id: str) -> list[Issue]:
+        """Return the completed issues for the sprint.
+
+        Returns:
+            List[Issue]
+        """
+        r_json: dict[str, Any] = self._get_json(
+            f"rapid/charts/sprintreport?rapidViewId={board_id}&sprintId={sprint_id}",
+            base=self.AGILE_BASE_URL,
+        )
+        issues = [
+            Issue(self._options, self._session, raw_issues_json)
+            for raw_issues_json in r_json["contents"]["completedIssues"]
+        ]
+
+        return issues
+
     def removedIssuesEstimateSum(self, board_id: str, sprint_id: str) -> float:
         """Return the total incompleted points this sprint."""
         data: dict[str, Any] = self._get_json(
