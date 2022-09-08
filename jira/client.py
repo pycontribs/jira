@@ -5832,7 +5832,7 @@ class JIRA:
         return data["contents"]["incompletedIssuesEstimateSum"]["value"]
 
     def removed_issues(self, board_id: str, sprint_id: str) -> list[Issue]:
-        """Return the completed issues for the sprint.
+        """Return the removed issues for the sprint.
 
         Returns:
             List[Issue]
