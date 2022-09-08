@@ -4756,7 +4756,9 @@ class JIRA:
         )
         issues = [
             Issue(self._options, self._session, raw_issues_json)
-            for raw_issues_json in r_json["contents"]["issuesNotCompletedInCurrentSprint"]
+            for raw_issues_json in r_json["contents"][
+                "issuesNotCompletedInCurrentSprint"
+            ]
         ]
 
         return issues
