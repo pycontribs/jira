@@ -1839,6 +1839,11 @@ class JIRA:
 
         """
 
+        if self._version >= (9, 0, 0):
+            raise NotImplementedError(
+                "Support for createmeta search in server" ">= 9.0.0 has been removed."
+            )
+
         if self.is_84_and_later():
             DeprecationWarning("The `createmeta` is deprecated, use createmeta_v2")
 
