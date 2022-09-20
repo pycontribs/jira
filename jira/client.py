@@ -1722,6 +1722,94 @@ class JIRA:
         else:
             return Issue(self._options, self._session, raw=raw_issue_json)
 
+    def _createmeta_issuetypes(self, project: Union[str, int]) -> Dict[str, int]:
+        """Find all issuetypes for createmeta in project"""
+
+        def _iter():
+            params = {"startAt": 0}
+            while True:
+                try:
+                    resp = self._get_json(
+                        f"issue/createmeta/{project}/issuetypes", params
+                    )
+                except JIRAError:
+                    raise JIRAError(
+                        status_code=500,
+                        text=f"JIRA: There is no such project {project}",
+                    )
+                yield from resp["values"]
+                params["startAt"] = params["startAt"] + resp["maxResults"]
+                if resp["total"] < params["startAt"]:
+                    break
+
+        meta_source = _iter()
+        return {v["name"]: v["id"] for v in meta_source}
+
+    def _get_project_createmeta_issuetype(
+        self,
+        project: Union[str, int],
+        issueTypeName: str = None,
+        issueTypeId: int = None,
+    ) -> Dict[str, Any]:
+        """Returns createmeta fields for project+issuetype. if issuetypeId specifyies it skips list of issuetypes"""
+
+        def _iter(issuetypeid: int):
+            params = {"startAt": 0}
+            while True:
+                resp = self._get_json(
+                    f"issue/createmeta/{project}/issuetypes/{issuetypeid}", params
+                )
+                yield from resp["values"]
+                params["startAt"] = params["startAt"] + resp["maxResults"]
+                if resp["total"] < params["startAt"]:
+                    break
+
+        issuetype_id = issueTypeId
+        if issueTypeId is None:
+            _meta = self._createmeta_issuetypes(project)
+            issuetype_id = _meta.get(issueTypeName)
+        if issuetype_id is None:
+            raise JIRAError(
+                status_code=500,
+                text=f"JIRA:There is no such issueType {issueTypeName} in {project} project",
+            )
+        meta_source = _iter(issuetype_id)
+        return {v["fieldId"]: v for v in meta_source}
+
+    def is_84_and_later(self):
+        return self._version >= (8, 4, 0)
+
+    def createmeta_v2(
+        self,
+        projectKey: Optional[str] = None,
+        projectId: Optional[int] = None,
+        issueTypeName: Optional[str] = None,
+        issueTypeId: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        """Get the metadata required to create issues for particular project and issue type
+
+        Args:
+            projectKey (Optional[str]): key of project to find issue type.
+                It is single value string. Has precedence over `projectId`
+            projectId (Optional[int]): id of project to find issue type.
+                It is single value int
+            issueTypeName (Optional[str]): issueType to find fields metadata
+                It is single value string. Has precedence over `issueTypeId`
+            issueTypeId (Optional[int]): issueType to find fields metadata
+                It is single value int.
+        Returns:
+            Dict[str, Any]: Dictionary similar todeperecated createmeta returns in project[0].issuetype[0].fields
+        """
+
+        if self.is_84_and_later():
+            project: Union[str, int] = projectKey or projectId
+            meta = self._get_project_createmeta_issuetype(
+                project=project, issueTypeName=issueTypeName, issueTypeId=issueTypeId
+            )
+            return meta
+        else:
+            raise JIRAError("Not supported REST API in pre 8.4 versions")
+
     def createmeta(
         self,
         projectKeys: Optional[Union[Tuple[str, str], str]] = None,
@@ -1750,6 +1838,10 @@ class JIRA:
             Dict[str, Any]
 
         """
+
+        if self.is_84_and_later():
+            DeprecationWarning("The `createmeta` is deprecated, use createmeta_v2")
+
         params: Dict[str, Any] = {}
         if projectKeys is not None:
             params["projectKeys"] = projectKeys
