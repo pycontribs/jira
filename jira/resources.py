@@ -40,6 +40,7 @@ __all__ = (
     "PermissionScheme",
     "Watchers",
     "Worklog",
+    "IssueField",
     "IssueLink",
     "IssueLinkType",
     "IssueProperty",
@@ -1076,6 +1077,21 @@ class IssueType(Resource):
         raw: Dict[str, Any] = None,
     ):
         Resource.__init__(self, "issuetype/{0}", options, session)
+        if raw:
+            self._parse_raw(raw)
+        self.raw: Dict[str, Any] = cast(Dict[str, Any], self.raw)
+
+
+class IssueField(Resource):
+    """Type of an issue."""
+
+    def __init__(
+        self,
+        options: Dict[str, str],
+        session: ResilientSession,
+        raw: Dict[str, Any] = None,
+    ):
+        Resource.__init__(self, "issuefield/{0}", options, session)
         if raw:
             self._parse_raw(raw)
         self.raw: Dict[str, Any] = cast(Dict[str, Any], self.raw)

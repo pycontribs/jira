@@ -65,6 +65,7 @@ from jira.resources import (
     Filter,
     Group,
     Issue,
+    IssueField,
     IssueLink,
     IssueLinkType,
     IssueProperty,
@@ -1722,29 +1723,6 @@ class JIRA:
         else:
             return Issue(self._options, self._session, raw=raw_issue_json)
 
-    def _createmeta_issuetypes(self, project: Union[str, int]) -> Dict[str, int]:
-        """Find all issuetypes for createmeta in project"""
-
-        def _iter():
-            params = {"startAt": 0}
-            while True:
-                try:
-                    resp = self._get_json(
-                        f"issue/createmeta/{project}/issuetypes", params
-                    )
-                except JIRAError:
-                    raise JIRAError(
-                        status_code=500,
-                        text=f"JIRA: There is no such project {project}",
-                    )
-                yield from resp["values"]
-                params["startAt"] = params["startAt"] + resp["maxResults"]
-                if resp["total"] < params["startAt"]:
-                    break
-
-        meta_source = _iter()
-        return {v["name"]: v["id"] for v in meta_source}
-
     def _get_project_createmeta_issuetype(
         self,
         project: Union[str, int],
@@ -1753,28 +1731,39 @@ class JIRA:
     ) -> Dict[str, Any]:
         """Returns createmeta fields for project+issuetype. if issuetypeId specifyies it skips list of issuetypes"""
 
-        def _iter(issuetypeid: int):
-            params = {"startAt": 0}
-            while True:
-                resp = self._get_json(
-                    f"issue/createmeta/{project}/issuetypes/{issuetypeid}", params
-                )
-                yield from resp["values"]
-                params["startAt"] = params["startAt"] + resp["maxResults"]
-                if resp["total"] < params["startAt"]:
-                    break
-
         issuetype_id = issueTypeId
         if issueTypeId is None:
-            _meta = self._createmeta_issuetypes(project)
-            issuetype_id = _meta.get(issueTypeName)
+            try:
+                f: ResultList[IssueType] = self._fetch_pages(
+                    IssueType,
+                    "values",
+                    f"issue/createmeta/{project}/issuetypes",
+                    0,
+                    0,
+                    None,
+                )
+                _meta = [v.id for v in f if v.name == issueTypeName]
+                if len(_meta) == 1:
+                    issuetype_id = _meta[0]
+            except JIRAError:
+                raise JIRAError(
+                    status_code=500,
+                    text=f"JIRA: There is no such project {project}",
+                )
         if issuetype_id is None:
             raise JIRAError(
                 status_code=500,
-                text=f"JIRA:There is no such issueType {issueTypeName} in {project} project",
+                text=f"JIRA: There is no such issueType {issueTypeName} in {project} project",
             )
-        meta_source = _iter(issuetype_id)
-        return {v["fieldId"]: v for v in meta_source}
+        meta_source: ResultList[IssueField] = self._fetch_pages(
+            IssueField,
+            "values",
+            f"issue/createmeta/{project}/issuetypes/{issuetype_id}",
+            0,
+            0,
+            None,
+        )
+        return {v.fieldId: v for v in meta_source}
 
     def is_84_and_later(self):
         return self._version >= (8, 4, 0)
@@ -1785,7 +1774,7 @@ class JIRA:
         projectId: Optional[int] = None,
         issueTypeName: Optional[str] = None,
         issueTypeId: Optional[int] = None,
-    ) -> Dict[str, Any]:
+    ) -> Dict[str, IssueField]:
         """Get the metadata required to create issues for particular project and issue type
 
         Args:
@@ -1798,7 +1787,7 @@ class JIRA:
             issueTypeId (Optional[int]): issueType to find fields metadata
                 It is single value int.
         Returns:
-            Dict[str, Any]: Dictionary similar todeperecated createmeta returns in project[0].issuetype[0].fields
+            Dict[str, IssueField]: dict fieldId:IssueField
         """
 
         if self.is_84_and_later():
