@@ -55,7 +55,7 @@ flaky==3.7.0
     # via jira (setup.cfg)
 furo==2022.6.21
     # via jira (setup.cfg)
-idna==3.3
+idna==3.4
     # via requests
 imagesize==1.4.1
     # via sphinx
