@@ -133,7 +133,7 @@ pytest==7.1.2
     #   pytest-xdist
 pytest-cache==1.0
     # via jira (setup.cfg)
-pytest-cov==3.0.0
+pytest-cov==4.0.0
     # via jira (setup.cfg)
 pytest-forked==1.4.0
     # via pytest-xdist
