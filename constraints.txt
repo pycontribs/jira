@@ -18,7 +18,7 @@ backcall==0.2.0
     # via ipython
 beautifulsoup4==4.11.1
     # via furo
-certifi==2022.6.15
+certifi==2022.9.24
     # via requests
 cffi==1.15.1
     # via cryptography
