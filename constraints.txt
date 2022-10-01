@@ -210,7 +210,7 @@ stack-data==0.4.0
     # via ipython
 tenacity==8.0.1
     # via jira (setup.cfg)
-termcolor==1.1.0
+termcolor==2.0.1
     # via pytest-sugar
 tomli==2.0.1
     # via
