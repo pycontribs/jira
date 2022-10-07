@@ -2590,15 +2590,19 @@ class JIRA:
         else:
             raise KeyError(f"Issue type '{name}' appears more than once.")
 
-    def request_types(self, service_desk: ServiceDesk) -> List[RequestType]:
+    def request_types(self, service_desk: ServiceDesk, limit: Optional[int] = None) -> List[RequestType]:
         """Returns request types supported by a service desk instance.
 
         Args:
             service_desk (ServiceDesk): The service desk instance.
+            limit: Limit parameter. Allow searching beyond default limit parameters.
 
         Returns:
             List[RequestType]
         """
+        params = {}
+        if limit is not None:
+            params["limit"] = limit
         if hasattr(service_desk, "id"):
             service_desk = service_desk.id
         url = (
@@ -2606,7 +2610,7 @@ class JIRA:
             + f"/rest/servicedeskapi/servicedesk/{service_desk}/requesttype"
         )
         headers = {"X-ExperimentalApi": "opt-in"}
-        r_json = json_loads(self._session.get(url, headers=headers))
+        r_json = json_loads(self._session.get(url, headers=headers, params=params))
         request_types = [
             RequestType(self._options, self._session, raw_type_json)
             for raw_type_json in r_json["values"]
