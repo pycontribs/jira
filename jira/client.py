@@ -1669,7 +1669,11 @@ class JIRA:
 
     @no_type_check  # FIXME: This function does not do what it wants to with fieldargs
     def create_customer_request(
-        self, fields: Dict[str, Any] = None, prefetch: bool = True, **fieldargs
+        self,
+        fields: Dict[str, Any] = None,
+        prefetch: bool = True,
+        limit: Optional[int] = None,
+        **fieldargs
     ) -> Issue:
         """Create a new customer request and return an issue Resource for it.
 
@@ -1689,6 +1693,7 @@ class JIRA:
               will be ignored
             prefetch (bool): whether to reload the created issue Resource so that all of its data is present in the value
               returned from this method
+            limit (Optional[int]): the maximum number of items to return per page. If present extends search past Default limit. 
         Returns:
             Issue
         """
@@ -1708,7 +1713,7 @@ class JIRA:
         if isinstance(p, int):
             data["requestTypeId"] = p
         elif isinstance(p, str):
-            data["requestTypeId"] = self.request_type_by_name(service_desk, p).id
+            data["requestTypeId"] = self.request_type_by_name(service_desk, p, limit).id
 
         url = self.server_url + "/rest/servicedeskapi/request"
         headers = {"X-ExperimentalApi": "opt-in"}
