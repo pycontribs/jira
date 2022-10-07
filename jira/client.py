@@ -1673,7 +1673,7 @@ class JIRA:
         fields: Dict[str, Any] = None,
         prefetch: bool = True,
         limit: Optional[int] = None,
-        **fieldargs
+        **fieldargs,
     ) -> Issue:
         """Create a new customer request and return an issue Resource for it.
 
@@ -1693,7 +1693,7 @@ class JIRA:
               will be ignored
             prefetch (bool): whether to reload the created issue Resource so that all of its data is present in the value
               returned from this method
-            limit (Optional[int]): the maximum number of items to return per page. If present extends search past Default limit. 
+            limit (Optional[int]): the maximum number of items to return per page. If present extends search past Default limit.
         Returns:
             Issue
         """
@@ -2600,7 +2600,7 @@ class JIRA:
         service_desk: ServiceDesk,
         limit: Optional[int] = None,
         start: Optional[int] = None,
-        groupId: Optional[int] = None
+        groupId: Optional[int] = None,
     ) -> List[RequestType]:
         """Returns request types supported by a service desk instance.
 
@@ -2634,10 +2634,9 @@ class JIRA:
         ]
         return request_types
 
-    def request_type_by_name(self,
-        service_desk: ServiceDesk,
-        name: str,
-        limit: Optional[int] = None):
+    def request_type_by_name(
+        self, service_desk: ServiceDesk, name: str, limit: Optional[int] = None
+    ):
         request_types = self.request_types(service_desk, limit)
         try:
             request_type = [rt for rt in request_types if rt.name == name][0]
