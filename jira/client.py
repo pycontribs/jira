@@ -2590,12 +2590,20 @@ class JIRA:
         else:
             raise KeyError(f"Issue type '{name}' appears more than once.")
 
-    def request_types(self, service_desk: ServiceDesk, limit: Optional[int] = None) -> List[RequestType]:
+    def request_types(
+        self,
+        service_desk: ServiceDesk,
+        limit: Optional[int] = None,
+        start: Optional[int] = None,
+        groupId: Optional[int] = None
+    ) -> List[RequestType]:
         """Returns request types supported by a service desk instance.
 
         Args:
             service_desk (ServiceDesk): The service desk instance.
-            limit: Limit parameter. Allow searching beyond default limit parameters.
+            limit: Limit parameter. The maximum number of items to return per page.
+            start: The starting index of the returned objects. Base index: 0.
+            groupId: Filter results where the group ID of the request type matches groupId.
 
         Returns:
             List[RequestType]
@@ -2603,6 +2611,10 @@ class JIRA:
         params = {}
         if limit is not None:
             params["limit"] = limit
+        if start is not None:
+            params["start"] = start
+        if params["groupId"] is not None:
+            params["groupId"] = groupId
         if hasattr(service_desk, "id"):
             service_desk = service_desk.id
         url = (
@@ -2617,8 +2629,11 @@ class JIRA:
         ]
         return request_types
 
-    def request_type_by_name(self, service_desk: ServiceDesk, name: str):
-        request_types = self.request_types(service_desk)
+    def request_type_by_name(self,
+        service_desk: ServiceDesk,
+        name: str,
+        limit: Optional[int] = None):
+        request_types = self.request_types(service_desk, limit)
         try:
             request_type = [rt for rt in request_types if rt.name == name][0]
         except IndexError:
