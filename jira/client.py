@@ -21,7 +21,7 @@ import warnings
 from collections import OrderedDict
 from collections.abc import Iterable
 from functools import lru_cache, wraps
-from io import BufferedReader
+from io import BufferedReader, BytesIO, StringIO
 from numbers import Number
 from typing import (
     Any,
@@ -973,7 +973,7 @@ class JIRA:
 
     @translate_resource_args
     def add_attachment(
-        self, issue: str, attachment: Union[str, BufferedReader], filename: str = None
+        self, issue: str, attachment: Union[str, BufferedReader, BytesIO, StringIO], filename: str = None
     ) -> Attachment:
         """Attach an attachment to an issue and returns a Resource for it.
 
