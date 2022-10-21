@@ -973,7 +973,10 @@ class JIRA:
 
     @translate_resource_args
     def add_attachment(
-        self, issue: str, attachment: Union[str, BufferedReader, BytesIO, StringIO], filename: str = None
+        self,
+        issue: str,
+        attachment: Union[str, BufferedReader, BytesIO, StringIO],
+        filename: str = None,
     ) -> Attachment:
         """Attach an attachment to an issue and returns a Resource for it.
 
