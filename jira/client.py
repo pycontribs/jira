@@ -29,6 +29,7 @@ from io import BufferedReader, BytesIO
 from numbers import Number
 from typing import (
     Any,
+    BinaryIO,
     Callable,
     Generic,
     Literal,
@@ -1376,7 +1377,7 @@ class JIRA:
     def add_attachment(
         self,
         issue: str | int | Issue,
-        attachment: str | bytes | BufferedReader,
+        attachment: str | bytes | BinaryIO,
         filename: str | None = None,
     ) -> Attachment:
         """Attach an attachment to an issue and returns a Resource for it.
@@ -1386,8 +1387,8 @@ class JIRA:
 
         Args:
             issue (str | int | Issue): the issue to attach the attachment to
-            attachment (Union[str, bytes, BufferedReader]): file-like object to attach to the issue, also works if it is a string with the filename
-              or the raw ``bytes`` of the file.
+            attachment (str | bytes | BinaryIO): binary file-like object (e.g. ``open(path, "rb")`` or ``BytesIO``)
+              to attach to the issue, also works if it is a string with the filename or the raw ``bytes`` of the file.
             filename (str): optional name for the attached file. If omitted, the file object's ``name`` attribute is used.
               If you acquired the file-like object by any other method than ``open()``, or pass ``bytes``, make sure that a name is specified.
 
@@ -1395,7 +1396,7 @@ class JIRA:
             Attachment
         """
         close_attachment = False
-        attachment_io: BytesIO | BufferedReader
+        attachment_io: BinaryIO
         if isinstance(attachment, str):
             attachment_io = open(attachment, "rb")
             close_attachment = True
