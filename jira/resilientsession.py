@@ -103,6 +103,10 @@ def parse_error_msg(resp: Response) -> str:
     if "message" in resp_data:
         # Jira 5.1 errors
         parsed_error = resp_data["message"]
+    if "errorMessage" in resp_data:
+        # Jira sometimes returns "errorMessage" as a message text key
+        # (for example for "Site temporary unavailable" message)
+        parsed_error = resp_data["message"]
     elif "errorMessages" in resp_data:
         # Jira 5.0.x error messages sometimes come wrapped in this array
         # Sometimes this is present but empty
