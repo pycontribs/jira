@@ -91,19 +91,21 @@ def parse_errors(resp: Response) -> List[str]:
     """
     resp_data: Dict[str, Any] = {}  # json parsed from the response
     parsed_errors: List[str] = []  # error messages parsed from the response
-
     if resp.status_code == 403 and "x-authentication-denied-reason" in resp.headers:
-        parsed_errors = [resp.headers["x-authentication-denied-reason"]]
+        return [resp.headers["x-authentication-denied-reason"]]
     elif resp.text:
         try:
             resp_data = resp.json()
         except ValueError:
-            parsed_errors = [resp.text]
-            resp_data = {}
+            return [resp.text]
 
     if "message" in resp_data:
         # Jira 5.1 errors
         parsed_errors = [resp_data["message"]]
+    elif "errorMessage" in resp_data:
+        # Sometimes Jira returns `errorMessage` as a message error key
+        # for example for the "Service temporary unavailable" error
+        parsed_errors = [resp_data["errorMessage"]]
     elif "errorMessages" in resp_data:
         # Jira 5.0.x error messages sometimes come wrapped in this array
         # Sometimes this is present but empty

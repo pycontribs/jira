@@ -6,6 +6,7 @@ from requests import Response
 
 import jira.resilientsession
 from jira.exceptions import JIRAError
+from jira.resilientsession import parse_error_msg, parse_errors
 from tests.conftest import JiraTestCase
 
 
@@ -98,6 +99,31 @@ def test_status_codes_retries(
         session.get("mocked_url")
     assert mocked_request_method.call_count == expected_number_of_retries
     assert mocked_sleep_method.call_count == expected_number_of_sleep_invocations
+
+
+errors_parsing_test_data = [
+    (403, {"x-authentication-denied-reason": "err1"}, "", ["err1"]),
+    (500, {}, "err1", ["err1"]),
+    (500, {}, '{"message": "err1"}', ["err1"]),
+    (500, {}, '{"errorMessages": "err1"}', ["err1"]),
+    (500, {}, '{"errorMessages": ["err1", "err2"]}', ["err1", "err2"]),
+    (500, {}, '{"errors": {"code1": "err1", "code2": "err2"}}', ["err1", "err2"]),
+]
+
+
+@pytest.mark.parametrize(
+    "status_code,headers,content,expected_errors",
+    errors_parsing_test_data,
+)
+def test_error_parsing(status_code, headers, content, expected_errors):
+    mocked_response: Response = Response()
+    mocked_response.status_code = status_code
+    mocked_response.headers.update(headers)
+    mocked_response._content = content.encode("utf-8")
+    errors = parse_errors(mocked_response)
+    assert errors == expected_errors
+    error_msg = parse_error_msg(mocked_response)
+    assert error_msg == ", ".join(expected_errors)
 
 
 def test_passthrough_class():
