@@ -79,6 +79,10 @@ def get_error_list(r: Response) -> List[str]:
                 if "message" in response:
                     # Jira 5.1 errors
                     error_list = [response["message"]]
+                if "errorMessage" in response:
+                    # Jira sometimes returns "errorMessage" as a message text key
+                    # (for example for "Site temporary unavailable" message)
+                    error_list = [response["errorMessage"]]
                 elif "errorMessages" in response and len(response["errorMessages"]) > 0:
                     # Jira 5.0.x error messages sometimes come wrapped in this array
                     # Sometimes this is present but empty
