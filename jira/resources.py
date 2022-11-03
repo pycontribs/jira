@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Type, Union,
 from requests import Response
 from requests.structures import CaseInsensitiveDict
 
-from jira.resilientsession import ResilientSession
+from jira.resilientsession import ResilientSession, parse_errors
 from jira.utils import json_loads, threaded_requests
 
 if TYPE_CHECKING:
@@ -66,35 +66,6 @@ __all__ = (
 )
 
 logging.getLogger("jira").addHandler(logging.NullHandler())
-
-
-def get_error_list(r: Response) -> List[str]:
-    error_list = []
-    if r.status_code >= 400:
-        if r.status_code == 403 and "x-authentication-denied-reason" in r.headers:
-            error_list = [r.headers["x-authentication-denied-reason"]]
-        elif r.text:
-            try:
-                response: Dict[str, Any] = json_loads(r)
-                if "message" in response:
-                    # Jira 5.1 errors
-                    error_list = [response["message"]]
-                elif "errorMessages" in response and len(response["errorMessages"]) > 0:
-                    # Jira 5.0.x error messages sometimes come wrapped in this array
-                    # Sometimes this is present but empty
-                    errorMessages = response["errorMessages"]
-                    if isinstance(errorMessages, (list, tuple)):
-                        error_list = list(errorMessages)
-                    else:
-                        error_list = [errorMessages]
-                elif "errors" in response and len(response["errors"]) > 0:
-                    # Jira 6.x error messages are found in this array.
-                    error_list = response["errors"].values()
-                else:
-                    error_list = [r.text]
-            except ValueError:
-                error_list = [r.text]
-    return error_list
 
 
 class Resource:
@@ -358,7 +329,7 @@ class Resource:
         r = self._session.put(self.self + querystring, data=json.dumps(data))
         if "autofix" in self._options and r.status_code == 400:
             user = None
-            error_list = get_error_list(r)
+            error_list = parse_errors(r)
             logging.error(error_list)
             if "The reporter specified is not a user." in error_list:
                 if "reporter" not in data["fields"]:
