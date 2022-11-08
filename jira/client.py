@@ -1760,7 +1760,9 @@ class JIRA:
         if self._version < (8, 4, 0):
             raise JIRAError(f"Unsupported JIRA version: {self._version}")
 
-        return self._get_json(f"issue/createmeta/{projectIdOrKey}/issuetypes/{issueTypeId}")
+        return self._get_json(
+            f"issue/createmeta/{projectIdOrKey}/issuetypes/{issueTypeId}"
+        )
 
     def createmeta(
         self,
@@ -1796,7 +1798,7 @@ class JIRA:
             warnings.warn(
                 "This API have been deprecated in JIRA 8.4 and is removed in JIRA 9.0."
                 "Use 'createmeta_issuetypes' and 'createmeta_fieldtypes' instead.",
-                DeprecationWarning
+                DeprecationWarning,
             )
 
         params: Dict[str, Any] = {}
