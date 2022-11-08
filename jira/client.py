@@ -1727,7 +1727,7 @@ class JIRA:
         self,
         project: Union[str, int],
         issueTypeName: str = None,
-        issueTypeId: int = None,
+        issueTypeId: str = None,
     ) -> Dict[str, Any]:
         """Returns createmeta fields for project+issuetype. if issuetypeId specifyies it skips list of issuetypes"""
 
@@ -1745,11 +1745,8 @@ class JIRA:
                 _meta = [v.id for v in f if v.name == issueTypeName]
                 if len(_meta) == 1:
                     issuetype_id = _meta[0]
-            except JIRAError:
-                raise JIRAError(
-                    status_code=500,
-                    text=f"JIRA: There is no such project {project}",
-                )
+            except JIRAError as e:
+                raise e
         if issuetype_id is None:
             raise JIRAError(
                 status_code=500,
@@ -1765,40 +1762,6 @@ class JIRA:
         )
         return {v.fieldId: v for v in meta_source}
 
-    def is_84_and_later(self):
-        return self._version >= (8, 4, 0)
-
-    def createmeta_v2(
-        self,
-        projectKey: Optional[str] = None,
-        projectId: Optional[int] = None,
-        issueTypeName: Optional[str] = None,
-        issueTypeId: Optional[int] = None,
-    ) -> Dict[str, IssueField]:
-        """Get the metadata required to create issues for particular project and issue type
-
-        Args:
-            projectKey (Optional[str]): key of project to find issue type.
-                It is single value string. Has precedence over `projectId`
-            projectId (Optional[int]): id of project to find issue type.
-                It is single value int
-            issueTypeName (Optional[str]): issueType to find fields metadata
-                It is single value string. Has precedence over `issueTypeId`
-            issueTypeId (Optional[int]): issueType to find fields metadata
-                It is single value int.
-        Returns:
-            Dict[str, IssueField]: dict fieldId:IssueField
-        """
-
-        if self.is_84_and_later():
-            project: Union[str, int] = projectKey or projectId
-            meta = self._get_project_createmeta_issuetype(
-                project=project, issueTypeName=issueTypeName, issueTypeId=issueTypeId
-            )
-            return meta
-        else:
-            raise JIRAError("Not supported REST API in pre 8.4 versions")
-
     def createmeta(
         self,
         projectKeys: Optional[Union[Tuple[str, str], str]] = None,
@@ -1813,6 +1776,7 @@ class JIRA:
             projectKeys (Optional[Union[Tuple[str, str], str]]): keys of the projects to filter the results with.
               Can be a single value or a comma-delimited string. May be combined
               with projectIds.
+              Comma-delimited values is supoported onlyin  <9.0 Jira
             projectIds (Union[List, Tuple[str, str]]): IDs of the projects to filter the results with. Can
               be a single value or a comma-delimited string. May be combined with
               projectKeys.
@@ -1828,13 +1792,24 @@ class JIRA:
 
         """
 
-        if self._version >= (9, 0, 0):
-            raise NotImplementedError(
-                "Support for createmeta search in server" ">= 9.0.0 has been removed."
-            )
+        def deprecate_or_raise(msg: str):
+            if self._version >= (9, 0, 0):
+                raise ValueError(msg)
+            elif self._version >= (8, 4, 0):
+                DeprecationWarning(f"From Jira version 8.4.0: {msg}")
 
-        if self.is_84_and_later():
-            DeprecationWarning("The `createmeta` is deprecated, use createmeta_v2")
+        if not isinstance(projectKeys, str) or ("," in projectKeys):
+            deprecate_or_raise("projectKeys must be a str of a single project key")
+        elif self._version >= (9, 0, 0):
+            projectKey = projectKeys
+            projectId = projectIds[0] if len(projectIds) == 1 else None
+            issueTypeName = issuetypeNames[0] if len(issuetypeNames) == 1 else None
+            issueTypeId = issuetypeIds[0] if len(issuetypeIds) == 1 else None
+            project: Union[str, int] = projectKey or projectId
+            meta = self._get_project_createmeta_issuetype(
+                project=project, issueTypeName=issueTypeName, issueTypeId=issueTypeId
+            )
+            return meta
 
         params: Dict[str, Any] = {}
         if projectKeys is not None:
