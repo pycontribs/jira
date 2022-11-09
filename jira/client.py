@@ -1742,9 +1742,9 @@ class JIRA:
                     0,
                     None,
                 )
-                _meta = [v.id for v in f if v.name == issueTypeName]
-                if len(_meta) == 1:
-                    issuetype_id = _meta[0]
+                issueMeta = [v for v in f if v.name == issueTypeName]
+                if len(issueMeta) == 1:
+                    issuetype_id = issueMeta[0].id
             except JIRAError as e:
                 raise e
         if issuetype_id is None:
@@ -1760,7 +1760,37 @@ class JIRA:
             0,
             None,
         )
-        return {v.fieldId: v for v in meta_source}
+
+        proj_meta = self._get_json(f"project/{project}")
+
+        # reconstruct call to looks similar to pre 8.4 createmeat
+        # return {v.fieldId: v for v in meta_source}
+        res = dict(
+            expand="projects",
+            projects=[
+                dict(
+                    expand="issuetypes",
+                    self=proj_meta["self"],
+                    id=proj_meta["id"],
+                    key=proj_meta["key"],
+                    name=proj_meta["name"],
+                    avatarUrls=proj_meta["avatarUrls"],
+                    issuetypes=[
+                        dict(
+                            self=issueMeta[0].self,
+                            id=issuetype_id,
+                            description=issueMeta[0].description,
+                            iconUrl=issueMeta[0].iconUrl,
+                            name=issueMeta[0].name,
+                            subtask=issueMeta[0].subtask,
+                            expand="fields",
+                            fields=[{v.fieldId: v.raw} for v in meta_source],
+                        )
+                    ],
+                )
+            ],
+        )
+        return res
 
     def createmeta(
         self,
@@ -1802,9 +1832,21 @@ class JIRA:
             deprecate_or_raise("projectKeys must be a str of a single project key")
         elif self._version >= (9, 0, 0):
             projectKey = projectKeys
-            projectId = projectIds[0] if len(projectIds) == 1 else None
-            issueTypeName = issuetypeNames[0] if len(issuetypeNames) == 1 else None
-            issueTypeId = issuetypeIds[0] if len(issuetypeIds) == 1 else None
+            projectId = (
+                projectIds[0]
+                if projectIds is not None and len(projectIds) == 1
+                else None
+            )
+            issueTypeName = (
+                issuetypeNames.split(",")[0]
+                if issuetypeNames is not None and len(issuetypeNames.split(",")) > 1
+                else issuetypeNames
+            )
+            issueTypeId = (
+                issuetypeIds[0]
+                if issuetypeIds is not None and len(issuetypeIds) == 1
+                else None
+            )
             project: Union[str, int] = projectKey or projectId
             meta = self._get_project_createmeta_issuetype(
                 project=project, issueTypeName=issueTypeName, issueTypeId=issueTypeId
