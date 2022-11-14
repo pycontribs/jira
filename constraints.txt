@@ -208,7 +208,7 @@ sphinxcontrib-serializinghtml==1.1.5
     # via sphinx
 stack-data==0.4.0
     # via ipython
-tenacity==8.0.1
+tenacity==8.1.0
     # via jira (setup.cfg)
 termcolor==2.1.0
     # via pytest-sugar
