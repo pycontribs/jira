@@ -190,7 +190,7 @@ sphinx==5.1.1
     #   jira (setup.cfg)
     #   sphinx-basic-ng
     #   sphinx-copybutton
-sphinx-basic-ng==0.0.1a12
+sphinx-basic-ng==1.0.0b1
     # via furo
 sphinx-copybutton==0.5.0
     # via jira (setup.cfg)
