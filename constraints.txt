@@ -79,7 +79,7 @@ markupsafe==2.1.1
     #   jira (setup.cfg)
 matplotlib-inline==0.1.6
     # via ipython
-oauthlib==3.2.0
+oauthlib==3.2.2
     # via
     #   jira (setup.cfg)
     #   requests-oauthlib
