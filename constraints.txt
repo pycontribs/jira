@@ -24,7 +24,7 @@ cffi==1.15.1
     # via cryptography
 charset-normalizer==2.1.1
     # via requests
-colorama==0.4.5
+colorama==0.4.6
     # via
     #   ipython
     #   pytest
