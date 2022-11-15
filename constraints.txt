@@ -113,7 +113,7 @@ pygments==2.13.0
     #   furo
     #   ipython
     #   sphinx
-pyjwt==2.4.0
+pyjwt==2.6.0
     # via
     #   jira (setup.cfg)
     #   requests-jwt
