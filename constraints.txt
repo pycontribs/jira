@@ -29,7 +29,7 @@ colorama==0.4.5
     #   ipython
     #   pytest
     #   sphinx
-coverage==6.4.4
+coverage==6.5.0
     # via pytest-cov
 cryptography==37.0.4
     # via
