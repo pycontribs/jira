@@ -26,7 +26,7 @@ jobs:
         python-version: ["3.8"]
 
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v3
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
@@ -65,7 +65,7 @@ jobs:
           CI_JIRA_CLOUD_USER_TOKEN: ${{ secrets.CLOUD_USER_TOKEN }}
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3.1.0
+        uses: codecov/codecov-action@v3.1.1
         with:
           file: ./coverage.xml
           name: ${{ runner.os }}-${{ matrix.python-version }}-Cloud
