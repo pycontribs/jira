@@ -1,7 +1,7 @@
 ---
 repos:
   - repo: https://github.com/psf/black
-    rev: 22.6.0
+    rev: 22.10.0
     hooks:
       - id: black
         language_version: python3
@@ -20,7 +20,7 @@ repos:
       - id: check-yaml
         files: .*\.(yaml|yml)$
   - repo: https://github.com/codespell-project/codespell.git
-    rev: v2.2.1
+    rev: v2.2.2
     hooks:
       - id: codespell
         name: codespell
@@ -41,12 +41,12 @@ repos:
       - id: isort
         name: isort
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.27.1
+    rev: v1.28.0
     hooks:
       - id: yamllint
         files: \.(yaml|yml)$
   - repo: https://github.com/pre-commit/mirrors-mypy.git
-    rev: v0.971
+    rev: v0.990
     hooks:
       - id: mypy
         additional_dependencies:
@@ -54,7 +54,7 @@ repos:
           - types-pkg_resources
         args: [--no-strict-optional, --ignore-missing-imports, --show-error-codes]
   - repo: https://github.com/asottile/pyupgrade
-    rev: v2.37.3
+    rev: v3.2.2
     hooks:
       - id: pyupgrade
         args: [--py38-plus]

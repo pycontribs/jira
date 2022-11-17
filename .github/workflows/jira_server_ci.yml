@@ -15,7 +15,7 @@ jobs:
         jira-version: [8.17.1]
 
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v3
       - name: Start Jira docker instance
         run: docker run -dit -p 2990:2990 --name jira addono/jira-software-standalone --version ${{ matrix.jira-version }}
 
@@ -53,7 +53,7 @@ jobs:
         run: tox
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3.1.0
+        uses: codecov/codecov-action@v3.1.1
         with:
           file: ./coverage.xml
           name: ${{ runner.os }}-${{ matrix.python-version }}
