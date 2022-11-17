@@ -1738,9 +1738,9 @@ class JIRA:
         """
         if self._is_cloud or self._version < (8, 4, 0):
             raise JIRAError(
-                    f"Unsupported JIRA deployment type: {self.deploymentType} or version: {self._version}. "
-                    "Use 'createmeta' instead."
-                    )
+                f"Unsupported JIRA deployment type: {self.deploymentType} or version: {self._version}. "
+                "Use 'createmeta' instead."
+            )
 
         return self._get_json(f"issue/createmeta/{projectIdOrKey}/issuetypes")
 
@@ -1762,11 +1762,13 @@ class JIRA:
         """
         if self._is_cloud or self._version < (8, 4, 0):
             raise JIRAError(
-                    f"Unsupported JIRA deployment type: {self.deploymentType} or version: {self._version}. "
-                    "Use 'createmeta' instead."
-                    )
+                f"Unsupported JIRA deployment type: {self.deploymentType} or version: {self._version}. "
+                "Use 'createmeta' instead."
+            )
 
-        return self._get_json(f"issue/createmeta/{projectIdOrKey}/issuetypes/{issueTypeId}")
+        return self._get_json(
+            f"issue/createmeta/{projectIdOrKey}/issuetypes/{issueTypeId}"
+        )
 
     def createmeta(
         self,
@@ -1800,9 +1802,9 @@ class JIRA:
         if not self._is_cloud:
             if self._version >= (9, 0, 0):
                 raise JIRAError(
-                        f"Unsupported JIRA version: {self._version}. "
-                        "Use 'createmeta_issuetypes' and 'createmeta_fieldtypes' instead."
-                        )
+                    f"Unsupported JIRA version: {self._version}. "
+                    "Use 'createmeta_issuetypes' and 'createmeta_fieldtypes' instead."
+                )
             elif self._version >= (8, 4, 0):
                 warnings.warn(
                     "This API have been deprecated in JIRA 8.4 and is removed in JIRA 9.0. "
