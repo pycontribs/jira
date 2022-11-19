@@ -1669,7 +1669,11 @@ class JIRA:
 
     @no_type_check  # FIXME: This function does not do what it wants to with fieldargs
     def create_customer_request(
-        self, fields: Dict[str, Any] = None, prefetch: bool = True, **fieldargs
+        self,
+        fields: Dict[str, Any] = None,
+        prefetch: bool = True,
+        limit: Optional[int] = None,
+        **fieldargs,
     ) -> Issue:
         """Create a new customer request and return an issue Resource for it.
 
@@ -1689,6 +1693,7 @@ class JIRA:
               will be ignored
             prefetch (bool): whether to reload the created issue Resource so that all of its data is present in the value
               returned from this method
+            limit (Optional[int]): the maximum number of items to return per page. If present extends search past Default limit.
         Returns:
             Issue
         """
@@ -1708,7 +1713,7 @@ class JIRA:
         if isinstance(p, int):
             data["requestTypeId"] = p
         elif isinstance(p, str):
-            data["requestTypeId"] = self.request_type_by_name(service_desk, p).id
+            data["requestTypeId"] = self.request_type_by_name(service_desk, p, limit).id
 
         url = self.server_url + "/rest/servicedeskapi/request"
         headers = {"X-ExperimentalApi": "opt-in"}
@@ -2590,15 +2595,31 @@ class JIRA:
         else:
             raise KeyError(f"Issue type '{name}' appears more than once.")
 
-    def request_types(self, service_desk: ServiceDesk) -> List[RequestType]:
+    def request_types(
+        self,
+        service_desk: ServiceDesk,
+        limit: Optional[int] = None,
+        start: Optional[int] = None,
+        groupId: Optional[int] = None,
+    ) -> List[RequestType]:
         """Returns request types supported by a service desk instance.
 
         Args:
             service_desk (ServiceDesk): The service desk instance.
+            limit: Limit parameter. The maximum number of items to return per page.
+            start: The starting index of the returned objects. Base index: 0.
+            groupId: Filter results where the group ID of the request type matches groupId.
 
         Returns:
             List[RequestType]
         """
+        params = {}
+        if limit is not None:
+            params["limit"] = limit
+        if start is not None:
+            params["start"] = start
+        if params["groupId"] is not None:
+            params["groupId"] = groupId
         if hasattr(service_desk, "id"):
             service_desk = service_desk.id
         url = (
@@ -2606,15 +2627,17 @@ class JIRA:
             + f"/rest/servicedeskapi/servicedesk/{service_desk}/requesttype"
         )
         headers = {"X-ExperimentalApi": "opt-in"}
-        r_json = json_loads(self._session.get(url, headers=headers))
+        r_json = json_loads(self._session.get(url, headers=headers, params=params))
         request_types = [
             RequestType(self._options, self._session, raw_type_json)
             for raw_type_json in r_json["values"]
         ]
         return request_types
 
-    def request_type_by_name(self, service_desk: ServiceDesk, name: str):
-        request_types = self.request_types(service_desk)
+    def request_type_by_name(
+        self, service_desk: ServiceDesk, name: str, limit: Optional[int] = None
+    ):
+        request_types = self.request_types(service_desk, limit)
         try:
             request_type = [rt for rt in request_types if rt.name == name][0]
         except IndexError:
