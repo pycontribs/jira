@@ -3,7 +3,7 @@ import json
 import logging
 import random
 import time
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from requests import Response, Session
 from requests.exceptions import ConnectionError
@@ -78,8 +78,8 @@ def raise_on_error(resp: Optional[Response], **kwargs) -> TypeGuard[Response]:
     return True  # if no exception was raised, we have a valid Response
 
 
-def parse_error_msg(resp: Response) -> str:
-    """Parse a Jira Error message from the Response.
+def parse_errors(resp: Response) -> List[str]:
+    """Parse a Jira Error messages from the Response.
 
     https://developer.atlassian.com/cloud/jira/platform/rest/v2/intro/#status-codes
 
@@ -87,40 +87,57 @@ def parse_error_msg(resp: Response) -> str:
         resp (Response): The Jira API request's response.
 
     Returns:
-        str: The error message parsed from the Response. An empty string if no error.
+        List[str]: The error messages list parsed from the Response. An empty list if no error.
     """
     resp_data: Dict[str, Any] = {}  # json parsed from the response
-    parsed_error = ""  # error message parsed from the response
-
+    parsed_errors: List[str] = []  # error messages parsed from the response
     if resp.status_code == 403 and "x-authentication-denied-reason" in resp.headers:
-        parsed_error = resp.headers["x-authentication-denied-reason"]
+        return [resp.headers["x-authentication-denied-reason"]]
     elif resp.text:
         try:
             resp_data = resp.json()
         except ValueError:
-            parsed_error = resp.text
+            return [resp.text]
 
     if "message" in resp_data:
         # Jira 5.1 errors
-        parsed_error = resp_data["message"]
+        parsed_errors = [resp_data["message"]]
+    elif "errorMessage" in resp_data:
+        # Sometimes Jira returns `errorMessage` as a message error key
+        # for example for the "Service temporary unavailable" error
+        parsed_errors = [resp_data["errorMessage"]]
     elif "errorMessages" in resp_data:
         # Jira 5.0.x error messages sometimes come wrapped in this array
         # Sometimes this is present but empty
         error_messages = resp_data["errorMessages"]
         if len(error_messages) > 0:
             if isinstance(error_messages, (list, tuple)):
-                parsed_error = "\n".join(error_messages)
+                parsed_errors = list(error_messages)
             else:
-                parsed_error = error_messages
+                parsed_errors = [error_messages]
     elif "errors" in resp_data:
         resp_errors = resp_data["errors"]
         if len(resp_errors) > 0 and isinstance(resp_errors, dict):
             # Catching only 'errors' that are dict. See https://github.com/pycontribs/jira/issues/350
             # Jira 6.x error messages are found in this array.
-            error_list = resp_errors.values()
-            parsed_error = ", ".join(error_list)
+            parsed_errors = [str(err) for err in resp_errors.values()]
 
-    return parsed_error
+    return parsed_errors
+
+
+def parse_error_msg(resp: Response) -> str:
+    """Parse a Jira Error messages from the Response and join them by comma.
+
+    https://developer.atlassian.com/cloud/jira/platform/rest/v2/intro/#status-codes
+
+    Args:
+        resp (Response): The Jira API request's response.
+
+    Returns:
+        str: The error message parsed from the Response. An empty str if no error.
+    """
+    errors = parse_errors(resp)
+    return ", ".join(errors)
 
 
 class ResilientSession(Session):
