@@ -1978,7 +1978,7 @@ class JIRA:
             relationship (Optional[str]): relationship description for the link (see the above link for details)
 
         Returns:
-            RemoteLink: the added remote lint
+            RemoteLink: the added remote link
         """
         try:
             applicationlinks: List[Dict] = self.applicationlinks()
@@ -2058,7 +2058,7 @@ class JIRA:
             object (Dict[str,Any]): the dictionary used to create remotelink data
 
         Returns:
-            RemoteLint
+            RemoteLink
         """
         data = {"object": object}
         url = self._get_url("issue/" + str(issue) + "/remotelink")
