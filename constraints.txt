@@ -67,7 +67,7 @@ iniconfig==1.1.1
     # via pytest
 ipython==8.4.0
     # via jira (setup.cfg)
-jedi==0.18.1
+jedi==0.18.2
     # via ipython
 jinja2==3.1.2
     # via sphinx
