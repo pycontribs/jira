@@ -6,7 +6,7 @@
 #
 alabaster==0.7.12
     # via sphinx
-asttokens==2.1.0
+asttokens==2.2.0
     # via stack-data
 atomicwrites==1.4.1
     # via pytest
