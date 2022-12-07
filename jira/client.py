@@ -387,7 +387,9 @@ class JIRA:
         logging: bool = True,
         max_retries: int = 3,
         proxies: Any = None,
-        timeout: Optional[Union[Union[float, int], Tuple[float, float]]] = None,
+        timeout: Optional[
+            Union[None, float, Tuple[float, float], Tuple[float, None]]
+        ] = None,
         auth: Tuple[str, str] = None,
         default_batch_sizes: Optional[Dict[Type[Resource], Optional[int]]] = None,
     ):
@@ -458,7 +460,7 @@ class JIRA:
               are available.
             async_ (bool): To enable async requests for those actions where we implemented it, like issue update() or delete().
             async_workers (int): Set the number of worker threads for async operations.
-            timeout (Optional[Union[Union[float, int], Tuple[float, float]]]): Set a read/connect timeout for the underlying
+            timeout (Optional[Union[Union[float, int], Tuple[float, float]]]): Set a connect/read timeout for the underlying
               calls to Jira (default: None).
               Obviously this means that you cannot rely on the return code when this is enabled.
             max_retries (int): Sets the amount Retries for the HTTP sessions initiated by the client. (Default: 3)
@@ -615,7 +617,9 @@ class JIRA:
     def _create_cookie_auth(
         self,
         auth: Tuple[str, str],
-        timeout: Optional[Union[Union[float, int], Tuple[float, float]]],
+        timeout: Optional[
+            Union[None, float, Tuple[float, float], Tuple[float, None]]
+        ] = None,
     ):
         warnings.warn(
             "Use OAuth or Token based authentication "
@@ -3594,14 +3598,16 @@ class JIRA:
         self,
         username: str,
         password: str,
-        timeout: Optional[Union[Union[float, int], Tuple[float, float]]] = None,
+        timeout: Optional[
+            Union[None, float, Tuple[float, float], Tuple[float, None]]
+        ] = None,
     ):
         """Creates a basic http session.
 
         Args:
             username (str): Username for the session
             password (str): Password for the username
-            timeout (Optional[int]): If set determines the timeout period for the Session.
+            timeout (Optional[int]): If set determines the connection/read timeout delay for the Session.
 
         Returns:
             ResilientSession
@@ -3628,7 +3634,7 @@ class JIRA:
 
     def _create_kerberos_session(
         self,
-        timeout: Optional[Union[Union[float, int], Tuple[float, float]]],
+        timeout: Optional[Union[None, float, Tuple[float, float], Tuple[float, None]]],
         kerberos_options=None,
     ):
         if kerberos_options is None:
@@ -3703,7 +3709,9 @@ class JIRA:
     def _create_token_session(
         self,
         token_auth: str,
-        timeout: Optional[Union[Union[float, int], Tuple[float, float]]],
+        timeout: Optional[
+            Union[None, float, Tuple[float, float], Tuple[float, None]]
+        ] = None,
     ):
         """
         Creates token-based session.
