@@ -4698,7 +4698,9 @@ class JIRA:
                 )
         return sprints
 
-    def update_sprint(self, id, name=None, startDate=None, endDate=None, state=None, goal=None):
+    def update_sprint(
+        self, id, name=None, startDate=None, endDate=None, state=None, goal=None
+    ):
         payload = {}
         if name:
             payload["name"] = name
@@ -4709,7 +4711,7 @@ class JIRA:
         if state:
             payload["state"] = state
         if goal:
-            payload['goal'] = goal
+            payload["goal"] = goal
 
         url = self._get_url(f"sprint/{id}", base=self.AGILE_BASE_URL)
         r = self._session.put(url, data=json.dumps(payload))
