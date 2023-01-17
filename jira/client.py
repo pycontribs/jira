@@ -180,8 +180,8 @@ class ResultList(list, Generic[ResourceType]):
         return super().__iter__()
 
     # fmt: off
-    # The mypy error we ignore is about returning a contravariant type. 
-    # As this classis a List of a generic 'Resource' class 
+    # The mypy error we ignore is about returning a contravariant type.
+    # As this classis a List of a generic 'Resource' class
     # this is the right way to specify that the output is the same as which
     # the class was initialized with.
     @overload
@@ -1962,7 +1962,7 @@ class JIRA:
             relationship (Optional[str]): relationship description for the link (see the above link for details)
 
         Returns:
-            RemoteLink: the added remote lint
+            RemoteLink: the added remote link
         """
         try:
             applicationlinks: List[Dict] = self.applicationlinks()
@@ -2041,7 +2041,7 @@ class JIRA:
             object (Dict[str,Any]): the dictionary used to create remotelink data
 
         Returns:
-            RemoteLint
+            RemoteLink
         """
         data = {"object": object}
         url = self._get_url("issue/" + str(issue) + "/remotelink")
