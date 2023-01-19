@@ -1548,15 +1548,19 @@ class JIRA:
             issue_data: Dict[str, Any] = _field_worker(field_dict)
             p = issue_data["fields"]["project"]
 
+            project_id = None
             if isinstance(p, (str, int)):
-                issue_data["fields"]["project"] = {"id": self.project(str(p)).id}
+                project_id = self.project(str(p)).id
+                issue_data["fields"]["project"] = {"id": project_id}
 
             p = issue_data["fields"]["issuetype"]
             if isinstance(p, int):
                 issue_data["fields"]["issuetype"] = {"id": p}
-            if isinstance(p, str):
+            elif isinstance(p, str):
                 issue_data["fields"]["issuetype"] = {
-                    "id": self.issue_type_by_name(str(p)).id
+                    "id": self.issue_type_by_name(
+                        str(p), project=str(project_id) if project_id else None
+                    ).id
                 }
 
             data["issueUpdates"].append(issue_data)
