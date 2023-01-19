@@ -300,22 +300,38 @@ class ResilientSession(Session):
         if isinstance(response, Response):
             if response.status_code in [429]:
                 is_recoverable = True
-                number_of_tokens_issued_per_interval = response.headers[
+                number_of_tokens_issued_per_interval = response.headers.get(
                     "X-RateLimit-FillRate"
-                ]
-                token_issuing_rate_interval_seconds = response.headers[
+                )
+                token_issuing_rate_interval_seconds = response.headers.get(
                     "X-RateLimit-Interval-Seconds"
-                ]
-                maximum_number_of_tokens = response.headers["X-RateLimit-Limit"]
-                retry_after = response.headers["retry-after"]
+                )
+                maximum_number_of_tokens = response.headers.get("X-RateLimit-Limit")
+                retry_after = response.headers.get("retry-after")
                 msg = f"{response.status_code} {response.reason}"
-                LOG.warning(
-                    f"Request rate limited by Jira: request should be retried after {retry_after} seconds.\n"
-                    + f"{number_of_tokens_issued_per_interval} tokens are issued every {token_issuing_rate_interval_seconds} seconds. "
-                    + f"You can accumulate up to {maximum_number_of_tokens} tokens.\n"
+                warning_msg = "Request rate limited by Jira."
+
+                warning_msg += (
+                    f" Request should be retried after {retry_after} seconds.\n"
+                    if retry_after is not None
+                    else "\n"
+                )
+                if (
+                    number_of_tokens_issued_per_interval is not None
+                    and token_issuing_rate_interval_seconds is not None
+                ):
+                    warning_msg += f"{number_of_tokens_issued_per_interval} tokens are issued every {token_issuing_rate_interval_seconds} seconds.\n"
+                if maximum_number_of_tokens is not None:
+                    warning_msg += (
+                        f"You can accumulate up to {maximum_number_of_tokens} tokens.\n"
+                    )
+                warning_msg = (
+                    warning_msg
                     + "Consider adding an exemption for the user as explained in: "
                     + "https://confluence.atlassian.com/adminjiraserver/improving-instance-stability-with-rate-limiting-983794911.html"
                 )
+
+                LOG.warning(warning_msg)
 
         if is_recoverable:
             # Exponential backoff with full jitter.
