@@ -2069,11 +2069,11 @@ class JIRA:
 
     # non-resource
     @translate_resource_args
-    def transitions(self, issue: str, id: Optional[str] = None, expand=None):
+    def transitions(self, issue: Union[str, Issue], id: Optional[str] = None, expand=None):
         """Get a list of the transitions available on the specified issue to the current user.
 
         Args:
-            issue (str): ID or key of the issue to get the transitions from
+            issue (Union[str, Issue]): ID, key or issue object of the issue to get the transitions from
             id (Optional[str]): if present, get only the transition matching this ID
             expand (Optional): extra information to fetch inside each transition
 
@@ -2112,7 +2112,7 @@ class JIRA:
     @translate_resource_args
     def transition_issue(
         self,
-        issue: str,
+        issue: Union[str, Issue],
         transition: str,
         fields: Optional[Dict[str, Any]] = None,
         comment: Optional[str] = None,
@@ -2126,7 +2126,7 @@ class JIRA:
         will be ignored. Field values will be set on the issue as part of the transition process.
 
         Args:
-            issue (str): ID or key of the issue to perform the transition on
+            issue (Union[str, Issue]): ID or key of the issue to perform the transition on
             transition (str): ID or name of the transition to perform
             fields (Optional[Dict[str,Any]]): a dict containing field names and the values to use.
             comment (Optional[str]): String to add as comment to the issue when performing the transition.
