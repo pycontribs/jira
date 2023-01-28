@@ -2069,7 +2069,9 @@ class JIRA:
 
     # non-resource
     @translate_resource_args
-    def transitions(self, issue: Union[str, Issue], id: Optional[str] = None, expand=None):
+    def transitions(
+        self, issue: Union[str, Issue], id: Optional[str] = None, expand=None
+    ):
         """Get a list of the transitions available on the specified issue to the current user.
 
         Args:
