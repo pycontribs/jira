@@ -171,7 +171,7 @@ class ResilientSession(Session):
     def _jira_prepare(self, **original_kwargs) -> dict:
         """Do any pre-processing of our own and return the updated kwargs."""
         prepared_kwargs = original_kwargs.copy()
-
+        self.headers: CaseInsensitiveDict
         request_headers = self.headers.copy()
         request_headers.update(original_kwargs.get("headers", {}))
         prepared_kwargs["headers"] = request_headers
