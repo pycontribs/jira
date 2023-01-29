@@ -1,7 +1,7 @@
-"""
-This module implements a friendly (well, friendlier) interface between the raw JSON responses from Jira and the Resource/dict
-abstractions provided by this library. Users will construct a JIRA object as described below. Full API documentation can be found at:
-https://jira.readthedocs.io/en/latest/
+"""This module implements a friendly (well, friendlier) interface between the raw JSON
+responses from Jira and the Resource/dict abstractions provided by this library. Users
+will construct a JIRA object as described below. Full API documentation can be found
+at: https://jira.readthedocs.io/en/latest/.
 """
 import calendar
 import copy
@@ -145,7 +145,7 @@ class ResultList(list, Generic[ResourceType]):
         _total: Optional[int] = None,
         _isLast: Optional[bool] = None,
     ) -> None:
-        """
+        """Results List.
 
         Args:
             iterable (Iterable): [description]. Defaults to None.
@@ -227,7 +227,7 @@ class QshGenerator:
 
 
 class JiraCookieAuth(AuthBase):
-    """Jira Cookie Authentication
+    """Jira Cookie Authentication.
 
     Allows using cookie authentication as described by `jira api docs <https://developer.atlassian.com/server/jira/platform/cookie-based-authentication/>`_
     """
@@ -235,14 +235,13 @@ class JiraCookieAuth(AuthBase):
     def __init__(
         self, session: ResilientSession, session_api_url: str, auth: Tuple[str, str]
     ):
-        """Cookie Based Authentication
+        """Cookie Based Authentication.
 
         Args:
             session (ResilientSession): The Session object to communicate with the API.
             session_api_url (str): The session api url to use.
             auth (Tuple[str, str]): The username, password tuple.
         """
-
         self._session = session
         self._session_api_url = session_api_url  # e.g ."/rest/auth/1/session"
         self.__auth = auth
@@ -311,7 +310,7 @@ class JiraCookieAuth(AuthBase):
 
 
 class TokenAuth(AuthBase):
-    """Bearer Token Authentication"""
+    """Bearer Token Authentication."""
 
     def __init__(self, token: str):
         # setup any auth-related data here
@@ -605,7 +604,7 @@ class JIRA:
 
     @property
     def server_url(self) -> str:
-        """Return the server url
+        """Return the server url.
 
         Returns:
             str
@@ -833,8 +832,8 @@ class JIRA:
             raise KeyError(str(e) + " : " + json.dumps(resource))
 
     def _get_batch_size(self, item_type: Type[ResourceType]) -> Optional[int]:
-        """
-        Return the batch size for the given resource type from the options.
+        """Return the batch size for the given resource type from the options.
+
         Check if specified item-type has a mapped batch-size, else try to fallback to batch-size assigned to `Resource`, else fallback to Backend-determined batch-size.
 
         Returns:
@@ -1730,6 +1729,7 @@ class JIRA:
 
         Args:
             projectIdOrKey (Union[str, int]): id or key of the project for which to get the metadata.
+
         Returns:
             Dict[str, Any]
         """
@@ -1754,6 +1754,7 @@ class JIRA:
         Args:
             projectIdOrKey (Union[str, int]): id or key of the project for which to get the metadata.
             issueTypeId (Union[str, int]): id of the issue type for which to get the metadata.
+
         Returns:
             Dict[str, Any]
         """
@@ -1791,7 +1792,6 @@ class JIRA:
         Returns:
             Dict[str, Any]
         """
-
         if not self._is_cloud:
             if self._version >= (9, 0, 0):
                 raise JIRAError(
@@ -2045,7 +2045,7 @@ class JIRA:
             # we just won't be able to be quite as helpful.
             warnings.warn(
                 "Unable to gather applicationlinks; you will not be able "
-                "to add links to remote issues: (%s) %s" % (e.status_code, e.text),
+                "to add links to remote issues: ({}) {}".format(e.status_code, e.text),
                 Warning,
             )
 
@@ -2503,7 +2503,6 @@ class JIRA:
         Returns:
             Response
         """
-
         url = self._get_url(f"issue/{issue}/properties/{key}")
         return self._session.put(url, data=json.dumps(data))
 
@@ -2632,10 +2631,9 @@ class JIRA:
         return self._find_for_resource(IssueType, id)
 
     def issue_type_by_name(self, name: str, project: Optional[str] = None) -> IssueType:
-        """
-        Args:
+        """Args:
             name (str): Name of the issue type
-            project (str): Key or ID of the project. If set, only issue types available for that project will be looked up
+            project (str): Key or ID of the project. If set, only issue types available for that project will be looked up.
 
         Returns:
             IssueType
@@ -3774,9 +3772,8 @@ class JIRA:
         token_auth: str,
         timeout: Optional[Union[Union[float, int], Tuple[float, float]]],
     ):
-        """
-        Creates token-based session.
-        Header structure: "authorization": "Bearer <token_auth>"
+        """Creates token-based session.
+        Header structure: "authorization": "Bearer <token_auth>".
         """
         self._session = ResilientSession(timeout=timeout)
         self._session.auth = TokenAuth(token_auth)
@@ -3843,7 +3840,7 @@ class JIRA:
         ids: Union[Tuple[str, str], Tuple[Union[str, int], str], int, str],
         expand=None,
     ) -> Any:
-        """Uses the find method of the provided Resource class
+        """Uses the find method of the provided Resource class.
 
         Args:
             resource_cls (Any): Any instance of :py:class`Resource`
@@ -3887,7 +3884,7 @@ class JIRA:
                 self._magic = None
 
     def _get_mime_type(self, buff: bytes) -> Optional[str]:
-        """Get the MIME type for a given stream of bytes
+        """Get the MIME type for a given stream of bytes.
 
         Args:
             buff (bytes): Stream of bytes
@@ -3936,7 +3933,6 @@ class JIRA:
         Returns:
             bool: Success of user deletion
         """
-
         url = self._get_latest_url(f"user/?username={username}")
 
         r = self._session.delete(url)
@@ -4272,7 +4268,6 @@ class JIRA:
         Returns:
             List[IssueTypeScheme]: All the Issue Type Schemes available to the currently logged in user.
         """
-
         url = self._get_url("issuetypescheme")
 
         r = self._session.get(url)
@@ -4367,7 +4362,7 @@ class JIRA:
         return data
 
     def get_issue_type_scheme_associations(self, id: str) -> List[Project]:
-        """For the specified issue type scheme, returns all of the associated projects. (Admin required)
+        """For the specified issue type scheme, returns all of the associated projects. (Admin required).
 
         Args:
             id (str): The issue type scheme id.
