@@ -47,6 +47,7 @@ jobs:
           python -m pip install --upgrade tox tox-gh-actions
 
       - name: Lint with tox
+        if: ${{ 'Skipped as pre-commit GHA also running'== 'true' }}
         run: tox -e lint
 
       - name: Test with tox
@@ -62,4 +63,5 @@ jobs:
         run: tox -e packaging
 
       - name: Make docs
+        if: ${{ 'Skipped as readthedocs GHA also running'== 'true' }}
         run: tox -e docs
