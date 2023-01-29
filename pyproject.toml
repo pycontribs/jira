@@ -6,12 +6,6 @@ build-backend = "setuptools.build_meta"
 # Equivalent to use_scm_version=True
 [tool.setuptools_scm]
 
-# Tool Config
-[tool.isort]
-profile = "black"
-src_paths = ["jira", "tests"]
-
-
 [tool.pytest.ini_options]
 minversion = "6.0"
 testpaths = ["tests"]
