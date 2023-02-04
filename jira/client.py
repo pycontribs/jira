@@ -1444,6 +1444,7 @@ class JIRA:
         id: Union[Issue, str],
         fields: Optional[str] = None,
         expand: Optional[str] = None,
+        properties: Optional[str] = None,
     ) -> Issue:
         """Get an issue Resource from the server.
 
@@ -1451,6 +1452,7 @@ class JIRA:
             id (Union[Issue, str]): ID or key of the issue to get
             fields (Optional[str]): comma-separated string of issue fields to include in the results
             expand (Optional[str]): extra information to fetch inside each resource
+            properties (Optional[str]): extra properties to fetch
         Returns:
             Issue
         """
@@ -1465,6 +1467,8 @@ class JIRA:
             params["fields"] = fields
         if expand is not None:
             params["expand"] = expand
+        if properties is not None:
+            params["properties"] = properties
         issue.find(id, params=params)
         return issue
 
