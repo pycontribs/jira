@@ -1452,7 +1452,7 @@ class JIRA:
             id (Union[Issue, str]): ID or key of the issue to get
             fields (Optional[str]): comma-separated string of issue fields to include in the results
             expand (Optional[str]): extra information to fetch inside each resource
-            properties (Optional[str]): extra properties to fetch
+            properties (Optional[str]): extra properties to fetch inside each result
         Returns:
             Issue
         """
@@ -3038,6 +3038,7 @@ class JIRA:
         validate_query: bool = True,
         fields: Optional[Union[str, List[str]]] = "*all",
         expand: Optional[str] = None,
+        properties: Optional[str] = None,
         json_result: bool = False,
     ) -> Union[Dict[str, Any], ResultList[Issue]]:
         """Get a :class:`~jira.client.ResultList` of issue Resources matching a JQL search string.
@@ -3052,6 +3053,7 @@ class JIRA:
             fields (Optional[Union[str, List[str]]]): comma-separated string or list of issue fields to include in the results.
               Default is to include all fields.
             expand (Optional[str]): extra information to fetch inside each resource
+            properties (Optional[str]): extra properties to fetch inside each result
             json_result (bool): JSON response will be returned when this parameter is set to True.
               Otherwise, :class:`~jira.client.ResultList` will be returned.
 
@@ -3079,6 +3081,7 @@ class JIRA:
             "validateQuery": validate_query,
             "fields": fields,
             "expand": expand,
+            "properties": properties,
         }
         if json_result:
             search_params["maxResults"] = maxResults
