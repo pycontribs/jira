@@ -34,7 +34,7 @@ jobs:
           path: ${{ steps.pip-cache.outputs.dir }}
           key: >-
             ${{ runner.os }}-pip-${{ hashFiles('setup.cfg') }}-${{
-            hashFiles('setup.py') }}-${{ hashFiles('tox.ini') }}-${{
+            hashFiles('pyproject.toml') }}-${{ hashFiles('tox.ini') }}-${{
             hashFiles('.pre-commit-config.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pip-
@@ -47,6 +47,7 @@ jobs:
           python -m pip install --upgrade tox tox-gh-actions
 
       - name: Lint with tox
+        if: ${{ 'Skipped as pre-commit GHA also running'== 'true' }}
         run: tox -e lint
 
       - name: Test with tox
@@ -62,4 +63,5 @@ jobs:
         run: tox -e packaging
 
       - name: Make docs
+        if: ${{ 'Skipped as readthedocs GHA also running'== 'true' }}
         run: tox -e docs

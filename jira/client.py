@@ -1481,7 +1481,7 @@ class JIRA:
         this behavior can be controlled through the 'prefetch' argument.
 
         Jira projects may contain many different issue types. Some issue screens have different requirements for fields in a new issue.
-        This information is available through the 'createmeta' method.
+        This information is available through the 'createmeta' set of methods.
         Further examples are available here: https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Create+Issue
 
         Args:
@@ -1671,7 +1671,7 @@ class JIRA:
         this behavior can be controlled through the 'prefetch' argument.
 
         Jira projects may contain many issue types. Some issue screens have different requirements for fields in a new issue.
-        This information is available through the 'createmeta' method.
+        This information is available through the 'createmeta' set of methods.
         Further examples are available here: https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Create+Issue
 
         Args:
@@ -1711,6 +1711,54 @@ class JIRA:
         else:
             return Issue(self._options, self._session, raw=raw_issue_json)
 
+    def createmeta_issuetypes(
+        self,
+        projectIdOrKey: Union[str, int],
+    ) -> Dict[str, Any]:
+        """Get the issue types metadata for a given project, required to create issues.
+
+        This API was introduced in JIRA Server / DC 8.4 as a replacement for the more general purpose API 'createmeta'.
+        For details see: https://confluence.atlassian.com/jiracore/createmeta-rest-endpoint-to-be-removed-975040986.html
+
+        Args:
+            projectIdOrKey (Union[str, int]): id or key of the project for which to get the metadata.
+        Returns:
+            Dict[str, Any]
+        """
+        if self._is_cloud or self._version < (8, 4, 0):
+            raise JIRAError(
+                f"Unsupported JIRA deployment type: {self.deploymentType} or version: {self._version}. "
+                "Use 'createmeta' instead."
+            )
+
+        return self._get_json(f"issue/createmeta/{projectIdOrKey}/issuetypes")
+
+    def createmeta_fieldtypes(
+        self,
+        projectIdOrKey: Union[str, int],
+        issueTypeId: Union[str, int],
+    ) -> Dict[str, Any]:
+        """Get the field metadata for a given project and issue type, required to create issues.
+
+        This API was introduced in JIRA Server / DC 8.4 as a replacement for the more general purpose API 'createmeta'.
+        For details see: https://confluence.atlassian.com/jiracore/createmeta-rest-endpoint-to-be-removed-975040986.html
+
+        Args:
+            projectIdOrKey (Union[str, int]): id or key of the project for which to get the metadata.
+            issueTypeId (Union[str, int]): id of the issue type for which to get the metadata.
+        Returns:
+            Dict[str, Any]
+        """
+        if self._is_cloud or self._version < (8, 4, 0):
+            raise JIRAError(
+                f"Unsupported JIRA deployment type: {self.deploymentType} or version: {self._version}. "
+                "Use 'createmeta' instead."
+            )
+
+        return self._get_json(
+            f"issue/createmeta/{projectIdOrKey}/issuetypes/{issueTypeId}"
+        )
+
     def createmeta(
         self,
         projectKeys: Optional[Union[Tuple[str, str], str]] = None,
@@ -1735,6 +1783,21 @@ class JIRA:
         Returns:
             Dict[str, Any]
         """
+
+        if not self._is_cloud:
+            if self._version >= (9, 0, 0):
+                raise JIRAError(
+                    f"Unsupported JIRA version: {self._version}. "
+                    "Use 'createmeta_issuetypes' and 'createmeta_fieldtypes' instead."
+                )
+            elif self._version >= (8, 4, 0):
+                warnings.warn(
+                    "This API have been deprecated in JIRA 8.4 and is removed in JIRA 9.0. "
+                    "Use 'createmeta_issuetypes' and 'createmeta_fieldtypes' instead.",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
+
         params: Dict[str, Any] = {}
         if projectKeys is not None:
             params["projectKeys"] = projectKeys
