@@ -1441,6 +1441,7 @@ class JIRA:
         id: Union[Issue, str],
         fields: Optional[str] = None,
         expand: Optional[str] = None,
+        properties: Optional[str] = None,
     ) -> Issue:
         """Get an issue Resource from the server.
 
@@ -1448,6 +1449,7 @@ class JIRA:
             id (Union[Issue, str]): ID or key of the issue to get
             fields (Optional[str]): comma-separated string of issue fields to include in the results
             expand (Optional[str]): extra information to fetch inside each resource
+            properties (Optional[str]): extra properties to fetch inside each result
 
         Returns:
             Issue
@@ -1463,6 +1465,8 @@ class JIRA:
             params["fields"] = fields
         if expand is not None:
             params["expand"] = expand
+        if properties is not None:
+            params["properties"] = properties
         issue.find(id, params=params)
         return issue
 
@@ -3024,6 +3028,7 @@ class JIRA:
         validate_query: bool = True,
         fields: Optional[Union[str, List[str]]] = "*all",
         expand: Optional[str] = None,
+        properties: Optional[str] = None,
         json_result: bool = False,
     ) -> Union[Dict[str, Any], ResultList[Issue]]:
         """Get a :class:`~jira.client.ResultList` of issue Resources matching a JQL search string.
@@ -3038,6 +3043,7 @@ class JIRA:
             fields (Optional[Union[str, List[str]]]): comma-separated string or list of issue fields to include in the results.
               Default is to include all fields.
             expand (Optional[str]): extra information to fetch inside each resource
+            properties (Optional[str]): extra properties to fetch inside each result
             json_result (bool): True to return a JSON response. When set to False a :class:`ResultList` will be returned. (Default: ``False``)
 
         Returns:
@@ -3063,6 +3069,7 @@ class JIRA:
             "validateQuery": validate_query,
             "fields": fields,
             "expand": expand,
+            "properties": properties,
         }
         if json_result:
             search_params["maxResults"] = maxResults
