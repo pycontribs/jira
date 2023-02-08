@@ -2634,7 +2634,9 @@ class JIRA:
         return self._find_for_resource(IssueType, id)
 
     def issue_type_by_name(self, name: str, project: Optional[str] = None) -> IssueType:
-        """Args:
+        """Get issue type by name.
+
+        Args:
             name (str): Name of the issue type
             project (str): Key or ID of the project. If set, only issue types available for that project will be looked up.
 
