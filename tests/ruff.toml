@@ -1,5 +1,5 @@
 extend = "../pyproject.toml"
 ignore = [
-    "E501", # We have way to many "line too long" errors at the moment
+    "E501", # We have way too many "line too long" errors at the moment
     "D", # Too many undocumented functions at the moment
 ]
