@@ -31,15 +31,11 @@ repos:
         args: []
         require_serial: false
         additional_dependencies: []
-  - repo: https://github.com/PyCQA/flake8
-    rev: 6.0.0
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: "v0.0.237"
     hooks:
-      - id: flake8
-  - repo: https://github.com/pycqa/isort
-    rev: 5.12.0
-    hooks:
-      - id: isort
-        name: isort
+      - id: ruff
+        args: [--fix]
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.29.0
     hooks:
@@ -52,7 +48,8 @@ repos:
         additional_dependencies:
           - types-requests
           - types-pkg_resources
-        args: [--no-strict-optional, --ignore-missing-imports, --show-error-codes]
+        args:
+          [--no-strict-optional, --ignore-missing-imports, --show-error-codes]
   - repo: https://github.com/asottile/pyupgrade
     rev: v3.3.1
     hooks:
