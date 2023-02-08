@@ -1,4 +1,5 @@
-"""This module implements a friendly (well, friendlier) interface between the raw JSON
+"""Jira Client module.
+This module implements a friendly (well, friendlier) interface between the raw JSON
 responses from Jira and the Resource/dict abstractions provided by this library. Users
 will construct a JIRA object as described below. Full API documentation can be found
 at: https://jira.readthedocs.io/en/latest/.
@@ -109,7 +110,8 @@ def translate_resource_args(func: Callable):
 
 
     Args:
-        func Callable: the function to decorate"""
+        func (Callable): the function to decorate
+    """
 
     @wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -266,7 +268,8 @@ class JiraCookieAuth(AuthBase):
         """Initialise the Session object's cookies, so we can use the session cookie.
 
         Raises:
-            HTTPError: if the post returns an erroring http response"""
+            HTTPError: if the post returns an erroring http response
+        """
         username, password = self.__auth
         authentication_data = {"username": username, "password": password}
         r = self._session.post(  # this also goes through the handle_401() hook
@@ -1490,6 +1493,7 @@ class JIRA:
         Args:
             fields (Optional[Dict[str, Any]]): a dict containing field names and the values to use. If present, all other keyword arguments will be ignored
             prefetch (bool): True reloads the created issue Resource so all of its data is present in the value returned (Default: ``True``)
+
         Returns:
             Issue
         """
@@ -1535,6 +1539,7 @@ class JIRA:
         Args:
             field_list (List[Dict[str, Any]]): a list of dicts each containing field names and the values to use. Each dict is an individual issue to create and is subject to its minimum requirements.
             prefetch (bool): True reloads the created issue Resource so all of its data is present in the value returned (Default: ``True``)
+
         Returns:
             List[Dict[str, Any]]
         """
@@ -1824,7 +1829,7 @@ class JIRA:
     def _get_user_identifier(self, user: User) -> str:
         """Get the unique identifier depending on the deployment type.
         - Cloud: 'accountId'
-        - Self Hosted: 'name' (equivalent to username)
+        - Self Hosted: 'name' (equivalent to username).
 
         Args:
             user (User): a User object
@@ -4781,7 +4786,7 @@ class JIRA:
         endDate: Optional[Any] = None,
         state: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """Updates the sprint with the given values
+        """Updates the sprint with the given values.
 
         Args:
             id (Union[str, int]): The id of the sprint to update
@@ -4793,7 +4798,6 @@ class JIRA:
         Returns:
             Dict[str, Any]
         """
-
         payload = {}
         if name:
             payload["name"] = name

@@ -1,4 +1,4 @@
-"""
+"""Jira resource definitions.
 This module implements the Resource classes that translate JSON from Jira REST
 resources into usable objects.
 """
