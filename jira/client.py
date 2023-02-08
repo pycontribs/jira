@@ -734,7 +734,6 @@ class JIRA:
         items = next_items_page
 
         if True:  # isinstance(resource, dict):
-
             if isinstance(resource, dict):
                 total = resource.get("total")
                 total = int(total) if total is not None else total
@@ -1007,9 +1006,9 @@ class JIRA:
         if not fname and isinstance(attachment_io, BufferedReader):
             fname = os.path.basename(attachment_io.name)
 
-        def generate_multipartencoded_request_args() -> Tuple[
-            MultipartEncoder, CaseInsensitiveDict
-        ]:
+        def generate_multipartencoded_request_args() -> (
+            Tuple[MultipartEncoder, CaseInsensitiveDict]
+        ):
             """Returns MultipartEncoder stream of attachment, and the header."""
             attachment_io.seek(0)
             encoded_data = MultipartEncoder(
@@ -2071,7 +2070,6 @@ class JIRA:
             if "globalId" not in data:
                 raise NotImplementedError("Unable to identify the issue to link to.")
         else:
-
             if globalId is not None:
                 data["globalId"] = globalId
             if application is not None:
@@ -3684,7 +3682,6 @@ class JIRA:
     def _create_oauth_session(
         self, oauth, timeout: Optional[Union[Union[float, int], Tuple[float, float]]]
     ):
-
         from oauthlib.oauth1 import SIGNATURE_RSA
         from requests_oauthlib import OAuth1
 
@@ -4179,7 +4176,6 @@ class JIRA:
             str: User's `accountId` (Cloud) else `username`.
         """
         if not hasattr(self, "_myself"):
-
             url = self._get_url("myself")
             r = self._session.get(url, headers=self._options["headers"])
 
@@ -4242,7 +4238,6 @@ class JIRA:
 
     @lru_cache(maxsize=None)
     def templates(self) -> Dict:
-
         url = self.server_url + "/rest/project-templates/latest/templates"
 
         r = self._session.get(url)
@@ -4258,7 +4253,6 @@ class JIRA:
 
     @lru_cache(maxsize=None)
     def permissionschemes(self):
-
         url = self._get_url("permissionscheme")
 
         r = self._session.get(url)
@@ -4282,7 +4276,6 @@ class JIRA:
 
     @lru_cache(maxsize=None)
     def issuesecurityschemes(self):
-
         url = self._get_url("issuesecurityschemes")
 
         r = self._session.get(url)
@@ -4292,7 +4285,6 @@ class JIRA:
 
     @lru_cache(maxsize=None)
     def projectcategories(self):
-
         url = self._get_url("projectCategory")
 
         r = self._session.get(url)
@@ -4302,7 +4294,6 @@ class JIRA:
 
     @lru_cache(maxsize=None)
     def avatars(self, entity="project"):
-
         url = self._get_url(f"avatar/{entity}/system")
 
         r = self._session.get(url)
@@ -4347,7 +4338,6 @@ class JIRA:
         return data  # ['values']
 
     def delete_screen(self, id: str):
-
         url = self._get_url(f"screens/{id}")
 
         r = self._session.delete(url)
@@ -4357,7 +4347,6 @@ class JIRA:
         return data
 
     def delete_permissionscheme(self, id: str):
-
         url = self._get_url(f"permissionscheme/{id}")
 
         r = self._session.delete(url)

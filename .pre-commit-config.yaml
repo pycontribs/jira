@@ -1,7 +1,7 @@
 ---
 repos:
   - repo: https://github.com/psf/black
-    rev: 22.12.0
+    rev: 23.1.0
     hooks:
       - id: black
         language_version: python3
@@ -32,7 +32,7 @@ repos:
         require_serial: false
         additional_dependencies: []
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: "v0.0.237"
+    rev: "v0.0.243"
     hooks:
       - id: ruff
         args: [--fix]
@@ -42,7 +42,7 @@ repos:
       - id: yamllint
         files: \.(yaml|yml)$
   - repo: https://github.com/pre-commit/mirrors-mypy.git
-    rev: v0.991
+    rev: v1.0.0
     hooks:
       - id: mypy
         additional_dependencies:
