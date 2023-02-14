@@ -1,4 +1,5 @@
 """Jira Client module.
+
 This module implements a friendly (well, friendlier) interface between the raw JSON
 responses from Jira and the Resource/dict abstractions provided by this library. Users
 will construct a JIRA object as described below. Full API documentation can be found
@@ -107,7 +108,6 @@ LOG.addHandler(_logging.NullHandler())
 
 def translate_resource_args(func: Callable):
     """Decorator that converts Issue and Project resources to their keys when used as arguments.
-
 
     Args:
         func (Callable): the function to decorate
@@ -1827,6 +1827,7 @@ class JIRA:
 
     def _get_user_identifier(self, user: User) -> str:
         """Get the unique identifier depending on the deployment type.
+
         - Cloud: 'accountId'
         - Self Hosted: 'name' (equivalent to username).
 
@@ -3255,6 +3256,7 @@ class JIRA:
         query: Optional[str] = None,
     ):
         """Get a list of user Resources that match the search string for assigning or creating issues.
+
         "username" query parameter is deprecated in Jira Cloud; the expected parameter now is "query", which can just be the full email again.
         But the "user" parameter is kept for backwards compatibility, i.e. Jira Server/Data Center.
 
@@ -3459,6 +3461,7 @@ class JIRA:
         query: Optional[str] = None,
     ) -> ResultList[User]:
         """Get a list of user Resources that match the specified search string.
+
         "username" query parameter is deprecated in Jira Cloud; the expected parameter now is "query", which can just be the full email again.
         But the "user" parameter is kept for backwards compatibility, i.e. Jira Server/Data Center.
 
@@ -3724,6 +3727,7 @@ class JIRA:
 
     def _add_client_cert_to_session(self):
         """Adds the client certificate to the session.
+
         If configured through the constructor.
 
         https://docs.python-requests.org/en/master/user/advanced/#client-side-certificates
@@ -3735,6 +3739,7 @@ class JIRA:
 
     def _add_ssl_cert_verif_strategy_to_session(self):
         """Adds verification strategy for host SSL certificates.
+
         If configured through the constructor.
 
         https://docs.python-requests.org/en/master/user/advanced/#ssl-cert-verification
@@ -3777,6 +3782,7 @@ class JIRA:
         timeout: Optional[Union[Union[float, int], Tuple[float, float]]],
     ):
         """Creates token-based session.
+
         Header structure: "authorization": "Bearer <token_auth>".
         """
         self._session = ResilientSession(timeout=timeout)
@@ -3788,6 +3794,7 @@ class JIRA:
 
     def _get_url(self, path: str, base: str = JIRA_BASE_URL) -> str:
         """Returns the full url based on Jira base url and the path provided.
+
         Using the API version specified during the __init__.
 
         Args:
@@ -3803,6 +3810,7 @@ class JIRA:
 
     def _get_latest_url(self, path: str, base: str = JIRA_BASE_URL) -> str:
         """Returns the full url based on Jira base url and the path provided.
+
         Using the latest API endpoint.
 
         Args:
@@ -4168,6 +4176,7 @@ class JIRA:
 
     def current_user(self, field: Optional[str] = None) -> str:
         """Return the `accountId` (Cloud) else `username` of the current user.
+
         For anonymous users it will return a value that evaluates as False.
 
         Args:

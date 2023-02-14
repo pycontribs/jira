@@ -268,6 +268,7 @@ class ResilientSession(Session):
         counter: int = 1,
     ):
         """Return whether the request is recoverable and hence should be retried.
+
         Exponentially delays if recoverable.
 
         At this moment it supports: 429
