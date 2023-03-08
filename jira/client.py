@@ -117,6 +117,8 @@ def translate_resource_args(func: Callable):
         for arg in args:
             if isinstance(arg, (Issue, Project)):
                 arg_list.append(arg.key)
+            elif isinstance(arg, IssueLinkType):
+                arg_list.append(arg.name)
             else:
                 arg_list.append(arg)
         result = func(*arg_list, **kwargs)

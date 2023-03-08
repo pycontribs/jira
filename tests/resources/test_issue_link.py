@@ -18,6 +18,13 @@ class IssueLinkTests(JiraTestCase):
             self.test_manager.project_b_issue2,
         )
 
+    def test_create_issue_link_with_issue_link_obj(self):
+        self.test_manager.jira_admin.create_issue_link(
+            self.link_types[0],
+            self.test_manager.project_b_issue1,
+            self.test_manager.project_b_issue2,
+        )
+
     def test_create_issue_link_with_issue_obj(self):
         inwardissue = self.test_manager.jira_admin.issue(
             self.test_manager.project_b_issue1
