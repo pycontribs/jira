@@ -308,7 +308,6 @@ def handle_basic_auth(auth, server):
 
 
 def main():
-
     try:
         try:
             get_ipython

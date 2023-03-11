@@ -57,7 +57,7 @@ def threaded_requests(requests):
 
 
 def json_loads(resp: Optional[Response]) -> Any:
-    """Attempts to load json the result of a response
+    """Attempts to load json the result of a response.
 
     Args:
         resp (Optional[Response]): The Response object

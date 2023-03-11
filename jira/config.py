@@ -1,9 +1,9 @@
-"""
+"""Config handler.
+
 This module allows people to keep their jira server credentials outside their script,
 in a configuration file that is not saved in the source control.
 
 Also, this simplifies the scripts by not having to write the same initialization code for each script.
-
 """
 import configparser
 import logging
