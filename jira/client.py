@@ -527,24 +527,9 @@ class JIRA:
         self._try_magic()
 
         assert isinstance(self._options["headers"], dict)  # for mypy benefit
-        self._session: ResilientSession  # for mypy benefit
-        if oauth:
-            self._create_oauth_session(oauth, timeout)
-        elif basic_auth:
-            self._create_http_basic_session(*basic_auth, timeout=timeout)
-        elif jwt:
-            self._create_jwt_session(jwt, timeout)
-        elif token_auth:
-            self._create_token_session(token_auth, timeout)
-        elif kerberos:
-            self._create_kerberos_session(timeout, kerberos_options=kerberos_options)
-        elif auth:
-            self._create_cookie_auth(auth, timeout)
-            # always log in for cookie based auth, as we need a first request to be logged in
-            validate = True
-        else:
-            self._session = ResilientSession(timeout=timeout)
 
+        # Create Session object and update with config options first
+        self._session = ResilientSession(timeout=timeout)
         # Add the client authentication certificate to the request if configured
         self._add_client_cert_to_session()
         # Add the SSL Cert to the request if configured
@@ -559,6 +544,23 @@ class JIRA:
 
         if proxies:
             self._session.proxies = proxies
+
+        # Setup the Auth last,
+        # so that if any handlers take a copy of the session obj it will be ready
+        if oauth:
+            self._create_oauth_session(oauth)
+        elif basic_auth:
+            self._create_http_basic_session(*basic_auth)
+        elif jwt:
+            self._create_jwt_session(jwt)
+        elif token_auth:
+            self._create_token_session(token_auth)
+        elif kerberos:
+            self._create_kerberos_session(kerberos_options=kerberos_options)
+        elif auth:
+            self._create_cookie_auth(auth)
+            # always log in for cookie based auth, as we need a first request to be logged in
+            validate = True
 
         self.auth = auth
         if validate:
@@ -619,17 +621,12 @@ class JIRA:
         """Return whether we are on a Cloud based Jira instance."""
         return self.deploymentType in ("Cloud",)
 
-    def _create_cookie_auth(
-        self,
-        auth: tuple[str, str],
-        timeout: None | float | tuple[float, float] | tuple[float, None] | None = None,
-    ):
+    def _create_cookie_auth(self, auth: tuple[str, str]):
         warnings.warn(
             "Use OAuth or Token based authentication "
             + "instead of Cookie based Authentication.",
             DeprecationWarning,
         )
-        self._session = ResilientSession(timeout=timeout)
         self._session.auth = JiraCookieAuth(
             session=self._session,
             session_api_url="{server}{auth_url}".format(**self._options),
@@ -3678,28 +3675,19 @@ class JIRA:
         return None
 
     # Utilities
-    def _create_http_basic_session(
-        self,
-        username: str,
-        password: str,
-        timeout: None | float | tuple[float, float] | tuple[float, None] | None = None,
-    ):
+    def _create_http_basic_session(self, username: str, password: str):
         """Creates a basic http session.
 
         Args:
             username (str): Username for the session
             password (str): Password for the username
-            timeout (Optional[int]): If set determines the connection/read timeout delay for the Session.
 
         Returns:
             ResilientSession
         """
-        self._session = ResilientSession(timeout=timeout)
         self._session.auth = (username, password)
 
-    def _create_oauth_session(
-        self, oauth, timeout: float | int | tuple[float, float] | None
-    ):
+    def _create_oauth_session(self, oauth: dict[str, Any]):
         from oauthlib.oauth1 import SIGNATURE_HMAC_SHA1
         from requests_oauthlib import OAuth1
 
@@ -3710,13 +3698,11 @@ class JIRA:
             resource_owner_key=oauth["access_token"],
             resource_owner_secret=oauth["access_token_secret"],
         )
-        self._session = ResilientSession(timeout)
         self._session.auth = oauth_instance
 
     def _create_kerberos_session(
         self,
-        timeout: None | float | tuple[float, float] | tuple[float, None] | None,
-        kerberos_options=None,
+        kerberos_options: dict[str, Any] = None,
     ):
         if kerberos_options is None:
             kerberos_options = {}
@@ -3733,7 +3719,6 @@ class JIRA:
                 % kerberos_options["mutual_authentication"]
             )
 
-        self._session = ResilientSession(timeout=timeout)
         self._session.auth = HTTPKerberosAuth(
             mutual_authentication=mutual_authentication
         )
@@ -3769,9 +3754,7 @@ class JIRA:
             t += dt
         return calendar.timegm(t.timetuple())
 
-    def _create_jwt_session(
-        self, jwt, timeout: float | int | tuple[float, float] | None
-    ):
+    def _create_jwt_session(self, jwt: dict[str, Any]):
         try:
             jwt_auth = JWTAuth(jwt["secret"], alg="HS256")
         except NameError as e:
@@ -3786,19 +3769,13 @@ class JIRA:
         jwt_auth.add_field("qsh", QshGenerator(self._options["context_path"]))
         for f in jwt["payload"].items():
             jwt_auth.add_field(f[0], f[1])
-        self._session = ResilientSession(timeout=timeout)
         self._session.auth = jwt_auth
 
-    def _create_token_session(
-        self,
-        token_auth: str,
-        timeout: None | float | tuple[float, float] | tuple[float, None] | None = None,
-    ):
+    def _create_token_session(self, token_auth: str):
         """Creates token-based session.
 
         Header structure: "authorization": "Bearer <token_auth>".
         """
-        self._session = ResilientSession(timeout=timeout)
         self._session.auth = TokenAuth(token_auth)
 
     def _set_avatar(self, params, url, avatar):
