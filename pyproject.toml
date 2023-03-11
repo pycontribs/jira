@@ -6,12 +6,6 @@ build-backend = "setuptools.build_meta"
 # Equivalent to use_scm_version=True
 [tool.setuptools_scm]
 
-# Tool Config
-[tool.isort]
-profile = "black"
-src_paths = ["jira", "tests"]
-
-
 [tool.pytest.ini_options]
 minversion = "6.0"
 testpaths = ["tests"]
@@ -37,3 +31,51 @@ markers = ["allow_on_cloud: opt in for the test to run on Jira Cloud"]
 python_version = 3.8
 warn_unused_configs = true
 namespace_packages = true
+# check_untyped_defs = true
+
+[tool.ruff]
+select = [
+    "E", # pydocstyle
+    "W", # pydocstyle
+    "F", # pyflakes
+    "I", # isort
+    "UP", # pyupgrade
+    "D", # docstrings
+]
+ignore = [
+    "E501", # We have way too many "line too long" errors at the moment
+    # TODO: Address these with time
+    "D100",
+    "D101",
+    "D102",
+    "D103",
+    "D105",
+    "D107",
+    "D401",
+    "D402",
+    "D417",
+]
+
+# Same as Black.
+line-length = 88
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+# Assume Python 3.8. (minimum supported)
+target-version = "py38"
+
+# The source code paths to consider, e.g., when resolving first- vs. third-party imports
+src = ["jira", "tests"]
+
+[tool.ruff.isort]
+known-first-party = ["jira", "tests"]
+
+[tool.ruff.per-file-ignores]
+"jira/__init__.py" = [
+    "E402", # ignore import order in this file
+]
+
+[tool.ruff.pydocstyle]
+# Use Google-style docstrings.
+convention = "google"

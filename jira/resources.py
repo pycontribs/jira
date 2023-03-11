@@ -1,6 +1,7 @@
-"""
-This module implements the Resource classes that translate JSON from Jira REST resources
-into usable objects.
+"""Jira resource definitions.
+
+This module implements the Resource classes that translate JSON from Jira REST
+resources into usable objects.
 """
 
 import json
@@ -72,8 +73,7 @@ class Resource:
     """Models a URL-addressable resource in the Jira REST API.
 
     All Resource objects provide the following:
-    ``find()`` -- get a resource from the server and load it into the current object
-    (though clients should use the methods in the JIRA class instead of this method directly)
+    ``find()`` -- get a resource from the server and load it into the current object (though clients should use the methods in the JIRA class instead of this method directly)
     ``update()`` -- changes the value of this resource on the server and returns a new resource object for it
     ``delete()`` -- deletes this resource from the server
     ``self`` -- the URL of this resource on the server
@@ -88,14 +88,13 @@ class Resource:
     * ``issue/{0}/votes``
     * ``issue/{0}/comment/{1}``
 
-    where the bracketed numerals are placeholders for ID values that are filled in from the
-    ``ids`` parameter to ``find()``.
+    where the bracketed numerals are placeholders for ID values that are filled in from the ``ids`` parameter to ``find()``.
     """
 
     JIRA_BASE_URL = "{server}/rest/{rest_path}/{rest_api_version}/{path}"
 
-    # A prioritized list of the keys in self.raw most likely to contain a human
-    # readable name or identifier, or that offer other key information.
+    # A prioritized list of the keys in self.raw most likely to contain a
+    # human readable name or identifier, or that offer other key information.
     _READABLE_IDS = (
         "displayName",
         "key",
@@ -110,7 +109,7 @@ class Resource:
         "closed",
     )
 
-    # A list of properties that should uniquely identify a Resource object
+    # A list of properties that should uniquely identify a Resource object.
     # Each of these properties should be hashable, usually strings
     _HASH_IDS = (
         "self",
@@ -141,12 +140,11 @@ class Resource:
         self._session = session
         self._base_url = base_url
 
-        # Explicitly define as None so we know when a resource has actually
-        # been loaded
+        # Explicitly define as None, so we know when a resource has actually been loaded
         self.raw: Optional[Dict[str, Any]] = None
 
     def __str__(self) -> str:
-        """Return the first value we find that is likely to be human readable.
+        """Return the first value we find that is likely to be human-readable.
 
         Returns:
             str
@@ -205,17 +203,15 @@ class Resource:
         return vars(self)
 
     def __setstate__(self, raw_pickled: Dict[str, Any]):
-        """Unpickling of the resource"""
+        """Unpickling of the resource."""
         # https://stackoverflow.com/a/50888571/7724187
         vars(self).update(raw_pickled)
 
     def __hash__(self) -> int:
         """Hash calculation.
 
-        We try to find unique identifier like properties
-        to form our hash object.
-        Technically 'self', if present, is the unique URL to the object,
-        and should be sufficient to generate a unique hash.
+        We try to find unique identifier like properties to form our hash object.
+        Technically 'self', if present, is the unique URL to the object, and should be sufficient to generate a unique hash.
         """
         hash_list = []
         for a in self._HASH_IDS:
@@ -230,8 +226,7 @@ class Resource:
     def __eq__(self, other: Any) -> bool:
         """Default equality test.
 
-        Checks the types look about right and that the relevant
-        attributes that uniquely identify a resource are equal.
+        Checks the types look about right and that the relevant attributes that uniquely identify a resource are equal.
         """
         return isinstance(other, self.__class__) and all(
             [
@@ -251,9 +246,7 @@ class Resource:
         Args:
             id (Union[Tuple[str, str], int, str]): id
             params (Optional[Dict[str, str]]): params
-
         """
-
         if params is None:
             params = {}
 
@@ -269,9 +262,10 @@ class Resource:
         url: str,
         params: Optional[Dict[str, str]] = None,
     ):
-        """Finds a resource on the specified url. The resource is loaded
-        with the JSON data returned by doing a request on the specified
-        url.
+        """Finds a resource on the specified url.
+
+        The resource is loaded with the JSON data returned by doing a
+        request on the specified url.
 
         Args:
             url (str): url
@@ -302,15 +296,15 @@ class Resource:
     ):
         """Update this resource on the server.
 
-        Keyword arguments are marshalled into a dict before being sent. If this
-        resource doesn't support ``PUT``, a :py:exc:`.JIRAError` will be raised; subclasses that specialize this method
-        will only raise errors in case of user error.
+        Keyword arguments are marshalled into a dict before being sent. If this resource doesn't support ``PUT``, a :py:exc:`.JIRAError`
+        will be raised; subclasses that specialize this method will only raise errors in case of user error.
 
         Args:
             fields (Optional[Dict[str, Any]]): Fields which should be updated for the object.
-            async_ (bool): If true the request will be added to the queue so it can be executed later using async_run()
+            async_ (Optional[bool]): True to add the request to the queue, so it can be executed later using async_run()
             jira (jira.client.JIRA): Instance of Jira Client
-            notify (bool): Whether or not to notify users about the update. (Default: True)
+            notify (bool): True to notify watchers about the update, sets parameter notifyUsers. (Default: ``True``).
+              Admin or project admin permissions are required to disable the notification.
             kwargs (Any): extra arguments to the PUT request.
         """
         if async_ is None:
@@ -346,8 +340,8 @@ class Resource:
                         % (self._options["autofix"], self.key)
                     )
                     data["fields"]["assignee"] = {"name": self._options["autofix"]}
-                    # for some reason the above approach fails on Jira 5.2.11
-                    # so we need to change the assignee before
+                    # for some reason the above approach fails on Jira 5.2.11, so
+                    # we need to change the assignee before
 
             if (
                 "Issue type is a sub-task but parent issue key or id not specified."
@@ -408,9 +402,8 @@ class Resource:
     def delete(self, params: Optional[Dict[str, Any]] = None) -> Optional[Response]:
         """Delete this resource from the server, passing the specified query parameters.
 
-        If this resource doesn't support ``DELETE``, a :py:exc:`.JIRAError`
-        will be raised; subclasses that specialize this method will only raise errors
-        in case of user error.
+        If this resource doesn't support ``DELETE``, a :py:exc:`.JIRAError` will be raised; subclasses that specialize this method will
+        only raise errors in case of user error.
 
         Args:
             params: Parameters for the delete request.
@@ -635,23 +628,21 @@ class Issue(Resource):
     ):
         """Update this issue on the server.
 
-        Each keyword argument (other than the predefined ones) is treated as a field name and the argument's value
-        is treated as the intended value for that field -- if the fields argument is used, all other keyword arguments
-        will be ignored.
+        Each keyword argument (other than the predefined ones) is treated as a field name and the argument's value is treated as
+        the intended value for that field -- if the fields argument is used, all other keyword arguments will be ignored.
 
-        Jira projects may contain many different issue types. Some issue screens have different requirements for
-        fields in an issue. This information is available through the :py:meth:`.JIRA.editmeta` method. Further examples
-        are available here: https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Edit+issues
+        Jira projects may contain many issue types. Some issue screens have different requirements for fields in an issue.
+        This information is available through the :py:meth:`.JIRA.editmeta` method.
+        Further examples are available here: https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Edit+issues
 
         Args:
             fields (Dict[str,Any]): a dict containing field names and the values to use
-            update (Dict[str,Any]): a dict containing update operations to apply
-            notify (bool): query parameter notifyUsers. If true send the email with notification that the issue was updated
-              to users that watch it. Admin or project admin permissions are required to disable the notification.
+            update (Dict[str,Any]): a dict containing update the operations to apply
+            async_ (Optional[bool]): True to add the request to the queue, so it can be executed later using async_run() (Default: ``None``))
             jira (Optional[jira.client.JIRA]): JIRA instance.
-            fieldargs (dict): keyword arguments will generally be merged into fields, except lists,
-              which will be merged into updates
-
+            notify (bool): True to notify watchers about the update, sets parameter notifyUsers. (Default: ``True``).
+              Admin or project admin permissions are required to disable the notification.
+            fieldargs (dict): keyword arguments will generally be merged into fields, except lists, which will be merged into updates
         """
         data = {}
         if fields is not None:
@@ -697,7 +688,6 @@ class Issue(Resource):
         Returns:
             Any: Returns the parsed data stored in the field. For example, "project" would be of class :py:class:`Project`
         """
-
         if field_name.startswith("_"):
             raise AttributeError(
                 f"An issue field_name cannot start with underscore (_): {field_name}",
@@ -714,7 +704,6 @@ class Issue(Resource):
         Args:
             field (str): The field name
             value (str): The field's value
-
         """
         super().update(fields={"update": {field: [{"add": value}]}})
 
@@ -722,8 +711,7 @@ class Issue(Resource):
         """Delete this issue from the server.
 
         Args:
-            deleteSubtasks (bool): if the issue has subtasks, this argument must be set to true for the call to succeed.
-
+            deleteSubtasks (bool): True to also delete subtasks. If any are present the Issue won't be deleted (Default: ``True``)
         """
         super().delete(params={"deleteSubtasks": deleteSubtasks})
 
@@ -751,7 +739,8 @@ class Comment(Resource):
         self.raw: Dict[str, Any] = cast(Dict[str, Any], self.raw)
 
     def update(  # type: ignore[override]
-        # The above ignore is added because we've added new parameters and order of parameters is different.
+        # The above ignore is added because we've added new parameters and order of
+        # parameters is different.
         # Will need to be solved in a major version bump.
         self,
         fields: Optional[Dict[str, Any]] = None,
@@ -762,21 +751,21 @@ class Comment(Resource):
         is_internal: bool = False,
         notify: bool = True,
     ):
-        """Update a comment
+        """Update a comment.
 
         Keyword arguments are marshalled into a dict before being sent.
 
         Args:
             fields (Optional[Dict[str, Any]]): DEPRECATED => a comment doesn't have fields
-            async_ (Optional[bool]): If True the request will be added to the queue, so it can be executed later using async_run()
+            async_ (Optional[bool]): True to add the request to the queue, so it can be executed later using async_run() (Default: ``None``))
             jira (jira.client.JIRA): Instance of Jira Client
             visibility (Optional[Dict[str, str]]): a dict containing two entries: "type" and "value".
-              "type" is 'role' (or 'group' if the Jira server has configured
-              comment visibility for groups) and 'value' is the name of the role
-              (or group) to which viewing of this comment will be restricted.
+              "type" is 'role' (or 'group' if the Jira server has configured comment visibility for groups)
+              "value" is the name of the role (or group) to which viewing of this comment will be restricted.
             body (str): New text of the comment
-            is_internal (bool): Defines whether a comment has to be marked as 'Internal' in Jira Service Desk (Default: False)
-            notify (bool): Whether to notify users about the update. (Default: True)
+            is_internal (bool): True to mark the comment as 'Internal' in Jira Service Desk (Default: ``False``)
+            notify (bool): True to notify watchers about the update, sets parameter notifyUsers. (Default: ``True``).
+              Admin or project admin permissions are required to disable the notification.
         """
         data: Dict[str, Any] = {}
         if body:
@@ -808,8 +797,8 @@ class RemoteLink(Resource):
     def update(self, object, globalId=None, application=None, relationship=None):
         """Update a RemoteLink. 'object' is required.
 
-        For definitions of the allowable fields for 'object' and the keyword arguments 'globalId', 'application' and
-        'relationship', see https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+for+Remote+Issue+Links.
+        For definitions of the allowable fields for 'object' and the keyword arguments 'globalId', 'application' and 'relationship',
+        see https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+for+Remote+Issue+Links.
 
         Args:
             object: the link details to add (see the above link for details)
@@ -854,7 +843,7 @@ class IssueTypeScheme(Resource):
 
 
 class IssueSecurityLevelScheme(Resource):
-    """IssueSecurityLevelScheme information on an project."""
+    """IssueSecurityLevelScheme information on a project."""
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(
@@ -866,7 +855,7 @@ class IssueSecurityLevelScheme(Resource):
 
 
 class NotificationScheme(Resource):
-    """NotificationScheme information on an project."""
+    """NotificationScheme information on a project."""
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(
@@ -878,7 +867,7 @@ class NotificationScheme(Resource):
 
 
 class PermissionScheme(Resource):
-    """Permissionscheme information on an project."""
+    """Permissionscheme information on a project."""
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(
@@ -890,7 +879,7 @@ class PermissionScheme(Resource):
 
 
 class PriorityScheme(Resource):
-    """PriorityScheme information on an project."""
+    """PriorityScheme information on a project."""
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(
@@ -902,7 +891,7 @@ class PriorityScheme(Resource):
 
 
 class WorkflowScheme(Resource):
-    """WorkflowScheme information on an project."""
+    """WorkflowScheme information on a project."""
 
     def __init__(self, options, session, raw=None):
         Resource.__init__(
@@ -1038,7 +1027,7 @@ class IssueLinkType(Resource):
 
 
 class IssueType(Resource):
-    """Type of an issue."""
+    """Type of issue."""
 
     def __init__(
         self,
@@ -1107,7 +1096,6 @@ class Role(Resource):
             users (Optional[Union[str,List,Tuple]]): a user or users to add to the role
             groups (Optional[Union[str,List,Tuple]]): a group or groups to add to the role
         """
-
         if users is not None and isinstance(users, str):
             users = (users,)
         if groups is not None and isinstance(groups, str):
@@ -1128,15 +1116,12 @@ class Role(Resource):
         users: Union[str, List, Tuple] = None,
         groups: Union[str, List, Tuple] = None,
     ):
-        """Add the specified users or groups to this project role.
-
-        One of ``users`` or ``groups`` must be specified.
+        """Add the specified users or groups to this project role. One of ``users`` or ``groups`` must be specified.
 
         Args:
             users (Optional[Union[str,List,Tuple]]): a user or users to add to the role
             groups (Optional[Union[str,List,Tuple]]): a group or groups to add to the role
         """
-
         if users is not None and isinstance(users, str):
             users = (users,)
         if groups is not None and isinstance(groups, str):
@@ -1257,19 +1242,14 @@ class Version(Resource):
         self.raw: Dict[str, Any] = cast(Dict[str, Any], self.raw)
 
     def delete(self, moveFixIssuesTo=None, moveAffectedIssuesTo=None):
-        """
-        Delete this project version from the server.
+        """Delete this project version from the server.
 
-        If neither of the arguments are specified, the version is removed from all
-        issues it is attached to.
+        If neither of the arguments are specified, the version is removed from all issues it is attached to.
 
         Args:
-            moveFixIssuesTo: in issues for which this version is a fix
-              version, add this argument version to the fix version list
-            moveAffectedIssuesTo: in issues for which this version is an
-              affected version, add this argument version to the affected version list
+            moveFixIssuesTo: in issues for which this version is a fix version, add this version to the fix version list
+            moveAffectedIssuesTo: in issues for which this version is an affected version, add this version to the affected version list
         """
-
         params = {}
         if moveFixIssuesTo is not None:
             params["moveFixIssuesTo"] = moveFixIssuesTo
@@ -1279,8 +1259,7 @@ class Version(Resource):
         return super().delete(params)
 
     def update(self, **kwargs):
-        """
-        Update this project version from the server. It is prior used to archive versions.
+        """Update this project version from the server. It is prior used to archive versions.
 
         Refer to Atlassian REST API `documentation`_.
 
@@ -1429,9 +1408,8 @@ def dict2resource(
 ) -> Union["PropertyHolder", Type[Resource]]:
     """Convert a dictionary into a Jira Resource object.
 
-    Recursively walks a dict structure, transforming the properties into attributes
-    on a new ``Resource`` object of the appropriate type (if a ``self`` link is present)
-    or a ``PropertyHolder`` object (if no ``self`` link is present).
+    Recursively walks a dict structure, transforming the properties into attributes on a new ``Resource`` object of the appropriate type
+    (if a ``self`` link is present) or a ``PropertyHolder`` object (if no ``self`` link is present).
     """
     if top is None:
         top = PropertyHolder()

@@ -101,6 +101,31 @@ def test_status_codes_retries(
     assert mocked_sleep_method.call_count == expected_number_of_sleep_invocations
 
 
+@patch("requests.Session.request")
+@patch(f"{jira.resilientsession.__name__}.time.sleep")
+@pytest.mark.parametrize(
+    "status_code,expected_number_of_retries,expected_number_of_sleep_invocations",
+    status_codes_retries_test_data,
+)
+def test_status_codes_retries_no_headers(
+    mocked_sleep_method: Mock,
+    mocked_request_method: Mock,
+    status_code: int,
+    expected_number_of_retries: int,
+    expected_number_of_sleep_invocations: int,
+):
+    mocked_response: Response = Response()
+    mocked_response.status_code = status_code
+    mocked_request_method.return_value = mocked_response
+    session: jira.resilientsession.ResilientSession = (
+        jira.resilientsession.ResilientSession()
+    )
+    with pytest.raises(JIRAError):
+        session.get("mocked_url")
+    assert mocked_request_method.call_count == expected_number_of_retries
+    assert mocked_sleep_method.call_count == expected_number_of_sleep_invocations
+
+
 errors_parsing_test_data = [
     (403, {"x-authentication-denied-reason": "err1"}, "", ["err1"]),
     (500, {}, "err1", ["err1"]),
@@ -149,6 +174,24 @@ def test_unspecified_body_remains_unspecified(mocked_request_method: Mock):
 def test_nonempty_body_is_forwarded(mocked_request_method: Mock):
     # Disable retries for this test.
     session = jira.resilientsession.ResilientSession(max_retries=0)
+    session.get(url="mocked_url", data={"some": "fake-data"})
+    kwargs = mocked_request_method.call_args.kwargs
+    assert kwargs["data"] == '{"some": "fake-data"}'
+
+
+@patch("requests.Session.request")
+def test_with_requests_simple_timeout(mocked_request_method: Mock):
+    # Disable retries for this test.
+    session = jira.resilientsession.ResilientSession(max_retries=0, timeout=1)
+    session.get(url="mocked_url", data={"some": "fake-data"})
+    kwargs = mocked_request_method.call_args.kwargs
+    assert kwargs["data"] == '{"some": "fake-data"}'
+
+
+@patch("requests.Session.request")
+def test_with_requests_tuple_timeout(mocked_request_method: Mock):
+    # Disable retries for this test.
+    session = jira.resilientsession.ResilientSession(max_retries=0, timeout=(1, 3.5))
     session.get(url="mocked_url", data={"some": "fake-data"})
     kwargs = mocked_request_method.call_args.kwargs
     assert kwargs["data"] == '{"some": "fake-data"}'

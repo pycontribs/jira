@@ -46,7 +46,7 @@ class PassthroughRetryPrepare(PrepareRequestForRetry):
 
 
 def raise_on_error(resp: Optional[Response], **kwargs) -> TypeGuard[Response]:
-    """Handle errors from a Jira Request
+    """Handle errors from a Jira Request.
 
     Args:
         resp (Optional[Response]): Response from Jira request
@@ -150,11 +150,11 @@ class ResilientSession(Session):
         """A Session subclass catered for the Jira API with exponential delaying retry.
 
         Args:
-            timeout (Optional[int]): Timeout. Defaults to None.
+            timeout (Optional[Union[Union[float, int], Tuple[float, float]]]): Connection/read timeout delay. Defaults to None.
             max_retries (int): Max number of times to retry a request. Defaults to 3.
             max_retry_delay (int): Max delay allowed between retries. Defaults to 60.
         """
-        self.timeout = timeout  # TODO: Unused?
+        self.timeout = timeout
         self.max_retries = max_retries
         self.max_retry_delay = max_retry_delay
         super().__init__()
@@ -171,7 +171,7 @@ class ResilientSession(Session):
     def _jira_prepare(self, **original_kwargs) -> dict:
         """Do any pre-processing of our own and return the updated kwargs."""
         prepared_kwargs = original_kwargs.copy()
-
+        self.headers: CaseInsensitiveDict
         request_headers = self.headers.copy()
         request_headers.update(original_kwargs.get("headers", {}))
         prepared_kwargs["headers"] = request_headers
@@ -199,7 +199,6 @@ class ResilientSession(Session):
         Returns:
             Response: The response.
         """
-
         retry_number = 0
         exception: Optional[Exception] = None
         response: Optional[Response] = None
@@ -216,7 +215,9 @@ class ResilientSession(Session):
             exception = None
 
             try:
-                response = super().request(method, url, **processed_kwargs)
+                response = super().request(
+                    method, url, timeout=self.timeout, **processed_kwargs
+                )
                 if response.ok:
                     self.__handle_known_ok_response_errors(response)
                     return response
@@ -269,6 +270,7 @@ class ResilientSession(Session):
         counter: int = 1,
     ):
         """Return whether the request is recoverable and hence should be retried.
+
         Exponentially delays if recoverable.
 
         At this moment it supports: 429
@@ -300,22 +302,38 @@ class ResilientSession(Session):
         if isinstance(response, Response):
             if response.status_code in [429]:
                 is_recoverable = True
-                number_of_tokens_issued_per_interval = response.headers[
+                number_of_tokens_issued_per_interval = response.headers.get(
                     "X-RateLimit-FillRate"
-                ]
-                token_issuing_rate_interval_seconds = response.headers[
+                )
+                token_issuing_rate_interval_seconds = response.headers.get(
                     "X-RateLimit-Interval-Seconds"
-                ]
-                maximum_number_of_tokens = response.headers["X-RateLimit-Limit"]
-                retry_after = response.headers["retry-after"]
+                )
+                maximum_number_of_tokens = response.headers.get("X-RateLimit-Limit")
+                retry_after = response.headers.get("retry-after")
                 msg = f"{response.status_code} {response.reason}"
-                LOG.warning(
-                    f"Request rate limited by Jira: request should be retried after {retry_after} seconds.\n"
-                    + f"{number_of_tokens_issued_per_interval} tokens are issued every {token_issuing_rate_interval_seconds} seconds. "
-                    + f"You can accumulate up to {maximum_number_of_tokens} tokens.\n"
+                warning_msg = "Request rate limited by Jira."
+
+                warning_msg += (
+                    f" Request should be retried after {retry_after} seconds.\n"
+                    if retry_after is not None
+                    else "\n"
+                )
+                if (
+                    number_of_tokens_issued_per_interval is not None
+                    and token_issuing_rate_interval_seconds is not None
+                ):
+                    warning_msg += f"{number_of_tokens_issued_per_interval} tokens are issued every {token_issuing_rate_interval_seconds} seconds.\n"
+                if maximum_number_of_tokens is not None:
+                    warning_msg += (
+                        f"You can accumulate up to {maximum_number_of_tokens} tokens.\n"
+                    )
+                warning_msg = (
+                    warning_msg
                     + "Consider adding an exemption for the user as explained in: "
                     + "https://confluence.atlassian.com/adminjiraserver/improving-instance-stability-with-rate-limiting-983794911.html"
                 )
+
+                LOG.warning(warning_msg)
 
         if is_recoverable:
             # Exponential backoff with full jitter.
