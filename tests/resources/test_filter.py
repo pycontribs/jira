@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 from contextlib import contextmanager
-from typing import Optional
 
 from tests.conftest import JiraTestCase, rndstr
 
@@ -13,7 +14,7 @@ class FilterTests(JiraTestCase):
         self.filter_jql: str = f"project = {self.project_b} AND component is not EMPTY"
         self.filter_name: str = "some filter " + rndstr()
         self.filter_desc: str = "just some new test filter"
-        self.filter_favourite: Optional[bool] = False
+        self.filter_favourite: bool | None = False
 
     @contextmanager
     def make_filter(self, **kwargs):

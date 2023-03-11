@@ -1,5 +1,7 @@
 # This script shows how to use the client in anonymous mode
 # against jira.atlassian.com.
+from __future__ import annotations
+
 import re
 
 from jira import JIRA

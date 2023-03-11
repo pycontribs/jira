@@ -5,23 +5,24 @@ in a configuration file that is not saved in the source control.
 
 Also, this simplifies the scripts by not having to write the same initialization code for each script.
 """
+from __future__ import annotations
+
 import configparser
 import logging
 import os
 import sys
-from typing import Optional, Union
 
 from jira.client import JIRA
 
 
 def get_jira(
-    profile: Optional[str] = None,
+    profile: str | None = None,
     url: str = "http://localhost:2990",
     username: str = "admin",
     password: str = "admin",
     appid=None,
     autofix=False,
-    verify: Union[bool, str] = True,
+    verify: bool | str = True,
 ):
     """Return a JIRA object by loading the connection details from the `config.ini` file.
 

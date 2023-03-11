@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import abc
 import json
 import logging
 import random
 import time
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from requests import Response, Session
 from requests.exceptions import ConnectionError
@@ -45,7 +47,7 @@ class PassthroughRetryPrepare(PrepareRequestForRetry):
         return super().prepare(original_request_kwargs)
 
 
-def raise_on_error(resp: Optional[Response], **kwargs) -> TypeGuard[Response]:
+def raise_on_error(resp: Response | None, **kwargs) -> TypeGuard[Response]:
     """Handle errors from a Jira Request.
 
     Args:
@@ -78,7 +80,7 @@ def raise_on_error(resp: Optional[Response], **kwargs) -> TypeGuard[Response]:
     return True  # if no exception was raised, we have a valid Response
 
 
-def parse_errors(resp: Response) -> List[str]:
+def parse_errors(resp: Response) -> list[str]:
     """Parse a Jira Error messages from the Response.
 
     https://developer.atlassian.com/cloud/jira/platform/rest/v2/intro/#status-codes
@@ -89,8 +91,8 @@ def parse_errors(resp: Response) -> List[str]:
     Returns:
         List[str]: The error messages list parsed from the Response. An empty list if no error.
     """
-    resp_data: Dict[str, Any] = {}  # json parsed from the response
-    parsed_errors: List[str] = []  # error messages parsed from the response
+    resp_data: dict[str, Any] = {}  # json parsed from the response
+    parsed_errors: list[str] = []  # error messages parsed from the response
     if resp.status_code == 403 and "x-authentication-denied-reason" in resp.headers:
         return [resp.headers["x-authentication-denied-reason"]]
     elif resp.text:
@@ -187,7 +189,7 @@ class ResilientSession(Session):
     def request(  # type: ignore[override] # An intentionally different override
         self,
         method: str,
-        url: Union[str, bytes],
+        url: str | bytes,
         _prepare_retry_class: PrepareRequestForRetry = PassthroughRetryPrepare(),
         **kwargs,
     ) -> Response:
@@ -200,9 +202,9 @@ class ResilientSession(Session):
             Response: The response.
         """
         retry_number = 0
-        exception: Optional[Exception] = None
-        response: Optional[Response] = None
-        response_or_exception: Optional[Union[ConnectionError, Response]]
+        exception: Exception | None = None
+        response: Response | None = None
+        response_or_exception: ConnectionError | Response | None
 
         processed_kwargs = self._jira_prepare(**kwargs)
 
@@ -264,8 +266,8 @@ class ResilientSession(Session):
 
     def __recoverable(
         self,
-        response: Optional[Union[ConnectionError, Response]],
-        url: Union[str, bytes],
+        response: ConnectionError | Response | None,
+        url: str | bytes,
         request_method: str,
         counter: int = 1,
     ):

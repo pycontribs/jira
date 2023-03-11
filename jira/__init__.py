@@ -1,4 +1,6 @@
 """The root of JIRA package namespace."""
+from __future__ import annotations
+
 try:
     import importlib.metadata
 

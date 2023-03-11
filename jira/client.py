@@ -5,6 +5,8 @@ responses from Jira and the Resource/dict abstractions provided by this library.
 will construct a JIRA object as described below. Full API documentation can be found
 at: https://jira.readthedocs.io/en/latest/.
 """
+from __future__ import annotations
+
 import calendar
 import copy
 import datetime
@@ -27,17 +29,12 @@ from numbers import Number
 from typing import (
     Any,
     Callable,
-    Dict,
     Generic,
     Iterator,
     List,
     Literal,
-    Optional,
     SupportsIndex,
-    Tuple,
-    Type,
     TypeVar,
-    Union,
     no_type_check,
     overload,
 )
@@ -130,8 +127,8 @@ def translate_resource_args(func: Callable):
 
 
 def _field_worker(
-    fields: Dict[str, Any] = None, **fieldargs: Any
-) -> Union[Dict[str, Dict[str, Any]], Dict[str, Dict[str, str]]]:
+    fields: dict[str, Any] = None, **fieldargs: Any
+) -> dict[str, dict[str, Any]] | dict[str, dict[str, str]]:
     if fields is not None:
         return {"fields": fields}
     return {"fields": fieldargs}
@@ -146,8 +143,8 @@ class ResultList(list, Generic[ResourceType]):
         iterable: Iterable = None,
         _startAt: int = 0,
         _maxResults: int = 0,
-        _total: Optional[int] = None,
-        _isLast: Optional[bool] = None,
+        _total: int | None = None,
+        _isLast: bool | None = None,
     ) -> None:
         """Results List.
 
@@ -170,7 +167,7 @@ class ResultList(list, Generic[ResourceType]):
         self.isLast = _isLast
         self.total = _total if _total is not None else len(self)
 
-        self.iterable: List[ResourceType] = list(iterable) if iterable else []
+        self.iterable: list[ResourceType] = list(iterable) if iterable else []
         self.current = self.startAt
 
     def __next__(self) -> ResourceType:  # type:ignore[misc]
@@ -191,7 +188,7 @@ class ResultList(list, Generic[ResourceType]):
     @overload
     def __getitem__(self, i: SupportsIndex) -> ResourceType: ...  # type:ignore[misc]  # noqa: E704
     @overload
-    def __getitem__(self, s: slice) -> List[ResourceType]: ...  # type:ignore[misc]  # noqa: E704
+    def __getitem__(self, s: slice) -> list[ResourceType]: ...  # type:ignore[misc]  # noqa: E704
     def __getitem__(self, slice_or_index): # noqa: E301,E261
         return list.__getitem__(self, slice_or_index)
     # fmt: on
@@ -237,7 +234,7 @@ class JiraCookieAuth(AuthBase):
     """
 
     def __init__(
-        self, session: ResilientSession, session_api_url: str, auth: Tuple[str, str]
+        self, session: ResilientSession, session_api_url: str, auth: tuple[str, str]
     ):
         """Cookie Based Authentication.
 
@@ -388,13 +385,13 @@ class JIRA:
     def __init__(
         self,
         server: str = None,
-        options: Dict[str, Union[str, bool, Any]] = None,
-        basic_auth: Optional[Tuple[str, str]] = None,
-        token_auth: Optional[str] = None,
-        oauth: Dict[str, Any] = None,
-        jwt: Dict[str, Any] = None,
+        options: dict[str, str | bool | Any] = None,
+        basic_auth: tuple[str, str] | None = None,
+        token_auth: str | None = None,
+        oauth: dict[str, Any] = None,
+        jwt: dict[str, Any] = None,
         kerberos=False,
-        kerberos_options: Dict[str, Any] = None,
+        kerberos_options: dict[str, Any] = None,
         validate=False,
         get_server_info: bool = True,
         async_: bool = False,
@@ -402,11 +399,9 @@ class JIRA:
         logging: bool = True,
         max_retries: int = 3,
         proxies: Any = None,
-        timeout: Optional[
-            Union[None, float, Tuple[float, float], Tuple[float, None]]
-        ] = None,
-        auth: Tuple[str, str] = None,
-        default_batch_sizes: Optional[Dict[Type[Resource], Optional[int]]] = None,
+        timeout: None | float | tuple[float, float] | tuple[float, None] | None = None,
+        auth: tuple[str, str] = None,
+        default_batch_sizes: dict[type[Resource], int | None] | None = None,
     ):
         """Construct a Jira client instance.
 
@@ -504,7 +499,7 @@ class JIRA:
         LOG.setLevel(_logging.INFO if logging else _logging.CRITICAL)
         self.log = LOG
 
-        self._options: Dict[str, Any] = copy.deepcopy(JIRA.DEFAULT_OPTIONS)
+        self._options: dict[str, Any] = copy.deepcopy(JIRA.DEFAULT_OPTIONS)
 
         if default_batch_sizes:
             self._options["default_batch_size"].update(default_batch_sizes)
@@ -593,10 +588,10 @@ class JIRA:
             self._check_update_()
             JIRA.checked_version = True
 
-        self._fields_cache_value: Dict[str, str] = {}  # access via self._fields_cache
+        self._fields_cache_value: dict[str, str] = {}  # access via self._fields_cache
 
     @property
-    def _fields_cache(self) -> Dict[str, str]:
+    def _fields_cache(self) -> dict[str, str]:
         """Cached dictionary of {Field Name: Field ID}. Lazy loaded."""
         if not self._fields_cache_value:
             self._update_fields_cache()
@@ -626,10 +621,8 @@ class JIRA:
 
     def _create_cookie_auth(
         self,
-        auth: Tuple[str, str],
-        timeout: Optional[
-            Union[None, float, Tuple[float, float], Tuple[float, None]]
-        ] = None,
+        auth: tuple[str, str],
+        timeout: None | float | tuple[float, float] | tuple[float, None] | None = None,
     ):
         warnings.warn(
             "Use OAuth or Token based authentication "
@@ -696,12 +689,12 @@ class JIRA:
 
     def _fetch_pages(
         self,
-        item_type: Type[ResourceType],
-        items_key: Optional[str],
+        item_type: type[ResourceType],
+        items_key: str | None,
         request_path: str,
         startAt: int = 0,
         maxResults: int = 50,
-        params: Dict[str, Any] = None,
+        params: dict[str, Any] = None,
         base: str = JIRA_BASE_URL,
     ) -> ResultList[ResourceType]:
         """Fetch from a paginated end point.
@@ -826,10 +819,10 @@ class JIRA:
 
     def _get_items_from_page(
         self,
-        item_type: Type[ResourceType],
-        items_key: Optional[str],
-        resource: Dict[str, Any],
-    ) -> List[ResourceType]:
+        item_type: type[ResourceType],
+        items_key: str | None,
+        resource: dict[str, Any],
+    ) -> list[ResourceType]:
         try:
             return [
                 # We need to ignore the type here, as 'Resource' is an option
@@ -840,7 +833,7 @@ class JIRA:
             # improving the error text so we know why it happened
             raise KeyError(str(e) + " : " + json.dumps(resource))
 
-    def _get_batch_size(self, item_type: Type[ResourceType]) -> Optional[int]:
+    def _get_batch_size(self, item_type: type[ResourceType]) -> int | None:
         """Return the batch size for the given resource type from the options.
 
         Check if specified item-type has a mapped batch-size, else try to fallback to batch-size assigned to `Resource`, else fallback to Backend-determined batch-size.
@@ -848,7 +841,7 @@ class JIRA:
         Returns:
            Optional[int]: The batch size to use. When the configured batch size is None, the batch size should be determined by the JIRA-Backend.
         """
-        batch_sizes: Dict[Type[Resource], Optional[int]] = self._options[
+        batch_sizes: dict[type[Resource], int | None] = self._options[
             "default_batch_size"
         ]
         try:
@@ -867,7 +860,7 @@ class JIRA:
     # Universal resource loading
 
     def find(
-        self, resource_format: str, ids: Union[Tuple[str, str], int, str] = ""
+        self, resource_format: str, ids: tuple[str, str] | int | str = ""
     ) -> Resource:
         """Find Resource object for any addressable resource on the server.
 
@@ -908,7 +901,7 @@ class JIRA:
     # non-resource
     def application_properties(
         self, key: str = None
-    ) -> Union[Dict[str, str], List[Dict[str, str]]]:
+    ) -> dict[str, str] | list[dict[str, str]]:
         """Return the mutable server application properties.
 
         Args:
@@ -932,13 +925,13 @@ class JIRA:
         payload = {"id": key, "value": value}
         return self._session.put(url, data=json.dumps(payload))
 
-    def applicationlinks(self, cached: bool = True) -> List:
+    def applicationlinks(self, cached: bool = True) -> list:
         """List of application links.
 
         Returns:
             List[Dict]: json, or empty list
         """
-        self._applicationlinks: List[Dict]  # for mypy benefit
+        self._applicationlinks: list[dict]  # for mypy benefit
         # if cached, return the last result
         if cached and hasattr(self, "_applicationlinks"):
             return self._applicationlinks
@@ -968,7 +961,7 @@ class JIRA:
         return self._find_for_resource(Attachment, id)
 
     # non-resource
-    def attachment_meta(self) -> Dict[str, int]:
+    def attachment_meta(self) -> dict[str, int]:
         """Get the attachment metadata.
 
         Return:
@@ -979,8 +972,8 @@ class JIRA:
     @translate_resource_args
     def add_attachment(
         self,
-        issue: Union[str, int],
-        attachment: Union[str, BufferedReader],
+        issue: str | int,
+        attachment: str | BufferedReader,
         filename: str = None,
     ) -> Attachment:
         """Attach an attachment to an issue and returns a Resource for it.
@@ -1014,7 +1007,7 @@ class JIRA:
             fname = os.path.basename(attachment_io.name)
 
         def generate_multipartencoded_request_args() -> (
-            Tuple[MultipartEncoder, CaseInsensitiveDict]
+            tuple[MultipartEncoder, CaseInsensitiveDict]
         ):
             """Returns MultipartEncoder stream of attachment, and the header."""
             attachment_io.seek(0)
@@ -1051,7 +1044,7 @@ class JIRA:
             if close_attachment:
                 attachment_io.close()
 
-        js: Union[Dict[str, Any], List[Dict[str, Any]]] = json_loads(r)
+        js: dict[str, Any] | list[dict[str, Any]] = json_loads(r)
         if not js or not isinstance(js, Iterable):
             raise JIRAError(f"Unable to parse JSON: {js}. Failed to add attachment?")
         jira_attachment = Attachment(
@@ -1133,7 +1126,7 @@ class JIRA:
         Args:
             id (str): ID of the component to use
         """
-        data: Dict[str, Any] = self._get_json(
+        data: dict[str, Any] = self._get_json(
             "component/" + str(id) + "/relatedIssueCounts"
         )
         return data["issueCount"]
@@ -1204,7 +1197,7 @@ class JIRA:
     # Fields
 
     # non-resource
-    def fields(self) -> List[Dict[str, Any]]:
+    def fields(self) -> list[dict[str, Any]]:
         """Return a list of all issue fields.
 
         Returns:
@@ -1225,13 +1218,13 @@ class JIRA:
         """
         return self._find_for_resource(Filter, id)
 
-    def favourite_filters(self) -> List[Filter]:
+    def favourite_filters(self) -> list[Filter]:
         """Get a list of filter Resources which are the favourites of the currently authenticated user.
 
         Returns:
             List[Filter]
         """
-        r_json: List[Dict[str, Any]] = self._get_json("filter/favourite")
+        r_json: list[dict[str, Any]] = self._get_json("filter/favourite")
         filters = [
             Filter(self._options, self._session, raw_filter_json)
             for raw_filter_json in r_json
@@ -1256,7 +1249,7 @@ class JIRA:
         Returns:
             Filter
         """
-        data: Dict[str, Any] = {}
+        data: dict[str, Any] = {}
         if name is not None:
             data["name"] = name
         if description is not None:
@@ -1268,7 +1261,7 @@ class JIRA:
         url = self._get_url("filter")
         r = self._session.post(url, data=json.dumps(data))
 
-        raw_filter_json: Dict[str, Any] = json_loads(r)
+        raw_filter_json: dict[str, Any] = json_loads(r)
         return Filter(self._options, self._session, raw=raw_filter_json)
 
     def update_filter(
@@ -1327,10 +1320,10 @@ class JIRA:
     # non-resource
     def groups(
         self,
-        query: Optional[str] = None,
-        exclude: Optional[Any] = None,
+        query: str | None = None,
+        exclude: Any | None = None,
         maxResults: int = 9999,
-    ) -> List[str]:
+    ) -> list[str]:
         """Return a list of groups matching the specified criteria.
 
         Args:
@@ -1341,7 +1334,7 @@ class JIRA:
         Returns:
             List[str]
         """
-        params: Dict[str, Any] = {}
+        params: dict[str, Any] = {}
         groups = []
         if query is not None:
             params["query"] = query
@@ -1446,10 +1439,10 @@ class JIRA:
 
     def issue(
         self,
-        id: Union[Issue, str],
-        fields: Optional[str] = None,
-        expand: Optional[str] = None,
-        properties: Optional[str] = None,
+        id: Issue | str,
+        fields: str | None = None,
+        expand: str | None = None,
+        properties: str | None = None,
     ) -> Issue:
         """Get an issue Resource from the server.
 
@@ -1480,7 +1473,7 @@ class JIRA:
 
     def create_issue(
         self,
-        fields: Optional[Dict[str, Any]] = None,
+        fields: dict[str, Any] | None = None,
         prefetch: bool = True,
         **fieldargs,
     ) -> Issue:
@@ -1503,7 +1496,7 @@ class JIRA:
         Returns:
             Issue
         """
-        data: Dict[str, Any] = _field_worker(fields, **fieldargs)
+        data: dict[str, Any] = _field_worker(fields, **fieldargs)
 
         p = data["fields"]["project"]
 
@@ -1536,8 +1529,8 @@ class JIRA:
             return Issue(self._options, self._session, raw=raw_issue_json)
 
     def create_issues(
-        self, field_list: List[Dict[str, Any]], prefetch: bool = True
-    ) -> List[Dict[str, Any]]:
+        self, field_list: list[dict[str, Any]], prefetch: bool = True
+    ) -> list[dict[str, Any]]:
         """Bulk create new issues and return an issue Resource for each successfully created issue.
 
         See `create_issue` documentation for field information.
@@ -1549,9 +1542,9 @@ class JIRA:
         Returns:
             List[Dict[str, Any]]
         """
-        data: Dict[str, List] = {"issueUpdates": []}
+        data: dict[str, list] = {"issueUpdates": []}
         for field_dict in field_list:
-            issue_data: Dict[str, Any] = _field_worker(field_dict)
+            issue_data: dict[str, Any] = _field_worker(field_dict)
             p = issue_data["fields"]["project"]
 
             project_id = None
@@ -1650,7 +1643,7 @@ class JIRA:
             raise JIRAError(status_code=r.status_code, request=r)
         return Customer(self._options, self._session, raw=raw_customer_json)
 
-    def service_desks(self) -> List[ServiceDesk]:
+    def service_desks(self) -> list[ServiceDesk]:
         """Get a list of ServiceDesk Resources from the server visible to the current authenticated user.
 
         Returns:
@@ -1678,7 +1671,7 @@ class JIRA:
 
     @no_type_check  # FIXME: This function does not do what it wants to with fieldargs
     def create_customer_request(
-        self, fields: Dict[str, Any] = None, prefetch: bool = True, **fieldargs
+        self, fields: dict[str, Any] = None, prefetch: bool = True, **fieldargs
     ) -> Issue:
         """Create a new customer request and return an issue Resource for it.
 
@@ -1731,8 +1724,8 @@ class JIRA:
 
     def createmeta_issuetypes(
         self,
-        projectIdOrKey: Union[str, int],
-    ) -> Dict[str, Any]:
+        projectIdOrKey: str | int,
+    ) -> dict[str, Any]:
         """Get the issue types metadata for a given project, required to create issues.
 
         This API was introduced in JIRA Server / DC 8.4 as a replacement for the more general purpose API 'createmeta'.
@@ -1754,9 +1747,9 @@ class JIRA:
 
     def createmeta_fieldtypes(
         self,
-        projectIdOrKey: Union[str, int],
-        issueTypeId: Union[str, int],
-    ) -> Dict[str, Any]:
+        projectIdOrKey: str | int,
+        issueTypeId: str | int,
+    ) -> dict[str, Any]:
         """Get the field metadata for a given project and issue type, required to create issues.
 
         This API was introduced in JIRA Server / DC 8.4 as a replacement for the more general purpose API 'createmeta'.
@@ -1781,12 +1774,12 @@ class JIRA:
 
     def createmeta(
         self,
-        projectKeys: Optional[Union[Tuple[str, str], str]] = None,
-        projectIds: Union[List, Tuple[str, str]] = [],
-        issuetypeIds: Optional[List[str]] = None,
-        issuetypeNames: Optional[str] = None,
-        expand: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        projectKeys: tuple[str, str] | str | None = None,
+        projectIds: list | tuple[str, str] = [],
+        issuetypeIds: list[str] | None = None,
+        issuetypeNames: str | None = None,
+        expand: str | None = None,
+    ) -> dict[str, Any]:
         """Get the metadata required to create issues, optionally filtered by projects and issue types.
 
         Args:
@@ -1817,7 +1810,7 @@ class JIRA:
                     stacklevel=2,
                 )
 
-        params: Dict[str, Any] = {}
+        params: dict[str, Any] = {}
         if projectKeys is not None:
             params["projectKeys"] = projectKeys
         if projectIds is not None:
@@ -1846,7 +1839,7 @@ class JIRA:
         """
         return user.accountId if self._is_cloud else user.name
 
-    def _get_user_id(self, user: Optional[str]) -> Optional[str]:
+    def _get_user_id(self, user: str | None) -> str | None:
         """Internal method for translating a user search (str) to an id.
 
         Return None and -1 unchanged.
@@ -1886,7 +1879,7 @@ class JIRA:
 
     # non-resource
     @translate_resource_args
-    def assign_issue(self, issue: Union[int, str], assignee: Optional[str]) -> bool:
+    def assign_issue(self, issue: int | str, assignee: str | None) -> bool:
         """Assign an issue to a user.
 
         Args:
@@ -1904,8 +1897,8 @@ class JIRA:
 
     @translate_resource_args
     def comments(
-        self, issue: Union[int, str], expand: Optional[str] = None
-    ) -> List[Comment]:
+        self, issue: int | str, expand: str | None = None
+    ) -> list[Comment]:
         """Get a list of comment Resources of the issue provided.
 
         Args:
@@ -1928,7 +1921,7 @@ class JIRA:
 
     @translate_resource_args
     def comment(
-        self, issue: Union[int, str], comment: str, expand: Optional[str] = None
+        self, issue: int | str, comment: str, expand: str | None = None
     ) -> Comment:
         """Get a comment Resource from the server for the specified ID.
 
@@ -1945,9 +1938,9 @@ class JIRA:
     @translate_resource_args
     def add_comment(
         self,
-        issue: Union[str, int],
+        issue: str | int,
         body: str,
-        visibility: Optional[Dict[str, str]] = None,
+        visibility: dict[str, str] | None = None,
         is_internal: bool = False,
     ) -> Comment:
         """Add a comment from the current authenticated user on the specified issue and return a Resource for it.
@@ -1963,7 +1956,7 @@ class JIRA:
         Returns:
             Comment: the created comment
         """
-        data: Dict[str, Any] = {"body": body}
+        data: dict[str, Any] = {"body": body}
 
         if is_internal:
             data["properties"] = [
@@ -1979,7 +1972,7 @@ class JIRA:
 
     # non-resource
     @translate_resource_args
-    def editmeta(self, issue: Union[str, int]):
+    def editmeta(self, issue: str | int):
         """Get the edit metadata for an issue.
 
         Args:
@@ -1991,7 +1984,7 @@ class JIRA:
         return self._get_json("issue/" + str(issue) + "/editmeta")
 
     @translate_resource_args
-    def remote_links(self, issue: Union[str, int]) -> List[RemoteLink]:
+    def remote_links(self, issue: str | int) -> list[RemoteLink]:
         """Get a list of remote link Resources from an issue.
 
         Args:
@@ -2008,7 +2001,7 @@ class JIRA:
         return remote_links
 
     @translate_resource_args
-    def remote_link(self, issue: Union[str, int], id: str) -> RemoteLink:
+    def remote_link(self, issue: str | int, id: str) -> RemoteLink:
         """Get a remote link Resource from the server.
 
         Args:
@@ -2025,10 +2018,10 @@ class JIRA:
     def add_remote_link(
         self,
         issue: str,
-        destination: Union[Issue, Dict[str, Any]],
-        globalId: Optional[str] = None,
-        application: Optional[Dict[str, Any]] = None,
-        relationship: Optional[str] = None,
+        destination: Issue | dict[str, Any],
+        globalId: str | None = None,
+        application: dict[str, Any] | None = None,
+        relationship: str | None = None,
     ) -> RemoteLink:
         """Add a remote link from an issue to an external application and returns a remote link Resource for it.
 
@@ -2048,7 +2041,7 @@ class JIRA:
             RemoteLink: the added remote link
         """
         try:
-            applicationlinks: List[Dict] = self.applicationlinks()
+            applicationlinks: list[dict] = self.applicationlinks()
         except JIRAError as e:
             applicationlinks = []
             # In many (if not most) configurations, non-admin users are not allowed to
@@ -2061,7 +2054,7 @@ class JIRA:
                 Warning,
             )
 
-        data: Dict[str, Any] = {}
+        data: dict[str, Any] = {}
         if isinstance(destination, Issue) and destination.raw:
             data["object"] = {"title": str(destination), "url": destination.permalink()}
             for x in applicationlinks:
@@ -2107,7 +2100,7 @@ class JIRA:
         remote_link = RemoteLink(self._options, self._session, raw=json_loads(r))
         return remote_link
 
-    def add_simple_link(self, issue: str, object: Dict[str, Any]):
+    def add_simple_link(self, issue: str, object: dict[str, Any]):
         """Add a simple remote link from an issue to web resource.
 
         This avoids the admin access problems from add_remote_link by just using a simple object and presuming all fields are correct
@@ -2135,7 +2128,7 @@ class JIRA:
     # non-resource
     @translate_resource_args
     def transitions(
-        self, issue: Union[str, int], id: Optional[str] = None, expand=None
+        self, issue: str | int, id: str | None = None, expand=None
     ):
         """Get a list of the transitions available on the specified issue to the current user.
 
@@ -2157,8 +2150,8 @@ class JIRA:
         ]
 
     def find_transitionid_by_name(
-        self, issue: Union[str, int], transition_name: str
-    ) -> Optional[int]:
+        self, issue: str | int, transition_name: str
+    ) -> int | None:
         """Get a transitionid available on the specified issue to the current user.
 
         Look at https://developer.atlassian.com/static/rest/jira/6.1.html#d2e1074 for json reference
@@ -2171,7 +2164,7 @@ class JIRA:
             Optional[int]: returns the id is found None when it's not
         """
         transitions_json = self.transitions(issue)
-        id: Optional[int] = None
+        id: int | None = None
 
         for transition in transitions_json:
             if transition["name"].lower() == transition_name.lower():
@@ -2182,11 +2175,11 @@ class JIRA:
     @translate_resource_args
     def transition_issue(
         self,
-        issue: Union[str, int],
+        issue: str | int,
         transition: str,
-        fields: Optional[Dict[str, Any]] = None,
-        comment: Optional[str] = None,
-        worklog: Optional[str] = None,
+        fields: dict[str, Any] | None = None,
+        comment: str | None = None,
+        worklog: str | None = None,
         **fieldargs,
     ):
         """Perform a transition on an issue.
@@ -2202,7 +2195,7 @@ class JIRA:
             worklog (Optional[str]): String to add as time spent on the issue when performing the transition.
             **fieldargs: If present, all other keyword arguments will be ignored
         """
-        transitionId: Optional[int] = None
+        transitionId: int | None = None
 
         try:
             transitionId = int(transition)
@@ -2212,8 +2205,8 @@ class JIRA:
             if transitionId is None:
                 raise JIRAError(f"Invalid transition name. {transition}")
 
-        data: Dict[str, Any] = {"transition": {"id": transitionId}}
-        update_dict: Dict[str, Any] = {}
+        data: dict[str, Any] = {"transition": {"id": transitionId}}
+        update_dict: dict[str, Any] = {}
         if comment:
             update_dict["comment"] = [{"add": {"body": comment}}]
         if worklog:
@@ -2238,7 +2231,7 @@ class JIRA:
         return r_json
 
     @translate_resource_args
-    def votes(self, issue: Union[str, int]) -> Votes:
+    def votes(self, issue: str | int) -> Votes:
         """Get a votes Resource from the server.
 
         Args:
@@ -2311,7 +2304,7 @@ class JIRA:
         return self._find_for_resource(WorkflowScheme, project)
 
     @translate_resource_args
-    def add_vote(self, issue: Union[str, int]) -> Response:
+    def add_vote(self, issue: str | int) -> Response:
         """Register a vote for the current authenticated user on an issue.
 
         Args:
@@ -2324,7 +2317,7 @@ class JIRA:
         return self._session.post(url)
 
     @translate_resource_args
-    def remove_vote(self, issue: Union[str, int]):
+    def remove_vote(self, issue: str | int):
         """Remove the current authenticated user's vote from an issue.
 
         Args:
@@ -2334,7 +2327,7 @@ class JIRA:
         self._session.delete(url)
 
     @translate_resource_args
-    def watchers(self, issue: Union[str, int]) -> Watchers:
+    def watchers(self, issue: str | int) -> Watchers:
         """Get a watchers Resource from the server for an issue.
 
         Args:
@@ -2346,7 +2339,7 @@ class JIRA:
         return self._find_for_resource(Watchers, issue)
 
     @translate_resource_args
-    def add_watcher(self, issue: Union[str, int], watcher: str) -> Response:
+    def add_watcher(self, issue: str | int, watcher: str) -> Response:
         """Add a user to an issue's watchers list.
 
         Args:
@@ -2360,7 +2353,7 @@ class JIRA:
         return self._session.post(url, data=json.dumps(watcher))
 
     @translate_resource_args
-    def remove_watcher(self, issue: Union[str, int], watcher: str) -> Response:
+    def remove_watcher(self, issue: str | int, watcher: str) -> Response:
         """Remove a user from an issue's watch list.
 
         Args:
@@ -2378,7 +2371,7 @@ class JIRA:
         return result
 
     @translate_resource_args
-    def worklogs(self, issue: Union[str, int]) -> List[Worklog]:
+    def worklogs(self, issue: str | int) -> list[Worklog]:
         """Get a list of worklog Resources from the server for an issue.
 
         Args:
@@ -2394,7 +2387,7 @@ class JIRA:
         return worklogs
 
     @translate_resource_args
-    def worklog(self, issue: Union[str, int], id: str) -> Worklog:
+    def worklog(self, issue: str | int, id: str) -> Worklog:
         """Get a specific worklog Resource from the server.
 
         Args:
@@ -2409,15 +2402,15 @@ class JIRA:
     @translate_resource_args
     def add_worklog(
         self,
-        issue: Union[str, int],
-        timeSpent: (Optional[str]) = None,
-        timeSpentSeconds: (Optional[str]) = None,
-        adjustEstimate: (Optional[str]) = None,
-        newEstimate: (Optional[str]) = None,
-        reduceBy: (Optional[str]) = None,
-        comment: (Optional[str]) = None,
-        started: (Optional[datetime.datetime]) = None,
-        user: (Optional[str]) = None,
+        issue: str | int,
+        timeSpent: (str | None) = None,
+        timeSpentSeconds: (str | None) = None,
+        adjustEstimate: (str | None) = None,
+        newEstimate: (str | None) = None,
+        reduceBy: (str | None) = None,
+        comment: (str | None) = None,
+        started: (datetime.datetime | None) = None,
+        user: (str | None) = None,
     ) -> Worklog:
         """Add a new worklog entry on an issue and return a Resource for it.
 
@@ -2444,7 +2437,7 @@ class JIRA:
         if reduceBy is not None:
             params["reduceBy"] = reduceBy
 
-        data: Dict[str, Any] = {}
+        data: dict[str, Any] = {}
         if timeSpent is not None:
             data["timeSpent"] = timeSpent
         if timeSpentSeconds is not None:
@@ -2478,7 +2471,7 @@ class JIRA:
     # Issue properties
 
     @translate_resource_args
-    def issue_properties(self, issue: str) -> List[IssueProperty]:
+    def issue_properties(self, issue: str) -> list[IssueProperty]:
         """Get a list of issue property Resource from the server for an issue.
 
         Args:
@@ -2522,10 +2515,10 @@ class JIRA:
     @translate_resource_args
     def create_issue_link(
         self,
-        type: Union[str, IssueLinkType],
+        type: str | IssueLinkType,
         inwardIssue: str,
         outwardIssue: str,
-        comment: Optional[Dict[str, Any]] = None,
+        comment: dict[str, Any] | None = None,
     ) -> Response:
         """Create a link between two issues.
 
@@ -2587,7 +2580,7 @@ class JIRA:
 
     # Issue link types
 
-    def issue_link_types(self, force: bool = False) -> List[IssueLinkType]:
+    def issue_link_types(self, force: bool = False) -> list[IssueLinkType]:
         """Get a list of issue link type Resources from the server.
 
         Args:
@@ -2617,7 +2610,7 @@ class JIRA:
 
     # Issue types
 
-    def issue_types(self) -> List[IssueType]:
+    def issue_types(self) -> list[IssueType]:
         """Get a list of issue type Resources from the server.
 
         Returns:
@@ -2641,7 +2634,7 @@ class JIRA:
         """
         return self._find_for_resource(IssueType, id)
 
-    def issue_type_by_name(self, name: str, project: Optional[str] = None) -> IssueType:
+    def issue_type_by_name(self, name: str, project: str | None = None) -> IssueType:
         """Get issue type by name.
 
         Args:
@@ -2664,7 +2657,7 @@ class JIRA:
         else:
             raise KeyError(f"Issue type '{name}' appears more than once.")
 
-    def request_types(self, service_desk: ServiceDesk) -> List[RequestType]:
+    def request_types(self, service_desk: ServiceDesk) -> list[RequestType]:
         """Returns request types supported by a service desk instance.
 
         Args:
@@ -2700,12 +2693,12 @@ class JIRA:
     # non-resource
     def my_permissions(
         self,
-        projectKey: Optional[str] = None,
-        projectId: Optional[str] = None,
-        issueKey: Optional[str] = None,
-        issueId: Optional[str] = None,
-        permissions: Optional[str] = None,
-    ) -> Dict[str, Dict[str, Dict[str, str]]]:
+        projectKey: str | None = None,
+        projectId: str | None = None,
+        issueKey: str | None = None,
+        issueId: str | None = None,
+        permissions: str | None = None,
+    ) -> dict[str, dict[str, dict[str, str]]]:
         """Get a dict of all available permissions on the server.
 
         ``permissions`` is a comma-separated value list of permission keys that is
@@ -2738,7 +2731,7 @@ class JIRA:
 
     # Priorities
 
-    def priorities(self) -> List[Priority]:
+    def priorities(self) -> list[Priority]:
         """Get a list of priority Resources from the server.
 
         Returns:
@@ -2764,7 +2757,7 @@ class JIRA:
 
     # Projects
 
-    def projects(self, expand: Optional[str] = None) -> List[Project]:
+    def projects(self, expand: str | None = None) -> list[Project]:
         """Get a list of project Resources from the server visible to the current authenticated user.
 
         Args:
@@ -2783,7 +2776,7 @@ class JIRA:
         ]
         return projects
 
-    def project(self, id: str, expand: Optional[str] = None) -> Project:
+    def project(self, id: str, expand: str | None = None) -> Project:
         """Get a project Resource from the server.
 
         Args:
@@ -2843,9 +2836,9 @@ class JIRA:
         if size != size_from_file:
             size = size_from_file
 
-        params: Dict[str, Union[int, str]] = {"filename": filename, "size": size}
+        params: dict[str, int | str] = {"filename": filename, "size": size}
 
-        headers: Dict[str, Any] = {"X-Atlassian-Token": "no-check"}
+        headers: dict[str, Any] = {"X-Atlassian-Token": "no-check"}
         if contentType is not None:
             headers["content-type"] = contentType
         else:
@@ -2855,14 +2848,14 @@ class JIRA:
         url = self._get_url("project/" + project + "/avatar/temporary")
         r = self._session.post(url, params=params, headers=headers, data=avatar_img)
 
-        cropping_properties: Dict[str, Any] = json_loads(r)
+        cropping_properties: dict[str, Any] = json_loads(r)
         if auto_confirm:
             return self.confirm_project_avatar(project, cropping_properties)
         else:
             return cropping_properties
 
     @translate_resource_args
-    def confirm_project_avatar(self, project: str, cropping_properties: Dict[str, Any]):
+    def confirm_project_avatar(self, project: str, cropping_properties: dict[str, Any]):
         """Confirm the temporary avatar image previously uploaded with the specified cropping.
 
         After a successful registry with :py:meth:`create_temp_project_avatar`, use this method to confirm the avatar for use.
@@ -2904,7 +2897,7 @@ class JIRA:
         return self._session.delete(url)
 
     @translate_resource_args
-    def project_components(self, project: str) -> List[Component]:
+    def project_components(self, project: str) -> list[Component]:
         """Get a list of component Resources present on a project.
 
         Args:
@@ -2921,7 +2914,7 @@ class JIRA:
         return components
 
     @translate_resource_args
-    def project_versions(self, project: str) -> List[Version]:
+    def project_versions(self, project: str) -> list[Version]:
         """Get a list of version Resources present on a project.
 
         Args:
@@ -2940,7 +2933,7 @@ class JIRA:
     @translate_resource_args
     def get_project_version_by_name(
         self, project: str, version_name: str
-    ) -> Optional[Version]:
+    ) -> Version | None:
         """Get a version Resource by its name present on a project.
 
         Args:
@@ -2950,7 +2943,7 @@ class JIRA:
         Returns:
             Optional[Version]
         """
-        versions: List[Version] = self.project_versions(project)
+        versions: list[Version] = self.project_versions(project)
         for version in versions:
             if version.name == version_name:
                 return version
@@ -2971,7 +2964,7 @@ class JIRA:
 
     # non-resource
     @translate_resource_args
-    def project_roles(self, project: str) -> Dict[str, Dict[str, str]]:
+    def project_roles(self, project: str) -> dict[str, dict[str, str]]:
         """Get a dict of role names to resource locations for a project.
 
         Args:
@@ -2981,11 +2974,11 @@ class JIRA:
             Dict[str, Dict[str, str]]
         """
         path = "project/" + project + "/role"
-        _rolesdict: Dict[str, str] = self._get_json(path)
-        rolesdict: Dict[str, Dict[str, str]] = {}
+        _rolesdict: dict[str, str] = self._get_json(path)
+        rolesdict: dict[str, dict[str, str]] = {}
 
         for k, v in _rolesdict.items():
-            tmp: Dict[str, str] = {}
+            tmp: dict[str, str] = {}
             tmp["id"] = v.split("/")[-1]
             tmp["url"] = v
             rolesdict[k] = tmp
@@ -3009,7 +3002,7 @@ class JIRA:
 
     # Resolutions
 
-    def resolutions(self) -> List[Resolution]:
+    def resolutions(self) -> list[Resolution]:
         """Get a list of resolution Resources from the server.
 
         Returns:
@@ -3041,11 +3034,11 @@ class JIRA:
         startAt: int = 0,
         maxResults: int = 50,
         validate_query: bool = True,
-        fields: Optional[Union[str, List[str]]] = "*all",
-        expand: Optional[str] = None,
-        properties: Optional[str] = None,
+        fields: str | list[str] | None = "*all",
+        expand: str | None = None,
+        properties: str | None = None,
         json_result: bool = False,
-    ) -> Union[Dict[str, Any], ResultList[Issue]]:
+    ) -> dict[str, Any] | ResultList[Issue]:
         """Get a :class:`~jira.client.ResultList` of issue Resources matching a JQL search string.
 
         Args:
@@ -3093,7 +3086,7 @@ class JIRA:
                     "All issues cannot be fetched at once, when json_result parameter is set",
                     Warning,
                 )
-            r_json: Dict[str, Any] = self._get_json("search", params=search_params)
+            r_json: dict[str, Any] = self._get_json("search", params=search_params)
             return r_json
 
         issues = self._fetch_pages(
@@ -3125,7 +3118,7 @@ class JIRA:
     # Server info
 
     # non-resource
-    def server_info(self) -> Dict[str, Any]:
+    def server_info(self) -> dict[str, Any]:
         """Get a dict of server information for this Jira instance.
 
         Returns:
@@ -3141,7 +3134,7 @@ class JIRA:
             j = self._get_json("serverInfo")
         return j
 
-    def myself(self) -> Dict[str, Any]:
+    def myself(self) -> dict[str, Any]:
         """Get a dict of server information for this Jira instance.
 
         Returns:
@@ -3151,7 +3144,7 @@ class JIRA:
 
     # Status
 
-    def statuses(self) -> List[Status]:
+    def statuses(self) -> list[Status]:
         """Get a list of all status Resources from the server.
 
         Refer to :py:meth:`JIRA.issue_types_for_project` for getting statuses
@@ -3167,7 +3160,7 @@ class JIRA:
         ]
         return statuses
 
-    def issue_types_for_project(self, projectIdOrKey: str) -> List[IssueType]:
+    def issue_types_for_project(self, projectIdOrKey: str) -> list[IssueType]:
         """Get a list of issue types available within the project.
 
         Each project has a set of valid issue types and each issue type has a set of valid statuses.
@@ -3196,7 +3189,7 @@ class JIRA:
 
     # Category
 
-    def statuscategories(self) -> List[StatusCategory]:
+    def statuscategories(self) -> list[StatusCategory]:
         """Get a list of status category Resources from the server.
 
         Returns:
@@ -3222,7 +3215,7 @@ class JIRA:
 
     # Users
 
-    def user(self, id: str, expand: Optional[Any] = None) -> User:
+    def user(self, id: str, expand: Any | None = None) -> User:
         """Get a user Resource from the server.
 
         Args:
@@ -3273,13 +3266,13 @@ class JIRA:
 
     def search_assignable_users_for_issues(
         self,
-        username: Optional[str] = None,
-        project: Optional[str] = None,
-        issueKey: Optional[str] = None,
-        expand: Optional[Any] = None,
+        username: str | None = None,
+        project: str | None = None,
+        issueKey: str | None = None,
+        expand: Any | None = None,
         startAt: int = 0,
         maxResults: int = 50,
-        query: Optional[str] = None,
+        query: str | None = None,
     ):
         """Get a list of user Resources that match the search string for assigning or creating issues.
 
@@ -3327,7 +3320,7 @@ class JIRA:
         )
 
     # non-resource
-    def user_avatars(self, username: str) -> Dict[str, Any]:
+    def user_avatars(self, username: str) -> dict[str, Any]:
         """Get a dict of avatars for the specified user.
 
         Args:
@@ -3379,13 +3372,13 @@ class JIRA:
         # remove path from filename
         filename = os.path.split(filename)[1]
 
-        params: Dict[str, Union[str, int]] = {
+        params: dict[str, str | int] = {
             "username": user,
             "filename": filename,
             "size": size,
         }
 
-        headers: Dict[str, Any]
+        headers: dict[str, Any]
         headers = {"X-Atlassian-Token": "no-check"}
         if contentType is not None:
             headers["content-type"] = contentType
@@ -3396,13 +3389,13 @@ class JIRA:
         url = self._get_url("user/avatar/temporary")
         r = self._session.post(url, params=params, headers=headers, data=avatar_img)
 
-        cropping_properties: Dict[str, Any] = json_loads(r)
+        cropping_properties: dict[str, Any] = json_loads(r)
         if auto_confirm:
             return self.confirm_user_avatar(user, cropping_properties)
         else:
             return cropping_properties
 
-    def confirm_user_avatar(self, user: str, cropping_properties: Dict[str, Any]):
+    def confirm_user_avatar(self, user: str, cropping_properties: dict[str, Any]):
         """Confirm the temporary avatar image previously uploaded with the specified cropping.
 
         After a successful registry with :py:meth:`create_temp_user_avatar`, use this method to confirm the avatar for use.
@@ -3450,10 +3443,10 @@ class JIRA:
     @translate_resource_args
     def delete_remote_link(
         self,
-        issue: Union[str, Issue],
+        issue: str | Issue,
         *,
-        internal_id: Optional[str] = None,
-        global_id: Optional[str] = None,
+        internal_id: str | None = None,
+        global_id: str | None = None,
     ) -> Response:
         """Delete remote link from issue by internalId or globalId.
 
@@ -3479,12 +3472,12 @@ class JIRA:
 
     def search_users(
         self,
-        user: Optional[str] = None,
+        user: str | None = None,
         startAt: int = 0,
         maxResults: int = 50,
         includeActive: bool = True,
         includeInactive: bool = False,
-        query: Optional[str] = None,
+        query: str | None = None,
     ) -> ResultList[User]:
         """Get a list of user Resources that match the specified search string.
 
@@ -3638,7 +3631,7 @@ class JIRA:
         Args:
             id (str): the version to count issues for
         """
-        r_json: Dict[str, Any] = self._get_json("version/" + id + "/relatedIssueCounts")
+        r_json: dict[str, Any] = self._get_json("version/" + id + "/relatedIssueCounts")
         del r_json["self"]  # this isn't really an addressable resource
         return r_json
 
@@ -3648,7 +3641,7 @@ class JIRA:
         Args:
             id (str): ID of the version to count issues for
         """
-        r_json: Dict[str, Any] = self._get_json(
+        r_json: dict[str, Any] = self._get_json(
             "version/" + id + "/unresolvedIssueCount"
         )
         return r_json["issuesUnresolvedCount"]
@@ -3677,7 +3670,7 @@ class JIRA:
         return self._session.delete(url)
 
     # Websudo
-    def kill_websudo(self) -> Optional[Response]:
+    def kill_websudo(self) -> Response | None:
         """Destroy the user's current WebSudo session.
 
         Works only for non-cloud deployments, for others does nothing.
@@ -3695,9 +3688,7 @@ class JIRA:
         self,
         username: str,
         password: str,
-        timeout: Optional[
-            Union[None, float, Tuple[float, float], Tuple[float, None]]
-        ] = None,
+        timeout: None | float | tuple[float, float] | tuple[float, None] | None = None,
     ):
         """Creates a basic http session.
 
@@ -3713,7 +3704,7 @@ class JIRA:
         self._session.auth = (username, password)
 
     def _create_oauth_session(
-        self, oauth, timeout: Optional[Union[Union[float, int], Tuple[float, float]]]
+        self, oauth, timeout: float | int | tuple[float, float] | None
     ):
         from oauthlib.oauth1 import SIGNATURE_RSA
         from requests_oauthlib import OAuth1
@@ -3730,7 +3721,7 @@ class JIRA:
 
     def _create_kerberos_session(
         self,
-        timeout: Optional[Union[None, float, Tuple[float, float], Tuple[float, None]]],
+        timeout: None | float | tuple[float, float] | tuple[float, None] | None,
         kerberos_options=None,
     ):
         if kerberos_options is None:
@@ -3762,7 +3753,7 @@ class JIRA:
         - str: a single file (containing the private key and the certificate)
         - Tuple[str,str] a tuple of both files’ paths
         """
-        client_cert: Union[str, Tuple[str, str]] = self._options["client_cert"]
+        client_cert: str | tuple[str, str] = self._options["client_cert"]
         self._session.cert = client_cert
 
     def _add_ssl_cert_verif_strategy_to_session(self):
@@ -3774,7 +3765,7 @@ class JIRA:
         - str: Path to a `CA_BUNDLE` file or directory with certificates of trusted CAs.
         - bool: True/False
         """
-        ssl_cert: Union[bool, str] = self._options["verify"]
+        ssl_cert: bool | str = self._options["verify"]
         self._session.verify = ssl_cert
 
     @staticmethod
@@ -3785,7 +3776,7 @@ class JIRA:
         return calendar.timegm(t.timetuple())
 
     def _create_jwt_session(
-        self, jwt, timeout: Optional[Union[Union[float, int], Tuple[float, float]]]
+        self, jwt, timeout: float | int | tuple[float, float] | None
     ):
         try:
             jwt_auth = JWTAuth(jwt["secret"], alg="HS256")
@@ -3807,9 +3798,7 @@ class JIRA:
     def _create_token_session(
         self,
         token_auth: str,
-        timeout: Optional[
-            Union[None, float, Tuple[float, float], Tuple[float, None]]
-        ] = None,
+        timeout: None | float | tuple[float, float] | tuple[float, None] | None = None,
     ):
         """Creates token-based session.
 
@@ -3855,7 +3844,7 @@ class JIRA:
         return base.format(**options)
 
     def _get_json(
-        self, path: str, params: Dict[str, Any] = None, base: str = JIRA_BASE_URL
+        self, path: str, params: dict[str, Any] = None, base: str = JIRA_BASE_URL
     ):
         """Get the json for a given path and params.
 
@@ -3879,7 +3868,7 @@ class JIRA:
     def _find_for_resource(
         self,
         resource_cls: Any,
-        ids: Union[Tuple[str, str], Tuple[Union[str, int], str], int, str],
+        ids: tuple[str, str] | tuple[str | int, str] | int | str,
         expand=None,
     ) -> Any:
         """Uses the find method of the provided Resource class.
@@ -3925,7 +3914,7 @@ class JIRA:
             except AttributeError:
                 self._magic = None
 
-    def _get_mime_type(self, buff: bytes) -> Optional[str]:
+    def _get_mime_type(self, buff: bytes) -> str | None:
         """Get the MIME type for a given stream of bytes.
 
         Args:
@@ -3983,7 +3972,7 @@ class JIRA:
         self.log.error(r.status_code)
         return False
 
-    def deactivate_user(self, username: str) -> Union[str, int]:
+    def deactivate_user(self, username: str) -> str | int:
         """Disable/deactivate the user.
 
         Args:
@@ -4102,7 +4091,7 @@ class JIRA:
 
     def backup(
         self, filename: str = "backup.zip", attachments: bool = False
-    ) -> Optional[Union[bool, int]]:
+    ) -> bool | int | None:
         """Will call jira export to backup as zipped xml. Returning with success does not mean that the backup process finished.
 
         Args:
@@ -4130,7 +4119,7 @@ class JIRA:
             self.log.error("I see %s", e)
         return False
 
-    def backup_progress(self) -> Optional[Dict[str, Any]]:
+    def backup_progress(self) -> dict[str, Any] | None:
         """Return status of cloud backup as a dict.
 
         Is there a way to get progress for Server version?
@@ -4163,7 +4152,7 @@ class JIRA:
                 progress[k] = root.get(k)
             return progress
 
-    def backup_complete(self) -> Optional[bool]:
+    def backup_complete(self) -> bool | None:
         """Return boolean based on 'alternativePercentage' and 'size' returned from backup_progress (cloud only)."""
         if not self._is_cloud:
             self.log.warning("This functionality is not available in Server version")
@@ -4204,7 +4193,7 @@ class JIRA:
             self.log.error(ioe)
         return None
 
-    def current_user(self, field: Optional[str] = None) -> str:
+    def current_user(self, field: str | None = None) -> str:
         """Return the `accountId` (Cloud) else `username` of the current user.
 
         For anonymous users it will return a value that evaluates as False.
@@ -4220,7 +4209,7 @@ class JIRA:
             url = self._get_url("myself")
             r = self._session.get(url, headers=self._options["headers"])
 
-            r_json: Dict[str, str] = json_loads(r)
+            r_json: dict[str, str] = json_loads(r)
             self._myself = r_json
 
         if field is None:
@@ -4230,7 +4219,7 @@ class JIRA:
 
         return self._myself[field]
 
-    def delete_project(self, pid: Union[str, Project]) -> Optional[bool]:
+    def delete_project(self, pid: str | Project) -> bool | None:
         """Delete project from Jira.
 
         Args:
@@ -4278,11 +4267,11 @@ class JIRA:
         )
 
     @lru_cache(maxsize=None)
-    def templates(self) -> Dict:
+    def templates(self) -> dict:
         url = self.server_url + "/rest/project-templates/latest/templates"
 
         r = self._session.get(url)
-        data: Dict[str, Any] = json_loads(r)
+        data: dict[str, Any] = json_loads(r)
 
         templates = {}
         if "projectTemplatesGroupedByType" in data:
@@ -4297,12 +4286,12 @@ class JIRA:
         url = self._get_url("permissionscheme")
 
         r = self._session.get(url)
-        data: Dict[str, Any] = json_loads(r)
+        data: dict[str, Any] = json_loads(r)
 
         return data["permissionSchemes"]
 
     @lru_cache(maxsize=None)
-    def issue_type_schemes(self) -> List[IssueTypeScheme]:
+    def issue_type_schemes(self) -> list[IssueTypeScheme]:
         """Get all issue type schemes defined (Admin required).
 
         Returns:
@@ -4311,7 +4300,7 @@ class JIRA:
         url = self._get_url("issuetypescheme")
 
         r = self._session.get(url)
-        data: Dict[str, Any] = json_loads(r)
+        data: dict[str, Any] = json_loads(r)
 
         return data["schemes"]
 
@@ -4320,7 +4309,7 @@ class JIRA:
         url = self._get_url("issuesecurityschemes")
 
         r = self._session.get(url)
-        data: Dict[str, Any] = json_loads(r)
+        data: dict[str, Any] = json_loads(r)
 
         return data["issueSecuritySchemes"]
 
@@ -4338,7 +4327,7 @@ class JIRA:
         url = self._get_url(f"avatar/{entity}/system")
 
         r = self._session.get(url)
-        data: Dict[str, Any] = json_loads(r)
+        data: dict[str, Any] = json_loads(r)
 
         return data["system"]
 
@@ -4348,7 +4337,7 @@ class JIRA:
         url = self._get_url("notificationscheme")
 
         r = self._session.get(url)
-        data: Dict[str, Any] = json_loads(r)
+        data: dict[str, Any] = json_loads(r)
         return data["values"]
 
     @lru_cache(maxsize=None)
@@ -4357,7 +4346,7 @@ class JIRA:
         url = self._get_url("screens")
 
         r = self._session.get(url)
-        data: Dict[str, Any] = json_loads(r)
+        data: dict[str, Any] = json_loads(r)
         return data["values"]
 
     @lru_cache(maxsize=None)
@@ -4396,7 +4385,7 @@ class JIRA:
         self.permissionschemes.cache_clear()
         return data
 
-    def get_issue_type_scheme_associations(self, id: str) -> List[Project]:
+    def get_issue_type_scheme_associations(self, id: str) -> list[Project]:
         """For the specified issue type scheme, returns all of the associated projects. (Admin required).
 
         Args:
@@ -4445,7 +4434,7 @@ class JIRA:
         if name is None:
             name = key
 
-        ps_list: List[Dict[str, Any]]
+        ps_list: list[dict[str, Any]]
 
         if permissionScheme is None:
             ps_list = self.permissionschemes()
@@ -4576,7 +4565,7 @@ class JIRA:
         notify: bool = False,
         active: bool = True,
         ignore_existing: bool = False,
-        application_keys: Optional[List] = None,
+        application_keys: list | None = None,
     ):
         """Create a new Jira user.
 
@@ -4605,7 +4594,7 @@ class JIRA:
 
         # implementation based on
         # https://docs.atlassian.com/jira/REST/ondemand/#d2e5173
-        x: Dict[str, Any] = OrderedDict()
+        x: dict[str, Any] = OrderedDict()
 
         x["displayName"] = fullname
         x["emailAddress"] = email
@@ -4634,7 +4623,7 @@ class JIRA:
 
     def add_user_to_group(
         self, username: str, group: str
-    ) -> Union[bool, Dict[str, Any]]:
+    ) -> bool | dict[str, Any]:
         """Add a user to an existing group.
 
         Args:
@@ -4650,7 +4639,7 @@ class JIRA:
 
         payload = json.dumps(y)
 
-        r: Dict[str, Any] = json_loads(self._session.post(url, params=x, data=payload))
+        r: dict[str, Any] = json_loads(self._session.post(url, params=x, data=payload))
         if "name" not in r or r["name"] != group:
             return False
         else:
@@ -4673,7 +4662,7 @@ class JIRA:
 
         return True
 
-    def role(self) -> List[Dict[str, Any]]:
+    def role(self) -> list[dict[str, Any]]:
         """Return Jira role information.
 
         Returns:
@@ -4684,7 +4673,7 @@ class JIRA:
         url = self._get_latest_url("role")
 
         r = self._session.get(url)
-        data: List[Dict[str, Any]] = json_loads(r)
+        data: list[dict[str, Any]] = json_loads(r)
         return data
 
     # Experimental support for iDalko Grid, expect API to change as it's using private
@@ -4748,7 +4737,7 @@ class JIRA:
     def sprints(
         self,
         board_id: int,
-        extended: Optional[bool] = None,
+        extended: bool | None = None,
         startAt: int = 0,
         maxResults: int = 50,
         state: str = None,
@@ -4784,8 +4773,8 @@ class JIRA:
         )
 
     def sprints_by_name(
-        self, id: Union[str, int], extended: bool = False, state: str = None
-    ) -> Dict[str, Dict[str, Any]]:
+        self, id: str | int, extended: bool = False, state: str = None
+    ) -> dict[str, dict[str, Any]]:
         """Get a dictionary of sprint Resources where the name of the sprint is the key.
 
         Args:
@@ -4810,12 +4799,12 @@ class JIRA:
 
     def update_sprint(
         self,
-        id: Union[str, int],
-        name: Optional[str] = None,
-        startDate: Optional[Any] = None,
-        endDate: Optional[Any] = None,
-        state: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        id: str | int,
+        name: str | None = None,
+        startDate: Any | None = None,
+        endDate: Any | None = None,
+        state: str | None = None,
+    ) -> dict[str, Any]:
         """Updates the sprint with the given values.
 
         Args:
@@ -4845,7 +4834,7 @@ class JIRA:
 
     def incompletedIssuesEstimateSum(self, board_id: str, sprint_id: str):
         """Return the total incompleted points this sprint."""
-        data: Dict[str, Any] = self._get_json(
+        data: dict[str, Any] = self._get_json(
             f"rapid/charts/sprintreport?rapidViewId={board_id}&sprintId={sprint_id}",
             base=self.AGILE_BASE_URL,
         )
@@ -4857,7 +4846,7 @@ class JIRA:
         Returns:
             List[Issue]
         """
-        r_json: Dict[str, Any] = self._get_json(
+        r_json: dict[str, Any] = self._get_json(
             f"rapid/charts/sprintreport?rapidViewId={board_id}&sprintId={sprint_id}",
             base=self.AGILE_BASE_URL,
         )
@@ -4870,14 +4859,14 @@ class JIRA:
 
     def removedIssuesEstimateSum(self, board_id: str, sprint_id: str):
         """Return the total incompleted points this sprint."""
-        data: Dict[str, Any] = self._get_json(
+        data: dict[str, Any] = self._get_json(
             f"rapid/charts/sprintreport?rapidViewId={board_id}&sprintId={sprint_id}",
             base=self.AGILE_BASE_URL,
         )
         return data["contents"]["puntedIssuesEstimateSum"]["value"]
 
     # TODO(ssbarnea): remove sprint_info() method, sprint() method suit the convention more
-    def sprint_info(self, board_id: str, sprint_id: str) -> Dict[str, Any]:
+    def sprint_info(self, board_id: str, sprint_id: str) -> dict[str, Any]:
         """Return the information about a sprint.
 
         Args:
@@ -4917,7 +4906,7 @@ class JIRA:
         project_ids: str = None,
         preset: str = "scrum",
         location_type: Literal["user", "project"] = "user",
-        location_id: Optional[str] = None,
+        location_id: str | None = None,
     ) -> Board:
         """Create a new board for the ``project_ids``.
 
@@ -4935,7 +4924,7 @@ class JIRA:
         Returns:
             Board: The newly created board
         """
-        payload: Dict[str, Any] = {}
+        payload: dict[str, Any] = {}
 
         if project_ids is not None:
             DeprecationWarning(
@@ -4964,8 +4953,8 @@ class JIRA:
         self,
         name: str,
         board_id: int,
-        startDate: Optional[Any] = None,
-        endDate: Optional[Any] = None,
+        startDate: Any | None = None,
+        endDate: Any | None = None,
     ) -> Sprint:
         """Create a new sprint for the ``board_id``.
 
@@ -4978,13 +4967,13 @@ class JIRA:
         Returns:
             Sprint: The newly created Sprint
         """
-        payload: Dict[str, Any] = {"name": name}
+        payload: dict[str, Any] = {"name": name}
         if startDate:
             payload["startDate"] = startDate
         if endDate:
             payload["endDate"] = endDate
 
-        raw_issue_json: Dict[str, Any]
+        raw_issue_json: dict[str, Any]
         url = self._get_url("sprint", base=self.AGILE_BASE_URL)
         payload["originBoardId"] = board_id
         r = self._session.post(url, data=json.dumps(payload))
@@ -4992,7 +4981,7 @@ class JIRA:
 
         return Sprint(self._options, self._session, raw=raw_issue_json)
 
-    def add_issues_to_sprint(self, sprint_id: int, issue_keys: List[str]) -> Response:
+    def add_issues_to_sprint(self, sprint_id: int, issue_keys: list[str]) -> Response:
         """Add the issues in ``issue_keys`` to the ``sprint_id``.
 
         The sprint must be started but not completed.
@@ -5014,7 +5003,7 @@ class JIRA:
         return self._session.post(url, data=json.dumps(payload))
 
     def add_issues_to_epic(
-        self, epic_id: str, issue_keys: Union[str, List[str]], ignore_epics: bool = None
+        self, epic_id: str, issue_keys: str | list[str], ignore_epics: bool = None
     ) -> Response:
         """Add the issues in ``issue_keys`` to the ``epic_id``.
 
@@ -5029,7 +5018,7 @@ class JIRA:
         Returns:
             Response
         """
-        data: Dict[str, Any] = {}
+        data: dict[str, Any] = {}
         data["issues"] = (
             issue_keys.split(",") if isinstance(issue_keys, str) else list(issue_keys)
         )
@@ -5041,8 +5030,8 @@ class JIRA:
     def rank(
         self,
         issue: str,
-        next_issue: Optional[str] = None,
-        prev_issue: Optional[str] = None,
+        next_issue: str | None = None,
+        prev_issue: str | None = None,
     ) -> Response:
         """Rank an issue before/after another using the default Ranking field, the one named 'Rank'.
 
@@ -5095,7 +5084,7 @@ class JIRA:
         }
         return self._session.put(url, data=json.dumps(payload))
 
-    def move_to_backlog(self, issue_keys: List[str]) -> Response:
+    def move_to_backlog(self, issue_keys: list[str]) -> Response:
         """Move issues in ``issue_keys`` to the backlog, removing them from all sprints that have not been completed.
 
         Args:
