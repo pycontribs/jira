@@ -20,7 +20,7 @@ repos:
       - id: check-yaml
         files: .*\.(yaml|yml)$
   - repo: https://github.com/codespell-project/codespell.git
-    rev: v2.2.2
+    rev: v2.2.4
     hooks:
       - id: codespell
         name: codespell
@@ -32,7 +32,7 @@ repos:
         require_serial: false
         additional_dependencies: []
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: "v0.0.246"
+    rev: "v0.0.254"
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
@@ -42,7 +42,7 @@ repos:
       - id: yamllint
         files: \.(yaml|yml)$
   - repo: https://github.com/pre-commit/mirrors-mypy.git
-    rev: v1.0.0
+    rev: v1.1.1
     hooks:
       - id: mypy
         additional_dependencies:
