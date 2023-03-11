@@ -1896,9 +1896,7 @@ class JIRA:
         return True
 
     @translate_resource_args
-    def comments(
-        self, issue: int | str, expand: str | None = None
-    ) -> list[Comment]:
+    def comments(self, issue: int | str, expand: str | None = None) -> list[Comment]:
         """Get a list of comment Resources of the issue provided.
 
         Args:
@@ -2127,9 +2125,7 @@ class JIRA:
 
     # non-resource
     @translate_resource_args
-    def transitions(
-        self, issue: str | int, id: str | None = None, expand=None
-    ):
+    def transitions(self, issue: str | int, id: str | None = None, expand=None):
         """Get a list of the transitions available on the specified issue to the current user.
 
         Args:
@@ -4621,9 +4617,7 @@ class JIRA:
             raise e
         return True
 
-    def add_user_to_group(
-        self, username: str, group: str
-    ) -> bool | dict[str, Any]:
+    def add_user_to_group(self, username: str, group: str) -> bool | dict[str, Any]:
         """Add a user to an existing group.
 
         Args:
