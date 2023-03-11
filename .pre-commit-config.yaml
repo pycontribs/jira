@@ -19,7 +19,7 @@ repos:
       - id: debug-statements
       - id: check-yaml
         files: .*\.(yaml|yml)$
-  - repo: https://github.com/codespell-project/codespell.git
+  - repo: https://github.com/codespell-project/codespell
     rev: v2.2.4
     hooks:
       - id: codespell
@@ -36,12 +36,12 @@ repos:
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
-  - repo: https://github.com/adrienverge/yamllint.git
+  - repo: https://github.com/adrienverge/yamllint
     rev: v1.29.0
     hooks:
       - id: yamllint
         files: \.(yaml|yml)$
-  - repo: https://github.com/pre-commit/mirrors-mypy.git
+  - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.1.1
     hooks:
       - id: mypy
