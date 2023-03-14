@@ -552,6 +552,24 @@ class Dashboard(Resource):
         self.raw: dict[str, Any] = cast(Dict[str, Any], self.raw)
 
 
+class Field(Resource):
+    """An issue field.
+
+    A field cannot be fetched from the Jira APi individually, but paginated lists of fields are returned by some endpoints.
+    """
+
+    def __init__(
+        self,
+        options: Dict[str, str],
+        session: ResilientSession,
+        raw: Dict[str, Any] = None,
+    ):
+        Resource.__init__(self, "field/{0}", options, session)
+        if raw:
+            self._parse_raw(raw)
+        self.raw: Dict[str, Any] = cast(Dict[str, Any], self.raw)
+
+
 class Filter(Resource):
     """An issue navigator filter."""
 
