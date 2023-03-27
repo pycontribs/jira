@@ -46,7 +46,7 @@ class PassthroughRetryPrepare(PrepareRequestForRetry):
 
 
 def raise_on_error(resp: Optional[Response], **kwargs) -> TypeGuard[Response]:
-    """Handle errors from a Jira Request
+    """Handle errors from a Jira Request.
 
     Args:
         resp (Optional[Response]): Response from Jira request
@@ -199,7 +199,6 @@ class ResilientSession(Session):
         Returns:
             Response: The response.
         """
-
         retry_number = 0
         exception: Optional[Exception] = None
         response: Optional[Response] = None
@@ -271,6 +270,7 @@ class ResilientSession(Session):
         counter: int = 1,
     ):
         """Return whether the request is recoverable and hence should be retried.
+
         Exponentially delays if recoverable.
 
         At this moment it supports: 429

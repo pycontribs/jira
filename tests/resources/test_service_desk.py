@@ -21,7 +21,6 @@ class JiraServiceDeskTests(JiraTestCase):
 
     @broken_test(reason="Broken needs fixing")
     def test_create_customer_request(self):
-
         self.jira.create_project(
             key=self.test_manager.project_sd,
             name=self.test_manager.project_sd_name,
