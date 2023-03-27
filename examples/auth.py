@@ -1,5 +1,4 @@
-"""Some simple authentication examples.
-"""
+"""Some simple authentication examples."""
 
 from collections import Counter
 from typing import cast
