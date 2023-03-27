@@ -14,7 +14,7 @@ babel==2.11.0
     # via sphinx
 backcall==0.2.0
     # via ipython
-beautifulsoup4==4.11.1
+beautifulsoup4==4.11.2
     # via furo
 certifi==2022.12.7
     # via requests
@@ -214,7 +214,7 @@ traitlets==5.8.1
     # via
     #   ipython
     #   matplotlib-inline
-typing-extensions==4.4.0
+typing-extensions==4.5.0
     # via jira (setup.cfg)
 urllib3==1.26.14
     # via requests
