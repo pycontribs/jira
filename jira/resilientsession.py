@@ -184,6 +184,9 @@ class ResilientSession(Session):
             # but for people subclassing we should preserve old behaviour
             prepared_kwargs["data"] = json.dumps(data)
 
+        if "verify" not in prepared_kwargs:
+            prepared_kwargs["verify"] = self.verify
+
         return prepared_kwargs
 
     def request(  # type: ignore[override] # An intentionally different override
