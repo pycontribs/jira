@@ -3,6 +3,7 @@
 Script arguments support changing the server and a persistent authentication
 over HTTP BASIC or Kerberos.
 """
+from __future__ import annotations
 
 import argparse
 import configparser

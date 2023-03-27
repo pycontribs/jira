@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import getpass
 import hashlib
 import logging
@@ -8,7 +10,7 @@ import string
 import sys
 import unittest
 from time import sleep
-from typing import Any, Dict
+from typing import Any
 
 import pytest
 
@@ -122,7 +124,7 @@ class JiraTestManager:
         initialized (bool): if init was successful.
     """
 
-    __shared_state: Dict[Any, Any] = {}
+    __shared_state: dict[Any, Any] = {}
 
     def __init__(self, jira_hosted_type=os.environ.get("CI_JIRA_TYPE", "Server")):
         """Instantiate and populate the JIRA instance"""

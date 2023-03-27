@@ -70,6 +70,7 @@ src = ["jira", "tests"]
 
 [tool.ruff.isort]
 known-first-party = ["jira", "tests"]
+required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.per-file-ignores]
 "jira/__init__.py" = [

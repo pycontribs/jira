@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 from contextlib import contextmanager
 from functools import lru_cache
-from typing import Iterator, Tuple
+from typing import Iterator
 
 import pytest as pytest
 
@@ -28,7 +30,7 @@ class SprintTests(JiraTestCase):
         self.filter.delete()  # must do AFTER deleting board referencing the filter
         super().tearDown()
 
-    def _create_board_and_filter(self) -> Tuple[Board, Filter]:
+    def _create_board_and_filter(self) -> tuple[Board, Filter]:
         """Helper method to create a board and filter"""
         filter = self.jira.create_filter(
             self.filter_name, "description", f"project={self.project_b}", True

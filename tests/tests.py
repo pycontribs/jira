@@ -8,11 +8,13 @@ Refer to conftest.py for shared helper methods.
 resources/test_* : For tests related to resources
 test_* : For other tests of the non-resource elements of the jira package.
 """
+from __future__ import annotations
+
 import logging
 import os
 import pickle
 from time import sleep
-from typing import Optional, cast
+from typing import cast
 from unittest import mock
 
 import pytest
@@ -469,8 +471,8 @@ def _calculate_calls_for_fetch_pages(
     start_at: int,
     total: int,
     max_results: int,
-    batch_size: Optional[int],
-    default: Optional[int] = 10,
+    batch_size: int | None,
+    default: int | None = 10,
 ):
     """Returns expected query parameters for specified search-issues arguments."""
     if not max_results:
