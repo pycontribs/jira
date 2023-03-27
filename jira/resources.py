@@ -1,4 +1,5 @@
-"""
+"""Jira resource definitions.
+
 This module implements the Resource classes that translate JSON from Jira REST
 resources into usable objects.
 """
@@ -202,7 +203,7 @@ class Resource:
         return vars(self)
 
     def __setstate__(self, raw_pickled: Dict[str, Any]):
-        """Unpickling of the resource"""
+        """Unpickling of the resource."""
         # https://stackoverflow.com/a/50888571/7724187
         vars(self).update(raw_pickled)
 
@@ -246,7 +247,6 @@ class Resource:
             id (Union[Tuple[str, str], int, str]): id
             params (Optional[Dict[str, str]]): params
         """
-
         if params is None:
             params = {}
 
@@ -262,9 +262,10 @@ class Resource:
         url: str,
         params: Optional[Dict[str, str]] = None,
     ):
-        """Finds a resource on the specified url. The resource is loaded
-        with the JSON data returned by doing a request on the specified
-        url.
+        """Finds a resource on the specified url.
+
+        The resource is loaded with the JSON data returned by doing a
+        request on the specified url.
 
         Args:
             url (str): url
@@ -687,7 +688,6 @@ class Issue(Resource):
         Returns:
             Any: Returns the parsed data stored in the field. For example, "project" would be of class :py:class:`Project`
         """
-
         if field_name.startswith("_"):
             raise AttributeError(
                 f"An issue field_name cannot start with underscore (_): {field_name}",
@@ -751,7 +751,7 @@ class Comment(Resource):
         is_internal: bool = False,
         notify: bool = True,
     ):
-        """Update a comment
+        """Update a comment.
 
         Keyword arguments are marshalled into a dict before being sent.
 
@@ -1096,7 +1096,6 @@ class Role(Resource):
             users (Optional[Union[str,List,Tuple]]): a user or users to add to the role
             groups (Optional[Union[str,List,Tuple]]): a group or groups to add to the role
         """
-
         if users is not None and isinstance(users, str):
             users = (users,)
         if groups is not None and isinstance(groups, str):
@@ -1123,7 +1122,6 @@ class Role(Resource):
             users (Optional[Union[str,List,Tuple]]): a user or users to add to the role
             groups (Optional[Union[str,List,Tuple]]): a group or groups to add to the role
         """
-
         if users is not None and isinstance(users, str):
             users = (users,)
         if groups is not None and isinstance(groups, str):
@@ -1244,8 +1242,7 @@ class Version(Resource):
         self.raw: Dict[str, Any] = cast(Dict[str, Any], self.raw)
 
     def delete(self, moveFixIssuesTo=None, moveAffectedIssuesTo=None):
-        """
-        Delete this project version from the server.
+        """Delete this project version from the server.
 
         If neither of the arguments are specified, the version is removed from all issues it is attached to.
 
@@ -1253,7 +1250,6 @@ class Version(Resource):
             moveFixIssuesTo: in issues for which this version is a fix version, add this version to the fix version list
             moveAffectedIssuesTo: in issues for which this version is an affected version, add this version to the affected version list
         """
-
         params = {}
         if moveFixIssuesTo is not None:
             params["moveFixIssuesTo"] = moveFixIssuesTo
@@ -1263,8 +1259,7 @@ class Version(Resource):
         return super().delete(params)
 
     def update(self, **kwargs):
-        """
-        Update this project version from the server. It is prior used to archive versions.
+        """Update this project version from the server. It is prior used to archive versions.
 
         Refer to Atlassian REST API `documentation`_.
 
