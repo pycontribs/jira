@@ -3031,7 +3031,7 @@ class JIRA:
         startAt: int,
         maxResults: int,
         validate_query: bool,
-        fields: Optional[Union[str, List[str]]],
+        fields: Optional[Union[str, list[str]]],
         expand: Optional[str],
         json_result: Literal[False],
     ) -> ResultList[Issue]:
@@ -3044,7 +3044,7 @@ class JIRA:
         startAt: int,
         maxResults: int,
         validate_query: bool,
-        fields: Optional[Union[str, List[str]]],
+        fields: Optional[Union[str, list[str]]],
         expand: Optional[str],
         json_result: Literal[True],
     ) -> Dict[str, Any]:
