@@ -29,7 +29,6 @@ class VersionTests(JiraTestCase):
         version.delete()
 
     def test_update_version(self):
-
         version = self.jira.create_version(
             "new updated version 1",
             self.project_b,
