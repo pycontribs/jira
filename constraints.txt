@@ -176,7 +176,7 @@ six==1.16.0
     #   requests-mock
 snowballstemmer==2.2.0
     # via sphinx
-soupsieve==2.3.2.post1
+soupsieve==2.4
     # via beautifulsoup4
 sphinx==6.1.3
     # via
