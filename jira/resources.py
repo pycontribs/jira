@@ -293,6 +293,8 @@ class Resource:
         async_: bool | None = None,
         jira: JIRA = None,
         notify: bool = True,
+        override_screen_security: bool = False,
+        override_editable_flag: bool = False,
         **kwargs: Any,
     ):
         """Update this resource on the server.
@@ -306,6 +308,8 @@ class Resource:
             jira (jira.client.JIRA): Instance of Jira Client
             notify (bool): True to notify watchers about the update, sets parameter notifyUsers. (Default: ``True``).
               Admin or project admin permissions are required to disable the notification.
+            override_screen_security (bool): If true then screen security is overridden to enable hidden fields to be edited.
+            override_editable_flag (bool): If true then screen security is overridden to enable uneditable fields to be edited.
             kwargs (Any): extra arguments to the PUT request.
         """
         if async_ is None:
@@ -315,6 +319,21 @@ class Resource:
         if fields is not None:
             data.update(fields)
         data.update(kwargs)
+
+        querystring_dict = dict()
+        if not notify:
+            querystring_dict["notifyUsers"] = "false"
+        if override_screen_security:
+            querystring_dict["overrideScreenSecurity"] = "true"
+        if override_editable_flag:
+            querystring_dict["overrideEditableFlag"] = "true"
+
+        if querystring_dict:
+            querystring = "?" + "&".join(
+                f"{item[0]}={item[1]}" for item in querystring_dict.items()
+            )
+        else:
+            querystring = ""
 
         if not notify:
             querystring = "?notifyUsers=false"
@@ -625,6 +644,8 @@ class Issue(Resource):
         async_: bool = None,
         jira: JIRA = None,
         notify: bool = True,
+        override_screen_security: bool = False,
+        override_editable_flag: bool = False,
         **fieldargs,
     ):
         """Update this issue on the server.
@@ -643,6 +664,8 @@ class Issue(Resource):
             jira (Optional[jira.client.JIRA]): JIRA instance.
             notify (bool): True to notify watchers about the update, sets parameter notifyUsers. (Default: ``True``).
               Admin or project admin permissions are required to disable the notification.
+            override_screen_security (bool): If true then screen security is overridden to enable hidden fields to be edited.
+            override_editable_flag (bool): If true then screen security is overridden to enable uneditable fields to be edited.
             fieldargs (dict): keyword arguments will generally be merged into fields, except lists, which will be merged into updates
         """
         data = {}
@@ -675,7 +698,14 @@ class Issue(Resource):
             else:
                 fields_dict[field] = value
 
-        super().update(async_=async_, jira=jira, notify=notify, fields=data)
+        super().update(
+            async_=async_,
+            jira=jira,
+            notify=notify,
+            fields=data,
+            override_screen_security=override_screen_security,
+            override_editable_flag=override_editable_flag,
+        )
 
     def get_field(self, field_name: str) -> Any:
         """Obtain the (parsed) value from the Issue's field.
