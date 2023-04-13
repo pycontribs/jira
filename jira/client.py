@@ -3702,13 +3702,13 @@ class JIRA:
     def _create_oauth_session(
         self, oauth, timeout: float | int | tuple[float, float] | None
     ):
-        from oauthlib.oauth1 import SIGNATURE_RSA
+        from oauthlib.oauth1 import SIGNATURE_HMAC_SHA1
         from requests_oauthlib import OAuth1
 
         oauth_instance = OAuth1(
             oauth["consumer_key"],
             rsa_key=oauth["key_cert"],
-            signature_method=SIGNATURE_RSA,
+            signature_method=SIGNATURE_HMAC_SHA1,
             resource_owner_key=oauth["access_token"],
             resource_owner_secret=oauth["access_token_secret"],
         )

@@ -15,7 +15,7 @@ from urllib.parse import parse_qsl
 
 import keyring
 import requests
-from oauthlib.oauth1 import SIGNATURE_RSA
+from oauthlib.oauth1 import SIGNATURE_HMAC_SHA1
 from requests_oauthlib import OAuth1
 
 from jira import JIRA, __version__
@@ -29,7 +29,7 @@ def oauth_dance(server, consumer_key, key_cert_data, print_tokens=False, verify=
         verify = server.startswith("https")
 
     # step 1: get request tokens
-    oauth = OAuth1(consumer_key, signature_method=SIGNATURE_RSA, rsa_key=key_cert_data)
+    oauth = OAuth1(consumer_key, signature_method=SIGNATURE_HMAC_SHA1, rsa_key=key_cert_data)
     r = requests.post(
         server + "/plugins/servlet/oauth/request-token", verify=verify, auth=oauth
     )
@@ -71,7 +71,7 @@ def oauth_dance(server, consumer_key, key_cert_data, print_tokens=False, verify=
     # step 3: get access tokens for validated user
     oauth = OAuth1(
         consumer_key,
-        signature_method=SIGNATURE_RSA,
+        signature_method=SIGNATURE_HMAC_SHA1,
         rsa_key=key_cert_data,
         resource_owner_key=request_token,
         resource_owner_secret=request_token_secret,
