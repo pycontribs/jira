@@ -29,7 +29,9 @@ def oauth_dance(server, consumer_key, key_cert_data, print_tokens=False, verify=
         verify = server.startswith("https")
 
     # step 1: get request tokens
-    oauth = OAuth1(consumer_key, signature_method=SIGNATURE_HMAC_SHA1, rsa_key=key_cert_data)
+    oauth = OAuth1(
+        consumer_key, signature_method=SIGNATURE_HMAC_SHA1, rsa_key=key_cert_data
+    )
     r = requests.post(
         server + "/plugins/servlet/oauth/request-token", verify=verify, auth=oauth
     )
