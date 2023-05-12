@@ -1936,7 +1936,7 @@ class JIRA:
     @translate_resource_args
     def add_comment(
         self,
-        issue: str | int,
+        issue: str | int | Issue,
         body: str,
         visibility: dict[str, str] | None = None,
         is_internal: bool = False,
@@ -1944,7 +1944,7 @@ class JIRA:
         """Add a comment from the current authenticated user on the specified issue and return a Resource for it.
 
         Args:
-            issue (Union[str, int]): ID or key of the issue to add the comment to
+            issue (Union[str, int, jira.resources.Issue]): ID or key of the issue to add the comment to
             body (str): Text of the comment to add
             visibility (Optional[Dict[str, str]]): a dict containing two entries: "type" and "value".
               "type" is 'role' (or 'group' if the Jira server has configured comment visibility for groups)
@@ -2125,11 +2125,11 @@ class JIRA:
 
     # non-resource
     @translate_resource_args
-    def transitions(self, issue: str | int, id: str | None = None, expand=None):
+    def transitions(self, issue: str | int | Issue, id: str | None = None, expand=None):
         """Get a list of the transitions available on the specified issue to the current user.
 
         Args:
-            issue (Union[str, int]): ID or key of the issue to get the transitions from
+            issue (Union[str, int, jira.resources.Issue]): ID or key of the issue to get the transitions from
             id (Optional[str]): if present, get only the transition matching this ID
             expand (Optional): extra information to fetch inside each transition
 
@@ -2146,14 +2146,14 @@ class JIRA:
         ]
 
     def find_transitionid_by_name(
-        self, issue: str | int, transition_name: str
+        self, issue: str | int | Issue, transition_name: str
     ) -> int | None:
         """Get a transitionid available on the specified issue to the current user.
 
         Look at https://developer.atlassian.com/static/rest/jira/6.1.html#d2e1074 for json reference
 
         Args:
-            issue (Union[str, int]): ID or key of the issue to get the transitions from
+            issue (Union[str, int, jira.resources.Issue]): ID or key of the issue to get the transitions from
             transition_name (str): name of transition we are looking for
 
         Returns:
@@ -2171,7 +2171,7 @@ class JIRA:
     @translate_resource_args
     def transition_issue(
         self,
-        issue: str | int,
+        issue: str | int | Issue,
         transition: str,
         fields: dict[str, Any] | None = None,
         comment: str | None = None,
@@ -2184,7 +2184,7 @@ class JIRA:
         all other keyword arguments will be ignored. Field values will be set on the issue as part of the transition process.
 
         Args:
-            issue (Union[str, int]): ID or key of the issue to perform the transition on
+            issue (Union[str, int, jira.resources.Issue]): ID or key of the issue to perform the transition on
             transition (str): ID or name of the transition to perform
             fields (Optional[Dict[str,Any]]): a dict containing field names and the values to use.
             comment (Optional[str]): String to add as comment to the issue when performing the transition.
