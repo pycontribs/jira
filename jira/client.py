@@ -646,8 +646,7 @@ class JIRA:
             released_version = data["info"]["version"]
             if parse_version(released_version) > parse_version(__version__):
                 warnings.warn(
-                    "You are running an outdated version of Jira Python %s. Current version is %s. Do not file any bugs against older versions."
-                    % (__version__, released_version)
+                    f"You are running an outdated version of Jira Python {__version__}. Current version is {released_version}. Do not file any bugs against older versions."
                 )
         except requests.RequestException:
             pass
@@ -891,8 +890,7 @@ class JIRA:
         """
         if hasattr(self._session, "_async_jobs"):
             self.log.info(
-                "Executing asynchronous %s jobs found in queue by using %s threads..."
-                % (len(self._session._async_jobs), size)
+                f"Executing asynchronous {len(self._session._async_jobs)} jobs found in queue by using {size} threads..."
             )
             threaded_requests.map(self._session._async_jobs, size=size)
 
