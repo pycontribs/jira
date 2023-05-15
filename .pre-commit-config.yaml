@@ -1,7 +1,7 @@
 ---
 repos:
   - repo: https://github.com/psf/black
-    rev: 23.1.0
+    rev: 23.3.0
     hooks:
       - id: black
         language_version: python3
@@ -32,17 +32,17 @@ repos:
         require_serial: false
         additional_dependencies: []
   - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: "v0.0.259"
+    rev: "v0.0.267"
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
   - repo: https://github.com/adrienverge/yamllint
-    rev: v1.30.0
+    rev: v1.31.0
     hooks:
       - id: yamllint
         files: \.(yaml|yml)$
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.1.1
+    rev: v1.3.0
     hooks:
       - id: mypy
         additional_dependencies:
@@ -51,7 +51,7 @@ repos:
         args:
           [--no-strict-optional, --ignore-missing-imports, --show-error-codes]
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.3.1
+    rev: v3.4.0
     hooks:
       - id: pyupgrade
         args: [--py38-plus]
