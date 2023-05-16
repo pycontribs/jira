@@ -93,7 +93,7 @@ packaging==23.0
     #   pytest
     #   pytest-sugar
     #   sphinx
-parameterized==0.8.1
+parameterized==0.9.0
     # via jira (setup.cfg)
 parso==0.8.3
     # via jedi
