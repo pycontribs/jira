@@ -41,7 +41,7 @@ docutils==0.19
     # via
     #   jira (setup.cfg)
     #   sphinx
-exceptiongroup==1.1.0
+exceptiongroup==1.1.1
     # via pytest
 execnet==1.9.0
     # via
