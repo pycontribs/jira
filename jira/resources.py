@@ -337,8 +337,7 @@ class Resource:
             if "Issues must be assigned." in error_list:
                 if "assignee" not in data["fields"]:
                     logging.warning(
-                        "autofix: setting assignee to '%s' for %s and retrying the update."
-                        % (self._options["autofix"], self.key)
+                        "autofix: setting assignee to '{}' for {} and retrying the update.".format(self._options["autofix"], self.key)
                     )
                     data["fields"]["assignee"] = {"name": self._options["autofix"]}
                     # for some reason the above approach fails on Jira 5.2.11, so
