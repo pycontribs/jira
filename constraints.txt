@@ -220,7 +220,7 @@ urllib3==1.26.14
     # via requests
 wcwidth==0.2.6
     # via prompt-toolkit
-wheel==0.38.4
+wheel==0.40.0
     # via jira (setup.cfg)
 xmlrunner==1.7.7
     # via jira (setup.cfg)
