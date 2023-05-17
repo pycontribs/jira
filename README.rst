@@ -25,10 +25,6 @@ Jira Python Library
 .. image:: https://img.shields.io/bountysource/team/pycontribs/activity.svg
     :target: https://www.bountysource.com/teams/pycontribs/issues?tracker_ids=3650997
 
-.. image:: https://requires.io/github/pycontribs/jira/requirements.svg?branch=main
-    :target: https://requires.io/github/pycontribs/jira/requirements/?branch=main
-    :alt: Requirements Status
-
 
 This library eases the use of the Jira REST API from Python and it has been used in production for years.
 
