@@ -137,7 +137,7 @@ pytest-sugar==0.9.6
     # via jira (setup.cfg)
 pytest-timeout==2.1.0
     # via jira (setup.cfg)
-pytest-xdist==3.2.1
+pytest-xdist==3.3.1
     # via jira (setup.cfg)
 pytz==2023.3
     # via babel
