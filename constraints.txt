@@ -145,7 +145,7 @@ pywin32-ctypes==0.2.0
     # via keyring
 pyyaml==6.0
     # via jira (setup.cfg)
-requests==2.28.2
+requests==2.31.0
     # via
     #   jira (setup.cfg)
     #   requests-futures
