@@ -4437,7 +4437,9 @@ class JIRA:
 
         # If categoryId provided instead of projectCategory, attribute the categoryId value
         # to the projectCategory variable
-        projectCategory = categoryId if categoryId and not projectCategory else projectCategory
+        projectCategory = (
+            categoryId if categoryId and not projectCategory else projectCategory
+        )
 
         if projectCategory is None:
             ps_list = self.projectcategories()
