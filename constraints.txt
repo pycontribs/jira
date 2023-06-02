@@ -27,7 +27,7 @@ colorama==0.4.6
     #   ipython
     #   pytest
     #   sphinx
-coverage==7.2.5
+coverage==7.2.7
     # via pytest-cov
 cryptography==39.0.1
     # via
@@ -186,7 +186,7 @@ sphinx==6.1.3
     #   sphinx-copybutton
 sphinx-basic-ng==1.0.0b1
     # via furo
-sphinx-copybutton==0.5.1
+sphinx-copybutton==0.5.2
     # via jira (setup.cfg)
 sphinxcontrib-applehelp==1.0.4
     # via sphinx
@@ -204,7 +204,7 @@ stack-data==0.6.2
     # via ipython
 tenacity==8.2.2
     # via jira (setup.cfg)
-termcolor==2.2.0
+termcolor==2.3.0
     # via pytest-sugar
 tomli==2.0.1
     # via
