@@ -4378,12 +4378,12 @@ class JIRA:
         assignee: str = None,
         ptype: str = "software",
         template_name: str = None,
-        avatarId=None,
-        issueSecurityScheme=None,
-        permissionScheme=None,
-        projectCategory=None,
-        notificationScheme=10000,
-        categoryId=None,
+        avatarId: int = None,
+        issueSecurityScheme: int = None,
+        permissionScheme: int = None,
+        projectCategory: int = None,
+        notificationScheme: int = 10000,
+        categoryId: int = None,
         url: str = "",
     ):
         """Create a project with the specified parameters.
@@ -4391,10 +4391,20 @@ class JIRA:
         Args:
             key (str): Mandatory. Must match Jira project key requirements, usually only 2-10 uppercase characters.
             name (Optional[str]): If not specified it will use the key value.
-            assignee (Optional[str]): key of the lead, if not specified it will use current user.
-            ptype (Optional[str]): Determines the type of project should be created.
-            template_name (Optional[str]): is used to create a project based on one of the existing project templates.
+            assignee (Optional[str]): Key of the lead, if not specified it will use current user.
+            ptype (Optional[str]): Determines the type of project that should be created. Defaults to 'software'.
+            template_name (Optional[str]): Is used to create a project based on one of the existing project templates.
               If `template_name` is not specified, then it should use one of the default values.
+            avatarId (Optional[int]): ID of the avatar to use for the project.
+            issueSecurityScheme (Optional[int]): Determines the security scheme to use. If none provided, will fetch the
+              scheme named 'Default' or the first scheme returned.
+            permissionScheme (Optional[int]): Determines the permission scheme to use. If none provided, will fetch the
+              scheme named 'Default Permission Scheme' or the first scheme returned.
+            projectCategory (Optional[int]): Determines the category the project belongs to. If none provided,
+              will fetch the one named 'Default' or the first category returned.
+            notificationScheme (Optional[int]): Determines the notification scheme to use.
+            categoryId (Optional[int]): Same as projectCategory. Can be used interchangeably.
+            url (Optional[string]): A link to information about the project, such as documentation.
 
         Returns:
             Union[bool,int]: Should evaluate to False if it fails otherwise it will be the new project id.
@@ -4425,6 +4435,12 @@ class JIRA:
                     break
             if issueSecurityScheme is None and ps_list:
                 issueSecurityScheme = ps_list[0]["id"]
+
+        # If categoryId provided instead of projectCategory, attribute the categoryId value
+        # to the projectCategory variable
+        projectCategory = (
+            categoryId if categoryId and not projectCategory else projectCategory
+        )
 
         if projectCategory is None:
             ps_list = self.projectcategories()
