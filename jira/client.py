@@ -441,6 +441,7 @@ class JIRA:
                 * access_token_secret -- OAuth access token secret to sign with the key
                 * consumer_key -- key of the OAuth application link defined in Jira
                 * key_cert -- private key file to sign requests with (should be the pair of the public key supplied to Jira in the OAuth application link)
+                * signature_method (Optional) -- The signature method to use with OAuth. Defaults to oauthlib.oauth1.SIGNATURE_HMAC_SHA1
 
             kerberos (bool): True to enable Kerberos authentication. (Default: ``False``)
             kerberos_options (Optional[Dict[str,str]]): A dict of properties for Kerberos authentication.
@@ -3694,7 +3695,7 @@ class JIRA:
         oauth_instance = OAuth1(
             oauth["consumer_key"],
             rsa_key=oauth["key_cert"],
-            signature_method=SIGNATURE_HMAC_SHA1,
+            signature_method=oauth.get("signature_method", SIGNATURE_HMAC_SHA1),
             resource_owner_key=oauth["access_token"],
             resource_owner_secret=oauth["access_token_secret"],
         )
