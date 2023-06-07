@@ -264,6 +264,29 @@ Updating components::
         existingComponents.append({"name" : component.name})
     issue.update(fields={"components": existingComponents})
 
+Working with Rich Text
+^^^^^^^^^^^^^^^^^^^^^^
+
+You can use rich text in an issue's description or comment. In order to use rich text, the body
+content needs to be formatted using the Atlassian Document Format (ADF)::
+
+    jira = JIRA(basic_auth=("email", "API token"))
+    comment = {
+        "type": "doc",
+        "version": 1,
+        "content": [
+          {
+            "type": "codeBlock",
+            "content": [
+              {
+                "text": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque eget venenatis elit. Duis eu justo eget augue iaculis fermentum. Sed semper quam laoreet nisi egestas at posuere augue semper.",
+                "type": "text"
+              }
+            ]
+          }
+        ]
+      }
+    jira.add_comment("AB-123", comment)
 
 Fields
 ------
@@ -449,3 +472,4 @@ You can delete attachment by id::
         for a in i['fields']['attachment']:
             print("For issue {0}, found attach: '{1}' [{2}].".format(i['key'], a['filename'], a['id']))
             jira.delete_attachment(a['id'])
+
