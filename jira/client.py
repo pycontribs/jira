@@ -1909,6 +1909,7 @@ class JIRA:
         description: str | None = None,
         jql: str | None = None,
         favourite: bool | None = None,
+        share_permissions: list[dict[str, Any]] | dict[str, Any] | None = None,
     ) -> Filter:
         """Create a new filter and return a filter Resource for it.
 
@@ -1917,6 +1918,10 @@ class JIRA:
             description (str): Useful human-readable description of the new filter
             jql (str): query string that defines the filter
             favourite (Optional[bool]): True adds this filter to the current user's favorites (Default: ``None``)
+            share_permissions (list[dict[str, Any]] | dict[str, Any] | None): Share permissions to add to
+              the new filter, in the format :py:meth:`add_filter_share_permission` takes. (Default: ``None``)
+              Jira creates the filter first and then adds each permission with its own request,
+              so if one of those requests fails the filter stays, with only the permissions added before it.
 
         Returns:
             Filter
@@ -1930,10 +1935,18 @@ class JIRA:
             data["jql"] = jql
         if favourite is not None:
             data["favourite"] = favourite
+        if share_permissions:
+            # Checked before the filter exists, so an old server is not left with
+            # a filter that has none of the permissions asked for.
+            self._check_filter_share_permission()
         url = self._get_url("filter")
         r = self._session.post(url, data=json.dumps(data))
 
         raw_filter_json: dict[str, Any] = json_loads(r)
+
+        if share_permissions:
+            self.add_filter_share_permission(raw_filter_json["id"], share_permissions)
+
         return Filter(self._options, self._session, raw=raw_filter_json)
 
     def update_filter(
@@ -1969,6 +1982,50 @@ class JIRA:
 
         raw_filter_json = json.loads(r.text)
         return Filter(self._options, self._session, raw=raw_filter_json)
+
+    def _check_filter_share_permission(self) -> None:
+        # First in the 7.1.0 reference, absent from 7.0.10:
+        # https://docs.atlassian.com/software/jira/docs/api/REST/7.1.0/#api/2/filter-addSharePermission
+        if not self._is_cloud and self._version < (7, 1, 0):
+            raise NotImplementedError(
+                "POST filter/{id}/permission needs Jira 7.1 or later,"
+                f" this server is {'.'.join(map(str, self._version))}."
+            )
+
+    def add_filter_share_permission(
+        self,
+        filter_id: int | str,
+        permission_fields: list[dict[str, Any]] | dict[str, Any],
+    ) -> list[dict[str, Any]]:
+        """Add share permissions to a given filter.
+
+        Adding a global permission removes all previous permissions from the filter.
+        Server and Data Center need Jira 7.1 or later.
+
+        Args:
+            filter_id (int | str): the ID of the filter to add permissions for.
+            permission_fields (list[dict[str, Any]] | dict[str, Any]): one share permission, or a list of them,
+              e.g. ``{"type": "group", "groupname": "jira-users"}``. Jira takes one permission per request,
+              so a list is sent as one request each.
+
+        Returns:
+            list[dict[str, Any]]: every share permission on the filter after the last one was added.
+            Jira Cloud and Server 8.20 answer with that list; a single permission object is wrapped in a list.
+        """
+        self._check_filter_share_permission()
+        if isinstance(permission_fields, dict):
+            permission_fields = [permission_fields]
+
+        url = self._get_latest_url(f"filter/{filter_id}/permission")
+        current: list[dict[str, Any]] = []
+        for permission in permission_fields:
+            # Both document the response as every share permission on the filter:
+            # https://docs.atlassian.com/software/jira/docs/api/REST/8.20.30/#api/2/filter-addSharePermission
+            # https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-filter-sharing/#api-rest-api-2-filter-id-permission-post
+            r = self._session.post(url, data=json.dumps(permission))
+            result = json_loads(r)
+            current = result if isinstance(result, list) else [result]
+        return current
 
     # Groups
 
