@@ -472,4 +472,3 @@ You can delete attachment by id::
         for a in i['fields']['attachment']:
             print("For issue {0}, found attach: '{1}' [{2}].".format(i['key'], a['filename'], a['id']))
             jira.delete_attachment(a['id'])
-
