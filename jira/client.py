@@ -2342,7 +2342,9 @@ class JIRA:
             Response
         """
         url = self._get_url("issue/" + str(issue) + "/watchers")
-        return self._session.post(url, data=json.dumps(watcher))
+        # Use user_id when adding watcher
+        watcher_id = self._get_user_id(watcher)
+        return self._session.post(url, data=json.dumps(watcher_id))
 
     @translate_resource_args
     def remove_watcher(self, issue: str | int, watcher: str) -> Response:
