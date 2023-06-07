@@ -35,7 +35,6 @@ from typing import (
     Literal,
     SupportsIndex,
     TypeVar,
-    Union,
     no_type_check,
     overload,
 )
@@ -1234,7 +1233,7 @@ class JIRA:
         description: str = None,
         jql: str = None,
         favourite: bool = None,
-        share_permissions: Union[List[dict], dict] = None
+        share_permissions: list[dict] | dict = None,
     ) -> Filter:
         """Create a new filter and return a filter Resource for it.
 
@@ -1306,7 +1305,7 @@ class JIRA:
     def add_filter_share_permission(
         self,
         filter_id: str,
-        permission_fields: Union[List[dict], dict],
+        permission_fields: list[dict] | dict,
     ) -> bool:
         """Add a share permission to a given filter.
 
@@ -1321,7 +1320,6 @@ class JIRA:
         Returns:
             (bool): Return True if request successful.
         """
-
         url = self._get_latest_url(f"filter/{filter_id}/permission")
         payload = json.dumps(permission_fields)
 
