@@ -3693,7 +3693,7 @@ class JIRA:
         from requests_oauthlib import OAuth1
 
         try:
-            from oauthlib.oauth1 import SIGNATURE_RSA_SHA1 as FALLBACK_SHA
+            from oauthlib.oauth1 import SIGNATURE_RSA as FALLBACK_SHA
         except ImportError:
             FALLBACK_SHA = DEFAULT_SHA
             _logging.debug("Fallback SHA 'SIGNATURE_RSA_SHA1' could not be imported.")
