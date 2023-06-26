@@ -3715,7 +3715,7 @@ class JIRA:
             except JIRAError:
                 _logging.exception(f"Failed to create OAuth session with {sha_type}")
                 if sha_type is FALLBACK_SHA:
-                    raise # We have exhausted our options, bubble up exception
+                    raise  # We have exhausted our options, bubble up exception
 
     def _create_kerberos_session(
         self,
