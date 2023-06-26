@@ -31,7 +31,7 @@ default address for a Jira instance started from the Atlassian Plugin SDK.
 
 You can manually set the Jira server to use::
 
-    jac = JIRA('https://jira.atlassian.com')
+    jira = JIRA('https://jira.atlassian.com')
 
 Authentication
 --------------
