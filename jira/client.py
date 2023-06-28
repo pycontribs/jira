@@ -3711,9 +3711,14 @@ class JIRA:
             self._session.auth = oauth_instance
             try:
                 self.myself()
+                _logging.debug(f"OAuth1 succeeded with signature_method={sha_type}")
                 return  # successful response, return with happy session
             except JIRAError:
-                _logging.exception(f"Failed to create OAuth session with {sha_type}")
+                _logging.exception(
+                    f"Failed to create OAuth session with signature_method={sha_type}.\n"
+                    + "Attempting fallback method(s)."
+                    + "Consider specifying the signature via oauth['signature_method']."
+                )
                 if sha_type is FALLBACK_SHA:
                     raise  # We have exhausted our options, bubble up exception
 
