@@ -99,6 +99,8 @@ parso==0.8.3
     # via jedi
 pickleshare==0.7.5
     # via ipython
+pillow>=2.1.0
+    # via jira (setup.cfg)
 pluggy==1.0.0
     # via pytest
 prompt-toolkit==3.0.38
