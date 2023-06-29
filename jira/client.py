@@ -3689,17 +3689,38 @@ class JIRA:
         self._session.auth = (username, password)
 
     def _create_oauth_session(self, oauth: dict[str, Any]):
-        from oauthlib.oauth1 import SIGNATURE_HMAC_SHA1
+        from oauthlib.oauth1 import SIGNATURE_HMAC_SHA1 as DEFAULT_SHA
         from requests_oauthlib import OAuth1
 
-        oauth_instance = OAuth1(
-            oauth["consumer_key"],
-            rsa_key=oauth["key_cert"],
-            signature_method=oauth.get("signature_method", SIGNATURE_HMAC_SHA1),
-            resource_owner_key=oauth["access_token"],
-            resource_owner_secret=oauth["access_token_secret"],
-        )
-        self._session.auth = oauth_instance
+        try:
+            from oauthlib.oauth1 import SIGNATURE_RSA as FALLBACK_SHA
+        except ImportError:
+            FALLBACK_SHA = DEFAULT_SHA
+            _logging.debug("Fallback SHA 'SIGNATURE_RSA_SHA1' could not be imported.")
+
+        for sha_type in (oauth.get("signature_method"), DEFAULT_SHA, FALLBACK_SHA):
+            if sha_type is None:
+                continue
+            oauth_instance = OAuth1(
+                oauth["consumer_key"],
+                rsa_key=oauth["key_cert"],
+                signature_method=sha_type,
+                resource_owner_key=oauth["access_token"],
+                resource_owner_secret=oauth["access_token_secret"],
+            )
+            self._session.auth = oauth_instance
+            try:
+                self.myself()
+                _logging.debug(f"OAuth1 succeeded with signature_method={sha_type}")
+                return  # successful response, return with happy session
+            except JIRAError:
+                _logging.exception(
+                    f"Failed to create OAuth session with signature_method={sha_type}.\n"
+                    + "Attempting fallback method(s)."
+                    + "Consider specifying the signature via oauth['signature_method']."
+                )
+                if sha_type is FALLBACK_SHA:
+                    raise  # We have exhausted our options, bubble up exception
 
     def _create_kerberos_session(
         self,
