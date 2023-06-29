@@ -11,7 +11,6 @@ import calendar
 import copy
 import datetime
 import hashlib
-import imghdr
 import json
 import logging as _logging
 import mimetypes
@@ -42,6 +41,7 @@ from urllib.parse import parse_qs, quote, urlparse
 
 import requests
 from packaging.version import parse as parse_version
+from PIL import Image
 from requests import Response
 from requests.auth import AuthBase
 from requests.structures import CaseInsensitiveDict
@@ -3919,7 +3919,7 @@ class JIRA:
         if self._magic is not None:
             return self._magic.id_buffer(buff)
         try:
-            return mimetypes.guess_type("f." + str(imghdr.what(0, buff)))[0]
+            return mimetypes.guess_type("f." + Image.open(buff).format)[0]
         except (OSError, TypeError):
             self.log.warning(
                 "Couldn't detect content type of avatar image"
