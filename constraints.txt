@@ -118,7 +118,7 @@ pyjwt==2.6.0
     # via
     #   jira (setup.cfg)
     #   requests-jwt
-pyspnego==0.8.0
+pyspnego==0.9.1
     # via requests-kerberos
 pytest==7.2.1
     # via
