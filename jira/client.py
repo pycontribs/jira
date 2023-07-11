@@ -4287,8 +4287,7 @@ class JIRA:
 
     @lru_cache(maxsize=None)
     def issue_type_schemes(self) -> list[IssueTypeScheme]:
-        """
-        Get all issue type schemes defined.
+        """Get all issue type schemes defined.
 
         @warning: Admin is required to perform this action
 
