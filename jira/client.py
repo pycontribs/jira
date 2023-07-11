@@ -4287,17 +4287,25 @@ class JIRA:
 
     @lru_cache(maxsize=None)
     def issue_type_schemes(self) -> list[IssueTypeScheme]:
-        """Get all issue type schemes defined (Admin required).
+        """
+        Get all issue type schemes defined.
 
-        Returns:
-            List[IssueTypeScheme]: All the Issue Type Schemes available to the currently logged in user.
+        @warning: Admin is required to perform this action
+
+        @return: List[IssueTypeScheme]: All the Issue Type Schemes available to the currently logged in user
         """
         url = self._get_url("issuetypescheme")
 
         r = self._session.get(url)
         data: dict[str, Any] = json_loads(r)
+        data = data.get("values", [])
 
-        return data["schemes"]
+        issue_type_schemes = [
+            IssueTypeScheme(self._options, self._session, raw_type_json)
+            for raw_type_json in data
+        ]
+
+        return issue_type_schemes
 
     @lru_cache(maxsize=None)
     def issuesecurityschemes(self):
