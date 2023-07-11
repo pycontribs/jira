@@ -4286,18 +4286,34 @@ class JIRA:
         return data["permissionSchemes"]
 
     @lru_cache(maxsize=None)
-    def issue_type_schemes(self) -> list[IssueTypeScheme]:
-        """Get all issue type schemes defined.
-
-        @warning: Admin is required to perform this action
-
-        @return: List[IssueTypeScheme]: All the Issue Type Schemes available to the currently logged in user
+    def issue_type_schemes(
+            self,
+            expand_projects: bool = False,
+            expand_issue_types: bool = False
+    ) -> list[IssueTypeScheme]:
         """
-        url = self._get_url("issuetypescheme")
+        Get all issue type schemes defined (Admin required).
 
-        r = self._session.get(url)
-        data: dict[str, Any] = json_loads(r)
-        data = data.get("values", [])
+        @param expand_projects: For each issue type schemes, returns information about the projects the issue type scheme is assigned to
+        @param expand_issue_types: For each issue type schemes, returns information about the issueTypes the issue type scheme have.
+        @return: List[IssueTypeScheme]: All the Issue Type Schemes available to the currently logged in user.
+        """
+        expand = []
+        if expand_projects:
+            expand.append("projects")
+        if expand_issue_types:
+            expand.append("issueTypes")
+
+        params = {}
+        if expand:
+            params["expand"] = ",".join(expand)
+
+        url = self._get_url("issuetypescheme")
+        print(url)
+
+        response = self._session.get(url, params=params)
+        data: dict[str, Any] = json_loads(response)
+        data = data.get("values")
 
         issue_type_schemes = [
             IssueTypeScheme(self._options, self._session, raw_type_json)
