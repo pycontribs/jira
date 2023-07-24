@@ -118,7 +118,7 @@ pyjwt==2.6.0
     # via
     #   jira (setup.cfg)
     #   requests-jwt
-pyspnego==0.8.0
+pyspnego==0.9.1
     # via requests-kerberos
 pytest==7.2.1
     # via
@@ -131,7 +131,7 @@ pytest==7.2.1
     #   pytest-xdist
 pytest-cache==1.0
     # via jira (setup.cfg)
-pytest-cov==4.0.0
+pytest-cov==4.1.0
     # via jira (setup.cfg)
 pytest-instafail==0.4.2
     # via jira (setup.cfg)
@@ -139,7 +139,7 @@ pytest-sugar==0.9.6
     # via jira (setup.cfg)
 pytest-timeout==2.1.0
     # via jira (setup.cfg)
-pytest-xdist==3.2.1
+pytest-xdist==3.3.1
     # via jira (setup.cfg)
 pytz==2023.3
     # via babel
@@ -147,7 +147,7 @@ pywin32-ctypes==0.2.0
     # via keyring
 pyyaml==6.0
     # via jira (setup.cfg)
-requests==2.28.2
+requests==2.31.0
     # via
     #   jira (setup.cfg)
     #   requests-futures
@@ -216,7 +216,7 @@ traitlets==5.8.1
     # via
     #   ipython
     #   matplotlib-inline
-typing-extensions==4.5.0
+typing-extensions==4.6.3
     # via jira (setup.cfg)
 urllib3==1.26.14
     # via requests
