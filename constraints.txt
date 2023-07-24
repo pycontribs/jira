@@ -99,6 +99,8 @@ parso==0.8.3
     # via jedi
 pickleshare==0.7.5
     # via ipython
+pillow==9.5.0
+    # via jira (setup.cfg)
 pluggy==1.0.0
     # via pytest
 prompt-toolkit==3.0.38
@@ -116,7 +118,7 @@ pyjwt==2.6.0
     # via
     #   jira (setup.cfg)
     #   requests-jwt
-pyspnego==0.8.0
+pyspnego==0.9.1
     # via requests-kerberos
 pytest==7.2.1
     # via
@@ -129,7 +131,7 @@ pytest==7.2.1
     #   pytest-xdist
 pytest-cache==1.0
     # via jira (setup.cfg)
-pytest-cov==4.0.0
+pytest-cov==4.1.0
     # via jira (setup.cfg)
 pytest-instafail==0.4.2
     # via jira (setup.cfg)
