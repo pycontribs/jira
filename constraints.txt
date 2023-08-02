@@ -53,7 +53,7 @@ filemagic==1.6
     # via jira (setup.cfg)
 flaky==3.7.0
     # via jira (setup.cfg)
-furo==2022.12.7
+furo==2023.7.26
     # via jira (setup.cfg)
 idna==3.4
     # via requests
