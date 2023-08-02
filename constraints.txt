@@ -29,7 +29,7 @@ colorama==0.4.6
     #   sphinx
 coverage==7.2.7
     # via pytest-cov
-cryptography==39.0.1
+cryptography==41.0.3
     # via
     #   pyspnego
     #   requests-kerberos
