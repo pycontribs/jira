@@ -3492,14 +3492,14 @@ class JIRA:
         if not user and not query:
             raise ValueError("Either 'user' or 'query' arguments must be specified.")
 
-        params = {
+        params = json.dumps({
             "username": user,
             "query": query,
             "includeActive": includeActive,
             "includeInactive": includeInactive,
-        }
+        })
 
-        return self._fetch_pages(User, None, "user/search", startAt, maxResults, params)
+        return self._fetch_pages(User, None, "user/search", startAt, maxResults, json.loads(params))
 
     def search_allowed_users_for_issue(
         self,
