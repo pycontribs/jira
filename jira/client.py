@@ -5108,3 +5108,41 @@ class JIRA:
         url = self._get_url("backlog/issue", base=self.AGILE_BASE_URL)
         payload = {"issues": issue_keys}  # TODO: should be list of issues
         return self._session.post(url, data=json.dumps(payload))
+    
+    def api_get(self, url_path: str) -> Response:
+        """Send a GET request to the specified URL path and return a Response object
+
+        Args:
+            url_path (str): URL path to GET (append to the base JIRA url)
+
+        Returns:
+            Response
+        """
+        url = self._get_url(url_path)
+        return self._session.get(url)
+    
+    def api_put(self, url_path: str, payload: dict|list = None) -> Response:
+        """Send a PUT request to the specified URL path and return a Response object
+
+        Args:
+            url_path (str): URL path to PUT (append to the base JIRA url)
+            payload (dict | list, optional): dict or list object payload to convert to JSON.
+
+        Returns:
+            Response
+        """
+        url = self._get_latest_url(url_path)
+        return self._session.put(url, data=json.dumps(payload))
+
+    def api_post(self, url_path: str, payload: dict|list = None) -> Response:
+        """Send a POST request to the specified URL path and return a Response object
+
+        Args:
+            url_path (str): URL path to POST (append to the base JIRA url)
+            payload (dict | list, optional): dict or list object payload to convert to JSON.
+
+        Returns:
+            Response
+        """
+        url = self._get_latest_url(url_path)
+        return self._session.post(url, data=json.dumps(payload))
