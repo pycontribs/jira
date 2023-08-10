@@ -718,7 +718,8 @@ class JIRA:
             except ImportError:
                 pass
             async_workers = self._options.get("async_workers")
-        page_params = params.copy() if params else {}
+        page_params = json.loads(json.dumps(params.copy())) if params else {}
+        #passing the params through json.dumps and json.loads is required to construct the right query
         if startAt:
             page_params["startAt"] = startAt
         if maxResults:
@@ -767,7 +768,8 @@ class JIRA:
                         session=self._session, max_workers=async_workers
                     )
                     for start_index in range(page_start, total, page_size):
-                        page_params = params.copy() if params else {}
+                        page_params = json.loads(json.dumps(params.copy())) if params else {}
+                        #passing the params through json.dumps and json.loads is required to construct the right query
                         page_params["startAt"] = start_index
                         page_params["maxResults"] = page_size
                         url = self._get_url(request_path)
@@ -788,8 +790,9 @@ class JIRA:
                     and len(next_items_page) == page_size
                 ):
                     page_params = (
-                        params.copy() if params else {}
+                        json.loads(json.dumps(params.copy())) if params else {}
                     )  # Hack necessary for mock-calls to not change
+                    #passing the params through json.dumps and json.loads is required to construct the right query
                     page_params["startAt"] = page_start
                     page_params["maxResults"] = page_size
                     resource = self._get_json(
@@ -3492,18 +3495,14 @@ class JIRA:
         if not user and not query:
             raise ValueError("Either 'user' or 'query' arguments must be specified.")
 
-        params = json.dumps(
-            {
-                "username": user,
-                "query": query,
-                "includeActive": includeActive,
-                "includeInactive": includeInactive,
-            }
-        )
+        params = {
+            "username": user,
+            "query": query,
+            "includeActive": includeActive,
+            "includeInactive": includeInactive,
+        }
 
-        return self._fetch_pages(
-            User, None, "user/search", startAt, maxResults, json.loads(params)
-        )
+        return self._fetch_pages(User, None, "user/search", startAt, maxResults, params)
 
     def search_allowed_users_for_issue(
         self,
