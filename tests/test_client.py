@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import getpass
 from unittest import mock
 
@@ -54,7 +56,6 @@ def slug(request, cl_admin):
 
 
 def test_delete_project(cl_admin, cl_normal, slug):
-
     assert cl_admin.delete_project(slug)
 
 
@@ -126,7 +127,6 @@ def test_result_list_if_empty():
     ids=["overwrite", "new"],
 )
 def test_headers_unclobbered_update(options_arg, no_fields):
-
     assert "headers" in options_arg, "test case options must contain headers"
 
     # GIVEN: the headers and the expected value
@@ -160,7 +160,6 @@ def test_headers_unclobbered_update(options_arg, no_fields):
 
 
 def test_headers_unclobbered_update_with_no_provided_headers(no_fields):
-
     options_arg = {}  # a dict with "headers" not set
 
     # GIVEN:the headers and the expected value

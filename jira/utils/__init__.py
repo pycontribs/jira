@@ -1,7 +1,9 @@
 """Jira utils used internally."""
+from __future__ import annotations
+
 import threading
 import warnings
-from typing import Any, Optional, cast
+from typing import Any, cast
 
 from requests import Response
 from requests.structures import CaseInsensitiveDict as _CaseInsensitiveDict
@@ -56,8 +58,8 @@ def threaded_requests(requests):
             th.join()
 
 
-def json_loads(resp: Optional[Response]) -> Any:
-    """Attempts to load json the result of a response
+def json_loads(resp: Response | None) -> Any:
+    """Attempts to load json the result of a response.
 
     Args:
         resp (Optional[Response]): The Response object

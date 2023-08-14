@@ -2,7 +2,9 @@
 #
 # This script will cleanup your jira instance by removing all projects and
 # it is used to clean the CI/CD Jira server used for testing.
-#
+
+from __future__ import annotations
+
 import json
 import logging
 import os
