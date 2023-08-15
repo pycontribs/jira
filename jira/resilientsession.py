@@ -6,6 +6,7 @@ import logging
 import random
 import time
 from typing import Any
+from http import HTTPStatus
 
 from requests import Response, Session
 from requests.exceptions import ConnectionError
@@ -278,7 +279,7 @@ class ResilientSession(Session):
 
         Exponentially delays if recoverable.
 
-        At this moment it supports: 429
+        At this moment it supports: 429, 503
 
         Args:
             response (Optional[Union[ConnectionError, Response]]): The response or exception.
@@ -306,15 +307,21 @@ class ResilientSession(Session):
                 )
 
         elif isinstance(response, Response):
-            retry_after = response.headers.get('Retry-After')
-            if retry_after:
-                suggested_delay = int(retry_after)  # Do as told
-            elif response.status_code == 429:
-                suggested_delay = 10 * 2**counter  # Exponential backoff
+            recoverable_error_codes = [
+                HTTPStatus.TOO_MANY_REQUESTS,
+                HTTPStatus.SERVICE_UNAVAILABLE
+            ]
 
-            if response.status_code == 429:
-                msg = f"{response.status_code} {response.reason}"
-                self.__log_http_429_response(response)
+            if response.status_code in recoverable_error_codes:
+                retry_after = response.headers.get('Retry-After')
+                if retry_after:
+                    suggested_delay = int(retry_after)  # Do as told
+                elif response.status_code == HTTPStatus.TOO_MANY_REQUESTS:
+                    suggested_delay = 10 * 2**counter  # Exponential backoff
+
+                if response.status_code == HTTPStatus.TOO_MANY_REQUESTS:
+                    msg = f"{response.status_code} {response.reason}"
+                    self.__log_http_429_response(response)
 
         is_recoverable = suggested_delay > 0
         if is_recoverable:
