@@ -1875,18 +1875,23 @@ class JIRA:
 
     # non-resource
     @translate_resource_args
-    def assign_issue(self, issue: int | str, assignee: str | None) -> bool:
+    def assign_issue(
+            self,
+            issue: int | str,
+            assignee: str | None,
+            skipUserResolution: bool = False) -> bool:
         """Assign an issue to a user.
 
         Args:
             issue (Union[int, str]): the issue ID or key to assign
             assignee (str): the user to assign the issue to. None will set it to unassigned. -1 will set it to Automatic.
+            skipUserResolution (bool): when true, use the username from caller side directly to assign issue
 
         Returns:
             bool
         """
         url = self._get_latest_url(f"issue/{issue}/assignee")
-        user_id = self._get_user_id(assignee)
+        user_id = assignee if skipUserResolution else self._get_user_id(assignee)
         payload = {"accountId": user_id} if self._is_cloud else {"name": user_id}
         self._session.put(url, data=json.dumps(payload))
         return True
