@@ -5,8 +5,8 @@ import json
 import logging
 import random
 import time
-from typing import Any
 from http import HTTPStatus
+from typing import Any
 
 from requests import Response, Session
 from requests.exceptions import ConnectionError
@@ -291,7 +291,9 @@ class ResilientSession(Session):
         Returns:
             bool: True if the request should be retried.
         """
-        suggested_delay = -1 # Controls return value AND whether we delay or not, Not-recoverable by default
+        suggested_delay = (
+            -1
+        )  # Controls return value AND whether we delay or not, Not-recoverable by default
         msg = str(response)
 
         if isinstance(response, ConnectionError):
@@ -309,11 +311,11 @@ class ResilientSession(Session):
         elif isinstance(response, Response):
             recoverable_error_codes = [
                 HTTPStatus.TOO_MANY_REQUESTS,
-                HTTPStatus.SERVICE_UNAVAILABLE
+                HTTPStatus.SERVICE_UNAVAILABLE,
             ]
 
             if response.status_code in recoverable_error_codes:
-                retry_after = response.headers.get('Retry-After')
+                retry_after = response.headers.get("Retry-After")
                 if retry_after:
                     suggested_delay = int(retry_after)  # Do as told
                 elif response.status_code == HTTPStatus.TOO_MANY_REQUESTS:
@@ -341,9 +343,13 @@ class ResilientSession(Session):
         return is_recoverable
 
     def __log_http_429_response(self, response: Response):
-        retry_after = response.headers.get('Retry-After')
-        number_of_tokens_issued_per_interval = response.headers.get("X-RateLimit-FillRate")
-        token_issuing_rate_interval_seconds = response.headers.get("X-RateLimit-Interval-Seconds")
+        retry_after = response.headers.get("Retry-After")
+        number_of_tokens_issued_per_interval = response.headers.get(
+            "X-RateLimit-FillRate"
+        )
+        token_issuing_rate_interval_seconds = response.headers.get(
+            "X-RateLimit-Interval-Seconds"
+        )
         maximum_number_of_tokens = response.headers.get("X-RateLimit-Limit")
 
         warning_msg = "Request rate limited by Jira."

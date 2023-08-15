@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from http import HTTPStatus
 from unittest.mock import Mock, patch
 
 import pytest
@@ -10,7 +11,6 @@ import jira.resilientsession
 from jira.exceptions import JIRAError
 from jira.resilientsession import parse_error_msg, parse_errors
 from tests.conftest import JiraTestCase
-from http import HTTPStatus
 
 
 class ListLoggingHandler(logging.Handler):
@@ -64,7 +64,6 @@ class ResilientSessionLoggingConfidentialityTests(JiraTestCase):
         del self.loggingHandler
 
 
-
 # Retry test data tuples: (status_code, with_rate_limit_header, with_retry_after_header, retry_expected)
 with_rate_limit = with_retry_after = True
 without_rate_limit = without_retry_after = False
@@ -74,13 +73,11 @@ status_codes_retries_test_data = [
     (HTTPStatus.TOO_MANY_REQUESTS, with_rate_limit, without_retry_after, True),
     (HTTPStatus.TOO_MANY_REQUESTS, without_rate_limit, with_retry_after, True),
     (HTTPStatus.TOO_MANY_REQUESTS, without_rate_limit, without_retry_after, True),
-
     # Retry 503 responses only when 'Retry-After' in headers
     (HTTPStatus.SERVICE_UNAVAILABLE, with_rate_limit, with_retry_after, True),
     (HTTPStatus.SERVICE_UNAVAILABLE, with_rate_limit, without_retry_after, False),
     (HTTPStatus.SERVICE_UNAVAILABLE, without_rate_limit, with_retry_after, True),
     (HTTPStatus.SERVICE_UNAVAILABLE, without_rate_limit, without_retry_after, False),
-
     # Never retry other responses
     (HTTPStatus.UNAUTHORIZED, with_rate_limit, with_retry_after, False),
     (HTTPStatus.UNAUTHORIZED, without_rate_limit, without_retry_after, False),
@@ -107,9 +104,9 @@ def test_status_codes_retries(
     status_code: int,
     with_rate_limit_header: bool,
     with_retry_after_header: bool,
-    retry_expected: bool
+    retry_expected: bool,
 ):
-    RETRY_AFTER_HEADER = { "Retry-After": "1" }
+    RETRY_AFTER_HEADER = {"Retry-After": "1"}
     RATE_LIMIT_HEADERS = {
         "X-RateLimit-FillRate": "1",
         "X-RateLimit-Interval-Seconds": "1",
@@ -143,7 +140,6 @@ def test_status_codes_retries(
 
     assert mocked_request_method.call_count == expected_number_of_requests
     assert mocked_sleep_method.call_count == expected_number_of_sleep_invocations
-
 
 
 errors_parsing_test_data = [
