@@ -1876,10 +1876,8 @@ class JIRA:
     # non-resource
     @translate_resource_args
     def assign_issue(
-            self,
-            issue: int | str,
-            assignee: str | None,
-            skipUserResolution: bool = False) -> bool:
+        self, issue: int | str, assignee: str | None, skipUserResolution: bool = False
+    ) -> bool:
         """Assign an issue to a user.
 
         Args:
