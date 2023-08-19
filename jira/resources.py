@@ -403,7 +403,9 @@ class Resource:
         time.sleep(self._options["delay_reload"])
         self._load(self.self)
 
-    def delete(self, params: dict[str, Any] | None = None) -> Response | None:
+    def delete(
+        self, params: dict[str, Any] | None = None, notify: bool | None = None
+    ) -> Response | None:
         """Delete this resource from the server, passing the specified query parameters.
 
         If this resource doesn't support ``DELETE``, a :py:exc:`.JIRAError` will be raised; subclasses that specialize this method will
@@ -411,10 +413,14 @@ class Resource:
 
         Args:
             params: Parameters for the delete request.
+            notify: if specified, sets `notifyUsers` parameter.
 
         Returns:
             Optional[Response]: Returns None if async
         """
+        params = params or {}
+        if notify is not None:
+            params["notifyUsers"] = "true" if notify else "false"
         if self._options["async"]:
             # FIXME: mypy doesn't think this should work
             if not hasattr(self._session, "_async_jobs"):
@@ -954,7 +960,11 @@ class Worklog(Resource):
         self.raw: dict[str, Any] = cast(Dict[str, Any], self.raw)
 
     def delete(  # type: ignore[override]
-        self, adjustEstimate: str | None = None, newEstimate=None, increaseBy=None
+        self,
+        adjustEstimate: str | None = None,
+        newEstimate=None,
+        increaseBy=None,
+        notify: bool | None = None,
     ):
         """Delete this worklog entry from its associated issue.
 
@@ -964,6 +974,7 @@ class Worklog(Resource):
               ``leave`` leaves the estimate unchanged by this deletion.
             newEstimate: combined with ``adjustEstimate=new``, set the estimate to this value
             increaseBy: combined with ``adjustEstimate=manual``, increase the remaining estimate by this amount
+            notify (Optional[bool]): Whether users watching the issue are notified by email. Sets API `notifyUsers` param.
         """
         params = {}
         if adjustEstimate is not None:
@@ -973,7 +984,7 @@ class Worklog(Resource):
         if increaseBy is not None:
             params["increaseBy"] = increaseBy
 
-        super().delete(params)
+        super().delete(params, notify=notify)
 
 
 class IssueProperty(Resource):

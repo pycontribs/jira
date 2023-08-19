@@ -1053,17 +1053,21 @@ class JIRA:
             )
         return jira_attachment
 
-    def delete_attachment(self, id: str) -> Response:
+    def delete_attachment(self, id: str, notify: bool | None = None) -> Response:
         """Delete attachment by id.
 
         Args:
             id (str): ID of the attachment to delete
+            notify (Optional[bool]): Whether users watching the issue are notified by email. Sets API `notifyUsers` param.
 
         Returns:
             Response
         """
+        params = {}
+        if notify is not None:
+            params["notifyUsers"] = "true" if notify else "false"
         url = self._get_url("attachment/" + str(id))
-        return self._session.delete(url)
+        return self._session.delete(url, params=params)
 
     # Components
 
@@ -2405,6 +2409,7 @@ class JIRA:
         comment: (str | None) = None,
         started: (datetime.datetime | None) = None,
         user: (str | None) = None,
+        notify: bool | None = None,
     ) -> Worklog:
         """Add a new worklog entry on an issue and return a Resource for it.
 
@@ -2419,6 +2424,7 @@ class JIRA:
             comment (Optional[str]): optional worklog comment
             started (Optional[datetime.datetime]): Moment when the work is logged, if not specified will default to now
             user (Optional[str]): the user ID or name to use for this worklog
+            notify (Optional[bool]): Whether users watching the issue are notified by email. Sets API `notifyUsers` param.
 
         Returns:
             Worklog
@@ -2430,6 +2436,8 @@ class JIRA:
             params["newEstimate"] = newEstimate
         if reduceBy is not None:
             params["reduceBy"] = reduceBy
+        if notify is not None:
+            params["notifyUsers"] = "true" if notify else "false"
 
         data: dict[str, Any] = {}
         if timeSpent is not None:

@@ -45,6 +45,10 @@ class WorklogTests(JiraTestCase):
         self.assertEqual(len(self.jira.worklogs(self.issue_2)), worklog_count + 1)
         worklog.delete()
 
+    def test_add_worklog_with_notify_false(self):
+        worklog = self.jira.add_worklog(self.issue_2, "2h", notify=False)
+        worklog.delete(notify=False)
+
     def test_add_worklog_with_issue_obj(self):
         issue = self.jira.issue(self.issue_2)
         worklog_count = len(self.jira.worklogs(issue))

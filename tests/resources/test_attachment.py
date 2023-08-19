@@ -29,7 +29,7 @@ class AttachmentTests(JiraTestCase):
                 new_attachment.size, os.path.getsize(TEST_ATTACH_PATH), msg=msg
             )
             # JIRA returns a HTTP 204 upon successful deletion
-            self.assertEqual(attachment.delete().status_code, 204)
+            self.assertEqual(attachment.delete(notify=False).status_code, 204)
 
     def test_attach_with_no_filename(self):
         issue = self.jira.issue(self.issue_1)
