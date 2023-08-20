@@ -229,7 +229,10 @@ def test_cookie_auth(test_manager: JiraTestManager):
     # WHEN: We create a session with cookie auth for the same server
     cookie_auth_jira = jira.client.JIRA(
         server=test_manager.CI_JIRA_URL,
-        auth=(test_manager.CI_JIRA_ADMIN, test_manager.CI_JIRA_ADMIN_PASSWORD),
+        auth={
+            "username": test_manager.CI_JIRA_ADMIN,
+            "password": test_manager.CI_JIRA_ADMIN_PASSWORD,
+        },
     )
     # THEN: We get the same result from the API
     assert test_manager.jira_admin.myself() == cookie_auth_jira.myself()
@@ -248,7 +251,7 @@ def test_cookie_auth_retry():
             jira.client.JIRA(
                 server="https://httpstat.us",
                 options=new_options,
-                auth=("user", "pass"),
+                auth={"username": "user", "password": "pass"},
             )
     # THEN: We don't get a RecursionError and only call the reset_function once
     mock_reset_func.assert_called_once()

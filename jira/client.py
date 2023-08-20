@@ -23,6 +23,7 @@ import warnings
 from collections import OrderedDict
 from collections.abc import Iterable
 from functools import lru_cache, wraps
+from http.cookiejar import FileCookieJar, MozillaCookieJar
 from io import BufferedReader
 from numbers import Number
 from typing import (
@@ -234,20 +235,33 @@ class JiraCookieAuth(AuthBase):
     """
 
     def __init__(
-        self, session: ResilientSession, session_api_url: str, auth: tuple[str, str]
+        self,
+        session: ResilientSession,
+        session_api_url: str,
+        auth: dict[str, Any],
     ):
         """Cookie Based Authentication.
 
         Args:
             session (ResilientSession): The Session object to communicate with the API.
             session_api_url (str): The session api url to use.
-            auth (Tuple[str, str]): The username, password tuple.
+            auth (Dict[str, Any]): A dict of properties for Cookie authentication.
         """
         self._session = session
         self._session_api_url = session_api_url  # e.g ."/rest/auth/1/session"
         self.__auth = auth
         self._retry_counter_401 = 0
         self._max_allowed_401_retries = 1  # 401 aren't recoverable with retries really
+
+        cookie_jar = auth.get("cookie_jar")
+        if cookie_jar:
+            self._session.cookies = MozillaCookieJar(cookie_jar)  # type: ignore
+
+        if isinstance(self._session.cookies, FileCookieJar):
+            try:
+                self._session.cookies.load(ignore_discard=True)
+            except OSError:
+                pass  # it's ok if file is not present
 
     @property
     def cookies(self):
@@ -269,12 +283,18 @@ class JiraCookieAuth(AuthBase):
         Raises:
             HTTPError: if the post returns an erroring http response
         """
-        username, password = self.__auth
+        username = self.__auth["username"]
+        password = self.__auth["password"]
+        if callable(password):
+            password = password()
+
         authentication_data = {"username": username, "password": password}
         r = self._session.post(  # this also goes through the handle_401() hook
             self._session_api_url, data=json.dumps(authentication_data)
         )
         r.raise_for_status()
+        if isinstance(self._session.cookies, FileCookieJar):
+            self._session.cookies.save(ignore_discard=True)
 
     def handle_401(self, response: requests.Response, **kwargs) -> requests.Response:
         """Refresh cookies if the session cookie has expired. Then retry the request.
@@ -400,7 +420,7 @@ class JIRA:
         max_retries: int = 3,
         proxies: Any = None,
         timeout: None | float | tuple[float, float] | tuple[float, None] | None = None,
-        auth: tuple[str, str] = None,
+        auth: dict[str, Any] = None,
         default_batch_sizes: dict[type[Resource], int | None] | None = None,
     ):
         """Construct a Jira client instance.
@@ -468,7 +488,14 @@ class JIRA:
               Obviously this means that you cannot rely on the return code when this is enabled.
             max_retries (int): Sets the amount Retries for the HTTP sessions initiated by the client. (Default: ``3``)
             proxies (Optional[Any]): Sets the proxies for the HTTP session.
-            auth (Optional[Tuple[str,str]]): Set a cookie auth token if this is required.
+
+            auth (Optional[Dict[str, Any]]): A dict of properties for Cookei authentication.
+              The following properties are available:
+
+                * username (srt) -- username
+                * password (str | Callable[[], str]) -- password or function for lazy receiving password
+                * cookie_jar (Optional[srt]) -- file path for persisting cookies
+
             logging (bool): True enables loglevel to info => else critical. (Default: ``True``)
             default_batch_sizes (Optional[Dict[Type[Resource], Optional[int]]]): Manually specify the batch-sizes for
               the paginated retrieval of different item types. `Resource` is used as a fallback for every item type not
@@ -622,7 +649,7 @@ class JIRA:
         """Return whether we are on a Cloud based Jira instance."""
         return self.deploymentType in ("Cloud",)
 
-    def _create_cookie_auth(self, auth: tuple[str, str]):
+    def _create_cookie_auth(self, auth: dict[str, Any]):
         warnings.warn(
             "Use OAuth or Token based authentication "
             + "instead of Cookie based Authentication.",
