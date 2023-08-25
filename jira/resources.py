@@ -197,6 +197,9 @@ class Resource:
         Returns:
             Any: Attribute value.
         """
+        if item == "raw":
+            # Only reached when raw is unset; the fallback below reads self.raw.
+            raise AttributeError(f"{self.__class__!r} object has no attribute 'raw'")
         try:
             return self[item]  # type: ignore
         except Exception as e:
