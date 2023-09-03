@@ -2044,7 +2044,7 @@ class JIRA:
             # we just won't be able to be quite as helpful.
             warnings.warn(
                 "Unable to gather applicationlinks; you will not be able "
-                "to add links to remote issues: ({}) {}".format(e.status_code, e.text),
+                f"to add links to remote issues: ({e.status_code}) {e.text}",
                 Warning,
             )
 
