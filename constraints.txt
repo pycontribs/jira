@@ -180,7 +180,7 @@ snowballstemmer==2.2.0
     # via sphinx
 soupsieve==2.4.1
     # via beautifulsoup4
-sphinx==7.0.1
+sphinx==7.2.5
     # via
     #   furo
     #   jira (setup.cfg)
