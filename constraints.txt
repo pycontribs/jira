@@ -16,7 +16,7 @@ backcall==0.2.0
     # via ipython
 beautifulsoup4==4.12.2
     # via furo
-certifi==2022.12.7
+certifi==2023.7.22
     # via requests
 cffi==1.15.1
     # via cryptography
@@ -67,7 +67,7 @@ iniconfig==2.0.0
     # via pytest
 ipython==8.9.0
     # via jira (setup.cfg)
-jaraco-classes==3.2.3
+jaraco-classes==3.3.0
     # via keyring
 jedi==0.18.2
     # via ipython
@@ -186,7 +186,7 @@ sphinx==7.2.5
     #   jira (setup.cfg)
     #   sphinx-basic-ng
     #   sphinx-copybutton
-sphinx-basic-ng==1.0.0b1
+sphinx-basic-ng==1.0.0b2
     # via furo
 sphinx-copybutton==0.5.2
     # via jira (setup.cfg)
