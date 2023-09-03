@@ -31,7 +31,7 @@ default address for a Jira instance started from the Atlassian Plugin SDK.
 
 You can manually set the Jira server to use::
 
-    jac = JIRA('https://jira.atlassian.com')
+    jira = JIRA('https://jira.atlassian.com')
 
 Authentication
 --------------
@@ -264,6 +264,29 @@ Updating components::
         existingComponents.append({"name" : component.name})
     issue.update(fields={"components": existingComponents})
 
+Working with Rich Text
+^^^^^^^^^^^^^^^^^^^^^^
+
+You can use rich text in an issue's description or comment. In order to use rich text, the body
+content needs to be formatted using the Atlassian Document Format (ADF)::
+
+    jira = JIRA(basic_auth=("email", "API token"))
+    comment = {
+        "type": "doc",
+        "version": 1,
+        "content": [
+          {
+            "type": "codeBlock",
+            "content": [
+              {
+                "text": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque eget venenatis elit. Duis eu justo eget augue iaculis fermentum. Sed semper quam laoreet nisi egestas at posuere augue semper.",
+                "type": "text"
+              }
+            ]
+          }
+        ]
+      }
+    jira.add_comment("AB-123", comment)
 
 Fields
 ------

@@ -37,7 +37,7 @@ decorator==5.1.1
     # via ipython
 defusedxml==0.7.1
     # via jira (setup.cfg)
-docutils==0.19
+docutils==0.20.1
     # via
     #   jira (setup.cfg)
     #   sphinx
@@ -53,7 +53,7 @@ filemagic==1.6
     # via jira (setup.cfg)
 flaky==3.7.0
     # via jira (setup.cfg)
-furo==2022.12.7
+furo==2023.8.19
     # via jira (setup.cfg)
 idna==3.4
     # via requests
@@ -99,6 +99,8 @@ parso==0.8.3
     # via jedi
 pickleshare==0.7.5
     # via ipython
+pillow==9.5.0
+    # via jira (setup.cfg)
 pluggy==1.0.0
     # via pytest
 prompt-toolkit==3.0.38
@@ -107,7 +109,7 @@ pure-eval==0.2.2
     # via stack-data
 pycparser==2.21
     # via cffi
-pygments==2.14.0
+pygments==2.15.1
     # via
     #   furo
     #   ipython
@@ -116,7 +118,7 @@ pyjwt==2.6.0
     # via
     #   jira (setup.cfg)
     #   requests-jwt
-pyspnego==0.8.0
+pyspnego==0.9.1
     # via requests-kerberos
 pytest==7.2.1
     # via
@@ -129,15 +131,15 @@ pytest==7.2.1
     #   pytest-xdist
 pytest-cache==1.0
     # via jira (setup.cfg)
-pytest-cov==4.0.0
+pytest-cov==4.1.0
     # via jira (setup.cfg)
 pytest-instafail==0.4.2
     # via jira (setup.cfg)
-pytest-sugar==0.9.6
+pytest-sugar==0.9.7
     # via jira (setup.cfg)
 pytest-timeout==2.1.0
     # via jira (setup.cfg)
-pytest-xdist==3.2.1
+pytest-xdist==3.3.1
     # via jira (setup.cfg)
 pytz==2023.3
     # via babel
@@ -145,7 +147,7 @@ pywin32-ctypes==0.2.0
     # via keyring
 pyyaml==6.0
     # via jira (setup.cfg)
-requests==2.28.2
+requests==2.31.0
     # via
     #   jira (setup.cfg)
     #   requests-futures
@@ -214,7 +216,7 @@ traitlets==5.8.1
     # via
     #   ipython
     #   matplotlib-inline
-typing-extensions==4.5.0
+typing-extensions==4.6.3
     # via jira (setup.cfg)
 urllib3==1.26.14
     # via requests
