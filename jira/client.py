@@ -1721,6 +1721,8 @@ class JIRA:
     def createmeta_issuetypes(
         self,
         projectIdOrKey: str | int,
+        startAt: int = 0,
+        maxResults: int = 50,
     ) -> dict[str, Any]:
         """Get the issue types metadata for a given project, required to create issues.
 
@@ -1739,12 +1741,20 @@ class JIRA:
                 "Use 'createmeta' instead."
             )
 
-        return self._get_json(f"issue/createmeta/{projectIdOrKey}/issuetypes")
+        return self._get_json(
+            f"issue/createmeta/{projectIdOrKey}/issuetypes",
+            params={
+                "startAt": startAt,
+                "maxResults": maxResults,
+            }
+        )
 
     def createmeta_fieldtypes(
         self,
         projectIdOrKey: str | int,
         issueTypeId: str | int,
+        startAt: int = 0,
+        maxResults: int = 50,
     ) -> dict[str, Any]:
         """Get the field metadata for a given project and issue type, required to create issues.
 
@@ -1765,7 +1775,11 @@ class JIRA:
             )
 
         return self._get_json(
-            f"issue/createmeta/{projectIdOrKey}/issuetypes/{issueTypeId}"
+            f"issue/createmeta/{projectIdOrKey}/issuetypes/{issueTypeId}",
+            params={
+                "startAt": startAt,
+                "maxResults": maxResults,
+            }
         )
 
     def createmeta(
