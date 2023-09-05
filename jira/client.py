@@ -1746,7 +1746,7 @@ class JIRA:
             params={
                 "startAt": startAt,
                 "maxResults": maxResults,
-            }
+            },
         )
 
     def createmeta_fieldtypes(
@@ -1779,7 +1779,7 @@ class JIRA:
             params={
                 "startAt": startAt,
                 "maxResults": maxResults,
-            }
+            },
         )
 
     def createmeta(
