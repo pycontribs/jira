@@ -266,8 +266,7 @@ class JiraCookieAuth(AuthBase):
     def init_session(self):
         """Initialise the Session object's cookies, so we can use the session cookie.
 
-        Raises:
-            HTTPError: if the post returns an erroring http response
+        Raises HTTPError if the post returns an erroring http response
         """
         username, password = self.__auth
         authentication_data = {"username": username, "password": password}
@@ -4427,7 +4426,7 @@ class JIRA:
               will fetch the one named 'Default' or the first category returned.
             notificationScheme (Optional[int]): Determines the notification scheme to use.
             categoryId (Optional[int]): Same as projectCategory. Can be used interchangeably.
-            url (Optional[string]): A link to information about the project, such as documentation.
+            url (Optional[str]): A link to information about the project, such as documentation.
 
         Returns:
             Union[bool,int]: Should evaluate to False if it fails otherwise it will be the new project id.
