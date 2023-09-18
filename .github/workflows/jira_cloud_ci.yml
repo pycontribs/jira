@@ -24,6 +24,7 @@ jobs:
         # We only test a single version to prevent concurrent
         # running of tests influencing one another
         python-version: ["3.8"]
+        cache: pip
 
     steps:
       - uses: actions/checkout@v3
@@ -32,22 +33,6 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-
-      - name: Get pip cache dir
-        id: pip-cache
-        run: |
-          echo "::set-output name=dir::$(pip cache dir)"
-      - name: Setup the Pip cache
-        uses: actions/cache@v3
-        with:
-          path: ${{ steps.pip-cache.outputs.dir }}
-          key: >-
-            ${{ runner.os }}-pip-${{ hashFiles('setup.cfg') }}-${{
-            hashFiles('setup.py') }}-${{ hashFiles('tox.ini') }}-${{
-            hashFiles('.pre-commit-config.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-            ${{ runner.os }}-
 
       - name: Install Dependencies
         run: |
