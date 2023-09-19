@@ -1,10 +1,5 @@
 ---
 repos:
-  - repo: https://github.com/psf/black
-    rev: 23.1.0
-    hooks:
-      - id: black
-        language_version: python3
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:
@@ -20,7 +15,7 @@ repos:
       - id: check-yaml
         files: .*\.(yaml|yml)$
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.2.4
+    rev: v2.2.5
     hooks:
       - id: codespell
         name: codespell
@@ -31,18 +26,23 @@ repos:
         args: []
         require_serial: false
         additional_dependencies: []
-  - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: "v0.0.259"
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: "v0.0.286"
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
+  - repo: https://github.com/psf/black # after ruff, as ruff output may need fixing
+    rev: 23.7.0
+    hooks:
+      - id: black
+        language_version: python3
   - repo: https://github.com/adrienverge/yamllint
-    rev: v1.30.0
+    rev: v1.32.0
     hooks:
       - id: yamllint
         files: \.(yaml|yml)$
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.1.1
+    rev: v1.5.1
     hooks:
       - id: mypy
         additional_dependencies:
@@ -50,8 +50,3 @@ repos:
           - types-pkg_resources
         args:
           [--no-strict-optional, --ignore-missing-imports, --show-error-codes]
-  - repo: https://github.com/asottile/pyupgrade
-    rev: v3.3.1
-    hooks:
-      - id: pyupgrade
-        args: [--py38-plus]

@@ -11,7 +11,6 @@ import calendar
 import copy
 import datetime
 import hashlib
-import imghdr
 import json
 import logging as _logging
 import mimetypes
@@ -42,6 +41,7 @@ from urllib.parse import parse_qs, quote, urlparse
 
 import requests
 from packaging.version import parse as parse_version
+from PIL import Image
 from requests import Response
 from requests.auth import AuthBase
 from requests.structures import CaseInsensitiveDict
@@ -266,8 +266,7 @@ class JiraCookieAuth(AuthBase):
     def init_session(self):
         """Initialise the Session object's cookies, so we can use the session cookie.
 
-        Raises:
-            HTTPError: if the post returns an erroring http response
+        Raises HTTPError if the post returns an erroring http response
         """
         username, password = self.__auth
         authentication_data = {"username": username, "password": password}
@@ -441,6 +440,7 @@ class JIRA:
                 * access_token_secret -- OAuth access token secret to sign with the key
                 * consumer_key -- key of the OAuth application link defined in Jira
                 * key_cert -- private key file to sign requests with (should be the pair of the public key supplied to Jira in the OAuth application link)
+                * signature_method (Optional) -- The signature method to use with OAuth. Defaults to oauthlib.oauth1.SIGNATURE_HMAC_SHA1
 
             kerberos (bool): True to enable Kerberos authentication. (Default: ``False``)
             kerberos_options (Optional[Dict[str,str]]): A dict of properties for Kerberos authentication.
@@ -527,24 +527,9 @@ class JIRA:
         self._try_magic()
 
         assert isinstance(self._options["headers"], dict)  # for mypy benefit
-        self._session: ResilientSession  # for mypy benefit
-        if oauth:
-            self._create_oauth_session(oauth, timeout)
-        elif basic_auth:
-            self._create_http_basic_session(*basic_auth, timeout=timeout)
-        elif jwt:
-            self._create_jwt_session(jwt, timeout)
-        elif token_auth:
-            self._create_token_session(token_auth, timeout)
-        elif kerberos:
-            self._create_kerberos_session(timeout, kerberos_options=kerberos_options)
-        elif auth:
-            self._create_cookie_auth(auth, timeout)
-            # always log in for cookie based auth, as we need a first request to be logged in
-            validate = True
-        else:
-            self._session = ResilientSession(timeout=timeout)
 
+        # Create Session object and update with config options first
+        self._session = ResilientSession(timeout=timeout)
         # Add the client authentication certificate to the request if configured
         self._add_client_cert_to_session()
         # Add the SSL Cert to the request if configured
@@ -559,6 +544,23 @@ class JIRA:
 
         if proxies:
             self._session.proxies = proxies
+
+        # Setup the Auth last,
+        # so that if any handlers take a copy of the session obj it will be ready
+        if oauth:
+            self._create_oauth_session(oauth)
+        elif basic_auth:
+            self._create_http_basic_session(*basic_auth)
+        elif jwt:
+            self._create_jwt_session(jwt)
+        elif token_auth:
+            self._create_token_session(token_auth)
+        elif kerberos:
+            self._create_kerberos_session(kerberos_options=kerberos_options)
+        elif auth:
+            self._create_cookie_auth(auth)
+            # always log in for cookie based auth, as we need a first request to be logged in
+            validate = True
 
         self.auth = auth
         if validate:
@@ -619,17 +621,12 @@ class JIRA:
         """Return whether we are on a Cloud based Jira instance."""
         return self.deploymentType in ("Cloud",)
 
-    def _create_cookie_auth(
-        self,
-        auth: tuple[str, str],
-        timeout: None | float | tuple[float, float] | tuple[float, None] | None = None,
-    ):
+    def _create_cookie_auth(self, auth: tuple[str, str]):
         warnings.warn(
             "Use OAuth or Token based authentication "
             + "instead of Cookie based Authentication.",
             DeprecationWarning,
         )
-        self._session = ResilientSession(timeout=timeout)
         self._session.auth = JiraCookieAuth(
             session=self._session,
             session_api_url="{server}{auth_url}".format(**self._options),
@@ -646,8 +643,7 @@ class JIRA:
             released_version = data["info"]["version"]
             if parse_version(released_version) > parse_version(__version__):
                 warnings.warn(
-                    "You are running an outdated version of Jira Python %s. Current version is %s. Do not file any bugs against older versions."
-                    % (__version__, released_version)
+                    f"You are running an outdated version of Jira Python {__version__}. Current version is {released_version}. Do not file any bugs against older versions."
                 )
         except requests.RequestException:
             pass
@@ -891,8 +887,7 @@ class JIRA:
         """
         if hasattr(self._session, "_async_jobs"):
             self.log.info(
-                "Executing asynchronous %s jobs found in queue by using %s threads..."
-                % (len(self._session._async_jobs), size)
+                f"Executing asynchronous {len(self._session._async_jobs)} jobs found in queue by using {size} threads..."
             )
             threaded_requests.map(self._session._async_jobs, size=size)
 
@@ -1936,7 +1931,7 @@ class JIRA:
     @translate_resource_args
     def add_comment(
         self,
-        issue: str | int,
+        issue: str | int | Issue,
         body: str,
         visibility: dict[str, str] | None = None,
         is_internal: bool = False,
@@ -1944,7 +1939,7 @@ class JIRA:
         """Add a comment from the current authenticated user on the specified issue and return a Resource for it.
 
         Args:
-            issue (Union[str, int]): ID or key of the issue to add the comment to
+            issue (Union[str, int, jira.resources.Issue]): ID or key of the issue to add the comment to
             body (str): Text of the comment to add
             visibility (Optional[Dict[str, str]]): a dict containing two entries: "type" and "value".
               "type" is 'role' (or 'group' if the Jira server has configured comment visibility for groups)
@@ -2048,7 +2043,7 @@ class JIRA:
             # we just won't be able to be quite as helpful.
             warnings.warn(
                 "Unable to gather applicationlinks; you will not be able "
-                "to add links to remote issues: ({}) {}".format(e.status_code, e.text),
+                f"to add links to remote issues: ({e.status_code}) {e.text}",
                 Warning,
             )
 
@@ -2125,11 +2120,11 @@ class JIRA:
 
     # non-resource
     @translate_resource_args
-    def transitions(self, issue: str | int, id: str | None = None, expand=None):
+    def transitions(self, issue: str | int | Issue, id: str | None = None, expand=None):
         """Get a list of the transitions available on the specified issue to the current user.
 
         Args:
-            issue (Union[str, int]): ID or key of the issue to get the transitions from
+            issue (Union[str, int, jira.resources.Issue]): ID or key of the issue to get the transitions from
             id (Optional[str]): if present, get only the transition matching this ID
             expand (Optional): extra information to fetch inside each transition
 
@@ -2146,14 +2141,14 @@ class JIRA:
         ]
 
     def find_transitionid_by_name(
-        self, issue: str | int, transition_name: str
+        self, issue: str | int | Issue, transition_name: str
     ) -> int | None:
         """Get a transitionid available on the specified issue to the current user.
 
         Look at https://developer.atlassian.com/static/rest/jira/6.1.html#d2e1074 for json reference
 
         Args:
-            issue (Union[str, int]): ID or key of the issue to get the transitions from
+            issue (Union[str, int, jira.resources.Issue]): ID or key of the issue to get the transitions from
             transition_name (str): name of transition we are looking for
 
         Returns:
@@ -2171,7 +2166,7 @@ class JIRA:
     @translate_resource_args
     def transition_issue(
         self,
-        issue: str | int,
+        issue: str | int | Issue,
         transition: str,
         fields: dict[str, Any] | None = None,
         comment: str | None = None,
@@ -2184,7 +2179,7 @@ class JIRA:
         all other keyword arguments will be ignored. Field values will be set on the issue as part of the transition process.
 
         Args:
-            issue (Union[str, int]): ID or key of the issue to perform the transition on
+            issue (Union[str, int, jira.resources.Issue]): ID or key of the issue to perform the transition on
             transition (str): ID or name of the transition to perform
             fields (Optional[Dict[str,Any]]): a dict containing field names and the values to use.
             comment (Optional[str]): String to add as comment to the issue when performing the transition.
@@ -2346,7 +2341,9 @@ class JIRA:
             Response
         """
         url = self._get_url("issue/" + str(issue) + "/watchers")
-        return self._session.post(url, data=json.dumps(watcher))
+        # Use user_id when adding watcher
+        watcher_id = self._get_user_id(watcher)
+        return self._session.post(url, data=json.dumps(watcher_id))
 
     @translate_resource_args
     def remove_watcher(self, issue: str | int, watcher: str) -> Response:
@@ -3680,45 +3677,55 @@ class JIRA:
         return None
 
     # Utilities
-    def _create_http_basic_session(
-        self,
-        username: str,
-        password: str,
-        timeout: None | float | tuple[float, float] | tuple[float, None] | None = None,
-    ):
+    def _create_http_basic_session(self, username: str, password: str):
         """Creates a basic http session.
 
         Args:
             username (str): Username for the session
             password (str): Password for the username
-            timeout (Optional[int]): If set determines the connection/read timeout delay for the Session.
 
         Returns:
             ResilientSession
         """
-        self._session = ResilientSession(timeout=timeout)
         self._session.auth = (username, password)
 
-    def _create_oauth_session(
-        self, oauth, timeout: float | int | tuple[float, float] | None
-    ):
-        from oauthlib.oauth1 import SIGNATURE_RSA
+    def _create_oauth_session(self, oauth: dict[str, Any]):
+        from oauthlib.oauth1 import SIGNATURE_HMAC_SHA1 as DEFAULT_SHA
         from requests_oauthlib import OAuth1
 
-        oauth_instance = OAuth1(
-            oauth["consumer_key"],
-            rsa_key=oauth["key_cert"],
-            signature_method=SIGNATURE_RSA,
-            resource_owner_key=oauth["access_token"],
-            resource_owner_secret=oauth["access_token_secret"],
-        )
-        self._session = ResilientSession(timeout)
-        self._session.auth = oauth_instance
+        try:
+            from oauthlib.oauth1 import SIGNATURE_RSA as FALLBACK_SHA
+        except ImportError:
+            FALLBACK_SHA = DEFAULT_SHA
+            _logging.debug("Fallback SHA 'SIGNATURE_RSA_SHA1' could not be imported.")
+
+        for sha_type in (oauth.get("signature_method"), DEFAULT_SHA, FALLBACK_SHA):
+            if sha_type is None:
+                continue
+            oauth_instance = OAuth1(
+                oauth["consumer_key"],
+                rsa_key=oauth["key_cert"],
+                signature_method=sha_type,
+                resource_owner_key=oauth["access_token"],
+                resource_owner_secret=oauth["access_token_secret"],
+            )
+            self._session.auth = oauth_instance
+            try:
+                self.myself()
+                _logging.debug(f"OAuth1 succeeded with signature_method={sha_type}")
+                return  # successful response, return with happy session
+            except JIRAError:
+                _logging.exception(
+                    f"Failed to create OAuth session with signature_method={sha_type}.\n"
+                    + "Attempting fallback method(s)."
+                    + "Consider specifying the signature via oauth['signature_method']."
+                )
+                if sha_type is FALLBACK_SHA:
+                    raise  # We have exhausted our options, bubble up exception
 
     def _create_kerberos_session(
         self,
-        timeout: None | float | tuple[float, float] | tuple[float, None] | None,
-        kerberos_options=None,
+        kerberos_options: dict[str, Any] = None,
     ):
         if kerberos_options is None:
             kerberos_options = {}
@@ -3735,7 +3742,6 @@ class JIRA:
                 % kerberos_options["mutual_authentication"]
             )
 
-        self._session = ResilientSession(timeout=timeout)
         self._session.auth = HTTPKerberosAuth(
             mutual_authentication=mutual_authentication
         )
@@ -3771,9 +3777,7 @@ class JIRA:
             t += dt
         return calendar.timegm(t.timetuple())
 
-    def _create_jwt_session(
-        self, jwt, timeout: float | int | tuple[float, float] | None
-    ):
+    def _create_jwt_session(self, jwt: dict[str, Any]):
         try:
             jwt_auth = JWTAuth(jwt["secret"], alg="HS256")
         except NameError as e:
@@ -3788,19 +3792,13 @@ class JIRA:
         jwt_auth.add_field("qsh", QshGenerator(self._options["context_path"]))
         for f in jwt["payload"].items():
             jwt_auth.add_field(f[0], f[1])
-        self._session = ResilientSession(timeout=timeout)
         self._session.auth = jwt_auth
 
-    def _create_token_session(
-        self,
-        token_auth: str,
-        timeout: None | float | tuple[float, float] | tuple[float, None] | None = None,
-    ):
+    def _create_token_session(self, token_auth: str):
         """Creates token-based session.
 
         Header structure: "authorization": "Bearer <token_auth>".
         """
-        self._session = ResilientSession(timeout=timeout)
         self._session.auth = TokenAuth(token_auth)
 
     def _set_avatar(self, params, url, avatar):
@@ -3922,7 +3920,7 @@ class JIRA:
         if self._magic is not None:
             return self._magic.id_buffer(buff)
         try:
-            return mimetypes.guess_type("f." + str(imghdr.what(0, buff)))[0]
+            return mimetypes.guess_type("f." + Image.open(buff).format)[0]
         except (OSError, TypeError):
             self.log.warning(
                 "Couldn't detect content type of avatar image"
@@ -4422,12 +4420,12 @@ class JIRA:
         assignee: str = None,
         ptype: str = "software",
         template_name: str = None,
-        avatarId=None,
-        issueSecurityScheme=None,
-        permissionScheme=None,
-        projectCategory=None,
-        notificationScheme=10000,
-        categoryId=None,
+        avatarId: int = None,
+        issueSecurityScheme: int = None,
+        permissionScheme: int = None,
+        projectCategory: int = None,
+        notificationScheme: int = 10000,
+        categoryId: int = None,
         url: str = "",
     ):
         """Create a project with the specified parameters.
@@ -4435,10 +4433,20 @@ class JIRA:
         Args:
             key (str): Mandatory. Must match Jira project key requirements, usually only 2-10 uppercase characters.
             name (Optional[str]): If not specified it will use the key value.
-            assignee (Optional[str]): key of the lead, if not specified it will use current user.
-            ptype (Optional[str]): Determines the type of project should be created.
-            template_name (Optional[str]): is used to create a project based on one of the existing project templates.
+            assignee (Optional[str]): Key of the lead, if not specified it will use current user.
+            ptype (Optional[str]): Determines the type of project that should be created. Defaults to 'software'.
+            template_name (Optional[str]): Is used to create a project based on one of the existing project templates.
               If `template_name` is not specified, then it should use one of the default values.
+            avatarId (Optional[int]): ID of the avatar to use for the project.
+            issueSecurityScheme (Optional[int]): Determines the security scheme to use. If none provided, will fetch the
+              scheme named 'Default' or the first scheme returned.
+            permissionScheme (Optional[int]): Determines the permission scheme to use. If none provided, will fetch the
+              scheme named 'Default Permission Scheme' or the first scheme returned.
+            projectCategory (Optional[int]): Determines the category the project belongs to. If none provided,
+              will fetch the one named 'Default' or the first category returned.
+            notificationScheme (Optional[int]): Determines the notification scheme to use.
+            categoryId (Optional[int]): Same as projectCategory. Can be used interchangeably.
+            url (Optional[str]): A link to information about the project, such as documentation.
 
         Returns:
             Union[bool,int]: Should evaluate to False if it fails otherwise it will be the new project id.
@@ -4469,6 +4477,12 @@ class JIRA:
                     break
             if issueSecurityScheme is None and ps_list:
                 issueSecurityScheme = ps_list[0]["id"]
+
+        # If categoryId provided instead of projectCategory, attribute the categoryId value
+        # to the projectCategory variable
+        projectCategory = (
+            categoryId if categoryId and not projectCategory else projectCategory
+        )
 
         if projectCategory is None:
             ps_list = self.projectcategories()

@@ -184,6 +184,9 @@ class ResilientSession(Session):
             # but for people subclassing we should preserve old behaviour
             prepared_kwargs["data"] = json.dumps(data)
 
+        if "verify" not in prepared_kwargs:
+            prepared_kwargs["verify"] = self.verify
+
         return prepared_kwargs
 
     def request(  # type: ignore[override] # An intentionally different override
@@ -341,8 +344,7 @@ class ResilientSession(Session):
             # Exponential backoff with full jitter.
             delay = min(self.max_retry_delay, 10 * 2**counter) * random.random()
             LOG.warning(
-                "Got recoverable error from %s %s, will retry [%s/%s] in %ss. Err: %s"
-                % (request_method, url, counter, self.max_retries, delay, msg)  # type: ignore[str-bytes-safe]
+                f"Got recoverable error from {request_method} {url}, will retry [{counter}/{self.max_retries}] in {delay}s. Err: {msg}"  # type: ignore[str-bytes-safe]
             )
             if isinstance(response, Response):
                 LOG.debug(
