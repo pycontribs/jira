@@ -3,9 +3,10 @@ Installation
 
 The easiest (and best) way to install jira-python is through `pip <https://pip.pypa.io/>`_::
 
-    pip install jira
+    pip install 'jira[cli]'
 
-This will handle installation of the client itself as well as the requirements.
+This will handle installation of the client itself as well as the requirements. The `[cli]` part installs
+dependencies for the `jirashell` binary, and may be omitted if you just need the library.
 
 If you're going to run the client standalone, we strongly recommend using a `virtualenv <https://virtualenv.pypa.io/>`_:
 
