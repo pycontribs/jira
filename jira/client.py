@@ -3668,7 +3668,7 @@ class JIRA:
 
     # App properties
 
-    def app_properties(self, addon_key: str) -> List[AppProperty]:
+    def app_properties(self, addon_key: str) -> list[AppProperty]:
         """Get a list of app properties.
 
         Args:
@@ -3704,7 +3704,7 @@ class JIRA:
         return self._find_for_resource(AppProperty, (addon_key, property_key))
 
     def create_app_property(
-        self, addon_key: str, property_key: str, data: Dict[str, Any]
+        self, addon_key: str, property_key: str, data: dict[str, Any]
     ) -> Response:
         """Create a new app property.
 
