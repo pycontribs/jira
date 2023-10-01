@@ -202,7 +202,7 @@ sphinxcontrib-qthelp==1.0.3
     # via sphinx
 sphinxcontrib-serializinghtml==1.1.9
     # via sphinx
-stack-data==0.6.2
+stack-data==0.6.3
     # via ipython
 tenacity==8.2.2
     # via jira (setup.cfg)
