@@ -1731,6 +1731,10 @@ class JIRA:
 
         Args:
             projectIdOrKey (Union[str, int]): id or key of the project for which to get the metadata.
+            startAt (int): Index of the first issue to return. (Default: ``0``)
+            maxResults (int): Maximum number of issues to return.
+              Total number of results is available in the ``total`` attribute of the returned :class:`ResultList`.
+              If maxResults evaluates to False, it will try to get all issues in batches. (Default: ``50``)
 
         Returns:
             Dict[str, Any]
@@ -1764,6 +1768,10 @@ class JIRA:
         Args:
             projectIdOrKey (Union[str, int]): id or key of the project for which to get the metadata.
             issueTypeId (Union[str, int]): id of the issue type for which to get the metadata.
+            startAt (int): Index of the first issue to return. (Default: ``0``)
+            maxResults (int): Maximum number of issues to return.
+              Total number of results is available in the ``total`` attribute of the returned :class:`ResultList`.
+              If maxResults evaluates to False, it will try to get all issues in batches. (Default: ``50``)
 
         Returns:
             Dict[str, Any]
