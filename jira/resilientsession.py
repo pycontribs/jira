@@ -113,10 +113,9 @@ class ResilientSession(Session):
             logging.warning(
                 f"Got ConnectionError [{response}] errno:{response.errno} on {request} {url}\n{vars(response)}\n{response.__dict__}"
             )
-        if isinstance(response, Response):
-            if response.status_code in [502, 503, 504, 401]:
-                # 401 UNAUTHORIZED still randomly returned by Atlassian Cloud as of 2017-01-16
-                msg = f"{response.status_code} {response.reason}"
+        if hasattr(response, "status_code"):
+            if response.status_code in [502, 503, 504]:
+                msg = "%s %s" % (response.status_code, response.reason)
                 # 2019-07-25: Disabled recovery for codes above^
                 return False
             elif not (
