@@ -11,34 +11,19 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        python-version: ["3.8", "3.9", "3.10"]
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
         jira-version: [8.17.1]
 
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v3
       - name: Start Jira docker instance
         run: docker run -dit -p 2990:2990 --name jira addono/jira-software-standalone --version ${{ matrix.jira-version }}
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-
-      - name: Get pip cache dir
-        id: pip-cache
-        run: |
-          echo "::set-output name=dir::$(pip cache dir)"
-      - name: Setup the Pip cache
-        uses: actions/cache@v2
-        with:
-          path: ${{ steps.pip-cache.outputs.dir }}
-          key: >-
-            ${{ runner.os }}-pip-${{ hashFiles('setup.cfg') }}-${{
-            hashFiles('setup.py') }}-${{ hashFiles('tox.ini') }}-${{
-            hashFiles('.pre-commit-config.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-            ${{ runner.os }}-
+          cache: pip
 
       - name: Install Dependencies
         run: |
@@ -47,13 +32,14 @@ jobs:
           python -m pip install --upgrade tox tox-gh-actions
 
       - name: Lint with tox
+        if: ${{ 'Skipped as pre-commit GHA also running'== 'true' }}
         run: tox -e lint
 
       - name: Test with tox
         run: tox
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1.0.15
+        uses: codecov/codecov-action@v3.1.4
         with:
           file: ./coverage.xml
           name: ${{ runner.os }}-${{ matrix.python-version }}
@@ -62,4 +48,5 @@ jobs:
         run: tox -e packaging
 
       - name: Make docs
+        if: ${{ 'Skipped as readthedocs GHA also running'== 'true' }}
         run: tox -e docs

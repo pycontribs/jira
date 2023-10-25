@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import os
+from pathlib import Path
 
 from tests.conftest import TEST_ATTACH_PATH, JiraTestCase
 
@@ -27,6 +30,15 @@ class AttachmentTests(JiraTestCase):
             )
             # JIRA returns a HTTP 204 upon successful deletion
             self.assertEqual(attachment.delete().status_code, 204)
+
+    def test_attach_with_no_filename(self):
+        issue = self.jira.issue(self.issue_1)
+        attachment_no_filename_specified = self.jira.add_attachment(
+            issue=issue.key, attachment=TEST_ATTACH_PATH, filename=None
+        )
+        new_attachment = self.jira.attachment(attachment_no_filename_specified.id)
+        msg = f"attachment, no filename specified {new_attachment.__dict__} of issue {issue}"
+        assert new_attachment.filename == Path(TEST_ATTACH_PATH).name, msg
 
     def test_2_add_remove_attachment_using_filename(self):
         issue = self.jira.issue(self.issue_1)

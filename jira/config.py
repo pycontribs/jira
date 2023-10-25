@@ -1,27 +1,29 @@
-"""
-This module allows people to keep their jira server credentials outside their script, in a configuration file that is not saved in the source control.
+"""Config handler.
+
+This module allows people to keep their jira server credentials outside their script,
+in a configuration file that is not saved in the source control.
 
 Also, this simplifies the scripts by not having to write the same initialization code for each script.
-
 """
+from __future__ import annotations
+
 import configparser
 import copy
 import logging
 import os
 import sys
-from typing import Optional, Union
 
 from jira.client import JIRA
 
 
 def get_jira(
-    profile: Optional[str] = None,
+    profile: str | None = None,
     url: str = "http://localhost:2990",
     username: str = "admin",
     password: str = "admin",
     appid=None,
     autofix=False,
-    verify: Union[bool, str] = True,
+    verify: bool | str = True,
 ):
     """Return a JIRA object by loading the connection details from the `config.ini` file.
 
@@ -32,9 +34,8 @@ def get_jira(
         password (str): password to use for authentication
         appid: appid
         autofix: autofix
-        verify (Union[bool, str]): boolean indicating whether SSL certificates should be
-            verified, or path to a CA_BUNDLE file or directory with certificates of
-            trusted CAs.
+        verify (Union[bool, str]): True to indicate whether SSL certificates should be verified or
+            str path to a CA_BUNDLE file or directory with certificates of trusted CAs. (Default: ``True``)
 
     Returns:
         JIRA: an instance to a JIRA object.

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import unittest
 from pathlib import Path
 from unittest.mock import mock_open, patch
@@ -54,7 +56,6 @@ class ExceptionsTests(unittest.TestCase):
             self.status_code = status_code
 
     def test_jira_error_response_added(self):
-
         err = JIRAError(
             response=self.MockResponse(headers=DUMMY_HEADERS, text=DUMMY_TEXT)
         )
@@ -74,7 +75,6 @@ class ExceptionsTests(unittest.TestCase):
         assert "text = " not in err_str
 
     def test_jira_error_request_added(self):
-
         err = JIRAError(
             request=self.MockResponse(headers=DUMMY_HEADERS, text=DUMMY_TEXT)
         )

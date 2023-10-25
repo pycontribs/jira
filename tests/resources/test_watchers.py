@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from tests.conftest import JiraTestCase
 
 
@@ -7,7 +9,6 @@ class WatchersTests(JiraTestCase):
         self.issue_1 = self.test_manager.project_b_issue1
 
     def test_add_remove_watcher(self):
-
         # removing it in case it exists, so we know its state
         self.jira.remove_watcher(self.issue_1, self.test_manager.user_normal.name)
         init_watchers = self.jira.watchers(self.issue_1).watchCount

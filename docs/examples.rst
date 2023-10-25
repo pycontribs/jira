@@ -1,9 +1,6 @@
 Examples
 ********
 
-.. contents:: Contents
-   :local:
-
 Here's a quick usage example:
 
 .. literalinclude:: ../examples/basic_use.py
@@ -34,7 +31,7 @@ default address for a Jira instance started from the Atlassian Plugin SDK.
 
 You can manually set the Jira server to use::
 
-    jac = JIRA('https://jira.atlassian.com')
+    jira = JIRA('https://jira.atlassian.com')
 
 Authentication
 --------------
@@ -267,6 +264,29 @@ Updating components::
         existingComponents.append({"name" : component.name})
     issue.update(fields={"components": existingComponents})
 
+Working with Rich Text
+^^^^^^^^^^^^^^^^^^^^^^
+
+You can use rich text in an issue's description or comment. In order to use rich text, the body
+content needs to be formatted using the Atlassian Document Format (ADF)::
+
+    jira = JIRA(basic_auth=("email", "API token"))
+    comment = {
+        "type": "doc",
+        "version": 1,
+        "content": [
+          {
+            "type": "codeBlock",
+            "content": [
+              {
+                "text": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque eget venenatis elit. Duis eu justo eget augue iaculis fermentum. Sed semper quam laoreet nisi egestas at posuere augue semper.",
+                "type": "text"
+              }
+            ]
+          }
+        ]
+      }
+    jira.add_comment("AB-123", comment)
 
 Fields
 ------
@@ -335,6 +355,16 @@ Adding, editing and deleting comments is similarly straightforward::
     comment.update(body='updated comment body')
     comment.update(body='updated comment body but no mail notification', notify=False)
     comment.delete()
+
+Get all images from a comment::
+
+    issue = jira.issue('JRA-1330')
+    regex_for_png = re.compile(r'\!(\S+?\.(jpg|png|bmp))\|?\S*?\!')
+    pngs_used_in_comment = regex_for_png.findall(issue.fields.comment.comments[0].body)
+    for attachment in issue.fields.attachment:
+        if attachment.filename in pngs_used_in_comment:
+            with open(attachment.filename, 'wb') as f:
+                f.write(attachment.get())
 
 Transitions
 -----------

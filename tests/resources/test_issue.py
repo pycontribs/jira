@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 
 from jira.exceptions import JIRAError
@@ -16,7 +18,7 @@ class IssueTests(JiraTestCase):
     def test_issue(self):
         issue = self.jira.issue(self.issue_1)
         self.assertEqual(issue.key, self.issue_1)
-        self.assertEqual(issue.fields.summary, "issue 1 from %s" % self.project_b)
+        self.assertEqual(issue.fields.summary, f"issue 1 from {self.project_b}")
 
     def test_issue_search_finds_issue(self):
         issues = self.jira.search_issues("key=%s" % self.issue_1)
@@ -37,9 +39,16 @@ class IssueTests(JiraTestCase):
         self.assertFalse(hasattr(issues[0].fields, "reporter"))
 
     def test_issue_search_default_behaviour_included_fields(self):
-        issues = self.jira.search_issues("key=%s" % self.issue_1)
+        search_str = f"key={self.issue_1}"
+        issues = self.jira.search_issues(search_str)
         self.assertTrue(hasattr(issues[0].fields, "reporter"))
         self.assertTrue(hasattr(issues[0].fields, "comment"))
+
+        # fields=None should be valid and return all fields (ie. default behavior)
+        self.assertEqual(
+            self.jira.search_issues(search_str),
+            self.jira.search_issues(search_str, fields=None),
+        )
 
     def test_issue_get_field(self):
         issue = self.jira.issue(self.issue_1)
@@ -55,7 +64,7 @@ class IssueTests(JiraTestCase):
 
     def test_issue_field_limiting(self):
         issue = self.jira.issue(self.issue_2, fields="summary,comment")
-        self.assertEqual(issue.fields.summary, "issue 2 from %s" % self.project_b)
+        self.assertEqual(issue.fields.summary, f"issue 2 from {self.project_b}")
         comment1 = self.jira.add_comment(issue, "First comment")
         comment2 = self.jira.add_comment(issue, "Second comment")
         comment3 = self.jira.add_comment(issue, "Third comment")
@@ -70,7 +79,7 @@ class IssueTests(JiraTestCase):
     def test_issue_equal(self):
         issue1 = self.jira.issue(self.issue_1)
         issue2 = self.jira.issue(self.issue_2)
-        issues = self.jira.search_issues("key=%s" % self.issue_1)
+        issues = self.jira.search_issues(f"key={self.issue_1}")
         self.assertTrue(issue1 is not None)
         self.assertTrue(issue1 == issues[0])
         self.assertFalse(issue2 == issues[0])
@@ -248,6 +257,29 @@ class IssueTests(JiraTestCase):
         assert "fields" not in issues[1]["issue"].raw
         for issue in issues:
             issue["issue"].delete()
+
+    def test_create_issue_with_integer_issuetype(self):
+        # take first existing issuetype to avoid problems due to hardcoded name/id later
+        issue_types_resolved = self.jira.issue_types()
+        dyn_it = issue_types_resolved[0]
+
+        issue = self.jira.create_issue(
+            summary="Test issue created using an integer issuetype",
+            project=self.project_b,
+            issuetype=int(dyn_it.id),
+        )
+        self.assertEqual(issue.get_field("issuetype").name, dyn_it.name)
+
+    def test_create_issue_with_issue_type_name(self):
+        issue_types_resolved = self.jira.issue_types()
+        dyn_it = issue_types_resolved[0]
+
+        issue = self.jira.create_issue(
+            summary="Test issue created using a str issuetype",
+            project=self.project_b,
+            issuetype=dyn_it.name,
+        )
+        self.assertEqual(issue.get_field("issuetype").name, dyn_it.name)
 
     def test_update_with_fieldargs(self):
         issue = self.jira.create_issue(

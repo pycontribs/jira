@@ -1,5 +1,7 @@
 # This script shows how to use the client in anonymous mode
 # against jira.atlassian.com.
+from __future__ import annotations
+
 from jira.client import JIRA
 
 # By default, the client will connect to a Jira instance started from the Atlassian Plugin SDK

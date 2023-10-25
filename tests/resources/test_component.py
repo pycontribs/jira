@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from jira.exceptions import JIRAError
 from tests.conftest import JiraTestCase, rndstr
 

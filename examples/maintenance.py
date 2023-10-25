@@ -2,7 +2,9 @@
 #
 # This script will cleanup your jira instance by removing all projects and
 # it is used to clean the CI/CD Jira server used for testing.
-#
+
+from __future__ import annotations
+
 import json
 import logging
 import os
@@ -38,27 +40,27 @@ for p in j.projects():
 
 for s in j.permissionschemes():
     if " for Project" in s["name"]:
-        logging.info("Deleting permission scheme: %s" % s["name"])
+        logging.info(f"Deleting permission scheme: {s['name']}")
         try:
             j.delete_permissionscheme(s["id"])
         except JIRAError as e:
             logging.error(e.text)
     else:
-        logging.info("Permission scheme: %s" % s["name"])
+        logging.info(f"Permission scheme: {s['name']}")
 
 for s in j.issuesecurityschemes():
     if " for Project" in s["name"]:
         logging.info("Deleting issue security scheme: %s", s["name"])
         j.delete_permissionscheme(s["id"])
     else:
-        logging.error("Issue security scheme: %s" % s["name"])
+        logging.error(f"Issue security scheme: {s['name']}")
 
 for s in j.projectcategories():
     # if ' for Project' in s['name']:
     #     print("Deleting issue security scheme: %s" % s['name'])
     #     # j.delete_permissionscheme(s['id'])
     # else:
-    logging.info("Project category: %s" % s["name"])
+    logging.info(f"Project category: {s['name']}")
 
 for s in j.avatars("project"):
     logging.info("Avatar project: %s", s)

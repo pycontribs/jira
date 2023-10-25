@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from jira import JIRAError
 from tests.conftest import JiraTestCase, find_by_id, rndstr
 
@@ -107,7 +109,7 @@ class ProjectTests(JiraTestCase):
         component.delete()
 
     def test_project_versions(self):
-        name = "version-%s" % rndstr()
+        name = f"version-{rndstr()}"
         version = self.jira.create_version(name, self.project_b, "will be deleted soon")
         versions = self.jira.project_versions(self.project_b)
         self.assertGreaterEqual(len(versions), 1)
@@ -121,9 +123,9 @@ class ProjectTests(JiraTestCase):
 
     def test_update_project_version(self):
         # given
-        name = "version-%s" % rndstr()
+        name = f"version-{rndstr()}"
         version = self.jira.create_version(name, self.project_b, "will be deleted soon")
-        updated_name = "version-%s" % rndstr()
+        updated_name = f"version-{rndstr()}"
         # when
         version.update(name=updated_name)
         # then
@@ -131,7 +133,7 @@ class ProjectTests(JiraTestCase):
         version.delete()
 
     def test_get_project_version_by_name(self):
-        name = "version-%s" % rndstr()
+        name = f"version-{rndstr()}"
         version = self.jira.create_version(name, self.project_b, "will be deleted soon")
 
         found_version = self.jira.get_project_version_by_name(self.project_b, name)
@@ -148,7 +150,7 @@ class ProjectTests(JiraTestCase):
         version.delete()
 
     def test_rename_version(self):
-        old_name = "version-%s" % rndstr()
+        old_name = f"version-{rndstr()}"
         version = self.jira.create_version(
             old_name, self.project_b, "will be deleted soon"
         )
@@ -170,7 +172,7 @@ class ProjectTests(JiraTestCase):
         version.delete()
 
     def test_project_versions_with_project_obj(self):
-        name = "version-%s" % rndstr()
+        name = f"version-{rndstr()}"
         version = self.jira.create_version(name, self.project_b, "will be deleted soon")
         project = self.jira.project(self.project_b)
         versions = self.jira.project_versions(project)

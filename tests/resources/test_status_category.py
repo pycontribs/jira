@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from tests.conftest import JiraTestCase
 
 
@@ -10,7 +12,7 @@ class StatusCategoryTests(JiraTestCase):
                 found = True
                 break
         self.assertTrue(
-            found, "StatusCategory with id=1 not found. [%s]" % statuscategories
+            found, f"StatusCategory with id=1 not found. [{statuscategories}]"
         )
         self.assertGreater(len(statuscategories), 0)
 

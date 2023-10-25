@@ -1,6 +1,6 @@
-"""Attempts to create a test user,
-as the empty JIRA instance isn't provisioned with one.
-"""
+"""Attempts to create a test user, as the empty JIRA instance isn't provisioned with one."""
+from __future__ import annotations
+
 import sys
 import time
 from os import environ

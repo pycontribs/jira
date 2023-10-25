@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import io
 import sys
 from unittest.mock import MagicMock, patch
@@ -68,7 +70,7 @@ def test_no_password_try_keyring(
 
         assert len(requests_mock.request_history) == 0
         captured = capsys.readouterr()
-        assert captured.err == "No password provided!\nassert ''\n"
+        assert "No password provided!" == captured.err.strip()
         assert "Getting password from keyring..." == captured.out.strip()
         assert mock_keyring._keyring == {}
 

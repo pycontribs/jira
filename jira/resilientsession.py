@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import abc
 import json
 import logging
 import random
 import time
-from typing import Any, Dict, Optional, Union
+from typing import Any
 
 from requests import Response, Session
 from requests.exceptions import ConnectionError
@@ -45,8 +47,8 @@ class PassthroughRetryPrepare(PrepareRequestForRetry):
         return super().prepare(original_request_kwargs)
 
 
-def raise_on_error(resp: Optional[Response], **kwargs) -> TypeGuard[Response]:
-    """Handle errors from a Jira Request
+def raise_on_error(resp: Response | None, **kwargs) -> TypeGuard[Response]:
+    """Handle errors from a Jira Request.
 
     Args:
         resp (Optional[Response]): Response from Jira request
@@ -78,8 +80,8 @@ def raise_on_error(resp: Optional[Response], **kwargs) -> TypeGuard[Response]:
     return True  # if no exception was raised, we have a valid Response
 
 
-def parse_error_msg(resp: Response) -> str:
-    """Parse a Jira Error message from the Response.
+def parse_errors(resp: Response) -> list[str]:
+    """Parse a Jira Error messages from the Response.
 
     https://developer.atlassian.com/cloud/jira/platform/rest/v2/intro/#status-codes
 
@@ -87,40 +89,57 @@ def parse_error_msg(resp: Response) -> str:
         resp (Response): The Jira API request's response.
 
     Returns:
-        str: The error message parsed from the Response. An empty string if no error.
+        List[str]: The error messages list parsed from the Response. An empty list if no error.
     """
-    resp_data: Dict[str, Any] = {}  # json parsed from the response
-    parsed_error = ""  # error message parsed from the response
-
+    resp_data: dict[str, Any] = {}  # json parsed from the response
+    parsed_errors: list[str] = []  # error messages parsed from the response
     if resp.status_code == 403 and "x-authentication-denied-reason" in resp.headers:
-        parsed_error = resp.headers["x-authentication-denied-reason"]
+        return [resp.headers["x-authentication-denied-reason"]]
     elif resp.text:
         try:
             resp_data = resp.json()
         except ValueError:
-            parsed_error = resp.text
+            return [resp.text]
 
     if "message" in resp_data:
         # Jira 5.1 errors
-        parsed_error = resp_data["message"]
+        parsed_errors = [resp_data["message"]]
+    elif "errorMessage" in resp_data:
+        # Sometimes Jira returns `errorMessage` as a message error key
+        # for example for the "Service temporary unavailable" error
+        parsed_errors = [resp_data["errorMessage"]]
     elif "errorMessages" in resp_data:
         # Jira 5.0.x error messages sometimes come wrapped in this array
         # Sometimes this is present but empty
         error_messages = resp_data["errorMessages"]
         if len(error_messages) > 0:
             if isinstance(error_messages, (list, tuple)):
-                parsed_error = "\n".join(error_messages)
+                parsed_errors = list(error_messages)
             else:
-                parsed_error = error_messages
+                parsed_errors = [error_messages]
     elif "errors" in resp_data:
         resp_errors = resp_data["errors"]
         if len(resp_errors) > 0 and isinstance(resp_errors, dict):
             # Catching only 'errors' that are dict. See https://github.com/pycontribs/jira/issues/350
             # Jira 6.x error messages are found in this array.
-            error_list = resp_errors.values()
-            parsed_error = ", ".join(error_list)
+            parsed_errors = [str(err) for err in resp_errors.values()]
 
-    return parsed_error
+    return parsed_errors
+
+
+def parse_error_msg(resp: Response) -> str:
+    """Parse a Jira Error messages from the Response and join them by comma.
+
+    https://developer.atlassian.com/cloud/jira/platform/rest/v2/intro/#status-codes
+
+    Args:
+        resp (Response): The Jira API request's response.
+
+    Returns:
+        str: The error message parsed from the Response. An empty str if no error.
+    """
+    errors = parse_errors(resp)
+    return ", ".join(errors)
 
 
 class ResilientSession(Session):
@@ -133,11 +152,11 @@ class ResilientSession(Session):
         """A Session subclass catered for the Jira API with exponential delaying retry.
 
         Args:
-            timeout (Optional[int]): Timeout. Defaults to None.
+            timeout (Optional[Union[Union[float, int], Tuple[float, float]]]): Connection/read timeout delay. Defaults to None.
             max_retries (int): Max number of times to retry a request. Defaults to 3.
             max_retry_delay (int): Max delay allowed between retries. Defaults to 60.
         """
-        self.timeout = timeout  # TODO: Unused?
+        self.timeout = timeout
         self.max_retries = max_retries
         self.max_retry_delay = max_retry_delay
         super().__init__()
@@ -154,23 +173,26 @@ class ResilientSession(Session):
     def _jira_prepare(self, **original_kwargs) -> dict:
         """Do any pre-processing of our own and return the updated kwargs."""
         prepared_kwargs = original_kwargs.copy()
-
+        self.headers: CaseInsensitiveDict
         request_headers = self.headers.copy()
         request_headers.update(original_kwargs.get("headers", {}))
         prepared_kwargs["headers"] = request_headers
 
-        data = original_kwargs.get("data", {})
+        data = original_kwargs.get("data", None)
         if isinstance(data, dict):
             # mypy ensures we don't do this,
             # but for people subclassing we should preserve old behaviour
             prepared_kwargs["data"] = json.dumps(data)
+
+        if "verify" not in prepared_kwargs:
+            prepared_kwargs["verify"] = self.verify
 
         return prepared_kwargs
 
     def request(  # type: ignore[override] # An intentionally different override
         self,
         method: str,
-        url: Union[str, bytes],
+        url: str | bytes,
         _prepare_retry_class: PrepareRequestForRetry = PassthroughRetryPrepare(),
         **kwargs,
     ) -> Response:
@@ -182,11 +204,10 @@ class ResilientSession(Session):
         Returns:
             Response: The response.
         """
-
         retry_number = 0
-        exception: Optional[Exception] = None
-        response: Optional[Response] = None
-        response_or_exception: Optional[Union[ConnectionError, Response]]
+        exception: Exception | None = None
+        response: Response | None = None
+        response_or_exception: ConnectionError | Response | None
 
         processed_kwargs = self._jira_prepare(**kwargs)
 
@@ -199,7 +220,9 @@ class ResilientSession(Session):
             exception = None
 
             try:
-                response = super().request(method, url, **processed_kwargs)
+                response = super().request(
+                    method, url, timeout=self.timeout, **processed_kwargs
+                )
                 if response.ok:
                     self.__handle_known_ok_response_errors(response)
                     return response
@@ -246,12 +269,13 @@ class ResilientSession(Session):
 
     def __recoverable(
         self,
-        response: Optional[Union[ConnectionError, Response]],
-        url: Union[str, bytes],
+        response: ConnectionError | Response | None,
+        url: str | bytes,
         request_method: str,
         counter: int = 1,
     ):
         """Return whether the request is recoverable and hence should be retried.
+
         Exponentially delays if recoverable.
 
         At this moment it supports: 429
@@ -283,29 +307,44 @@ class ResilientSession(Session):
         if isinstance(response, Response):
             if response.status_code in [429]:
                 is_recoverable = True
-                number_of_tokens_issued_per_interval = response.headers[
+                number_of_tokens_issued_per_interval = response.headers.get(
                     "X-RateLimit-FillRate"
-                ]
-                token_issuing_rate_interval_seconds = response.headers[
+                )
+                token_issuing_rate_interval_seconds = response.headers.get(
                     "X-RateLimit-Interval-Seconds"
-                ]
-                maximum_number_of_tokens = response.headers["X-RateLimit-Limit"]
-                retry_after = response.headers["retry-after"]
+                )
+                maximum_number_of_tokens = response.headers.get("X-RateLimit-Limit")
+                retry_after = response.headers.get("retry-after")
                 msg = f"{response.status_code} {response.reason}"
-                LOG.warning(
-                    f"Request rate limited by Jira: request should be retried after {retry_after} seconds.\n"
-                    + f"{number_of_tokens_issued_per_interval} tokens are issued every {token_issuing_rate_interval_seconds} seconds. "
-                    + f"You can accumulate up to {maximum_number_of_tokens} tokens.\n"
+                warning_msg = "Request rate limited by Jira."
+
+                warning_msg += (
+                    f" Request should be retried after {retry_after} seconds.\n"
+                    if retry_after is not None
+                    else "\n"
+                )
+                if (
+                    number_of_tokens_issued_per_interval is not None
+                    and token_issuing_rate_interval_seconds is not None
+                ):
+                    warning_msg += f"{number_of_tokens_issued_per_interval} tokens are issued every {token_issuing_rate_interval_seconds} seconds.\n"
+                if maximum_number_of_tokens is not None:
+                    warning_msg += (
+                        f"You can accumulate up to {maximum_number_of_tokens} tokens.\n"
+                    )
+                warning_msg = (
+                    warning_msg
                     + "Consider adding an exemption for the user as explained in: "
                     + "https://confluence.atlassian.com/adminjiraserver/improving-instance-stability-with-rate-limiting-983794911.html"
                 )
+
+                LOG.warning(warning_msg)
 
         if is_recoverable:
             # Exponential backoff with full jitter.
             delay = min(self.max_retry_delay, 10 * 2**counter) * random.random()
             LOG.warning(
-                "Got recoverable error from %s %s, will retry [%s/%s] in %ss. Err: %s"
-                % (request_method, url, counter, self.max_retries, delay, msg)  # type: ignore[str-bytes-safe]
+                f"Got recoverable error from {request_method} {url}, will retry [{counter}/{self.max_retries}] in {delay}s. Err: {msg}"  # type: ignore[str-bytes-safe]
             )
             if isinstance(response, Response):
                 LOG.debug(

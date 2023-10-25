@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from tests.conftest import JiraTestCase
 
 
@@ -14,6 +16,13 @@ class IssueLinkTests(JiraTestCase):
     def test_create_issue_link(self):
         self.test_manager.jira_admin.create_issue_link(
             self.link_types[0].outward,
+            self.test_manager.project_b_issue1,
+            self.test_manager.project_b_issue2,
+        )
+
+    def test_create_issue_link_with_issue_link_obj(self):
+        self.test_manager.jira_admin.create_issue_link(
+            self.link_types[0],
             self.test_manager.project_b_issue1,
             self.test_manager.project_b_issue2,
         )

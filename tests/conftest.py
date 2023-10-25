@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import getpass
 import hashlib
 import logging
@@ -8,7 +10,7 @@ import string
 import sys
 import unittest
 from time import sleep
-from typing import Any, Dict
+from typing import Any
 
 import pytest
 
@@ -122,7 +124,7 @@ class JiraTestManager:
         initialized (bool): if init was successful.
     """
 
-    __shared_state: Dict[Any, Any] = {}
+    __shared_state: dict[Any, Any] = {}
 
     def __init__(self, jira_hosted_type=os.environ.get("CI_JIRA_TYPE", "Server")):
         """Instantiate and populate the JIRA instance"""
@@ -278,20 +280,11 @@ class JiraTestManager:
         self.jid = get_unique_project_name()
 
         self.project_a = self.jid + "A"  # old XSS
-        self.project_a_name = "Test user={} key={} A".format(
-            getpass.getuser(),
-            self.project_a,
-        )
+        self.project_a_name = f"Test user={getpass.getuser()} key={self.project_a} A"
         self.project_b = self.jid + "B"  # old BULK
-        self.project_b_name = "Test user={} key={} B".format(
-            getpass.getuser(),
-            self.project_b,
-        )
+        self.project_b_name = f"Test user={getpass.getuser()} key={self.project_b} B"
         self.project_sd = self.jid + "C"
-        self.project_sd_name = "Test user={} key={} C".format(
-            getpass.getuser(),
-            self.project_sd,
-        )
+        self.project_sd_name = f"Test user={getpass.getuser()} key={self.project_sd} C"
 
         self.project_a_id = self._create_project(self.project_a, self.project_a_name)
         self.project_b_id = self._create_project(
@@ -306,17 +299,17 @@ class JiraTestManager:
             "issuetype": {"name": self.CI_JIRA_ISSUE},
         }
         self.project_b_issue1_obj = self.jira_admin.create_issue(
-            summary="issue 1 from %s" % self.project_b, **project_b_issue_kwargs
+            summary=f"issue 1 from {self.project_b}", **project_b_issue_kwargs
         )
         self.project_b_issue1 = self.project_b_issue1_obj.key
 
         self.project_b_issue2_obj = self.jira_admin.create_issue(
-            summary="issue 2 from %s" % self.project_b, **project_b_issue_kwargs
+            summary=f"issue 2 from {self.project_b}", **project_b_issue_kwargs
         )
         self.project_b_issue2 = self.project_b_issue2_obj.key
 
         self.project_b_issue3_obj = self.jira_admin.create_issue(
-            summary="issue 3 from %s" % self.project_b, **project_b_issue_kwargs
+            summary=f"issue 3 from {self.project_b}", **project_b_issue_kwargs
         )
         self.project_b_issue3 = self.project_b_issue3_obj.key
 
@@ -343,3 +336,13 @@ def find_by_name(seq, name):
     for seq_item in seq:
         if seq_item["name"] == name:
             return seq_item
+
+
+@pytest.fixture()
+def no_fields(monkeypatch):
+    """When we want to test the __init__ method of the jira.client.JIRA
+    we don't need any external calls to get the fields.
+
+    We don't need the features of a MagicMock, hence we don't use it here.
+    """
+    monkeypatch.setattr(JIRA, "fields", lambda *args, **kwargs: [])

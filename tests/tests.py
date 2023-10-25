@@ -8,6 +8,8 @@ Refer to conftest.py for shared helper methods.
 resources/test_* : For tests related to resources
 test_* : For other tests of the non-resource elements of the jira package.
 """
+from __future__ import annotations
+
 import logging
 import os
 import pickle
@@ -17,11 +19,12 @@ from unittest import mock
 
 import pytest
 import requests
+from parameterized import parameterized
 
 from jira import JIRA, Issue, JIRAError
 from jira.client import ResultList
-from jira.resources import cls_for_resource
-from tests.conftest import JiraTestCase, rndpassword
+from jira.resources import Dashboard, Resource, cls_for_resource
+from tests.conftest import JiraTestCase, allow_on_cloud, rndpassword
 
 LOGGER = logging.getLogger(__name__)
 
@@ -153,9 +156,9 @@ class FieldsTests(JiraTestCase):
         self.assertGreater(len(fields), 10)
 
 
-class MyPermissionsTests(JiraTestCase):
+class MyPermissionsServerTests(JiraTestCase):
     def setUp(self):
-        JiraTestCase.setUp(self)
+        super().setUp()
         self.issue_1 = self.test_manager.project_b_issue1
 
     def test_my_permissions(self):
@@ -177,13 +180,56 @@ class MyPermissionsTests(JiraTestCase):
         self.assertGreaterEqual(len(perms["permissions"]), 10)
 
 
+@allow_on_cloud
+class MyPermissionsCloudTests(JiraTestCase):
+    def setUp(self):
+        super().setUp()
+        if not self.jira._is_cloud:
+            self.skipTest("cloud only test class")
+        self.issue_1 = self.test_manager.project_b_issue1
+        self.permission_keys = "BROWSE_PROJECTS,CREATE_ISSUES,ADMINISTER_PROJECTS"
+
+    def test_my_permissions(self):
+        perms = self.jira.my_permissions(permissions=self.permission_keys)
+        self.assertEqual(len(perms["permissions"]), 3)
+
+    def test_my_permissions_by_project(self):
+        perms = self.jira.my_permissions(
+            projectKey=self.test_manager.project_a, permissions=self.permission_keys
+        )
+        self.assertEqual(len(perms["permissions"]), 3)
+        perms = self.jira.my_permissions(
+            projectId=self.test_manager.project_a_id, permissions=self.permission_keys
+        )
+        self.assertEqual(len(perms["permissions"]), 3)
+
+    def test_my_permissions_by_issue(self):
+        perms = self.jira.my_permissions(
+            issueKey=self.issue_1, permissions=self.permission_keys
+        )
+        self.assertEqual(len(perms["permissions"]), 3)
+        perms = self.jira.my_permissions(
+            issueId=self.test_manager.project_b_issue1_obj.id,
+            permissions=self.permission_keys,
+        )
+        self.assertEqual(len(perms["permissions"]), 3)
+
+    def test_missing_required_param_my_permissions_raises_exception(self):
+        with self.assertRaises(JIRAError):
+            self.jira.my_permissions()
+
+    def test_invalid_param_my_permissions_raises_exception(self):
+        with self.assertRaises(JIRAError):
+            self.jira.my_permissions("INVALID_PERMISSION")
+
+
 class SearchTests(JiraTestCase):
     def setUp(self):
         JiraTestCase.setUp(self)
         self.issue = self.test_manager.project_b_issue1
 
     def test_search_issues(self):
-        issues = self.jira.search_issues("project=%s" % self.project_b)
+        issues = self.jira.search_issues(f"project={self.project_b}")
         issues = cast(ResultList[Issue], issues)
         self.assertLessEqual(len(issues), 50)  # default maxResults
         for issue in issues:
@@ -194,7 +240,7 @@ class SearchTests(JiraTestCase):
         try:
             self.jira._options["async"] = True
             issues = self.jira.search_issues(
-                "project=%s" % self.project_b, maxResults=False
+                f"project={self.project_b}", maxResults=False
             )
             issues = cast(ResultList[Issue], issues)
             self.assertEqual(len(issues), issues.total)
@@ -204,20 +250,18 @@ class SearchTests(JiraTestCase):
             self.jira._options["async"] = original_val
 
     def test_search_issues_maxresults(self):
-        issues = self.jira.search_issues("project=%s" % self.project_b, maxResults=10)
+        issues = self.jira.search_issues(f"project={self.project_b}", maxResults=10)
         self.assertLessEqual(len(issues), 10)
 
     def test_search_issues_startat(self):
         issues = self.jira.search_issues(
-            "project=%s" % self.project_b, startAt=2, maxResults=10
+            f"project={self.project_b}", startAt=2, maxResults=10
         )
         self.assertGreaterEqual(len(issues), 1)
         # we know that project_b should have at least 3 issues
 
     def test_search_issues_field_limiting(self):
-        issues = self.jira.search_issues(
-            "key=%s" % self.issue, fields="summary,comment"
-        )
+        issues = self.jira.search_issues(f"key={self.issue}", fields="summary,comment")
         issues = cast(ResultList[Issue], issues)
         self.assertTrue(hasattr(issues[0].fields, "summary"))
         self.assertTrue(hasattr(issues[0].fields, "comment"))
@@ -225,7 +269,7 @@ class SearchTests(JiraTestCase):
         self.assertFalse(hasattr(issues[0].fields, "progress"))
 
     def test_search_issues_expand(self):
-        issues = self.jira.search_issues("key=%s" % self.issue, expand="changelog")
+        issues = self.jira.search_issues(f"key={self.issue}", expand="changelog")
         issues = cast(ResultList[Issue], issues)
         # self.assertTrue(hasattr(issues[0], 'names'))
         self.assertEqual(len(issues), 1)
@@ -286,6 +330,9 @@ class SessionTests(JiraTestCase):
         self.assertTrue(False, "Instantiation of invalid JIRA instance succeeded.")
 
 
+MIMICKED_BACKEND_BATCH_SIZE = 10
+
+
 class AsyncTests(JiraTestCase):
     def setUp(self):
         self.jira = JIRA(
@@ -296,47 +343,116 @@ class AsyncTests(JiraTestCase):
             get_server_info=False,
         )
 
-    def test_fetch_pages(self):
+    @parameterized.expand(
+        [
+            (
+                0,
+                26,
+                {Issue: None},
+                False,
+            ),  # original behaviour, fetch all with jira's original return size
+            (0, 26, {Issue: 20}, False),  # set batch size to 20
+            (5, 26, {Issue: 20}, False),  # test start_at
+            (5, 26, {Issue: 20}, 50),  # test maxResults set (one request)
+        ]
+    )
+    def test_fetch_pages(
+        self, start_at: int, total: int, default_batch_sizes: dict, max_results: int
+    ):
         """Tests that the JIRA._fetch_pages method works as expected."""
         params = {"startAt": 0}
-        total = 26
+        self.jira._options["default_batch_size"] = default_batch_sizes
+        batch_size = self.jira._get_batch_size(Issue)
+        expected_calls = _calculate_calls_for_fetch_pages(
+            "https://jira.atlassian.com/rest/api/2/search",
+            start_at,
+            total,
+            max_results,
+            batch_size,
+            MIMICKED_BACKEND_BATCH_SIZE,
+        )
+        batch_size = batch_size or MIMICKED_BACKEND_BATCH_SIZE
         expected_results = []
         for i in range(0, total):
-            result = _create_issue_result_json(i, "summary %s" % i, key="KEY-%s" % i)
+            result = _create_issue_result_json(i, f"summary {i}", key=f"KEY-{i}")
             expected_results.append(result)
-        result_one = _create_issue_search_results_json(
-            expected_results[:10], max_results=10, total=total
-        )
-        result_two = _create_issue_search_results_json(
-            expected_results[10:20], max_results=10, total=total
-        )
-        result_three = _create_issue_search_results_json(
-            expected_results[20:], max_results=6, total=total
-        )
+
+        if not max_results:
+            mocked_api_results = []
+            for i in range(start_at, total, batch_size):
+                mocked_api_result = _create_issue_search_results_json(
+                    expected_results[i : i + batch_size],
+                    max_results=batch_size,
+                    total=total,
+                )
+                mocked_api_results.append(mocked_api_result)
+        else:
+            mocked_api_results = [
+                _create_issue_search_results_json(
+                    expected_results[start_at : max_results + start_at],
+                    max_results=max_results,
+                    total=total,
+                )
+            ]
+
         mock_session = mock.Mock(name="mock_session")
         responses = mock.Mock(name="responses")
         responses.content = "_filler_"
-        responses.json.side_effect = [result_one, result_two, result_three]
+        responses.json.side_effect = mocked_api_results
         responses.status_code = 200
         mock_session.request.return_value = responses
         mock_session.get.return_value = responses
         self.jira._session.close()
         self.jira._session = mock_session
-        items = self.jira._fetch_pages(Issue, "issues", "search", 0, False, params)
-        self.assertEqual(len(items), total)
+        items = self.jira._fetch_pages(
+            Issue, "issues", "search", start_at, max_results, params=params
+        )
+
+        actual_calls = [[kall[1], kall[2]] for kall in self.jira._session.method_calls]
+        self.assertEqual(actual_calls, expected_calls)
+        self.assertEqual(len(items), total - start_at)
         self.assertEqual(
             {item.key for item in items},
-            {expected_r["key"] for expected_r in expected_results},
+            {expected_r["key"] for expected_r in expected_results[start_at:]},
         )
+
+
+@pytest.mark.parametrize(
+    "default_batch_sizes, item_type, expected",
+    [
+        ({Issue: 2}, Issue, 2),
+        ({Resource: 1}, Resource, 1),
+        (
+            {Resource: 1, Issue: None},
+            Issue,
+            None,
+        ),
+        ({Resource: 1}, Dashboard, 1),
+        ({}, Issue, 100),
+        ({}, Resource, 100),
+    ],
+    ids=[
+        "modify Issue default",
+        "modify Resource default",
+        "let backend decide for Issue",
+        "fallback",
+        "default for Issue",
+        "default value for everything else",
+    ],
+)
+def test_get_batch_size(default_batch_sizes, item_type, expected, no_fields):
+    jira = JIRA(default_batch_sizes=default_batch_sizes, get_server_info=False)
+
+    assert jira._get_batch_size(item_type) == expected
 
 
 def _create_issue_result_json(issue_id, summary, key, **kwargs):
     """Returns a minimal json object for an issue."""
     return {
-        "id": "%s" % issue_id,
+        "id": f"{issue_id}",
         "summary": summary,
         "key": key,
-        "self": kwargs.get("self", "http://example.com/%s" % issue_id),
+        "self": kwargs.get("self", f"http://example.com/{issue_id}"),
     }
 
 
@@ -350,6 +466,71 @@ def _create_issue_search_results_json(issues, **kwargs):
     }
 
 
+def _calculate_calls_for_fetch_pages(
+    url: str,
+    start_at: int,
+    total: int,
+    max_results: int,
+    batch_size: int | None,
+    default: int | None = 10,
+):
+    """Returns expected query parameters for specified search-issues arguments."""
+    if not max_results:
+        call_list = []
+        if batch_size is None:
+            # for the first request with batch-size is `None` we specifically cannot/don't want to set it but let
+            # the server specify it (here we mimic a server-default of 10 issues per batch).
+            call_ = [(url,), {"params": {"startAt": start_at}}]
+            call_list.append(call_)
+            start_at += default
+            batch_size = default
+        for index, start_at in enumerate(range(start_at, total, batch_size)):
+            call_ = [
+                (url,),
+                {"params": {"startAt": start_at, "maxResults": batch_size}},
+            ]
+
+            call_list.append(call_)
+    else:
+        call_list = [
+            [(url,), {"params": {"startAt": start_at, "maxResults": max_results}}]
+        ]
+    return call_list
+
+
+DEFAULT_NEW_REMOTE_LINK_OBJECT = {"url": "http://google.com", "title": "googlicious!"}
+
+
+class ClientRemoteLinkTests(JiraTestCase):
+    def setUp(self):
+        JiraTestCase.setUp(self)
+        self.issue_key = self.test_manager.project_b_issue1
+
+    def test_delete_remote_link_by_internal_id(self):
+        link = self.jira.add_remote_link(
+            self.issue_key,
+            destination=DEFAULT_NEW_REMOTE_LINK_OBJECT,
+        )
+        _id = link.id
+        self.jira.delete_remote_link(self.issue_key, internal_id=_id)
+        self.assertRaises(JIRAError, self.jira.remote_link, self.issue_key, _id)
+
+    def test_delete_remote_link_by_global_id(self):
+        link = self.jira.add_remote_link(
+            self.issue_key,
+            destination=DEFAULT_NEW_REMOTE_LINK_OBJECT,
+            globalId="python-test:story.of.sasquatch.riding",
+        )
+        _id = link.id
+        self.jira.delete_remote_link(
+            self.issue_key, global_id="python-test:story.of.sasquatch.riding"
+        )
+        self.assertRaises(JIRAError, self.jira.remote_link, self.issue_key, _id)
+
+    def test_delete_remote_link_with_invalid_args(self):
+        self.assertRaises(ValueError, self.jira.delete_remote_link, self.issue_key)
+
+
 class WebsudoTests(JiraTestCase):
     def test_kill_websudo(self):
         self.jira.kill_websudo()
@@ -361,10 +542,10 @@ class WebsudoTests(JiraTestCase):
 class UserAdministrationTests(JiraTestCase):
     def setUp(self):
         JiraTestCase.setUp(self)
-        self.test_username = "test_%s" % self.test_manager.project_a
-        self.test_email = "%s@example.com" % self.test_username
+        self.test_username = f"test_{self.test_manager.project_a}"
+        self.test_email = f"{self.test_username}@example.com"
         self.test_password = rndpassword()
-        self.test_groupname = "testGroupFor_%s" % self.test_manager.project_a
+        self.test_groupname = f"testGroupFor_{self.test_manager.project_a}"
 
     def _skip_pycontribs_instance(self):
         pytest.skip(
