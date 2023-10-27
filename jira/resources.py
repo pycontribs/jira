@@ -1550,6 +1550,6 @@ def cls_for_resource(resource_literal: str) -> type[Resource]:
 
 class PropertyHolder:
     """An object for storing named attributes."""
+
     def __iter__(self):
-        for attr in vars(self):
-            yield attr
+        yield from vars(self)
