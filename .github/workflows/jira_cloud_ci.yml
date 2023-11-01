@@ -24,15 +24,15 @@ jobs:
         # We only test a single version to prevent concurrent
         # running of tests influencing one another
         python-version: ["3.8"]
-        cache: pip
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
+          cache: pip
 
       - name: Install Dependencies
         run: |
