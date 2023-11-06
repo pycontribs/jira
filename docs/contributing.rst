@@ -63,7 +63,7 @@ Issues and Feature Requests
   * How to recreate the bug.
   * If relevant, including the versions of your:
 
-    * Python interpreter (3.6, etc)
+    * Python interpreter (3.11, etc)
     * jira-python
     * Operating System and Version (Windows 7, OS X 10.10, Ubuntu 14.04, etc.)
     * IPython if using jirashell
