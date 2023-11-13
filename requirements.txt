@@ -140,9 +140,7 @@ traitlets==5.13.0
     #   ipython
     #   matplotlib-inline
 urllib3==2.0.7
-    # via
-    #   jira (setup.cfg)
-    #   requests
+    # via requests
 wcwidth==0.2.9
     # via prompt-toolkit
 zipp==3.4.1
