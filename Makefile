@@ -72,9 +72,8 @@ dist:
 	$(PREFIX)python setup.py sdist bdist_wheel
 
 prepare:
-	@pyenv install -s 3.6.9
-	@pyenv install -s 3.7.4
-	@pyenv local 3.6.9 3.7.4
+	@pyenv install -s 3.11
+	@pyenv local 3.11
 	@echo "INFO:	=== Preparing to run for package:$(PACKAGE_NAME) platform:$(PLATFORM) py:$(PYTHON_VERSION) dir:$(DIR) ==="
 	#if [ -f ${HOME}/testspace/testspace ]; then ${HOME}/testspace/testspace config url ${TESTSPACE_TOKEN}@pycontribs.testspace.com/jira/tests ; fi;
 
