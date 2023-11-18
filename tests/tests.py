@@ -546,6 +546,10 @@ class UserAdministrationTests(JiraTestCase):
         self.test_email = f"{self.test_username}@example.com"
         self.test_password = rndpassword()
         self.test_groupname = f"testGroupFor_{self.test_manager.project_a}"
+        self.test_team_name= f"testTeamFor_{self.test_manager.project_a}"
+        self.org_id=""
+        self.test_team_type="OPEN"
+        self.test_team_description="test Description"
 
     def _skip_pycontribs_instance(self):
         pytest.skip(
@@ -609,6 +613,27 @@ class UserAdministrationTests(JiraTestCase):
 
         result = self.jira.delete_user(self.test_username)
         assert result, True
+
+    def test_add_team(self):
+        if self._should_skip_for_pycontribs_instance():
+            self._skip_pycontribs_instance()
+        try:
+            self.jira.remove_team(self.test_team_name)
+        except JIRAError:
+            pass
+
+        sleep(2)  # avoid 500 errors
+        result_team = self.jira.create_team(
+            self.org_id,
+            self.test_team_description,
+            self.test_team_name, 
+            self.test_team_type
+        )
+        self.assertEqual(
+            self.test_team_name,
+            result_team.__getattr__("displayName"),
+            "Did not find expected group after trying to add" " it. Test Fails.",
+        )
 
     def test_add_group(self):
         if self._should_skip_for_pycontribs_instance():
