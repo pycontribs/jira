@@ -1365,13 +1365,13 @@ class JIRA:
         """
         url = f"/gateway/api/public/teams/v1/org/{org_id}/teams/{team_id}/members"
         payload = {"first": 50}
-        r = self._session.get(url, data=json.dumps(payload))
+        r = self._session.get(url, data=json.dumps(payload)).json()
         has_next_page = r["pageInfo"]["hasNextPage"]
         end_index = r["pageInfo"]["endCursor"]
 
         while has_next_page:
-            payload["after"] = str(end_index)
-            r2 = self._session.get(url, data=json.dumps(payload))
+            payload["after"] = end_index
+            r2 = self._session.get(url, data=json.dumps(payload)).json()
             for user in r2["results"]:
                 r["results"].append(user)
             end_index = r2["pageInfo"]["endCursor"]
