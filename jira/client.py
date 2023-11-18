@@ -1293,6 +1293,41 @@ class JIRA:
         raw_filter_json = json.loads(r.text)
         return Filter(self._options, self._session, raw=raw_filter_json)
 
+    # Teams
+
+    def team_members(self, team_id: str, org_id: str) -> list[str]:
+        """Return list of account Ids in the team. Requires Jira 6.0 or will raise NotImplemented.
+
+        Args:
+            team_id (str): Id of the team.
+            org_id (str): Id of the org.
+        """
+
+        url = f"/gateway/api/public/teams/v1/org/{org_id}/teams/{team_id}/members"
+        headers = {
+            "Accept": "*/*",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "first": 50
+        }
+        r = self._session.get(url,headers=headers,data=json.dumps(payload))
+        has_next_page = r["pageInfo"]["hasNextPage"]
+        end_index = r["pageInfo"]["endCursor"]
+
+        while has_next_page:
+            payload["after"]=str(end_index)
+            r2 = self._session.get(url,headers=headers,data=json.dumps(payload))
+            for user in r2["results"]:
+                r["results"].append(user)
+            end_index = r2["pageInfo"]["endCursor"]
+            has_next_page = r2["pageInfo"]["hasNextPage"]
+        
+        result = []
+        for accounts in r["results"]:
+            result.append(accounts.get("accountId"))
+        return result
+
     # Groups
 
     def group(self, id: str, expand: Any = None) -> Group:
