@@ -1215,6 +1215,7 @@ class User(Resource):
             self._parse_raw(raw)
         self.raw: dict[str, Any] = cast(Dict[str, Any], self.raw)
 
+
 class Team(Resource):
     """A Jira team."""
 
@@ -1224,9 +1225,11 @@ class Team(Resource):
         session: ResilientSession,
         raw: dict[str, Any] = None,
     ):
-        TEAM_API_BASE_URL = "{server}/gateway/api/public/teams/v1/" #rest/{rest_path}/{rest_api_version}/{path}"
-        
-        Resource.__init__(self, "org/{0}/teams/{1}", options, session, base_url=TEAM_API_BASE_URL)
+        TEAM_API_BASE_URL = "{server}/gateway/api/public/teams/v1/"  # rest/{rest_path}/{rest_api_version}/{path}"
+
+        Resource.__init__(
+            self, "org/{0}/teams/{1}", options, session, base_url=TEAM_API_BASE_URL
+        )
         if raw:
             self._parse_raw(raw)
         self.raw: dict[str, Any] = cast(Dict[str, Any], self.raw)

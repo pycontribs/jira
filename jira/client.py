@@ -1297,51 +1297,46 @@ class JIRA:
     # Teams
 
     def create_team(
-            self, 
-            org_id: str,
-            description: str,
-            display_name: str,
-            team_type: str,
-            site_id: str = None,
+        self,
+        org_id: str,
+        description: str,
+        display_name: str,
+        team_type: str,
+        site_id: str = None,
     ) -> Team:
-        url=f"gateway/api/public/teams/v1/org/{org_id}/teams/"
+        url = f"gateway/api/public/teams/v1/org/{org_id}/teams/"
         payload = {
             "description": description,
             "displayName": display_name,
-            "teamType": team_type
+            "teamType": team_type,
         }
         if site_id is not None:
-            payload["siteId"]=site_id
-        r=self._session.post(url,data=json.dumps(payload))
+            payload["siteId"] = site_id
+        r = self._session.post(url, data=json.dumps(payload))
         raw_team_json: dict[str, Any] = json_loads(r)
-        return Team(self._options,self._session,raw=raw_team_json)
+        return Team(self._options, self._session, raw=raw_team_json)
 
-    def get_team(
-            self,
-            org_id: str,
-            team_id: str,
-            site_id: str = None
-    ) -> Team:
-        url=f"gateway/api/public/teams/v1/org/{org_id}/teams/{team_id}"
+    def get_team(self, org_id: str, team_id: str, site_id: str = None) -> Team:
+        url = f"gateway/api/public/teams/v1/org/{org_id}/teams/{team_id}"
         if site_id is not None:
-            url+=f"?siteId={site_id}"
-        r=self._session.get(url)
+            url += f"?siteId={site_id}"
+        r = self._session.get(url)
         raw_team_json: dict[str, Any] = json_loads(r)
-        return Team(self._options,self._session,raw=raw_team_json)
+        return Team(self._options, self._session, raw=raw_team_json)
 
     def remove_team(
-            self,
-            org_id: str,
-            team_id: str, 
+        self,
+        org_id: str,
+        team_id: str,
     ):
         pass
 
     def update_team(
-            self,
-            org_id: str,
-            team_id: str,
-            description: str,
-            displayName: str,          
+        self,
+        org_id: str,
+        team_id: str,
+        description: str,
+        displayName: str,
     ) -> Team:
         pass
 
@@ -1352,41 +1347,38 @@ class JIRA:
             team_id (str): Id of the team.
             org_id (str): Id of the org.
         """
-
         url = f"/gateway/api/public/teams/v1/org/{org_id}/teams/{team_id}/members"
-        payload = {
-            "first": 50
-        }
-        r = self._session.get(url,data=json.dumps(payload))
+        payload = {"first": 50}
+        r = self._session.get(url, data=json.dumps(payload))
         has_next_page = r["pageInfo"]["hasNextPage"]
         end_index = r["pageInfo"]["endCursor"]
 
         while has_next_page:
-            payload["after"]=str(end_index)
-            r2 = self._session.get(url,data=json.dumps(payload))
+            payload["after"] = str(end_index)
+            r2 = self._session.get(url, data=json.dumps(payload))
             for user in r2["results"]:
                 r["results"].append(user)
             end_index = r2["pageInfo"]["endCursor"]
             has_next_page = r2["pageInfo"]["hasNextPage"]
-        
+
         result = []
         for accounts in r["results"]:
             result.append(accounts.get("accountId"))
         return result
 
     def add_team_members(
-            self,
-            org_id: str,
-            team_id: str,
-            members: list[str],          
+        self,
+        org_id: str,
+        team_id: str,
+        members: list[str],
     ):
         pass
 
     def remove_team_members(
-            self,
-            org_id: str,
-            team_id: str,
-            members: list[str],          
+        self,
+        org_id: str,
+        team_id: str,
+        members: list[str],
     ):
         pass
 
