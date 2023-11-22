@@ -10,7 +10,7 @@ appdirs==1.4.4
     # via virtualenv
 attrs==20.3.0
     # via pytest
-certifi==2020.12.5
+certifi==2023.7.22
     # via requests
 cfgv==3.2.0
     # via pre-commit

@@ -12,7 +12,7 @@ asttokens==2.4.1
     # via stack-data
 babel==2.13.1
     # via sphinx
-certifi==2020.12.5
+certifi==2023.7.22
     # via requests
 cffi==1.16.0
     # via cryptography
