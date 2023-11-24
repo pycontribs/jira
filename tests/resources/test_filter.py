@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 
-from tests.conftest import JiraTestCase, rndstr
+from tests.conftest import jira_svcTestCase, rndstr
 
 
-class FilterTests(JiraTestCase):
+class FilterTests(jira_svcTestCase):
     def setUp(self):
-        JiraTestCase.setUp(self)
+        jira_svcTestCase.setUp(self)
         self.issue_1 = self.test_manager.project_b_issue1
         self.issue_2 = self.test_manager.project_b_issue2
 
@@ -19,7 +19,7 @@ class FilterTests(JiraTestCase):
     @contextmanager
     def make_filter(self, **kwargs):
         try:
-            new_filter = self.jira.create_filter(
+            new_filter = self.jira_svc.create_filter(
                 name=kwargs.pop("name", self.filter_name),
                 description=kwargs.pop("description", self.filter_desc),
                 jql=kwargs.pop("jql", self.filter_jql),
@@ -39,21 +39,21 @@ class FilterTests(JiraTestCase):
     def test_favourite_filters(self):
         filter_name = f"filter-to-fav-{self.filter_name}"
         with self.make_filter(name=filter_name, favourite=True):
-            new_filters = self.jira.favourite_filters()
+            new_filters = self.jira_svc.favourite_filters()
             assert filter_name in [f.name for f in new_filters]
 
     def test_filter_update_empty_description(self):
         new_jql = f"{self.filter_jql} ORDER BY created ASC"
         new_name = f"new_{self.filter_name}"
         with self.make_filter(description=None) as myfilter:
-            self.jira.update_filter(
+            self.jira_svc.update_filter(
                 myfilter.id,
                 name=new_name,
                 description=None,
                 jql=new_jql,
                 favourite=None,
             )
-            updated_filter = self.jira.filter(myfilter.id)
+            updated_filter = self.jira_svc.filter(myfilter.id)
             assert updated_filter.name == new_name
             assert updated_filter.jql == new_jql
             assert not hasattr(updated_filter, "description")
@@ -61,12 +61,12 @@ class FilterTests(JiraTestCase):
     def test_filter_update_empty_description_with_new_description(self):
         new_desc = "new description"
         with self.make_filter(description=None) as myfilter:
-            self.jira.update_filter(
+            self.jira_svc.update_filter(
                 myfilter.id,
                 name=myfilter.name,
                 description=new_desc,
                 jql=myfilter.jql,
                 favourite=None,
             )
-            updated_filter = self.jira.filter(myfilter.id)
+            updated_filter = self.jira_svc.filter(myfilter.id)
             assert updated_filter.description == new_desc

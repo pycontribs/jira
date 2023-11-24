@@ -1,6 +1,6 @@
 """Config handler.
 
-This module allows people to keep their jira server credentials outside their script,
+This module allows people to keep their jira_svc server credentials outside their script,
 in a configuration file that is not saved in the source control.
 
 Also, this simplifies the scripts by not having to write the same initialization code for each script.
@@ -12,10 +12,10 @@ import logging
 import os
 import sys
 
-from jira.client import JIRA
+from jira_svc.client import jira_svc
 
 
-def get_jira(
+def get_jira_svc(
     profile: str | None = None,
     url: str = "http://localhost:2990",
     username: str = "admin",
@@ -24,11 +24,11 @@ def get_jira(
     autofix=False,
     verify: bool | str = True,
 ):
-    """Return a JIRA object by loading the connection details from the `config.ini` file.
+    """Return a jira_svc object by loading the connection details from the `config.ini` file.
 
     Args:
         profile (Optional[str]): The name of the section from config.ini file that stores server config url/username/password
-        url (str): URL of the Jira server
+        url (str): URL of the jira_svc server
         username (str): username to use for authentication
         password (str): password to use for authentication
         appid: appid
@@ -37,23 +37,23 @@ def get_jira(
             str path to a CA_BUNDLE file or directory with certificates of trusted CAs. (Default: ``True``)
 
     Returns:
-        JIRA: an instance to a JIRA object.
+        jira_svc: an instance to a jira_svc object.
 
     Raises:
         EnvironmentError
 
     Usage:
 
-        >>> from jira.config import get_jira
+        >>> from jira_svc.config import get_jira_svc
         >>>
-        >>> jira = get_jira(profile='jira')
+        >>> jira_svc = get_jira_svc(profile='jira_svc')
 
     Also create a `config.ini` like this and put it in current directory, user home directory or PYTHONPATH.
 
     .. code-block:: none
 
-        [jira]
-        url=https://jira.atlassian.com
+        [jira_svc]
+        url=https://jira_svc.atlassian.com
         # only the `url` is mandatory
         user=...
         pass=...
@@ -99,7 +99,7 @@ def get_jira(
         if config_file:
             config.read(config_file)
             try:
-                profile = config.get("general", "default-jira-profile")
+                profile = config.get("general", "default-jira_svc-profile")
             except configparser.NoOptionError:
                 pass
 
@@ -121,11 +121,11 @@ def get_jira(
                 % __name__
             )
 
-    options = JIRA.DEFAULT_OPTIONS
+    options = jira_svc.DEFAULT_OPTIONS
     options["server"] = url
     options["autofix"] = autofix
     options["appid"] = appid
     options["verify"] = verify
 
-    return JIRA(options=options, basic_auth=(username, password))
-    # self.jira.config.debug = debug
+    return jira_svc(options=options, basic_auth=(username, password))
+    # self.jira_svc.config.debug = debug

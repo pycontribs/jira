@@ -6,7 +6,7 @@ import tempfile
 from requests import Response
 
 
-class JIRAError(Exception):
+class jira_svcError(Exception):
     """General error raised for all problems in operation of the client."""
 
     def __init__(
@@ -18,7 +18,7 @@ class JIRAError(Exception):
         response: Response = None,
         **kwargs,
     ):
-        """Creates a JIRAError.
+        """Creates a jira_svcError.
 
         Args:
             text (Optional[str]): Message for the error.
@@ -34,11 +34,11 @@ class JIRAError(Exception):
         self.request = request
         self.response = response
         self.headers = kwargs.get("headers", None)
-        self.log_to_tempfile = "PYJIRA_LOG_TO_TEMPFILE" in os.environ
+        self.log_to_tempfile = "PYjira_svc_LOG_TO_TEMPFILE" in os.environ
         self.ci_run = "GITHUB_ACTION" in os.environ
 
     def __str__(self) -> str:
-        t = f"JiraError HTTP {self.status_code}"
+        t = f"jira_svcError HTTP {self.status_code}"
         if self.url:
             t += f" url: {self.url}"
 
@@ -58,7 +58,7 @@ class JIRAError(Exception):
 
         if self.log_to_tempfile:
             # Only log to tempfile if the option is set.
-            _, file_name = tempfile.mkstemp(suffix=".tmp", prefix="jiraerror-")
+            _, file_name = tempfile.mkstemp(suffix=".tmp", prefix="jira_svcerror-")
             with open(file_name, "w") as f:
                 t += f" details: {file_name}"
                 f.write(details)

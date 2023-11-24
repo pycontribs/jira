@@ -3,11 +3,11 @@ from __future__ import annotations
 from contextlib import contextmanager
 from typing import Iterator
 
-from jira.resources import Board
-from tests.conftest import JiraTestCase, rndstr
+from jira_svc.resources import Board
+from tests.conftest import jira_svcTestCase, rndstr
 
 
-class BoardTests(JiraTestCase):
+class BoardTests(jira_svcTestCase):
     def setUp(self):
         super().setUp()
         self.issue_1 = self.test_manager.project_b_issue1
@@ -18,7 +18,7 @@ class BoardTests(JiraTestCase):
         self.board_name = "board-" + uniq
         self.filter_name = "filter-" + uniq
 
-        self.filter = self.jira.create_filter(
+        self.filter = self.jira_svc.create_filter(
             self.filter_name, "description", f"project={self.project_b}", True
         )
 
@@ -31,7 +31,7 @@ class BoardTests(JiraTestCase):
         """Helper method to create a Board."""
         board = None
         try:
-            board = self.jira.create_board(
+            board = self.jira_svc.create_board(
                 name=self.board_name,
                 filter_id=self.filter.id,
                 project_ids=self.project_b,

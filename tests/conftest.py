@@ -14,8 +14,8 @@ from typing import Any
 
 import pytest
 
-from jira import JIRA
-from jira.exceptions import JIRAError
+from jira_svc import jira_svc
+from jira_svc.exceptions import jira_svcError
 
 TEST_ROOT = os.path.dirname(__file__)
 TEST_ICON_PATH = os.path.join(TEST_ROOT, "icon.png")
@@ -28,13 +28,13 @@ allow_on_cloud = pytest.mark.allow_on_cloud
 broken_test = pytest.mark.xfail
 
 
-class JiraTestCase(unittest.TestCase):
-    """Test case for all Jira tests.
+class jira_svcTestCase(unittest.TestCase):
+    """Test case for all jira_svc tests.
 
-    This is the base class for all Jira tests that require access to the
-    Jira instance.
+    This is the base class for all jira_svc tests that require access to the
+    jira_svc instance.
 
-    It calls JiraTestManager() in the setUp() method.
+    It calls jira_svcTestManager() in the setUp() method.
     setUp() is the method that is called **before** each test is run.
 
     Where possible follow the:
@@ -46,8 +46,8 @@ class JiraTestCase(unittest.TestCase):
     format for tests.
     """
 
-    jira: JIRA  # admin authenticated
-    jira_normal: JIRA  # non-admin authenticated
+    jira_svc: jira_svc  # admin authenticated
+    jira_svc_normal: jira_svc  # non-admin authenticated
 
     def setUp(self) -> None:
         """
@@ -57,7 +57,7 @@ class JiraTestCase(unittest.TestCase):
 
         initialized = False
         try:
-            self.test_manager = JiraTestManager()
+            self.test_manager = jira_svcTestManager()
             initialized = self.test_manager.initialized
         except Exception as e:
             # pytest with flaky swallows any exceptions re-raised in a try, except
@@ -65,8 +65,8 @@ class JiraTestCase(unittest.TestCase):
             LOGGER.exception(e)
         self.assertTrue(initialized, "Test Manager setUp failed")
 
-        self.jira = self.test_manager.jira_admin
-        self.jira_normal = self.test_manager.jira_normal
+        self.jira_svc = self.test_manager.jira_svc_admin
+        self.jira_svc_normal = self.test_manager.jira_svc_normal
         self.user_admin = self.test_manager.user_admin
         self.user_normal = self.test_manager.user_normal  # use this user where possible
         self.project_b = self.test_manager.project_b
@@ -74,12 +74,12 @@ class JiraTestCase(unittest.TestCase):
 
     @property
     def identifying_user_property(self) -> str:
-        """Literal["accountId", "name"]: Depending on if Jira Cloud or Server"""
-        return "accountId" if self.is_jira_cloud_ci else "name"
+        """Literal["accountId", "name"]: Depending on if jira_svc Cloud or Server"""
+        return "accountId" if self.is_jira_svc_cloud_ci else "name"
 
     @property
-    def is_jira_cloud_ci(self) -> bool:
-        """is running on Jira Cloud"""
+    def is_jira_svc_cloud_ci(self) -> bool:
+        """is running on jira_svc Cloud"""
         return self.test_manager._cloud_ci
 
 
@@ -106,7 +106,7 @@ def get_unique_project_name():
     user = re.sub("[^A-Z_]", "", getpass.getuser().upper())
     if "GITHUB_ACTION" in os.environ and "GITHUB_RUN_NUMBER" in os.environ:
         # please note that user underline (_) is not supported by
-        # Jira even if it is documented as supported.
+        # jira_svc even if it is documented as supported.
         return "GH" + hashify(user + os.environ["GITHUB_RUN_NUMBER"])
     identifier = (
         user + chr(ord("A") + sys.version_info[0]) + chr(ord("A") + sys.version_info[1])
@@ -114,20 +114,20 @@ def get_unique_project_name():
     return "Z" + hashify(identifier)
 
 
-class JiraTestManager:
-    """Instantiate and populate the JIRA instance with data for tests.
+class jira_svcTestManager:
+    """Instantiate and populate the jira_svc instance with data for tests.
 
     Attributes:
-        CI_JIRA_ADMIN (str): Admin user account name.
-        CI_JIRA_USER (str): Limited user account name.
+        CI_jira_svc_ADMIN (str): Admin user account name.
+        CI_jira_svc_USER (str): Limited user account name.
         max_retries (int): number of retries to perform for recoverable HTTP errors.
         initialized (bool): if init was successful.
     """
 
     __shared_state: dict[Any, Any] = {}
 
-    def __init__(self, jira_hosted_type=os.environ.get("CI_JIRA_TYPE", "Server")):
-        """Instantiate and populate the JIRA instance"""
+    def __init__(self, jira_svc_hosted_type=os.environ.get("CI_jira_svc_TYPE", "Server")):
+        """Instantiate and populate the jira_svc instance"""
         self.__dict__ = self.__shared_state
 
         if not self.__dict__:
@@ -135,80 +135,80 @@ class JiraTestManager:
             self.max_retries = 5
             self._cloud_ci = False
 
-            if jira_hosted_type and jira_hosted_type.upper() == "CLOUD":
-                self.set_jira_cloud_details()
+            if jira_svc_hosted_type and jira_svc_hosted_type.upper() == "CLOUD":
+                self.set_jira_svc_cloud_details()
                 self._cloud_ci = True
             else:
-                self.set_jira_server_details()
+                self.set_jira_svc_server_details()
 
-            jira_class_kwargs = {
-                "server": self.CI_JIRA_URL,
+            jira_svc_class_kwargs = {
+                "server": self.CI_jira_svc_URL,
                 "logging": False,
                 "validate": True,
                 "max_retries": self.max_retries,
             }
 
-            self.set_basic_auth_logins(**jira_class_kwargs)
+            self.set_basic_auth_logins(**jira_svc_class_kwargs)
 
-            if not self.jira_admin.current_user():
+            if not self.jira_svc_admin.current_user():
                 self.initialized = True
                 sys.exit(3)
 
             # now we need to create some data to start with for the tests
             self.create_some_data()
 
-        if not hasattr(self, "jira_normal") or not hasattr(self, "jira_admin"):
+        if not hasattr(self, "jira_svc_normal") or not hasattr(self, "jira_svc_admin"):
             pytest.exit("FATAL: WTF!?")
 
         if self._cloud_ci:
-            self.user_admin = self.jira_admin.search_users(query=self.CI_JIRA_ADMIN)[0]
-            self.user_normal = self.jira_admin.search_users(query=self.CI_JIRA_USER)[0]
+            self.user_admin = self.jira_svc_admin.search_users(query=self.CI_jira_svc_ADMIN)[0]
+            self.user_normal = self.jira_svc_admin.search_users(query=self.CI_jira_svc_USER)[0]
         else:
-            self.user_admin = self.jira_admin.search_users(self.CI_JIRA_ADMIN)[0]
-            self.user_normal = self.jira_admin.search_users(self.CI_JIRA_USER)[0]
+            self.user_admin = self.jira_svc_admin.search_users(self.CI_jira_svc_ADMIN)[0]
+            self.user_normal = self.jira_svc_admin.search_users(self.CI_jira_svc_USER)[0]
         self.initialized = True
 
-    def set_jira_cloud_details(self):
-        self.CI_JIRA_URL = "https://pycontribs.atlassian.net"
-        self.CI_JIRA_ADMIN = os.environ["CI_JIRA_CLOUD_ADMIN"]
-        self.CI_JIRA_ADMIN_PASSWORD = os.environ["CI_JIRA_CLOUD_ADMIN_TOKEN"]
-        self.CI_JIRA_USER = os.environ["CI_JIRA_CLOUD_USER"]
-        self.CI_JIRA_USER_PASSWORD = os.environ["CI_JIRA_CLOUD_USER_TOKEN"]
-        self.CI_JIRA_ISSUE = os.environ.get("CI_JIRA_ISSUE", "Bug")
+    def set_jira_svc_cloud_details(self):
+        self.CI_jira_svc_URL = "https://pycontribs.atlassian.net"
+        self.CI_jira_svc_ADMIN = os.environ["CI_jira_svc_CLOUD_ADMIN"]
+        self.CI_jira_svc_ADMIN_PASSWORD = os.environ["CI_jira_svc_CLOUD_ADMIN_TOKEN"]
+        self.CI_jira_svc_USER = os.environ["CI_jira_svc_CLOUD_USER"]
+        self.CI_jira_svc_USER_PASSWORD = os.environ["CI_jira_svc_CLOUD_USER_TOKEN"]
+        self.CI_jira_svc_ISSUE = os.environ.get("CI_jira_svc_ISSUE", "Bug")
 
-    def set_jira_server_details(self):
-        self.CI_JIRA_URL = os.environ["CI_JIRA_URL"]
-        self.CI_JIRA_ADMIN = os.environ["CI_JIRA_ADMIN"]
-        self.CI_JIRA_ADMIN_PASSWORD = os.environ["CI_JIRA_ADMIN_PASSWORD"]
-        self.CI_JIRA_USER = os.environ["CI_JIRA_USER"]
-        self.CI_JIRA_USER_PASSWORD = os.environ["CI_JIRA_USER_PASSWORD"]
-        self.CI_JIRA_ISSUE = os.environ.get("CI_JIRA_ISSUE", "Bug")
+    def set_jira_svc_server_details(self):
+        self.CI_jira_svc_URL = os.environ["CI_jira_svc_URL"]
+        self.CI_jira_svc_ADMIN = os.environ["CI_jira_svc_ADMIN"]
+        self.CI_jira_svc_ADMIN_PASSWORD = os.environ["CI_jira_svc_ADMIN_PASSWORD"]
+        self.CI_jira_svc_USER = os.environ["CI_jira_svc_USER"]
+        self.CI_jira_svc_USER_PASSWORD = os.environ["CI_jira_svc_USER_PASSWORD"]
+        self.CI_jira_svc_ISSUE = os.environ.get("CI_jira_svc_ISSUE", "Bug")
 
-    def set_basic_auth_logins(self, **jira_class_kwargs):
-        if self.CI_JIRA_ADMIN:
-            self.jira_admin = JIRA(
-                basic_auth=(self.CI_JIRA_ADMIN, self.CI_JIRA_ADMIN_PASSWORD),
-                **jira_class_kwargs,
+    def set_basic_auth_logins(self, **jira_svc_class_kwargs):
+        if self.CI_jira_svc_ADMIN:
+            self.jira_svc_admin = jira_svc(
+                basic_auth=(self.CI_jira_svc_ADMIN, self.CI_jira_svc_ADMIN_PASSWORD),
+                **jira_svc_class_kwargs,
             )
-            self.jira_sysadmin = JIRA(
-                basic_auth=(self.CI_JIRA_ADMIN, self.CI_JIRA_ADMIN_PASSWORD),
-                **jira_class_kwargs,
+            self.jira_svc_sysadmin = jira_svc(
+                basic_auth=(self.CI_jira_svc_ADMIN, self.CI_jira_svc_ADMIN_PASSWORD),
+                **jira_svc_class_kwargs,
             )
-            self.jira_normal = JIRA(
-                basic_auth=(self.CI_JIRA_USER, self.CI_JIRA_USER_PASSWORD),
-                **jira_class_kwargs,
+            self.jira_svc_normal = jira_svc(
+                basic_auth=(self.CI_jira_svc_USER, self.CI_jira_svc_USER_PASSWORD),
+                **jira_svc_class_kwargs,
             )
         else:
-            raise RuntimeError("CI_JIRA_ADMIN environment variable is not set/empty.")
+            raise RuntimeError("CI_jira_svc_ADMIN environment variable is not set/empty.")
 
     def _project_exists(self, project_key: str) -> bool:
         """True if we think the project exists, else False.
 
-        Assumes project exists if unknown Jira exception is raised.
+        Assumes project exists if unknown jira_svc exception is raised.
         """
         try:
-            self.jira_admin.project(project_key)
-        except JIRAError as e:  # If the project does not exist a warning is thrown
+            self.jira_svc_admin.project(project_key)
+        except jira_svcError as e:  # If the project does not exist a warning is thrown
             if "No project could be found" in str(e):
                 return False
             LOGGER.exception("Assuming project '%s' exists.", project_key)
@@ -222,10 +222,10 @@ class JiraTestManager:
         wait_attempts = int(time_to_wait_for_delete_secs / wait_between_checks_secs)
 
         # TODO(ssbarnea): find a way to prevent SecurityTokenMissing for On Demand
-        # https://jira.atlassian.com/browse/JRA-39153
+        # https://jira_svc.atlassian.com/browse/JRA-39153
         if self._project_exists(project_key):
             try:
-                self.jira_admin.delete_project(project_key)
+                self.jira_svc_admin.delete_project(project_key)
             except Exception:
                 LOGGER.exception("Failed to delete '%s'.", project_key)
 
@@ -254,17 +254,17 @@ class JiraTestManager:
             create_attempts = 6
             for _ in range(create_attempts):
                 try:
-                    if self.jira_admin.create_project(project_key, project_name):
+                    if self.jira_svc_admin.create_project(project_key, project_name):
                         break
-                except JIRAError as e:
+                except jira_svcError as e:
                     if "A project with that name already exists" not in str(e):
                         raise e
-        return self.jira_admin.project(project_key).id
+        return self.jira_svc_admin.project(project_key).id
 
     def create_some_data(self):
         """Create some data for the tests"""
 
-        # jira project key is max 10 chars, no letter.
+        # jira_svc project key is max 10 chars, no letter.
         # [0] always "Z"
         # [1-6] username running the tests (hope we will not collide)
         # [7-8] python version A=0, B=1,..
@@ -274,7 +274,7 @@ class JiraTestManager:
         executing tests in parallel as we have only one test instance.
 
         jid length must be less than 9 characters because we may append
-        another one and the Jira Project key length limit is 10.
+        another one and the jira_svc Project key length limit is 10.
         """
 
         self.jid = get_unique_project_name()
@@ -291,24 +291,24 @@ class JiraTestManager:
             self.project_b, self.project_b_name, force_recreate=True
         )
 
-        sleep(1)  # keep it here as often Jira will report the
+        sleep(1)  # keep it here as often jira_svc will report the
         # project as missing even after is created
 
         project_b_issue_kwargs = {
             "project": self.project_b,
-            "issuetype": {"name": self.CI_JIRA_ISSUE},
+            "issuetype": {"name": self.CI_jira_svc_ISSUE},
         }
-        self.project_b_issue1_obj = self.jira_admin.create_issue(
+        self.project_b_issue1_obj = self.jira_svc_admin.create_issue(
             summary=f"issue 1 from {self.project_b}", **project_b_issue_kwargs
         )
         self.project_b_issue1 = self.project_b_issue1_obj.key
 
-        self.project_b_issue2_obj = self.jira_admin.create_issue(
+        self.project_b_issue2_obj = self.jira_svc_admin.create_issue(
             summary=f"issue 2 from {self.project_b}", **project_b_issue_kwargs
         )
         self.project_b_issue2 = self.project_b_issue2_obj.key
 
-        self.project_b_issue3_obj = self.jira_admin.create_issue(
+        self.project_b_issue3_obj = self.jira_svc_admin.create_issue(
             summary=f"issue 3 from {self.project_b}", **project_b_issue_kwargs
         )
         self.project_b_issue3 = self.project_b_issue3_obj.key
@@ -340,9 +340,9 @@ def find_by_name(seq, name):
 
 @pytest.fixture()
 def no_fields(monkeypatch):
-    """When we want to test the __init__ method of the jira.client.JIRA
+    """When we want to test the __init__ method of the jira_svc.client.jira_svc
     we don't need any external calls to get the fields.
 
     We don't need the features of a MagicMock, hence we don't use it here.
     """
-    monkeypatch.setattr(JIRA, "fields", lambda *args, **kwargs: [])
+    monkeypatch.setattr(jira_svc, "fields", lambda *args, **kwargs: [])

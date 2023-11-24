@@ -1,4 +1,4 @@
-"""Jira utils used internally."""
+"""jira_svc utils used internally."""
 from __future__ import annotations
 
 import threading
@@ -8,7 +8,7 @@ from typing import Any, cast
 from requests import Response
 from requests.structures import CaseInsensitiveDict as _CaseInsensitiveDict
 
-from jira.resilientsession import raise_on_error
+from jira_svc.resilientsession import raise_on_error
 
 
 class CaseInsensitiveDict(_CaseInsensitiveDict):
@@ -65,7 +65,7 @@ def json_loads(resp: Response | None) -> Any:
         resp (Optional[Response]): The Response object
 
     Raises:
-        JIRAError: via :py:func:`jira.resilientsession.raise_on_error`
+        jira_svcError: via :py:func:`jira_svc.resilientsession.raise_on_error`
 
     Returns:
         Union[List[Dict[str, Any]], Dict[str, Any]]: the json

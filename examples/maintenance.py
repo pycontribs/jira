@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
-# This script will cleanup your jira instance by removing all projects and
-# it is used to clean the CI/CD Jira server used for testing.
+# This script will cleanup your jira_svc instance by removing all projects and
+# it is used to clean the CI/CD jira_svc server used for testing.
 
 from __future__ import annotations
 
@@ -9,20 +9,20 @@ import json
 import logging
 import os
 
-from jira import JIRA, Issue, JIRAError, Project, Role  # noqa
+from jira_svc import jira_svc, Issue, jira_svcError, Project, Role  # noqa
 
 logging.getLogger().setLevel(logging.DEBUG)
 logging.getLogger("requests").setLevel(logging.INFO)
 logging.getLogger("urllib3").setLevel(logging.INFO)
-logging.getLogger("jira").setLevel(logging.DEBUG)
+logging.getLogger("jira_svc").setLevel(logging.DEBUG)
 
-CI_JIRA_URL = os.environ["CI_JIRA_URL"]
-CI_JIRA_ADMIN = os.environ["CI_JIRA_ADMIN"]
-CI_JIRA_ADMIN_TOKEN = os.environ["CI_JIRA_ADMIN_TOKEN"]
+CI_jira_svc_URL = os.environ["CI_jira_svc_URL"]
+CI_jira_svc_ADMIN = os.environ["CI_jira_svc_ADMIN"]
+CI_jira_svc_ADMIN_TOKEN = os.environ["CI_jira_svc_ADMIN_TOKEN"]
 
-j = JIRA(
-    CI_JIRA_URL,
-    basic_auth=(CI_JIRA_ADMIN, CI_JIRA_ADMIN_TOKEN),
+j = jira_svc(
+    CI_jira_svc_URL,
+    basic_auth=(CI_jira_svc_ADMIN, CI_jira_svc_ADMIN_TOKEN),
     logging=True,
     validate=True,
     async_=True,
@@ -43,7 +43,7 @@ for s in j.permissionschemes():
         logging.info(f"Deleting permission scheme: {s['name']}")
         try:
             j.delete_permissionscheme(s["id"])
-        except JIRAError as e:
+        except jira_svcError as e:
             logging.error(e.text)
     else:
         logging.info(f"Permission scheme: {s['name']}")

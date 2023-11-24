@@ -1,7 +1,7 @@
 include LICENSE README.rst
 
 # Include
-include jira/py.typed
+include jira_svc/py.typed
 
 # Exclude what is in these folders
 prune tests

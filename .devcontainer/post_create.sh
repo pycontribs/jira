@@ -1,12 +1,12 @@
 #!/bin/bash
 # This file is run from the .vscode folder
-WORKSPACE_FOLDER=/workspaces/jira
+WORKSPACE_FOLDER=/workspaces/jira_svc
 
-# Start the Jira Server docker instance first so can be running while we initialise everything else
+# Start the jira_svc Server docker instance first so can be running while we initialise everything else
 # Need to ensure this --version matches what is in CI
-echo "Initiating jira server instance, use the docker extension to inspect the logs (takes around 10/15mins to startup)"
-docker run -dit -p 2990:2990 --name jira addono/jira-software-standalone --version 8.17.1
-echo "Once started up, Jira host port is forwarded and can be found on: localhost:2990/jira/"
+echo "Initiating jira_svc server instance, use the docker extension to inspect the logs (takes around 10/15mins to startup)"
+docker run -dit -p 2990:2990 --name jira_svc addono/jira_svc-software-standalone --version 8.17.1
+echo "Once started up, jira_svc host port is forwarded and can be found on: localhost:2990/jira_svc/"
 
 # For Windows uses that have cloned into Windows' partition, we do this so that
 # it doesn't show all the files as "changed" for having different line endings.

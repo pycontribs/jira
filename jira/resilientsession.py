@@ -12,7 +12,7 @@ from requests.exceptions import ConnectionError
 from requests.structures import CaseInsensitiveDict
 from typing_extensions import TypeGuard
 
-from jira.exceptions import JIRAError
+from jira_svc.exceptions import jira_svcError
 
 LOG = logging.getLogger(__name__)
 
@@ -48,14 +48,14 @@ class PassthroughRetryPrepare(PrepareRequestForRetry):
 
 
 def raise_on_error(resp: Response | None, **kwargs) -> TypeGuard[Response]:
-    """Handle errors from a Jira Request.
+    """Handle errors from a jira_svc Request.
 
     Args:
-        resp (Optional[Response]): Response from Jira request
+        resp (Optional[Response]): Response from jira_svc request
 
     Raises:
-        JIRAError: If Response is None
-        JIRAError: for unhandled 400 status codes.
+        jira_svcError: If Response is None
+        jira_svcError: for unhandled 400 status codes.
 
     Returns:
         TypeGuard[Response]: True if the passed in Response is all good.
@@ -63,12 +63,12 @@ def raise_on_error(resp: Response | None, **kwargs) -> TypeGuard[Response]:
     request = kwargs.get("request", None)
 
     if resp is None:
-        raise JIRAError("Empty Response!", response=resp, **kwargs)
+        raise jira_svcError("Empty Response!", response=resp, **kwargs)
 
     if not resp.ok:
         error = parse_error_msg(resp=resp)
 
-        raise JIRAError(
+        raise jira_svcError(
             error,
             status_code=resp.status_code,
             url=resp.url,
@@ -81,12 +81,12 @@ def raise_on_error(resp: Response | None, **kwargs) -> TypeGuard[Response]:
 
 
 def parse_errors(resp: Response) -> list[str]:
-    """Parse a Jira Error messages from the Response.
+    """Parse a jira_svc Error messages from the Response.
 
-    https://developer.atlassian.com/cloud/jira/platform/rest/v2/intro/#status-codes
+    https://developer.atlassian.com/cloud/jira_svc/platform/rest/v2/intro/#status-codes
 
     Args:
-        resp (Response): The Jira API request's response.
+        resp (Response): The jira_svc API request's response.
 
     Returns:
         List[str]: The error messages list parsed from the Response. An empty list if no error.
@@ -102,14 +102,14 @@ def parse_errors(resp: Response) -> list[str]:
             return [resp.text]
 
     if "message" in resp_data:
-        # Jira 5.1 errors
+        # jira_svc 5.1 errors
         parsed_errors = [resp_data["message"]]
     elif "errorMessage" in resp_data:
-        # Sometimes Jira returns `errorMessage` as a message error key
+        # Sometimes jira_svc returns `errorMessage` as a message error key
         # for example for the "Service temporary unavailable" error
         parsed_errors = [resp_data["errorMessage"]]
     elif "errorMessages" in resp_data:
-        # Jira 5.0.x error messages sometimes come wrapped in this array
+        # jira_svc 5.0.x error messages sometimes come wrapped in this array
         # Sometimes this is present but empty
         error_messages = resp_data["errorMessages"]
         if len(error_messages) > 0:
@@ -120,20 +120,20 @@ def parse_errors(resp: Response) -> list[str]:
     elif "errors" in resp_data:
         resp_errors = resp_data["errors"]
         if len(resp_errors) > 0 and isinstance(resp_errors, dict):
-            # Catching only 'errors' that are dict. See https://github.com/pycontribs/jira/issues/350
-            # Jira 6.x error messages are found in this array.
+            # Catching only 'errors' that are dict. See https://github.com/pycontribs/jira_svc/issues/350
+            # jira_svc 6.x error messages are found in this array.
             parsed_errors = [str(err) for err in resp_errors.values()]
 
     return parsed_errors
 
 
 def parse_error_msg(resp: Response) -> str:
-    """Parse a Jira Error messages from the Response and join them by comma.
+    """Parse a jira_svc Error messages from the Response and join them by comma.
 
-    https://developer.atlassian.com/cloud/jira/platform/rest/v2/intro/#status-codes
+    https://developer.atlassian.com/cloud/jira_svc/platform/rest/v2/intro/#status-codes
 
     Args:
-        resp (Response): The Jira API request's response.
+        resp (Response): The jira_svc API request's response.
 
     Returns:
         str: The error message parsed from the Response. An empty str if no error.
@@ -149,7 +149,7 @@ class ResilientSession(Session):
     """
 
     def __init__(self, timeout=None, max_retries: int = 3, max_retry_delay: int = 60):
-        """A Session subclass catered for the Jira API with exponential delaying retry.
+        """A Session subclass catered for the jira_svc API with exponential delaying retry.
 
         Args:
             timeout (Optional[Union[Union[float, int], Tuple[float, float]]]): Connection/read timeout delay. Defaults to None.
@@ -161,7 +161,7 @@ class ResilientSession(Session):
         self.max_retry_delay = max_retry_delay
         super().__init__()
 
-        # Indicate our preference for JSON to avoid https://bitbucket.org/bspeakmon/jira-python/issue/46 and https://jira.atlassian.com/browse/JRA-38551
+        # Indicate our preference for JSON to avoid https://bitbucket.org/bspeakmon/jira_svc-python/issue/46 and https://jira_svc.atlassian.com/browse/JRA-38551
         self.headers.update({"Accept": "application/json,*.*;q=0.9"})
 
         # Warn users on instantiation the debug level shouldn't be used for prod
@@ -170,7 +170,7 @@ class ResilientSession(Session):
             + f"Log level debug in '{__name__}' is not safe for production code!"
         )
 
-    def _jira_prepare(self, **original_kwargs) -> dict:
+    def _jira_svc_prepare(self, **original_kwargs) -> dict:
         """Do any pre-processing of our own and return the updated kwargs."""
         prepared_kwargs = original_kwargs.copy()
         self.headers: CaseInsensitiveDict
@@ -209,7 +209,7 @@ class ResilientSession(Session):
         response: Response | None = None
         response_or_exception: ConnectionError | Response | None
 
-        processed_kwargs = self._jira_prepare(**kwargs)
+        processed_kwargs = self._jira_svc_prepare(**kwargs)
 
         def is_allowed_to_retry() -> bool:
             """Helper method to say if we should still be retrying."""
@@ -265,7 +265,7 @@ class ResilientSession(Session):
             and "X-Seraph-LoginReason" in response.headers
             and "AUTHENTICATED_FAILED" in response.headers["X-Seraph-LoginReason"]
         ):
-            LOG.warning("Atlassian's bug https://jira.atlassian.com/browse/JRA-41559")
+            LOG.warning("Atlassian's bug https://jira_svc.atlassian.com/browse/JRA-41559")
 
     def __recoverable(
         self,
@@ -316,7 +316,7 @@ class ResilientSession(Session):
                 maximum_number_of_tokens = response.headers.get("X-RateLimit-Limit")
                 retry_after = response.headers.get("retry-after")
                 msg = f"{response.status_code} {response.reason}"
-                warning_msg = "Request rate limited by Jira."
+                warning_msg = "Request rate limited by jira_svc."
 
                 warning_msg += (
                     f" Request should be retried after {retry_after} seconds.\n"
@@ -335,7 +335,7 @@ class ResilientSession(Session):
                 warning_msg = (
                     warning_msg
                     + "Consider adding an exemption for the user as explained in: "
-                    + "https://confluence.atlassian.com/adminjiraserver/improving-instance-stability-with-rate-limiting-983794911.html"
+                    + "https://confluence.atlassian.com/adminjira_svcserver/improving-instance-stability-with-rate-limiting-983794911.html"
                 )
 
                 LOG.warning(warning_msg)

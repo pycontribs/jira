@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from tests.conftest import JiraTestCase
+from tests.conftest import jira_svcTestCase
 
 
-class CustomFieldOptionTests(JiraTestCase):
+class CustomFieldOptionTests(jira_svcTestCase):
     def test_custom_field_option(self):
-        option = self.jira.custom_field_option("10000")
+        option = self.jira_svc.custom_field_option("10000")
         self.assertEqual(option.value, "To Do")

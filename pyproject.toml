@@ -12,19 +12,19 @@ testpaths = ["tests"]
 python_files = ["test_*.py", "tests.py"]
 addopts = '''-p no:xdist --durations=10 --tb=long -rxX -v --color=yes
              --junitxml=build/results.xml
-             --cov-report=xml --cov jira'''
+             --cov-report=xml --cov jira_svc'''
 
 # these are important for distributed testing, to speedup their execution we minimize what we sync
-rsyncdirs = ". jira demo docs"
+rsyncdirs = ". jira_svc demo docs"
 rsyncignore = ".git"
 
-# pytest-timeout, delete_project on jira cloud takes >70s
+# pytest-timeout, delete_project on jira_svc cloud takes >70s
 timeout = 80
 
 # avoid useless warnings related to coverage skips
 filterwarnings = ["ignore::pytest.PytestWarning"]
 
-markers = ["allow_on_cloud: opt in for the test to run on Jira Cloud"]
+markers = ["allow_on_cloud: opt in for the test to run on jira_svc Cloud"]
 
 
 [tool.mypy]
@@ -66,14 +66,14 @@ dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 target-version = "py38"
 
 # The source code paths to consider, e.g., when resolving first- vs. third-party imports
-src = ["jira", "tests"]
+src = ["jira_svc", "tests"]
 
 [tool.ruff.isort]
-known-first-party = ["jira", "tests"]
+known-first-party = ["jira_svc", "tests"]
 required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.per-file-ignores]
-"jira/__init__.py" = [
+"jira_svc/__init__.py" = [
     "E402", # ignore import order in this file
 ]
 

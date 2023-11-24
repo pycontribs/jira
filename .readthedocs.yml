@@ -19,5 +19,5 @@ python:
       path: .
       extra_requirements:
         - docs
-        # to autodoc jirashell
+        # to autodoc jira_svcshell
         - cli

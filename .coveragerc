@@ -1,6 +1,6 @@
 [run]
 data_file = .coverage
-source = jira
+source = jira_svc
 branch = True
 
 [report]

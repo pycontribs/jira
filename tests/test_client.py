@@ -6,9 +6,9 @@ from unittest import mock
 import pytest
 import requests.sessions
 
-import jira.client
-from jira.exceptions import JIRAError
-from tests.conftest import JiraTestManager, get_unique_project_name
+import jira_svc.client
+from jira_svc.exceptions import jira_svcError
+from tests.conftest import jira_svcTestManager, get_unique_project_name
 
 
 @pytest.fixture()
@@ -17,18 +17,18 @@ def prep():
 
 
 @pytest.fixture(scope="module")
-def test_manager() -> JiraTestManager:
-    return JiraTestManager()
+def test_manager() -> jira_svcTestManager:
+    return jira_svcTestManager()
 
 
 @pytest.fixture()
-def cl_admin(test_manager: JiraTestManager) -> jira.client.JIRA:
-    return test_manager.jira_admin
+def cl_admin(test_manager: jira_svcTestManager) -> jira_svc.client.jira_svc:
+    return test_manager.jira_svc_admin
 
 
 @pytest.fixture()
-def cl_normal(test_manager: JiraTestManager) -> jira.client.JIRA:
-    return test_manager.jira_normal
+def cl_normal(test_manager: jira_svcTestManager) -> jira_svc.client.jira_svc:
+    return test_manager.jira_svc_normal
 
 
 @pytest.fixture(scope="function")
@@ -36,7 +36,7 @@ def slug(request, cl_admin):
     def remove_by_slug():
         try:
             cl_admin.delete_project(slug)
-        except (ValueError, JIRAError):
+        except (ValueError, jira_svcError):
             # Some tests have project already removed, so we stay silent
             pass
 
@@ -46,7 +46,7 @@ def slug(request, cl_admin):
 
     try:
         proj = cl_admin.project(slug)
-    except JIRAError:
+    except jira_svcError:
         proj = cl_admin.create_project(slug, project_name)
     assert proj
 
@@ -61,7 +61,7 @@ def test_delete_project(cl_admin, cl_normal, slug):
 
 def test_delete_inexistent_project(cl_admin):
     slug = "abogus123"
-    with pytest.raises(JIRAError) as ex:
+    with pytest.raises(jira_svcError) as ex:
         assert cl_admin.delete_project(slug)
 
     assert "No project could be found with key" in str(
@@ -96,7 +96,7 @@ def test_result_list():
     maxResults = 50
     total = 2
 
-    results = jira.client.ResultList(iterable, startAt, maxResults, total)
+    results = jira_svc.client.ResultList(iterable, startAt, maxResults, total)
 
     for idx, result in enumerate(results):
         assert results[idx] == iterable[idx]
@@ -109,7 +109,7 @@ def test_result_list():
 
 
 def test_result_list_if_empty():
-    results = jira.client.ResultList()
+    results = jira_svc.client.ResultList()
 
     for r in results:
         raise AssertionError("`results` should be empty")
@@ -134,7 +134,7 @@ def test_headers_unclobbered_update(options_arg, no_fields):
     expected_header_value: str = options_arg["headers"][header_to_check]
 
     invariant_header_name: str = "X-Atlassian-Token"
-    invariant_header_value: str = jira.client.JIRA.DEFAULT_OPTIONS["headers"][
+    invariant_header_value: str = jira_svc.client.jira_svc.DEFAULT_OPTIONS["headers"][
         invariant_header_name
     ]
 
@@ -144,15 +144,15 @@ def test_headers_unclobbered_update(options_arg, no_fields):
         invariant_header_name not in options_arg["headers"]
     ), f"{invariant_header_name} is checked as not being overwritten in this test"
 
-    # WHEN: we initialise the JIRA class and get the headers
-    jira_client = jira.client.JIRA(
-        server="https://jira.atlasian.com",
+    # WHEN: we initialise the jira_svc class and get the headers
+    jira_svc_client = jira_svc.client.jira_svc(
+        server="https://jira_svc.atlasian.com",
         get_server_info=False,
         validate=False,
         options=options_arg,
     )
 
-    session_headers = jira_client._session.headers
+    session_headers = jira_svc_client._session.headers
 
     # THEN: we have set the right headers and not affect the other headers' defaults
     assert session_headers[header_to_check] == expected_header_value
@@ -164,25 +164,25 @@ def test_headers_unclobbered_update_with_no_provided_headers(no_fields):
 
     # GIVEN:the headers and the expected value
     invariant_header_name: str = "X-Atlassian-Token"
-    invariant_header_value: str = jira.client.JIRA.DEFAULT_OPTIONS["headers"][
+    invariant_header_value: str = jira_svc.client.jira_svc.DEFAULT_OPTIONS["headers"][
         invariant_header_name
     ]
 
-    # WHEN: we initialise the JIRA class with no provided headers and get the headers
-    jira_client = jira.client.JIRA(
-        server="https://jira.atlasian.com",
+    # WHEN: we initialise the jira_svc class with no provided headers and get the headers
+    jira_svc_client = jira_svc.client.jira_svc(
+        server="https://jira_svc.atlasian.com",
         get_server_info=False,
         validate=False,
         options=options_arg,
     )
 
-    session_headers = jira_client._session.headers
+    session_headers = jira_svc_client._session.headers
 
     # THEN: we have not affected the other headers' defaults
     assert session_headers[invariant_header_name] == invariant_header_value
 
 
-def test_token_auth(cl_admin: jira.client.JIRA):
+def test_token_auth(cl_admin: jira_svc.client.jira_svc):
     """Tests the Personal Access Token authentication works."""
     # GIVEN: We have a PAT token created by a user.
     pat_token_request = {
@@ -196,56 +196,56 @@ def test_token_auth(cl_admin: jira.client.JIRA):
     new_token = pat_token_response["rawToken"]
 
     # WHEN: A new client is authenticated with this token
-    new_jira_client = jira.client.JIRA(token_auth=new_token)
+    new_jira_svc_client = jira_svc.client.jira_svc(token_auth=new_token)
 
     # THEN: The reported authenticated user of the token
     # matches the original token creator user.
-    assert cl_admin.myself() == new_jira_client.myself()
+    assert cl_admin.myself() == new_jira_svc_client.myself()
 
 
 def test_bearer_token_auth():
     my_token = "cool-token"
-    token_auth_jira = jira.client.JIRA(
+    token_auth_jira_svc = jira_svc.client.jira_svc(
         server="https://what.ever",
         token_auth=my_token,
         get_server_info=False,
         validate=False,
     )
-    method_send = token_auth_jira._session.send
-    with mock.patch.object(token_auth_jira._session, method_send.__name__) as mock_send:
-        token_auth_jira._session.get(token_auth_jira.server_url)
+    method_send = token_auth_jira_svc._session.send
+    with mock.patch.object(token_auth_jira_svc._session, method_send.__name__) as mock_send:
+        token_auth_jira_svc._session.get(token_auth_jira_svc.server_url)
         prepared_req: requests.sessions.PreparedRequest = mock_send.call_args[0][0]
         assert prepared_req.headers["Authorization"] == f"Bearer {my_token}"
 
 
-def test_cookie_auth(test_manager: JiraTestManager):
+def test_cookie_auth(test_manager: jira_svcTestManager):
     """Test Cookie based authentication works.
 
     NOTE: this is deprecated in Cloud and is not recommended in Server.
-    https://developer.atlassian.com/cloud/jira/platform/jira-rest-api-cookie-based-authentication/
-    https://developer.atlassian.com/server/jira/platform/cookie-based-authentication/
+    https://developer.atlassian.com/cloud/jira_svc/platform/jira_svc-rest-api-cookie-based-authentication/
+    https://developer.atlassian.com/server/jira_svc/platform/cookie-based-authentication/
     """
     # GIVEN: the username and password
     # WHEN: We create a session with cookie auth for the same server
-    cookie_auth_jira = jira.client.JIRA(
-        server=test_manager.CI_JIRA_URL,
-        auth=(test_manager.CI_JIRA_ADMIN, test_manager.CI_JIRA_ADMIN_PASSWORD),
+    cookie_auth_jira_svc = jira_svc.client.jira_svc(
+        server=test_manager.CI_jira_svc_URL,
+        auth=(test_manager.CI_jira_svc_ADMIN, test_manager.CI_jira_svc_ADMIN_PASSWORD),
     )
     # THEN: We get the same result from the API
-    assert test_manager.jira_admin.myself() == cookie_auth_jira.myself()
+    assert test_manager.jira_svc_admin.myself() == cookie_auth_jira_svc.myself()
 
 
 def test_cookie_auth_retry():
     """Test Cookie based authentication retry logic works."""
     # GIVEN: arguments that will cause a 401 error
-    auth_class = jira.client.JiraCookieAuth
-    reset_func = jira.client.JiraCookieAuth._reset_401_retry_counter
-    new_options = jira.client.JIRA.DEFAULT_OPTIONS.copy()
+    auth_class = jira_svc.client.jira_svcCookieAuth
+    reset_func = jira_svc.client.jira_svcCookieAuth._reset_401_retry_counter
+    new_options = jira_svc.client.jira_svc.DEFAULT_OPTIONS.copy()
     new_options["auth_url"] = "/401"
-    with pytest.raises(JIRAError):
+    with pytest.raises(jira_svcError):
         with mock.patch.object(auth_class, reset_func.__name__) as mock_reset_func:
             # WHEN: We create a session with cookie auth
-            jira.client.JIRA(
+            jira_svc.client.jira_svc(
                 server="https://httpstat.us",
                 options=new_options,
                 auth=("user", "pass"),

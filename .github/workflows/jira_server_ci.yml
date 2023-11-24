@@ -6,18 +6,18 @@ on:
 
 jobs:
   test:
-    name: py${{ matrix.python-version }}-jira${{ matrix.jira-version }}
+    name: py${{ matrix.python-version }}-jira_svc${{ matrix.jira_svc-version }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest]
         python-version: ["3.8", "3.9", "3.10", "3.11"]
-        jira-version: [8.17.1]
+        jira_svc-version: [8.17.1]
 
     steps:
       - uses: actions/checkout@v4
-      - name: Start Jira docker instance
-        run: docker run -dit -p 2990:2990 --name jira addono/jira-software-standalone --version ${{ matrix.jira-version }}
+      - name: Start jira_svc docker instance
+        run: docker run -dit -p 2990:2990 --name jira_svc addono/jira_svc-software-standalone --version ${{ matrix.jira_svc-version }}
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4

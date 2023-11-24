@@ -1,23 +1,23 @@
 # This script shows how to use the client in anonymous mode
-# against jira.atlassian.com.
+# against jira_svc.atlassian.com.
 from __future__ import annotations
 
 import re
 
-from jira import JIRA
+from jira_svc import jira_svc
 
-# By default, the client will connect to a Jira instance started from the Atlassian Plugin SDK
+# By default, the client will connect to a jira_svc instance started from the Atlassian Plugin SDK
 # (see https://developer.atlassian.com/display/DOCS/Installing+the+Atlassian+Plugin+SDK for details).
-jira = JIRA(server="https://jira.atlassian.com")
+jira_svc = jira_svc(server="https://jira_svc.atlassian.com")
 
 # Get all projects viewable by anonymous users.
-projects = jira.projects()
+projects = jira_svc.projects()
 
 # Sort available project keys, then return the second, third, and fourth keys.
 keys = sorted(project.key for project in projects)[2:5]
 
 # Get an issue.
-issue = jira.issue("JRA-1330")
+issue = jira_svc.issue("JRA-1330")
 # Find all comments made by Atlassians on this issue.
 atl_comments = [
     comment
@@ -26,7 +26,7 @@ atl_comments = [
 ]
 
 # Add a comment to the issue.
-jira.add_comment(issue, "Comment text")
+jira_svc.add_comment(issue, "Comment text")
 
 # Change the issue's summary and description.
 issue.update(
@@ -47,7 +47,7 @@ issue.update(fields={"labels": issue.fields.labels})
 # Send the issue away for good.
 issue.delete()
 
-# Linking a remote jira issue (needs applinks to be configured to work)
-issue = jira.issue("JRA-1330")
-issue2 = jira.issue("XX-23")  # could also be another instance
-jira.add_remote_link(issue.id, issue2)
+# Linking a remote jira_svc issue (needs applinks to be configured to work)
+issue = jira_svc.issue("JRA-1330")
+issue2 = jira_svc.issue("XX-23")  # could also be another instance
+jira_svc.add_remote_link(issue.id, issue2)

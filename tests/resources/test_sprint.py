@@ -6,12 +6,12 @@ from typing import Iterator
 
 import pytest as pytest
 
-from jira.exceptions import JIRAError
-from jira.resources import Board, Filter, Sprint
-from tests.conftest import JiraTestCase, rndstr
+from jira_svc.exceptions import jira_svcError
+from jira_svc.resources import Board, Filter, Sprint
+from tests.conftest import jira_svcTestCase, rndstr
 
 
-class SprintTests(JiraTestCase):
+class SprintTests(jira_svcTestCase):
     def setUp(self):
         super().setUp()
         self.issue_1 = self.test_manager.project_b_issue1
@@ -32,11 +32,11 @@ class SprintTests(JiraTestCase):
 
     def _create_board_and_filter(self) -> tuple[Board, Filter]:
         """Helper method to create a board and filter"""
-        filter = self.jira.create_filter(
+        filter = self.jira_svc.create_filter(
             self.filter_name, "description", f"project={self.project_b}", True
         )
 
-        board = self.jira.create_board(
+        board = self.jira_svc.create_board(
             name=self.board_name, filter_id=filter.id, project_ids=self.project_b
         )
         return board, filter
@@ -46,7 +46,7 @@ class SprintTests(JiraTestCase):
         """Helper method to create a Sprint."""
         sprint = None
         try:
-            sprint = self.jira.create_sprint(self.sprint_name, self.board.id)
+            sprint = self.jira_svc.create_sprint(self.sprint_name, self.board.id)
             yield sprint
         finally:
             if sprint is not None:
@@ -55,12 +55,12 @@ class SprintTests(JiraTestCase):
     @lru_cache
     def _sprint_customfield(self) -> str:
         """Helper method to return the customfield_ name for a sprint.
-        This is needed as it is implemented as a plugin to Jira, (Jira Agile).
+        This is needed as it is implemented as a plugin to jira_svc, (jira_svc Agile).
         """
         sprint_field_name = "Sprint"
         sprint_field_id = [
             f["schema"]["customId"]
-            for f in self.jira.fields()
+            for f in self.jira_svc.fields()
             if f["name"] == sprint_field_name
         ][0]
         return f"customfield_{sprint_field_id}"
@@ -69,7 +69,7 @@ class SprintTests(JiraTestCase):
         # GIVEN: the board and filter
         # WHEN: we create the sprint
         with self._create_sprint() as sprint:
-            sprint = self.jira.create_sprint(self.sprint_name, self.board.id)
+            sprint = self.jira_svc.create_sprint(self.sprint_name, self.board.id)
             # THEN: we get a sprint with some reasonable defaults
             assert isinstance(sprint.id, int)
             assert sprint.name == self.sprint_name
@@ -80,9 +80,9 @@ class SprintTests(JiraTestCase):
         # GIVEN: The sprint
         with self._create_sprint() as sprint:
             # WHEN: we add an issue to the sprint
-            self.jira.add_issues_to_sprint(sprint.id, [self.issue_1])
+            self.jira_svc.add_issues_to_sprint(sprint.id, [self.issue_1])
 
-            updated_issue_1 = self.jira.issue(self.issue_1)
+            updated_issue_1 = self.jira_svc.issue(self.issue_1)
             serialised_sprint = updated_issue_1.get_field(self._sprint_customfield())[0]
 
             # THEN: We find this sprint in the Sprint field of the Issue
@@ -91,22 +91,22 @@ class SprintTests(JiraTestCase):
     def test_move_issue_to_backlog(self):
         with self._create_sprint() as sprint:
             # GIVEN: we have an issue in a sprint
-            self.jira.add_issues_to_sprint(sprint.id, [self.issue_1])
-            updated_issue_1 = self.jira.issue(self.issue_1)
+            self.jira_svc.add_issues_to_sprint(sprint.id, [self.issue_1])
+            updated_issue_1 = self.jira_svc.issue(self.issue_1)
             assert updated_issue_1.get_field(self._sprint_customfield()) is not None
 
             # WHEN: We move it to the backlog
-            self.jira.move_to_backlog([updated_issue_1.key])
-            updated_issue_1 = self.jira.issue(updated_issue_1)
+            self.jira_svc.move_to_backlog([updated_issue_1.key])
+            updated_issue_1 = self.jira_svc.issue(updated_issue_1)
 
             # THEN: There is no longer the sprint assigned
-            updated_issue_1 = self.jira.issue(self.issue_1)
+            updated_issue_1 = self.jira_svc.issue(self.issue_1)
             assert updated_issue_1.get_field(self._sprint_customfield()) is None
 
-    def test_two_sprints_with_the_same_name_raise_a_jira_error_when_sprints_by_name_is_called(
+    def test_two_sprints_with_the_same_name_raise_a_jira_svc_error_when_sprints_by_name_is_called(
         self,
     ):
         with self._create_sprint():
             with self._create_sprint():
-                with pytest.raises(JIRAError):
-                    self.jira.sprints_by_name(self.board.id)
+                with pytest.raises(jira_svcError):
+                    self.jira_svc.sprints_by_name(self.board.id)

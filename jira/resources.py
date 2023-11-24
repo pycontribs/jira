@@ -1,6 +1,6 @@
-"""Jira resource definitions.
+"""jira_svc resource definitions.
 
-This module implements the Resource classes that translate JSON from Jira REST
+This module implements the Resource classes that translate JSON from jira_svc REST
 resources into usable objects.
 """
 from __future__ import annotations
@@ -14,11 +14,11 @@ from typing import TYPE_CHECKING, Any, Dict, List, Type, cast
 from requests import Response
 from requests.structures import CaseInsensitiveDict
 
-from jira.resilientsession import ResilientSession, parse_errors
-from jira.utils import json_loads, threaded_requests
+from jira_svc.resilientsession import ResilientSession, parse_errors
+from jira_svc.utils import json_loads, threaded_requests
 
 if TYPE_CHECKING:
-    from jira.client import JIRA
+    from jira_svc.client import jira_svc
 
     AnyLike = Any
 else:
@@ -67,14 +67,14 @@ __all__ = (
     "resource_class_map",
 )
 
-logging.getLogger("jira").addHandler(logging.NullHandler())
+logging.getLogger("jira_svc").addHandler(logging.NullHandler())
 
 
 class Resource:
-    """Models a URL-addressable resource in the Jira REST API.
+    """Models a URL-addressable resource in the jira_svc REST API.
 
     All Resource objects provide the following:
-    ``find()`` -- get a resource from the server and load it into the current object (though clients should use the methods in the JIRA class instead of this method directly)
+    ``find()`` -- get a resource from the server and load it into the current object (though clients should use the methods in the jira_svc class instead of this method directly)
     ``update()`` -- changes the value of this resource on the server and returns a new resource object for it
     ``delete()`` -- deletes this resource from the server
     ``self`` -- the URL of this resource on the server
@@ -92,7 +92,7 @@ class Resource:
     where the bracketed numerals are placeholders for ID values that are filled in from the ``ids`` parameter to ``find()``.
     """
 
-    JIRA_BASE_URL = "{server}/rest/{rest_path}/{rest_api_version}/{path}"
+    jira_svc_BASE_URL = "{server}/rest/{rest_path}/{rest_api_version}/{path}"
 
     # A prioritized list of the keys in self.raw most likely to contain a
     # human readable name or identifier, or that offer other key information.
@@ -125,7 +125,7 @@ class Resource:
         resource: str,
         options: dict[str, Any],
         session: ResilientSession,
-        base_url: str = JIRA_BASE_URL,
+        base_url: str = jira_svc_BASE_URL,
     ):
         """Initializes a generic resource.
 
@@ -133,7 +133,7 @@ class Resource:
             resource (str): The name of the resource.
             options (Dict[str,str]): Options for the new resource
             session (ResilientSession): Session used for the resource.
-            base_url (Optional[str]): The Base Jira url.
+            base_url (Optional[str]): The Base jira_svc url.
 
         """
         self._resource = resource
@@ -174,8 +174,8 @@ class Resource:
                 if name in self.raw:
                     names.append(name + "=" + repr(self.raw[name]))
         if not names:
-            return f"<JIRA {self.__class__.__name__} at {id(self)}>"
-        return f"<JIRA {self.__class__.__name__}: {', '.join(names)}>"
+            return f"<jira_svc {self.__class__.__name__} at {id(self)}>"
+        return f"<jira_svc {self.__class__.__name__}: {', '.join(names)}>"
 
     def __getattr__(self, item: str) -> Any:
         """Allow access of attributes via names.
@@ -291,19 +291,19 @@ class Resource:
         self,
         fields: dict[str, Any] | None = None,
         async_: bool | None = None,
-        jira: JIRA = None,
+        jira_svc: jira_svc = None,
         notify: bool = True,
         **kwargs: Any,
     ):
         """Update this resource on the server.
 
-        Keyword arguments are marshalled into a dict before being sent. If this resource doesn't support ``PUT``, a :py:exc:`.JIRAError`
+        Keyword arguments are marshalled into a dict before being sent. If this resource doesn't support ``PUT``, a :py:exc:`.jira_svcError`
         will be raised; subclasses that specialize this method will only raise errors in case of user error.
 
         Args:
             fields (Optional[Dict[str, Any]]): Fields which should be updated for the object.
             async_ (Optional[bool]): True to add the request to the queue, so it can be executed later using async_run()
-            jira (jira.client.JIRA): Instance of Jira Client
+            jira_svc (jira_svc.client.jira_svc): Instance of jira_svc Client
             notify (bool): True to notify watchers about the update, sets parameter notifyUsers. (Default: ``True``).
               Admin or project admin permissions are required to disable the notification.
             kwargs (Any): extra arguments to the PUT request.
@@ -379,12 +379,12 @@ class Resource:
                     else:
                         raise NotImplementedError()
 
-            if user and jira:
+            if user and jira_svc:
                 logging.warning(
                     "Trying to add missing orphan user '%s' in order to complete the previous failed operation."
                     % user
                 )
-                jira.add_user(user, "noreply@example.com", 10100, active=False)
+                jira_svc.add_user(user, "noreply@example.com", 10100, active=False)
                 # if 'assignee' not in data['fields']:
                 #    logging.warning("autofix: setting assignee to '%s' and retrying the update." % self._options['autofix'])
                 #    data['fields']['assignee'] = {'name': self._options['autofix']}
@@ -406,7 +406,7 @@ class Resource:
     def delete(self, params: dict[str, Any] | None = None) -> Response | None:
         """Delete this resource from the server, passing the specified query parameters.
 
-        If this resource doesn't support ``DELETE``, a :py:exc:`.JIRAError` will be raised; subclasses that specialize this method will
+        If this resource doesn't support ``DELETE``, a :py:exc:`.jira_svcError` will be raised; subclasses that specialize this method will
         only raise errors in case of user error.
 
         Args:
@@ -541,7 +541,7 @@ class CustomFieldOption(Resource):
 
 
 class Dashboard(Resource):
-    """A Jira dashboard."""
+    """A jira_svc dashboard."""
 
     def __init__(
         self,
@@ -571,7 +571,7 @@ class Filter(Resource):
 
 
 class Issue(Resource):
-    """A Jira issue."""
+    """A jira_svc issue."""
 
     class _IssueFields(AnyLike):
         class _Comment:
@@ -626,7 +626,7 @@ class Issue(Resource):
         fields: dict[str, Any] = None,
         update: dict[str, Any] = None,
         async_: bool = None,
-        jira: JIRA = None,
+        jira_svc: jira_svc = None,
         notify: bool = True,
         **fieldargs,
     ):
@@ -635,15 +635,15 @@ class Issue(Resource):
         Each keyword argument (other than the predefined ones) is treated as a field name and the argument's value is treated as
         the intended value for that field -- if the fields argument is used, all other keyword arguments will be ignored.
 
-        Jira projects may contain many issue types. Some issue screens have different requirements for fields in an issue.
-        This information is available through the :py:meth:`.JIRA.editmeta` method.
-        Further examples are available here: https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Edit+issues
+        jira_svc projects may contain many issue types. Some issue screens have different requirements for fields in an issue.
+        This information is available through the :py:meth:`.jira_svc.editmeta` method.
+        Further examples are available here: https://developer.atlassian.com/display/jira_svcDEV/jira_svc+REST+API+Example+-+Edit+issues
 
         Args:
             fields (Dict[str,Any]): a dict containing field names and the values to use
             update (Dict[str,Any]): a dict containing update the operations to apply
             async_ (Optional[bool]): True to add the request to the queue, so it can be executed later using async_run() (Default: ``None``))
-            jira (Optional[jira.client.JIRA]): JIRA instance.
+            jira_svc (Optional[jira_svc.client.jira_svc]): jira_svc instance.
             notify (bool): True to notify watchers about the update, sets parameter notifyUsers. (Default: ``True``).
               Admin or project admin permissions are required to disable the notification.
             fieldargs (dict): keyword arguments will generally be merged into fields, except lists, which will be merged into updates
@@ -678,7 +678,7 @@ class Issue(Resource):
             else:
                 fields_dict[field] = value
 
-        super().update(async_=async_, jira=jira, notify=notify, fields=data)
+        super().update(async_=async_, jira_svc=jira_svc, notify=notify, fields=data)
 
     def get_field(self, field_name: str) -> Any:
         """Obtain the (parsed) value from the Issue's field.
@@ -749,7 +749,7 @@ class Comment(Resource):
         self,
         fields: dict[str, Any] | None = None,
         async_: bool | None = None,
-        jira: JIRA = None,
+        jira_svc: jira_svc = None,
         body: str = "",
         visibility: dict[str, str] | None = None,
         is_internal: bool = False,
@@ -762,12 +762,12 @@ class Comment(Resource):
         Args:
             fields (Optional[Dict[str, Any]]): DEPRECATED => a comment doesn't have fields
             async_ (Optional[bool]): True to add the request to the queue, so it can be executed later using async_run() (Default: ``None``))
-            jira (jira.client.JIRA): Instance of Jira Client
+            jira_svc (jira_svc.client.jira_svc): Instance of jira_svc Client
             visibility (Optional[Dict[str, str]]): a dict containing two entries: "type" and "value".
-              "type" is 'role' (or 'group' if the Jira server has configured comment visibility for groups)
+              "type" is 'role' (or 'group' if the jira_svc server has configured comment visibility for groups)
               "value" is the name of the role (or group) to which viewing of this comment will be restricted.
             body (str): New text of the comment
-            is_internal (bool): True to mark the comment as 'Internal' in Jira Service Desk (Default: ``False``)
+            is_internal (bool): True to mark the comment as 'Internal' in jira_svc Service Desk (Default: ``False``)
             notify (bool): True to notify watchers about the update, sets parameter notifyUsers. (Default: ``True``).
               Admin or project admin permissions are required to disable the notification.
         """
@@ -781,7 +781,7 @@ class Comment(Resource):
                 {"key": "sd.public.comment", "value": {"internal": is_internal}}
             ]
 
-        super().update(async_=async_, jira=jira, notify=notify, fields=data)
+        super().update(async_=async_, jira_svc=jira_svc, notify=notify, fields=data)
 
 
 class RemoteLink(Resource):
@@ -802,7 +802,7 @@ class RemoteLink(Resource):
         """Update a RemoteLink. 'object' is required.
 
         For definitions of the allowable fields for 'object' and the keyword arguments 'globalId', 'application' and 'relationship',
-        see https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+for+Remote+Issue+Links.
+        see https://developer.atlassian.com/display/jira_svcDEV/jira_svc+REST+API+for+Remote+Issue+Links.
 
         Args:
             object: the link details to add (see the above link for details)
@@ -1061,7 +1061,7 @@ class Priority(Resource):
 
 
 class Project(Resource):
-    """A Jira project."""
+    """A jira_svc project."""
 
     def __init__(
         self,
@@ -1196,7 +1196,7 @@ class StatusCategory(Resource):
 
 
 class User(Resource):
-    """A Jira user."""
+    """A jira_svc user."""
 
     def __init__(
         self,
@@ -1206,7 +1206,7 @@ class User(Resource):
         *,
         _query_param: str = "username",
     ):
-        # Handle self-hosted Jira and Jira Cloud differently
+        # Handle self-hosted jira_svc and jira_svc Cloud differently
         if raw and "accountId" in raw["self"]:
             _query_param = "accountId"
 
@@ -1217,7 +1217,7 @@ class User(Resource):
 
 
 class Group(Resource):
-    """A Jira user group."""
+    """A jira_svc user group."""
 
     def __init__(
         self,
@@ -1267,14 +1267,14 @@ class Version(Resource):
 
         Refer to Atlassian REST API `documentation`_.
 
-        .. _documentation: https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-project-versions/#api-rest-api-2-version-id-put
+        .. _documentation: https://developer.atlassian.com/cloud/jira_svc/platform/rest/v2/api-group-project-versions/#api-rest-api-2-version-id-put
 
         :Example:
 
             .. code-block:: python
 
                 >> version_id = "10543"
-                >> version = JIRA("https://atlassian.org").version(version_id)
+                >> version = jira_svc("https://atlassian.org").version(version_id)
                 >> print(version.name)
                 "some_version_name"
                 >> version.update(name="another_name")
@@ -1295,12 +1295,12 @@ class Version(Resource):
 
 
 class AgileResource(Resource):
-    """A generic Agile resource. Also known as Jira Agile Server, Jira Software and formerly GreenHopper."""
+    """A generic Agile resource. Also known as jira_svc Agile Server, jira_svc Software and formerly GreenHopper."""
 
     AGILE_BASE_URL = "{server}/rest/{agile_rest_path}/{agile_rest_api_version}/{path}"
 
     AGILE_BASE_REST_PATH = "agile"
-    """Public API introduced in Jira Agile 6.7.7."""
+    """Public API introduced in jira_svc Agile 6.7.7."""
 
     def __init__(
         self,
@@ -1410,7 +1410,7 @@ class RequestType(Resource):
 def dict2resource(
     raw: dict[str, Any], top=None, options=None, session=None
 ) -> PropertyHolder | type[Resource]:
-    """Convert a dictionary into a Jira Resource object.
+    """Convert a dictionary into a jira_svc Resource object.
 
     Recursively walks a dict structure, transforming the properties into attributes on a new ``Resource`` object of the appropriate type
     (if a ``self`` link is present) or a ``PropertyHolder`` object (if no ``self`` link is present).
@@ -1467,7 +1467,7 @@ def dict2resource(
 
 
 resource_class_map: dict[str, type[Resource]] = {
-    # Jira-specific resources
+    # jira_svc-specific resources
     r"attachment/[^/]+$": Attachment,
     r"component/[^/]+$": Component,
     r"customFieldOption/[^/]+$": CustomFieldOption,
@@ -1505,7 +1505,7 @@ resource_class_map: dict[str, type[Resource]] = {
 
 
 class UnknownResource(Resource):
-    """A Resource from Jira that is not (yet) supported."""
+    """A Resource from jira_svc that is not (yet) supported."""
 
     def __init__(
         self,

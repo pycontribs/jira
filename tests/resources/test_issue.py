@@ -2,36 +2,36 @@ from __future__ import annotations
 
 import logging
 
-from jira.exceptions import JIRAError
-from tests.conftest import JiraTestCase, find_by_key, find_by_key_value
+from jira_svc.exceptions import jira_svcError
+from tests.conftest import jira_svcTestCase, find_by_key, find_by_key_value
 
 LOGGER = logging.getLogger(__name__)
 
 
-class IssueTests(JiraTestCase):
+class IssueTests(jira_svcTestCase):
     def setUp(self):
-        JiraTestCase.setUp(self)
+        jira_svcTestCase.setUp(self)
         self.issue_1 = self.test_manager.project_b_issue1
         self.issue_2 = self.test_manager.project_b_issue2
         self.issue_3 = self.test_manager.project_b_issue3
 
     def test_issue(self):
-        issue = self.jira.issue(self.issue_1)
+        issue = self.jira_svc.issue(self.issue_1)
         self.assertEqual(issue.key, self.issue_1)
         self.assertEqual(issue.fields.summary, f"issue 1 from {self.project_b}")
 
     def test_issue_search_finds_issue(self):
-        issues = self.jira.search_issues("key=%s" % self.issue_1)
+        issues = self.jira_svc.search_issues("key=%s" % self.issue_1)
         self.assertEqual(self.issue_1, issues[0].key)
 
     def test_issue_search_return_type(self):
-        issues = self.jira.search_issues("key=%s" % self.issue_1)
+        issues = self.jira_svc.search_issues("key=%s" % self.issue_1)
         self.assertIsInstance(issues, list)
-        issues = self.jira.search_issues("key=%s" % self.issue_1, json_result=True)
+        issues = self.jira_svc.search_issues("key=%s" % self.issue_1, json_result=True)
         self.assertIsInstance(issues, dict)
 
     def test_issue_search_only_includes_provided_fields(self):
-        issues = self.jira.search_issues(
+        issues = self.jira_svc.search_issues(
             "key=%s" % self.issue_1, fields="comment,assignee"
         )
         self.assertTrue(hasattr(issues[0].fields, "comment"))
@@ -40,18 +40,18 @@ class IssueTests(JiraTestCase):
 
     def test_issue_search_default_behaviour_included_fields(self):
         search_str = f"key={self.issue_1}"
-        issues = self.jira.search_issues(search_str)
+        issues = self.jira_svc.search_issues(search_str)
         self.assertTrue(hasattr(issues[0].fields, "reporter"))
         self.assertTrue(hasattr(issues[0].fields, "comment"))
 
         # fields=None should be valid and return all fields (ie. default behavior)
         self.assertEqual(
-            self.jira.search_issues(search_str),
-            self.jira.search_issues(search_str, fields=None),
+            self.jira_svc.search_issues(search_str),
+            self.jira_svc.search_issues(search_str, fields=None),
         )
 
     def test_issue_get_field(self):
-        issue = self.jira.issue(self.issue_1)
+        issue = self.jira_svc.issue(self.issue_1)
         self.assertEqual(
             issue.fields.description, issue.get_field(field_name="description")
         )
@@ -63,12 +63,12 @@ class IssueTests(JiraTestCase):
             issue.get_field("customfield_1234")
 
     def test_issue_field_limiting(self):
-        issue = self.jira.issue(self.issue_2, fields="summary,comment")
+        issue = self.jira_svc.issue(self.issue_2, fields="summary,comment")
         self.assertEqual(issue.fields.summary, f"issue 2 from {self.project_b}")
-        comment1 = self.jira.add_comment(issue, "First comment")
-        comment2 = self.jira.add_comment(issue, "Second comment")
-        comment3 = self.jira.add_comment(issue, "Third comment")
-        self.jira.issue(self.issue_2, fields="summary,comment")
+        comment1 = self.jira_svc.add_comment(issue, "First comment")
+        comment2 = self.jira_svc.add_comment(issue, "Second comment")
+        comment3 = self.jira_svc.add_comment(issue, "Third comment")
+        self.jira_svc.issue(self.issue_2, fields="summary,comment")
         LOGGER.warning(issue.raw["fields"])
         self.assertFalse(hasattr(issue.fields, "reporter"))
         self.assertFalse(hasattr(issue.fields, "progress"))
@@ -77,22 +77,22 @@ class IssueTests(JiraTestCase):
         comment3.delete()
 
     def test_issue_equal(self):
-        issue1 = self.jira.issue(self.issue_1)
-        issue2 = self.jira.issue(self.issue_2)
-        issues = self.jira.search_issues(f"key={self.issue_1}")
+        issue1 = self.jira_svc.issue(self.issue_1)
+        issue2 = self.jira_svc.issue(self.issue_2)
+        issues = self.jira_svc.search_issues(f"key={self.issue_1}")
         self.assertTrue(issue1 is not None)
         self.assertTrue(issue1 == issues[0])
         self.assertFalse(issue2 == issues[0])
 
     def test_issue_expand(self):
-        issue = self.jira.issue(self.issue_1, expand="editmeta,schema")
+        issue = self.jira_svc.issue(self.issue_1, expand="editmeta,schema")
         self.assertTrue(hasattr(issue, "editmeta"))
         self.assertTrue(hasattr(issue, "schema"))
         # testing for changelog is not reliable because it may exist or not based on test order
         # self.assertFalse(hasattr(issue, 'changelog'))
 
     def test_create_issue_with_fieldargs(self):
-        issue = self.jira.create_issue(
+        issue = self.jira_svc.create_issue(
             summary="Test issue created",
             project=self.project_b,
             issuetype={"name": "Bug"},
@@ -114,7 +114,7 @@ class IssueTests(JiraTestCase):
             # 'customfield_10022': 'XSS',
             "priority": {"name": "High"},
         }
-        issue = self.jira.create_issue(fields=fields)
+        issue = self.jira_svc.create_issue(fields=fields)
         self.assertEqual(issue.fields.summary, "Issue created from field dict")
         self.assertEqual(issue.fields.description, "Some new issue for test")
         self.assertEqual(issue.fields.issuetype.name, "Bug")
@@ -124,7 +124,7 @@ class IssueTests(JiraTestCase):
         issue.delete()
 
     def test_create_issue_without_prefetch(self):
-        issue = self.jira.create_issue(
+        issue = self.jira_svc.create_issue(
             summary="Test issue created",
             project=self.project_b,
             issuetype={"name": "Bug"},
@@ -155,7 +155,7 @@ class IssueTests(JiraTestCase):
                 "priority": {"name": "High"},
             },
         ]
-        issues = self.jira.create_issues(field_list=field_list)
+        issues = self.jira_svc.create_issues(field_list=field_list)
         self.assertEqual(len(issues), 2)
         self.assertIsNotNone(issues[0]["issue"], "the first issue has not been created")
         self.assertEqual(
@@ -207,7 +207,7 @@ class IssueTests(JiraTestCase):
                 "priority": {"name": "High"},
             },
         ]
-        issues = self.jira.create_issues(field_list=field_list)
+        issues = self.jira_svc.create_issues(field_list=field_list)
         self.assertEqual(
             issues[0]["issue"].fields.summary, "Issue created via bulk create #1"
         )
@@ -247,7 +247,7 @@ class IssueTests(JiraTestCase):
                 description="foo description",
             ),
         ]
-        issues = self.jira.create_issues(field_list, prefetch=False)
+        issues = self.jira_svc.create_issues(field_list, prefetch=False)
 
         assert hasattr(issues[0]["issue"], "self")
         assert hasattr(issues[0]["issue"], "raw")
@@ -260,10 +260,10 @@ class IssueTests(JiraTestCase):
 
     def test_create_issue_with_integer_issuetype(self):
         # take first existing issuetype to avoid problems due to hardcoded name/id later
-        issue_types_resolved = self.jira.issue_types()
+        issue_types_resolved = self.jira_svc.issue_types()
         dyn_it = issue_types_resolved[0]
 
-        issue = self.jira.create_issue(
+        issue = self.jira_svc.create_issue(
             summary="Test issue created using an integer issuetype",
             project=self.project_b,
             issuetype=int(dyn_it.id),
@@ -271,10 +271,10 @@ class IssueTests(JiraTestCase):
         self.assertEqual(issue.get_field("issuetype").name, dyn_it.name)
 
     def test_create_issue_with_issue_type_name(self):
-        issue_types_resolved = self.jira.issue_types()
+        issue_types_resolved = self.jira_svc.issue_types()
         dyn_it = issue_types_resolved[0]
 
-        issue = self.jira.create_issue(
+        issue = self.jira_svc.create_issue(
             summary="Test issue created using a str issuetype",
             project=self.project_b,
             issuetype=dyn_it.name,
@@ -282,7 +282,7 @@ class IssueTests(JiraTestCase):
         self.assertEqual(issue.get_field("issuetype").name, dyn_it.name)
 
     def test_update_with_fieldargs(self):
-        issue = self.jira.create_issue(
+        issue = self.jira_svc.create_issue(
             summary="Test issue for updating with fieldargs",
             project=self.project_b,
             issuetype={"name": "Bug"},
@@ -302,7 +302,7 @@ class IssueTests(JiraTestCase):
         issue.delete()
 
     def test_update_with_fielddict(self):
-        issue = self.jira.create_issue(
+        issue = self.jira_svc.create_issue(
             summary="Test issue for updating with fielddict",
             project=self.project_b,
             description="Will be updated shortly",
@@ -324,11 +324,11 @@ class IssueTests(JiraTestCase):
         issue.delete()
 
     def test_update_with_label(self):
-        issue = self.jira.create_issue(
+        issue = self.jira_svc.create_issue(
             summary="Test issue for updating labels",
             project=self.project_b,
             description="Label testing",
-            issuetype=self.test_manager.CI_JIRA_ISSUE,
+            issuetype=self.test_manager.CI_jira_svc_ISSUE,
         )
 
         labelarray = ["testLabel"]
@@ -338,21 +338,21 @@ class IssueTests(JiraTestCase):
         self.assertEqual(issue.fields.labels, ["testLabel"])
 
     def test_update_with_bad_label(self):
-        issue = self.jira.create_issue(
+        issue = self.jira_svc.create_issue(
             summary="Test issue for updating bad labels",
             project=self.project_b,
             description="Label testing",
-            issuetype=self.test_manager.CI_JIRA_ISSUE,
+            issuetype=self.test_manager.CI_jira_svc_ISSUE,
         )
 
         issue.fields.labels.append("this should not work")
 
         fields = {"labels": issue.fields.labels}
 
-        self.assertRaises(JIRAError, issue.update, fields=fields)
+        self.assertRaises(jira_svcError, issue.update, fields=fields)
 
     def test_update_with_notify_false(self):
-        issue = self.jira.create_issue(
+        issue = self.jira_svc.create_issue(
             summary="Test issue for updating wiith notify false",
             project=self.project_b,
             description="Will be updated shortly",
@@ -363,29 +363,29 @@ class IssueTests(JiraTestCase):
         issue.delete()
 
     def test_delete(self):
-        issue = self.jira.create_issue(
+        issue = self.jira_svc.create_issue(
             summary="Test issue created",
             project=self.project_b,
             description="Not long for this world",
-            issuetype=self.test_manager.CI_JIRA_ISSUE,
+            issuetype=self.test_manager.CI_jira_svc_ISSUE,
         )
         key = issue.key
         issue.delete()
-        self.assertRaises(JIRAError, self.jira.issue, key)
+        self.assertRaises(jira_svcError, self.jira_svc.issue, key)
 
     def test_createmeta(self):
-        meta = self.jira.createmeta()
+        meta = self.jira_svc.createmeta()
         proj = find_by_key(meta["projects"], self.project_b)
         # we assume that this project should allow at least one issue type
         self.assertGreaterEqual(len(proj["issuetypes"]), 1)
 
     def test_createmeta_filter_by_projectkey_and_name(self):
-        meta = self.jira.createmeta(projectKeys=self.project_b, issuetypeNames="Bug")
+        meta = self.jira_svc.createmeta(projectKeys=self.project_b, issuetypeNames="Bug")
         self.assertEqual(len(meta["projects"]), 1)
         self.assertEqual(len(meta["projects"][0]["issuetypes"]), 1)
 
     def test_createmeta_filter_by_projectkeys_and_name(self):
-        meta = self.jira.createmeta(
+        meta = self.jira_svc.createmeta(
             projectKeys=(self.project_a, self.project_b), issuetypeNames="Task"
         )
         self.assertEqual(len(meta["projects"]), 2)
@@ -393,11 +393,11 @@ class IssueTests(JiraTestCase):
             self.assertEqual(len(project["issuetypes"]), 1)
 
     def test_createmeta_filter_by_id(self):
-        projects = self.jira.projects()
+        projects = self.jira_svc.projects()
         proja = find_by_key_value(projects, self.project_a)
         projb = find_by_key_value(projects, self.project_b)
         issue_type_ids = dict()
-        full_meta = self.jira.createmeta(projectIds=(proja.id, projb.id))
+        full_meta = self.jira_svc.createmeta(projectIds=(proja.id, projb.id))
         for project in full_meta["projects"]:
             for issue_t in project["issuetypes"]:
                 issue_t_id = issue_t["id"]
@@ -413,7 +413,7 @@ class IssueTests(JiraTestCase):
         for_lookup_common_issue_ids = common_issue_ids
         if len(common_issue_ids) > 2:
             for_lookup_common_issue_ids = common_issue_ids[:-1]
-        meta = self.jira.createmeta(
+        meta = self.jira_svc.createmeta(
             projectIds=(proja.id, projb.id), issuetypeIds=for_lookup_common_issue_ids
         )
         self.assertEqual(len(meta["projects"]), 2)
@@ -424,49 +424,49 @@ class IssueTests(JiraTestCase):
 
     def test_createmeta_expand(self):
         # limit to SCR project so the call returns promptly
-        meta = self.jira.createmeta(
+        meta = self.jira_svc.createmeta(
             projectKeys=self.project_b, expand="projects.issuetypes.fields"
         )
         self.assertTrue("fields" in meta["projects"][0]["issuetypes"][0])
 
     def test_assign_issue(self):
-        self.assertTrue(self.jira.assign_issue(self.issue_1, self.user_normal.name))
+        self.assertTrue(self.jira_svc.assign_issue(self.issue_1, self.user_normal.name))
         self.assertEqual(
-            self.jira.issue(self.issue_1).fields.assignee.name, self.user_normal.name
+            self.jira_svc.issue(self.issue_1).fields.assignee.name, self.user_normal.name
         )
 
     def test_assign_issue_with_issue_obj(self):
-        issue = self.jira.issue(self.issue_1)
-        x = self.jira.assign_issue(issue, self.user_normal.name)
+        issue = self.jira_svc.issue(self.issue_1)
+        x = self.jira_svc.assign_issue(issue, self.user_normal.name)
         self.assertTrue(x)
         self.assertEqual(
-            self.jira.issue(self.issue_1).fields.assignee.name, self.user_normal.name
+            self.jira_svc.issue(self.issue_1).fields.assignee.name, self.user_normal.name
         )
 
     def test_assign_to_bad_issue_raises(self):
-        self.assertRaises(JIRAError, self.jira.assign_issue, "NOPE-1", "notauser")
+        self.assertRaises(jira_svcError, self.jira_svc.assign_issue, "NOPE-1", "notauser")
 
     def test_unassign_issue(self):
         # Given: A user is assigned to an issue
-        self.assertTrue(self.jira.assign_issue(self.issue_1, self.user_normal.name))
+        self.assertTrue(self.jira_svc.assign_issue(self.issue_1, self.user_normal.name))
         self.assertEqual(
-            self.jira.issue(self.issue_1).fields.assignee.name, self.user_normal.name
+            self.jira_svc.issue(self.issue_1).fields.assignee.name, self.user_normal.name
         )
         # When: we unassign the issue
-        self.assertTrue(self.jira.assign_issue(self.issue_1, None))
+        self.assertTrue(self.jira_svc.assign_issue(self.issue_1, None))
         # Then: the issue has an assignee of None
-        self.assertEqual(self.jira.issue(self.issue_1).fields.assignee, None)
+        self.assertEqual(self.jira_svc.issue(self.issue_1).fields.assignee, None)
 
     def test_assign_issue_automatic(self):
         # Given: A user is assigned to an issue
-        self.assertTrue(self.jira.assign_issue(self.issue_1, self.user_normal.name))
+        self.assertTrue(self.jira_svc.assign_issue(self.issue_1, self.user_normal.name))
         self.assertEqual(
-            self.jira.issue(self.issue_1).fields.assignee.name, self.user_normal.name
+            self.jira_svc.issue(self.issue_1).fields.assignee.name, self.user_normal.name
         )
         # When: we assign the issue to "-1"
-        self.assertTrue(self.jira.assign_issue(self.issue_1, "-1"))
+        self.assertTrue(self.jira_svc.assign_issue(self.issue_1, "-1"))
         # Then: the issue has the default assignee (the admin user)
-        self.assertEqual(self.jira.issue(self.issue_1).fields.assignee, self.user_admin)
+        self.assertEqual(self.jira_svc.issue(self.issue_1).fields.assignee, self.user_admin)
 
     def test_editmeta(self):
         expected_fields = {
@@ -481,7 +481,7 @@ class IssueTests(JiraTestCase):
             "summary",
         }
         for i in (self.issue_1, self.issue_2):
-            meta = self.jira.editmeta(i)
+            meta = self.jira_svc.editmeta(i)
             meta_field_set = set(meta["fields"].keys())
             self.assertEqual(
                 meta_field_set.intersection(expected_fields), expected_fields
@@ -490,58 +490,58 @@ class IssueTests(JiraTestCase):
     def test_transitioning(self):
         # we check with both issue-as-string or issue-as-object
         transitions = []
-        for issue in [self.issue_2, self.jira.issue(self.issue_2)]:
-            transitions = self.jira.transitions(issue)
+        for issue in [self.issue_2, self.jira_svc.issue(self.issue_2)]:
+            transitions = self.jira_svc.transitions(issue)
             self.assertTrue(transitions)
             self.assertTrue("id" in transitions[0])
             self.assertTrue("name" in transitions[0])
 
         self.assertTrue(transitions, msg="Expecting at least one transition")
         # we test getting a single transition
-        transition = self.jira.transitions(self.issue_2, transitions[0]["id"])[0]
+        transition = self.jira_svc.transitions(self.issue_2, transitions[0]["id"])[0]
         self.assertDictEqual(transition, transitions[0])
 
         # we test the expand of fields
-        transition = self.jira.transitions(
+        transition = self.jira_svc.transitions(
             self.issue_2, transitions[0]["id"], expand="transitions.fields"
         )[0]
         self.assertTrue("fields" in transition)
 
         # Testing of transition with field assignment is disabled now because default workflows do not have it.
 
-        # self.jira.transition_issue(issue, transitions[0]['id'], assignee={'name': self.test_manager.CI_JIRA_ADMIN})
-        # issue = self.jira.issue(issue.key)
-        # self.assertEqual(issue.fields.assignee.name, self.test_manager.CI_JIRA_ADMIN)
+        # self.jira_svc.transition_issue(issue, transitions[0]['id'], assignee={'name': self.test_manager.CI_jira_svc_ADMIN})
+        # issue = self.jira_svc.issue(issue.key)
+        # self.assertEqual(issue.fields.assignee.name, self.test_manager.CI_jira_svc_ADMIN)
         #
         # fields = {
         #     'assignee': {
-        #         'name': self.test_manager.CI_JIRA_USER
+        #         'name': self.test_manager.CI_jira_svc_USER
         #     }
         # }
-        # transitions = self.jira.transitions(issue.key)
+        # transitions = self.jira_svc.transitions(issue.key)
         # self.assertTrue(transitions)  # any issue should have at least one transition available to it
         # transition_id = transitions[0]['id']
         #
-        # self.jira.transition_issue(issue.key, transition_id, fields=fields)
-        # issue = self.jira.issue(issue.key)
-        # self.assertEqual(issue.fields.assignee.name, self.test_manager.CI_JIRA_USER)
+        # self.jira_svc.transition_issue(issue.key, transition_id, fields=fields)
+        # issue = self.jira_svc.issue(issue.key)
+        # self.assertEqual(issue.fields.assignee.name, self.test_manager.CI_jira_svc_USER)
         # self.assertEqual(issue.fields.status.id, transition_id)
 
     def test_rank(self):
         def get_issues_ordered_by_rank():
             """Search for the issues, returned in the order determined by their rank."""
-            return self.jira.search_issues(
+            return self.jira_svc.search_issues(
                 f"key in ({self.issue_1},{self.issue_2}) ORDER BY Rank ASC"
             )
 
-        self.jira.rank(self.issue_1, next_issue=self.issue_2)
+        self.jira_svc.rank(self.issue_1, next_issue=self.issue_2)
         issues = get_issues_ordered_by_rank()
         assert (issues[0].key, issues[1].key) == (self.issue_1, self.issue_2)
 
-        self.jira.rank(self.issue_2, next_issue=self.issue_1)
+        self.jira_svc.rank(self.issue_2, next_issue=self.issue_1)
         issues = get_issues_ordered_by_rank()
         assert (issues[0].key, issues[1].key) == (self.issue_2, self.issue_1)
 
-        self.jira.rank(self.issue_2, prev_issue=self.issue_1)
+        self.jira_svc.rank(self.issue_2, prev_issue=self.issue_1)
         issues = get_issues_ordered_by_rank()
         assert (issues[0].key, issues[1].key) == (self.issue_1, self.issue_2)

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from jira.client import QshGenerator
+from jira_svc.client import QshGenerator
 
 
 class MockRequest:

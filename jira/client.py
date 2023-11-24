@@ -1,9 +1,9 @@
-"""Jira Client module.
+"""jira_svc Client module.
 
 This module implements a friendly (well, friendlier) interface between the raw JSON
-responses from Jira and the Resource/dict abstractions provided by this library. Users
-will construct a JIRA object as described below. Full API documentation can be found
-at: https://jira.readthedocs.io/en/latest/.
+responses from jira_svc and the Resource/dict abstractions provided by this library. Users
+will construct a jira_svc object as described below. Full API documentation can be found
+at: https://jira_svc.readthedocs.io/en/latest/.
 """
 from __future__ import annotations
 
@@ -48,10 +48,10 @@ from requests.structures import CaseInsensitiveDict
 from requests.utils import get_netrc_auth
 from requests_toolbelt import MultipartEncoder
 
-from jira import __version__
-from jira.exceptions import JIRAError
-from jira.resilientsession import PrepareRequestForRetry, ResilientSession
-from jira.resources import (
+from jira_svc import __version__
+from jira_svc.exceptions import jira_svcError
+from jira_svc.resilientsession import PrepareRequestForRetry, ResilientSession
+from jira_svc.resources import (
     AgileResource,
     Attachment,
     Board,
@@ -91,7 +91,7 @@ from jira.resources import (
     WorkflowScheme,
     Worklog,
 )
-from jira.utils import json_loads, threaded_requests
+from jira_svc.utils import json_loads, threaded_requests
 
 try:
     from requests_jwt import JWTAuth
@@ -99,7 +99,7 @@ except ImportError:
     pass
 
 
-LOG = _logging.getLogger("jira")
+LOG = _logging.getLogger("jira_svc")
 LOG.addHandler(_logging.NullHandler())
 
 
@@ -154,7 +154,7 @@ class ResultList(list, Generic[ResourceType]):
             _maxResults (int): Max results per page. Defaults to 0.
             _total (Optional[int]): Total results from query. Defaults to 0.
             _isLast (Optional[bool]): True to mark this page is the last page? (Default: ``None``).
-             see `The official API docs <https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/#expansion:~:text=for%20all%20operations.-,isLast,-indicates%20whether%20the>`_
+             see `The official API docs <https://developer.atlassian.com/cloud/jira_svc/platform/rest/v3/intro/#expansion:~:text=for%20all%20operations.-,isLast,-indicates%20whether%20the>`_
         """
         if iterable is not None:
             list.__init__(self, iterable)
@@ -212,7 +212,7 @@ class QshGenerator:
         )
 
         # create canonical query string according to docs at:
-        # https://developer.atlassian.com/cloud/jira/platform/understanding-jwt-for-connect-apps/#qsh
+        # https://developer.atlassian.com/cloud/jira_svc/platform/understanding-jwt-for-connect-apps/#qsh
         params = parse_qs(parse_result.query, keep_blank_values=True)
         joined = {
             key: ",".join(self._sort_and_quote_values(params[key])) for key in params
@@ -227,10 +227,10 @@ class QshGenerator:
         return [quote(value, safe="~") for value in ordered_values]
 
 
-class JiraCookieAuth(AuthBase):
-    """Jira Cookie Authentication.
+class jira_svcCookieAuth(AuthBase):
+    """jira_svc Cookie Authentication.
 
-    Allows using cookie authentication as described by `jira api docs <https://developer.atlassian.com/server/jira/platform/cookie-based-authentication/>`_
+    Allows using cookie authentication as described by `jira_svc api docs <https://developer.atlassian.com/server/jira_svc/platform/cookie-based-authentication/>`_
     """
 
     def __init__(
@@ -323,29 +323,29 @@ class TokenAuth(AuthBase):
         return r
 
 
-class JIRA:
-    """User interface to Jira.
+class jira_svc:
+    """User interface to jira_svc.
 
-    Clients interact with Jira by constructing an instance of this object and calling its methods.
-    For addressable resources in Jira -- those with "self" links -- an appropriate subclass of
-    :py:class:`jira.resources.Resource` will be returned with customized ``update()`` and ``delete()`` methods,
+    Clients interact with jira_svc by constructing an instance of this object and calling its methods.
+    For addressable resources in jira_svc -- those with "self" links -- an appropriate subclass of
+    :py:class:`jira_svc.resources.Resource` will be returned with customized ``update()`` and ``delete()`` methods,
     along with attribute access to fields. This means that calls of the form ``issue.fields.summary`` will be resolved into the proper lookups to return
     the JSON value at that mapping. Methods that do not return resources will return a dict constructed from the JSON response or a scalar value;
     see each method's documentation for details on what that method returns.
 
-    Without any arguments, this client will connect anonymously to the Jira instance started by the Atlassian Plugin SDK from one of the
-    'atlas-run', ``atlas-debug`` or ``atlas-run-standalone`` commands. By default, this instance runs at ``http://localhost:2990/jira``.
-    The ``options`` argument can be used to set the Jira instance to use.
+    Without any arguments, this client will connect anonymously to the jira_svc instance started by the Atlassian Plugin SDK from one of the
+    'atlas-run', ``atlas-debug`` or ``atlas-run-standalone`` commands. By default, this instance runs at ``http://localhost:2990/jira_svc``.
+    The ``options`` argument can be used to set the jira_svc instance to use.
 
-    Authentication is handled with the ``basic_auth`` argument. If authentication is supplied (and is accepted by Jira), the client will remember it for subsequent requests.
+    Authentication is handled with the ``basic_auth`` argument. If authentication is supplied (and is accepted by jira_svc), the client will remember it for subsequent requests.
 
-    For quick command line access to a server, see the ``jirashell`` script included with this distribution.
+    For quick command line access to a server, see the ``jira_svcshell`` script included with this distribution.
 
-    The easiest way to instantiate is using ``j = JIRA("https://jira.atlassian.com")``
+    The easiest way to instantiate is using ``j = jira_svc("https://jira_svc.atlassian.com")``
     """
 
     DEFAULT_OPTIONS = {
-        "server": "http://localhost:2990/jira",
+        "server": "http://localhost:2990/jira_svc",
         "auth_url": "/rest/auth/1/session",
         "context_path": "/",
         "rest_path": "api",
@@ -378,7 +378,7 @@ class JIRA:
     checked_version = False
 
     # TODO(ssbarnea): remove these two variables and use the ones defined in resources
-    JIRA_BASE_URL = Resource.JIRA_BASE_URL
+    jira_svc_BASE_URL = Resource.jira_svc_BASE_URL
     AGILE_BASE_URL = AgileResource.AGILE_BASE_URL
 
     def __init__(
@@ -402,32 +402,32 @@ class JIRA:
         auth: tuple[str, str] = None,
         default_batch_sizes: dict[type[Resource], int | None] | None = None,
     ):
-        """Construct a Jira client instance.
+        """Construct a jira_svc client instance.
 
-        Without any arguments, this client will connect anonymously to the Jira instance started by the Atlassian Plugin SDK from one
+        Without any arguments, this client will connect anonymously to the jira_svc instance started by the Atlassian Plugin SDK from one
         of the 'atlas-run', ``atlas-debug`` or ``atlas-run-standalone`` commands.
-        By default, this instance runs at ``http://localhost:2990/jira``. The ``options`` argument can be used to set the Jira instance to use.
+        By default, this instance runs at ``http://localhost:2990/jira_svc``. The ``options`` argument can be used to set the jira_svc instance to use.
 
         Authentication is handled with the ``basic_auth``  or ``token_auth`` argument.
-        If authentication is supplied (and is accepted by Jira), the client will remember it for subsequent requests.
+        If authentication is supplied (and is accepted by jira_svc), the client will remember it for subsequent requests.
 
-        For quick command line access to a server, see the ``jirashell`` script included with this distribution.
+        For quick command line access to a server, see the ``jira_svcshell`` script included with this distribution.
 
-        The easiest way to instantiate is using ``j = JIRA("https://jira.atlasian.com")``
+        The easiest way to instantiate is using ``j = jira_svc("https://jira_svc.atlasian.com")``
 
         Args:
-            server (Optional[str]): The server address and context path to use. Defaults to ``http://localhost:2990/jira``.
+            server (Optional[str]): The server address and context path to use. Defaults to ``http://localhost:2990/jira_svc``.
             options (Optional[Dict[str, bool, Any]]): Specify the server and properties this client will use.
               Use a dict with any of the following properties:
 
-                * server -- the server address and context path to use. Defaults to ``http://localhost:2990/jira``.
-                * rest_path -- the root REST path to use. Defaults to ``api``, where the Jira REST resources live.
+                * server -- the server address and context path to use. Defaults to ``http://localhost:2990/jira_svc``.
+                * rest_path -- the root REST path to use. Defaults to ``api``, where the jira_svc REST resources live.
                 * rest_api_version -- the version of the REST resources under rest_path to use. Defaults to ``2``.
-                * agile_rest_path - the REST path to use for Jira Agile requests. Defaults to ``agile``.
+                * agile_rest_path - the REST path to use for jira_svc Agile requests. Defaults to ``agile``.
                 * verify (Union[bool, str]) -- Verify SSL certs. (Default: ``True``).
                   Or path to a CA_BUNDLE file or directory with certificates of trusted CAs, for the `requests` library to use.
                 * client_cert (Union[str, Tuple[str,str]]) -- Path to file with both cert and key or a tuple of (cert,key), for the `requests` library to use for client side SSL.
-                * check_update -- Check whether using the newest python-jira library version.
+                * check_update -- Check whether using the newest python-jira_svc library version.
                 * headers -- a dict to update the default headers the session uses for all API requests.
 
             basic_auth (Optional[Tuple[str, str]]): A tuple of username and password to use when establishing a session via HTTP BASIC authentication.
@@ -438,8 +438,8 @@ class JIRA:
 
                 * access_token -- OAuth access token for the user
                 * access_token_secret -- OAuth access token secret to sign with the key
-                * consumer_key -- key of the OAuth application link defined in Jira
-                * key_cert -- private key file to sign requests with (should be the pair of the public key supplied to Jira in the OAuth application link)
+                * consumer_key -- key of the OAuth application link defined in jira_svc
+                * key_cert -- private key file to sign requests with (should be the pair of the public key supplied to jira_svc in the OAuth application link)
                 * signature_method (Optional) -- The signature method to use with OAuth. Defaults to oauthlib.oauth1.SIGNATURE_HMAC_SHA1
 
             kerberos (bool): True to enable Kerberos authentication. (Default: ``False``)
@@ -459,11 +459,11 @@ class JIRA:
 
                 Example jwt structure: ``{'secret': SHARED_SECRET, 'payload': {'iss': PLUGIN_KEY}}``
 
-            validate (bool): True makes your credentials first to be validated. Remember that if you are accessing Jira as anonymous it will fail. (Default: ``False``).
+            validate (bool): True makes your credentials first to be validated. Remember that if you are accessing jira_svc as anonymous it will fail. (Default: ``False``).
             get_server_info (bool): True fetches server version info first to determine if some API calls are available. (Default: ``True``).
             async_ (bool): True enables async requests for those actions where we implemented it, like issue update() or delete(). (Default: ``False``).
             async_workers (int): Set the number of worker threads for async operations.
-            timeout (Optional[Union[Union[float, int], Tuple[float, float]]]): Set a read/connect timeout for the underlying calls to Jira.
+            timeout (Optional[Union[Union[float, int], Tuple[float, float]]]): Set a read/connect timeout for the underlying calls to jira_svc.
               Obviously this means that you cannot rely on the return code when this is enabled.
             max_retries (int): Sets the amount Retries for the HTTP sessions initiated by the client. (Default: ``3``)
             proxies (Optional[Any]): Sets the proxies for the HTTP session.
@@ -471,7 +471,7 @@ class JIRA:
             logging (bool): True enables loglevel to info => else critical. (Default: ``True``)
             default_batch_sizes (Optional[Dict[Type[Resource], Optional[int]]]): Manually specify the batch-sizes for
               the paginated retrieval of different item types. `Resource` is used as a fallback for every item type not
-              specified. If an item type is mapped to `None` no fallback occurs, instead the JIRA-backend will use its
+              specified. If an item type is mapped to `None` no fallback occurs, instead the jira_svc-backend will use its
               default batch-size. By default all Resources will be queried in batches of 100. E.g., setting this to
               ``{Issue: 500, Resource: None}`` will make :py:meth:`search_issues` query Issues in batches of 500, while
               every other item type's batch-size will be controlled by the backend. (Default: None)
@@ -484,7 +484,7 @@ class JIRA:
             options = {}
             if server and isinstance(server, dict):
                 warnings.warn(
-                    "Old API usage, use JIRA(url) or JIRA(options={'server': url}, when using dictionary always use named parameters.",
+                    "Old API usage, use jira_svc(url) or jira_svc(options={'server': url}, when using dictionary always use named parameters.",
                     DeprecationWarning,
                 )
                 options = server
@@ -499,7 +499,7 @@ class JIRA:
         LOG.setLevel(_logging.INFO if logging else _logging.CRITICAL)
         self.log = LOG
 
-        self._options: dict[str, Any] = copy.deepcopy(JIRA.DEFAULT_OPTIONS)
+        self._options: dict[str, Any] = copy.deepcopy(jira_svc.DEFAULT_OPTIONS)
 
         if default_batch_sizes:
             self._options["default_batch_size"].update(default_batch_sizes)
@@ -571,7 +571,7 @@ class JIRA:
                 auth_method = (
                     oauth or basic_auth or jwt or kerberos or auth or "anonymous"
                 )
-                raise JIRAError(f"Can not log in with {auth_method}")
+                raise jira_svcError(f"Can not log in with {auth_method}")
 
         self.deploymentType = None
         if get_server_info:
@@ -586,9 +586,9 @@ class JIRA:
         else:
             self._version = (0, 0, 0)
 
-        if self._options["check_update"] and not JIRA.checked_version:
+        if self._options["check_update"] and not jira_svc.checked_version:
             self._check_update_()
-            JIRA.checked_version = True
+            jira_svc.checked_version = True
 
         self._fields_cache_value: dict[str, str] = {}  # access via self._fields_cache
 
@@ -618,7 +618,7 @@ class JIRA:
 
     @property
     def _is_cloud(self) -> bool:
-        """Return whether we are on a Cloud based Jira instance."""
+        """Return whether we are on a Cloud based jira_svc instance."""
         return self.deploymentType in ("Cloud",)
 
     def _create_cookie_auth(self, auth: tuple[str, str]):
@@ -627,7 +627,7 @@ class JIRA:
             + "instead of Cookie based Authentication.",
             DeprecationWarning,
         )
-        self._session.auth = JiraCookieAuth(
+        self._session.auth = jira_svcCookieAuth(
             session=self._session,
             session_api_url="{server}{auth_url}".format(**self._options),
             auth=auth,
@@ -637,13 +637,13 @@ class JIRA:
         """Check if the current version of the library is outdated."""
         try:
             data = requests.get(
-                "https://pypi.python.org/pypi/jira/json", timeout=2.001
+                "https://pypi.python.org/pypi/jira_svc/json", timeout=2.001
             ).json()
 
             released_version = data["info"]["version"]
             if parse_version(released_version) > parse_version(__version__):
                 warnings.warn(
-                    f"You are running an outdated version of Jira Python {__version__}. Current version is {released_version}. Do not file any bugs against older versions."
+                    f"You are running an outdated version of jira_svc Python {__version__}. Current version is {released_version}. Do not file any bugs against older versions."
                 )
         except requests.RequestException:
             pass
@@ -651,7 +651,7 @@ class JIRA:
             self.log.warning(e)
 
     def __del__(self):
-        """Destructor for JIRA instance."""
+        """Destructor for jira_svc instance."""
         self.close()
 
     def close(self):
@@ -667,11 +667,11 @@ class JIRA:
             self._session = None
 
     def _check_for_html_error(self, content: str):
-        # Jira has the bad habit of returning errors in pages with 200 and embedding the
+        # jira_svc has the bad habit of returning errors in pages with 200 and embedding the
         # error in a huge webpage.
         if "<!-- SecurityTokenMissing -->" in content:
             self.log.warning("Got SecurityTokenMissing")
-            raise JIRAError(f"SecurityTokenMissing: {content}")
+            raise jira_svcError(f"SecurityTokenMissing: {content}")
         return True
 
     def _get_sprint_field_id(self):
@@ -691,7 +691,7 @@ class JIRA:
         startAt: int = 0,
         maxResults: int = 50,
         params: dict[str, Any] = None,
-        base: str = JIRA_BASE_URL,
+        base: str = jira_svc_BASE_URL,
     ) -> ResultList[ResourceType]:
         """Fetch from a paginated end point.
 
@@ -733,8 +733,8 @@ class JIRA:
             if isinstance(resource, dict):
                 total = resource.get("total")
                 total = int(total) if total is not None else total
-                # 'isLast' is the optional key added to responses in Jira Agile 6.7.6.
-                # So far not used in basic Jira API.
+                # 'isLast' is the optional key added to responses in jira_svc Agile 6.7.6.
+                # So far not used in basic jira_svc API.
                 is_last = resource.get("isLast", False)
                 start_at_from_response = resource.get("startAt", 0)
                 max_results_from_response = resource.get("maxResults", 1)
@@ -835,7 +835,7 @@ class JIRA:
         Check if specified item-type has a mapped batch-size, else try to fallback to batch-size assigned to `Resource`, else fallback to Backend-determined batch-size.
 
         Returns:
-           Optional[int]: The batch size to use. When the configured batch size is None, the batch size should be determined by the JIRA-Backend.
+           Optional[int]: The batch size to use. When the configured batch size is None, the batch size should be determined by the jira_svc-Backend.
         """
         batch_sizes: dict[type[Resource], int | None] = self._options[
             "default_batch_size"
@@ -843,7 +843,7 @@ class JIRA:
         try:
             item_type_batch_size = batch_sizes[item_type]
         except KeyError:
-            # Cannot find Resource-key -> Fallback to letting JIRA-Backend determine batch-size (=None)
+            # Cannot find Resource-key -> Fallback to letting jira_svc-Backend determine batch-size (=None)
             item_type_batch_size = batch_sizes.get(Resource, None)
         return item_type_batch_size
 
@@ -860,7 +860,7 @@ class JIRA:
     ) -> Resource:
         """Find Resource object for any addressable resource on the server.
 
-        This method is a universal resource locator for any REST-ful resource in Jira. The argument ``resource_format`` is a string of
+        This method is a universal resource locator for any REST-ful resource in jira_svc. The argument ``resource_format`` is a string of
         the form ``resource``, ``resource/{0}``, ``resource/{0}/sub``, ``resource/{0}/sub/{1}``, etc.
         The format placeholders will be populated from the ``ids`` argument if present. The existing authentication session will be used.
 
@@ -1041,16 +1041,16 @@ class JIRA:
 
         js: dict[str, Any] | list[dict[str, Any]] = json_loads(r)
         if not js or not isinstance(js, Iterable):
-            raise JIRAError(f"Unable to parse JSON: {js}. Failed to add attachment?")
-        jira_attachment = Attachment(
+            raise jira_svcError(f"Unable to parse JSON: {js}. Failed to add attachment?")
+        jira_svc_attachment = Attachment(
             self._options, self._session, js[0] if isinstance(js, List) else js
         )
-        if jira_attachment.size == 0:
-            raise JIRAError(
+        if jira_svc_attachment.size == 0:
+            raise jira_svcError(
                 "Added empty attachment?!: "
-                + f"Response: {r}\nAttachment: {jira_attachment}"
+                + f"Response: {r}\nAttachment: {jira_svc_attachment}"
             )
-        return jira_attachment
+        return jira_svc_attachment
 
     def delete_attachment(self, id: str) -> Response:
         """Delete attachment by id.
@@ -1280,7 +1280,7 @@ class JIRA:
         data = {}
         data["name"] = name or filter.name
         if description or hasattr(filter, "description"):
-            # Jira omits .description if created with =None !
+            # jira_svc omits .description if created with =None !
             data["description"] = description or filter.description
         data["jql"] = jql or filter.jql
         data["favourite"] = favourite or filter.favourite
@@ -1342,14 +1342,14 @@ class JIRA:
         return sorted(groups)
 
     def group_members(self, group: str) -> OrderedDict:
-        """Return a hash or users with their information. Requires Jira 6.0 or will raise NotImplemented.
+        """Return a hash or users with their information. Requires jira_svc 6.0 or will raise NotImplemented.
 
         Args:
             group (str): Name of the group.
         """
         if self._version < (6, 0, 0):
             raise NotImplementedError(
-                "Group members is not implemented in Jira before version 6.0, upgrade the instance, if possible."
+                "Group members is not implemented in jira_svc before version 6.0, upgrade the instance, if possible."
             )
 
         params = {"groupname": group, "expand": "users"}
@@ -1370,9 +1370,9 @@ class JIRA:
 
         result = {}
         for user in r["users"]["items"]:
-            # 'id' is likely available only in older JIRA Server,
-            # it's not available on newer JIRA Server.
-            # 'name' is not available in JIRA Cloud.
+            # 'id' is likely available only in older jira_svc Server,
+            # it's not available on newer jira_svc Server.
+            # 'name' is not available in jira_svc Cloud.
             hasId = user.get("id") is not None and user.get("id") != ""
             hasName = user.get("name") is not None and user.get("name") != ""
             result[
@@ -1393,7 +1393,7 @@ class JIRA:
         return OrderedDict(sorted(result.items(), key=lambda t: t[0]))
 
     def add_group(self, groupname: str) -> bool:
-        """Create a new group in Jira.
+        """Create a new group in jira_svc.
 
         Args:
             groupname (str): The name of the group you wish to create.
@@ -1403,7 +1403,7 @@ class JIRA:
         """
         url = self._get_latest_url("group")
 
-        # implementation based on https://docs.atlassian.com/jira/REST/ondemand/#d2e5173
+        # implementation based on https://docs.atlassian.com/jira_svc/REST/ondemand/#d2e5173
 
         x = OrderedDict()
 
@@ -1416,15 +1416,15 @@ class JIRA:
         return True
 
     def remove_group(self, groupname: str) -> bool:
-        """Delete a group from the Jira instance.
+        """Delete a group from the jira_svc instance.
 
         Args:
-            groupname (str): The group to be deleted from the Jira instance.
+            groupname (str): The group to be deleted from the jira_svc instance.
 
         Returns:
             bool: Returns True on success.
         """
-        # implementation based on https://docs.atlassian.com/jira/REST/ondemand/#d2e5173
+        # implementation based on https://docs.atlassian.com/jira_svc/REST/ondemand/#d2e5173
         url = self._get_latest_url("group")
         x = {"groupname": groupname}
         self._session.delete(url, params=x)
@@ -1480,9 +1480,9 @@ class JIRA:
         By default, the client will immediately reload the issue Resource created by this method in order to return a complete Issue object to the caller;
         this behavior can be controlled through the 'prefetch' argument.
 
-        Jira projects may contain many different issue types. Some issue screens have different requirements for fields in a new issue.
+        jira_svc projects may contain many different issue types. Some issue screens have different requirements for fields in a new issue.
         This information is available through the 'createmeta' set of methods.
-        Further examples are available here: https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Create+Issue
+        Further examples are available here: https://developer.atlassian.com/display/jira_svcDEV/jira_svc+REST+API+Example+-+Create+Issue
 
         Args:
             fields (Optional[Dict[str, Any]]): a dict containing field names and the values to use. If present, all other keyword arguments will be ignored
@@ -1515,7 +1515,7 @@ class JIRA:
 
         raw_issue_json = json_loads(r)
         if "key" not in raw_issue_json:
-            raise JIRAError(
+            raise jira_svcError(
                 status_code=r.status_code, response=r, url=url, text=json.dumps(data)
             )
         if prefetch:
@@ -1564,8 +1564,8 @@ class JIRA:
             r = self._session.post(url, data=json.dumps(data))
             raw_issue_json = json_loads(r)
         # Catching case where none of the issues has been created.
-        # See https://github.com/pycontribs/jira/issues/350
-        except JIRAError as je:
+        # See https://github.com/pycontribs/jira_svc/issues/350
+        except jira_svcError as je:
             if je.status_code == 400 and je.response:
                 raw_issue_json = json.loads(je.response.text)
             else:
@@ -1601,7 +1601,7 @@ class JIRA:
         return issue_list
 
     def supports_service_desk(self):
-        """Returns if the Jira instance supports service desk.
+        """Returns if the jira_svc instance supports service desk.
 
         Returns:
             bool
@@ -1611,7 +1611,7 @@ class JIRA:
         try:
             r = self._session.get(url, headers=headers)
             return r.status_code == 200
-        except JIRAError:
+        except jira_svcError:
             return False
 
     def create_customer(self, email: str, displayName: str) -> Customer:
@@ -1635,7 +1635,7 @@ class JIRA:
         raw_customer_json = json_loads(r)
 
         if r.status_code != 201:
-            raise JIRAError(status_code=r.status_code, request=r)
+            raise jira_svcError(status_code=r.status_code, request=r)
         return Customer(self._options, self._session, raw=raw_customer_json)
 
     def service_desks(self) -> list[ServiceDesk]:
@@ -1676,9 +1676,9 @@ class JIRA:
         By default, the client will immediately reload the issue Resource created by this method in order to return a complete Issue object to the caller;
         this behavior can be controlled through the 'prefetch' argument.
 
-        Jira projects may contain many issue types. Some issue screens have different requirements for fields in a new issue.
+        jira_svc projects may contain many issue types. Some issue screens have different requirements for fields in a new issue.
         This information is available through the 'createmeta' set of methods.
-        Further examples are available here: https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Create+Issue
+        Further examples are available here: https://developer.atlassian.com/display/jira_svcDEV/jira_svc+REST+API+Example+-+Create+Issue
 
         Args:
             fields (Dict[str, Any]): a dict containing field names and the values to use. If present, all other keyword arguments will be ignored
@@ -1711,7 +1711,7 @@ class JIRA:
 
         raw_issue_json = json_loads(r)
         if "issueKey" not in raw_issue_json:
-            raise JIRAError(status_code=r.status_code, request=r)
+            raise jira_svcError(status_code=r.status_code, request=r)
         if prefetch:
             return self.issue(raw_issue_json["issueKey"])
         else:
@@ -1723,8 +1723,8 @@ class JIRA:
     ) -> dict[str, Any]:
         """Get the issue types metadata for a given project, required to create issues.
 
-        This API was introduced in JIRA Server / DC 8.4 as a replacement for the more general purpose API 'createmeta'.
-        For details see: https://confluence.atlassian.com/jiracore/createmeta-rest-endpoint-to-be-removed-975040986.html
+        This API was introduced in jira_svc Server / DC 8.4 as a replacement for the more general purpose API 'createmeta'.
+        For details see: https://confluence.atlassian.com/jira_svccore/createmeta-rest-endpoint-to-be-removed-975040986.html
 
         Args:
             projectIdOrKey (Union[str, int]): id or key of the project for which to get the metadata.
@@ -1733,8 +1733,8 @@ class JIRA:
             Dict[str, Any]
         """
         if self._is_cloud or self._version < (8, 4, 0):
-            raise JIRAError(
-                f"Unsupported JIRA deployment type: {self.deploymentType} or version: {self._version}. "
+            raise jira_svcError(
+                f"Unsupported jira_svc deployment type: {self.deploymentType} or version: {self._version}. "
                 "Use 'createmeta' instead."
             )
 
@@ -1747,8 +1747,8 @@ class JIRA:
     ) -> dict[str, Any]:
         """Get the field metadata for a given project and issue type, required to create issues.
 
-        This API was introduced in JIRA Server / DC 8.4 as a replacement for the more general purpose API 'createmeta'.
-        For details see: https://confluence.atlassian.com/jiracore/createmeta-rest-endpoint-to-be-removed-975040986.html
+        This API was introduced in jira_svc Server / DC 8.4 as a replacement for the more general purpose API 'createmeta'.
+        For details see: https://confluence.atlassian.com/jira_svccore/createmeta-rest-endpoint-to-be-removed-975040986.html
 
         Args:
             projectIdOrKey (Union[str, int]): id or key of the project for which to get the metadata.
@@ -1758,8 +1758,8 @@ class JIRA:
             Dict[str, Any]
         """
         if self._is_cloud or self._version < (8, 4, 0):
-            raise JIRAError(
-                f"Unsupported JIRA deployment type: {self.deploymentType} or version: {self._version}. "
+            raise jira_svcError(
+                f"Unsupported jira_svc deployment type: {self.deploymentType} or version: {self._version}. "
                 "Use 'createmeta' instead."
             )
 
@@ -1793,13 +1793,13 @@ class JIRA:
         """
         if not self._is_cloud:
             if self._version >= (9, 0, 0):
-                raise JIRAError(
-                    f"Unsupported JIRA version: {self._version}. "
+                raise jira_svcError(
+                    f"Unsupported jira_svc version: {self._version}. "
                     "Use 'createmeta_issuetypes' and 'createmeta_fieldtypes' instead."
                 )
             elif self._version >= (8, 4, 0):
                 warnings.warn(
-                    "This API have been deprecated in JIRA 8.4 and is removed in JIRA 9.0. "
+                    "This API have been deprecated in jira_svc 8.4 and is removed in jira_svc 9.0. "
                     "Use 'createmeta_issuetypes' and 'createmeta_fieldtypes' instead.",
                     DeprecationWarning,
                     stacklevel=2,
@@ -1839,17 +1839,17 @@ class JIRA:
 
         Return None and -1 unchanged.
 
-        This function uses :py:meth:`JIRA.search_users` to find the user and then using :py:meth:`JIRA._get_user_identifier` extracts
+        This function uses :py:meth:`jira_svc.search_users` to find the user and then using :py:meth:`jira_svc._get_user_identifier` extracts
         the relevant identifier property depending on whether the instance is a Cloud or self-hosted Instance.
 
         Args:
             user (Optional[str]): The search term used for finding a user. None, '-1' and -1 are equivalent to 'Unassigned'.
 
         Raises:
-            JIRAError: If any error occurs.
+            jira_svcError: If any error occurs.
 
         Returns:
-            Optional[str]: The Jira user's identifier. Or "-1" and None unchanged.
+            Optional[str]: The jira_svc user's identifier. Or "-1" and None unchanged.
         """
         if user in (None, -1, "-1"):
             return user
@@ -1861,7 +1861,7 @@ class JIRA:
                 users = self.search_users(user=user, maxResults=20)
 
             if len(users) < 1:
-                raise JIRAError(f"No matching user found for: '{user}'")
+                raise jira_svcError(f"No matching user found for: '{user}'")
 
             matches = []
             if len(users) > 1:
@@ -1869,7 +1869,7 @@ class JIRA:
             user_obj = matches[0] if matches else users[0]
 
         except Exception as e:
-            raise JIRAError(str(e))
+            raise jira_svcError(str(e))
         return self._get_user_identifier(user_obj)
 
     # non-resource
@@ -1939,12 +1939,12 @@ class JIRA:
         """Add a comment from the current authenticated user on the specified issue and return a Resource for it.
 
         Args:
-            issue (Union[str, int, jira.resources.Issue]): ID or key of the issue to add the comment to
+            issue (Union[str, int, jira_svc.resources.Issue]): ID or key of the issue to add the comment to
             body (str): Text of the comment to add
             visibility (Optional[Dict[str, str]]): a dict containing two entries: "type" and "value".
-              "type" is 'role' (or 'group' if the Jira server has configured comment visibility for groups)
+              "type" is 'role' (or 'group' if the jira_svc server has configured comment visibility for groups)
               "value" is the name of the role (or group) to which viewing of this comment will be restricted.
-            is_internal (bool): True marks the comment as 'Internal' in Jira Service Desk (Default: ``False``)
+            is_internal (bool): True marks the comment as 'Internal' in jira_svc Service Desk (Default: ``False``)
 
         Returns:
             Comment: the created comment
@@ -2018,10 +2018,10 @@ class JIRA:
     ) -> RemoteLink:
         """Add a remote link from an issue to an external application and returns a remote link Resource for it.
 
-        ``destination`` should be a dict containing at least ``url`` to the linked external URL and ``title`` to display for the link inside Jira.
+        ``destination`` should be a dict containing at least ``url`` to the linked external URL and ``title`` to display for the link inside jira_svc.
 
         For definitions of the allowable fields for ``destination`` and the keyword arguments ``globalId``, ``application`` and ``relationship``,
-        see https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+for+Remote+Issue+Links.
+        see https://developer.atlassian.com/display/jira_svcDEV/jira_svc+REST+API+for+Remote+Issue+Links.
 
         Args:
             issue (str): the issue to add the remote link to
@@ -2035,7 +2035,7 @@ class JIRA:
         """
         try:
             applicationlinks: list[dict] = self.applicationlinks()
-        except JIRAError as e:
+        except jira_svcError as e:
             applicationlinks = []
             # In many (if not most) configurations, non-admin users are not allowed to
             # list applicationlinks;
@@ -2058,7 +2058,7 @@ class JIRA:
                     )
                     data["application"] = {
                         "name": x["application"]["name"],
-                        "type": "com.atlassian.jira",
+                        "type": "com.atlassian.jira_svc",
                     }
                     break
             if "globalId" not in data:
@@ -2083,7 +2083,7 @@ class JIRA:
                     )
                     data["application"] = {
                         "name": x["application"]["name"],
-                        "type": "com.atlassian.jira",
+                        "type": "com.atlassian.jira_svc",
                     }
                     break
 
@@ -2099,10 +2099,10 @@ class JIRA:
         This avoids the admin access problems from add_remote_link by just using a simple object and presuming all fields are correct
         and not requiring more complex ``application`` data.
 
-        ``object`` should be a dict containing at least ``url`` to the linked external URL and ``title`` to display for the link inside Jira
+        ``object`` should be a dict containing at least ``url`` to the linked external URL and ``title`` to display for the link inside jira_svc
 
         For definitions of the allowable fields for ``object`` ,
-        see https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+for+Remote+Issue+Links.
+        see https://developer.atlassian.com/display/jira_svcDEV/jira_svc+REST+API+for+Remote+Issue+Links.
 
         Args:
             issue (str): the issue to add the remote link to
@@ -2124,7 +2124,7 @@ class JIRA:
         """Get a list of the transitions available on the specified issue to the current user.
 
         Args:
-            issue (Union[str, int, jira.resources.Issue]): ID or key of the issue to get the transitions from
+            issue (Union[str, int, jira_svc.resources.Issue]): ID or key of the issue to get the transitions from
             id (Optional[str]): if present, get only the transition matching this ID
             expand (Optional): extra information to fetch inside each transition
 
@@ -2145,10 +2145,10 @@ class JIRA:
     ) -> int | None:
         """Get a transitionid available on the specified issue to the current user.
 
-        Look at https://developer.atlassian.com/static/rest/jira/6.1.html#d2e1074 for json reference
+        Look at https://developer.atlassian.com/static/rest/jira_svc/6.1.html#d2e1074 for json reference
 
         Args:
-            issue (Union[str, int, jira.resources.Issue]): ID or key of the issue to get the transitions from
+            issue (Union[str, int, jira_svc.resources.Issue]): ID or key of the issue to get the transitions from
             transition_name (str): name of transition we are looking for
 
         Returns:
@@ -2179,7 +2179,7 @@ class JIRA:
         all other keyword arguments will be ignored. Field values will be set on the issue as part of the transition process.
 
         Args:
-            issue (Union[str, int, jira.resources.Issue]): ID or key of the issue to perform the transition on
+            issue (Union[str, int, jira_svc.resources.Issue]): ID or key of the issue to perform the transition on
             transition (str): ID or name of the transition to perform
             fields (Optional[Dict[str,Any]]): a dict containing field names and the values to use.
             comment (Optional[str]): String to add as comment to the issue when performing the transition.
@@ -2194,7 +2194,7 @@ class JIRA:
             # cannot cast to int, so try to find transitionId by name
             transitionId = self.find_transitionid_by_name(issue, transition)
             if transitionId is None:
-                raise JIRAError(f"Invalid transition name. {transition}")
+                raise jira_svcError(f"Invalid transition name. {transition}")
 
         data: dict[str, Any] = {"transition": {"id": transitionId}}
         update_dict: dict[str, Any] = {}
@@ -2357,7 +2357,7 @@ class JIRA:
             Response
         """
         url = self._get_url("issue/" + str(issue) + "/watchers")
-        # https://docs.atlassian.com/software/jira/docs/api/REST/8.13.6/#api/2/issue-removeWatcher
+        # https://docs.atlassian.com/software/jira_svc/docs/api/REST/8.13.6/#api/2/issue-removeWatcher
         user_id = self._get_user_id(watcher)
         payload = {"accountId": user_id} if self._is_cloud else {"username": user_id}
         result = self._session.delete(url, params=payload)
@@ -2450,7 +2450,7 @@ class JIRA:
         if user is not None:
             data["author"] = {
                 "name": user,
-                "self": self.JIRA_BASE_URL + "/rest/api/latest/user?username=" + user,
+                "self": self.jira_svc_BASE_URL + "/rest/api/latest/user?username=" + user,
                 "displayName": user,
                 "active": False,
             }
@@ -2521,7 +2521,7 @@ class JIRA:
             outwardIssue: the issue to link to
             comment (Optional[Dict[str, Any]]):  a comment to add to the issues with the link. Should be a dict containing ``body`` and
               ``visibility`` fields: ``body`` being the text of the comment and ``visibility`` being a dict containing two entries:
-              ``type`` and ``value``. ``type`` is ``role`` (or ``group`` if the Jira server has configured comment visibility for groups)
+              ``type`` and ``value``. ``type`` is ``role`` (or ``group`` if the jira_svc server has configured comment visibility for groups)
               and ``value`` is the name of the role (or group) to which viewing of this comment will be restricted.
 
         Returns:
@@ -2695,8 +2695,8 @@ class JIRA:
         """Get a dict of all available permissions on the server.
 
         ``permissions`` is a comma-separated value list of permission keys that is
-        required in Jira Cloud. For possible and allowable permission values, see
-        https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-permission-schemes/#built-in-permissions
+        required in jira_svc Cloud. For possible and allowable permission values, see
+        https://developer.atlassian.com/cloud/jira_svc/platform/rest/v3/api-group-permission-schemes/#built-in-permissions
 
         Args:
             projectKey (Optional[str]): limit returned permissions to the specified project
@@ -2809,11 +2809,11 @@ class JIRA:
         this mechanism relies on libmagic and will not work out of the box on Windows systems
         (see `Their Documentation <https://filemagic.readthedocs.io/en/latest/guide.html>`_ for details on how to install support).
 
-        The ``contentType`` argument can be used to explicitly set the value (note that Jira will reject any type other than the well-known ones for images, e.g. ``image/jpg``, ``image/png``, etc.)
+        The ``contentType`` argument can be used to explicitly set the value (note that jira_svc will reject any type other than the well-known ones for images, e.g. ``image/jpg``, ``image/png``, etc.)
 
         This method returns a dict of properties that can be used to crop a subarea of a larger image for use.
         This dict should be saved and passed to :py:meth:`confirm_project_avatar` to finish the avatar creation process.
-        If you want to cut out the middleman and confirm the avatar with Jira's default cropping,
+        If you want to cut out the middleman and confirm the avatar with jira_svc's default cropping,
         pass the 'auto_confirm' argument with a truthy value and :py:meth:`confirm_project_avatar` will be called for you before this method returns.
 
         Args:
@@ -3032,7 +3032,7 @@ class JIRA:
         properties: str | None = None,
         json_result: bool = False,
     ) -> dict[str, Any] | ResultList[Issue]:
-        """Get a :class:`~jira.client.ResultList` of issue Resources matching a JQL search string.
+        """Get a :class:`~jira_svc.client.ResultList` of issue Resources matching a JQL search string.
 
         Args:
             jql_str (str): The JQL search string.
@@ -3112,7 +3112,7 @@ class JIRA:
 
     # non-resource
     def server_info(self) -> dict[str, Any]:
-        """Get a dict of server information for this Jira instance.
+        """Get a dict of server information for this jira_svc instance.
 
         Returns:
             Dict[str, Any]
@@ -3121,14 +3121,14 @@ class JIRA:
         j = self._get_json("serverInfo")
         while not j and retry < 3:
             self.log.warning(
-                "Bug https://jira.atlassian.com/browse/JRA-59676 trying again..."
+                "Bug https://jira_svc.atlassian.com/browse/JRA-59676 trying again..."
             )
             retry += 1
             j = self._get_json("serverInfo")
         return j
 
     def myself(self) -> dict[str, Any]:
-        """Get a dict of server information for this Jira instance.
+        """Get a dict of server information for this jira_svc instance.
 
         Returns:
             Dict[str, Any]
@@ -3140,7 +3140,7 @@ class JIRA:
     def statuses(self) -> list[Status]:
         """Get a list of all status Resources from the server.
 
-        Refer to :py:meth:`JIRA.issue_types_for_project` for getting statuses
+        Refer to :py:meth:`jira_svc.issue_types_for_project` for getting statuses
         for a specific issue type within a specific project.
 
         Returns:
@@ -3269,8 +3269,8 @@ class JIRA:
     ):
         """Get a list of user Resources that match the search string for assigning or creating issues.
 
-        "username" query parameter is deprecated in Jira Cloud; the expected parameter now is "query", which can just be the full email again.
-        But the "user" parameter is kept for backwards compatibility, i.e. Jira Server/Data Center.
+        "username" query parameter is deprecated in jira_svc Cloud; the expected parameter now is "query", which can just be the full email again.
+        But the "user" parameter is kept for backwards compatibility, i.e. jira_svc Server/Data Center.
 
         This method is intended to find users that are eligible to create issues in a project or be assigned to an existing issue.
         When searching for eligible creators, specify a project. When searching for eligible assignees, specify an issue key.
@@ -3341,11 +3341,11 @@ class JIRA:
         this mechanism relies on ``libmagic`` and will not work out of the box on Windows systems
         (see `Their Documentation <https://filemagic.readthedocs.io/en/latest/guide.html>`_ for details on how to install support).
         The ``contentType`` argument can be used to explicitly set the value
-        (note that Jira will reject any type other than the well-known ones for images, e.g. ``image/jpg``, ``image/png``, etc.)
+        (note that jira_svc will reject any type other than the well-known ones for images, e.g. ``image/jpg``, ``image/png``, etc.)
 
         This method returns a dict of properties that can be used to crop a subarea of a larger image for use.
         This dict should be saved and passed to :py:meth:`confirm_user_avatar` to finish the avatar creation process.
-        If you want to cut out the middleman and confirm the avatar with Jira's default cropping, pass the ``auto_confirm`` argument with a truthy value and
+        If you want to cut out the middleman and confirm the avatar with jira_svc's default cropping, pass the ``auto_confirm`` argument with a truthy value and
         :py:meth:`confirm_user_avatar` will be called for you before this method returns.
 
         Args:
@@ -3474,8 +3474,8 @@ class JIRA:
     ) -> ResultList[User]:
         """Get a list of user Resources that match the specified search string.
 
-        "username" query parameter is deprecated in Jira Cloud; the expected parameter now is "query", which can just be the full email again.
-        But the "user" parameter is kept for backwards compatibility, i.e. Jira Server/Data Center.
+        "username" query parameter is deprecated in jira_svc Cloud; the expected parameter now is "query", which can just be the full email again.
+        But the "user" parameter is kept for backwards compatibility, i.e. jira_svc Server/Data Center.
 
         Args:
             user (Optional[str]): a string to match usernames, name or email against.
@@ -3714,7 +3714,7 @@ class JIRA:
                 self.myself()
                 _logging.debug(f"OAuth1 succeeded with signature_method={sha_type}")
                 return  # successful response, return with happy session
-            except JIRAError:
+            except jira_svcError:
                 _logging.exception(
                     f"Failed to create OAuth session with signature_method={sha_type}.\n"
                     + "Attempting fallback method(s)."
@@ -3785,9 +3785,9 @@ class JIRA:
             raise e
         jwt_auth.set_header_format("JWT %s")
 
-        jwt_auth.add_field("iat", lambda req: JIRA._timestamp())
+        jwt_auth.add_field("iat", lambda req: jira_svc._timestamp())
         jwt_auth.add_field(
-            "exp", lambda req: JIRA._timestamp(datetime.timedelta(minutes=3))
+            "exp", lambda req: jira_svc._timestamp(datetime.timedelta(minutes=3))
         )
         jwt_auth.add_field("qsh", QshGenerator(self._options["context_path"]))
         for f in jwt["payload"].items():
@@ -3805,8 +3805,8 @@ class JIRA:
         data = {"id": avatar}
         return self._session.put(url, params=params, data=json.dumps(data))
 
-    def _get_url(self, path: str, base: str = JIRA_BASE_URL) -> str:
-        """Returns the full url based on Jira base url and the path provided.
+    def _get_url(self, path: str, base: str = jira_svc_BASE_URL) -> str:
+        """Returns the full url based on jira_svc base url and the path provided.
 
         Using the API version specified during the __init__.
 
@@ -3821,8 +3821,8 @@ class JIRA:
         options.update({"path": path})
         return base.format(**options)
 
-    def _get_latest_url(self, path: str, base: str = JIRA_BASE_URL) -> str:
-        """Returns the full url based on Jira base url and the path provided.
+    def _get_latest_url(self, path: str, base: str = jira_svc_BASE_URL) -> str:
+        """Returns the full url based on jira_svc base url and the path provided.
 
         Using the latest API endpoint.
 
@@ -3838,14 +3838,14 @@ class JIRA:
         return base.format(**options)
 
     def _get_json(
-        self, path: str, params: dict[str, Any] = None, base: str = JIRA_BASE_URL
+        self, path: str, params: dict[str, Any] = None, base: str = jira_svc_BASE_URL
     ):
         """Get the json for a given path and params.
 
         Args:
             path (str): The subpath required
             params (Optional[Dict[str, Any]]): Parameters to filter the json query.
-            base (Optional[str]): The Base Jira URL, defaults to the instance base.
+            base (Optional[str]): The Base jira_svc URL, defaults to the instance base.
 
         Returns:
             Union[Dict[str, Any], List[Dict[str, str]]]
@@ -3873,7 +3873,7 @@ class JIRA:
             expand ([type], optional): The value for the expand property in the Resource's ``find()`` params. Defaults to None.
 
         Raises:
-            JIRAError: If the Resource cannot be found
+            jira_svcError: If the Resource cannot be found
 
         Returns:
             Any: A class of the same type as ``resource_cls``
@@ -3884,7 +3884,7 @@ class JIRA:
             params["expand"] = expand
         resource.find(id=ids, params=params)
         if not resource:
-            raise JIRAError("Unable to find resource %s(%s)", resource_cls, str(ids))
+            raise jira_svcError("Unable to find resource %s(%s)", resource_cls, str(ids))
         return resource
 
     def _try_magic(self):
@@ -3929,7 +3929,7 @@ class JIRA:
             return None
 
     def rename_user(self, old_user: str, new_user: str):
-        """Rename a Jira user.
+        """Rename a jira_svc user.
 
         Args:
             old_user (str): Old username login
@@ -3946,11 +3946,11 @@ class JIRA:
             self._session.put(url, params=params, data=json.dumps(payload))
         else:
             raise NotImplementedError(
-                "Support for renaming users in Jira " "< 6.0.0 has been removed."
+                "Support for renaming users in jira_svc " "< 6.0.0 has been removed."
             )
 
     def delete_user(self, username: str) -> bool:
-        """Deletes a Jira User.
+        """Deletes a jira_svc User.
 
         Args:
             username (str): Username to delete
@@ -3977,11 +3977,11 @@ class JIRA:
         """
         if self._is_cloud:
             # Disabling users now needs cookie auth in the Cloud -
-            # see https://jira.atlassian.com/browse/ID-6230
+            # see https://jira_svc.atlassian.com/browse/ID-6230
             if "authCookie" not in vars(self):
                 user = self.session()
                 if user.raw is None:
-                    raise JIRAError("Can not log in!")
+                    raise jira_svcError("Can not log in!")
                 self.authCookie = "{}={}".format(
                     user.raw["session"]["name"],
                     user.raw["session"]["value"],
@@ -4010,7 +4010,7 @@ class JIRA:
                 return r.status_code
             except Exception as e:
                 self.log.error(f"Error Deactivating {username}: {e}")
-                raise JIRAError(f"Error Deactivating {username}: {e}")
+                raise jira_svcError(f"Error Deactivating {username}: {e}")
         else:
             url = self.server_url + "/secure/admin/user/EditUser.jspa"
             self._options["headers"][
@@ -4037,28 +4037,28 @@ class JIRA:
                 return r.status_code
             except Exception as e:
                 self.log.error(f"Error Deactivating {username}: {e}")
-                raise JIRAError(f"Error Deactivating {username}: {e}")
+                raise jira_svcError(f"Error Deactivating {username}: {e}")
 
     def reindex(self, force: bool = False, background: bool = True) -> bool:
-        """Start jira re-indexing. Returns True if reindexing is in progress or not needed, or False.
+        """Start jira_svc re-indexing. Returns True if reindexing is in progress or not needed, or False.
 
-        If you call reindex() without any parameters it will perform a background reindex only if Jira thinks it should do it.
+        If you call reindex() without any parameters it will perform a background reindex only if jira_svc thinks it should do it.
 
         Args:
-            force (bool): True to reindex even if Jira doesn't say this is needed. (Default: ``False``)
+            force (bool): True to reindex even if jira_svc doesn't say this is needed. (Default: ``False``)
             background (bool): True to reindex in background, slower but does not impact the users. (Default: ``True``)
 
         Returns:
             bool: True if reindexing is in progress or not needed
         """
         # /secure/admin/IndexAdmin.jspa
-        # /secure/admin/jira/IndexProgress.jspa?taskId=1
+        # /secure/admin/jira_svc/IndexProgress.jspa?taskId=1
         indexingStrategy = "background" if background else "stoptheworld"
-        url = self.server_url + "/secure/admin/jira/IndexReIndex.jspa"
+        url = self.server_url + "/secure/admin/jira_svc/IndexReIndex.jspa"
 
         r = self._session.get(url, headers=self._options["headers"])
         if r.status_code == 503:
-            # self.log.warning("Jira returned 503, this could mean that a full reindex is in progress.")
+            # self.log.warning("jira_svc returned 503, this could mean that a full reindex is in progress.")
             return 503  # type: ignore # FIXME: is this a bug?
 
         if (
@@ -4068,7 +4068,7 @@ class JIRA:
             return True
 
         if r.text.find("All issues are being re-indexed"):
-            self.log.warning("Jira re-indexing is already running.")
+            self.log.warning("jira_svc re-indexing is already running.")
             return True  # still reindexing is considered still a success
 
         if r.text.find("To perform the re-index now, please go to the") or force:
@@ -4080,13 +4080,13 @@ class JIRA:
             if r.text.find("All issues are being re-indexed") != -1:
                 return True
 
-        self.log.error("Failed to reindex jira, probably a bug.")
+        self.log.error("Failed to reindex jira_svc, probably a bug.")
         return False
 
     def backup(
         self, filename: str = "backup.zip", attachments: bool = False
     ) -> bool | int | None:
-        """Will call jira export to backup as zipped xml. Returning with success does not mean that the backup process finished.
+        """Will call jira_svc export to backup as zipped xml. Returning with success does not mean that the backup process finished.
 
         Args:
             filename (str): the filename for the backup (Default: "backup.zip")
@@ -4175,13 +4175,13 @@ class JIRA:
                         url, headers=self._options["headers"], stream=True
                     )
                 except Exception:
-                    raise JIRAError()
+                    raise jira_svcError()
                 if not resp.ok:
                     self.log.error(f"Something went wrong with download: {resp.text}")
-                    raise JIRAError(resp.text)
+                    raise jira_svcError(resp.text)
                 for block in resp.iter_content(1024):
                     file.write(block)
-        except JIRAError as je:
+        except jira_svcError as je:
             self.log.error(f"Unable to access remote backup file: {je}")
         except OSError as ioe:
             self.log.error(ioe)
@@ -4194,7 +4194,7 @@ class JIRA:
 
         Args:
             field (Optional[str]): the name of the identifier field.
-              Defaults to "accountId" for Jira Cloud, else "username"
+              Defaults to "accountId" for jira_svc Cloud, else "username"
 
         Returns:
             str: User's `accountId` (Cloud) else `username`.
@@ -4214,13 +4214,13 @@ class JIRA:
         return self._myself[field]
 
     def delete_project(self, pid: str | Project) -> bool | None:
-        """Delete project from Jira.
+        """Delete project from jira_svc.
 
         Args:
-            pid (Union[str, Project]): Jira projectID or Project or slug
+            pid (Union[str, Project]): jira_svc projectID or Project or slug
 
         Raises:
-            JIRAError:  If project not found or not enough permissions
+            jira_svcError:  If project not found or not enough permissions
             ValueError: If pid parameter is not Project, slug or ProjectID
 
         Returns:
@@ -4233,9 +4233,9 @@ class JIRA:
         url = self._get_url(f"project/{pid}")
         r = self._session.delete(url)
         if r.status_code == 403:
-            raise JIRAError("Not enough permissions to delete project")
+            raise jira_svcError("Not enough permissions to delete project")
         if r.status_code == 404:
-            raise JIRAError("Project not found in Jira")
+            raise jira_svcError("Project not found in jira_svc")
         return r.ok
 
     def _gain_sudo_session(self, options, destination):
@@ -4411,7 +4411,7 @@ class JIRA:
         """Create a project with the specified parameters.
 
         Args:
-            key (str): Mandatory. Must match Jira project key requirements, usually only 2-10 uppercase characters.
+            key (str): Mandatory. Must match jira_svc project key requirements, usually only 2-10 uppercase characters.
             name (Optional[str]): If not specified it will use the key value.
             assignee (Optional[str]): Key of the lead, if not specified it will use current user.
             ptype (Optional[str]): Determines the type of project that should be created. Defaults to 'software'.
@@ -4473,45 +4473,45 @@ class JIRA:
             if projectCategory is None and ps_list:
                 projectCategory = ps_list[0]["id"]
         # <beep> Atlassian for failing to provide an API to get projectTemplateKey values
-        #  Possible values are just hardcoded and obviously depending on Jira version.
-        # https://developer.atlassian.com/cloud/jira/platform/rest/v3/?_ga=2.88310429.766596084.1562439833-992274574.1559129176#api-rest-api-3-project-post
-        # https://jira.atlassian.com/browse/JRASERVER-59658
+        #  Possible values are just hardcoded and obviously depending on jira_svc version.
+        # https://developer.atlassian.com/cloud/jira_svc/platform/rest/v3/?_ga=2.88310429.766596084.1562439833-992274574.1559129176#api-rest-api-3-project-post
+        # https://jira_svc.atlassian.com/browse/JRASERVER-59658
         # preference list for picking a default template
         if not template_name:
-            # https://confluence.atlassian.com/jirakb/creating-projects-via-rest-api-in-jira-963651978.html
+            # https://confluence.atlassian.com/jira_svckb/creating-projects-via-rest-api-in-jira_svc-963651978.html
             template_key = (
-                "com.pyxis.greenhopper.jira:gh-simplified-basic"
+                "com.pyxis.greenhopper.jira_svc:gh-simplified-basic"
                 if self._is_cloud
-                else "com.pyxis.greenhopper.jira:basic-software-development-template"
+                else "com.pyxis.greenhopper.jira_svc:basic-software-development-template"
             )
 
-        # https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-projects/#api-rest-api-2-project-get
+        # https://developer.atlassian.com/cloud/jira_svc/platform/rest/v2/api-group-projects/#api-rest-api-2-project-get
         # template_keys = [
-        #     "com.pyxis.greenhopper.jira:gh-simplified-agility-kanban",
-        #     "com.pyxis.greenhopper.jira:gh-simplified-agility-scrum",
-        #     "com.pyxis.greenhopper.jira:gh-simplified-basic",
-        #     "com.pyxis.greenhopper.jira:gh-simplified-kanban-classic",
-        #     "com.pyxis.greenhopper.jira:gh-simplified-scrum-classic",
+        #     "com.pyxis.greenhopper.jira_svc:gh-simplified-agility-kanban",
+        #     "com.pyxis.greenhopper.jira_svc:gh-simplified-agility-scrum",
+        #     "com.pyxis.greenhopper.jira_svc:gh-simplified-basic",
+        #     "com.pyxis.greenhopper.jira_svc:gh-simplified-kanban-classic",
+        #     "com.pyxis.greenhopper.jira_svc:gh-simplified-scrum-classic",
         #     "com.atlassian.servicedesk:simplified-it-service-desk",
         #     "com.atlassian.servicedesk:simplified-internal-service-desk",
         #     "com.atlassian.servicedesk:simplified-external-service-desk",
-        #     "com.atlassian.jira-core-project-templates:jira-core-simplified-content-management",
-        #     "com.atlassian.jira-core-project-templates:jira-core-simplified-document-approval",
-        #     "com.atlassian.jira-core-project-templates:jira-core-simplified-lead-tracking",
-        #     "com.atlassian.jira-core-project-templates:jira-core-simplified-process-control",
-        #     "com.atlassian.jira-core-project-templates:jira-core-simplified-procurement",
-        #     "com.atlassian.jira-core-project-templates:jira-core-simplified-project-management",
-        #     "com.atlassian.jira-core-project-templates:jira-core-simplified-recruitment",
-        #     "com.atlassian.jira-core-project-templates:jira-core-simplified-task-",
-        #     "com.atlassian.jira.jira-incident-management-plugin:im-incident-management",
+        #     "com.atlassian.jira_svc-core-project-templates:jira_svc-core-simplified-content-management",
+        #     "com.atlassian.jira_svc-core-project-templates:jira_svc-core-simplified-document-approval",
+        #     "com.atlassian.jira_svc-core-project-templates:jira_svc-core-simplified-lead-tracking",
+        #     "com.atlassian.jira_svc-core-project-templates:jira_svc-core-simplified-process-control",
+        #     "com.atlassian.jira_svc-core-project-templates:jira_svc-core-simplified-procurement",
+        #     "com.atlassian.jira_svc-core-project-templates:jira_svc-core-simplified-project-management",
+        #     "com.atlassian.jira_svc-core-project-templates:jira_svc-core-simplified-recruitment",
+        #     "com.atlassian.jira_svc-core-project-templates:jira_svc-core-simplified-task-",
+        #     "com.atlassian.jira_svc.jira_svc-incident-management-plugin:im-incident-management",
         # ]
 
         # possible_templates = [
         #     "Scrum software development",  # have Bug
         #     "Agility",  # cannot set summary
         #     "Bug tracking",
-        #     "JIRA Classic",
-        #     "JIRA Default Schemes",
+        #     "jira_svc Classic",
+        #     "jira_svc Default Schemes",
         #     "Basic software development",
         #     "Project management",
         #     "Kanban software development",
@@ -4538,8 +4538,8 @@ class JIRA:
         # template_key = templates[template_name]["projectTemplateModuleCompleteKey"]
         # project_type_key = templates[template_name]["projectTypeKey"]
 
-        # https://confluence.atlassian.com/jirakb/creating-a-project-via-rest-based-on-jira-default-schemes-744325852.html
-        # see https://confluence.atlassian.com/jirakb/creating-projects-via-rest-api-in-jira-963651978.html
+        # https://confluence.atlassian.com/jira_svckb/creating-a-project-via-rest-based-on-jira_svc-default-schemes-744325852.html
+        # see https://confluence.atlassian.com/jira_svckb/creating-projects-via-rest-api-in-jira_svc-963651978.html
         payload = {
             "name": name,
             "key": key,
@@ -4577,7 +4577,7 @@ class JIRA:
         ignore_existing: bool = False,
         application_keys: list | None = None,
     ):
-        """Create a new Jira user.
+        """Create a new jira_svc user.
 
         Args:
             username (str): the username of the new user
@@ -4591,19 +4591,19 @@ class JIRA:
             application_keys (Optional[list]): Keys of products user should have access to
 
         Raises:
-            JIRAError:  If username already exists and `ignore_existing` has not been set to `True`.
+            jira_svcError:  If username already exists and `ignore_existing` has not been set to `True`.
 
         Returns:
             bool: Whether the user creation was successful.
         """
         if not fullname:
             fullname = username
-        # TODO(ssbarnea): default the directoryID to the first directory in jira instead
+        # TODO(ssbarnea): default the directoryID to the first directory in jira_svc instead
         # of 1 which is the internal one.
         url = self._get_latest_url("user")
 
         # implementation based on
-        # https://docs.atlassian.com/jira/REST/ondemand/#d2e5173
+        # https://docs.atlassian.com/jira_svc/REST/ondemand/#d2e5173
         x: dict[str, Any] = OrderedDict()
 
         x["displayName"] = fullname
@@ -4619,7 +4619,7 @@ class JIRA:
         payload = json.dumps(x)
         try:
             self._session.post(url, data=payload)
-        except JIRAError as e:
+        except jira_svcError as e:
             if e.response:
                 err = e.response.json()["errors"]
                 if (
@@ -4639,7 +4639,7 @@ class JIRA:
             group (str): Group that the user will be added to.
 
         Returns:
-            Union[bool,Dict[str,Any]]: json response from Jira server for success or a value that evaluates as False in case of failure.
+            Union[bool,Dict[str,Any]]: json response from jira_svc server for success or a value that evaluates as False in case of failure.
         """
         url = self._get_latest_url("group/user")
         x = {"groupname": group}
@@ -4671,12 +4671,12 @@ class JIRA:
         return True
 
     def role(self) -> list[dict[str, Any]]:
-        """Return Jira role information.
+        """Return jira_svc role information.
 
         Returns:
             List[Dict[str,Any]]: List of current user roles
         """
-        # https://developer.atlassian.com/cloud/jira/platform/rest/v3/?utm_source=%2Fcloud%2Fjira%2Fplatform%2Frest%2F&utm_medium=302#api-rest-api-3-role-get
+        # https://developer.atlassian.com/cloud/jira_svc/platform/rest/v3/?utm_source=%2Fcloud%2Fjira_svc%2Fplatform%2Frest%2F&utm_medium=302#api-rest-api-3-role-get
 
         url = self._get_latest_url("role")
 
@@ -4699,7 +4699,7 @@ class JIRA:
         return json_loads(r)
 
     """
-    Define the functions that interact with Jira Agile.
+    Define the functions that interact with jira_svc Agile.
     """
 
     @translate_resource_args
@@ -4799,7 +4799,7 @@ class JIRA:
             if s.name not in sprints:
                 sprints[s.name] = s.raw
             else:
-                raise JIRAError(
+                raise jira_svcError(
                     f"There are multiple sprints defined with the name {s.name} on board id {id},\n"
                     f"returning a dict with sprint names as a key, assumes unique names for each sprint"
                 )
@@ -5053,7 +5053,7 @@ class JIRA:
         Returns:
             Response
         """
-        # TODO: Jira Agile API supports moving more than one issue.
+        # TODO: jira_svc Agile API supports moving more than one issue.
 
         if next_issue is None and prev_issue is None:
             raise ValueError("One of 'next_issue' or 'prev_issue' must be specified")
@@ -5073,15 +5073,15 @@ class JIRA:
                 if field["name"] == "Rank":
                     if (
                         field["schema"]["custom"]
-                        == "com.pyxis.greenhopper.jira:gh-lexo-rank"
+                        == "com.pyxis.greenhopper.jira_svc:gh-lexo-rank"
                     ):
                         self._rank = field["schema"]["customId"]
                         break
                     elif (
                         field["schema"]["custom"]
-                        == "com.pyxis.greenhopper.jira:gh-global-rank"
+                        == "com.pyxis.greenhopper.jira_svc:gh-global-rank"
                     ):
-                        # Obsolete since Jira v6.3.13.1
+                        # Obsolete since jira_svc v6.3.13.1
                         self._rank = field["schema"]["customId"]
 
         url = self._get_url("issue/rank", base=self.AGILE_BASE_URL)
@@ -5099,7 +5099,7 @@ class JIRA:
             issue_keys (List[str]): the issues to move to the backlog
 
         Raises:
-            JIRAError: If moving issues to backlog fails
+            jira_svcError: If moving issues to backlog fails
 
         Returns:
             Response

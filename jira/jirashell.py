@@ -1,4 +1,4 @@
-"""Starts an interactive Jira session in an ipython terminal.
+"""Starts an interactive jira_svc session in an ipython terminal.
 
 Script arguments support changing the server and a persistent authentication
 over HTTP BASIC or Kerberos.
@@ -18,9 +18,9 @@ import requests
 from oauthlib.oauth1 import SIGNATURE_HMAC_SHA1
 from requests_oauthlib import OAuth1
 
-from jira import JIRA, __version__
+from jira_svc import jira_svc, __version__
 
-CONFIG_PATH = os.path.join(os.path.expanduser("~"), ".jira-python", "jirashell.ini")
+CONFIG_PATH = os.path.join(os.path.expanduser("~"), ".jira_svc-python", "jira_svcshell.ini")
 SENTINEL = object()
 
 
@@ -144,31 +144,31 @@ def process_config():
 
 def process_command_line():
     parser = argparse.ArgumentParser(
-        description="Start an interactive Jira shell with the REST API."
+        description="Start an interactive jira_svc shell with the REST API."
     )
-    jira_group = parser.add_argument_group("Jira server connection options")
-    jira_group.add_argument(
+    jira_svc_group = parser.add_argument_group("jira_svc server connection options")
+    jira_svc_group.add_argument(
         "-s",
         "--server",
-        help="The Jira instance to connect to, including context path.",
+        help="The jira_svc instance to connect to, including context path.",
     )
-    jira_group.add_argument(
+    jira_svc_group.add_argument(
         "-r", "--rest-path", help="The root path of the REST API to use."
     )
-    jira_group.add_argument("--auth-url", help="Path to URL to auth against.")
-    jira_group.add_argument(
+    jira_svc_group.add_argument("--auth-url", help="Path to URL to auth against.")
+    jira_svc_group.add_argument(
         "-v",
         "--rest-api-version",
         help="The version of the API under the specified name.",
     )
 
-    jira_group.add_argument(
+    jira_svc_group.add_argument(
         "--no-verify", action="store_true", help="do not verify the ssl certificate"
     )
 
     basic_auth_group = parser.add_argument_group("BASIC auth options")
     basic_auth_group.add_argument(
-        "-u", "--username", help="The username to connect to this Jira instance with."
+        "-u", "--username", help="The username to connect to this jira_svc instance with."
     )
     basic_auth_group.add_argument(
         "-p", "--password", help="The password associated with this user."
@@ -185,14 +185,14 @@ def process_command_line():
         "-od",
         "--oauth-dance",
         action="store_true",
-        help="Start a 3-legged OAuth authentication dance with Jira.",
+        help="Start a 3-legged OAuth authentication dance with jira_svc.",
     )
     oauth_group.add_argument("-ck", "--consumer-key", help="OAuth consumer key.")
     oauth_group.add_argument(
         "-k",
         "--key-cert",
         help="Private key to sign OAuth requests with (should be the pair of the public key\
-                                   configured in the Jira application link)",
+                                   configured in the jira_svc application link)",
     )
     oauth_group.add_argument(
         "-pt",
@@ -345,7 +345,7 @@ def main():
         use_kerberos = kerberos_auth.get("use_kerberos", False)
         del kerberos_auth["use_kerberos"]
 
-        jira = JIRA(
+        jira_svc = jira_svc(
             options=options,
             basic_auth=basic_auth,
             kerberos=use_kerberos,
@@ -362,9 +362,9 @@ def main():
             from IPython.frontend.terminal.embed import InteractiveShellEmbed
 
         ip_shell = InteractiveShellEmbed(
-            banner1="<Jira Shell " + __version__ + " (" + jira.server_url + ")>"
+            banner1="<jira_svc Shell " + __version__ + " (" + jira_svc.server_url + ")>"
         )
-        ip_shell("*** Jira shell active; client is in 'jira'. Press Ctrl-D to exit.")
+        ip_shell("*** jira_svc shell active; client is in 'jira_svc'. Press Ctrl-D to exit.")
     except Exception as e:
         print(e, file=sys.stderr)
         return 2

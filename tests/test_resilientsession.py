@@ -6,10 +6,10 @@ from unittest.mock import Mock, patch
 import pytest
 from requests import Response
 
-import jira.resilientsession
-from jira.exceptions import JIRAError
-from jira.resilientsession import parse_error_msg, parse_errors
-from tests.conftest import JiraTestCase
+import jira_svc.resilientsession
+from jira_svc.exceptions import jira_svcError
+from jira_svc.resilientsession import parse_error_msg, parse_errors
+from tests.conftest import jira_svcTestCase
 
 
 class ListLoggingHandler(logging.Handler):
@@ -26,12 +26,12 @@ class ListLoggingHandler(logging.Handler):
         self.records = []
 
 
-class ResilientSessionLoggingConfidentialityTests(JiraTestCase):
+class ResilientSessionLoggingConfidentialityTests(jira_svcTestCase):
     """No sensitive data shall be written to the log."""
 
     def setUp(self):
         self.loggingHandler = ListLoggingHandler()
-        jira.resilientsession.logging.getLogger().addHandler(self.loggingHandler)
+        jira_svc.resilientsession.logging.getLogger().addHandler(self.loggingHandler)
 
     def test_logging_with_connection_error(self):
         """No sensitive data shall be written to the log in case of a connection error."""
@@ -39,7 +39,7 @@ class ResilientSessionLoggingConfidentialityTests(JiraTestCase):
         for max_retries in (0, 1):
             for verb in ("get", "post", "put", "delete", "head", "patch", "options"):
                 with self.subTest(max_retries=max_retries, verb=verb):
-                    with jira.resilientsession.ResilientSession() as session:
+                    with jira_svc.resilientsession.ResilientSession() as session:
                         session.max_retries = max_retries
                         session.max_retry_delay = 0
                         try:
@@ -48,7 +48,7 @@ class ResilientSessionLoggingConfidentialityTests(JiraTestCase):
                                 headers={"sensitive_header": witness},
                                 data={"sensitive_data": witness},
                             )
-                        except jira.resilientsession.ConnectionError:
+                        except jira_svc.resilientsession.ConnectionError:
                             pass
                     # check that `witness` does not appear in log
                     for record in self.loggingHandler.records:
@@ -59,7 +59,7 @@ class ResilientSessionLoggingConfidentialityTests(JiraTestCase):
                     self.loggingHandler.reset()
 
     def tearDown(self):
-        jira.resilientsession.logging.getLogger().removeHandler(self.loggingHandler)
+        jira_svc.resilientsession.logging.getLogger().removeHandler(self.loggingHandler)
         del self.loggingHandler
 
 
@@ -75,7 +75,7 @@ status_codes_retries_test_data = [
 
 
 @patch("requests.Session.request")
-@patch(f"{jira.resilientsession.__name__}.time.sleep")
+@patch(f"{jira_svc.resilientsession.__name__}.time.sleep")
 @pytest.mark.parametrize(
     "status_code,expected_number_of_retries,expected_number_of_sleep_invocations",
     status_codes_retries_test_data,
@@ -94,17 +94,17 @@ def test_status_codes_retries(
     mocked_response.headers["retry-after"] = "1"
     mocked_response.headers["X-RateLimit-Limit"] = "1"
     mocked_request_method.return_value = mocked_response
-    session: jira.resilientsession.ResilientSession = (
-        jira.resilientsession.ResilientSession()
+    session: jira_svc.resilientsession.ResilientSession = (
+        jira_svc.resilientsession.ResilientSession()
     )
-    with pytest.raises(JIRAError):
+    with pytest.raises(jira_svcError):
         session.get("mocked_url")
     assert mocked_request_method.call_count == expected_number_of_retries
     assert mocked_sleep_method.call_count == expected_number_of_sleep_invocations
 
 
 @patch("requests.Session.request")
-@patch(f"{jira.resilientsession.__name__}.time.sleep")
+@patch(f"{jira_svc.resilientsession.__name__}.time.sleep")
 @pytest.mark.parametrize(
     "status_code,expected_number_of_retries,expected_number_of_sleep_invocations",
     status_codes_retries_test_data,
@@ -119,10 +119,10 @@ def test_status_codes_retries_no_headers(
     mocked_response: Response = Response()
     mocked_response.status_code = status_code
     mocked_request_method.return_value = mocked_response
-    session: jira.resilientsession.ResilientSession = (
-        jira.resilientsession.ResilientSession()
+    session: jira_svc.resilientsession.ResilientSession = (
+        jira_svc.resilientsession.ResilientSession()
     )
-    with pytest.raises(JIRAError):
+    with pytest.raises(jira_svcError):
         session.get("mocked_url")
     assert mocked_request_method.call_count == expected_number_of_retries
     assert mocked_sleep_method.call_count == expected_number_of_sleep_invocations
@@ -155,7 +155,7 @@ def test_error_parsing(status_code, headers, content, expected_errors):
 
 def test_passthrough_class():
     # GIVEN: The passthrough class and a dict of request args
-    passthrough_class = jira.resilientsession.PassthroughRetryPrepare()
+    passthrough_class = jira_svc.resilientsession.PassthroughRetryPrepare()
     my_kwargs = {"nice": "arguments"}
     # WHEN: the dict of request args are prepared
     # THEN: The exact same dict is returned
@@ -165,7 +165,7 @@ def test_passthrough_class():
 @patch("requests.Session.request")
 def test_unspecified_body_remains_unspecified(mocked_request_method: Mock):
     # Disable retries for this test.
-    session = jira.resilientsession.ResilientSession(max_retries=0)
+    session = jira_svc.resilientsession.ResilientSession(max_retries=0)
     # Data is not specified here.
     session.get(url="mocked_url")
     kwargs = mocked_request_method.call_args.kwargs
@@ -175,7 +175,7 @@ def test_unspecified_body_remains_unspecified(mocked_request_method: Mock):
 @patch("requests.Session.request")
 def test_nonempty_body_is_forwarded(mocked_request_method: Mock):
     # Disable retries for this test.
-    session = jira.resilientsession.ResilientSession(max_retries=0)
+    session = jira_svc.resilientsession.ResilientSession(max_retries=0)
     session.get(url="mocked_url", data={"some": "fake-data"})
     kwargs = mocked_request_method.call_args.kwargs
     assert kwargs["data"] == '{"some": "fake-data"}'
@@ -184,7 +184,7 @@ def test_nonempty_body_is_forwarded(mocked_request_method: Mock):
 @patch("requests.Session.request")
 def test_with_requests_simple_timeout(mocked_request_method: Mock):
     # Disable retries for this test.
-    session = jira.resilientsession.ResilientSession(max_retries=0, timeout=1)
+    session = jira_svc.resilientsession.ResilientSession(max_retries=0, timeout=1)
     session.get(url="mocked_url", data={"some": "fake-data"})
     kwargs = mocked_request_method.call_args.kwargs
     assert kwargs["data"] == '{"some": "fake-data"}'
@@ -193,7 +193,7 @@ def test_with_requests_simple_timeout(mocked_request_method: Mock):
 @patch("requests.Session.request")
 def test_with_requests_tuple_timeout(mocked_request_method: Mock):
     # Disable retries for this test.
-    session = jira.resilientsession.ResilientSession(max_retries=0, timeout=(1, 3.5))
+    session = jira_svc.resilientsession.ResilientSession(max_retries=0, timeout=(1, 3.5))
     session.get(url="mocked_url", data={"some": "fake-data"})
     kwargs = mocked_request_method.call_args.kwargs
     assert kwargs["data"] == '{"some": "fake-data"}'
@@ -202,7 +202,7 @@ def test_with_requests_tuple_timeout(mocked_request_method: Mock):
 @patch("requests.Session.request")
 def test_verify_is_forwarded(mocked_request_method: Mock):
     # Disable retries for this test.
-    session = jira.resilientsession.ResilientSession(max_retries=0)
+    session = jira_svc.resilientsession.ResilientSession(max_retries=0)
 
     session.get(url="mocked_url", data={"some": "fake-data"})
     kwargs = mocked_request_method.call_args.kwargs

@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from tests.conftest import JiraTestCase
+from tests.conftest import jira_svcTestCase
 
 
-class ProjectStatusesByIssueTypeTests(JiraTestCase):
+class ProjectStatusesByIssueTypeTests(jira_svcTestCase):
     def test_issue_types_for_project(self):
-        issue_types = self.jira.issue_types_for_project(self.project_a)
+        issue_types = self.jira_svc.issue_types_for_project(self.project_a)
 
         # should have at least one issue type within the project
         self.assertGreater(len(issue_types), 0)
@@ -20,7 +20,7 @@ class ProjectStatusesByIssueTypeTests(JiraTestCase):
 
         # test status id and name for each status within the project
         for status in unique_statuses:
-            self_status_id = self.jira.status(status.id).id
+            self_status_id = self.jira_svc.status(status.id).id
             self.assertEqual(self_status_id, status.id)
-            self_status_name = self.jira.status(status.name).name
+            self_status_name = self.jira_svc.status(status.name).name
             self.assertEqual(self_status_name, status.name)

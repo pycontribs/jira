@@ -5,7 +5,7 @@ Contributing
 The client is an open source project under the BSD license.
 Contributions of any kind are welcome!
 
-https://github.com/pycontribs/jira/
+https://github.com/pycontribs/jira_svc/
 
 If you find a bug or have an idea for a useful feature, file it at the GitHub
 project. Extra points for source code patches -- fork and send a pull request.
@@ -14,9 +14,9 @@ project. Extra points for source code patches -- fork and send a pull request.
 Discussion and support
 **********************
 
-We encourage all who wish to discuss by using https://community.atlassian.com/t5/tag/jira-python/tg-p
+We encourage all who wish to discuss by using https://community.atlassian.com/t5/tag/jira_svc-python/tg-p
 
-Keep in mind to use the jira-python tag when you add a new question. This will
+Keep in mind to use the jira_svc-python tag when you add a new question. This will
 ensure that the project maintainers will get notified about your question.
 
 
@@ -40,7 +40,7 @@ Testing
 Dev Container
 +++++++++++++
 
-We utilise Docker in order to generate a test Jira Server instance.
+We utilise Docker in order to generate a test jira_svc Server instance.
 
 This can be run manually, or automated using VS Code Dev Containers:
 
@@ -55,8 +55,8 @@ This will use the ``.devcontainer\Dockerfile`` as a base image with configuratio
 dictated by ``.devcontainer\devcontainer.json``.
 
 .. TIP::
-  The Docker extension can be used to monitor the progress of the Jira server build,
-  it takes a while! The tests will only run once the server is up and reachable on: http://localhost:2990/jira
+  The Docker extension can be used to monitor the progress of the jira_svc server build,
+  it takes a while! The tests will only run once the server is up and reachable on: http://localhost:2990/jira_svc
 
 
 Running Tests
@@ -91,13 +91,13 @@ Using tox
             "python": ".tox\\py39\\Scripts\\python.exe",
             "module": "pytest",
             "env": {
-                "CI_JIRA_URL": "http://localhost:2990/jira",
-                "CI_JIRA_ADMIN": "admin",
-                "CI_JIRA_ADMIN_PASSWORD": "admin",
-                "CI_JIRA_USER": "jira_user",
-                "CI_JIRA_USER_FULL_NAME": "Newly Created CI User",
-                "CI_JIRA_USER_PASSWORD": "jira",
-                "CI_JIRA_ISSUE": "Task",
+                "CI_jira_svc_URL": "http://localhost:2990/jira_svc",
+                "CI_jira_svc_ADMIN": "admin",
+                "CI_jira_svc_ADMIN_PASSWORD": "admin",
+                "CI_jira_svc_USER": "jira_svc_user",
+                "CI_jira_svc_USER_FULL_NAME": "Newly Created CI User",
+                "CI_jira_svc_USER_PASSWORD": "jira_svc",
+                "CI_jira_svc_ISSUE": "Task",
                 "PYTEST_TIMEOUT": "0", // Don't timeout
             },
             "args": [
@@ -114,14 +114,14 @@ Issues and Feature Requests
 ***************************
 
 * Check to see if there's an existing issue/pull request for the
-  bug/feature. All issues are at https://github.com/pycontribs/jira/issues
-  and pull requests are at https://github.com/pycontribs/jira/pulls.
+  bug/feature. All issues are at https://github.com/pycontribs/jira_svc/issues
+  and pull requests are at https://github.com/pycontribs/jira_svc/pulls.
 * If there isn't an existing issue there, please file an issue.
 
   * An example template is provided for:
 
-    * Bugs: https://github.com/pycontribs/jira/blob/main/.github/ISSUE_TEMPLATE/bug_report.yml
-    * Features: https://github.com/pycontribs/jira/blob/main/.github/ISSUE_TEMPLATE/feature_request.yml
+    * Bugs: https://github.com/pycontribs/jira_svc/blob/main/.github/ISSUE_TEMPLATE/bug_report.yml
+    * Features: https://github.com/pycontribs/jira_svc/blob/main/.github/ISSUE_TEMPLATE/feature_request.yml
 
   * If possible, create a pull request with a (failing) test case demonstrating
     what's wrong. This makes the process for fixing bugs quicker & gets issues

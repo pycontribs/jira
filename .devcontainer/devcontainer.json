@@ -69,7 +69,7 @@
 	],
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	"forwardPorts": [
-		// The jira server instance we run via docker is exposed on:
+		// The jira_svc server instance we run via docker is exposed on:
 		2990
 	],
 	// Use 'postCreateCommand' to run commands after the container is created.

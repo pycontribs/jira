@@ -7,13 +7,13 @@ from unittest.mock import MagicMock, patch
 import pytest  # noqa
 import requests  # noqa
 
-import jira.jirashell as jirashell
-from jira import JIRA, Issue, JIRAError, Project, Role  # noqa
+import jira_svc.jira_svcshell as jira_svcshell
+from jira_svc import jira_svc, Issue, jira_svcError, Project, Role  # noqa
 
 
 @pytest.fixture
 def testargs():
-    return ["jirashell", "-s", "http://localhost"]
+    return ["jira_svcshell", "-s", "http://localhost"]
 
 
 def test_unicode(requests_mock, capsys, testargs):
@@ -29,9 +29,9 @@ def test_unicode(requests_mock, capsys, testargs):
     )
 
     with patch.object(sys, "argv", testargs):
-        jirashell.main()
+        jira_svcshell.main()
     captured = capsys.readouterr()
-    assert captured.err.startswith("JiraError HTTP 404")
+    assert captured.err.startswith("jira_svcError HTTP 404")
     assert captured.out == ""
 
 
@@ -50,7 +50,7 @@ def mock_keyring():
         get_password=MagicMock(side_effect=mock_get_password),
         _keyring=_keyring,
     )
-    mocked_module = patch.object(jirashell, "keyring", new=mock_kr)
+    mocked_module = patch.object(jira_svcshell, "keyring", new=mock_kr)
     yield mocked_module.start()
     mocked_module.stop()
 
@@ -66,7 +66,7 @@ def test_no_password_try_keyring(
     # no password provided
     args = testargs + ["-u", "test@user"]
     with patch.object(sys, "argv", args):
-        jirashell.main()
+        jira_svcshell.main()
 
         assert len(requests_mock.request_history) == 0
         captured = capsys.readouterr()
@@ -78,7 +78,7 @@ def test_no_password_try_keyring(
     monkeypatch.setattr("sys.stdin", io.StringIO("n"))
     args = args + ["-p", "pass123"]
     with patch.object(sys, "argv", args):
-        jirashell.main()
+        jira_svcshell.main()
 
         assert len(requests_mock.request_history) == 4
         captured = capsys.readouterr()
@@ -91,7 +91,7 @@ def test_no_password_try_keyring(
     monkeypatch.setattr("sys.stdin", io.StringIO("y"))
     args = args + ["-p", "pass123"]
     with patch.object(sys, "argv", args):
-        jirashell.main()
+        jira_svcshell.main()
 
         assert len(requests_mock.request_history) == 8
         captured = capsys.readouterr()
@@ -103,7 +103,7 @@ def test_no_password_try_keyring(
     # user stored password
     args = testargs + ["-u", "test@user"]
     with patch.object(sys, "argv", args):
-        jirashell.main()
+        jira_svcshell.main()
 
         assert len(requests_mock.request_history) == 12
         captured = capsys.readouterr()

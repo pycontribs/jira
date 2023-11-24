@@ -1,86 +1,86 @@
 API Documentation
 *****************
 
-jira package
+jira_svc package
 ============
 
-jira.client module
+jira_svc.client module
 ------------------
 
-.. automodule:: jira.client
+.. automodule:: jira_svc.client
    :members:
    :undoc-members:
    :show-inheritance:
 
-jira.config module
+jira_svc.config module
 ------------------
 
-.. automodule:: jira.config
+.. automodule:: jira_svc.config
    :members:
    :undoc-members:
    :show-inheritance:
 
-jira.exceptions module
+jira_svc.exceptions module
 ----------------------
 
-.. automodule:: jira.exceptions
+.. automodule:: jira_svc.exceptions
    :members:
    :undoc-members:
    :show-inheritance:
 
-jira.jirashell module
+jira_svc.jira_svcshell module
 ---------------------
 
-.. automodule:: jira.jirashell
+.. automodule:: jira_svc.jira_svcshell
    :members:
    :undoc-members:
    :show-inheritance:
 
-jira.resilientsession module
+jira_svc.resilientsession module
 ----------------------------
 
-.. automodule:: jira.resilientsession
+.. automodule:: jira_svc.resilientsession
    :members:
    :undoc-members:
    :show-inheritance:
 
-jira.resources module
+jira_svc.resources module
 ---------------------
 
-.. autodata:: jira.client.ResourceType
-   :annotation: = alias of TypeVar(‘ResourceType’, contravariant=True, bound=jira.resources.Resource)
+.. autodata:: jira_svc.client.ResourceType
+   :annotation: = alias of TypeVar(‘ResourceType’, contravariant=True, bound=jira_svc.resources.Resource)
 
-.. automodule:: jira.resources
+.. automodule:: jira_svc.resources
    :members:
    :undoc-members:
    :show-inheritance:
    :private-members:
 
-.. autoclass:: jira.resources.StatusCategory
+.. autoclass:: jira_svc.resources.StatusCategory
    :members:
    :undoc-members:
    :show-inheritance:
 
-.. autoclass:: jira.resources.AgileResource
+.. autoclass:: jira_svc.resources.AgileResource
    :members:
    :undoc-members:
    :show-inheritance:
 
-.. autoclass:: jira.resources.Sprint
+.. autoclass:: jira_svc.resources.Sprint
    :members:
    :undoc-members:
    :show-inheritance:
 
-.. autoclass:: jira.resources.Board
+.. autoclass:: jira_svc.resources.Board
    :members:
    :undoc-members:
    :show-inheritance:
 
 
-jira.utils module
+jira_svc.utils module
 -----------------
 
-.. automodule:: jira.utils
+.. automodule:: jira_svc.utils
    :members:
    :undoc-members:
    :show-inheritance:
