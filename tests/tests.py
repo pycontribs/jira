@@ -556,7 +556,7 @@ class UserAdministrationTests(JiraTestCase):
         self.test_password = rndpassword()
         self.test_groupname = f"testGroupFor_{self.test_manager.project_a}"
         self.test_team_name = f"testTeamFor_{self.test_manager.project_a}"
-        self.org_id = ""
+        self.test_org_name = "testOrgFor_{self.test_manager.project_a}"
         self.test_team_type = "OPEN"
         self.test_team_description = "test Description"
 
@@ -623,10 +623,22 @@ class UserAdministrationTests(JiraTestCase):
         result = self.jira.delete_user(self.test_username)
         assert result, True
 
-    def test_add_team(self):
+    def test_create_org(self):
+        result_org = self.jira.create_org(self.test_org_name)
+        self.assertEqual(
+            self.test_org_name,
+            result_org.__getattr__("name")
+        )
+
+    def test_remove_org(self):
+        pass
+
+    def test_create_team(self):
         if self._should_skip_for_pycontribs_instance():
             self._skip_pycontribs_instance()
         try:
+            new_org = self.jira.create_org(self.test_org_name)
+
             self.jira.remove_team(self.test_team_name)
         except JIRAError:
             pass
