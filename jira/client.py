@@ -84,6 +84,7 @@ from jira.resources import (
     Sprint,
     Status,
     StatusCategory,
+    Organization,
     Team,
     User,
     Version,
@@ -1293,6 +1294,35 @@ class JIRA:
 
         raw_filter_json = json.loads(r.text)
         return Filter(self._options, self._session, raw=raw_filter_json)
+
+    # Organisations
+
+    def create_org(self, org_name: str) -> Organization:
+        url = f"rest/servicedeskapi/organization"
+        payload = {
+            "name": org_name
+        }
+        r = self._session.post(url, data=json.dumps(payload))
+        raw_org_json: dict[str, Any] = json_loads(r)
+        return Organization(self._options, self._session, raw=raw_org_json)
+    
+    def remove_org(self,org_id:str) -> bool:
+        url = f"rest/servicedeskapi/organization/{org_id}"
+        r = self._session.delete(url)
+        if r.status_code == 204:
+            return True
+        return False
+
+    def get_org(self, org_id: str) -> Organization:
+        url = f"rest/servicedeskapi/organization/{org_id}"
+        r = self._session.get(url)
+        raw_org_json: dict[str, Any] = json_loads(r)
+        if r.status_code == 200:
+            return Organization(self._options, self._session, raw=raw_org_json)
+        return None
+    
+    def get_orgs(self, start, limit, account_id):
+        pass
 
     # Teams
 
