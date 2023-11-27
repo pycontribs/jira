@@ -57,6 +57,8 @@ __all__ = (
     "Resolution",
     "SecurityLevel",
     "Status",
+    "Organization",
+    "Team",
     "User",
     "Group",
     "CustomFieldOption",
@@ -1233,6 +1235,22 @@ class User(Resource):
             self._parse_raw(raw)
         self.raw: dict[str, Any] = cast(Dict[str, Any], self.raw)
 
+class Organization(Resource):
+    """A JIRA Organization."""
+
+    def __init__(
+        self,
+        options: dict[str, str],
+        session: ResilientSession,
+        raw: dict[str, Any] = None,
+    ):
+
+        Resource.__init__(
+            self, "organization/{0}", options, session, "{server}/rest/servicedeskapi/{path}"
+        )
+        if raw:
+            self._parse_raw(raw)
+        self.raw: dict[str, Any] = cast(Dict[str, Any], self.raw)
 
 class Team(Resource):
     """A Jira team."""
