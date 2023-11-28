@@ -1298,7 +1298,7 @@ class JIRA:
     # Organisations
 
     def create_org(self, org_name: str) -> Organization:
-        url = f"rest/servicedeskapi/organization"
+        url = f"/rest/servicedeskapi/organization"
         payload = {
             "name": org_name
         }
@@ -1307,22 +1307,61 @@ class JIRA:
         return Organization(self._options, self._session, raw=raw_org_json)
     
     def remove_org(self,org_id:str) -> bool:
-        url = f"rest/servicedeskapi/organization/{org_id}"
+        url = f"/rest/servicedeskapi/organization/{org_id}"
         r = self._session.delete(url)
         if r.status_code == 204:
             return True
         return False
 
-    def get_org(self, org_id: str) -> Organization:
-        url = f"rest/servicedeskapi/organization/{org_id}"
+    def org(self, org_id: str) -> Organization:
+        url = f"/rest/servicedeskapi/organization/{org_id}"
         r = self._session.get(url)
         raw_org_json: dict[str, Any] = json_loads(r)
         if r.status_code == 200:
             return Organization(self._options, self._session, raw=raw_org_json)
         return None
     
-    def get_orgs(self, start, limit, account_id):
-        pass
+    def orgs(self, start=0, limit=50) -> ResultList[Organization]:
+        url = f"/rest/servicedeskapi/organization"
+        return self._fetch_pages(
+            Organization,
+            "values",
+            url,
+            start,
+            limit,
+            base=self.server_url
+        )        
+        
+    def org_users(self, org_id, start, limit) -> ResultList[User]:
+        url = f"/rest/servicedeskapi/organization/{org_id}/user"
+        return self._fetch_pages(
+            User,
+            None,
+            url,
+            start,
+            limit,
+            base=self.server_url
+        )  
+
+    def add_users_to_org(self, org_id: str, users: list[str]) -> bool:
+        url=f"/rest/servicedeskapi/organization/{org_id}/user"
+        payload={
+            "usernames": users
+        }
+        r= self._session.post(url, data=json.dumps(payload))
+        if r.status_code == 204:
+            return True
+        return False
+    
+    def remove_users_from_org(self, org_id: str, users: list[str]) -> bool:
+        url=f"/rest/servicedeskapi/organization/{org_id}/user"
+        payload={
+            "usernames": users
+        }
+        r= self._session.delete(url, data=json.dumps(payload))
+        if r.status_code == 204:
+            return True
+        return False
 
     # Teams
 
@@ -1371,7 +1410,7 @@ class JIRA:
         pass
 
     def team_members(self, team_id: str, org_id: str) -> list[str]:
-        """Return list of account Ids in the team. Requires Jira 6.0 or will raise NotImplemented.
+        """Return list of account Ids in the team. 
 
         Args:
             team_id (str): Id of the team.
