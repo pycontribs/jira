@@ -1311,10 +1311,18 @@ class JIRA:
         raw_filter_json = json.loads(r.text)
         return Filter(self._options, self._session, raw=raw_filter_json)
 
+    def _get_service_desk_url(self) -> str:
+        """Returns the service desk root url.
+
+        Returns:
+            str: service desk api url
+        """
+        return f"{self.server_url}/rest/servicedeskapi"
+
     # Organisations
 
     def create_org(self, org_name: str) -> Organization:
-        url = f"/rest/servicedeskapi/organization"
+        url = f"{self._get_service_desk_url()}/organization"
         payload = {
             "name": org_name
         }
@@ -1323,14 +1331,14 @@ class JIRA:
         return Organization(self._options, self._session, raw=raw_org_json)
     
     def remove_org(self,org_id:str) -> bool:
-        url = f"/rest/servicedeskapi/organization/{org_id}"
+        url = f"{self._get_service_desk_url()}/organization/{org_id}"
         r = self._session.delete(url)
         if r.status_code == 204:
             return True
         return False
 
     def org(self, org_id: str) -> Organization:
-        url = f"/rest/servicedeskapi/organization/{org_id}"
+        url = f"{self._get_service_desk_url()}/organization/{org_id}"
         r = self._session.get(url)
         raw_org_json: dict[str, Any] = json_loads(r)
         if r.status_code == 200:
@@ -1338,7 +1346,7 @@ class JIRA:
         return None
     
     def orgs(self, start=0, limit=50) -> ResultList[Organization]:
-        url = f"/rest/servicedeskapi/organization"
+        url = f"{self._get_service_desk_url()}/organization"
         return self._fetch_pages(
             Organization,
             "values",
@@ -1349,7 +1357,7 @@ class JIRA:
         )        
         
     def org_users(self, org_id, start, limit) -> ResultList[User]:
-        url = f"/rest/servicedeskapi/organization/{org_id}/user"
+        url = f"{self._get_service_desk_url()}/organization/{org_id}/user"
         return self._fetch_pages(
             User,
             None,
@@ -1360,7 +1368,7 @@ class JIRA:
         )  
 
     def add_users_to_org(self, org_id: str, users: list[str]) -> bool:
-        url=f"/rest/servicedeskapi/organization/{org_id}/user"
+        url=f"{self._get_service_desk_url()}/organization/{org_id}/user"
         payload={
             "usernames": users
         }
@@ -1370,7 +1378,7 @@ class JIRA:
         return False
     
     def remove_users_from_org(self, org_id: str, users: list[str]) -> bool:
-        url=f"/rest/servicedeskapi/organization/{org_id}/user"
+        url=f"{self._get_service_desk_url()}/organization/{org_id}/user"
         payload={
             "usernames": users
         }
@@ -1780,7 +1788,7 @@ class JIRA:
         Returns:
             bool
         """
-        url = self.server_url + "/rest/servicedeskapi/info"
+        url = f"{self._get_service_desk_url()}/info"
         headers = {"X-ExperimentalApi": "opt-in"}
         try:
             r = self._session.get(url, headers=headers)
@@ -1798,7 +1806,7 @@ class JIRA:
         Returns:
             Customer
         """
-        url = self.server_url + "/rest/servicedeskapi/customer"
+        url = f"{self._get_service_desk_url()}/customer"
         headers = {"X-ExperimentalApi": "opt-in"}
         r = self._session.post(
             url,
@@ -1818,7 +1826,7 @@ class JIRA:
         Returns:
             List[ServiceDesk]
         """
-        url = self.server_url + "/rest/servicedeskapi/servicedesk"
+        url = f"{self._get_service_desk_url()}/servicedesk"
         headers = {"X-ExperimentalApi": "opt-in"}
         r_json = json_loads(self._session.get(url, headers=headers))
         projects = [
@@ -1879,7 +1887,7 @@ class JIRA:
         elif isinstance(p, str):
             data["requestTypeId"] = self.request_type_by_name(service_desk, p).id
 
-        url = self.server_url + "/rest/servicedeskapi/request"
+        url = f"{self._get_service_desk_url()}/request"
         headers = {"X-ExperimentalApi": "opt-in"}
         r = self._session.post(url, headers=headers, data=json.dumps(data))
 
@@ -2876,8 +2884,7 @@ class JIRA:
         if hasattr(service_desk, "id"):
             service_desk = service_desk.id
         url = (
-            self.server_url
-            + f"/rest/servicedeskapi/servicedesk/{service_desk}/requesttype"
+            f"{self._get_service_desk_url()}/servicedesk/{service_desk}/requesttype"
         )
         headers = {"X-ExperimentalApi": "opt-in"}
         r_json = json_loads(self._session.get(url, headers=headers))
