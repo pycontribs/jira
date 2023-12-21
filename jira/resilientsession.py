@@ -162,7 +162,7 @@ class ResilientSession(Session):
         super().__init__()
 
         # Indicate our preference for JSON to avoid https://bitbucket.org/bspeakmon/jira-python/issue/46 and https://jira.atlassian.com/browse/JRA-38551
-        self.headers.update({"Accept": "application/json,*.*;q=0.9"})
+        self.headers.update({"Accept": "application/json,*/*;q=0.9"})
 
         # Warn users on instantiation the debug level shouldn't be used for prod
         LOG.debug(
