@@ -4484,6 +4484,8 @@ class JIRA:
                 if self._is_cloud
                 else "com.pyxis.greenhopper.jira:basic-software-development-template"
             )
+        else:
+            template_key = template_name
 
         # https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-projects/#api-rest-api-2-project-get
         # template_keys = [
