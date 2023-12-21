@@ -1566,7 +1566,7 @@ class JIRA:
         # Catching case where none of the issues has been created.
         # See https://github.com/pycontribs/jira/issues/350
         except JIRAError as je:
-            if je.status_code == 400 and je.response:
+            if je.status_code == 400 and je.response is not None:
                 raw_issue_json = json.loads(je.response.text)
             else:
                 raise
@@ -4620,7 +4620,7 @@ class JIRA:
         try:
             self._session.post(url, data=payload)
         except JIRAError as e:
-            if e.response:
+            if e.response is not None:
                 err = e.response.json()["errors"]
                 if (
                     "username" in err
