@@ -719,7 +719,13 @@ class JIRA:
             except ImportError:
                 pass
             async_workers = self._options.get("async_workers")
-        page_params = params.copy() if params else {}
+
+        def json_params() -> dict[str, Any]:
+            # passing through json.dumps and json.loads ensures json
+            return json.loads(json.dumps(params.copy())) if params else {}
+
+        page_params = json_params()
+
         if startAt:
             page_params["startAt"] = startAt
         if maxResults:
@@ -770,7 +776,7 @@ class JIRA:
                         session=self._session, max_workers=async_workers
                     )
                     for start_index in range(page_start, total, page_size):
-                        page_params = params.copy() if params else {}
+                        page_params = json_params()
                         page_params["startAt"] = start_index
                         page_params["maxResults"] = page_size
                         url = self._get_url(request_path)
@@ -795,7 +801,7 @@ class JIRA:
                     and len(next_items_page) == page_size
                 ):
                     page_params = (
-                        params.copy() if params else {}
+                        json_params()
                     )  # Hack necessary for mock-calls to not change
                     page_params["startAt"] = page_start
                     page_params["maxResults"] = page_size
