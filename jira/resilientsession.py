@@ -291,9 +291,7 @@ class ResilientSession(Session):
         Returns:
             bool: True if the request should be retried.
         """
-        suggested_delay = (
-            -1
-        )  # Controls return value AND whether we delay or not, Not-recoverable by default
+        suggested_delay = -1  # Controls return value AND whether we delay or not, Not-recoverable by default
         msg = str(response)
 
         if isinstance(response, ConnectionError):
