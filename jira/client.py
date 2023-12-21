@@ -692,6 +692,7 @@ class JIRA:
         maxResults: int = 50,
         params: dict[str, Any] = None,
         base: str = JIRA_BASE_URL,
+        use_post: bool = False,
     ) -> ResultList[ResourceType]:
         """Fetch from a paginated end point.
 
@@ -703,6 +704,7 @@ class JIRA:
             maxResults (int): Maximum number of items to return. If maxResults evaluates as False, it will try to get all items in batches. (Default:50)
             params (Dict[str, Any]): Params to be used in all requests. Should not contain startAt and maxResults, as they will be added for each request created from this function.
             base (str): base URL to use for the requests.
+            use_post (bool): Use POST endpoint instead of GET endpoint.
 
         Returns:
             ResultList
@@ -725,7 +727,9 @@ class JIRA:
         elif batch_size := self._get_batch_size(item_type):
             page_params["maxResults"] = batch_size
 
-        resource = self._get_json(request_path, params=page_params, base=base)
+        resource = self._get_json(
+            request_path, params=page_params, base=base, use_post=use_post
+        )
         next_items_page = self._get_items_from_page(item_type, items_key, resource)
         items = next_items_page
 
@@ -770,7 +774,11 @@ class JIRA:
                         page_params["startAt"] = start_index
                         page_params["maxResults"] = page_size
                         url = self._get_url(request_path)
-                        r = future_session.get(url, params=page_params)
+                        r = (
+                            future_session.post(url, data=json.dumps(page_params))
+                            if use_post
+                            else future_session.get(url, params=page_params)
+                        )
                         async_fetches.append(r)
                     for future in async_fetches:
                         response = future.result()
@@ -791,8 +799,9 @@ class JIRA:
                     )  # Hack necessary for mock-calls to not change
                     page_params["startAt"] = page_start
                     page_params["maxResults"] = page_size
+
                     resource = self._get_json(
-                        request_path, params=page_params, base=base
+                        request_path, params=page_params, base=base, use_post=use_post
                     )
                     if resource:
                         next_items_page = self._get_items_from_page(
@@ -3043,6 +3052,7 @@ class JIRA:
         expand: str | None = None,
         properties: str | None = None,
         json_result: bool = False,
+        use_post: bool = False,
     ) -> dict[str, Any] | ResultList[Issue]:
         """Get a :class:`~jira.client.ResultList` of issue Resources matching a JQL search string.
 
@@ -3058,6 +3068,7 @@ class JIRA:
             expand (Optional[str]): extra information to fetch inside each resource
             properties (Optional[str]): extra properties to fetch inside each result
             json_result (bool): True to return a JSON response. When set to False a :class:`ResultList` will be returned. (Default: ``False``)
+            use_post (bool): True to use POST endpoint to fetch issues.
 
         Returns:
             Union[Dict,ResultList]: Dict if ``json_result=True``
@@ -3084,6 +3095,10 @@ class JIRA:
             "expand": expand,
             "properties": properties,
         }
+        # for the POST version of this endpoint Jira
+        # complains about unrecognized field "properties"
+        if use_post:
+            search_params.pop("properties")
         if json_result:
             search_params["maxResults"] = maxResults
             if not maxResults:
@@ -3091,11 +3106,19 @@ class JIRA:
                     "All issues cannot be fetched at once, when json_result parameter is set",
                     Warning,
                 )
-            r_json: dict[str, Any] = self._get_json("search", params=search_params)
+            r_json: dict[str, Any] = self._get_json(
+                "search", params=search_params, use_post=use_post
+            )
             return r_json
 
         issues = self._fetch_pages(
-            Issue, "issues", "search", startAt, maxResults, search_params
+            Issue,
+            "issues",
+            "search",
+            startAt,
+            maxResults,
+            search_params,
+            use_post=use_post,
         )
 
         if untranslate:
@@ -3850,7 +3873,11 @@ class JIRA:
         return base.format(**options)
 
     def _get_json(
-        self, path: str, params: dict[str, Any] = None, base: str = JIRA_BASE_URL
+        self,
+        path: str,
+        params: dict[str, Any] = None,
+        base: str = JIRA_BASE_URL,
+        use_post: bool = False,
     ):
         """Get the json for a given path and params.
 
@@ -3858,12 +3885,17 @@ class JIRA:
             path (str): The subpath required
             params (Optional[Dict[str, Any]]): Parameters to filter the json query.
             base (Optional[str]): The Base Jira URL, defaults to the instance base.
+            use_post (bool): Use POST endpoint instead of GET endpoint.
 
         Returns:
             Union[Dict[str, Any], List[Dict[str, str]]]
         """
         url = self._get_url(path, base)
-        r = self._session.get(url, params=params)
+        r = (
+            self._session.post(url, data=json.dumps(params))
+            if use_post
+            else self._session.get(url, params=params)
+        )
         try:
             r_json = json_loads(r)
         except ValueError as e:
