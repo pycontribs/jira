@@ -1427,7 +1427,9 @@ def dict2resource(
                 resource = cast(
                     Type[Resource],
                     resource_class(  # type: ignore
-                        options=options, session=session, raw=j  # type: ignore
+                        options=options,
+                        session=session,
+                        raw=j,  # type: ignore
                     ),
                 )
                 setattr(top, i, resource)

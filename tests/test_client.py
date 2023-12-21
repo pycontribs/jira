@@ -81,9 +81,7 @@ Process management
 Project management
 Scrum software development
 Task management
-""".split(
-                "\n"
-            ),
+""".split("\n"),
         )
     )
 
