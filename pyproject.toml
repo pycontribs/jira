@@ -30,7 +30,12 @@ markers = ["allow_on_cloud: opt in for the test to run on Jira Cloud"]
 python_version = "3.8"
 warn_unused_configs = true
 namespace_packages = true
-# check_untyped_defs = true
+check_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+check_untyped_defs = false
+disable_error_code = "annotation-unchecked"
 
 [tool.ruff]
 select = [

@@ -2419,7 +2419,7 @@ class JIRA:
         comment: (str | None) = None,
         started: (datetime.datetime | None) = None,
         user: (str | None) = None,
-        visibility: (Dict[str, Any] | None) = None,
+        visibility: (dict[str, Any] | None) = None,
     ) -> Worklog:
         """Add a new worklog entry on an issue and return a Resource for it.
 
@@ -4295,7 +4295,7 @@ class JIRA:
             self._session.auth = get_netrc_auth(url)
 
         payload = {
-            "webSudoPassword": self._session.auth[1],
+            "webSudoPassword": self._session.auth[1],  # type: ignore[index] #TODO
             "webSudoDestination": destination,
             "webSudoIsPost": "true",
         }

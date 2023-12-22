@@ -111,7 +111,7 @@ def process_config():
         options = {}
         for option, value in parser.items("options"):
             if option in ("verify", "async"):
-                value = parser.getboolean("options", option)
+                value = parser.getboolean("options", option)  # type: ignore[assignment]
             options[option] = value
     else:
         options = {}
@@ -125,7 +125,7 @@ def process_config():
         oauth = {}
         for option, value in parser.items("oauth"):
             if option in ("oauth_dance", "print_tokens"):
-                value = parser.getboolean("oauth", option)
+                value = parser.getboolean("oauth", option)  # type: ignore[assignment]
             oauth[option] = value
     else:
         oauth = {}
@@ -134,7 +134,7 @@ def process_config():
         kerberos_auth = {}
         for option, value in parser.items("kerberos_auth"):
             if option in ("use_kerberos"):
-                value = parser.getboolean("kerberos_auth", option)
+                value = parser.getboolean("kerberos_auth", option)  # type: ignore[assignment]
             kerberos_auth[option] = value
     else:
         kerberos_auth = {}
@@ -313,7 +313,7 @@ def handle_basic_auth(auth, server):
 def main():
     try:
         try:
-            get_ipython
+            get_ipython  # type: ignore[name-defined] # exists in ipython
         except NameError:
             pass
         else:
