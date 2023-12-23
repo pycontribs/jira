@@ -1770,7 +1770,13 @@ class JIRA:
             Dict[str, Any]
         """
         self._check_createmeta_issuetypes()
-        return self._get_json(f"issue/createmeta/{projectIdOrKey}/issuetypes")
+        return self._get_json(
+            f"issue/createmeta/{projectIdOrKey}/issuetypes",
+            params={
+                "startAt": startAt,
+                "maxResults": maxResults,
+            },
+        )
 
     def createmeta_fieldtypes(
         self,
@@ -4339,11 +4345,14 @@ class JIRA:
 
         return self._myself[field]
 
-    def delete_project(self, pid: str | Project) -> bool | None:
+    def delete_project(
+        self, pid: str | Project, enable_undo: bool = True
+    ) -> bool | None:
         """Delete project from Jira.
 
         Args:
-            pid (Union[str, Project]): Jira projectID or Project or slug
+            pid (Union[str, Project]): Jira projectID or Project or slug.
+            enable_undo (bool): Jira Cloud only. True moves to 'Trash'. False permanently deletes.
 
         Raises:
             JIRAError:  If project not found or not enough permissions
@@ -4357,7 +4366,7 @@ class JIRA:
             pid = str(pid.id)
 
         url = self._get_url(f"project/{pid}")
-        r = self._session.delete(url)
+        r = self._session.delete(url, params={"enableUndo": enable_undo})
         if r.status_code == 403:
             raise JIRAError("Not enough permissions to delete project")
         if r.status_code == 404:

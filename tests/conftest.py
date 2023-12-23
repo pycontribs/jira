@@ -225,7 +225,7 @@ class JiraTestManager:
         # https://jira.atlassian.com/browse/JRA-39153
         if self._project_exists(project_key):
             try:
-                self.jira_admin.delete_project(project_key)
+                self.jira_admin.delete_project(project_key, enable_undo=False)
             except Exception:
                 LOGGER.exception("Failed to delete '%s'.", project_key)
 
