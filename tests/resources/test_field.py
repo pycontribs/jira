@@ -15,3 +15,11 @@ class FieldsTest(JiraTestCase):
             project=self.project_a, issue_type=self.issue_1_obj.fields.issuetype.id
         )
         assert isinstance(issue_fields[0], Field)
+
+    def test_field_pagination(self):
+        issue_fields = self.test_manager.jira_admin.project_issue_fields(
+            project=self.project_a,
+            issue_type=self.issue_1_obj.fields.issuetype.id,
+            startAt=50,
+        )
+        assert len(issue_fields) == 0

@@ -1748,68 +1748,6 @@ class JIRA:
                 "Use 'createmeta' instead."
             )
 
-    def createmeta_issuetypes(
-        self,
-        projectIdOrKey: str | int,
-        startAt: int = 0,
-        maxResults: int = 50,
-    ) -> dict[str, Any]:
-        """Get the issue types metadata for a given project, required to create issues.
-
-        This API was introduced in JIRA Server / DC 8.4 as a replacement for the more general purpose API 'createmeta'.
-        For details see: https://confluence.atlassian.com/jiracore/createmeta-rest-endpoint-to-be-removed-975040986.html
-
-        Args:
-            projectIdOrKey (Union[str, int]): id or key of the project for which to get the metadata.
-            startAt (int): Index of the first issue to return. (Default: ``0``)
-            maxResults (int): Maximum number of issues to return.
-              Total number of results is available in the ``total`` attribute of the returned :class:`ResultList`.
-              If maxResults evaluates to False, it will try to get all issues in batches. (Default: ``50``)
-
-        Returns:
-            Dict[str, Any]
-        """
-        self._check_createmeta_issuetypes()
-        return self._get_json(
-            f"issue/createmeta/{projectIdOrKey}/issuetypes",
-            params={
-                "startAt": startAt,
-                "maxResults": maxResults,
-            },
-        )
-
-    def createmeta_fieldtypes(
-        self,
-        projectIdOrKey: str | int,
-        issueTypeId: str | int,
-        startAt: int = 0,
-        maxResults: int = 50,
-    ) -> dict[str, Any]:
-        """Get the field metadata for a given project and issue type, required to create issues.
-
-        This API was introduced in JIRA Server / DC 8.4 as a replacement for the more general purpose API 'createmeta'.
-        For details see: https://confluence.atlassian.com/jiracore/createmeta-rest-endpoint-to-be-removed-975040986.html
-
-        Args:
-            projectIdOrKey (Union[str, int]): id or key of the project for which to get the metadata.
-            issueTypeId (Union[str, int]): id of the issue type for which to get the metadata.
-            startAt (int): Index of the first issue to return. (Default: ``0``)
-            maxResults (int): Maximum number of issues to return.
-              Total number of results is available in the ``total`` attribute of the returned :class:`ResultList`.
-              If maxResults evaluates to False, it will try to get all issues in batches. (Default: ``50``)
-
-        Returns:
-            Dict[str, Any]
-        """
-        self._check_createmeta_issuetypes()
-        return self._get_json(
-            f"issue/createmeta/{projectIdOrKey}/issuetypes/{issueTypeId}",
-            params={
-                "startAt": startAt,
-                "maxResults": maxResults,
-            },
-        )
-
     def createmeta(
         self,
         projectKeys: tuple[str, str] | str | None = None,
@@ -2679,6 +2617,9 @@ class JIRA:
     ) -> ResultList[IssueType]:
         """Get a list of issue type Resources available in a given project from the server.
 
+        This API was introduced in JIRA Server / DC 8.4 as a replacement for the more general purpose API 'createmeta'.
+        For details see: https://confluence.atlassian.com/jiracore/createmeta-rest-endpoint-to-be-removed-975040986.html
+
         Args:
             project (str): ID or key of the project to query issue types from.
             startAt (int): Index of first issue type to return. (Default: ``0``)
@@ -2706,6 +2647,9 @@ class JIRA:
     ) -> ResultList[Field]:
         """Get a list of field type Resources available for a project and issue type from the server.
 
+        This API was introduced in JIRA Server / DC 8.4 as a replacement for the more general purpose API 'createmeta'.
+        For details see: https://confluence.atlassian.com/jiracore/createmeta-rest-endpoint-to-be-removed-975040986.html
+
         Args:
             project (str): ID or key of the project to query field types from.
             issue_type (str): ID of the issue type to query field types from.
@@ -2713,7 +2657,7 @@ class JIRA:
             maxResults (int): Maximum number of issue types to return. (Default: ``50``)
 
         Returns:
-            ResultList[Issue._IssueFields]
+            ResultList[Field]
         """
         self._check_createmeta_issuetypes()
         fields = self._fetch_pages(
