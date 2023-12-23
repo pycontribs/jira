@@ -250,3 +250,29 @@ def test_cookie_auth_retry():
             )
     # THEN: We don't get a RecursionError and only call the reset_function once
     mock_reset_func.assert_called_once()
+
+
+def test_createmeta_issuetypes_pagination(cl_normal, slug):
+    """Test createmeta_issuetypes pagination kwargs"""
+    issue_types_resp = cl_normal.createmeta_issuetypes(
+        slug, 
+        startAt=50, 
+        maxResults=100
+    )
+    assert issue_types_resp["startAt"] == 50
+    assert issue_types_resp["maxResults"] == 100
+
+
+def test_createmeta_fieldtypes_pagination(cl_normal, slug):
+    """Test createmeta_fieldtypes pagination kwargs"""
+    issue_types = cl_normal.createmeta_issuetypes(slug)
+    assert issue_types["total"]
+    issue_type_id = issue_types["values"][-1]["id"]
+    field_types_resp = cl_normal.createmeta_fieldtypes(
+        projectIdOrKey=slug, 
+        issueTypeId=issue_type_id,
+        startAt=50, 
+        maxResults=100
+    )
+    assert field_types_resp["startAt"] == 50
+    assert field_types_resp["maxResults"] == 100
