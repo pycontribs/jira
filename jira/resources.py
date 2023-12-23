@@ -558,7 +558,7 @@ class Dashboard(Resource):
 class Field(Resource):
     """An issue field.
 
-    A field cannot be fetched from the Jira APi individually, but paginated lists of fields are returned by some endpoints.
+    A field cannot be fetched from the Jira API individually, but paginated lists of fields are returned by some endpoints.
     """
 
     def __init__(
