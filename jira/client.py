@@ -60,6 +60,7 @@ from jira.resources import (
     Customer,
     CustomFieldOption,
     Dashboard,
+    Field,
     Filter,
     Group,
     Issue,
@@ -1732,77 +1733,20 @@ class JIRA:
         else:
             return Issue(self._options, self._session, raw=raw_issue_json)
 
-    def createmeta_issuetypes(
-        self,
-        projectIdOrKey: str | int,
-        startAt: int = 0,
-        maxResults: int = 50,
-    ) -> dict[str, Any]:
-        """Get the issue types metadata for a given project, required to create issues.
+    def _check_createmeta_issuetypes(self) -> None:
+        """Check whether Jira deployment supports the createmeta issuetypes endpoint.
 
-        This API was introduced in JIRA Server / DC 8.4 as a replacement for the more general purpose API 'createmeta'.
-        For details see: https://confluence.atlassian.com/jiracore/createmeta-rest-endpoint-to-be-removed-975040986.html
-
-        Args:
-            projectIdOrKey (Union[str, int]): id or key of the project for which to get the metadata.
-            startAt (int): Index of the first issue to return. (Default: ``0``)
-            maxResults (int): Maximum number of issues to return.
-              Total number of results is available in the ``total`` attribute of the returned :class:`ResultList`.
-              If maxResults evaluates to False, it will try to get all issues in batches. (Default: ``50``)
+        Raises:
+            JIRAError: If the deployment does not support the API endpoint.
 
         Returns:
-            Dict[str, Any]
+            None
         """
         if self._is_cloud or self._version < (8, 4, 0):
             raise JIRAError(
                 f"Unsupported JIRA deployment type: {self.deploymentType} or version: {self._version}. "
                 "Use 'createmeta' instead."
             )
-
-        return self._get_json(
-            f"issue/createmeta/{projectIdOrKey}/issuetypes",
-            params={
-                "startAt": startAt,
-                "maxResults": maxResults,
-            },
-        )
-
-    def createmeta_fieldtypes(
-        self,
-        projectIdOrKey: str | int,
-        issueTypeId: str | int,
-        startAt: int = 0,
-        maxResults: int = 50,
-    ) -> dict[str, Any]:
-        """Get the field metadata for a given project and issue type, required to create issues.
-
-        This API was introduced in JIRA Server / DC 8.4 as a replacement for the more general purpose API 'createmeta'.
-        For details see: https://confluence.atlassian.com/jiracore/createmeta-rest-endpoint-to-be-removed-975040986.html
-
-        Args:
-            projectIdOrKey (Union[str, int]): id or key of the project for which to get the metadata.
-            issueTypeId (Union[str, int]): id of the issue type for which to get the metadata.
-            startAt (int): Index of the first issue to return. (Default: ``0``)
-            maxResults (int): Maximum number of issues to return.
-              Total number of results is available in the ``total`` attribute of the returned :class:`ResultList`.
-              If maxResults evaluates to False, it will try to get all issues in batches. (Default: ``50``)
-
-        Returns:
-            Dict[str, Any]
-        """
-        if self._is_cloud or self._version < (8, 4, 0):
-            raise JIRAError(
-                f"Unsupported JIRA deployment type: {self.deploymentType} or version: {self._version}. "
-                "Use 'createmeta' instead."
-            )
-
-        return self._get_json(
-            f"issue/createmeta/{projectIdOrKey}/issuetypes/{issueTypeId}",
-            params={
-                "startAt": startAt,
-                "maxResults": maxResults,
-            },
-        )
 
     def createmeta(
         self,
@@ -2664,6 +2608,66 @@ class JIRA:
             for raw_type_json in r_json
         ]
         return issue_types
+
+    def project_issue_types(
+        self,
+        project: str,
+        startAt: int = 0,
+        maxResults: int = 50,
+    ) -> ResultList[IssueType]:
+        """Get a list of issue type Resources available in a given project from the server.
+
+        This API was introduced in JIRA Server / DC 8.4 as a replacement for the more general purpose API 'createmeta'.
+        For details see: https://confluence.atlassian.com/jiracore/createmeta-rest-endpoint-to-be-removed-975040986.html
+
+        Args:
+            project (str): ID or key of the project to query issue types from.
+            startAt (int): Index of first issue type to return. (Default: ``0``)
+            maxResults (int): Maximum number of issue types to return. (Default: ``50``)
+
+        Returns:
+            ResultList[IssueType]
+        """
+        self._check_createmeta_issuetypes()
+        issue_types = self._fetch_pages(
+            IssueType,
+            "values",
+            f"issue/createmeta/{project}/issuetypes",
+            startAt=startAt,
+            maxResults=maxResults,
+        )
+        return issue_types
+
+    def project_issue_fields(
+        self,
+        project: str,
+        issue_type: str,
+        startAt: int = 0,
+        maxResults: int = 50,
+    ) -> ResultList[Field]:
+        """Get a list of field type Resources available for a project and issue type from the server.
+
+        This API was introduced in JIRA Server / DC 8.4 as a replacement for the more general purpose API 'createmeta'.
+        For details see: https://confluence.atlassian.com/jiracore/createmeta-rest-endpoint-to-be-removed-975040986.html
+
+        Args:
+            project (str): ID or key of the project to query field types from.
+            issue_type (str): ID of the issue type to query field types from.
+            startAt (int): Index of first issue type to return. (Default: ``0``)
+            maxResults (int): Maximum number of issue types to return. (Default: ``50``)
+
+        Returns:
+            ResultList[Field]
+        """
+        self._check_createmeta_issuetypes()
+        fields = self._fetch_pages(
+            Field,
+            "values",
+            f"issue/createmeta/{project}/issuetypes/{issue_type}",
+            startAt=startAt,
+            maxResults=maxResults,
+        )
+        return fields
 
     def issue_type(self, id: str) -> IssueType:
         """Get an issue type Resource from the server.
@@ -4285,11 +4289,14 @@ class JIRA:
 
         return self._myself[field]
 
-    def delete_project(self, pid: str | Project) -> bool | None:
+    def delete_project(
+        self, pid: str | Project, enable_undo: bool = True
+    ) -> bool | None:
         """Delete project from Jira.
 
         Args:
-            pid (Union[str, Project]): Jira projectID or Project or slug
+            pid (Union[str, Project]): Jira projectID or Project or slug.
+            enable_undo (bool): Jira Cloud only. True moves to 'Trash'. False permanently deletes.
 
         Raises:
             JIRAError:  If project not found or not enough permissions
@@ -4303,7 +4310,7 @@ class JIRA:
             pid = str(pid.id)
 
         url = self._get_url(f"project/{pid}")
-        r = self._session.delete(url)
+        r = self._session.delete(url, params={"enableUndo": enable_undo})
         if r.status_code == 403:
             raise JIRAError("Not enough permissions to delete project")
         if r.status_code == 404:
