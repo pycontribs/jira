@@ -8,6 +8,7 @@ import random
 import re
 import string
 import sys
+import time
 import unittest
 from time import sleep
 from typing import Any
@@ -259,6 +260,7 @@ class JiraTestManager:
                 except JIRAError as e:
                     if "A project with that name already exists" not in str(e):
                         raise e
+                time.sleep(1)
         return self.jira_admin.project(project_key).id
 
     def create_some_data(self):
