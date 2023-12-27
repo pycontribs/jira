@@ -77,7 +77,7 @@ class JiraTestCase(unittest.TestCase):
             self,
             self._cleanup,
             test_manager=self.test_manager,
-            projects=(self.project_a, self.project_b),
+            projects=[self.project_a, self.project_b],
         )
 
     @property
