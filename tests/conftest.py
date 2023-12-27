@@ -100,7 +100,7 @@ def rndpassword():
 
 
 def hashify(some_string, max_len=8):
-    return hashlib.sha256(some_string.encode("utf-8")).hexdigest()[:8].upper()
+    return hashlib.sha256(some_string.encode("utf-8")).hexdigest()[:max_len].upper()
 
 
 def get_unique_project_name():
@@ -109,7 +109,7 @@ def get_unique_project_name():
         run_number = os.environ["GITHUB_RUN_NUMBER"]
         # please note that user underline (_) is not supported by
         # Jira even if it is documented as supported.
-        return f"C{hashify(f'{user}{run_number}')}"
+        return f"CI{hashify(f'{user}{run_number}',max_len=7)}"
     sep = chr(ord("A"))
     identifier = f"{user}{sep}{sys.version_info[0]}{sep}{sys.version_info[1]}"
     return f"Z{hashify(identifier)}"
