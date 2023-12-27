@@ -1,13 +1,12 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
-// https://github.com/microsoft/vscode-dev-containers/tree/v0.231.5/containers/ubuntu
+// https://mcr.microsoft.com/en-us/product/devcontainers/base/about
 {
 	"name": "Ubuntu",
 	"build": {
 		"dockerfile": "Dockerfile",
-		// Update 'VARIANT' to pick an Ubuntu version: hirsute, focal, bionic
-		// Use hirsute or bionic on local arm64/Apple Silicon.
+		// Update 'VARIANT' to pick an Ubuntu version
 		"args": {
-			"VARIANT": "focal"
+			"VARIANT": "ubuntu-22.04"
 		}
 	},
 	// Set *default* container specific settings.json values on container create.
@@ -30,7 +29,6 @@
 						"color": "#ff000065"
 					},
 				],
-
 				"python.defaultInterpreterPath": "/usr/local/python/bin/python",
 				"mypy-type-checker.args": [
 					// "--follow-imports=silent",
@@ -84,7 +82,6 @@
 			],
 		}
 	},
-
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	"forwardPorts": [
 		// The jira server instance we run via docker is exposed on:
