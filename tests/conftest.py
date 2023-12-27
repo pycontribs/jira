@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import getpass
 import hashlib
-import json
 import logging
 import os
 import random
@@ -106,15 +105,14 @@ def hashify(some_string, max_len=8):
 
 def get_unique_project_name():
     user = re.sub("[^A-Z_]", "", getpass.getuser().upper())
-    if os.getenv("GITHUB_CONTEXT"):
-        run_number = json.loads(os.getenv("GITHUB_CONTEXT")).get("run_number")
+    if "GITHUB_ACTION" in os.environ and "GITHUB_RUN_NUMBER" in os.environ:
+        run_number = os.environ["GITHUB_RUN_NUMBER"]
         # please note that user underline (_) is not supported by
         # Jira even if it is documented as supported.
-        return "GH" + hashify(user + run_number)
-    identifier = (
-        user + chr(ord("A") + sys.version_info[0]) + chr(ord("A") + sys.version_info[1])
-    )
-    return "Z" + hashify(identifier)
+        return f"CI{hashify(f'{user}{run_number}')}"
+    sep = chr(ord("A"))
+    identifier = f"{user}{sep}{sys.version_info[0]}{sep}{sys.version_info[1]}"
+    return f"Z{hashify(identifier)}"
 
 
 class JiraTestManager:
