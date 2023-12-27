@@ -37,7 +37,7 @@ def slug(request, cl_admin):
 
     def remove_by_slug():
         try:
-            cl_admin.delete_project(slug)
+            cl_admin.delete_project(slug, enable_undo=False)
         except (ValueError, JIRAError):
             # Some tests have project already removed, so we stay silent
             pass
