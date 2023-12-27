@@ -2524,7 +2524,7 @@ class JIRA:
         issue_link_types = self.issue_link_types()
 
         if type not in issue_link_types:
-            LOG.warning(
+            self.log.warning(
                 "Warning: Specified issue link type is not present in the list of link types"
             )
             for lt in issue_link_types:
