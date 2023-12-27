@@ -32,18 +32,9 @@ def cl_normal(test_manager: JiraTestManager) -> jira.client.JIRA:
 
 
 @pytest.fixture(scope="function")
-def slug(request, cl_admin):
+def slug(request: pytest.FixtureRequest, cl_admin: jira.client.JIRA):
     """Project slug."""
-
-    def remove_by_slug():
-        try:
-            cl_admin.delete_project(slug, enable_undo=False)
-        except (ValueError, JIRAError):
-            # Some tests have project already removed, so we stay silent
-            pass
-
     slug = get_unique_project_name()
-
     project_name = f"Test user={getpass.getuser()} key={slug} A"
 
     try:
@@ -52,9 +43,12 @@ def slug(request, cl_admin):
         proj = cl_admin.create_project(slug, project_name)
     assert proj
 
-    request.addfinalizer(remove_by_slug)
-
-    return slug
+    yield slug
+    try:
+        cl_admin.delete_project(slug, enable_undo=False)
+    except (ValueError, JIRAError):
+        # Some tests have project already removed, so we stay silent
+        pass
 
 
 def test_delete_project(cl_admin, cl_normal, slug):

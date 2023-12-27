@@ -10,6 +10,7 @@ import string
 import sys
 import time
 import unittest
+import weakref
 from time import sleep
 from typing import Any
 
@@ -72,6 +73,12 @@ class JiraTestCase(unittest.TestCase):
         self.user_normal = self.test_manager.user_normal  # use this user where possible
         self.project_b = self.test_manager.project_b
         self.project_a = self.test_manager.project_a
+        weakref.finalize(
+            self,
+            self._cleanup,
+            test_manager=self.test_manager,
+            projects=(self.project_a, self.project_b),
+        )
 
     @property
     def identifying_user_property(self) -> str:
@@ -82,6 +89,14 @@ class JiraTestCase(unittest.TestCase):
     def is_jira_cloud_ci(self) -> bool:
         """is running on Jira Cloud"""
         return self.test_manager._cloud_ci
+
+    def _cleanup(self, test_manager: JiraTestManager, projects: list[str]) -> None:
+        """This is called when the object is set to be garbage collected."""
+        for proj in projects:
+            try:
+                test_manager._remove_project(proj)
+            except Exception:
+                LOGGER.exception(f"Failed to remove project {proj}")
 
 
 def rndstr():
