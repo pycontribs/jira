@@ -31,4 +31,4 @@ else
 fi
 
 # Install package in editable mode with test dependencies
-pip install -e .[test]
+pip install -e .[opt,test]
