@@ -71,7 +71,6 @@ from jira.resources import (
     IssueType,
     IssueTypeScheme,
     NotificationScheme,
-    Organization,
     PermissionScheme,
     Priority,
     PriorityScheme,
@@ -1401,26 +1400,19 @@ class JIRA:
         """
         url = f"gateway/api/public/teams/v1/org/{org_id}/teams/{team_id}"
 
-        headers = {
-        "Accept": "application/json",
-        "Content-Type": "application/json"
-        }
+        headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
-        payload =  {} 
+        payload = {}
         if description != "":
-            payload["description"]=description
+            payload["description"] = description
         if displayName != "":
             payload["displayName"] = displayName
 
         response = self._session.request(
-            "PATCH",
-            url,
-            data=json.dumps(payload),
-            headers=headers
-            )
+            "PATCH", url, data=json.dumps(payload), headers=headers
+        )
         raw_team_json: dict[str, Any] = json_loads(response)
         return Team(self._options, self._session, raw=raw_team_json)
-
 
     def team_members(self, team_id: str, org_id: str) -> list[str]:
         """Return the list of account Ids corresponding to the team members.
@@ -1469,12 +1461,10 @@ class JIRA:
         """
         url = f"/gateway/api/public/teams/v1/org/{org_id}/teams/{team_id}/members/add"
         payload_members_list = [{"accountId": accountId} for accountId in members]
-        payload = {
-            "members":payload_members_list
-        }
+        payload = {"members": payload_members_list}
         r = self._session.post(url, data=json.dumps(payload))
-        response_json=r.json()
-        return response_json["members"],response_json["errors"]
+        response_json = r.json()
+        return response_json["members"], response_json["errors"]
 
     def remove_team_members(
         self,
@@ -1492,11 +1482,11 @@ class JIRA:
         Returns:
             bool
         """
-        url = f"/gateway/api/public/teams/v1/org/{org_id}/teams/{team_id}/members/remove"
+        url = (
+            f"/gateway/api/public/teams/v1/org/{org_id}/teams/{team_id}/members/remove"
+        )
         payload_members_list = [{"accountId": accountId} for accountId in members]
-        payload = {
-            "members":payload_members_list
-        }
+        payload = {"members": payload_members_list}
         r = self._session.post(url, data=json.dumps(payload))
         if r.status_code == 204:
             return True
@@ -2910,7 +2900,10 @@ class JIRA:
         """
         if hasattr(service_desk, "id"):
             service_desk = service_desk.id
-        url = self.server_url + "/rest/servicedeskapi/servicedesk/{service_desk}/requesttype"
+        url = (
+            self.server_url
+            + "/rest/servicedeskapi/servicedesk/{service_desk}/requesttype"
+        )
         headers = {"X-ExperimentalApi": "opt-in"}
         r_json = json_loads(self._session.get(url, headers=headers))
         request_types = [
