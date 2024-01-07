@@ -557,7 +557,7 @@ class UserAdministrationTests(JiraTestCase):
         self.test_groupname = f"testGroupFor_{self.test_manager.project_a}"
         self.test_team_name = f"testTeamFor_{self.test_manager.project_a}"
         self.test_team_type = "OPEN"
-        self.org_id= os.environ["CI_JIRA_ORG_ID"]
+        self.org_id = os.environ["CI_JIRA_ORG_ID"]
         self.test_team_description = "test Description"
 
     def _skip_pycontribs_instance(self):
@@ -622,7 +622,6 @@ class UserAdministrationTests(JiraTestCase):
 
         result = self.jira.delete_user(self.test_username)
         assert result, True
-
 
     def test_create_team(self):
         if self._should_skip_for_pycontribs_instance():
