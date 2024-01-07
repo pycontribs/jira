@@ -12,9 +12,9 @@ def url_test_case(example_url: str):
 
 
 class TestResource:
+    # fmt: off
     @pytest.mark.parametrize(
         ["example_url", "expected_class"],
-        # fmt: off
         [
             (url_test_case("api/latest/issue/JRA-1330"), jira.resources.Issue),
             (url_test_case("api/latest/project/BULK"), jira.resources.Project),
@@ -24,7 +24,6 @@ class TestResource:
             (url_test_case("user?username=bla"), jira.resources.User),  # Jira Server / Data Center
             (url_test_case("user?accountId=bla"), jira.resources.User),  # Jira Cloud
         ],
-        # fmt: on
         ids=[
             "issue",
             "project",
@@ -35,6 +34,7 @@ class TestResource:
             "user_cloud",
         ],
     )
+    # fmt: on
     def test_cls_for_resource(self, example_url, expected_class):
         """Test the regex recognizes the right class for a given URL."""
         assert jira.resources.cls_for_resource(example_url) == expected_class

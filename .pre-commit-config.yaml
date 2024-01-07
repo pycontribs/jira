@@ -6,7 +6,7 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
       - id: mixed-line-ending
-      - id: check-byte-order-marker
+      - id: fix-byte-order-marker
       - id: check-executables-have-shebangs
       - id: check-merge-conflict
       - id: check-symlinks
@@ -27,22 +27,19 @@ repos:
         require_serial: false
         additional_dependencies: []
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.1.3"
+    rev: "v0.1.9"
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
-  - repo: https://github.com/psf/black # after ruff, as ruff output may need fixing
-    rev: 23.10.1
-    hooks:
-      - id: black
-        language_version: python3
+      # Run the formatter.
+      - id: ruff-format
   - repo: https://github.com/adrienverge/yamllint
-    rev: v1.32.0
+    rev: v1.33.0
     hooks:
       - id: yamllint
         files: \.(yaml|yml)$
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.6.1
+    rev: v1.8.0
     hooks:
       - id: mypy
         additional_dependencies:

@@ -277,6 +277,15 @@ class SearchTests(JiraTestCase):
         self.assertTrue(hasattr(issues[0], "changelog"))
         self.assertEqual(issues[0].key, self.issue)
 
+    def test_search_issues_use_post(self):
+        long_jql = " or ".join(f"key={self.issue}" for _ in range(2000))
+        with pytest.raises(JIRAError):
+            self.jira.search_issues(long_jql)
+        issues = self.jira.search_issues(long_jql, use_post=True)
+        issues = cast(ResultList[Issue], issues)
+        self.assertEqual(len(issues), 1)
+        self.assertEqual(issues[0].key, self.issue)
+
 
 class ServerInfoTests(JiraTestCase):
     def test_server_info(self):

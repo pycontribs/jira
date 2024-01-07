@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from http import HTTPStatus
 from unittest.mock import Mock, patch
 
 import pytest
@@ -63,68 +64,81 @@ class ResilientSessionLoggingConfidentialityTests(JiraTestCase):
         del self.loggingHandler
 
 
+# Retry test data tuples: (status_code, with_rate_limit_header, with_retry_after_header, retry_expected)
+with_rate_limit = with_retry_after = True
+without_rate_limit = without_retry_after = False
 status_codes_retries_test_data = [
-    (429, 4, 3),
-    (401, 1, 0),
-    (403, 1, 0),
-    (404, 1, 0),
-    (502, 1, 0),
-    (503, 1, 0),
-    (504, 1, 0),
+    # Always retry 429 responses
+    (HTTPStatus.TOO_MANY_REQUESTS, with_rate_limit, with_retry_after, True),
+    (HTTPStatus.TOO_MANY_REQUESTS, with_rate_limit, without_retry_after, True),
+    (HTTPStatus.TOO_MANY_REQUESTS, without_rate_limit, with_retry_after, True),
+    (HTTPStatus.TOO_MANY_REQUESTS, without_rate_limit, without_retry_after, True),
+    # Retry 503 responses only when 'Retry-After' in headers
+    (HTTPStatus.SERVICE_UNAVAILABLE, with_rate_limit, with_retry_after, True),
+    (HTTPStatus.SERVICE_UNAVAILABLE, with_rate_limit, without_retry_after, False),
+    (HTTPStatus.SERVICE_UNAVAILABLE, without_rate_limit, with_retry_after, True),
+    (HTTPStatus.SERVICE_UNAVAILABLE, without_rate_limit, without_retry_after, False),
+    # Never retry other responses
+    (HTTPStatus.UNAUTHORIZED, with_rate_limit, with_retry_after, False),
+    (HTTPStatus.UNAUTHORIZED, without_rate_limit, without_retry_after, False),
+    (HTTPStatus.FORBIDDEN, with_rate_limit, with_retry_after, False),
+    (HTTPStatus.FORBIDDEN, without_rate_limit, without_retry_after, False),
+    (HTTPStatus.NOT_FOUND, with_rate_limit, with_retry_after, False),
+    (HTTPStatus.NOT_FOUND, without_rate_limit, without_retry_after, False),
+    (HTTPStatus.BAD_GATEWAY, with_rate_limit, with_retry_after, False),
+    (HTTPStatus.BAD_GATEWAY, without_rate_limit, without_retry_after, False),
+    (HTTPStatus.GATEWAY_TIMEOUT, with_rate_limit, with_retry_after, False),
+    (HTTPStatus.GATEWAY_TIMEOUT, without_rate_limit, without_retry_after, False),
 ]
 
 
 @patch("requests.Session.request")
 @patch(f"{jira.resilientsession.__name__}.time.sleep")
 @pytest.mark.parametrize(
-    "status_code,expected_number_of_retries,expected_number_of_sleep_invocations",
+    "status_code,with_rate_limit_header,with_retry_after_header,retry_expected",
     status_codes_retries_test_data,
 )
 def test_status_codes_retries(
     mocked_sleep_method: Mock,
     mocked_request_method: Mock,
     status_code: int,
-    expected_number_of_retries: int,
-    expected_number_of_sleep_invocations: int,
+    with_rate_limit_header: bool,
+    with_retry_after_header: bool,
+    retry_expected: bool,
 ):
+    RETRY_AFTER_HEADER = {"Retry-After": "1"}
+    RATE_LIMIT_HEADERS = {
+        "X-RateLimit-FillRate": "1",
+        "X-RateLimit-Interval-Seconds": "1",
+        "X-RateLimit-Limit": "1",
+    }
+
+    max_retries = 2
+
+    if retry_expected:
+        expected_number_of_requests = 1 + max_retries
+        expected_number_of_sleep_invocations = max_retries
+    else:
+        expected_number_of_requests = 1
+        expected_number_of_sleep_invocations = 0
+
     mocked_response: Response = Response()
     mocked_response.status_code = status_code
-    mocked_response.headers["X-RateLimit-FillRate"] = "1"
-    mocked_response.headers["X-RateLimit-Interval-Seconds"] = "1"
-    mocked_response.headers["retry-after"] = "1"
-    mocked_response.headers["X-RateLimit-Limit"] = "1"
+    if with_retry_after_header:
+        mocked_response.headers.update(RETRY_AFTER_HEADER)
+    if with_rate_limit_header:
+        mocked_response.headers.update(RATE_LIMIT_HEADERS)
+
     mocked_request_method.return_value = mocked_response
+
     session: jira.resilientsession.ResilientSession = (
-        jira.resilientsession.ResilientSession()
+        jira.resilientsession.ResilientSession(max_retries=max_retries)
     )
+
     with pytest.raises(JIRAError):
         session.get("mocked_url")
-    assert mocked_request_method.call_count == expected_number_of_retries
-    assert mocked_sleep_method.call_count == expected_number_of_sleep_invocations
 
-
-@patch("requests.Session.request")
-@patch(f"{jira.resilientsession.__name__}.time.sleep")
-@pytest.mark.parametrize(
-    "status_code,expected_number_of_retries,expected_number_of_sleep_invocations",
-    status_codes_retries_test_data,
-)
-def test_status_codes_retries_no_headers(
-    mocked_sleep_method: Mock,
-    mocked_request_method: Mock,
-    status_code: int,
-    expected_number_of_retries: int,
-    expected_number_of_sleep_invocations: int,
-):
-    mocked_response: Response = Response()
-    mocked_response.status_code = status_code
-    mocked_request_method.return_value = mocked_response
-    session: jira.resilientsession.ResilientSession = (
-        jira.resilientsession.ResilientSession()
-    )
-    with pytest.raises(JIRAError):
-        session.get("mocked_url")
-    assert mocked_request_method.call_count == expected_number_of_retries
+    assert mocked_request_method.call_count == expected_number_of_requests
     assert mocked_sleep_method.call_count == expected_number_of_sleep_invocations
 
 
