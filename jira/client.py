@@ -71,7 +71,6 @@ from jira.resources import (
     IssueType,
     IssueTypeScheme,
     NotificationScheme,
-    Organization,
     PermissionScheme,
     Priority,
     PriorityScheme,

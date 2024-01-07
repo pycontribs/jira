@@ -57,7 +57,6 @@ __all__ = (
     "Resolution",
     "SecurityLevel",
     "Status",
-    "Organization",
     "Team",
     "User",
     "Group",
