@@ -1311,64 +1311,6 @@ class JIRA:
         raw_filter_json = json.loads(r.text)
         return Filter(self._options, self._session, raw=raw_filter_json)
 
-    def _get_service_desk_url(self) -> str:
-        """Returns the service desk root url.
-
-        Returns:
-            str: service desk api url
-        """
-        return f"{self.server_url}/rest/servicedeskapi"
-
-    # Organisations
-
-    def create_org(self, org_name: str) -> Organization:
-        url = f"{self._get_service_desk_url()}/organization"
-        payload = {"name": org_name}
-        r = self._session.post(url, data=json.dumps(payload))
-        raw_org_json: dict[str, Any] = json_loads(r)
-        return Organization(self._options, self._session, raw=raw_org_json)
-
-    def remove_org(self, org_id: str) -> bool:
-        url = f"{self._get_service_desk_url()}/organization/{org_id}"
-        r = self._session.delete(url)
-        if r.status_code == 204:
-            return True
-        return False
-
-    def org(self, org_id: str) -> Organization:
-        url = f"{self._get_service_desk_url()}/organization/{org_id}"
-        r = self._session.get(url)
-        raw_org_json: dict[str, Any] = json_loads(r)
-        if r.status_code == 200:
-            return Organization(self._options, self._session, raw=raw_org_json)
-        return None
-
-    def orgs(self, start=0, limit=50) -> ResultList[Organization]:
-        url = f"{self._get_service_desk_url()}/organization"
-        return self._fetch_pages(
-            Organization, "values", url, start, limit, base=self.server_url
-        )
-
-    def org_users(self, org_id, start, limit) -> ResultList[User]:
-        url = f"{self._get_service_desk_url()}/organization/{org_id}/user"
-        return self._fetch_pages(User, None, url, start, limit, base=self.server_url)
-
-    def add_users_to_org(self, org_id: str, users: list[str]) -> bool:
-        url = f"{self._get_service_desk_url()}/organization/{org_id}/user"
-        payload = {"usernames": users}
-        r = self._session.post(url, data=json.dumps(payload))
-        if r.status_code == 204:
-            return True
-        return False
-
-    def remove_users_from_org(self, org_id: str, users: list[str]) -> bool:
-        url = f"{self._get_service_desk_url()}/organization/{org_id}/user"
-        payload = {"usernames": users}
-        r = self._session.delete(url, data=json.dumps(payload))
-        if r.status_code == 204:
-            return True
-        return False
-
     # Teams
 
     def create_team(

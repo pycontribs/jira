@@ -556,8 +556,8 @@ class UserAdministrationTests(JiraTestCase):
         self.test_password = rndpassword()
         self.test_groupname = f"testGroupFor_{self.test_manager.project_a}"
         self.test_team_name = f"testTeamFor_{self.test_manager.project_a}"
-        self.test_org_name = "testOrgFor_{self.test_manager.project_a}"
         self.test_team_type = "OPEN"
+        self.org_id= os.environ["CI_JIRA_ORG_ID"]
         self.test_team_description = "test Description"
 
     def _skip_pycontribs_instance(self):
@@ -623,59 +623,6 @@ class UserAdministrationTests(JiraTestCase):
         result = self.jira.delete_user(self.test_username)
         assert result, True
 
-    def test_create_org(self):
-        if self._should_skip_for_pycontribs_instance():
-            self._skip_pycontribs_instance()
-        try:
-            self.jira.remove_org(self.test_org_name)
-        except JIRAError:
-            pass
-
-        result_org = self.jira.create_org(self.test_org_name)
-        self.assertEqual(self.test_org_name, result_org.__getattr__("name"))
-
-    def test_remove_org(self):
-        if self._should_skip_for_pycontribs_instance():
-            self._skip_pycontribs_instance()
-        try:
-            self.jira.create_org(self.test_org_name)
-            sleep(1)  # avoid 400
-        except JIRAError:
-            pass
-        result = self.jira.remove_org(self.test_org_name)
-        assert result, True
-
-    def test_fetching_orgs(self):
-        try:
-            self.jira.create_org(self.test_org_name)
-            sleep(1)  # avoid 400
-        except JIRAError:
-            pass
-        all_orgs = self.jira.orgs()
-        assert len(all_orgs) != 0
-
-    def test_fetching_org(self):
-        self.jira.remove_org(self.test_org_name)
-        org = self.jira.create_org(self.test_org_name)
-        org_id = org.id
-        response_org = self.jira.org(org_id)
-        assert response_org.id == org_id
-
-    def test_adding_and_fetching_users_to_org(self):
-        try:
-            self.jira.add_user(
-                self.test_username, self.test_email, password=self.test_password
-            )
-            org = self.jira.create_org(self.test_org_name)
-        except JIRAError:
-            pass
-        assert True, self.jira.add_users_to_org(org.id, [self.test_username])
-        users = self.jira.org_users(org.id)
-        is_test_user_in_org = False
-        for u in users:
-            if u.username == self.test_username:
-                is_test_user_in_org = True
-        assert is_test_user_in_org, True
 
     def test_create_team(self):
         if self._should_skip_for_pycontribs_instance():
