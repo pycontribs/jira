@@ -71,6 +71,7 @@ from jira.resources import (
     IssueType,
     IssueTypeScheme,
     NotificationScheme,
+    Organization,
     PermissionScheme,
     Priority,
     PriorityScheme,
@@ -85,7 +86,6 @@ from jira.resources import (
     Sprint,
     Status,
     StatusCategory,
-    Organization,
     Team,
     User,
     Version,
@@ -1323,14 +1323,12 @@ class JIRA:
 
     def create_org(self, org_name: str) -> Organization:
         url = f"{self._get_service_desk_url()}/organization"
-        payload = {
-            "name": org_name
-        }
+        payload = {"name": org_name}
         r = self._session.post(url, data=json.dumps(payload))
         raw_org_json: dict[str, Any] = json_loads(r)
         return Organization(self._options, self._session, raw=raw_org_json)
-    
-    def remove_org(self,org_id:str) -> bool:
+
+    def remove_org(self, org_id: str) -> bool:
         url = f"{self._get_service_desk_url()}/organization/{org_id}"
         r = self._session.delete(url)
         if r.status_code == 204:
@@ -1344,45 +1342,29 @@ class JIRA:
         if r.status_code == 200:
             return Organization(self._options, self._session, raw=raw_org_json)
         return None
-    
+
     def orgs(self, start=0, limit=50) -> ResultList[Organization]:
         url = f"{self._get_service_desk_url()}/organization"
         return self._fetch_pages(
-            Organization,
-            "values",
-            url,
-            start,
-            limit,
-            base=self.server_url
-        )        
-        
+            Organization, "values", url, start, limit, base=self.server_url
+        )
+
     def org_users(self, org_id, start, limit) -> ResultList[User]:
         url = f"{self._get_service_desk_url()}/organization/{org_id}/user"
-        return self._fetch_pages(
-            User,
-            None,
-            url,
-            start,
-            limit,
-            base=self.server_url
-        )  
+        return self._fetch_pages(User, None, url, start, limit, base=self.server_url)
 
     def add_users_to_org(self, org_id: str, users: list[str]) -> bool:
-        url=f"{self._get_service_desk_url()}/organization/{org_id}/user"
-        payload={
-            "usernames": users
-        }
-        r= self._session.post(url, data=json.dumps(payload))
+        url = f"{self._get_service_desk_url()}/organization/{org_id}/user"
+        payload = {"usernames": users}
+        r = self._session.post(url, data=json.dumps(payload))
         if r.status_code == 204:
             return True
         return False
-    
+
     def remove_users_from_org(self, org_id: str, users: list[str]) -> bool:
-        url=f"{self._get_service_desk_url()}/organization/{org_id}/user"
-        payload={
-            "usernames": users
-        }
-        r= self._session.delete(url, data=json.dumps(payload))
+        url = f"{self._get_service_desk_url()}/organization/{org_id}/user"
+        payload = {"usernames": users}
+        r = self._session.delete(url, data=json.dumps(payload))
         if r.status_code == 204:
             return True
         return False
@@ -1434,7 +1416,7 @@ class JIRA:
         pass
 
     def team_members(self, team_id: str, org_id: str) -> list[str]:
-        """Return list of account Ids in the team. 
+        """Return list of account Ids in the team.
 
         Args:
             team_id (str): Id of the team.
@@ -2883,9 +2865,7 @@ class JIRA:
         """
         if hasattr(service_desk, "id"):
             service_desk = service_desk.id
-        url = (
-            f"{self._get_service_desk_url()}/servicedesk/{service_desk}/requesttype"
-        )
+        url = f"{self._get_service_desk_url()}/servicedesk/{service_desk}/requesttype"
         headers = {"X-ExperimentalApi": "opt-in"}
         r_json = json_loads(self._session.get(url, headers=headers))
         request_types = [
