@@ -1815,7 +1815,7 @@ class JIRA:
         Returns:
             bool
         """
-        url = f"{self._get_service_desk_url()}/info"
+        url = self.server_url + "/rest/servicedeskapi/info"
         headers = {"X-ExperimentalApi": "opt-in"}
         try:
             r = self._session.get(url, headers=headers)
@@ -1833,7 +1833,7 @@ class JIRA:
         Returns:
             Customer
         """
-        url = f"{self._get_service_desk_url()}/customer"
+        url = self.server_url + "/rest/servicedeskapi/customer"
         headers = {"X-ExperimentalApi": "opt-in"}
         r = self._session.post(
             url,
@@ -1853,7 +1853,7 @@ class JIRA:
         Returns:
             List[ServiceDesk]
         """
-        url = f"{self._get_service_desk_url()}/servicedesk"
+        url = self.server_url + "/rest/servicedeskapi/servicedesk"
         headers = {"X-ExperimentalApi": "opt-in"}
         r_json = json_loads(self._session.get(url, headers=headers))
         projects = [
@@ -1914,7 +1914,7 @@ class JIRA:
         elif isinstance(p, str):
             data["requestTypeId"] = self.request_type_by_name(service_desk, p).id
 
-        url = f"{self._get_service_desk_url()}/request"
+        url = self.server_url + "/rest/servicedeskapi/request"
         headers = {"X-ExperimentalApi": "opt-in"}
         r = self._session.post(url, headers=headers, data=json.dumps(data))
 
@@ -2910,7 +2910,7 @@ class JIRA:
         """
         if hasattr(service_desk, "id"):
             service_desk = service_desk.id
-        url = f"{self._get_service_desk_url()}/servicedesk/{service_desk}/requesttype"
+        url = self.server_url + "/rest/servicedeskapi/servicedesk/{service_desk}/requesttype"
         headers = {"X-ExperimentalApi": "opt-in"}
         r_json = json_loads(self._session.get(url, headers=headers))
         request_types = [
