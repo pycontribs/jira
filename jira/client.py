@@ -1448,7 +1448,7 @@ class JIRA:
         org_id: str,
         team_id: str,
         members: list[str],
-    ) -> (list[str], list[str]):
+    ) -> tuple[list[str], list[str]]:
         """Adds a list of members (accountIds) to the team members.
 
         Args:
