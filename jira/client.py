@@ -1379,6 +1379,18 @@ class JIRA:
         team_type: str,
         site_id: str = None,
     ) -> Team:
+        """Creates a team, and adds the requesting user as the initial member.
+
+        Args:
+            org_id (str): organization identifier
+            description (str): description field of the team to be created
+            display_name (str): name of the team to be created
+            team_type (str): either 'OPEN' or 'MEMBER_INVITE'
+            site_id (Optional[str])
+
+        Returns:
+            Team
+        """
         url = f"gateway/api/public/teams/v1/org/{org_id}/teams/"
         payload = {
             "description": description,
@@ -1392,6 +1404,16 @@ class JIRA:
         return Team(self._options, self._session, raw=raw_team_json)
 
     def get_team(self, org_id: str, team_id: str, site_id: str = None) -> Team:
+        """Get the specified team.
+
+        Args:
+            org_id (str): organization identifier
+            team_id (str): team identifier
+            site_id (Optional[str])
+
+        Returns:
+            Team
+        """
         url = f"gateway/api/public/teams/v1/org/{org_id}/teams/{team_id}"
         if site_id is not None:
             url += f"?siteId={site_id}"
@@ -1404,7 +1426,20 @@ class JIRA:
         org_id: str,
         team_id: str,
     ):
-        pass
+        """Delete the specified team.
+
+        Args:
+            org_id (str): organization identifier
+            team_id (str): team identifier
+
+        Returns:
+            bool
+        """
+        url = f"gateway/api/public/teams/v1/org/{org_id}/teams/{team_id}"
+        r = self._session.delete(url)
+        if r.status_code == 204:
+            return True
+        return False
 
     def update_team(
         self,
@@ -1413,14 +1448,47 @@ class JIRA:
         description: str,
         displayName: str,
     ) -> Team:
-        pass
+        """Modifies the specified team with new values.
+
+        Args:
+            org_id (str): organization identifier
+            team_id (str): team identifier
+
+        Returns:
+            Team
+        """
+        url = f"gateway/api/public/teams/v1/org/{org_id}/teams/{team_id}"
+
+        headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+        }
+
+        payload =  {} 
+        if description != "":
+            payload["description"]=description
+        if displayName != "":
+            payload["displayName"] = displayName
+
+        response = self._session.request(
+            "PATCH",
+            url,
+            data=json.dumps(payload),
+            headers=headers
+            )
+        raw_team_json: dict[str, Any] = json_loads(response)
+        return Team(self._options, self._session, raw=raw_team_json)
+
 
     def team_members(self, team_id: str, org_id: str) -> list[str]:
-        """Return list of account Ids in the team.
+        """Return the list of account Ids corresponding to the team members.
 
         Args:
             team_id (str): Id of the team.
             org_id (str): Id of the org.
+
+        Returns:
+            list[str]
         """
         url = f"/gateway/api/public/teams/v1/org/{org_id}/teams/{team_id}/members"
         payload = {"first": 50}
@@ -1446,16 +1514,51 @@ class JIRA:
         org_id: str,
         team_id: str,
         members: list[str],
-    ):
-        pass
+    ) -> (list[str], list[str]):
+        """Adds a list of members (accountIds) to the team members.
+
+        Args:
+            team_id (str): Id of the team.
+            org_id (str): Id of the org.
+            members (list[str]): Account Ids of the new members.
+
+        Returns:
+            (list[str], list[str]): (list of successful addition, list of failure)
+        """
+        url = f"/gateway/api/public/teams/v1/org/{org_id}/teams/{team_id}/members/add"
+        payload_members_list = [{"accountId": accountId} for accountId in members]
+        payload = {
+            "members":payload_members_list
+        }
+        r = self._session.post(url, data=json.dumps(payload))
+        response_json=r.json()
+        return response_json["members"],response_json["errors"]
 
     def remove_team_members(
         self,
         org_id: str,
         team_id: str,
         members: list[str],
-    ):
-        pass
+    ) -> bool:
+        """Removes the specified members from the team.
+
+        Args:
+            team_id (str): Id of the team.
+            org_id (str): Id of the org.
+            members (list[str]): Account Ids of the new members.
+
+        Returns:
+            bool
+        """
+        url = f"/gateway/api/public/teams/v1/org/{org_id}/teams/{team_id}/members/remove"
+        payload_members_list = [{"accountId": accountId} for accountId in members]
+        payload = {
+            "members":payload_members_list
+        }
+        r = self._session.post(url, data=json.dumps(payload))
+        if r.status_code == 204:
+            return True
+        return False
 
     # Groups
 
