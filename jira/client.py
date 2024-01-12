@@ -596,7 +596,10 @@ class JIRA:
     @property
     def _fields_cache_raw(self) -> dict:
         """Cached raw dictionary of of fields. Lazy loaded."""
-        if not hasattr(self, '_fields_cache_value_raw') or not self._fields_cache_value_raw:
+        if (
+            not hasattr(self, "_fields_cache_value_raw")
+            or not self._fields_cache_value_raw
+        ):
             self._fields_cache_value_raw = self.fields()
         return self._fields_cache_value_raw
 
