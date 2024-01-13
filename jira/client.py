@@ -1856,7 +1856,9 @@ class JIRA:
 
     # non-resource
     @translate_resource_args
-    def assign_issue(self, issue: int | str, assignee: str | None, max_search_users_results: int = 20) -> bool:
+    def assign_issue(
+        self, issue: int | str, assignee: str | None, max_search_users_results: int = 20
+    ) -> bool:
         """Assign an issue to a user.
 
         Args:
@@ -2313,7 +2315,9 @@ class JIRA:
         return self._find_for_resource(Watchers, issue)
 
     @translate_resource_args
-    def add_watcher(self, issue: str | int, watcher: str, max_search_users_results: int = 20) -> Response:
+    def add_watcher(
+        self, issue: str | int, watcher: str, max_search_users_results: int = 20
+    ) -> Response:
         """Add a user to an issue's watchers list.
 
         Args:
@@ -2330,7 +2334,9 @@ class JIRA:
         return self._session.post(url, data=json.dumps(watcher_id))
 
     @translate_resource_args
-    def remove_watcher(self, issue: str | int, watcher: str, max_search_users_results: int = 20) -> Response:
+    def remove_watcher(
+        self, issue: str | int, watcher: str, max_search_users_results: int = 20
+    ) -> Response:
         """Remove a user from an issue's watch list.
 
         Args:
