@@ -1815,7 +1815,7 @@ class JIRA:
         """
         return user.accountId if self._is_cloud else user.name
 
-    def _get_user_id(self, user: str | None) -> str | None:
+    def _get_user_id(self, user: str | None, max_results: int = 20) -> str | None:
         """Internal method for translating a user search (str) to an id.
 
         Return None and -1 unchanged.
@@ -1825,6 +1825,7 @@ class JIRA:
 
         Args:
             user (Optional[str]): The search term used for finding a user. None, '-1' and -1 are equivalent to 'Unassigned'.
+            max_results (int): The maximum number of search users result.
 
         Raises:
             JIRAError: If any error occurs.
@@ -1837,9 +1838,9 @@ class JIRA:
         try:
             user_obj: User
             if self._is_cloud:
-                users = self.search_users(query=user, maxResults=20)
+                users = self.search_users(query=user, maxResults=max_results)
             else:
-                users = self.search_users(user=user, maxResults=20)
+                users = self.search_users(user=user, maxResults=max_results)
 
             if len(users) < 1:
                 raise JIRAError(f"No matching user found for: '{user}'")
@@ -1855,18 +1856,19 @@ class JIRA:
 
     # non-resource
     @translate_resource_args
-    def assign_issue(self, issue: int | str, assignee: str | None) -> bool:
+    def assign_issue(self, issue: int | str, assignee: str | None, max_search_users_results: int = 20) -> bool:
         """Assign an issue to a user.
 
         Args:
             issue (Union[int, str]): the issue ID or key to assign
             assignee (str): the user to assign the issue to. None will set it to unassigned. -1 will set it to Automatic.
+            max_search_users_results (int): the maximum number of search users results to return.
 
         Returns:
             bool
         """
         url = self._get_latest_url(f"issue/{issue}/assignee")
-        user_id = self._get_user_id(assignee)
+        user_id = self._get_user_id(assignee, max_search_users_results)
         payload = {"accountId": user_id} if self._is_cloud else {"name": user_id}
         self._session.put(url, data=json.dumps(payload))
         return True
@@ -2311,35 +2313,37 @@ class JIRA:
         return self._find_for_resource(Watchers, issue)
 
     @translate_resource_args
-    def add_watcher(self, issue: str | int, watcher: str) -> Response:
+    def add_watcher(self, issue: str | int, watcher: str, max_search_users_results: int = 20) -> Response:
         """Add a user to an issue's watchers list.
 
         Args:
             issue (Union[str, int]): ID or key of the issue affected
             watcher (str): name of the user to add to the watchers list
+            max_search_users_results (int): the maximum number of search users results to return.
 
         Returns:
             Response
         """
         url = self._get_url("issue/" + str(issue) + "/watchers")
         # Use user_id when adding watcher
-        watcher_id = self._get_user_id(watcher)
+        watcher_id = self._get_user_id(watcher, max_search_users_results)
         return self._session.post(url, data=json.dumps(watcher_id))
 
     @translate_resource_args
-    def remove_watcher(self, issue: str | int, watcher: str) -> Response:
+    def remove_watcher(self, issue: str | int, watcher: str, max_search_users_results: int = 20) -> Response:
         """Remove a user from an issue's watch list.
 
         Args:
             issue (Union[str, int]): ID or key of the issue affected
             watcher (str): name of the user to remove from the watchers list
+            max_search_users_results (int): the maximum number of search users results to return.
 
         Returns:
             Response
         """
         url = self._get_url("issue/" + str(issue) + "/watchers")
         # https://docs.atlassian.com/software/jira/docs/api/REST/8.13.6/#api/2/issue-removeWatcher
-        user_id = self._get_user_id(watcher)
+        user_id = self._get_user_id(watcher, max_search_users_results)
         payload = {"accountId": user_id} if self._is_cloud else {"username": user_id}
         result = self._session.delete(url, params=payload)
         return result
