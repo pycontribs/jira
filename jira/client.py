@@ -4290,9 +4290,12 @@ class JIRA:
     ) -> list[IssueTypeScheme]:
         """Get all issue type schemes defined (Admin required).
 
-        @param expand_projects: For each issue type schemes, returns information about the projects the issue type scheme is assigned to
-        @param expand_issue_types: For each issue type schemes, returns information about the issueTypes the issue type scheme have.
-        @return: List[IssueTypeScheme]: All the Issue Type Schemes available to the currently logged in user.
+        Args:
+            expand_issue_types: For each issue type schemes, returns information about the issueTypes the issue type scheme have.
+            expand_projects: For each issue type schemes, returns information about the projects the issue type scheme is assigned to
+
+        Returns:
+            List[IssueTypeScheme]: All the Issue Type Schemes available to the currently logged in user.
         """
         expand = []
         if expand_projects:
