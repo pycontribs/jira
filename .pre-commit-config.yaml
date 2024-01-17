@@ -1,12 +1,12 @@
 ---
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v4.5.0
     hooks:
       - id: end-of-file-fixer
       - id: trailing-whitespace
       - id: mixed-line-ending
-      - id: check-byte-order-marker
+      - id: fix-byte-order-marker
       - id: check-executables-have-shebangs
       - id: check-merge-conflict
       - id: check-symlinks
@@ -15,7 +15,7 @@ repos:
       - id: check-yaml
         files: .*\.(yaml|yml)$
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.2.5
+    rev: v2.2.6
     hooks:
       - id: codespell
         name: codespell
@@ -27,22 +27,19 @@ repos:
         require_serial: false
         additional_dependencies: []
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.0.286"
+    rev: "v0.1.9"
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
-  - repo: https://github.com/psf/black # after ruff, as ruff output may need fixing
-    rev: 23.7.0
-    hooks:
-      - id: black
-        language_version: python3
+      # Run the formatter.
+      - id: ruff-format
   - repo: https://github.com/adrienverge/yamllint
-    rev: v1.32.0
+    rev: v1.33.0
     hooks:
       - id: yamllint
         files: \.(yaml|yml)$
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.5.1
+    rev: v1.8.0
     hooks:
       - id: mypy
         additional_dependencies:
