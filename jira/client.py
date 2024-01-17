@@ -4305,7 +4305,6 @@ class JIRA:
             params["expand"] = ",".join(expand)
 
         url = self._get_url("issuetypescheme")
-        print(url)
 
         response = self._session.get(url, params=params)
         data: dict[str, Any] = json_loads(response)
