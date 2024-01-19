@@ -1238,16 +1238,16 @@ class User(Resource):
 class Team(Resource):
     """A Jira team."""
 
+    TEAM_API_BASE_URL = "{server}/gateway/api/public/teams/v1/"
+
     def __init__(
         self,
         options: dict[str, str],
         session: ResilientSession,
         raw: dict[str, Any] = None,
     ):
-        TEAM_API_BASE_URL = "{server}/gateway/api/public/teams/v1/"  # rest/{rest_path}/{rest_api_version}/{path}"
-
         Resource.__init__(
-            self, "org/{0}/teams/{1}", options, session, base_url=TEAM_API_BASE_URL
+            self, "org/{0}/teams/{1}", options, session, base_url=self.TEAM_API_BASE_URL
         )
         if raw:
             self._parse_raw(raw)
