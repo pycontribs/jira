@@ -1413,6 +1413,20 @@ class JIRA:
         raw_team_json: dict[str, Any] = json_loads(response)
         return Team(self._options, self._session, raw=raw_team_json)
 
+    def _fetch_paginated(self, url, payload):
+        result_response = self._session.get(url, data=json.dumps(payload)).json()
+        has_next_page = result_response["pageInfo"]["hasNextPage"]
+        end_index = result_response["pageInfo"]["endCursor"]
+
+        while has_next_page:
+            payload["after"] = end_index
+            r2 = self._session.get(url, data=json.dumps(payload)).json()
+            for res in r2["results"]:
+                result_response["results"].append(res)
+            end_index = r2["pageInfo"]["endCursor"]
+            has_next_page = r2["pageInfo"]["hasNextPage"]
+        return result_response
+
     def team_members(
         self,
         org_id: str,
@@ -1429,18 +1443,7 @@ class JIRA:
         """
         url = f"/gateway/api/public/teams/v1/org/{org_id}/teams/{team_id}/members"
         payload = {"first": 50}
-        r = self._session.get(url, data=json.dumps(payload)).json()
-        has_next_page = r["pageInfo"]["hasNextPage"]
-        end_index = r["pageInfo"]["endCursor"]
-
-        while has_next_page:
-            payload["after"] = end_index
-            r2 = self._session.get(url, data=json.dumps(payload)).json()
-            for user in r2["results"]:
-                r["results"].append(user)
-            end_index = r2["pageInfo"]["endCursor"]
-            has_next_page = r2["pageInfo"]["hasNextPage"]
-
+        r = self._fetch_paginated(url, payload)
         result = []
         for accounts in r["results"]:
             result.append(accounts.get("accountId"))
