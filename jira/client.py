@@ -1356,9 +1356,10 @@ class JIRA:
             Team
         """
         url = f"gateway/api/public/teams/v1/org/{org_id}/teams/{team_id}"
+        params = {}
         if site_id is not None:
-            url += f"?siteId={site_id}"
-        r = self._session.get(url)
+            params = {"siteId": site_id}
+        r = self._session.get(url, params=params)
         raw_team_json: dict[str, Any] = json_loads(r)
         return Team(self._options, self._session, raw=raw_team_json)
 
