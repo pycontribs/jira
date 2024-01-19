@@ -1379,9 +1379,7 @@ class JIRA:
         """
         url = f"gateway/api/public/teams/v1/org/{org_id}/teams/{team_id}"
         r = self._session.delete(url)
-        if r.status_code == 204:
-            return True
-        return False
+        return r.ok
 
     def update_team(
         self,
@@ -1415,12 +1413,16 @@ class JIRA:
         raw_team_json: dict[str, Any] = json_loads(response)
         return Team(self._options, self._session, raw=raw_team_json)
 
-    def team_members(self, team_id: str, org_id: str) -> list[str]:
+    def team_members(
+        self,
+        org_id: str,
+        team_id: str,
+    ) -> list[str]:
         """Return the list of account Ids corresponding to the team members.
 
         Args:
-            team_id (str): Id of the team.
             org_id (str): Id of the org.
+            team_id (str): Id of the team.
 
         Returns:
             list[str]
@@ -1453,8 +1455,8 @@ class JIRA:
         """Adds a list of members (accountIds) to the team members.
 
         Args:
-            team_id (str): Id of the team.
             org_id (str): Id of the org.
+            team_id (str): Id of the team.
             members (list[str]): Account Ids of the new members.
 
         Returns:
@@ -1489,9 +1491,7 @@ class JIRA:
         payload_members_list = [{"accountId": accountId} for accountId in members]
         payload = {"members": payload_members_list}
         r = self._session.post(url, data=json.dumps(payload))
-        if r.status_code == 204:
-            return True
-        return False
+        return r.ok
 
     # Groups
 
