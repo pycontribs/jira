@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 from contextlib import contextmanager
 
 from tests.conftest import JiraTestCase, allow_on_cloud
@@ -8,15 +7,21 @@ from tests.conftest import JiraTestCase, allow_on_cloud
 
 @allow_on_cloud
 class TeamsTests(JiraTestCase):
-    def setUp(self):
-        JiraTestCase.setUp(self)
-        self.test_team_name = f"testTeamFor_{self.test_manager.project_a}"
-        self.test_team_type = "OPEN"
-        self.org_id = os.environ["CI_JIRA_ORG_ID"]
-        self.test_team_description = "test Description"
+    @classmethod
+    def setUpClass(cls):
+        JiraTestCase.setUp(cls)
+        cls.test_team_name = f"testTeamFor_{cls.test_manager.project_a}"
+        cls.test_team_type = "OPEN"
+        cls.org = cls.jira.create_org("TestOrgUsedByTeamsAPI")
+        cls.org_id = cls.org.id
+        cls.test_team_description = "test Description"
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.org.delete()
 
     @contextmanager
-    def make_team(self, **kwargs):
+    def make_team(self):
         try:
             new_team = self.jira.create_team(
                 self.org_id,
@@ -24,9 +29,6 @@ class TeamsTests(JiraTestCase):
                 self.test_team_name,
                 self.test_team_type,
             )
-
-            if len(kwargs):
-                raise ValueError("Incorrect kwarg used !")
             yield new_team
         finally:
             new_team.delete()
