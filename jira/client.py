@@ -1346,7 +1346,7 @@ class JIRA:
             Organization, "values", url, start, limit, base=self.server_url
         )
 
-    def org_users(self, org_id, start, limit) -> ResultList[User]:
+    def org_users(self, org_id, start=0, limit=50) -> ResultList[User]:
         url = f"{self._get_service_desk_url()}/organization/{org_id}/user"
         return self._fetch_pages(User, None, url, start, limit, base=self.server_url)
 
