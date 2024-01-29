@@ -26,21 +26,25 @@ filterwarnings = ["ignore::pytest.PytestWarning"]
 
 markers = ["allow_on_cloud: opt in for the test to run on Jira Cloud"]
 
-
 [tool.mypy]
-python_version = 3.8
+python_version = "3.8"
 warn_unused_configs = true
 namespace_packages = true
-# check_untyped_defs = true
+check_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+check_untyped_defs = false
+disable_error_code = "annotation-unchecked"
 
 [tool.ruff]
 select = [
-    "E", # pydocstyle
-    "W", # pydocstyle
-    "F", # pyflakes
-    "I", # isort
+    "E",  # pydocstyle
+    "W",  # pydocstyle
+    "F",  # pyflakes
+    "I",  # isort
     "UP", # pyupgrade
-    "D", # docstrings
+    "D",  # docstrings
 ]
 ignore = [
     "E501", # We have way too many "line too long" errors at the moment

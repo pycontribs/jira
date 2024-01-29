@@ -8,7 +8,9 @@ import random
 import re
 import string
 import sys
+import time
 import unittest
+import weakref
 from time import sleep
 from typing import Any
 
@@ -71,6 +73,12 @@ class JiraTestCase(unittest.TestCase):
         self.user_normal = self.test_manager.user_normal  # use this user where possible
         self.project_b = self.test_manager.project_b
         self.project_a = self.test_manager.project_a
+        weakref.finalize(
+            self,
+            self._cleanup,
+            test_manager=self.test_manager,
+            projects=[self.project_a, self.project_b],
+        )
 
     @property
     def identifying_user_property(self) -> str:
@@ -81,6 +89,14 @@ class JiraTestCase(unittest.TestCase):
     def is_jira_cloud_ci(self) -> bool:
         """is running on Jira Cloud"""
         return self.test_manager._cloud_ci
+
+    def _cleanup(self, test_manager: JiraTestManager, projects: list[str]) -> None:
+        """This is called when the object is set to be garbage collected."""
+        for proj in projects:
+            try:
+                test_manager._remove_project(proj)
+            except Exception:
+                LOGGER.exception(f"Failed to remove project {proj}")
 
 
 def rndstr():
@@ -99,19 +115,19 @@ def rndpassword():
 
 
 def hashify(some_string, max_len=8):
-    return hashlib.sha256(some_string.encode("utf-8")).hexdigest()[:8].upper()
+    return hashlib.sha256(some_string.encode("utf-8")).hexdigest()[:max_len].upper()
 
 
 def get_unique_project_name():
     user = re.sub("[^A-Z_]", "", getpass.getuser().upper())
     if "GITHUB_ACTION" in os.environ and "GITHUB_RUN_NUMBER" in os.environ:
+        run_number = os.environ["GITHUB_RUN_NUMBER"]
         # please note that user underline (_) is not supported by
         # Jira even if it is documented as supported.
-        return "GH" + hashify(user + os.environ["GITHUB_RUN_NUMBER"])
-    identifier = (
-        user + chr(ord("A") + sys.version_info[0]) + chr(ord("A") + sys.version_info[1])
-    )
-    return "Z" + hashify(identifier)
+        return f"CI{hashify(f'{user}{run_number}',max_len=7)}"
+    sep = chr(ord("A"))
+    identifier = f"{user}{sep}{sys.version_info[0]}{sep}{sys.version_info[1]}"
+    return f"Z{hashify(identifier)}"
 
 
 class JiraTestManager:
@@ -225,7 +241,7 @@ class JiraTestManager:
         # https://jira.atlassian.com/browse/JRA-39153
         if self._project_exists(project_key):
             try:
-                self.jira_admin.delete_project(project_key)
+                self.jira_admin.delete_project(project_key, enable_undo=False)
             except Exception:
                 LOGGER.exception("Failed to delete '%s'.", project_key)
 
@@ -259,6 +275,7 @@ class JiraTestManager:
                 except JIRAError as e:
                     if "A project with that name already exists" not in str(e):
                         raise e
+                time.sleep(1)
         return self.jira_admin.project(project_key).id
 
     def create_some_data(self):

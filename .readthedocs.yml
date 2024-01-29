@@ -7,16 +7,13 @@ build:
   os: ubuntu-22.04
   tools:
     python: "3.11"
-  jobs:
-    # Work-around to actually constrain dependencies
-    # https://github.com/readthedocs/readthedocs.org/issues/7258#issuecomment-1094978683
-    post_install:
-      - python -m pip install --upgrade --upgrade-strategy eager --no-cache-dir .[docs,cli] -c constraints.txt
+  apt_packages:
+    - libkrb5-dev
 
 python:
   install:
-    - method: pip
-      path: .
+    - requirements: constraints.txt
+    - path: .
       extra_requirements:
         - docs
         # to autodoc jirashell

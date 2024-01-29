@@ -60,6 +60,7 @@ from jira.resources import (
     Customer,
     CustomFieldOption,
     Dashboard,
+    Field,
     Filter,
     Group,
     Issue,
@@ -692,6 +693,7 @@ class JIRA:
         maxResults: int = 50,
         params: dict[str, Any] = None,
         base: str = JIRA_BASE_URL,
+        use_post: bool = False,
     ) -> ResultList[ResourceType]:
         """Fetch from a paginated end point.
 
@@ -703,6 +705,7 @@ class JIRA:
             maxResults (int): Maximum number of items to return. If maxResults evaluates as False, it will try to get all items in batches. (Default:50)
             params (Dict[str, Any]): Params to be used in all requests. Should not contain startAt and maxResults, as they will be added for each request created from this function.
             base (str): base URL to use for the requests.
+            use_post (bool): Use POST endpoint instead of GET endpoint.
 
         Returns:
             ResultList
@@ -717,7 +720,13 @@ class JIRA:
             except ImportError:
                 pass
             async_workers = self._options.get("async_workers")
-        page_params = params.copy() if params else {}
+
+        def json_params() -> dict[str, Any]:
+            # passing through json.dumps and json.loads ensures json
+            return json.loads(json.dumps(params.copy())) if params else {}
+
+        page_params = json_params()
+
         if startAt:
             page_params["startAt"] = startAt
         if maxResults:
@@ -725,7 +734,9 @@ class JIRA:
         elif batch_size := self._get_batch_size(item_type):
             page_params["maxResults"] = batch_size
 
-        resource = self._get_json(request_path, params=page_params, base=base)
+        resource = self._get_json(
+            request_path, params=page_params, base=base, use_post=use_post
+        )
         next_items_page = self._get_items_from_page(item_type, items_key, resource)
         items = next_items_page
 
@@ -766,11 +777,15 @@ class JIRA:
                         session=self._session, max_workers=async_workers
                     )
                     for start_index in range(page_start, total, page_size):
-                        page_params = params.copy() if params else {}
+                        page_params = json_params()
                         page_params["startAt"] = start_index
                         page_params["maxResults"] = page_size
                         url = self._get_url(request_path)
-                        r = future_session.get(url, params=page_params)
+                        r = (
+                            future_session.post(url, data=json.dumps(page_params))
+                            if use_post
+                            else future_session.get(url, params=page_params)
+                        )
                         async_fetches.append(r)
                     for future in async_fetches:
                         response = future.result()
@@ -787,12 +802,13 @@ class JIRA:
                     and len(next_items_page) == page_size
                 ):
                     page_params = (
-                        params.copy() if params else {}
+                        json_params()
                     )  # Hack necessary for mock-calls to not change
                     page_params["startAt"] = page_start
                     page_params["maxResults"] = page_size
+
                     resource = self._get_json(
-                        request_path, params=page_params, base=base
+                        request_path, params=page_params, base=base, use_post=use_post
                     )
                     if resource:
                         next_items_page = self._get_items_from_page(
@@ -1566,7 +1582,7 @@ class JIRA:
         # Catching case where none of the issues has been created.
         # See https://github.com/pycontribs/jira/issues/350
         except JIRAError as je:
-            if je.status_code == 400 and je.response:
+            if je.status_code == 400 and je.response is not None:
                 raw_issue_json = json.loads(je.response.text)
             else:
                 raise
@@ -1717,55 +1733,20 @@ class JIRA:
         else:
             return Issue(self._options, self._session, raw=raw_issue_json)
 
-    def createmeta_issuetypes(
-        self,
-        projectIdOrKey: str | int,
-    ) -> dict[str, Any]:
-        """Get the issue types metadata for a given project, required to create issues.
+    def _check_createmeta_issuetypes(self) -> None:
+        """Check whether Jira deployment supports the createmeta issuetypes endpoint.
 
-        This API was introduced in JIRA Server / DC 8.4 as a replacement for the more general purpose API 'createmeta'.
-        For details see: https://confluence.atlassian.com/jiracore/createmeta-rest-endpoint-to-be-removed-975040986.html
-
-        Args:
-            projectIdOrKey (Union[str, int]): id or key of the project for which to get the metadata.
+        Raises:
+            JIRAError: If the deployment does not support the API endpoint.
 
         Returns:
-            Dict[str, Any]
+            None
         """
         if self._is_cloud or self._version < (8, 4, 0):
             raise JIRAError(
                 f"Unsupported JIRA deployment type: {self.deploymentType} or version: {self._version}. "
                 "Use 'createmeta' instead."
             )
-
-        return self._get_json(f"issue/createmeta/{projectIdOrKey}/issuetypes")
-
-    def createmeta_fieldtypes(
-        self,
-        projectIdOrKey: str | int,
-        issueTypeId: str | int,
-    ) -> dict[str, Any]:
-        """Get the field metadata for a given project and issue type, required to create issues.
-
-        This API was introduced in JIRA Server / DC 8.4 as a replacement for the more general purpose API 'createmeta'.
-        For details see: https://confluence.atlassian.com/jiracore/createmeta-rest-endpoint-to-be-removed-975040986.html
-
-        Args:
-            projectIdOrKey (Union[str, int]): id or key of the project for which to get the metadata.
-            issueTypeId (Union[str, int]): id of the issue type for which to get the metadata.
-
-        Returns:
-            Dict[str, Any]
-        """
-        if self._is_cloud or self._version < (8, 4, 0):
-            raise JIRAError(
-                f"Unsupported JIRA deployment type: {self.deploymentType} or version: {self._version}. "
-                "Use 'createmeta' instead."
-            )
-
-        return self._get_json(
-            f"issue/createmeta/{projectIdOrKey}/issuetypes/{issueTypeId}"
-        )
 
     def createmeta(
         self,
@@ -2404,6 +2385,7 @@ class JIRA:
         comment: (str | None) = None,
         started: (datetime.datetime | None) = None,
         user: (str | None) = None,
+        visibility: (dict[str, Any] | None) = None,
     ) -> Worklog:
         """Add a new worklog entry on an issue and return a Resource for it.
 
@@ -2418,6 +2400,15 @@ class JIRA:
             comment (Optional[str]): optional worklog comment
             started (Optional[datetime.datetime]): Moment when the work is logged, if not specified will default to now
             user (Optional[str]): the user ID or name to use for this worklog
+            visibility (Optional[Dict[str,Any]]): Details about any restrictions in the visibility of the worklog.
+              Optional when creating or updating a worklog. ::
+                ```js
+                {
+                    "type": "group", # "group" or "role"
+                    "value": "<string>",
+                    "identifier": "<string>" # OPTIONAL
+                }
+                ```
 
         Returns:
             Worklog
@@ -2441,6 +2432,8 @@ class JIRA:
             # we log user inside comment as it doesn't always work
             data["comment"] = user
 
+        if visibility is not None:
+            data["visibility"] = visibility
         if started is not None:
             # based on REST Browser it needs: "2014-06-03T08:21:01.273+0000"
             if started.tzinfo is None:
@@ -2531,6 +2524,9 @@ class JIRA:
         issue_link_types = self.issue_link_types()
 
         if type not in issue_link_types:
+            self.log.warning(
+                "Warning: Specified issue link type is not present in the list of link types"
+            )
             for lt in issue_link_types:
                 if lt.outward == type:
                     # we are smart to figure it out what he meant
@@ -2615,6 +2611,66 @@ class JIRA:
             for raw_type_json in r_json
         ]
         return issue_types
+
+    def project_issue_types(
+        self,
+        project: str,
+        startAt: int = 0,
+        maxResults: int = 50,
+    ) -> ResultList[IssueType]:
+        """Get a list of issue type Resources available in a given project from the server.
+
+        This API was introduced in JIRA Server / DC 8.4 as a replacement for the more general purpose API 'createmeta'.
+        For details see: https://confluence.atlassian.com/jiracore/createmeta-rest-endpoint-to-be-removed-975040986.html
+
+        Args:
+            project (str): ID or key of the project to query issue types from.
+            startAt (int): Index of first issue type to return. (Default: ``0``)
+            maxResults (int): Maximum number of issue types to return. (Default: ``50``)
+
+        Returns:
+            ResultList[IssueType]
+        """
+        self._check_createmeta_issuetypes()
+        issue_types = self._fetch_pages(
+            IssueType,
+            "values",
+            f"issue/createmeta/{project}/issuetypes",
+            startAt=startAt,
+            maxResults=maxResults,
+        )
+        return issue_types
+
+    def project_issue_fields(
+        self,
+        project: str,
+        issue_type: str,
+        startAt: int = 0,
+        maxResults: int = 50,
+    ) -> ResultList[Field]:
+        """Get a list of field type Resources available for a project and issue type from the server.
+
+        This API was introduced in JIRA Server / DC 8.4 as a replacement for the more general purpose API 'createmeta'.
+        For details see: https://confluence.atlassian.com/jiracore/createmeta-rest-endpoint-to-be-removed-975040986.html
+
+        Args:
+            project (str): ID or key of the project to query field types from.
+            issue_type (str): ID of the issue type to query field types from.
+            startAt (int): Index of first issue type to return. (Default: ``0``)
+            maxResults (int): Maximum number of issue types to return. (Default: ``50``)
+
+        Returns:
+            ResultList[Field]
+        """
+        self._check_createmeta_issuetypes()
+        fields = self._fetch_pages(
+            Field,
+            "values",
+            f"issue/createmeta/{project}/issuetypes/{issue_type}",
+            startAt=startAt,
+            maxResults=maxResults,
+        )
+        return fields
 
     def issue_type(self, id: str) -> IssueType:
         """Get an issue type Resource from the server.
@@ -3031,6 +3087,7 @@ class JIRA:
         expand: str | None = None,
         properties: str | None = None,
         json_result: bool = False,
+        use_post: bool = False,
     ) -> dict[str, Any] | ResultList[Issue]:
         """Get a :class:`~jira.client.ResultList` of issue Resources matching a JQL search string.
 
@@ -3046,6 +3103,7 @@ class JIRA:
             expand (Optional[str]): extra information to fetch inside each resource
             properties (Optional[str]): extra properties to fetch inside each result
             json_result (bool): True to return a JSON response. When set to False a :class:`ResultList` will be returned. (Default: ``False``)
+            use_post (bool): True to use POST endpoint to fetch issues.
 
         Returns:
             Union[Dict,ResultList]: Dict if ``json_result=True``
@@ -3072,6 +3130,10 @@ class JIRA:
             "expand": expand,
             "properties": properties,
         }
+        # for the POST version of this endpoint Jira
+        # complains about unrecognized field "properties"
+        if use_post:
+            search_params.pop("properties")
         if json_result:
             search_params["maxResults"] = maxResults
             if not maxResults:
@@ -3079,11 +3141,19 @@ class JIRA:
                     "All issues cannot be fetched at once, when json_result parameter is set",
                     Warning,
                 )
-            r_json: dict[str, Any] = self._get_json("search", params=search_params)
+            r_json: dict[str, Any] = self._get_json(
+                "search", params=search_params, use_post=use_post
+            )
             return r_json
 
         issues = self._fetch_pages(
-            Issue, "issues", "search", startAt, maxResults, search_params
+            Issue,
+            "issues",
+            "search",
+            startAt,
+            maxResults,
+            search_params,
+            use_post=use_post,
         )
 
         if untranslate:
@@ -3838,7 +3908,11 @@ class JIRA:
         return base.format(**options)
 
     def _get_json(
-        self, path: str, params: dict[str, Any] = None, base: str = JIRA_BASE_URL
+        self,
+        path: str,
+        params: dict[str, Any] = None,
+        base: str = JIRA_BASE_URL,
+        use_post: bool = False,
     ):
         """Get the json for a given path and params.
 
@@ -3846,12 +3920,17 @@ class JIRA:
             path (str): The subpath required
             params (Optional[Dict[str, Any]]): Parameters to filter the json query.
             base (Optional[str]): The Base Jira URL, defaults to the instance base.
+            use_post (bool): Use POST endpoint instead of GET endpoint.
 
         Returns:
             Union[Dict[str, Any], List[Dict[str, str]]]
         """
         url = self._get_url(path, base)
-        r = self._session.get(url, params=params)
+        r = (
+            self._session.post(url, data=json.dumps(params))
+            if use_post
+            else self._session.get(url, params=params)
+        )
         try:
             r_json = json_loads(r)
         except ValueError as e:
@@ -4213,11 +4292,14 @@ class JIRA:
 
         return self._myself[field]
 
-    def delete_project(self, pid: str | Project) -> bool | None:
+    def delete_project(
+        self, pid: str | Project, enable_undo: bool = True
+    ) -> bool | None:
         """Delete project from Jira.
 
         Args:
-            pid (Union[str, Project]): Jira projectID or Project or slug
+            pid (Union[str, Project]): Jira projectID or Project or slug.
+            enable_undo (bool): Jira Cloud only. True moves to 'Trash'. False permanently deletes.
 
         Raises:
             JIRAError:  If project not found or not enough permissions
@@ -4231,7 +4313,7 @@ class JIRA:
             pid = str(pid.id)
 
         url = self._get_url(f"project/{pid}")
-        r = self._session.delete(url)
+        r = self._session.delete(url, params={"enableUndo": enable_undo})
         if r.status_code == 403:
             raise JIRAError("Not enough permissions to delete project")
         if r.status_code == 404:
@@ -4245,7 +4327,7 @@ class JIRA:
             self._session.auth = get_netrc_auth(url)
 
         payload = {
-            "webSudoPassword": self._session.auth[1],
+            "webSudoPassword": self._session.auth[1],  # type: ignore[index] #TODO
             "webSudoDestination": destination,
             "webSudoIsPost": "true",
         }
@@ -4484,6 +4566,8 @@ class JIRA:
                 if self._is_cloud
                 else "com.pyxis.greenhopper.jira:basic-software-development-template"
             )
+        else:
+            template_key = template_name
 
         # https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-projects/#api-rest-api-2-project-get
         # template_keys = [
@@ -4620,7 +4704,7 @@ class JIRA:
         try:
             self._session.post(url, data=payload)
         except JIRAError as e:
-            if e.response:
+            if e.response is not None:
                 err = e.response.json()["errors"]
                 if (
                     "username" in err
