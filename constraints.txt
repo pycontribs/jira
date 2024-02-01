@@ -135,7 +135,7 @@ pytest-cov==4.1.0
     # via jira (setup.cfg)
 pytest-instafail==0.5.0
     # via jira (setup.cfg)
-pytest-sugar==0.9.7
+pytest-sugar==1.0.0
     # via jira (setup.cfg)
 pytest-timeout==2.2.0
     # via jira (setup.cfg)
