@@ -5060,7 +5060,7 @@ class JIRA:
             board_id (int): Which board the sprint should be assigned.
             startDate (Optional[Any]): Start date for the sprint.
             endDate (Optional[Any]): End date for the sprint.
-            goal (Optional[string]): Goal for the sprint.
+            goal (Optional[str]): Goal for the sprint.
 
         Returns:
             Sprint: The newly created Sprint
