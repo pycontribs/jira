@@ -81,7 +81,9 @@ class SprintTests(JiraTestCase):
         # GIVEN: The board, sprint name, and goal
         # WHEN: we create the sprint
         with self._create_sprint() as sprint:
-            sprint = self.jira.create_sprint(self.sprint_name, self.board.id, goal=self.goal)
+            sprint = self.jira.create_sprint(
+                self.sprint_name, self.board.id, goal=self.goal
+            )
             # THEN: we create the sprint with a goal
             assert isinstance(sprint.id, int)
             assert sprint.name == self.sprint_name
@@ -91,7 +93,9 @@ class SprintTests(JiraTestCase):
         # GIVEN: The sprint ID
         # WHEN: we update the sprint
         with self._create_sprint() as sprint:
-            sprint = self.jira.create_sprint(self.sprint_name, self.board.id, goal=self.goal)
+            sprint = self.jira.create_sprint(
+                self.sprint_name, self.board.id, goal=self.goal
+            )
             assert isinstance(sprint.id, int)
             assert sprint.name == self.sprint_name
             assert sprint.goal == self.sprint_goal
