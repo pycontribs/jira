@@ -22,7 +22,7 @@ class SprintTests(JiraTestCase):
         self.board_name = f"board-{uniq}"
         self.sprint_name = f"sprint-{uniq}"
         self.filter_name = f"filter-{uniq}"
-        self.goal = f"goal-{uniq}"
+        self.sprint_goal = f"goal-{uniq}"
 
         self.board, self.filter = self._create_board_and_filter()
 
