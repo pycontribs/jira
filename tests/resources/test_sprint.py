@@ -1,4 +1,4 @@
-tests/resources/test_sprint.pyfrom __future__ import annotations
+from __future__ import annotations
 
 from contextlib import contextmanager
 from functools import lru_cache
