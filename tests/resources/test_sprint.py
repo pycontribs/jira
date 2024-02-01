@@ -1,4 +1,4 @@
-from __future__ import annotations
+tests/resources/test_sprint.pyfrom __future__ import annotations
 
 from contextlib import contextmanager
 from functools import lru_cache
@@ -22,6 +22,7 @@ class SprintTests(JiraTestCase):
         self.board_name = f"board-{uniq}"
         self.sprint_name = f"sprint-{uniq}"
         self.filter_name = f"filter-{uniq}"
+        self.goal = f"goal-{uniq}"
 
         self.board, self.filter = self._create_board_and_filter()
 
@@ -75,6 +76,28 @@ class SprintTests(JiraTestCase):
             assert sprint.name == self.sprint_name
             assert sprint.state.upper() == "FUTURE"
         # THEN: the sprint .delete() is called successfully
+
+    def test_create_with_goal(self):
+        # GIVEN: The board, sprint name, and goal
+        # WHEN: we create the sprint
+        with self._create_sprint() as sprint:
+            sprint = self.jira.create_sprint(self.sprint_name, self.board.id, goal=self.goal)
+            # THEN: we create the sprint with a goal
+            assert isinstance(sprint.id, int)
+            assert sprint.name == self.sprint_name
+            assert sprint.goal == self.sprint_goal
+
+    def test_update_sprint(self):
+        # GIVEN: The sprint ID
+        # WHEN: we update the sprint
+        with self._create_sprint() as sprint:
+            sprint = self.jira.create_sprint(self.sprint_name, self.board.id, goal=self.goal)
+            assert isinstance(sprint.id, int)
+            assert sprint.name == self.sprint_name
+            assert sprint.goal == self.sprint_goal
+            # THEN: the name changes
+            updated_sprint = self.jira.update_sprint(sprint.id, "new_name")
+            assert sprint["name"] == "new_name"
 
     def test_add_issue_to_sprint(self):
         # GIVEN: The sprint
