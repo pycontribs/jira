@@ -5077,9 +5077,9 @@ class JIRA:
         url = self._get_url("sprint", base=self.AGILE_BASE_URL)
         payload["originBoardId"] = board_id
         r = self._session.post(url, data=json.dumps(payload))
-        raw_issue_json = json_loads(r)
+        raw_sprint_json = json_loads(r)
 
-        return Sprint(self._options, self._session, raw=raw_issue_json)
+        return Sprint(self._options, self._session, raw=raw_sprint_json)
 
     def add_issues_to_sprint(self, sprint_id: int, issue_keys: list[str]) -> Response:
         """Add the issues in ``issue_keys`` to the ``sprint_id``.
