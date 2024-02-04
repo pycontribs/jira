@@ -89,7 +89,7 @@ class SprintTests(JiraTestCase):
     def test_update_sprint(self):
         # GIVEN: The sprint ID
         # WHEN: we update the sprint
-       sprint = self.jira.create_sprint(self.sprint_name, self.board.id, goal=self.sprint_goal)
+        sprint = self.jira.create_sprint(self.sprint_name, self.board.id, goal=self.sprint_goal)
         assert isinstance(sprint.id, int)
         assert sprint.name == self.sprint_name
         assert sprint.goal == self.sprint_goal
@@ -100,7 +100,6 @@ class SprintTests(JiraTestCase):
             startDate="2015-04-11T15:22:00.000+10:00",
             endDate="2015-04-20T01:22:00.000+10:00")
         assert updated_sprint["name"] == "new_name"
->>>>>>> b490515 (Fix up tests)
 
     def test_add_issue_to_sprint(self):
         # GIVEN: The sprint
