@@ -5073,7 +5073,7 @@ class JIRA:
         if goal:
             payload["goal"] = goal
 
-        raw_issue_json: dict[str, Any]
+        raw_sprint_json: dict[str, Any]
         url = self._get_url("sprint", base=self.AGILE_BASE_URL)
         payload["originBoardId"] = board_id
         r = self._session.post(url, data=json.dumps(payload))
