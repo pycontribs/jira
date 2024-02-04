@@ -4906,7 +4906,7 @@ class JIRA:
             startDate (Optional[Any]): The start date for the sprint
             endDate (Optional[Any]): The start date for the sprint
             state: (Optional[str]): The state of the sprint
-            goal: (Optiona[str]): The goal of the sprint
+            goal: (Optional[str]): The goal of the sprint
 
         Returns:
             Dict[str, Any]
