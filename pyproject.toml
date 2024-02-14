@@ -1,90 +1,3 @@
-[build-system]
-requires = ["setuptools >= 60.0.0", "setuptools_scm[toml] >= 7.0.0"]
-build-backend = "setuptools.build_meta"
-
-# Setuptools config
-# Equivalent to use_scm_version=True
-[tool.setuptools_scm]
-
-[tool.pytest.ini_options]
-minversion = "6.0"
-testpaths = ["tests"]
-python_files = ["test_*.py", "tests.py"]
-addopts = '''-p no:xdist --durations=10 --tb=long -rxX -v --color=yes
-             --junitxml=build/results.xml
-             --cov-report=xml --cov jira'''
-
-# these are important for distributed testing, to speed up their execution we minimize what we sync
-rsyncdirs = ". jira demo docs"
-rsyncignore = ".git"
-
-# pytest-timeout, delete_project on jira cloud takes >70s
-timeout = 80
-
-# avoid useless warnings related to coverage skips
-filterwarnings = ["ignore::pytest.PytestWarning"]
-
-markers = ["allow_on_cloud: opt in for the test to run on Jira Cloud"]
-
-[tool.mypy]
-python_version = "3.8"
-warn_unused_configs = true
-namespace_packages = true
-check_untyped_defs = true
-
-[[tool.mypy.overrides]]
-module = "tests.*"
-check_untyped_defs = false
-disable_error_code = "annotation-unchecked"
-
-[tool.ruff]
-select = [
-    "E",  # pydocstyle
-    "W",  # pydocstyle
-    "F",  # pyflakes
-    "I",  # isort
-    "UP", # pyupgrade
-    "D",  # docstrings
-]
-ignore = [
-    "E501", # We have way too many "line too long" errors at the moment
-    # TODO: Address these with time
-    "D100",
-    "D101",
-    "D102",
-    "D103",
-    "D105",
-    "D107",
-    "D401",
-    "D402",
-    "D417",
-]
-
-# Same as Black.
-line-length = 88
-
-# Allow unused variables when underscore-prefixed.
-dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
-
-# Assume Python 3.8. (minimum supported)
-target-version = "py38"
-
-# The source code paths to consider, e.g., when resolving first- vs. third-party imports
-src = ["jira", "tests"]
-
-[tool.ruff.isort]
-known-first-party = ["jira", "tests"]
-required-imports = ["from __future__ import annotations"]
-
-[tool.ruff.per-file-ignores]
-"jira/__init__.py" = [
-    "E402", # ignore import order in this file
-]
-
-[tool.ruff.pydocstyle]
-# Use Google-style docstrings.
-convention = "google"
-
 [project]
 name = "jira"
 authors = [{name = "Ben Speakmon", email = "ben.speakmon@gmail.com"}]
@@ -193,3 +106,90 @@ find = {namespaces = false}
 
 [tool.setuptools.package-data]
 jira = ["jira/py.typed"]
+
+[build-system]
+requires = ["setuptools >= 60.0.0", "setuptools_scm[toml] >= 7.0.0"]
+build-backend = "setuptools.build_meta"
+
+# Setuptools config
+# Equivalent to use_scm_version=True
+[tool.setuptools_scm]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+testpaths = ["tests"]
+python_files = ["test_*.py", "tests.py"]
+addopts = '''-p no:xdist --durations=10 --tb=long -rxX -v --color=yes
+             --junitxml=build/results.xml
+             --cov-report=xml --cov jira'''
+
+# these are important for distributed testing, to speed up their execution we minimize what we sync
+rsyncdirs = ". jira demo docs"
+rsyncignore = ".git"
+
+# pytest-timeout, delete_project on jira cloud takes >70s
+timeout = 80
+
+# avoid useless warnings related to coverage skips
+filterwarnings = ["ignore::pytest.PytestWarning"]
+
+markers = ["allow_on_cloud: opt in for the test to run on Jira Cloud"]
+
+[tool.mypy]
+python_version = "3.8"
+warn_unused_configs = true
+namespace_packages = true
+check_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+check_untyped_defs = false
+disable_error_code = "annotation-unchecked"
+
+[tool.ruff]
+select = [
+    "E",  # pydocstyle
+    "W",  # pydocstyle
+    "F",  # pyflakes
+    "I",  # isort
+    "UP", # pyupgrade
+    "D",  # docstrings
+]
+ignore = [
+    "E501", # We have way too many "line too long" errors at the moment
+    # TODO: Address these with time
+    "D100",
+    "D101",
+    "D102",
+    "D103",
+    "D105",
+    "D107",
+    "D401",
+    "D402",
+    "D417",
+]
+
+# Same as Black.
+line-length = 88
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+# Assume Python 3.8. (minimum supported)
+target-version = "py38"
+
+# The source code paths to consider, e.g., when resolving first- vs. third-party imports
+src = ["jira", "tests"]
+
+[tool.ruff.isort]
+known-first-party = ["jira", "tests"]
+required-imports = ["from __future__ import annotations"]
+
+[tool.ruff.per-file-ignores]
+"jira/__init__.py" = [
+    "E402", # ignore import order in this file
+]
+
+[tool.ruff.pydocstyle]
+# Use Google-style docstrings.
+convention = "google"
