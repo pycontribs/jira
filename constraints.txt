@@ -12,7 +12,7 @@ babel==2.14.0
     # via sphinx
 backcall==0.2.0
     # via ipython
-beautifulsoup4==4.12.2
+beautifulsoup4==4.12.3
     # via furo
 certifi==2023.11.17
     # via requests
@@ -71,7 +71,7 @@ jaraco-classes==3.3.0
     # via keyring
 jedi==0.19.1
     # via ipython
-jinja2==3.1.2
+jinja2==3.1.3
     # via sphinx
 keyring==24.3.0
     # via jira (setup.cfg)
@@ -192,7 +192,7 @@ sphinx-copybutton==0.5.2
     # via jira (setup.cfg)
 sphinxcontrib-applehelp==1.0.4
     # via sphinx
-sphinxcontrib-devhelp==1.0.2
+sphinxcontrib-devhelp==1.0.6
     # via sphinx
 sphinxcontrib-htmlhelp==2.0.4
     # via sphinx
@@ -200,7 +200,7 @@ sphinxcontrib-jsmath==1.0.1
     # via sphinx
 sphinxcontrib-qthelp==1.0.6
     # via sphinx
-sphinxcontrib-serializinghtml==1.1.9
+sphinxcontrib-serializinghtml==1.1.10
     # via sphinx
 sspilib==0.1.0
     # via pyspnego
