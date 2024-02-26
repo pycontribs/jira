@@ -106,7 +106,8 @@ def test_status_codes_retries(
     with_retry_after_header: bool,
     retry_expected: bool,
 ):
-    RETRY_AFTER_HEADER = {"Retry-After": "1"}
+    RETRY_AFTER_SECONDS = 1 if with_retry_after_header else 0
+    RETRY_AFTER_HEADER = {"Retry-After": f"{RETRY_AFTER_SECONDS}"}
     RATE_LIMIT_HEADERS = {
         "X-RateLimit-FillRate": "1",
         "X-RateLimit-Interval-Seconds": "1",
@@ -140,6 +141,11 @@ def test_status_codes_retries(
 
     assert mocked_request_method.call_count == expected_number_of_requests
     assert mocked_sleep_method.call_count == expected_number_of_sleep_invocations
+
+    for actual_sleep in (
+        call_args.args[0] for call_args in mocked_sleep_method.call_args_list
+    ):
+        assert actual_sleep >= RETRY_AFTER_SECONDS
 
 
 errors_parsing_test_data = [

@@ -315,7 +315,7 @@ class ResilientSession(Session):
             if response.status_code in recoverable_error_codes:
                 retry_after = response.headers.get("Retry-After")
                 if retry_after:
-                    suggested_delay = int(retry_after)  # Do as told
+                    suggested_delay = 2 * int(retry_after)  # Do as told
                 elif response.status_code == HTTPStatus.TOO_MANY_REQUESTS:
                     suggested_delay = 10 * 2**counter  # Exponential backoff
 
@@ -326,7 +326,9 @@ class ResilientSession(Session):
         is_recoverable = suggested_delay > 0
         if is_recoverable:
             # Apply jitter to prevent thundering herd
-            delay = min(self.max_retry_delay, suggested_delay) * random.random()
+            delay = min(self.max_retry_delay, suggested_delay) * random.uniform(
+                0.5, 1.0
+            )
             LOG.warning(
                 f"Got recoverable error from {request_method} {url}, will retry [{counter}/{self.max_retries}] in {delay}s. Err: {msg}"  # type: ignore[str-bytes-safe]
             )
