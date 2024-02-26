@@ -65,13 +65,17 @@ class ResilientSessionLoggingConfidentialityTests(JiraTestCase):
 
 
 # Retry test data tuples: (status_code, with_rate_limit_header, with_retry_after_header, retry_expected)
-with_rate_limit = with_retry_after = True
-without_rate_limit = without_retry_after = False
+with_rate_limit = True
+with_retry_after = 1
+without_rate_limit = False
+without_retry_after = None
 status_codes_retries_test_data = [
     # Always retry 429 responses
     (HTTPStatus.TOO_MANY_REQUESTS, with_rate_limit, with_retry_after, True),
+    (HTTPStatus.TOO_MANY_REQUESTS, with_rate_limit, 0, True),
     (HTTPStatus.TOO_MANY_REQUESTS, with_rate_limit, without_retry_after, True),
     (HTTPStatus.TOO_MANY_REQUESTS, without_rate_limit, with_retry_after, True),
+    (HTTPStatus.TOO_MANY_REQUESTS, without_rate_limit, 0, True),
     (HTTPStatus.TOO_MANY_REQUESTS, without_rate_limit, without_retry_after, True),
     # Retry 503 responses only when 'Retry-After' in headers
     (HTTPStatus.SERVICE_UNAVAILABLE, with_rate_limit, with_retry_after, True),
@@ -103,10 +107,10 @@ def test_status_codes_retries(
     mocked_request_method: Mock,
     status_code: int,
     with_rate_limit_header: bool,
-    with_retry_after_header: bool,
+    with_retry_after_header: int | None,
     retry_expected: bool,
 ):
-    RETRY_AFTER_SECONDS = 1 if with_retry_after_header else 0
+    RETRY_AFTER_SECONDS = with_retry_after_header or 0
     RETRY_AFTER_HEADER = {"Retry-After": f"{RETRY_AFTER_SECONDS}"}
     RATE_LIMIT_HEADERS = {
         "X-RateLimit-FillRate": "1",
@@ -125,7 +129,7 @@ def test_status_codes_retries(
 
     mocked_response: Response = Response()
     mocked_response.status_code = status_code
-    if with_retry_after_header:
+    if with_retry_after_header is not None:
         mocked_response.headers.update(RETRY_AFTER_HEADER)
     if with_rate_limit_header:
         mocked_response.headers.update(RATE_LIMIT_HEADERS)

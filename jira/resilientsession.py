@@ -315,7 +315,9 @@ class ResilientSession(Session):
             if response.status_code in recoverable_error_codes:
                 retry_after = response.headers.get("Retry-After")
                 if retry_after:
-                    suggested_delay = 2 * int(retry_after)  # Do as told
+                    suggested_delay = 2 * max(
+                        int(retry_after), 1
+                    )  # Do as told but always wait at least a little
                 elif response.status_code == HTTPStatus.TOO_MANY_REQUESTS:
                     suggested_delay = 10 * 2**counter  # Exponential backoff
 
