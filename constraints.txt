@@ -224,7 +224,7 @@ typing-extensions==4.9.0
     #   jira (setup.cfg)
 urllib3==2.1.0
     # via requests
-wcwidth==0.2.12
+wcwidth==0.2.13
     # via prompt-toolkit
 wheel==0.42.0
     # via jira (setup.cfg)
