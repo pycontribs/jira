@@ -120,7 +120,7 @@ pyjwt==2.8.0
     #   requests-jwt
 pyspnego==0.10.2
     # via requests-kerberos
-pytest==7.4.3
+pytest==8.0.2
     # via
     #   jira (setup.cfg)
     #   pytest-cache
