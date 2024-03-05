@@ -323,6 +323,28 @@ class IssueTests(JiraTestCase):
         self.assertEqual(issue.fields.priority.name, "High")
         issue.delete()
 
+    def test_add_remove_field_values(self):
+        issue = self.jira.create_issue(
+            summary="Test issue for updating labels",
+            project=self.project_b,
+            description="Label testing",
+            issuetype=self.test_manager.CI_JIRA_ISSUE,
+        )
+
+        labelarray = ["testLabel1"]
+        fields = {"labels": labelarray}
+
+        issue.update(fields=fields)
+        self.assertEqual(issue.fields.labels, ["testLabel1"])
+
+        issue.add_field_value("labels", "testLabel2")
+        self.assertEqual(issue.fields.labels, ["testLabel1", "testLabel2"])
+
+        issue.remove_field_value("labels", "testLabel1")
+        self.assertEqual(issue.fields.labels, ["testLabel2"])
+
+        issue.delete()
+
     def test_update_with_label(self):
         issue = self.jira.create_issue(
             summary="Test issue for updating labels",
