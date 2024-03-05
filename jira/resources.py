@@ -739,7 +739,7 @@ class Issue(Resource):
             value (str): The field's value
         """
         super().update(fields={"update": {field: [{"remove": value}]}})
-    
+
     def delete(self, deleteSubtasks=False):
         """Delete this issue from the server.
 
