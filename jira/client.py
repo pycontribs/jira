@@ -1763,6 +1763,7 @@ class JIRA:
             maxResults (int): Maximum number of issues to return.
               Total number of results is available in the ``total`` attribute of the returned :class:`ResultList`.
               If maxResults evaluates to False, it will try to get all issues in batches. (Default: ``50``)
+
         Returns:
             Dict[str, Any]
         """
@@ -1792,6 +1793,7 @@ class JIRA:
             maxResults (int): Maximum number of issues to return.
               Total number of results is available in the ``total`` attribute of the returned :class:`ResultList`.
               If maxResults evaluates to False, it will try to get all issues in batches. (Default: ``50``)
+
         Returns:
             Dict[str, Any]
         """
