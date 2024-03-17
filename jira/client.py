@@ -1293,7 +1293,7 @@ class JIRA:
 
     @cloud
     @experimental
-    def update_dashboard_automatic_refresh_seconds(
+    def update_dashboard_automatic_refresh_minutes(
         self, id: str, minutes: int
     ) -> Response:
         # NOTE(jpavlav): The payload expects milliseconds, we are doing a conversion
@@ -1638,7 +1638,9 @@ class JIRA:
                 (
                     user["id"]
                     if hasId
-                    else user.get("name") if hasName else user.get("accountId")
+                    else user.get("name")
+                    if hasName
+                    else user.get("accountId")
                 )
             ] = {
                 "name": user.get("name"),

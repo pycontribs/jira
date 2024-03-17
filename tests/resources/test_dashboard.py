@@ -196,16 +196,16 @@ class DashboardTests(JiraTestCase):
         reason="Functionality only available on Jira Cloud",
     )
     @allow_on_cloud
-    def test_update_dashboard_automatic_refresh_seconds(self):
+    def test_update_dashboard_automatic_refresh_minutes(self):
         dashboard = self.jira.create_dashboard(
             name=rndstr(), share_permissions=[{"type": "authenticated"}]
         )
         self.dashboards_to_delete.append(dashboard)
-        response = self.jira.update_dashboard_automatic_refresh_seconds(
+        response = self.jira.update_dashboard_automatic_refresh_minutes(
             dashboard.id, 10
         )
         self.assertEqual(response.status_code, 204)
-        response = self.jira.update_dashboard_automatic_refresh_seconds(dashboard.id, 0)
+        response = self.jira.update_dashboard_automatic_refresh_minutes(dashboard.id, 0)
         self.assertEqual(response.status_code, 204)
 
     @pytest.mark.skipif(

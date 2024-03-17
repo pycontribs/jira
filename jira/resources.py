@@ -608,9 +608,9 @@ class DashboardItemProperty(Resource):
           Resource
         """
         options = self._options.copy()
-        options["path"] = (
-            f"dashboard/{dashboard_id}/items/{item_id}/properties/{self.key}"
-        )
+        options[
+            "path"
+        ] = f"dashboard/{dashboard_id}/items/{item_id}/properties/{self.key}"
         self.raw["value"].update(value)
         self._session.put(self.JIRA_BASE_URL.format(**options), self.raw["value"])
 
@@ -628,9 +628,9 @@ class DashboardItemProperty(Resource):
           Response
         """
         options = self._options.copy()
-        options["path"] = (
-            f"dashboard/{dashboard_id}/items/{item_id}/properties/{self.key}"
-        )
+        options[
+            "path"
+        ] = f"dashboard/{dashboard_id}/items/{item_id}/properties/{self.key}"
 
         return self._session.delete(self.JIRA_BASE_URL.format(**options))
 
