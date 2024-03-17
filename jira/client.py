@@ -61,11 +61,11 @@ from jira.resources import (
     Customer,
     CustomFieldOption,
     Dashboard,
+    DashboardGadget,
     DashboardItemProperty,
     DashboardItemPropertyKey,
     Field,
     Filter,
-    Gadget,
     Group,
     Issue,
     IssueLink,
@@ -1314,7 +1314,7 @@ class JIRA:
 
         Args:
           dashboard_id (str): ID of dashboard.
-          item_id (str): ID of dashboard item (``Gadget``).
+          item_id (str): ID of dashboard item (``DashboardGadget``).
 
         Returns:
             ResultList
@@ -1332,7 +1332,7 @@ class JIRA:
 
         Args:
           dashboard_id (str):  of the dashboard.
-          item_id (str): ID of the item (``Gadget``) on the dashboard.
+          item_id (str): ID of the item (``DashboardGadget``) on the dashboard.
           property_key (str): KEY of the gadget property.
 
         Returns:
@@ -1350,7 +1350,7 @@ class JIRA:
 
         Args:
           dashboard_id (str): Dashboard id.
-          item_id (str): ID of Gadget to add property_key to.
+          item_id (str): ID of dashboard item (``DashboardGadget``) to add property_key to.
           property_key (str): The key of the property to set.
           value (dict[str, Any]): The dictionary containing the value of the property key.
 
@@ -1368,18 +1368,18 @@ class JIRA:
 
     @cloud
     @experimental
-    def dashboard_gadgets(self, dashboard_id: str) -> list[Gadget]:
-        """Return a list of Gadget resources for the specified dashboard.
+    def dashboard_gadgets(self, dashboard_id: str) -> list[DashboardGadget]:
+        """Return a list of DashboardGadget resources for the specified dashboard.
 
         Args:
           dashboard_id (str): the ``dashboard_id`` of the dashboard to get gadgets for
 
         Returns:
-          list[Gadget]
+          list[DashboardGadget]
         """
-        gadgets: list[Gadget] = []
+        gadgets: list[DashboardGadget] = []
         gadgets = self._fetch_pages(
-            Gadget, "gadgets", f"dashboard/{dashboard_id}/gadget"
+            DashboardGadget, "gadgets", f"dashboard/{dashboard_id}/gadget"
         )
         for gadget in gadgets:
             for dashboard_item_key in self.dashboard_item_property_keys(
@@ -1395,13 +1395,13 @@ class JIRA:
 
     @cloud
     @experimental
-    def gadgets(self) -> ResultList[Gadget]:
-        """Return a ResultList of available Gadget resources and a ``total`` count.
+    def all_dashboard_gadgets(self) -> ResultList[DashboardGadget]:
+        """Return a ResultList of available DashboardGadget resources and a ``total`` count.
 
         Returns:
             ResultList
         """
-        return self._fetch_pages(Gadget, "gadgets", "dashboard/gadgets")
+        return self._fetch_pages(DashboardGadget, "gadgets", "dashboard/gadgets")
 
     @cloud
     @experimental
@@ -1414,8 +1414,8 @@ class JIRA:
         position: dict[str, int] | None = None,
         title: str | None = None,
         uri: str | None = None,
-    ) -> Gadget:
-        """Add a gadget to a dashboard and return a ``Gadget`` resource.
+    ) -> DashboardGadget:
+        """Add a gadget to a dashboard and return a ``DashboardGadget`` resource.
 
         Args:
           dashboard_id (str): The ``dashboard_id`` of the dashboard to add the gadget to `required`.
@@ -1446,7 +1446,7 @@ class JIRA:
         r = self._session.post(url, json=data)
 
         raw_gadget_json: dict[str, Any] = json_loads(r)
-        return Gadget(self._options, self._session, raw=raw_gadget_json)
+        return DashboardGadget(self._options, self._session, raw=raw_gadget_json)
 
     # Fields
 

@@ -41,7 +41,7 @@ __all__ = (
     "DashboardItemProperty",
     "DashboardItemPropertyKey",
     "Filter",
-    "Gadget",
+    "DashboardGadget",
     "Votes",
     "PermissionScheme",
     "Watchers",
@@ -556,7 +556,7 @@ class Dashboard(Resource):
         Resource.__init__(self, "dashboard/{0}", options, session)
         if raw:
             self._parse_raw(raw)
-        self.gadgets: list[Gadget] = []
+        self.gadgets: list[DashboardGadget] = []
         self.raw: dict[str, Any] = cast(Dict[str, Any], self.raw)
 
 
@@ -601,7 +601,7 @@ class DashboardItemProperty(Resource):
 
         Args:
           dashboard_id (str): The ``id`` if the dashboard.
-          item_id (str): The id of the dashboard item (``Gadget``) to target.
+          item_id (str): The id of the dashboard item (``DashboardGadget``) to target.
           value (dict[str, Any]): The value of the targeted property key.
 
         Returns:
@@ -621,7 +621,7 @@ class DashboardItemProperty(Resource):
 
         Args:
           dashboard_id (str): The ``id`` of the dashboard.
-          item_id (str): The ``id`` of the dashboard item (``Gadget``).
+          item_id (str): The ``id`` of the dashboard item (``DashboardGadget``).
 
 
         Returns:
@@ -635,7 +635,7 @@ class DashboardItemProperty(Resource):
         return self._session.delete(self.JIRA_BASE_URL.format(**options))
 
 
-class Gadget(Resource):
+class DashboardGadget(Resource):
     """A jira dashboard gadget."""
 
     def __init__(
@@ -674,7 +674,7 @@ class Gadget(Resource):
           title (str): The title of the gadget.
 
         Returns:
-          ``Gadget``
+          ``DashboardGadget``
         """
         data = remove_empty_attributes(
             {"color": color, "position": position, "title": title}
@@ -686,7 +686,7 @@ class Gadget(Resource):
         options["path"] = f"dashboard/{dashboard_id}/gadget"
 
         return next(
-            Gadget(self._options, self._session, raw=gadget)
+            DashboardGadget(self._options, self._session, raw=gadget)
             for gadget in self._session.get(
                 self.JIRA_BASE_URL.format(**options)
             ).json()["gadgets"]

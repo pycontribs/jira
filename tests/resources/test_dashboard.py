@@ -128,7 +128,7 @@ class DashboardTests(JiraTestCase):
         self.dashboards_to_delete.append(original_dashboard)
         # NOTE(jpavlav): Add something to the dashboard so we can test the copy worked
         # as intended.
-        available_gadgets = self.jira.gadgets()
+        available_gadgets = self.jira.all_dashboard_gadgets()
         filter_gadget = next(
             gadget for gadget in available_gadgets if gadget.title == self.gadget_title
         )
@@ -156,12 +156,12 @@ class DashboardTests(JiraTestCase):
         reason="Functionality only available on Jira Cloud",
     )
     @allow_on_cloud
-    def test_gadgets(self):
+    def test_all_dashboard_gadgets(self):
         # NOTE(jpalmer): This is a super basic test. We can't really rely on the fact
         # that the gadgets available at any given moment will be specifically represented
         # here and it would be silly to have to update the tests to adjust for that if
         # the starting list ever changed.
-        gadgets = self.jira.gadgets()
+        gadgets = self.jira.all_dashboard_gadgets()
         self.assertGreater(len(gadgets), 0)
 
     @pytest.mark.skipif(
@@ -176,7 +176,7 @@ class DashboardTests(JiraTestCase):
         )
         self.dashboards_to_delete.append(dashboard)
 
-        available_gadgets = self.jira.gadgets()
+        available_gadgets = self.jira.all_dashboard_gadgets()
         filter_gadget = next(
             gadget for gadget in available_gadgets if gadget.title == self.gadget_title
         )
@@ -219,7 +219,7 @@ class DashboardTests(JiraTestCase):
         )
         self.dashboards_to_delete.append(dashboard)
 
-        available_gadgets = self.jira.gadgets()
+        available_gadgets = self.jira.all_dashboard_gadgets()
         filter_gadget = next(
             gadget for gadget in available_gadgets if gadget.title == self.gadget_title
         )
@@ -244,7 +244,7 @@ class DashboardTests(JiraTestCase):
         )
         self.dashboards_to_delete.append(dashboard)
 
-        available_gadgets = self.jira.gadgets()
+        available_gadgets = self.jira.all_dashboard_gadgets()
         filter_gadget = next(
             gadget for gadget in available_gadgets if gadget.title == self.gadget_title
         )
@@ -274,7 +274,7 @@ class DashboardTests(JiraTestCase):
             name=rndstr(), share_permissions=[{"type": "authenticated"}]
         )
         self.dashboards_to_delete.append(dashboard)
-        available_gadgets = self.jira.gadgets()
+        available_gadgets = self.jira.all_dashboard_gadgets()
         filter_gadget = next(
             gadget for gadget in available_gadgets if gadget.title == self.gadget_title
         )
@@ -300,7 +300,7 @@ class DashboardTests(JiraTestCase):
         )
         self.dashboards_to_delete.append(dashboard)
 
-        available_gadgets = self.jira.gadgets()
+        available_gadgets = self.jira.all_dashboard_gadgets()
         filter_gadget = next(
             gadget for gadget in available_gadgets if gadget.title == self.gadget_title
         )
@@ -356,7 +356,7 @@ class DashboardTests(JiraTestCase):
         )
         self.dashboards_to_delete.append(dashboard)
 
-        available_gadgets = self.jira.gadgets()
+        available_gadgets = self.jira.all_dashboard_gadgets()
         filter_gadget = next(
             gadget for gadget in available_gadgets if gadget.title == self.gadget_title
         )
