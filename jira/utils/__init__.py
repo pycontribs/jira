@@ -1,4 +1,5 @@
 """Jira utils used internally."""
+
 from __future__ import annotations
 
 import threading

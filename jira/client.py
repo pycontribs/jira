@@ -5,6 +5,7 @@ responses from Jira and the Resource/dict abstractions provided by this library.
 will construct a JIRA object as described below. Full API documentation can be found
 at: https://jira.readthedocs.io/en/latest/.
 """
+
 from __future__ import annotations
 
 import calendar
@@ -4092,9 +4093,9 @@ class JIRA:
                 raise JIRAError(f"Error Deactivating {username}: {e}")
         else:
             url = self.server_url + "/secure/admin/user/EditUser.jspa"
-            self._options["headers"][
-                "Content-Type"
-            ] = "application/x-www-form-urlencoded; charset=UTF-8"
+            self._options["headers"]["Content-Type"] = (
+                "application/x-www-form-urlencoded; charset=UTF-8"
+            )
             user = self.user(username)
             userInfo = {
                 "inline": "true",

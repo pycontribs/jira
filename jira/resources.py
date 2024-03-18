@@ -3,6 +3,7 @@
 This module implements the Resource classes that translate JSON from Jira REST
 resources into usable objects.
 """
+
 from __future__ import annotations
 
 import json
