@@ -27,6 +27,10 @@ LOGGER = logging.getLogger(__name__)
 
 
 allow_on_cloud = pytest.mark.allow_on_cloud
+only_run_on_cloud = pytest.mark.skipif(
+    os.environ.get("CI_JIRA_TYPE", "Server").upper() != "CLOUD",
+    reason="Functionality only available on Jira Cloud",
+)
 broken_test = pytest.mark.xfail
 
 

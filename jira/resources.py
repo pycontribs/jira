@@ -593,7 +593,7 @@ class DashboardItemProperty(Resource):
 
     def update(  # type: ignore[override] # incompatible supertype ignored
         self, dashboard_id: str, item_id: str, value: dict[str, Any]
-    ) -> Resource:
+    ) -> DashboardItemProperty:
         """Update this resource on the server.
 
         Keyword arguments are marshalled into a dict before being sent. If this resource doesn't support ``PUT``, a :py:exc:`.JIRAError`
@@ -656,7 +656,7 @@ class DashboardGadget(Resource):
         color: str | None = None,
         position: dict[str, Any] | None = None,
         title: str | None = None,
-    ) -> Resource:
+    ) -> DashboardGadget:
         """Update this resource on the server.
 
         Keyword arguments are marshalled into a dict before being sent. If this resource doesn't support ``PUT``, a :py:exc:`.JIRAError`

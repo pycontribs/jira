@@ -1,12 +1,17 @@
 from __future__ import annotations
 
-import os
 from unittest import mock
 
 import pytest
 
 from jira.exceptions import JIRAError
-from tests.conftest import JiraTestCase, allow_on_cloud, broken_test, rndstr
+from tests.conftest import (
+    JiraTestCase,
+    allow_on_cloud,
+    broken_test,
+    only_run_on_cloud,
+    rndstr,
+)
 
 
 class DashboardTests(JiraTestCase):
@@ -53,10 +58,7 @@ class DashboardTests(JiraTestCase):
         self.assertEqual(dashboard.id, expected_ds.id)
         self.assertEqual(dashboard.name, expected_ds.name)
 
-    @pytest.mark.skipif(
-        os.environ.get("CI_JIRA_TYPE", "Server").upper() != "CLOUD",
-        reason="Functionality only available on Jira Cloud",
-    )
+    @only_run_on_cloud
     @allow_on_cloud
     def test_create_dashboard(self):
         name = rndstr()
@@ -70,18 +72,15 @@ class DashboardTests(JiraTestCase):
 
         self.assertEqual(dashboard.name, name)
         self.assertEqual(dashboard.description, description)
-        # NOTE(jpavlav): This is a bit obtuse, but Jira mutates the type on this
+        # This is a bit obtuse, but Jira mutates the type on this
         # object after the fact. `authenticated` corresponds to `loggedin`.
         self.assertEqual(dashboard.sharePermissions[0].type, "loggedin")
 
-        # NOTE(jpavlav): The system dashboard always has the ID `10000`, just
+        # The system dashboard always has the ID `10000`, just
         # ensuring we actually have a
         self.assertGreater(int(dashboard.id), 10000)
 
-    @pytest.mark.skipif(
-        os.environ.get("CI_JIRA_TYPE", "Server").upper() != "CLOUD",
-        reason="Functionality only available on Jira Cloud",
-    )
+    @only_run_on_cloud
     @allow_on_cloud
     def test_update_dashboard(self):
         updated_name = "changed"
@@ -97,10 +96,7 @@ class DashboardTests(JiraTestCase):
         dashboard.update(name=updated_name)
         self.assertEqual(dashboard.name, updated_name)
 
-    @pytest.mark.skipif(
-        os.environ.get("CI_JIRA_TYPE", "Server").upper() != "CLOUD",
-        reason="Functionality only available on Jira Cloud",
-    )
+    @only_run_on_cloud
     @allow_on_cloud
     def test_delete_dashboard(self):
         dashboard = self.jira.create_dashboard(name="to_delete")
@@ -116,18 +112,13 @@ class DashboardTests(JiraTestCase):
             ex.value.text, f"The dashboard with id '{dashboard_id}' does not exist."
         )
 
-    @pytest.mark.skipif(
-        os.environ.get("CI_JIRA_TYPE", "Server").upper() != "CLOUD",
-        reason="Functionality only available on Jira Cloud",
-    )
+    @only_run_on_cloud
     @allow_on_cloud
     def test_copy_dashboard(self):
         original_dashboard = self.jira.create_dashboard(
             name=rndstr(), share_permissions=[{"type": "authenticated"}]
         )
         self.dashboards_to_delete.append(original_dashboard)
-        # NOTE(jpavlav): Add something to the dashboard so we can test the copy worked
-        # as intended.
         available_gadgets = self.jira.all_dashboard_gadgets()
         filter_gadget = next(
             gadget for gadget in available_gadgets if gadget.title == self.gadget_title
@@ -151,23 +142,17 @@ class DashboardTests(JiraTestCase):
         self.assertEqual(original_gadget.color, copied_dashboard.gadgets[0].color)
         self.assertEqual(original_gadget.uri, copied_dashboard.gadgets[0].uri)
 
-    @pytest.mark.skipif(
-        os.environ.get("CI_JIRA_TYPE", "Server").upper() != "CLOUD",
-        reason="Functionality only available on Jira Cloud",
-    )
+    @only_run_on_cloud
     @allow_on_cloud
     def test_all_dashboard_gadgets(self):
-        # NOTE(jpalmer): This is a super basic test. We can't really rely on the fact
+        # This is a super basic test. We can't really rely on the fact
         # that the gadgets available at any given moment will be specifically represented
         # here and it would be silly to have to update the tests to adjust for that if
         # the starting list ever changed.
         gadgets = self.jira.all_dashboard_gadgets()
         self.assertGreater(len(gadgets), 0)
 
-    @pytest.mark.skipif(
-        os.environ.get("CI_JIRA_TYPE", "Server").upper() != "CLOUD",
-        reason="Functionality only available on Jira Cloud",
-    )
+    @only_run_on_cloud
     @allow_on_cloud
     def test_dashboard_gadgets(self):
         gadget_count = 3
@@ -191,10 +176,7 @@ class DashboardTests(JiraTestCase):
         dashboard_gadgets = self.jira.dashboard_gadgets(dashboard.id)
         self.assertEqual(len(dashboard_gadgets), gadget_count)
 
-    @pytest.mark.skipif(
-        os.environ.get("CI_JIRA_TYPE", "Server").upper() != "CLOUD",
-        reason="Functionality only available on Jira Cloud",
-    )
+    @only_run_on_cloud
     @allow_on_cloud
     def test_update_dashboard_automatic_refresh_minutes(self):
         dashboard = self.jira.create_dashboard(
@@ -208,10 +190,7 @@ class DashboardTests(JiraTestCase):
         response = self.jira.update_dashboard_automatic_refresh_minutes(dashboard.id, 0)
         self.assertEqual(response.status_code, 204)
 
-    @pytest.mark.skipif(
-        os.environ.get("CI_JIRA_TYPE", "Server").upper() != "CLOUD",
-        reason="Functionality only available on Jira Cloud",
-    )
+    @only_run_on_cloud
     @allow_on_cloud
     def test_add_gadget_to_dashboard(self):
         dashboard = self.jira.create_dashboard(
@@ -233,10 +212,7 @@ class DashboardTests(JiraTestCase):
         dashboard = self.jira.dashboard(dashboard.id)
         self.assertEqual(dashboard.gadgets[0], gadget)
 
-    @pytest.mark.skipif(
-        os.environ.get("CI_JIRA_TYPE", "Server").upper() != "CLOUD",
-        reason="Functionality only available on Jira Cloud",
-    )
+    @only_run_on_cloud
     @allow_on_cloud
     def test_remove_gadget_from_dashboard(self):
         dashboard = self.jira.create_dashboard(
@@ -263,10 +239,7 @@ class DashboardTests(JiraTestCase):
         dashboard = self.jira.dashboard(dashboard.id)
         self.assertEqual(len(dashboard.gadgets), 0)
 
-    @pytest.mark.skipif(
-        os.environ.get("CI_JIRA_TYPE", "Server").upper() != "CLOUD",
-        reason="Functionality only available on Jira Cloud",
-    )
+    @only_run_on_cloud
     @allow_on_cloud
     def test_update_gadget(self):
         new_color = "green"
@@ -289,10 +262,7 @@ class DashboardTests(JiraTestCase):
         self.assertEqual(gadget.color, new_color)
         self.assertEqual(gadget.raw["color"], new_color)
 
-    @pytest.mark.skipif(
-        os.environ.get("CI_JIRA_TYPE", "Server").upper() != "CLOUD",
-        reason="Functionality only available on Jira Cloud",
-    )
+    @only_run_on_cloud
     @allow_on_cloud
     def test_dashboard_item_property_keys(self):
         dashboard = self.jira.create_dashboard(
@@ -345,10 +315,7 @@ class DashboardTests(JiraTestCase):
         )
         self.assertEqual(len(dashboard_item_property_keys), 0)
 
-    @pytest.mark.skipif(
-        os.environ.get("CI_JIRA_TYPE", "Server").upper() != "CLOUD",
-        reason="Functionality only available on Jira Cloud",
-    )
+    @only_run_on_cloud
     @allow_on_cloud
     def test_dashboard_item_properties(self):
         dashboard = self.jira.create_dashboard(
@@ -399,10 +366,7 @@ class DashboardTests(JiraTestCase):
         )
         self.assertEqual(delete_response.status_code, 204)
 
-    @pytest.mark.skipif(
-        os.environ.get("CI_JIRA_TYPE", "Server").upper() != "CLOUD",
-        reason="Functionality only available on Jira Cloud",
-    )
+    @only_run_on_cloud
     @allow_on_cloud
     @mock.patch("requests.Session.request")
     def test_set_dashboard_item_property_not_201_response(self, mocked_request):

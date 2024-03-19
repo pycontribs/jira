@@ -50,7 +50,7 @@ from requests.utils import get_netrc_auth
 from requests_toolbelt import MultipartEncoder
 
 from jira import __version__
-from jira.exceptions import JIRAError
+from jira.exceptions import JIRAError, NotJIRAInstanceError
 from jira.resilientsession import PrepareRequestForRetry, ResilientSession
 from jira.resources import (
     AgileResource,
@@ -96,13 +96,7 @@ from jira.resources import (
     WorkflowScheme,
     Worklog,
 )
-from jira.utils import (
-    cloud,
-    experimental,
-    json_loads,
-    remove_empty_attributes,
-    threaded_requests,
-)
+from jira.utils import json_loads, remove_empty_attributes, threaded_requests
 
 try:
     from requests_jwt import JWTAuth
@@ -112,6 +106,82 @@ except ImportError:
 
 LOG = _logging.getLogger("jira")
 LOG.addHandler(_logging.NullHandler())
+
+
+def cloud_api(client_method: Callable) -> Callable:
+    """A convenience decorator to check if the Jira instance is cloud.
+
+    Checks if the client instance is talking to Cloud Jira. If it is, return
+    the result of the called client method. If not, return None and log a
+    warning.
+
+    Args:
+      client_method: The method that is being called by the client.
+
+    Returns:
+      Either the result of the wrapped function or None.
+
+    Raises:
+      JIRAError: In the case the error is not an HTTP error with a status code.
+      NotJIRAInstanceError: In the case that the first argument to this method
+       is not a `client.JIRA` instance.
+    """
+    wraps(client_method)
+
+    def check_if_cloud(*args, **kwargs):
+        # The first argument of any class instance is a `self`
+        # reference. Avoiding magic numbers here.
+        instance = next(arg for arg in args)
+        if not isinstance(instance, JIRA):
+            raise NotJIRAInstanceError(instance)
+
+        if instance._is_cloud:
+            return client_method(*args, **kwargs)
+
+        instance.log.warning(
+            "This functionality is not available on Jira Data Center (Server) version."
+        )
+        return None
+
+    return check_if_cloud
+
+
+def experimental_atlassian_api(client_method: Callable) -> Callable:
+    """A convenience decorator to inform if a client method is experimental.
+
+    Indicates the path covered by the client method is experimental. If the path
+    disappears or the method becomes disallowed, this logs an error and returns
+    None. If another kind of exception is raised, this reraises.
+
+    Raises:
+      JIRAError: In the case the error is not an HTTP error with a status code.
+      NotJIRAInstanceError: In the case that the first argument to this method is
+       is not a `client.JIRA` instance.
+
+    Returns:
+      Either the result of the wrapped function or None.
+    """
+    wraps(client_method)
+
+    def is_experimental(*args, **kwargs):
+        instance = next(arg for arg in args)
+        if not isinstance(instance, JIRA):
+            raise NotJIRAInstanceError(instance)
+
+        try:
+            return client_method(*args, **kwargs)
+        except JIRAError as e:
+            response = getattr(e, "response", None)
+            if response is not None and response.status_code in [405, 404]:
+                instance.log.warning(
+                    f"Functionality at path {response.url} is/was experimental. "
+                    f"Status Code: {response.status_code}"
+                )
+                return None
+            else:
+                raise
+
+    return is_experimental
 
 
 def translate_resource_args(func: Callable):
@@ -1190,7 +1260,7 @@ class JIRA:
             maxResults (int): maximum number of dashboards to return. If maxResults set to False, it will try to get all items in batches. (Default: ``20``)
 
         Returns:
-            ResultList
+            ResultList[Dashboard]
         """
         params = {}
         if filter is not None:
@@ -1217,14 +1287,14 @@ class JIRA:
         dashboard.gadgets.extend(self.dashboard_gadgets(id) or [])
         return dashboard
 
-    @cloud
-    @experimental
+    @cloud_api
+    @experimental_atlassian_api
     def create_dashboard(
         self,
         name: str,
         description: str | None = None,
-        edit_permissions: list[dict] | list = [],
-        share_permissions: list[dict] | list = [],
+        edit_permissions: list[dict] | list | None = None,
+        share_permissions: list[dict] | list | None = None,
     ) -> Dashboard:
         """Create a new dashboard and return a dashboard resource for it.
 
@@ -1242,8 +1312,8 @@ class JIRA:
         data: dict[str, Any] = remove_empty_attributes(
             {
                 "name": name,
-                "editPermissions": edit_permissions,
-                "sharePermissions": share_permissions,
+                "editPermissions": edit_permissions or [],
+                "sharePermissions": share_permissions or [],
                 "description": description,
             }
         )
@@ -1253,15 +1323,15 @@ class JIRA:
         raw_dashboard_json: dict[str, Any] = json_loads(r)
         return Dashboard(self._options, self._session, raw=raw_dashboard_json)
 
-    @cloud
-    @experimental
+    @cloud_api
+    @experimental_atlassian_api
     def copy_dashboard(
         self,
         id: str,
         name: str,
         description: str | None = None,
-        edit_permissions: list[dict] | list = [],
-        share_permissions: list[dict] | list = [],
+        edit_permissions: list[dict] | list | None = None,
+        share_permissions: list[dict] | list | None = None,
     ) -> Dashboard:
         """Copy an existing dashboard.
 
@@ -1274,13 +1344,14 @@ class JIRA:
           share_permissions (list | list[dict]): A list of permissions dicts `required`
             though can be an empty list.
 
-
+        Returns:
+          Dashboard
         """
         data: dict[str, Any] = remove_empty_attributes(
             {
                 "name": name,
-                "editPermissions": edit_permissions,
-                "sharePermissions": share_permissions,
+                "editPermissions": edit_permissions or [],
+                "sharePermissions": share_permissions or [],
                 "description": description,
             }
         )
@@ -1291,12 +1362,21 @@ class JIRA:
         raw_dashboard_json: dict[str, Any] = json_loads(r)
         return Dashboard(self._options, self._session, raw=raw_dashboard_json)
 
-    @cloud
-    @experimental
+    @cloud_api
+    @experimental_atlassian_api
     def update_dashboard_automatic_refresh_minutes(
         self, id: str, minutes: int
     ) -> Response:
-        # NOTE(jpavlav): The payload expects milliseconds, we are doing a conversion
+        """Update the automatic refresh interval of a dashboard.
+
+        Args:
+          id (str): The ``id`` of the ``Dashboard`` to copy.
+          minutes (int): The frequency of the dashboard automatic refresh in minutes.
+
+        Returns:
+          Response
+        """
+        # The payload expects milliseconds, we are doing a conversion
         # here as a convenience. Additionally, if the value is `0` then we are setting
         # to `None` which will serialize to `null` in `json` which is what is
         # expected if the user wants to turn it off.
@@ -1317,7 +1397,7 @@ class JIRA:
           item_id (str): ID of dashboard item (``DashboardGadget``).
 
         Returns:
-            ResultList
+            ResultList[DashboardItemPropertyKey]
         """
         return self._fetch_pages(
             DashboardItemPropertyKey,
@@ -1328,7 +1408,7 @@ class JIRA:
     def dashboard_item_property(
         self, dashboard_id: str, item_id: str, property_key: str
     ) -> DashboardItemProperty:
-        """Get a gadget Resource from a specific dashboard the server.
+        """Get the item property for a specific dashboard item (DashboardGadget).
 
         Args:
           dashboard_id (str):  of the dashboard.
@@ -1366,8 +1446,8 @@ class JIRA:
             raise JIRAError(status_code=r.status_code, request=r)
         return self.dashboard_item_property(dashboard_id, item_id, property_key)
 
-    @cloud
-    @experimental
+    @cloud_api
+    @experimental_atlassian_api
     def dashboard_gadgets(self, dashboard_id: str) -> list[DashboardGadget]:
         """Return a list of DashboardGadget resources for the specified dashboard.
 
@@ -1393,18 +1473,18 @@ class JIRA:
 
         return gadgets
 
-    @cloud
-    @experimental
+    @cloud_api
+    @experimental_atlassian_api
     def all_dashboard_gadgets(self) -> ResultList[DashboardGadget]:
         """Return a ResultList of available DashboardGadget resources and a ``total`` count.
 
         Returns:
-            ResultList
+            ResultList[DashboardGadget]
         """
         return self._fetch_pages(DashboardGadget, "gadgets", "dashboard/gadgets")
 
-    @cloud
-    @experimental
+    @cloud_api
+    @experimental_atlassian_api
     def add_gadget_to_dashboard(
         self,
         dashboard_id: str | Dashboard,
@@ -1431,6 +1511,9 @@ class JIRA:
           title (str): The title of the gadget.
           uri (str): The uri to the module to use in the gadget. Mutually exclusive
               with `module_key`.
+
+        Returns:
+          DashboardGadget
         """
         data = remove_empty_attributes(
             {
@@ -4121,7 +4204,7 @@ class JIRA:
         return self._session.put(url, params=params, data=json.dumps(data))
 
     def _get_internal_url(self, path: str, base: str = JIRA_BASE_URL) -> str:
-        """Returns the full url based on Jira base url and the path provided.
+        """Returns the full internal api url based on Jira base url and the path provided.
 
         Using the API version specified during the __init__.
 
