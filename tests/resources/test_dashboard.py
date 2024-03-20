@@ -5,6 +5,12 @@ from unittest import mock
 import pytest
 
 from jira.exceptions import JIRAError
+from jira.resources import (
+    Dashboard,
+    DashboardGadget,
+    DashboardItemProperty,
+    DashboardItemPropertyKey,
+)
 from tests.conftest import (
     JiraTestCase,
     allow_on_cloud,
@@ -68,6 +74,7 @@ class DashboardTests(JiraTestCase):
         dashboard = self.jira.create_dashboard(
             name=name, description=description, share_permissions=share_permissions
         )
+        self.assertIsInstance(dashboard, Dashboard)
         self.dashboards_to_delete.append(dashboard)
 
         self.assertEqual(dashboard.name, name)
@@ -91,6 +98,7 @@ class DashboardTests(JiraTestCase):
         dashboard = self.jira.create_dashboard(
             name=name, description=description, share_permissions=share_permissions
         )
+        self.assertIsInstance(dashboard, Dashboard)
         self.dashboards_to_delete.append(dashboard)
 
         dashboard.update(name=updated_name)
@@ -136,6 +144,7 @@ class DashboardTests(JiraTestCase):
             original_dashboard.id, name=rndstr()
         )
         copied_dashboard = self.jira.dashboard(copied_dashboard.id)
+        self.assertIsInstance(copied_dashboard, Dashboard)
         self.dashboards_to_delete.append(copied_dashboard)
 
         self.assertEqual(len(original_dashboard.gadgets), len(copied_dashboard.gadgets))
@@ -151,6 +160,7 @@ class DashboardTests(JiraTestCase):
         # the starting list ever changed.
         gadgets = self.jira.all_dashboard_gadgets()
         self.assertGreater(len(gadgets), 0)
+        self.assertIsInstance(gadgets[0], DashboardGadget)
 
     @only_run_on_cloud
     @allow_on_cloud
@@ -175,6 +185,9 @@ class DashboardTests(JiraTestCase):
 
         dashboard_gadgets = self.jira.dashboard_gadgets(dashboard.id)
         self.assertEqual(len(dashboard_gadgets), gadget_count)
+
+        for dashboard_gadget in dashboard_gadgets:
+            self.assertIsInstance(dashboard_gadget, DashboardGadget)
 
     @only_run_on_cloud
     @allow_on_cloud
@@ -211,6 +224,7 @@ class DashboardTests(JiraTestCase):
 
         dashboard = self.jira.dashboard(dashboard.id)
         self.assertEqual(dashboard.gadgets[0], gadget)
+        self.assertIsInstance(dashboard.gadgets[0], DashboardGadget)
 
     @only_run_on_cloud
     @allow_on_cloud
@@ -261,6 +275,7 @@ class DashboardTests(JiraTestCase):
         gadget = gadget.update(dashboard.id, color=new_color)
         self.assertEqual(gadget.color, new_color)
         self.assertEqual(gadget.raw["color"], new_color)
+        self.assertIsInstance(gadget, DashboardGadget)
 
     @only_run_on_cloud
     @allow_on_cloud
@@ -306,6 +321,7 @@ class DashboardTests(JiraTestCase):
         self.assertEqual(
             dashboard_item_property_keys[0].key, self.dashboard_item_expected_key
         )
+        self.assertIsInstance(dashboard_item_property_keys[0], DashboardItemPropertyKey)
 
         delete_response = dashboard_item_property_keys[0].delete()
         self.assertEqual(delete_response.status_code, 204)
@@ -351,6 +367,7 @@ class DashboardTests(JiraTestCase):
         self.assertEqual(
             dashboard.gadgets[0].item_properties[0], dashboard_item_property
         )
+        self.assertIsInstance(dashboard_item_property, DashboardItemProperty)
 
         updated_item_property_payload = {"num": 10}
         updated_dashboard_item_property = dashboard_item_property.update(
