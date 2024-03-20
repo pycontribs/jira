@@ -605,7 +605,7 @@ class DashboardItemProperty(Resource):
           value (dict[str, Any]): The value of the targeted property key.
 
         Returns:
-          Resource
+          DashboardItemProperty
         """
         options = self._options.copy()
         options[
@@ -1645,6 +1645,9 @@ resource_class_map: dict[str, type[Resource]] = {
     r"component/[^/]+$": Component,
     r"customFieldOption/[^/]+$": CustomFieldOption,
     r"dashboard/[^/]+$": Dashboard,
+    r"dashboard/[^/]+/items/[^/]+/properties+$": DashboardItemPropertyKey,
+    r"dashboard/[^/]+/items/[^/]+/properties/[^/]+$": DashboardItemProperty,
+    r"dashboard/[^/]+/gadget/[^/]+$": DashboardGadget,
     r"filter/[^/]$": Filter,
     r"issue/[^/]+$": Issue,
     r"issue/[^/]+/comment/[^/]+$": Comment,
