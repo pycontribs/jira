@@ -2104,12 +2104,12 @@ class JIRA:
             if self._version >= (9, 0, 0):
                 raise JIRAError(
                     f"Unsupported JIRA version: {self._version}. "
-                    "Use 'createmeta_issuetypes' and 'createmeta_fieldtypes' instead."
+                    "Use 'project_issue_types' and 'project_issue_fields' instead."
                 )
             elif self._version >= (8, 4, 0):
                 warnings.warn(
                     "This API have been deprecated in JIRA 8.4 and is removed in JIRA 9.0. "
-                    "Use 'createmeta_issuetypes' and 'createmeta_fieldtypes' instead.",
+                    "Use 'project_issue_types' and 'project_issue_fields' instead.",
                     DeprecationWarning,
                     stacklevel=2,
                 )
