@@ -336,7 +336,7 @@ def test_createmeta_fieldtypes_pagination(cl_normal, slug):
     assert field_types_resp["startAt"] == 50
     assert field_types_resp["maxResults"] == 100
 
- 
+
 @pytest.mark.parametrize(
     "mock_client_method", ["mock_cloud_only_method", "mock_experimental_method"]
 )
