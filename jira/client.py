@@ -2095,6 +2095,12 @@ class JIRA:
         Returns:
             Dict[str, Any]
         """
+        warnings.warn(
+            "'createmeta_issuetypes' is deprected and will be removed in future releases."
+            "Use 'project_issue_types' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         self._check_createmeta_issuetypes()
         return self._get_json(
             f"issue/createmeta/{projectIdOrKey}/issuetypes",
@@ -2125,6 +2131,12 @@ class JIRA:
         Returns:
             Dict[str, Any]
         """
+        warnings.warn(
+            "'createmeta_fieldtypes' is deprected and will be removed in future releases."
+            "Use 'project_issue_fields' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         self._check_createmeta_issuetypes()
         return self._get_json(
             f"issue/createmeta/{projectIdOrKey}/issuetypes/{issueTypeId}",
