@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import tempfile
+from typing import Any
 
 from requests import Response
 
@@ -69,3 +70,14 @@ class JIRAError(Exception):
             t += f"\n\t{details}"
 
         return t
+
+
+class NotJIRAInstanceError(Exception):
+    """Raised in the case an object is not a JIRA instance."""
+
+    def __init__(self, instance: Any):
+        msg = (
+            "The first argument of this function must be an instance of type "
+            f"JIRA. Instance Type: {instance.__class__.__name__}"
+        )
+        super().__init__(msg)

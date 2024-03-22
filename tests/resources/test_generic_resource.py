@@ -23,6 +23,10 @@ class TestResource:
             (url_test_case("group?groupname=bla"), jira.resources.Group),
             (url_test_case("user?username=bla"), jira.resources.User),  # Jira Server / Data Center
             (url_test_case("user?accountId=bla"), jira.resources.User),  # Jira Cloud
+            (url_test_case("api/latest/dashboard/12345"), jira.resources.Dashboard),
+            (url_test_case("api/latest/dashboard/1/items/1/properties"), jira.resources.DashboardItemPropertyKey),
+            (url_test_case("api/latest/dashboard/1/items/1/properties/property"), jira.resources.DashboardItemProperty),
+            (url_test_case("api/latest/dashboard/1/gadget/1"), jira.resources.DashboardGadget)
         ],
         ids=[
             "issue",
@@ -32,6 +36,10 @@ class TestResource:
             "group",
             "user",
             "user_cloud",
+            "dashboard",
+            "dashboard_item_property_key",
+            "dashboard_item_property",
+            "dashboard_gadget"
         ],
     )
     # fmt: on
