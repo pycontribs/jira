@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import getpass
+import logging
 from unittest import mock
 
 import pytest
 import requests.sessions
 
 import jira.client
-from jira.exceptions import JIRAError
+from jira.exceptions import JIRAError, NotJIRAInstanceError
 from tests.conftest import JiraTestManager, get_unique_project_name
 
 
@@ -49,6 +50,75 @@ def slug(request: pytest.FixtureRequest, cl_admin: jira.client.JIRA):
     except (ValueError, JIRAError):
         # Some tests have project already removed, so we stay silent
         pass
+
+
+@pytest.fixture(scope="session")
+def stream_logger():
+    logger = logging.getLogger("test_logger")
+    logger.addHandler(logging.StreamHandler())
+    return logger
+
+
+@pytest.fixture(scope="session")
+def mock_not_jira_client(stream_logger):
+    class MockClient:
+        def __init__(self, is_cloud=False):
+            self.is_cloud = is_cloud
+            self.log = stream_logger
+
+        @property
+        def _is_cloud(self):
+            return self.is_cloud
+
+        @jira.client.cloud_api
+        def mock_cloud_only_method(self, *args, **kwargs):
+            return args, kwargs
+
+        @jira.client.experimental_atlassian_api
+        def mock_experimental_method(self, *args, **kwargs):
+            return args, kwargs
+
+        @jira.client.experimental_atlassian_api
+        def mock_method_raises_jira_error(self, *args, **kwargs):
+            raise JIRAError(**kwargs)
+
+    return MockClient
+
+
+@pytest.fixture(scope="session")
+def mock_jira_client(stream_logger):
+    class MockClient(jira.client.JIRA):
+        def __init__(self, is_cloud=False):
+            self.is_cloud = is_cloud
+            self.log = stream_logger
+
+        @property
+        def _is_cloud(self):
+            return self.is_cloud
+
+        @jira.client.cloud_api
+        def mock_cloud_only_method(self, *args, **kwargs):
+            return args, kwargs
+
+        @jira.client.experimental_atlassian_api
+        def mock_experimental_method(self, *args, **kwargs):
+            return args, kwargs
+
+        @jira.client.experimental_atlassian_api
+        def mock_method_raises_jira_error(self, *args, **kwargs):
+            raise JIRAError(**kwargs)
+
+    return MockClient
+
+
+@pytest.fixture(scope="session")
+def mock_response():
+    class MockResponse:
+        def __init__(self, status_code=404):
+            self.status_code = status_code
+            self.url = "some/url/that/does/not/exist"
+
+    return MockResponse
 
 
 def test_delete_project(cl_admin, cl_normal, slug):
@@ -246,3 +316,75 @@ def test_cookie_auth_retry():
             )
     # THEN: We don't get a RecursionError and only call the reset_function once
     mock_reset_func.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "mock_client_method", ["mock_cloud_only_method", "mock_experimental_method"]
+)
+def test_not_cloud_instance(mock_not_jira_client, mock_client_method):
+    client = mock_not_jira_client()
+    with pytest.raises(NotJIRAInstanceError) as exc:
+        getattr(client, mock_client_method)()
+
+    assert str(exc.value) == (
+        "The first argument of this function must be an instance of type "
+        f"JIRA. Instance Type: {mock_not_jira_client().__class__.__name__}"
+    )
+
+
+@mock.patch("requests.Session.request")
+def test_cloud_api(mock_request, mock_jira_client):
+    mock_client = mock_jira_client(is_cloud=True)
+    out = mock_client.mock_cloud_only_method("one", two="three")
+    assert out is not None
+
+
+@mock.patch("requests.Session.request")
+def test_cloud_api_not_cloud_server(mock_request, mock_jira_client, caplog):
+    mock_client = mock_jira_client()
+    mock_client.mock_cloud_only_method()
+    assert caplog.messages[0] == (
+        "This functionality is not available on Jira Data Center (Server) version."
+    )
+
+
+@mock.patch("requests.Session.request")
+def test_experimental(mock_request, mock_jira_client):
+    out = mock_jira_client().mock_experimental_method("one", two="three")
+    assert out is not None
+
+
+@pytest.mark.parametrize("http_status_code", [404, 405])
+@mock.patch("requests.Session.request")
+def test_experimental_missing_or_not_allowed(
+    mock_request, mock_jira_client, mock_response, http_status_code, caplog
+):
+    mock_response = mock_response(status_code=http_status_code)
+    response = mock_jira_client().mock_method_raises_jira_error(
+        response=mock_response,
+        request=mock_response,
+        status_code=mock_response.status_code,
+    )
+    assert response is None
+    assert caplog.messages[0] == (
+        f"Functionality at path {mock_response.url} is/was experimental. Status Code: "
+        f"{mock_response.status_code}"
+    )
+
+
+@mock.patch("requests.Session.request")
+def test_experimental_non_200_not_404_405(
+    mock_request, mock_jira_client, mock_response
+):
+    status_code = 400
+    mock_response = mock_response(status_code=status_code)
+
+    with pytest.raises(JIRAError) as ex:
+        mock_jira_client().mock_method_raises_jira_error(
+            response=mock_response,
+            request=mock_response,
+            status_code=mock_response.status_code,
+        )
+
+    assert ex.value.status_code == status_code
+    assert isinstance(ex.value, JIRAError)

@@ -1,4 +1,5 @@
 """Jira utils used internally."""
+
 from __future__ import annotations
 
 import threading
@@ -79,3 +80,15 @@ def json_loads(resp: Response | None) -> Any:
         if not resp.text:
             return {}
         raise
+
+
+def remove_empty_attributes(data: dict[str, Any]) -> dict[str, Any]:
+    """A convenience function to remove key/value pairs with `None` for a value.
+
+    Args:
+      data: A dictionary.
+
+    Returns:
+      Dict[str, Any]: A dictionary with no `None` key/value pairs.
+    """
+    return {key: val for key, val in data.items() if val is not None}

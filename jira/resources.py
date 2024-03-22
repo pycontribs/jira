@@ -3,6 +3,7 @@
 This module implements the Resource classes that translate JSON from Jira REST
 resources into usable objects.
 """
+
 from __future__ import annotations
 
 import json
@@ -15,7 +16,7 @@ from requests import Response
 from requests.structures import CaseInsensitiveDict
 
 from jira.resilientsession import ResilientSession, parse_errors
-from jira.utils import json_loads, threaded_requests
+from jira.utils import json_loads, remove_empty_attributes, threaded_requests
 
 if TYPE_CHECKING:
     from jira.client import JIRA
@@ -37,7 +38,10 @@ __all__ = (
     "Attachment",
     "Component",
     "Dashboard",
+    "DashboardItemProperty",
+    "DashboardItemPropertyKey",
     "Filter",
+    "DashboardGadget",
     "Votes",
     "PermissionScheme",
     "Watchers",
@@ -239,7 +243,7 @@ class Resource:
 
     def find(
         self,
-        id: tuple[str, str] | int | str,
+        id: tuple[str, ...] | int | str,
         params: dict[str, str] | None = None,
     ):
         """Finds a resource based on the input parameters.
@@ -552,7 +556,156 @@ class Dashboard(Resource):
         Resource.__init__(self, "dashboard/{0}", options, session)
         if raw:
             self._parse_raw(raw)
+        self.gadgets: list[DashboardGadget] = []
         self.raw: dict[str, Any] = cast(Dict[str, Any], self.raw)
+
+
+class DashboardItemPropertyKey(Resource):
+    """A jira dashboard item property key."""
+
+    def __init__(
+        self,
+        options: dict[str, str],
+        session: ResilientSession,
+        raw: dict[str, Any] = None,
+    ):
+        Resource.__init__(self, "dashboard/{0}/items/{1}/properties", options, session)
+        if raw:
+            self._parse_raw(raw)
+        self.raw: dict[str, Any] = cast(Dict[str, Any], self.raw)
+
+
+class DashboardItemProperty(Resource):
+    """A jira dashboard item."""
+
+    def __init__(
+        self,
+        options: dict[str, str],
+        session: ResilientSession,
+        raw: dict[str, Any] = None,
+    ):
+        Resource.__init__(
+            self, "dashboard/{0}/items/{1}/properties/{2}", options, session
+        )
+        if raw:
+            self._parse_raw(raw)
+        self.raw: dict[str, Any] = cast(Dict[str, Any], self.raw)
+
+    def update(  # type: ignore[override] # incompatible supertype ignored
+        self, dashboard_id: str, item_id: str, value: dict[str, Any]
+    ) -> DashboardItemProperty:
+        """Update this resource on the server.
+
+        Keyword arguments are marshalled into a dict before being sent. If this resource doesn't support ``PUT``, a :py:exc:`.JIRAError`
+        will be raised; subclasses that specialize this method will only raise errors in case of user error.
+
+        Args:
+          dashboard_id (str): The ``id`` if the dashboard.
+          item_id (str): The id of the dashboard item (``DashboardGadget``) to target.
+          value (dict[str, Any]): The value of the targeted property key.
+
+        Returns:
+          DashboardItemProperty
+        """
+        options = self._options.copy()
+        options[
+            "path"
+        ] = f"dashboard/{dashboard_id}/items/{item_id}/properties/{self.key}"
+        self.raw["value"].update(value)
+        self._session.put(self.JIRA_BASE_URL.format(**options), self.raw["value"])
+
+        return DashboardItemProperty(self._options, self._session, raw=self.raw)
+
+    def delete(self, dashboard_id: str, item_id: str) -> Response:  # type: ignore[override] # incompatible supertype ignored
+        """Delete dashboard item property.
+
+        Args:
+          dashboard_id (str): The ``id`` of the dashboard.
+          item_id (str): The ``id`` of the dashboard item (``DashboardGadget``).
+
+
+        Returns:
+          Response
+        """
+        options = self._options.copy()
+        options[
+            "path"
+        ] = f"dashboard/{dashboard_id}/items/{item_id}/properties/{self.key}"
+
+        return self._session.delete(self.JIRA_BASE_URL.format(**options))
+
+
+class DashboardGadget(Resource):
+    """A jira dashboard gadget."""
+
+    def __init__(
+        self,
+        options: dict[str, str],
+        session: ResilientSession,
+        raw: dict[str, Any] = None,
+    ):
+        Resource.__init__(self, "dashboard/{0}/gadget/{1}", options, session)
+        if raw:
+            self._parse_raw(raw)
+        self.item_properties: list[DashboardItemProperty] = []
+        self.raw: dict[str, Any] = cast(Dict[str, Any], self.raw)
+
+    def update(  # type: ignore[override] # incompatible supertype ignored
+        self,
+        dashboard_id: str,
+        color: str | None = None,
+        position: dict[str, Any] | None = None,
+        title: str | None = None,
+    ) -> DashboardGadget:
+        """Update this resource on the server.
+
+        Keyword arguments are marshalled into a dict before being sent. If this resource doesn't support ``PUT``, a :py:exc:`.JIRAError`
+        will be raised; subclasses that specialize this method will only raise errors in case of user error.
+
+        Args:
+          dashboard_id (str): The ``id`` of the dashboard to add the gadget to `required`.
+          color (str): The color of the gadget, should be one of: blue, red, yellow,
+              green, cyan, purple, gray, or white.
+          ignore_uri_and_module_key_validation (bool): Whether to ignore the
+              validation of the module key and URI. For example, when a gadget is created
+              that is part of an application that is not installed.
+          position (dict[str, int]): A dictionary containing position information like -
+              `{"column": 0, "row", 1}`.
+          title (str): The title of the gadget.
+
+        Returns:
+          ``DashboardGadget``
+        """
+        data = remove_empty_attributes(
+            {"color": color, "position": position, "title": title}
+        )
+        options = self._options.copy()
+        options["path"] = f"dashboard/{dashboard_id}/gadget/{self.id}"
+
+        self._session.put(self.JIRA_BASE_URL.format(**options), json=data)
+        options["path"] = f"dashboard/{dashboard_id}/gadget"
+
+        return next(
+            DashboardGadget(self._options, self._session, raw=gadget)
+            for gadget in self._session.get(
+                self.JIRA_BASE_URL.format(**options)
+            ).json()["gadgets"]
+            if gadget["id"] == self.id
+        )
+
+    def delete(self, dashboard_id: str) -> Response:  # type: ignore[override] # incompatible supertype ignored
+        """Delete gadget from dashboard.
+
+        Args:
+          dashboard_id (str): The ``id`` of the dashboard.
+
+        Returns:
+          Response
+        """
+        options = self._options.copy()
+        options["path"] = f"dashboard/{dashboard_id}/gadget/{self.id}"
+
+        return self._session.delete(self.JIRA_BASE_URL.format(**options))
 
 
 class Field(Resource):
@@ -1492,6 +1645,9 @@ resource_class_map: dict[str, type[Resource]] = {
     r"component/[^/]+$": Component,
     r"customFieldOption/[^/]+$": CustomFieldOption,
     r"dashboard/[^/]+$": Dashboard,
+    r"dashboard/[^/]+/items/[^/]+/properties+$": DashboardItemPropertyKey,
+    r"dashboard/[^/]+/items/[^/]+/properties/[^/]+$": DashboardItemProperty,
+    r"dashboard/[^/]+/gadget/[^/]+$": DashboardGadget,
     r"filter/[^/]$": Filter,
     r"issue/[^/]+$": Issue,
     r"issue/[^/]+/comment/[^/]+$": Comment,
