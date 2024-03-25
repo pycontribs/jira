@@ -2083,8 +2083,13 @@ class JIRA:
         maxResults: int = 50,
     ) -> dict[str, Any]:
         """Get the issue types metadata for a given project, required to create issues.
+
+        .. deprecated:: 3.6.0
+            Use :func:`project_issue_types` instead.
+
         This API was introduced in JIRA Server / DC 8.4 as a replacement for the more general purpose API 'createmeta'.
         For details see: https://confluence.atlassian.com/jiracore/createmeta-rest-endpoint-to-be-removed-975040986.html
+
         Args:
             projectIdOrKey (Union[str, int]): id or key of the project for which to get the metadata.
             startAt (int): Index of the first issue to return. (Default: ``0``)
@@ -2096,7 +2101,7 @@ class JIRA:
             Dict[str, Any]
         """
         warnings.warn(
-            "'createmeta_issuetypes' is deprected and will be removed in future releases."
+            "'createmeta_issuetypes' is deprecated and will be removed in future releases."
             "Use 'project_issue_types' instead.",
             DeprecationWarning,
             stacklevel=2,
@@ -2118,8 +2123,13 @@ class JIRA:
         maxResults: int = 50,
     ) -> dict[str, Any]:
         """Get the field metadata for a given project and issue type, required to create issues.
+
+        .. deprecated:: 3.6.0
+            Use :func:`project_issue_fields` instead.
+        
         This API was introduced in JIRA Server / DC 8.4 as a replacement for the more general purpose API 'createmeta'.
         For details see: https://confluence.atlassian.com/jiracore/createmeta-rest-endpoint-to-be-removed-975040986.html
+
         Args:
             projectIdOrKey (Union[str, int]): id or key of the project for which to get the metadata.
             issueTypeId (Union[str, int]): id of the issue type for which to get the metadata.
@@ -2132,7 +2142,7 @@ class JIRA:
             Dict[str, Any]
         """
         warnings.warn(
-            "'createmeta_fieldtypes' is deprected and will be removed in future releases."
+            "'createmeta_fieldtypes' is deprecated and will be removed in future releases."
             "Use 'project_issue_fields' instead.",
             DeprecationWarning,
             stacklevel=2,
