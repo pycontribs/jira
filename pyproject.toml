@@ -147,6 +147,16 @@ check_untyped_defs = false
 disable_error_code = "annotation-unchecked"
 
 [tool.ruff]
+# Same as Black.
+line-length = 88
+
+# Assume Python 3.8. (minimum supported)
+target-version = "py38"
+
+# The source code paths to consider, e.g., when resolving first- vs. third-party imports
+src = ["jira", "tests"]
+
+[tool.ruff.lint]
 select = [
     "E",  # pydocstyle
     "W",  # pydocstyle
@@ -169,27 +179,18 @@ ignore = [
     "D417",
 ]
 
-# Same as Black.
-line-length = 88
-
 # Allow unused variables when underscore-prefixed.
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
-# Assume Python 3.8. (minimum supported)
-target-version = "py38"
-
-# The source code paths to consider, e.g., when resolving first- vs. third-party imports
-src = ["jira", "tests"]
-
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 known-first-party = ["jira", "tests"]
 required-imports = ["from __future__ import annotations"]
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "jira/__init__.py" = [
     "E402", # ignore import order in this file
 ]
 
-[tool.ruff.pydocstyle]
+[tool.ruff.lint.pydocstyle]
 # Use Google-style docstrings.
 convention = "google"
