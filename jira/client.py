@@ -2126,7 +2126,7 @@ class JIRA:
 
         .. deprecated:: 3.6.0
             Use :func:`project_issue_fields` instead.
-        
+
         This API was introduced in JIRA Server / DC 8.4 as a replacement for the more general purpose API 'createmeta'.
         For details see: https://confluence.atlassian.com/jiracore/createmeta-rest-endpoint-to-be-removed-975040986.html
 
