@@ -5322,6 +5322,7 @@ class JIRA:
         startDate: Any | None = None,
         endDate: Any | None = None,
         state: str | None = None,
+        goal: str | None = None,
     ) -> dict[str, Any]:
         """Updates the sprint with the given values.
 
@@ -5330,7 +5331,8 @@ class JIRA:
             name (Optional[str]): The name to update your sprint to
             startDate (Optional[Any]): The start date for the sprint
             endDate (Optional[Any]): The start date for the sprint
-            state: (Optional[str]): The start date for the sprint
+            state: (Optional[str]): The state of the sprint
+            goal: (Optional[str]): The goal of the sprint
 
         Returns:
             Dict[str, Any]
@@ -5344,6 +5346,8 @@ class JIRA:
             payload["endDate"] = endDate
         if state:
             payload["state"] = state
+        if goal:
+            payload["goal"] = goal
 
         url = self._get_url(f"sprint/{id}", base=self.AGILE_BASE_URL)
         r = self._session.put(url, data=json.dumps(payload))
@@ -5473,6 +5477,7 @@ class JIRA:
         board_id: int,
         startDate: Any | None = None,
         endDate: Any | None = None,
+        goal: str | None = None,
     ) -> Sprint:
         """Create a new sprint for the ``board_id``.
 
@@ -5481,6 +5486,7 @@ class JIRA:
             board_id (int): Which board the sprint should be assigned.
             startDate (Optional[Any]): Start date for the sprint.
             endDate (Optional[Any]): End date for the sprint.
+            goal (Optional[str]): Goal for the sprint.
 
         Returns:
             Sprint: The newly created Sprint
@@ -5490,14 +5496,16 @@ class JIRA:
             payload["startDate"] = startDate
         if endDate:
             payload["endDate"] = endDate
+        if goal:
+            payload["goal"] = goal
 
-        raw_issue_json: dict[str, Any]
+        raw_sprint_json: dict[str, Any]
         url = self._get_url("sprint", base=self.AGILE_BASE_URL)
         payload["originBoardId"] = board_id
         r = self._session.post(url, data=json.dumps(payload))
-        raw_issue_json = json_loads(r)
+        raw_sprint_json = json_loads(r)
 
-        return Sprint(self._options, self._session, raw=raw_issue_json)
+        return Sprint(self._options, self._session, raw=raw_sprint_json)
 
     def add_issues_to_sprint(self, sprint_id: int, issue_keys: list[str]) -> Response:
         """Add the issues in ``issue_keys`` to the ``sprint_id``.
