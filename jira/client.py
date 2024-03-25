@@ -674,6 +674,16 @@ class JIRA:
         self._fields_cache_value: dict[str, str] = {}  # access via self._fields_cache
 
     @property
+    def _fields_cache_raw(self) -> dict:
+        """Cached raw dictionary of of fields. Lazy loaded."""
+        if (
+            not hasattr(self, "_fields_cache_value_raw")
+            or not self._fields_cache_value_raw
+        ):
+            self._fields_cache_value_raw = self.fields()
+        return self._fields_cache_value_raw
+
+    @property
     def _fields_cache(self) -> dict[str, str]:
         """Cached dictionary of {Field Name: Field ID}. Lazy loaded."""
         if not self._fields_cache_value:
@@ -683,7 +693,7 @@ class JIRA:
     def _update_fields_cache(self):
         """Update the cache used for `self._fields_cache`."""
         self._fields_cache_value = {}
-        for f in self.fields():
+        for f in self._fields_cache_raw:
             if "clauseNames" in f:
                 for name in f["clauseNames"]:
                     self._fields_cache_value[name] = f["id"]
