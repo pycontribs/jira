@@ -4518,9 +4518,9 @@ class JIRA:
                 raise JIRAError(f"Error Deactivating {username}: {e}")
         else:
             url = self.server_url + "/secure/admin/user/EditUser.jspa"
-            self._options["headers"][
-                "Content-Type"
-            ] = "application/x-www-form-urlencoded; charset=UTF-8"
+            self._options["headers"]["Content-Type"] = (
+                "application/x-www-form-urlencoded; charset=UTF-8"
+            )
             user = self.user(username)
             userInfo = {
                 "inline": "true",
