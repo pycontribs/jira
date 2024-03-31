@@ -39,8 +39,8 @@ from typing import (
 )
 from urllib.parse import parse_qs, quote, urlparse
 
-import requests
 import filetype
+import requests
 from packaging.version import parse as parse_version
 from requests import Response
 from requests.auth import AuthBase
