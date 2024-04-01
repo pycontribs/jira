@@ -198,7 +198,7 @@ sphinx-copybutton==0.5.2
     # via jira (setup.cfg)
 sphinxcontrib-applehelp==1.0.4
     # via sphinx
-sphinxcontrib-devhelp==1.0.2
+sphinxcontrib-devhelp==1.0.6
     # via sphinx
 sphinxcontrib-htmlhelp==2.0.1
     # via sphinx
