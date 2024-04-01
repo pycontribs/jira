@@ -67,7 +67,7 @@ iniconfig==2.0.0
     # via pytest
 ipython==8.12.3
     # via jira (setup.cfg)
-jaraco-classes==3.3.1
+jaraco-classes==3.4.0
     # via keyring
 jaraco-context==4.3.0
     # via keyring
