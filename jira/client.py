@@ -672,7 +672,9 @@ class JIRA:
             JIRA.checked_version = True
 
         self._fields_cache_value: dict[str, str] = {}  # access via self._fields_cache
-        self._fields_cache_value_raw: list[dict[str, Any]] = []  # access via self._fields_cache_raw
+        self._fields_cache_value_raw: list[
+            dict[str, Any]
+        ] = []  # access via self._fields_cache_raw
 
     @property
     def _fields_cache_raw(self) -> list[dict[str, Any]]:
