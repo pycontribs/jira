@@ -1574,6 +1574,7 @@ class JIRA:
         description: str = None,
         jql: str = None,
         favourite: bool = None,
+        share_permissions: list[dict] | dict = None,
     ) -> Filter:
         """Create a new filter and return a filter Resource for it.
 
@@ -1582,6 +1583,8 @@ class JIRA:
             description (str): Useful human-readable description of the new filter
             jql (str): query string that defines the filter
             favourite (Optional[bool]): True adds this filter to the current user's favorites (Default: ``None``)
+            share_permissions (Optional[Union[List[dict], dict]]): Ddds the provided share permissions to the newly
+                created filter. Check `add share permission` documentation for specific fields. (Default: ``None``)
 
         Returns:
             Filter
@@ -1599,11 +1602,16 @@ class JIRA:
         r = self._session.post(url, data=json.dumps(data))
 
         raw_filter_json: dict[str, Any] = json_loads(r)
+
+        # If share permissions information provided, add permissions to newly created filter
+        if share_permissions:
+            self.add_filter_share_permission(raw_filter_json["id"], share_permissions)
+
         return Filter(self._options, self._session, raw=raw_filter_json)
 
     def update_filter(
         self,
-        filter_id,
+        filter_id: str,
         name: str = None,
         description: str = None,
         jql: str = None,
@@ -1634,6 +1642,31 @@ class JIRA:
 
         raw_filter_json = json.loads(r.text)
         return Filter(self._options, self._session, raw=raw_filter_json)
+
+    def add_filter_share_permission(
+        self,
+        filter_id: str,
+        permission_fields: list[dict] | dict,
+    ) -> bool:
+        """Add a share permission to a given filter.
+
+        Adding a global permission removes all previous permissions from the filter.
+
+        Args:
+            filter_id (str): the ID of the filter to add permissions for.
+            permission_fields (Union[List[dict], dict]): necessary permission fields to add the share permission.
+                If adding single permission, provide a dictionary. If adding multiple permissions, provide a list of
+                dictionaries.
+
+        Returns:
+            (bool): Return True if request successful.
+        """
+        url = self._get_latest_url(f"filter/{filter_id}/permission")
+        payload = json.dumps(permission_fields)
+
+        self._session.post(url, data=payload)
+
+        return True
 
     # Groups
 
