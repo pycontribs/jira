@@ -3490,6 +3490,7 @@ class JIRA:
         fields: str | list[str] | None = "*all",
         expand: str | None = None,
         properties: str | None = None,
+        *,
         json_result: Literal[False] = False,
         use_post: bool = False,
     ) -> ResultList[Issue]: ...
@@ -3504,7 +3505,8 @@ class JIRA:
         fields: str | list[str] | None = "*all",
         expand: str | None = None,
         properties: str | None = None,
-        json_result: Literal[True] = True,
+        *,
+        json_result: Literal[True],
         use_post: bool = False,
     ) -> dict[str, Any]: ...
 
@@ -3517,6 +3519,7 @@ class JIRA:
         fields: str | list[str] | None = "*all",
         expand: str | None = None,
         properties: str | None = None,
+        *,
         json_result: bool = False,
         use_post: bool = False,
     ) -> dict[str, Any] | ResultList[Issue]:
