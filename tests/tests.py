@@ -234,6 +234,13 @@ class SearchTests(JiraTestCase):
         for issue in issues:
             self.assertTrue(issue.key.startswith(self.project_b))
 
+    def test_search_issues_json(self):
+        result = self.jira.search_issues(f"project={self.project_b}", json_result=True)
+        issues = result["issues"]
+        self.assertLessEqual(len(issues), 50)  # default maxResults
+        for issue in issues:
+            self.assertTrue(issue["key"].startswith(self.project_b))
+
     def test_search_issues_async(self):
         original_val = self.jira._options["async"]
         try:
