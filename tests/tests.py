@@ -23,7 +23,6 @@ import requests
 from parameterized import parameterized
 
 from jira import JIRA, Issue, JIRAError
-from jira.client import ResultList
 from jira.resources import Dashboard, Resource, cls_for_resource
 from tests.conftest import JiraTestCase, allow_on_cloud, rndpassword
 
@@ -231,7 +230,6 @@ class SearchTests(JiraTestCase):
 
     def test_search_issues(self):
         issues = self.jira.search_issues(f"project={self.project_b}")
-        issues = cast(ResultList[Issue], issues)
         self.assertLessEqual(len(issues), 50)  # default maxResults
         for issue in issues:
             self.assertTrue(issue.key.startswith(self.project_b))
@@ -243,7 +241,6 @@ class SearchTests(JiraTestCase):
             issues = self.jira.search_issues(
                 f"project={self.project_b}", maxResults=False
             )
-            issues = cast(ResultList[Issue], issues)
             self.assertEqual(len(issues), issues.total)
             for issue in issues:
                 self.assertTrue(issue.key.startswith(self.project_b))
@@ -263,7 +260,6 @@ class SearchTests(JiraTestCase):
 
     def test_search_issues_field_limiting(self):
         issues = self.jira.search_issues(f"key={self.issue}", fields="summary,comment")
-        issues = cast(ResultList[Issue], issues)
         self.assertTrue(hasattr(issues[0].fields, "summary"))
         self.assertTrue(hasattr(issues[0].fields, "comment"))
         self.assertFalse(hasattr(issues[0].fields, "reporter"))
@@ -271,7 +267,6 @@ class SearchTests(JiraTestCase):
 
     def test_search_issues_expand(self):
         issues = self.jira.search_issues(f"key={self.issue}", expand="changelog")
-        issues = cast(ResultList[Issue], issues)
         # self.assertTrue(hasattr(issues[0], 'names'))
         self.assertEqual(len(issues), 1)
         self.assertFalse(hasattr(issues[0], "editmeta"))
@@ -283,7 +278,6 @@ class SearchTests(JiraTestCase):
         with pytest.raises(JIRAError):
             self.jira.search_issues(long_jql)
         issues = self.jira.search_issues(long_jql, use_post=True)
-        issues = cast(ResultList[Issue], issues)
         self.assertEqual(len(issues), 1)
         self.assertEqual(issues[0].key, self.issue)
 
