@@ -3480,6 +3480,34 @@ class JIRA:
 
     # Search
 
+    @overload
+    def search_issues(
+        self,
+        jql_str: str,
+        startAt: int = 0,
+        maxResults: int = 50,
+        validate_query: bool = True,
+        fields: str | list[str] | None = "*all",
+        expand: str | None = None,
+        properties: str | None = None,
+        json_result: Literal[False] = False,
+        use_post: bool = False,
+    ) -> ResultList[Issue]: ...
+
+    @overload
+    def search_issues(
+        self,
+        jql_str: str,
+        startAt: int = 0,
+        maxResults: int = 50,
+        validate_query: bool = True,
+        fields: str | list[str] | None = "*all",
+        expand: str | None = None,
+        properties: str | None = None,
+        json_result: Literal[True] = True,
+        use_post: bool = False,
+    ) -> dict[str, Any]: ...
+
     def search_issues(
         self,
         jql_str: str,
