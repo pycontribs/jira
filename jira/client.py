@@ -798,6 +798,11 @@ class JIRA:
 
                 async_class = FuturesSession
             except ImportError:
+                msg = (
+                    "async option requires requests-futures to be installed. "
+                    "falling back to synchronous implementation."
+                )
+                warnings.warn(msg)
                 pass
             async_workers = self._options.get("async_workers")
 
