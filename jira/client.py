@@ -773,6 +773,14 @@ class JIRA:
 
         self._options.update(options)
         self._options["headers"].update(headers)
+        if self._options["async"] and self._futures_session_class() is None:
+            warnings.warn(
+                "async option requires requests-futures to be installed. "
+                "falling back to synchronous implementation.\n"
+                "to enable async, install the 'async' extra, e.g. pip install jira[async]",
+                stacklevel=2,
+            )
+            self._options["async"] = False
 
         self._rank = None
 
