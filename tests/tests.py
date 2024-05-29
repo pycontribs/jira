@@ -269,6 +269,27 @@ class SearchTests(JiraTestCase):
         self.assertFalse(hasattr(issues[0].fields, "reporter"))
         self.assertFalse(hasattr(issues[0].fields, "progress"))
 
+    def test_find_issue_fields_limiting(self):
+        issue = self.jira.issue(self.issue, fields="summary, comment")
+        self.assertTrue(hasattr(issue.fields, "summary"))
+        self.assertTrue(hasattr(issue.fields, "comment"))
+        self.assertFalse(hasattr(issue.fields, "reporter"))
+        self.assertFalse(hasattr(issue.fields, "progress"))
+
+    def test_find_issue_fields_translating(self):
+        issues = self.jira.search_issues(f"key={self.issue}", fields="due")
+        issues = cast(ResultList[Issue], issues)
+        issue = issues[0]
+        self.assertTrue(hasattr(issue.fields, "due"))
+        self.assertTrue(hasattr(issue.fields, "duedate"))
+        self.assertTrue(issue.fields.due == issue.fields.duedate)
+
+    def test_search_issues_fields_translating(self):
+        issue = self.jira.issue(self.issue, fields="due")
+        self.assertTrue(hasattr(issue.fields, "due"))
+        self.assertTrue(hasattr(issue.fields, "duedate"))
+        self.assertTrue(issue.fields.due == issue.fields.duedate)
+
     def test_search_issues_expand(self):
         issues = self.jira.search_issues(f"key={self.issue}", expand="changelog")
         issues = cast(ResultList[Issue], issues)
