@@ -893,25 +893,25 @@ class Issue(Resource):
         else:
             return getattr(self.fields, field_name)
 
-    def add_field_value(self, field: str, value: str):
+    def add_field_value(self, field: str, value: Any):
         """Add a value to a field that supports multiple values, without resetting the existing values.
 
         This should work with: labels, multiple checkbox lists, multiple select
 
         Args:
             field (str): The field name
-            value (str): The field's value
+            value (Any): The field's value
         """
         super().update(fields={"update": {field: [{"add": value}]}})
 
-    def remove_field_value(self, field: str, value: str):
+    def remove_field_value(self, field: str, value: Any):
         """Remove a value from a field that supports multiple values, without resetting the existing values.
 
         This should work with: labels, multiple checkbox lists, multiple select
 
         Args:
             field (str): The field name
-            value (str): The field's value
+            value (Any): The field's value
         """
         super().update(fields={"update": {field: [{"remove": value}]}})
 
