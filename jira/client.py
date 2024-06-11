@@ -14,7 +14,6 @@ import datetime
 import hashlib
 import json
 import logging as _logging
-import mimetypes
 import os
 import re
 import sys
