@@ -105,7 +105,7 @@ parso==0.8.3
     # via jedi
 pickleshare==0.7.5
     # via ipython
-pillow==10.2.0
+filetype==1.2.0
     # via jira (setup.cfg)
 pluggy==1.4.0
     # via pytest
