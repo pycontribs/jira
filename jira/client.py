@@ -41,8 +41,8 @@ from typing import (
 from urllib.parse import parse_qs, quote, urlparse
 
 import requests
+from filetype import guess_mime
 from packaging.version import parse as parse_version
-from PIL import Image
 from requests import Response
 from requests.auth import AuthBase
 from requests.structures import CaseInsensitiveDict
@@ -4425,8 +4425,8 @@ class JIRA:
         if self._magic is not None:
             return self._magic.id_buffer(buff)
         try:
-            return mimetypes.guess_type("f." + Image.open(buff).format)[0]
-        except (OSError, TypeError):
+            return guess_mime(buff)
+        except TypeError:
             self.log.warning(
                 "Couldn't detect content type of avatar image"
                 ". Specify the 'contentType' parameter explicitly."
