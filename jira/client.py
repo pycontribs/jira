@@ -573,7 +573,22 @@ class JIRA:
 
         if server:
             options["server"] = server
+
+        options["async_class"] = None
         if async_:
+            if self._options["async"]:
+                try:
+                    from requests_futures.sessions import FuturesSession
+
+                    options["async_class"] = FuturesSession
+                except ImportError:
+                    msg = (
+                        "async option requires requests-futures to be installed. "
+                        "falling back to synchronous implementation."
+                    )
+                    warnings.warn(msg)
+                    pass
+
             options["async"] = async_
             options["async_workers"] = async_workers
 
@@ -790,21 +805,6 @@ class JIRA:
         Returns:
             ResultList
         """
-        async_workers = None
-        async_class = None
-        if self._options["async"]:
-            try:
-                from requests_futures.sessions import FuturesSession
-
-                async_class = FuturesSession
-            except ImportError:
-                msg = (
-                    "async option requires requests-futures to be installed. "
-                    "falling back to synchronous implementation."
-                )
-                warnings.warn(msg)
-                pass
-            async_workers = self._options.get("async_workers")
 
         def json_params() -> dict[str, Any]:
             # passing through json.dumps and json.loads ensures json
@@ -852,6 +852,7 @@ class JIRA:
                         page_size,
                     )
                 page_start = (startAt or start_at_from_response or 0) + page_size
+                async_class = self._options["async_class"]
                 if (
                     async_class is not None
                     and not is_last
@@ -859,7 +860,8 @@ class JIRA:
                 ):
                     async_fetches = []
                     future_session = async_class(
-                        session=self._session, max_workers=async_workers
+                        session=self._session,
+                        max_workers=self._options["async_workers"],
                     )
                     for start_index in range(page_start, total, page_size):
                         page_params = json_params()
