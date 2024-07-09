@@ -26,7 +26,7 @@ keywords = ["api", "atlassian", "jira", "rest", "web"]
 dependencies = [
     "defusedxml",
     "packaging",
-    "Pillow>=2.1.0",
+    "filetype>=1.2.0",
     "requests-oauthlib>=1.1.0",
     "requests>=2.10.0",
     "requests_toolbelt",
