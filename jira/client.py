@@ -103,6 +103,12 @@ try:
 except ImportError:
     pass
 
+try:
+    from requests_futures.sessions import FuturesSession
+except ImportError:
+    FuturesSession = None
+    pass
+
 
 LOG = _logging.getLogger("jira")
 LOG.addHandler(_logging.NullHandler())
@@ -574,20 +580,15 @@ class JIRA:
         if server:
             options["server"] = server
 
-        options["async_class"] = None
         if async_:
             if self._options["async"]:
-                try:
-                    from requests_futures.sessions import FuturesSession
-
-                    options["async_class"] = FuturesSession
-                except ImportError:
+                if FuturesSession is None:
                     msg = (
                         "async option requires requests-futures to be installed. "
-                        "falling back to synchronous implementation."
+                        "falling back to synchronous implementation.\n"
+                        "to enable async, install the 'async' extra, e.g. pip install jira[async]"
                     )
                     warnings.warn(msg)
-                    pass
 
             options["async"] = async_
             options["async_workers"] = async_workers
@@ -852,14 +853,13 @@ class JIRA:
                         page_size,
                     )
                 page_start = (startAt or start_at_from_response or 0) + page_size
-                async_class = self._options["async_class"]
                 if (
-                    async_class is not None
+                    FuturesSession is not None
                     and not is_last
                     and (total is not None and len(items) < total)
                 ):
                     async_fetches = []
-                    future_session = async_class(
+                    future_session = FuturesSession(
                         session=self._session,
                         max_workers=self._options["async_workers"],
                     )
@@ -883,7 +883,7 @@ class JIRA:
                             )
                             items.extend(next_items_page)
                 while (
-                    async_class is None
+                    FuturesSession is None
                     and not is_last
                     and (total is None or page_start < total)
                     and len(next_items_page) == page_size
