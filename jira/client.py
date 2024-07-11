@@ -581,14 +581,13 @@ class JIRA:
             options["server"] = server
 
         if async_:
-            if self._options["async"]:
-                if FuturesSession is None:
-                    msg = (
-                        "async option requires requests-futures to be installed. "
-                        "falling back to synchronous implementation.\n"
-                        "to enable async, install the 'async' extra, e.g. pip install jira[async]"
-                    )
-                    warnings.warn(msg)
+            if FuturesSession is None:
+                msg = (
+                    "async option requires requests-futures to be installed. "
+                    "falling back to synchronous implementation.\n"
+                    "to enable async, install the 'async' extra, e.g. pip install jira[async]"
+                )
+                warnings.warn(msg)
 
             options["async"] = async_
             options["async_workers"] = async_workers
