@@ -853,7 +853,8 @@ class JIRA:
                     )
                 page_start = (startAt or start_at_from_response or 0) + page_size
                 if (
-                    FuturesSession is not None
+                    self._options["async"]
+                    and FuturesSession is not None
                     and not is_last
                     and (total is not None and len(items) < total)
                 ):
@@ -882,7 +883,7 @@ class JIRA:
                             )
                             items.extend(next_items_page)
                 while (
-                    FuturesSession is None
+                    not self._options["async"]
                     and not is_last
                     and (total is None or page_start < total)
                     and len(next_items_page) == page_size
