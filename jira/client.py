@@ -2631,17 +2631,20 @@ class JIRA:
         """
         return user.accountId if self._is_cloud else user.name
 
-    def _get_user_id(self, user: str | None) -> str | None:
+    def _get_user_id(self, user: str | User | None) -> str | None:
         """Internal method for translating a user search (str) to an id.
 
-        Return None and -1 unchanged. On Cloud, a value that already is an account id is
-        also returned unchanged, so no user search is needed.
+        Return None and -1 unchanged. A :class:`~jira.resources.User` gives its identifier
+        directly. On Cloud, a value that already is an account id is also returned
+        unchanged. Anything else runs a user search. When no result's identifier equals
+        ``user``, the first result is used and a warning says so.
 
         This function uses :py:meth:`JIRA.search_users` to find the user and then using :py:meth:`JIRA._get_user_identifier` extracts
         the relevant identifier property depending on whether the instance is a Cloud or self-hosted Instance.
 
         Args:
-            user (Optional[str]): The search term used for finding a user, or a Cloud account id. None, '-1' and -1 are equivalent to 'Unassigned'.
+            user (str | User | None): The search term used for finding a user, a Cloud account id, or a User.
+              None, '-1' and -1 are equivalent to 'Unassigned'.
 
         Raises:
             JIRAError: If any error occurs.
@@ -2649,6 +2652,8 @@ class JIRA:
         Returns:
             Optional[str]: The Jira user's identifier. Or "-1" and None unchanged.
         """
+        if isinstance(user, User):
+            return self._get_user_identifier(user)
         if user in (None, -1, "-1"):
             return user
         if self._is_cloud and isinstance(user, str) and CLOUD_ACCOUNT_ID_RE.match(user):
@@ -2657,7 +2662,6 @@ class JIRA:
             # and bot accounts commonly do not have.
             return user
         try:
-            user_obj: User
             if self._is_cloud:
                 users = self.search_users(query=user, maxResults=20)
             else:
@@ -2666,23 +2670,29 @@ class JIRA:
             if len(users) < 1:
                 raise JIRAError(f"No matching user found for: '{user}'")
 
-            matches = []
-            if len(users) > 1:
-                matches = [u for u in users if self._get_user_identifier(u) == user]
-            user_obj = matches[0] if matches else users[0]
-
+            matches = [u for u in users if self._get_user_identifier(u) == user]
         except Exception as e:
             raise JIRAError(str(e))
+        if not matches:
+            warnings.warn(
+                f"No user with identifier {user!r}; using first search result. "
+                "Pass a User object, or an account id on Jira Cloud.",
+                stacklevel=4,
+            )
+        user_obj = matches[0] if matches else users[0]
         return self._get_user_identifier(user_obj)
 
     # non-resource
     @translate_resource_args
-    def assign_issue(self, issue: str | int | Issue, assignee: str | None) -> bool:
+    def assign_issue(
+        self, issue: str | int | Issue, assignee: str | User | None
+    ) -> bool:
         """Assign an issue to a user.
 
         Args:
             issue (str | int | Issue): the issue ID or key to assign
-            assignee (str): the user to assign the issue to. None will set it to unassigned. -1 will set it to Automatic.
+            assignee (str | User | None): username (hosted) or account ID (Cloud) of the user to assign,
+              or the User object itself. None will set it to unassigned. -1 will set it to Automatic.
 
         Returns:
             bool
@@ -3204,28 +3214,29 @@ class JIRA:
         return self._find_for_resource(Watchers, issue)
 
     @translate_resource_args
-    def add_watcher(self, issue: str | int | Issue, watcher: str) -> Response:
+    def add_watcher(self, issue: str | int | Issue, watcher: str | User) -> Response:
         """Add a user to an issue's watchers list.
 
         Args:
             issue (str | int | Issue): ID or key of the issue affected
-            watcher (str): name of the user to add to the watchers list
+            watcher (str | User): username (hosted) or account ID (Cloud) of the user to add to the watchers
+              list, or the User object itself.
 
         Returns:
             Response
         """
         url = self._get_url("issue/" + str(issue) + "/watchers")
-        # Use user_id when adding watcher
         watcher_id = self._get_user_id(watcher)
         return self._session.post(url, data=json.dumps(watcher_id))
 
     @translate_resource_args
-    def remove_watcher(self, issue: str | int | Issue, watcher: str) -> Response:
+    def remove_watcher(self, issue: str | int | Issue, watcher: str | User) -> Response:
         """Remove a user from an issue's watch list.
 
         Args:
             issue (str | int | Issue): ID or key of the issue affected
-            watcher (str): name of the user to remove from the watchers list
+            watcher (str | User): username (hosted) or account ID (Cloud) of the user to remove from the
+              watchers list, or the User object itself.
 
         Returns:
             Response
