@@ -193,6 +193,8 @@ class Resource:
         Returns:
             Any: Attribute value.
         """
+        if item in ["raw"]:
+            return self.__dict__[item]
         try:
             return self[item]  # type: ignore
         except Exception as e:
