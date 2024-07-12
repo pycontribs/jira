@@ -2209,7 +2209,7 @@ class JIRA:
             params["expand"] = expand
         return self._get_json("issue/createmeta", params)
 
-    def _get_user_identifier(self, user: User) -> str:
+    def get_user_identifier(self, user: User) -> str:
         """Get the unique identifier depending on the deployment type.
 
         - Cloud: 'accountId'
@@ -2222,44 +2222,6 @@ class JIRA:
             str: the User's unique identifier.
         """
         return user.accountId if self._is_cloud else user.name
-
-    def _get_user_id(self, user: str | None) -> str | None:
-        """Internal method for translating a user search (str) to an id.
-
-        Return None and -1 unchanged.
-
-        This function uses :py:meth:`JIRA.search_users` to find the user and then using :py:meth:`JIRA._get_user_identifier` extracts
-        the relevant identifier property depending on whether the instance is a Cloud or self-hosted Instance.
-
-        Args:
-            user (Optional[str]): The search term used for finding a user. None, '-1' and -1 are equivalent to 'Unassigned'.
-
-        Raises:
-            JIRAError: If any error occurs.
-
-        Returns:
-            Optional[str]: The Jira user's identifier. Or "-1" and None unchanged.
-        """
-        if user in (None, -1, "-1"):
-            return user
-        try:
-            user_obj: User
-            if self._is_cloud:
-                users = self.search_users(query=user, maxResults=20)
-            else:
-                users = self.search_users(user=user, maxResults=20)
-
-            if len(users) < 1:
-                raise JIRAError(f"No matching user found for: '{user}'")
-
-            matches = []
-            if len(users) > 1:
-                matches = [u for u in users if self._get_user_identifier(u) == user]
-            user_obj = matches[0] if matches else users[0]
-
-        except Exception as e:
-            raise JIRAError(str(e))
-        return self._get_user_identifier(user_obj)
 
     # non-resource
     @translate_resource_args
