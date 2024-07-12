@@ -2263,19 +2263,21 @@ class JIRA:
 
     # non-resource
     @translate_resource_args
-    def assign_issue(self, issue: int | str, assignee: str | None) -> bool:
+    def assign_issue(self, issue: int | str, assignee: str | None | User) -> bool:
         """Assign an issue to a user.
 
         Args:
             issue (Union[int, str]): the issue ID or key to assign
-            assignee (str): the user to assign the issue to. None will set it to unassigned. -1 will set it to Automatic.
+            assignee (Union[str, User]): username (for hosted) or account ID (for cloud) of the user to add to the
+                watchers list. Alternatively, you can provide the User object itself.
 
         Returns:
             bool
         """
         url = self._get_latest_url(f"issue/{issue}/assignee")
-        user_id = self._get_user_id(assignee)
-        payload = {"accountId": user_id} if self._is_cloud else {"name": user_id}
+        if isinstance(assignee, User):
+            assignee = self.get_user_identifier(assignee)
+        payload = {"accountId": assignee} if self._is_cloud else {"name": assignee}
         self._session.put(url, data=json.dumps(payload))
         return True
 
