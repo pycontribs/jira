@@ -185,9 +185,15 @@ If you only want a few specific fields, save time by asking for them explicitly:
     issue = jira.issue('JRA-1330', fields='summary,comment')
 
 Reassign an issue::
+    Reassigning an issue can be done either by providing the username/accountId (hosted/cloud) or the User Resource object itself::
 
-    # requires issue assign permission, which is different from issue editing permission!
-    jira.assign_issue(issue, 'newassignee')
+        # requires issue assign permission, which is different from issue editing permission!
+        # via username, for hosted instances
+        jira.assign_issue(issue, 'newassignee')
+        # or accountId, for cloud instances
+        jira.assign_issue(issue, 'gweg3:5fr23r23r-3041-4342-23f2-2g3g232c2e1234:8008sdg3-441a-12f2-9sg1-erbwer3q3r3')
+        # or via the User retrieved from search_users()
+        jira.assign_issue(issue, user_resource)
 
 If you want to unassign it again, just do::
 
@@ -421,15 +427,17 @@ Watchers are objects, represented by :class:`jira.resources.Watchers`::
         # watcher is instance of jira.resources.User:
         print(watcher.emailAddress)
 
-You can add users to watchers by their name::
+You can add users to watchers by their name (hosted) / accountId (cloud) or the User resource itself::
 
     jira.add_watcher(issue, 'username')
     jira.add_watcher(issue, user_resource.name)
+    jira.add_watcher(issue, user_resource)
 
 And of course you can remove users from watcher::
 
     jira.remove_watcher(issue, 'username')
     jira.remove_watcher(issue, user_resource.name)
+    jira.remove_watcher(issue, user_resource)
 
 Attachments
 -----------
