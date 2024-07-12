@@ -2683,7 +2683,7 @@ class JIRA:
         return self._find_for_resource(Watchers, issue)
 
     @translate_resource_args
-    def add_watcher(self, issue: str | int, watcher: str) -> Response:
+    def add_watcher(self, issue: str | int, watcher: str | User) -> Response:
         """Add a user to an issue's watchers list.
 
         Args:
@@ -2694,10 +2694,12 @@ class JIRA:
             Response
         """
         url = self._get_url("issue/" + str(issue) + "/watchers")
+        if isinstance(watcher, User):
+            watcher = self.get_user_identifier(watcher)
         return self._session.post(url, data=json.dumps(watcher))
 
     @translate_resource_args
-    def remove_watcher(self, issue: str | int, watcher: str) -> Response:
+    def remove_watcher(self, issue: str | int, watcher: str | User) -> Response:
         """Remove a user from an issue's watch list.
 
         Args:
@@ -2709,6 +2711,8 @@ class JIRA:
         """
         url = self._get_url("issue/" + str(issue) + "/watchers")
         # https://docs.atlassian.com/software/jira/docs/api/REST/8.13.6/#api/2/issue-removeWatcher
+        if isinstance(watcher, User):
+            watcher = self.get_user_identifier(watcher)
         payload = {"accountId": watcher} if self._is_cloud else {"username": watcher}
         result = self._session.delete(url, params=payload)
         return result
