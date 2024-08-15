@@ -2232,6 +2232,7 @@ class JIRA:
             issue (Union[int, str]): the issue ID or key to assign
             assignee (Union[str, User]): username (for hosted) or account ID (for cloud) of the user to add to the
                 watchers list. Alternatively, you can provide the User object itself.
+                None will set it to unassigned. -1 will set it to Automatic.
 
         Returns:
             bool
@@ -2688,7 +2689,8 @@ class JIRA:
 
         Args:
             issue (Union[str, int]): ID or key of the issue affected
-            watcher (str): username (for hosted) or account ID (for cloud) of the user to add to the watchers list
+            watcher (str | User): username (for hosted) or account ID (for cloud) of the user to add to the watchers
+                list
 
         Returns:
             Response
