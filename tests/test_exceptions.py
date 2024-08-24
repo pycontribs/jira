@@ -21,7 +21,7 @@ class ExceptionsTests(unittest.TestCase):
     class MockResponse(Response):
         def __init__(
             self,
-            headers: dict = None,
+            headers: dict | None = None,
             text: str = "",
             status_code: int = DUMMY_STATUS_CODE,
             url: str = DUMMY_URL,
@@ -43,7 +43,7 @@ class ExceptionsTests(unittest.TestCase):
     class MalformedMockResponse:
         def __init__(
             self,
-            headers: dict = None,
+            headers: dict | None = None,
             text: str = "",
             status_code: int = DUMMY_STATUS_CODE,
             url: str = DUMMY_URL,

@@ -482,7 +482,7 @@ def _calculate_calls_for_fetch_pages(
     total: int,
     max_results: int,
     batch_size: int | None,
-    default: int | None = 10,
+    default: int = 10,
 ):
     """Returns expected query parameters for specified search-issues arguments."""
     if not max_results:

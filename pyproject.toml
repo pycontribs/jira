@@ -92,6 +92,16 @@ test = [
 [project.scripts]
 jirashell = "jira.jirashell:main"
 
+[tool.codespell]
+skip = [
+    "./build",
+    "./docs/build",
+    "./node_modules",
+    "AUTHORS",
+    "ChangeLog"
+]
+ignore-words = ".config/dictionary.txt"
+
 [tool.files]
 packages = """
 jira"""
