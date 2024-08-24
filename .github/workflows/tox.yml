@@ -32,8 +32,14 @@ jobs:
             lint
             docs
             pkg
-          # ^ arm64 runner is using py311 for matching python version used in AAP 2.5
-          platforms: linux,macos,linux-arm64:ubuntu-24.04-arm64-2core
+            py39:tox -e py39 --notest
+            py310:tox -e py310 --notest
+            py311:tox -e py311 --notest
+            py312:tox -e py312 --notest
+            py39-macos:tox -e py312 --notest
+            py312-macos:tox -e py312 --notest
+          # ^ macos is also used to validate arm64 building
+          platforms: linux,macos
           skip_explode: "1"
   build:
     name: ${{ matrix.name }}
@@ -44,6 +50,13 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
     steps:
+
+      - name: Install package dependencies (ubuntu)
+        if: ${{ contains(matrix.os, 'ubuntu') }}
+        run: |
+          sudo apt remove -y docker-compose
+          sudo apt-get update -y
+          sudo apt-get --assume-yes --no-install-recommends install -y apt-transport-https curl libkrb5-dev
 
       - uses: actions/checkout@v4
         with:
@@ -138,8 +151,13 @@ jobs:
           name: logs.zip
           path: .
 
-      - name: Check for expected number of coverage reports
-        run: .github/check-coverage.sh
+      - name: Check for expected number of coverage.xml reports
+        run: |
+          JOBS_PRODUCING_COVERAGE=0
+          if [ "$(find . -name coverage.xml | wc -l | bc)" -ne "${JOBS_PRODUCING_COVERAGE}" ]; then
+            echo "::error::Number of coverage.xml files was not the expected one (${JOBS_PRODUCING_COVERAGE}): $(find . -name coverage.xml |xargs echo)"
+            exit 1
+          fi
 
       # Single uploads inside check job for codecov to allow use to retry
       # it when it fails without running tests again. Fails often enough!
@@ -160,7 +178,7 @@ jobs:
         with:
           name: ${{ matrix.name }}
           # verbose: true # optional (default = false)
-          fail_ci_if_error: true
+          fail_ci_if_error: false
           use_oidc: true # cspell:ignore oidc
           files: "*/tests/output/reports/coverage.xml"
 

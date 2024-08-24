@@ -3,7 +3,7 @@ name = "jira"
 authors = [{name = "Ben Speakmon", email = "ben.speakmon@gmail.com"}]
 maintainers = [{name = "Sorin Sbarnea", email = "sorin.sbarnea@gmail.com"}]
 description = "Python library for interacting with JIRA via REST APIs."
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 license = {text = "BSD-2-Clause"}
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -15,10 +15,10 @@ classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Internet :: WWW/HTTP",
 ]
@@ -163,7 +163,7 @@ filterwarnings = ["ignore::pytest.PytestWarning"]
 markers = ["allow_on_cloud: opt in for the test to run on Jira Cloud"]
 
 [tool.mypy]
-python_version = "3.8"
+python_version = "3.9"
 warn_unused_configs = true
 namespace_packages = true
 check_untyped_defs = true
@@ -177,8 +177,8 @@ disable_error_code = "annotation-unchecked"
 # Same as Black.
 line-length = 88
 
-# Assume Python 3.8. (minimum supported)
-target-version = "py38"
+# Assume Python 3.9 (minimum supported)
+target-version = "py39"
 
 # The source code paths to consider, e.g., when resolving first- vs. third-party imports
 src = ["jira", "tests"]
@@ -204,6 +204,8 @@ ignore = [
     "D401",
     "D402",
     "D417",
+    "UP006",
+    "UP035",
 ]
 
 # Allow unused variables when underscore-prefixed.

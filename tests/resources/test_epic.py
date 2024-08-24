@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Iterator
 from contextlib import contextmanager
 from functools import cached_property
-from typing import Iterator
 
 from parameterized import parameterized
 

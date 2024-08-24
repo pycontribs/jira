@@ -75,10 +75,10 @@ Using tox
 * Run tests
     - ``tox``
 * Run tests for one env only
-    - ``tox -e py38``
+    - ``tox -e py``
 * Specify what tests to run with pytest_
     - ``tox -e py39 -- tests/resources/test_attachment.py``
-    - ``tox -e py38 -- -m allow_on_cloud`` (Run only the cloud tests)
+    - ``tox -e py310 -- -m allow_on_cloud`` (Run only the cloud tests)
 * Debug tests with breakpoints by disabling the coverage plugin, with the ``--no-cov`` argument.
     - Example for VSCode on Windows :
 

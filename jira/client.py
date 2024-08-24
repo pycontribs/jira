@@ -22,16 +22,14 @@ import time
 import urllib
 import warnings
 from collections import OrderedDict
-from collections.abc import Iterable
-from functools import lru_cache, wraps
+from collections.abc import Iterable, Iterator
+from functools import cache, wraps
 from io import BufferedReader
 from numbers import Number
 from typing import (
     Any,
     Callable,
     Generic,
-    Iterator,
-    List,
     Literal,
     SupportsIndex,
     TypeVar,
@@ -1138,7 +1136,7 @@ class JIRA:
         if not js or not isinstance(js, Iterable):
             raise JIRAError(f"Unable to parse JSON: {js}. Failed to add attachment?")
         jira_attachment = Attachment(
-            self._options, self._session, js[0] if isinstance(js, List) else js
+            self._options, self._session, js[0] if isinstance(js, list) else js
         )
         if jira_attachment.size == 0:
             raise JIRAError(
@@ -4772,7 +4770,7 @@ class JIRA:
             data=payload,
         )
 
-    @lru_cache(maxsize=None)
+    @cache
     def templates(self) -> dict:
         url = self.server_url + "/rest/project-templates/latest/templates"
 
@@ -4787,7 +4785,7 @@ class JIRA:
         # pprint(templates.keys())
         return templates
 
-    @lru_cache(maxsize=None)
+    @cache
     def permissionschemes(self):
         url = self._get_url("permissionscheme")
 
@@ -4796,7 +4794,7 @@ class JIRA:
 
         return data["permissionSchemes"]
 
-    @lru_cache(maxsize=None)
+    @cache
     def issue_type_schemes(self) -> list[IssueTypeScheme]:
         """Get all issue type schemes defined (Admin required).
 
@@ -4810,7 +4808,7 @@ class JIRA:
 
         return data["schemes"]
 
-    @lru_cache(maxsize=None)
+    @cache
     def issuesecurityschemes(self):
         url = self._get_url("issuesecurityschemes")
 
@@ -4819,7 +4817,7 @@ class JIRA:
 
         return data["issueSecuritySchemes"]
 
-    @lru_cache(maxsize=None)
+    @cache
     def projectcategories(self):
         url = self._get_url("projectCategory")
 
@@ -4828,7 +4826,7 @@ class JIRA:
 
         return data
 
-    @lru_cache(maxsize=None)
+    @cache
     def avatars(self, entity="project"):
         url = self._get_url(f"avatar/{entity}/system")
 
@@ -4837,7 +4835,7 @@ class JIRA:
 
         return data["system"]
 
-    @lru_cache(maxsize=None)
+    @cache
     def notificationschemes(self):
         # TODO(ssbarnea): implement pagination support
         url = self._get_url("notificationscheme")
@@ -4846,7 +4844,7 @@ class JIRA:
         data: dict[str, Any] = json_loads(r)
         return data["values"]
 
-    @lru_cache(maxsize=None)
+    @cache
     def screens(self):
         # TODO(ssbarnea): implement pagination support
         url = self._get_url("screens")
@@ -4855,7 +4853,7 @@ class JIRA:
         data: dict[str, Any] = json_loads(r)
         return data["values"]
 
-    @lru_cache(maxsize=None)
+    @cache
     def workflowscheme(self):
         # TODO(ssbarnea): implement pagination support
         url = self._get_url("workflowschemes")
@@ -4864,7 +4862,7 @@ class JIRA:
         data = json_loads(r)
         return data  # ['values']
 
-    @lru_cache(maxsize=None)
+    @cache
     def workflows(self):
         # TODO(ssbarnea): implement pagination support
         url = self._get_url("workflow")

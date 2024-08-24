@@ -116,9 +116,11 @@ class ExceptionsTests(unittest.TestCase):
 
         # WHEN: a JIRAError's __str__ method is called and
         # log details are expected to be sent to the tempfile
-        with patch.dict("os.environ", env_vars), patch(
-            f"{PATCH_BASE}.tempfile.mkstemp", autospec=True
-        ) as mock_mkstemp, patch(f"{PATCH_BASE}.open", mocked_open):
+        with (
+            patch.dict("os.environ", env_vars),
+            patch(f"{PATCH_BASE}.tempfile.mkstemp", autospec=True) as mock_mkstemp,
+            patch(f"{PATCH_BASE}.open", mocked_open),
+        ):
             mock_mkstemp.return_value = 0, str(test_jira_error_filename)
             str(JIRAError(response=self.MockResponse(text=DUMMY_TEXT)))
 
@@ -137,9 +139,11 @@ class ExceptionsTests(unittest.TestCase):
         mocked_open = mock_open()
 
         # WHEN: a JIRAError's __str__ method is called
-        with patch.dict("os.environ", env_vars), patch(
-            f"{PATCH_BASE}.tempfile.mkstemp", autospec=True
-        ) as mock_mkstemp, patch(f"{PATCH_BASE}.open", mocked_open):
+        with (
+            patch.dict("os.environ", env_vars),
+            patch(f"{PATCH_BASE}.tempfile.mkstemp", autospec=True) as mock_mkstemp,
+            patch(f"{PATCH_BASE}.open", mocked_open),
+        ):
             mock_mkstemp.return_value = 0, str(test_jira_error_filename)
             str(JIRAError(response=self.MockResponse(text=DUMMY_TEXT)))
 
