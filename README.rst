@@ -11,11 +11,6 @@ Jira Python Library
 .. image:: https://img.shields.io/github/issues/pycontribs/jira.svg
     :target: https://github.com/pycontribs/jira/issues
 
-.. image:: https://img.shields.io/badge/irc-%23pycontribs-blue
-    :target: irc:///#pycontribs
-
-------------
-
 .. image:: https://readthedocs.org/projects/jira/badge/?version=main
     :target: https://jira.readthedocs.io/
 

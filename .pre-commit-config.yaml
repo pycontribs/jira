@@ -25,7 +25,8 @@ repos:
         types: [text]
         args: []
         require_serial: false
-        additional_dependencies: []
+        additional_dependencies:
+          - tomli; python_version<'3.11'
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: "v0.6.2"
     hooks:
