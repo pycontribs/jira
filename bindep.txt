@@ -1,0 +1,2 @@
+# gssapi pypi wheel build needs:
+libkrb5-dev [platform:dpkg]
