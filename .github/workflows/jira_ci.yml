@@ -1,17 +1,16 @@
 name: ci
 
+# runs only after tox workflow finished successfully
 on:
-  # Trigger the workflow on push or pull request,
-  # but only for the main branch
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+  workflow_run:
+    workflows: [tox]
+    branches: [main]
+    types:
+      - completed
 
 jobs:
   server:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     uses: pycontribs/jira/.github/workflows/jira_server_ci.yml@main
 
   cloud:

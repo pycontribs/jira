@@ -3279,7 +3279,7 @@ class JIRA:
 
         This method returns a dict of properties that can be used to crop a subarea of a larger image for use.
         This dict should be saved and passed to :py:meth:`confirm_project_avatar` to finish the avatar creation process.
-        If you want to cut out the middleman and confirm the avatar with Jira's default cropping,
+        If you want to confirm the avatar with Jira's default cropping,
         pass the 'auto_confirm' argument with a truthy value and :py:meth:`confirm_project_avatar` will be called for you before this method returns.
 
         Args:
@@ -3825,7 +3825,7 @@ class JIRA:
 
         This method returns a dict of properties that can be used to crop a subarea of a larger image for use.
         This dict should be saved and passed to :py:meth:`confirm_user_avatar` to finish the avatar creation process.
-        If you want to cut out the middleman and confirm the avatar with Jira's default cropping, pass the ``auto_confirm`` argument with a truthy value and
+        If you want to confirm the avatar with Jira's default cropping, pass the ``auto_confirm`` argument with a truthy value and
         :py:meth:`confirm_user_avatar` will be called for you before this method returns.
 
         Args:
@@ -4234,7 +4234,7 @@ class JIRA:
 
         If configured through the constructor.
 
-        https://docs.python-requests.org/en/master/user/advanced/#client-side-certificates
+        https://docs.python-requests.org/en/latest/user/advanced/#client-side-certificates
         - str: a single file (containing the private key and the certificate)
         - Tuple[str,str] a tuple of both files’ paths
         """
@@ -4246,7 +4246,7 @@ class JIRA:
 
         If configured through the constructor.
 
-        https://docs.python-requests.org/en/master/user/advanced/#ssl-cert-verification
+        https://docs.python-requests.org/en/latest/user/advanced/#ssl-cert-verification
         - str: Path to a `CA_BUNDLE` file or directory with certificates of trusted CAs.
         - bool: True/False
         """

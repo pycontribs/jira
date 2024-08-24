@@ -93,14 +93,31 @@ test = [
 jirashell = "jira.jirashell:main"
 
 [tool.codespell]
+check-filenames = true
+check-hidden = true
+quiet-level = 0
+write-changes = true
+enable-colors = true
 skip = [
+    "./.eggs",
+    "./.git",
+    "./.mypy_cache",
+    "./.tox",
     "./build",
     "./docs/build",
     "./node_modules",
+    "./pip-wheel-metadata",
+    "./tests/icon.png",
+    ".DS_Store",
+    ".ruff_cache",
     "AUTHORS",
-    "ChangeLog"
+    "ChangeLog",
+    "__pycache__",
+    "coverage.xml",
+    "dist",
 ]
-ignore-words = ".config/dictionary.txt"
+builtin = ["clear", "rare", "usage", "names", "code"]
+ignore-words = [".config/dictionary.txt"]
 
 [tool.files]
 packages = """
