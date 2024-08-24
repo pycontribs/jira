@@ -118,8 +118,7 @@ def get_jira(
                 verify = config.get(profile, "verify")
         else:
             raise OSError(
-                "%s was not able to locate the config.ini file in current directory, user home directory or PYTHONPATH."
-                % __name__
+                f"{__name__} was not able to locate the config.ini file in current directory, user home directory or PYTHONPATH."
             )
 
     options = JIRA.DEFAULT_OPTIONS

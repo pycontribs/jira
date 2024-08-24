@@ -295,7 +295,7 @@ class Resource:
         self,
         fields: dict[str, Any] | None = None,
         async_: bool | None = None,
-        jira: JIRA = None,
+        jira: JIRA | None = None,
         notify: bool = True,
         **kwargs: Any,
     ):
@@ -335,8 +335,9 @@ class Resource:
                 and "reporter" not in data["fields"]
             ):
                 logging.warning(
-                    "autofix: setting reporter to '%s' and retrying the update."
-                    % self._options["autofix"]
+                    "autofix: setting reporter to '{}' and retrying the update.".format(
+                        self._options["autofix"]
+                    )
                 )
                 data["fields"]["reporter"] = {"name": self._options["autofix"]}
 
@@ -385,8 +386,7 @@ class Resource:
 
             if user and jira:
                 logging.warning(
-                    "Trying to add missing orphan user '%s' in order to complete the previous failed operation."
-                    % user
+                    f"Trying to add missing orphan user '{user}' in order to complete the previous failed operation."
                 )
                 jira.add_user(user, "noreply@example.com", 10100, active=False)
                 # if 'assignee' not in data['fields']:
@@ -484,7 +484,7 @@ class Attachment(Resource):
         self,
         options: dict[str, str],
         session: ResilientSession,
-        raw: dict[str, Any] = None,
+        raw: dict[str, Any] | None = None,
     ):
         Resource.__init__(self, "attachment/{0}", options, session)
         if raw:
@@ -509,7 +509,7 @@ class Component(Resource):
         self,
         options: dict[str, str],
         session: ResilientSession,
-        raw: dict[str, Any] = None,
+        raw: dict[str, Any] | None = None,
     ):
         Resource.__init__(self, "component/{0}", options, session)
         if raw:
@@ -536,7 +536,7 @@ class CustomFieldOption(Resource):
         self,
         options: dict[str, str],
         session: ResilientSession,
-        raw: dict[str, Any] = None,
+        raw: dict[str, Any] | None = None,
     ):
         Resource.__init__(self, "customFieldOption/{0}", options, session)
         if raw:
@@ -551,7 +551,7 @@ class Dashboard(Resource):
         self,
         options: dict[str, str],
         session: ResilientSession,
-        raw: dict[str, Any] = None,
+        raw: dict[str, Any] | None = None,
     ):
         Resource.__init__(self, "dashboard/{0}", options, session)
         if raw:
@@ -567,7 +567,7 @@ class DashboardItemPropertyKey(Resource):
         self,
         options: dict[str, str],
         session: ResilientSession,
-        raw: dict[str, Any] = None,
+        raw: dict[str, Any] | None = None,
     ):
         Resource.__init__(self, "dashboard/{0}/items/{1}/properties", options, session)
         if raw:
@@ -582,7 +582,7 @@ class DashboardItemProperty(Resource):
         self,
         options: dict[str, str],
         session: ResilientSession,
-        raw: dict[str, Any] = None,
+        raw: dict[str, Any] | None = None,
     ):
         Resource.__init__(
             self, "dashboard/{0}/items/{1}/properties/{2}", options, session
@@ -642,7 +642,7 @@ class DashboardGadget(Resource):
         self,
         options: dict[str, str],
         session: ResilientSession,
-        raw: dict[str, Any] = None,
+        raw: dict[str, Any] | None = None,
     ):
         Resource.__init__(self, "dashboard/{0}/gadget/{1}", options, session)
         if raw:
@@ -718,7 +718,7 @@ class Field(Resource):
         self,
         options: dict[str, str],
         session: ResilientSession,
-        raw: dict[str, Any] = None,
+        raw: dict[str, Any] | None = None,
     ):
         Resource.__init__(self, "field/{0}", options, session)
         if raw:
@@ -733,7 +733,7 @@ class Filter(Resource):
         self,
         options: dict[str, str],
         session: ResilientSession,
-        raw: dict[str, Any] = None,
+        raw: dict[str, Any] | None = None,
     ):
         Resource.__init__(self, "filter/{0}", options, session)
         if raw:
@@ -781,7 +781,7 @@ class Issue(Resource):
         self,
         options: dict[str, str],
         session: ResilientSession,
-        raw: dict[str, Any] = None,
+        raw: dict[str, Any] | None = None,
     ):
         Resource.__init__(self, "issue/{0}", options, session)
 
@@ -794,10 +794,10 @@ class Issue(Resource):
 
     def update(  # type: ignore[override] # incompatible supertype ignored
         self,
-        fields: dict[str, Any] = None,
-        update: dict[str, Any] = None,
-        async_: bool = None,
-        jira: JIRA = None,
+        fields: dict[str, Any] | None = None,
+        update: dict[str, Any] | None = None,
+        async_: bool | None = None,
+        jira: JIRA | None = None,
         notify: bool = True,
         **fieldargs,
     ):
@@ -906,7 +906,7 @@ class Comment(Resource):
         self,
         options: dict[str, str],
         session: ResilientSession,
-        raw: dict[str, Any] = None,
+        raw: dict[str, Any] | None = None,
     ):
         Resource.__init__(self, "issue/{0}/comment/{1}", options, session)
         if raw:
@@ -920,7 +920,7 @@ class Comment(Resource):
         self,
         fields: dict[str, Any] | None = None,
         async_: bool | None = None,
-        jira: JIRA = None,
+        jira: JIRA | None = None,
         body: str = "",
         visibility: dict[str, str] | None = None,
         is_internal: bool = False,
@@ -962,14 +962,20 @@ class RemoteLink(Resource):
         self,
         options: dict[str, str],
         session: ResilientSession,
-        raw: dict[str, Any] = None,
+        raw: dict[str, Any] | None = None,
     ):
         Resource.__init__(self, "issue/{0}/remotelink/{1}", options, session)
         if raw:
             self._parse_raw(raw)
         self.raw: dict[str, Any] = cast(Dict[str, Any], self.raw)
 
-    def update(self, object, globalId=None, application=None, relationship=None):
+    def update(  # type: ignore[override]
+        self,
+        object: dict[str, Any] | None,
+        globalId=None,
+        application=None,
+        relationship=None,
+    ):
         """Update a RemoteLink. 'object' is required.
 
         For definitions of the allowable fields for 'object' and the keyword arguments 'globalId', 'application' and 'relationship',
@@ -989,7 +995,8 @@ class RemoteLink(Resource):
         if relationship is not None:
             data["relationship"] = relationship
 
-        super().update(**data)
+        # https://github.com/pycontribs/jira/issues/1881
+        super().update(**data)  # type: ignore[arg-type]
 
 
 class Votes(Resource):
@@ -999,7 +1006,7 @@ class Votes(Resource):
         self,
         options: dict[str, str],
         session: ResilientSession,
-        raw: dict[str, Any] = None,
+        raw: dict[str, Any] | None = None,
     ):
         Resource.__init__(self, "issue/{0}/votes", options, session)
         if raw:
@@ -1084,14 +1091,14 @@ class Watchers(Resource):
         self,
         options: dict[str, str],
         session: ResilientSession,
-        raw: dict[str, Any] = None,
+        raw: dict[str, Any] | None = None,
     ):
         Resource.__init__(self, "issue/{0}/watchers", options, session)
         if raw:
             self._parse_raw(raw)
         self.raw: dict[str, Any] = cast(Dict[str, Any], self.raw)
 
-    def delete(self, username):
+    def delete(self, username):  # type: ignore[override]
         """Remove the specified user from the watchers list."""
         super().delete(params={"username": username})
 
@@ -1101,7 +1108,7 @@ class TimeTracking(Resource):
         self,
         options: dict[str, str],
         session: ResilientSession,
-        raw: dict[str, Any] = None,
+        raw: dict[str, Any] | None = None,
     ):
         Resource.__init__(self, "issue/{0}/worklog/{1}", options, session)
         self.remainingEstimate = None
@@ -1117,7 +1124,7 @@ class Worklog(Resource):
         self,
         options: dict[str, str],
         session: ResilientSession,
-        raw: dict[str, Any] = None,
+        raw: dict[str, Any] | None = None,
     ):
         Resource.__init__(self, "issue/{0}/worklog/{1}", options, session)
         if raw:
@@ -1154,7 +1161,7 @@ class IssueProperty(Resource):
         self,
         options: dict[str, str],
         session: ResilientSession,
-        raw: dict[str, Any] = None,
+        raw: dict[str, Any] | None = None,
     ):
         Resource.__init__(self, "issue/{0}/properties/{1}", options, session)
         if raw:
@@ -1178,7 +1185,7 @@ class IssueLink(Resource):
         self,
         options: dict[str, str],
         session: ResilientSession,
-        raw: dict[str, Any] = None,
+        raw: dict[str, Any] | None = None,
     ):
         Resource.__init__(self, "issueLink/{0}", options, session)
         if raw:
@@ -1193,7 +1200,7 @@ class IssueLinkType(Resource):
         self,
         options: dict[str, str],
         session: ResilientSession,
-        raw: dict[str, Any] = None,
+        raw: dict[str, Any] | None = None,
     ):
         Resource.__init__(self, "issueLinkType/{0}", options, session)
         if raw:
@@ -1208,7 +1215,7 @@ class IssueType(Resource):
         self,
         options: dict[str, str],
         session: ResilientSession,
-        raw: dict[str, Any] = None,
+        raw: dict[str, Any] | None = None,
     ):
         Resource.__init__(self, "issuetype/{0}", options, session)
         if raw:
@@ -1223,7 +1230,7 @@ class Priority(Resource):
         self,
         options: dict[str, str],
         session: ResilientSession,
-        raw: dict[str, Any] = None,
+        raw: dict[str, Any] | None = None,
     ):
         Resource.__init__(self, "priority/{0}", options, session)
         if raw:
@@ -1238,7 +1245,7 @@ class Project(Resource):
         self,
         options: dict[str, str],
         session: ResilientSession,
-        raw: dict[str, Any] = None,
+        raw: dict[str, Any] | None = None,
     ):
         Resource.__init__(self, "project/{0}", options, session)
         if raw:
@@ -1253,7 +1260,7 @@ class Role(Resource):
         self,
         options: dict[str, str],
         session: ResilientSession,
-        raw: dict[str, Any] = None,
+        raw: dict[str, Any] | None = None,
     ):
         Resource.__init__(self, "project/{0}/role/{1}", options, session)
         if raw:
@@ -1262,8 +1269,8 @@ class Role(Resource):
 
     def update(  # type: ignore[override]
         self,
-        users: str | list | tuple = None,
-        groups: str | list | tuple = None,
+        users: str | list | tuple | None = None,
+        groups: str | list | tuple | None = None,
     ):
         """Add the specified users or groups to this project role. One of ``users`` or ``groups`` must be specified.
 
@@ -1288,8 +1295,8 @@ class Role(Resource):
 
     def add_user(
         self,
-        users: str | list | tuple = None,
-        groups: str | list | tuple = None,
+        users: str | list | tuple | None = None,
+        groups: str | list | tuple | None = None,
     ):
         """Add the specified users or groups to this project role. One of ``users`` or ``groups`` must be specified.
 
@@ -1313,7 +1320,7 @@ class Resolution(Resource):
         self,
         options: dict[str, str],
         session: ResilientSession,
-        raw: dict[str, Any] = None,
+        raw: dict[str, Any] | None = None,
     ):
         Resource.__init__(self, "resolution/{0}", options, session)
         if raw:
@@ -1328,7 +1335,7 @@ class SecurityLevel(Resource):
         self,
         options: dict[str, str],
         session: ResilientSession,
-        raw: dict[str, Any] = None,
+        raw: dict[str, Any] | None = None,
     ):
         Resource.__init__(self, "securitylevel/{0}", options, session)
         if raw:
@@ -1343,7 +1350,7 @@ class Status(Resource):
         self,
         options: dict[str, str],
         session: ResilientSession,
-        raw: dict[str, Any] = None,
+        raw: dict[str, Any] | None = None,
     ):
         Resource.__init__(self, "status/{0}", options, session)
         if raw:
@@ -1358,7 +1365,7 @@ class StatusCategory(Resource):
         self,
         options: dict[str, str],
         session: ResilientSession,
-        raw: dict[str, Any] = None,
+        raw: dict[str, Any] | None = None,
     ):
         Resource.__init__(self, "statuscategory/{0}", options, session)
         if raw:
@@ -1373,7 +1380,7 @@ class User(Resource):
         self,
         options: dict[str, str],
         session: ResilientSession,
-        raw: dict[str, Any] = None,
+        raw: dict[str, Any] | None = None,
         *,
         _query_param: str = "username",
     ):
@@ -1394,7 +1401,7 @@ class Group(Resource):
         self,
         options: dict[str, str],
         session: ResilientSession,
-        raw: dict[str, Any] = None,
+        raw: dict[str, Any] | None = None,
     ):
         Resource.__init__(self, "group?groupname={0}", options, session)
         if raw:
@@ -1409,7 +1416,7 @@ class Version(Resource):
         self,
         options: dict[str, str],
         session: ResilientSession,
-        raw: dict[str, Any] = None,
+        raw: dict[str, Any] | None = None,
     ):
         Resource.__init__(self, "version/{0}", options, session)
         if raw:
@@ -1433,7 +1440,8 @@ class Version(Resource):
 
         return super().delete(params)
 
-    def update(self, **kwargs):
+    # TODO: https://github.com/pycontribs/jira/issues/1881
+    def update(self, **kwargs):  # type: ignore[override]
         """Update this project version from the server. It is prior used to archive versions.
 
         Refer to Atlassian REST API `documentation`_.
@@ -1478,7 +1486,7 @@ class AgileResource(Resource):
         path: str,
         options: dict[str, str],
         session: ResilientSession,
-        raw: dict[str, Any] = None,
+        raw: dict[str, Any] | None = None,
     ):
         self.self = None
 
@@ -1495,7 +1503,7 @@ class Sprint(AgileResource):
         self,
         options: dict[str, str],
         session: ResilientSession,
-        raw: dict[str, Any] = None,
+        raw: dict[str, Any] | None = None,
     ):
         AgileResource.__init__(self, "sprint/{0}", options, session, raw)
 
@@ -1507,7 +1515,7 @@ class Board(AgileResource):
         self,
         options: dict[str, str],
         session: ResilientSession,
-        raw: dict[str, Any] = None,
+        raw: dict[str, Any] | None = None,
     ):
         AgileResource.__init__(self, "board/{id}", options, session, raw)
 
@@ -1522,7 +1530,7 @@ class Customer(Resource):
         self,
         options: dict[str, str],
         session: ResilientSession,
-        raw: dict[str, Any] = None,
+        raw: dict[str, Any] | None = None,
     ):
         Resource.__init__(
             self, "customer", options, session, "{server}/rest/servicedeskapi/{path}"
@@ -1539,7 +1547,7 @@ class ServiceDesk(Resource):
         self,
         options: dict[str, str],
         session: ResilientSession,
-        raw: dict[str, Any] = None,
+        raw: dict[str, Any] | None = None,
     ):
         Resource.__init__(
             self,
@@ -1560,7 +1568,7 @@ class RequestType(Resource):
         self,
         options: dict[str, str],
         session: ResilientSession,
-        raw: dict[str, Any] = None,
+        raw: dict[str, Any] | None = None,
     ):
         Resource.__init__(
             self,
@@ -1687,7 +1695,7 @@ class UnknownResource(Resource):
         self,
         options: dict[str, str],
         session: ResilientSession,
-        raw: dict[str, Any] = None,
+        raw: dict[str, Any] | None = None,
     ):
         Resource.__init__(self, "unknown{0}", options, session)
         if raw:
