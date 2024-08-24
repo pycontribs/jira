@@ -2811,14 +2811,8 @@ class JIRA:
             started (Optional[datetime.datetime]): Moment when the work is logged, if not specified will default to now
             user (Optional[str]): the user ID or name to use for this worklog
             visibility (Optional[Dict[str,Any]]): Details about any restrictions in the visibility of the worklog.
-              Optional when creating or updating a worklog. ::
-                ```js
-                {
-                    "type": "group", # "group" or "role"
-                    "value": "<string>",
-                    "identifier": "<string>" # OPTIONAL
-                }
-                ```
+                Example of visibility options when creating or updating a worklog.
+                ``{ "type": "group", "value": "<string>", "identifier": "<string>"}``
 
         Returns:
             Worklog
