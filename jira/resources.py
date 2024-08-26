@@ -954,6 +954,19 @@ class Comment(Resource):
 
         super().update(async_=async_, jira=jira, notify=notify, fields=data)
 
+class PinnedComment(Resource):
+    """Pinned comment on an issue."""
+
+    def __init__(
+        self,
+        options: dict[str, str],
+        session: ResilientSession,
+        raw: dict[str, Any] = None,
+    ):
+        Resource.__init__(self, "issue/{0}/pinned-comments", options, session)
+        if raw:
+            self._parse_raw(raw)
+        self.raw: dict[str, Any] = cast(dict[str, Any], self.raw)
 
 class RemoteLink(Resource):
     """A link to a remote application from an issue."""
@@ -1659,6 +1672,7 @@ resource_class_map: dict[str, type[Resource]] = {
     r"filter/[^/]$": Filter,
     r"issue/[^/]+$": Issue,
     r"issue/[^/]+/comment/[^/]+$": Comment,
+    r"issue/[^/]+/pinned-comments$": PinnedComment,
     r"issue/[^/]+/votes$": Votes,
     r"issue/[^/]+/watchers$": Watchers,
     r"issue/[^/]+/worklog/[^/]+$": Worklog,
