@@ -69,6 +69,7 @@ __all__ = (
     "ServiceDesk",
     "RequestType",
     "resource_class_map",
+    "PinnedComment"
 )
 
 logging.getLogger("jira").addHandler(logging.NullHandler())
@@ -962,7 +963,7 @@ class PinnedComment(Resource):
         self,
         options: dict[str, str],
         session: ResilientSession,
-        raw: dict[str, Any] = None,
+        raw: dict[str, Any] | None = None,
     ):
         Resource.__init__(self, "issue/{0}/pinned-comments", options, session)
         if raw:
