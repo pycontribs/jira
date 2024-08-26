@@ -69,7 +69,7 @@ __all__ = (
     "ServiceDesk",
     "RequestType",
     "resource_class_map",
-    "PinnedComment"
+    "PinnedComment",
 )
 
 logging.getLogger("jira").addHandler(logging.NullHandler())
