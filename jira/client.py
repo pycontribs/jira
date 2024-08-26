@@ -5653,9 +5653,9 @@ class JIRA:
             for raw_comment_json in r_json
         ]
         return pinned_comments
-    
+
     @translate_resource_args
-    def pin_comment(self, issue: int | str , comment: int | str, pin: bool) -> Response:
+    def pin_comment(self, issue: int | str, comment: int | str, pin: bool) -> Response:
         """Pin/Unpin a comment on the issue.
 
         Args:
@@ -5666,5 +5666,5 @@ class JIRA:
         Returns:
           Response
         """
-        url = self._get_url("issue/" + str(issue) + "/comment/"+ str(comment) + "/pin")
+        url = self._get_url("issue/" + str(issue) + "/comment/" + str(comment) + "/pin")
         return self._session.put(url, data=str(pin).lower())

@@ -32,4 +32,3 @@ class PinnedCommentTests(JiraTestCase):
             self.jira.pin_comment(comment2.id, False)
             pinned_comments = self.jira.pinned_comments(issue)
             assert len(pinned_comments) == 0
-

@@ -954,6 +954,7 @@ class Comment(Resource):
 
         super().update(async_=async_, jira=jira, notify=notify, fields=data)
 
+
 class PinnedComment(Resource):
     """Pinned comment on an issue."""
 
@@ -967,6 +968,7 @@ class PinnedComment(Resource):
         if raw:
             self._parse_raw(raw)
         self.raw: dict[str, Any] = cast(dict[str, Any], self.raw)
+
 
 class RemoteLink(Resource):
     """A link to a remote application from an issue."""
