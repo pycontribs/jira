@@ -3479,6 +3479,32 @@ class JIRA:
 
     # Search
 
+    @overload
+    def search_issues(
+        self,
+        jql_str: str,
+        startAt: int,
+        maxResults: int,
+        validate_query: bool,
+        fields: Optional[Union[str, list[str]]],
+        expand: Optional[str],
+        json_result: Literal[False],
+    ) -> ResultList[Issue]:
+        ...
+
+    @overload
+    def search_issues(
+        self,
+        jql_str: str,
+        startAt: int,
+        maxResults: int,
+        validate_query: bool,
+        fields: Optional[Union[str, list[str]]],
+        expand: Optional[str],
+        json_result: Literal[True],
+    ) -> Dict[str, Any]:
+        ...
+
     def search_issues(
         self,
         jql_str: str,
