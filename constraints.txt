@@ -14,7 +14,7 @@ backports-tarfile==1.2.0
     # via jaraco-context
 beautifulsoup4==4.12.3
     # via furo
-certifi==2024.7.4
+certifi==2024.8.30
     # via requests
 cffi==1.17.0
     # via cryptography
@@ -106,8 +106,6 @@ parso==0.8.4
     # via jedi
 pexpect==4.9.0
     # via ipython
-pillow==10.4.0
-    # via jira (pyproject.toml)
 pluggy==1.5.0
     # via pytest
 prompt-toolkit==3.0.47
@@ -232,5 +230,5 @@ wheel==0.44.0
     # via jira (pyproject.toml)
 yanc==0.3.3
     # via jira (pyproject.toml)
-zipp==3.20.0
+zipp==3.20.1
     # via importlib-metadata
