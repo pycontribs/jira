@@ -4,7 +4,7 @@
 #
 #    pip-compile --extra=async --extra=cli --extra=docs --extra=opt --extra=test --output-file=constraints.txt --strip-extras
 #
-alabaster==0.7.16
+alabaster==1.0.0
     # via sphinx
 asttokens==2.4.1
     # via stack-data
