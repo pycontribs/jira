@@ -74,6 +74,7 @@ from jira.resources import (
     IssueTypeScheme,
     NotificationScheme,
     PermissionScheme,
+    PinnedComment,
     Priority,
     PriorityScheme,
     Project,
@@ -5637,3 +5638,36 @@ class JIRA:
         url = self._get_url("backlog/issue", base=self.AGILE_BASE_URL)
         payload = {"issues": issue_keys}  # TODO: should be list of issues
         return self._session.post(url, data=json.dumps(payload))
+
+    @translate_resource_args
+    def pinned_comments(self, issue: int | str) -> list[PinnedComment]:
+        """Get a list of pinned comment Resources of the issue provided.
+
+        Args:
+            issue (Union[int, str]): the issue ID or key to get the comments from
+
+        Returns:
+            List[PinnedComment]
+        """
+        r_json = self._get_json(f"issue/{issue}/pinned-comments", params={})
+
+        pinned_comments = [
+            PinnedComment(self._options, self._session, raw_comment_json)
+            for raw_comment_json in r_json
+        ]
+        return pinned_comments
+
+    @translate_resource_args
+    def pin_comment(self, issue: int | str, comment: int | str, pin: bool) -> Response:
+        """Pin/Unpin a comment on the issue.
+
+        Args:
+          issue (Union[int, str]): the issue ID or key to get the comments from
+          comment (Union[int, str]): the comment ID
+          pin (bool): Pin (True) or Unpin (False)
+
+        Returns:
+          Response
+        """
+        url = self._get_url("issue/" + str(issue) + "/comment/" + str(comment) + "/pin")
+        return self._session.put(url, data=str(pin).lower())
