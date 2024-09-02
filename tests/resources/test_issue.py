@@ -38,6 +38,13 @@ class IssueTests(JiraTestCase):
         self.assertTrue(hasattr(issues[0].fields, "assignee"))
         self.assertFalse(hasattr(issues[0].fields, "reporter"))
 
+    def test_find_issue_fields_translating(self):
+        issues = self.jira.search_issues(f"key={self.issue_1}", fields="due")
+        issue = issues[0]
+        self.assertTrue(hasattr(issue.fields, "due"))
+        self.assertTrue(hasattr(issue.fields, "duedate"))
+        self.assertTrue(issue.fields.due == issue.fields.duedate)
+
     def test_issue_search_default_behaviour_included_fields(self):
         search_str = f"key={self.issue_1}"
         issues = self.jira.search_issues(search_str)
@@ -90,6 +97,19 @@ class IssueTests(JiraTestCase):
         self.assertTrue(hasattr(issue, "schema"))
         # testing for changelog is not reliable because it may exist or not based on test order
         # self.assertFalse(hasattr(issue, 'changelog'))
+
+    def test_find_issue_fields_limiting(self):
+        issue = self.jira.issue(self.issue_1, fields="summary, comment")
+        self.assertTrue(hasattr(issue.fields, "summary"))
+        self.assertTrue(hasattr(issue.fields, "comment"))
+        self.assertFalse(hasattr(issue.fields, "reporter"))
+        self.assertFalse(hasattr(issue.fields, "progress"))
+
+    def test_search_issues_fields_translating(self):
+        issue = self.jira.issue(self.issue_1, fields="due")
+        self.assertTrue(hasattr(issue.fields, "due"))
+        self.assertTrue(hasattr(issue.fields, "duedate"))
+        self.assertTrue(issue.fields.due == issue.fields.duedate)
 
     def test_create_issue_with_fieldargs(self):
         issue = self.jira.create_issue(
