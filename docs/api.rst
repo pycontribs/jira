@@ -76,6 +76,10 @@ jira.resources module
    :undoc-members:
    :show-inheritance:
 
+.. autoclass:: jira.resources.Field
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 jira.utils module
 -----------------

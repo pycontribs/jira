@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Iterator
 from contextlib import contextmanager
 from functools import cached_property
-from typing import Iterator
 
 from parameterized import parameterized
 
@@ -59,5 +59,5 @@ class EpicTests(JiraTestCase):
         with self.make_epic() as new_epic:
             self.jira.add_issues_to_epic(
                 new_epic.id,
-                ",".join(issue_list) if input_type == str else issue_list,
+                ",".join(issue_list) if input_type == str else issue_list,  # noqa: E721
             )
