@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Iterator
 from contextlib import contextmanager
 from functools import lru_cache
-from typing import Iterator
 
 import pytest as pytest
 

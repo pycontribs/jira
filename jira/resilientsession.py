@@ -105,11 +105,11 @@ def parse_errors(resp: Response) -> list[str]:
     if "message" in resp_data:
         # Jira 5.1 errors
         parsed_errors = [resp_data["message"]]
-    elif "errorMessage" in resp_data:
+    if "errorMessage" in resp_data:
         # Sometimes Jira returns `errorMessage` as a message error key
         # for example for the "Service temporary unavailable" error
         parsed_errors = [resp_data["errorMessage"]]
-    elif "errorMessages" in resp_data:
+    if "errorMessages" in resp_data:
         # Jira 5.0.x error messages sometimes come wrapped in this array
         # Sometimes this is present but empty
         error_messages = resp_data["errorMessages"]
@@ -118,7 +118,7 @@ def parse_errors(resp: Response) -> list[str]:
                 parsed_errors = list(error_messages)
             else:
                 parsed_errors = [error_messages]
-    elif "errors" in resp_data:
+    if "errors" in resp_data:
         resp_errors = resp_data["errors"]
         if len(resp_errors) > 0 and isinstance(resp_errors, dict):
             # Catching only 'errors' that are dict. See https://github.com/pycontribs/jira/issues/350

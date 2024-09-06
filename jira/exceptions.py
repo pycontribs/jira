@@ -12,11 +12,11 @@ class JIRAError(Exception):
 
     def __init__(
         self,
-        text: str = None,
-        status_code: int = None,
-        url: str = None,
-        request: Response = None,
-        response: Response = None,
+        text: str | None = None,
+        status_code: int | None = None,
+        url: str | None = None,
+        request: Response | None = None,
+        response: Response | None = None,
         **kwargs,
     ):
         """Creates a JIRAError.
