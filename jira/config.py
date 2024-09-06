@@ -9,6 +9,7 @@ Also, this simplifies the scripts by not having to write the same initialization
 from __future__ import annotations
 
 import configparser
+import copy
 import logging
 import os
 import sys
@@ -121,7 +122,7 @@ def get_jira(
                 f"{__name__} was not able to locate the config.ini file in current directory, user home directory or PYTHONPATH."
             )
 
-    options = JIRA.DEFAULT_OPTIONS
+    options = copy.copy(JIRA.DEFAULT_OPTIONS)
     options["server"] = url
     options["autofix"] = autofix
     options["appid"] = appid
