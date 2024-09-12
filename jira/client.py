@@ -668,9 +668,11 @@ class JIRA:
 
         self.with_lookup = with_lookup
         if with_lookup:
-            warnings.warn(f"Auto-lookup (with_lookup) has been set to True, the library will look-up the provided user "
-                          f"for its 'add_watcher', 'remove_watcher' and 'assign_issue' methods; this functionality "
-                          f"will be deprecated in future releases")
+            warnings.warn(
+                "Auto-lookup (with_lookup) has been set to True, the library will look-up the provided user "
+                "for its 'add_watcher', 'remove_watcher' and 'assign_issue' methods; this functionality "
+                "will be deprecated in future releases"
+            )
 
         if self._options["check_update"] and not JIRA.checked_version:
             self._check_update_()
@@ -2773,7 +2775,9 @@ class JIRA:
             watcher_id = watcher
         if self.with_lookup:
             watcher_id = self._get_user_id(watcher_id)
-        payload = {"accountId": watcher_id} if self._is_cloud else {"username": watcher_id}
+        payload = (
+            {"accountId": watcher_id} if self._is_cloud else {"username": watcher_id}
+        )
         result = self._session.delete(url, params=payload)
         return result
 
