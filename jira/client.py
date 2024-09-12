@@ -473,6 +473,7 @@ class JIRA:
         kerberos_options: dict[str, Any] | None = None,
         validate=False,
         get_server_info: bool = True,
+        with_lookup: bool = True,
         async_: bool = False,
         async_workers: int = 5,
         logging: bool = True,
@@ -664,6 +665,12 @@ class JIRA:
             self.deploymentType = si.get("deploymentType")
         else:
             self._version = (0, 0, 0)
+
+        self.with_lookup = with_lookup
+        if with_lookup:
+            warnings.warn(f"Auto-lookup (with_lookup) has been set to True, the library will look-up the provided user "
+                          f"for its 'add_watcher', 'remove_watcher' and 'assign_issue' methods; this functionality "
+                          f"will be deprecated in future releases")
 
         if self._options["check_update"] and not JIRA.checked_version:
             self._check_update_()
@@ -2210,7 +2217,7 @@ class JIRA:
             params["expand"] = expand
         return self._get_json("issue/createmeta", params)
 
-    def get_user_identifier(self, user: User) -> str:
+    def _get_user_identifier(self, user: User) -> str:
         """Get the unique identifier depending on the deployment type.
 
         - Cloud: 'accountId'
@@ -2224,9 +2231,47 @@ class JIRA:
         """
         return user.accountId if self._is_cloud else user.name
 
+    def _get_user_id(self, user: str | None) -> str | None:
+        """Internal method for translating a user search (str) to an id.
+
+        Return None and -1 unchanged.
+
+        This function uses :py:meth:`JIRA.search_users` to find the user and then using :py:meth:`JIRA._get_user_identifier` extracts
+        the relevant identifier property depending on whether the instance is a Cloud or self-hosted Instance.
+
+        Args:
+            user (Optional[str]): The search term used for finding a user. None, '-1' and -1 are equivalent to 'Unassigned'.
+
+        Raises:
+            JIRAError: If any error occurs.
+
+        Returns:
+            Optional[str]: The Jira user's identifier. Or "-1" and None unchanged.
+        """
+        if user in (None, -1, "-1"):
+            return user
+        try:
+            user_obj: User
+            if self._is_cloud:
+                users = self.search_users(query=user, maxResults=20)
+            else:
+                users = self.search_users(user=user, maxResults=20)
+
+            if len(users) < 1:
+                raise JIRAError(f"No matching user found for: '{user}'")
+
+            matches = []
+            if len(users) > 1:
+                matches = [u for u in users if self._get_user_identifier(u) == user]
+            user_obj = matches[0] if matches else users[0]
+
+        except Exception as e:
+            raise JIRAError(str(e))
+        return self._get_user_identifier(user_obj)
+
     # non-resource
     @translate_resource_args
-    def assign_issue(self, issue: int | str, assignee: str | None | User) -> bool:
+    def assign_issue(self, issue: int | str, assignee: str | User | None) -> bool:
         """Assign an issue to a user.
 
         Args:
@@ -2240,8 +2285,12 @@ class JIRA:
         """
         url = self._get_latest_url(f"issue/{issue}/assignee")
         if isinstance(assignee, User):
-            assignee = self.get_user_identifier(assignee)
-        payload = {"accountId": assignee} if self._is_cloud else {"name": assignee}
+            user_id = self._get_user_identifier(assignee)
+        else:
+            user_id = assignee
+        if self.with_lookup:
+            user_id = self._get_user_id(user_id)
+        payload = {"accountId": user_id} if self._is_cloud else {"name": user_id}
         self._session.put(url, data=json.dumps(payload))
         return True
 
@@ -2698,8 +2747,12 @@ class JIRA:
         """
         url = self._get_url("issue/" + str(issue) + "/watchers")
         if isinstance(watcher, User):
-            watcher = self.get_user_identifier(watcher)
-        return self._session.post(url, data=json.dumps(watcher))
+            watcher_id = self._get_user_identifier(watcher)
+        else:
+            watcher_id = watcher
+        if self.with_lookup:
+            watcher_id = self._get_user_id(watcher_id)
+        return self._session.post(url, data=json.dumps(watcher_id))
 
     @translate_resource_args
     def remove_watcher(self, issue: str | int, watcher: str | User) -> Response:
@@ -2707,7 +2760,7 @@ class JIRA:
 
         Args:
             issue (Union[str, int]): ID or key of the issue affected
-            watcher (str): username (for hosted) or account ID (for cloud) of the user to add to the watchers list
+            watcher (str): name of the user to remove from the watchers list
 
         Returns:
             Response
@@ -2715,8 +2768,12 @@ class JIRA:
         url = self._get_url("issue/" + str(issue) + "/watchers")
         # https://docs.atlassian.com/software/jira/docs/api/REST/8.13.6/#api/2/issue-removeWatcher
         if isinstance(watcher, User):
-            watcher = self.get_user_identifier(watcher)
-        payload = {"accountId": watcher} if self._is_cloud else {"username": watcher}
+            watcher_id = self._get_user_identifier(watcher)
+        else:
+            watcher_id = watcher
+        if self.with_lookup:
+            watcher_id = self._get_user_id(watcher_id)
+        payload = {"accountId": watcher_id} if self._is_cloud else {"username": watcher_id}
         result = self._session.delete(url, params=payload)
         return result
 
