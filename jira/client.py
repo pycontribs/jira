@@ -4985,7 +4985,11 @@ class JIRA:
 
         ps_list: list[dict[str, Any]]
 
-        if permissionScheme is None:
+        if permissionScheme is None and self._is_cloud:
+            # Let Jira Cloud decide the default field due to issues in handling the
+            # field. See https://bit.ly/3ALVqgo
+            pass
+        elif permissionScheme is None:
             ps_list = self.permissionschemes()
             for sec in ps_list:
                 if sec["name"] == "Default Permission Scheme":
@@ -5100,12 +5104,13 @@ class JIRA:
             "assigneeType": "PROJECT_LEAD",
             "description": "",
             # "avatarId": 13946,
-            "permissionScheme": int(permissionScheme),
             "notificationScheme": notificationScheme,
             "url": url,
         }
         if issueSecurityScheme:
             payload["issueSecurityScheme"] = int(issueSecurityScheme)
+        if permissionScheme is not None:
+            payload["permissionScheme"] = int(permissionScheme)
         if projectCategory:
             payload["categoryId"] = int(projectCategory)
 
