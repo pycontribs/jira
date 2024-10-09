@@ -44,7 +44,7 @@ execnet==2.1.1
     # via
     #   pytest-cache
     #   pytest-xdist
-executing==2.0.1
+executing==2.1.0
     # via stack-data
 filemagic==1.6
     # via jira (pyproject.toml)
