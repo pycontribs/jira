@@ -2795,7 +2795,7 @@ class JIRA:
         started: datetime.datetime | None = None,
         user: str | None = None,
         visibility: dict[str, Any] | None = None,
-        **additionalProperties
+        **additionalProperties,
     ) -> Worklog:
         """Add a new worklog entry on an issue and return a Resource for it.
 
