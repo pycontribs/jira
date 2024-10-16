@@ -2795,6 +2795,7 @@ class JIRA:
         started: datetime.datetime | None = None,
         user: str | None = None,
         visibility: dict[str, Any] | None = None,
+        **additionalProperties
     ) -> Worklog:
         """Add a new worklog entry on an issue and return a Resource for it.
 
@@ -2812,6 +2813,8 @@ class JIRA:
             visibility (Optional[Dict[str,Any]]): Details about any restrictions in the visibility of the worklog.
                 Example of visibility options when creating or updating a worklog.
                 ``{ "type": "group", "value": "<string>", "identifier": "<string>"}``
+            **additionalProperties: Extra properties of any type may be provided to this object.
+                https://developer.atlassian.com/cloud/jira/platform/rest/v3/api-group-issue-worklogs/#api-rest-api-3-issue-issueidorkey-worklog-post-request-body
 
         Returns:
             Worklog
@@ -2851,6 +2854,8 @@ class JIRA:
                 "active": False,
             }
             data["updateAuthor"] = data["author"]
+        if additionalProperties:
+            data.update(additionalProperties)
         # report bug to Atlassian: author and updateAuthor parameters are ignored.
         url = self._get_url(f"issue/{issue}/worklog")
         r = self._session.post(url, params=params, data=json.dumps(data))
