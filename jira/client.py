@@ -3289,6 +3289,7 @@ class JIRA:
         user: str | None = None,
         visibility: dict[str, Any] | None = None,
         notify: bool = True,
+        properties: list[dict[str, Any]] | None = None,
     ) -> Worklog:
         """Add a new worklog entry on an issue and return a Resource for it.
 
@@ -3309,6 +3310,9 @@ class JIRA:
             notify (bool): Whether to email users watching the issue about the new worklog.
               Jira Cloud honours this. Jira Server/DC does not document the parameter; it accepts
               and ignores it. (Default: ``True``)
+            properties (list[dict[str, Any]] | None): Entity properties to store on the worklog,
+              each as ``{"key": "<string>", "value": <any JSON>}``. Jira Cloud only:
+              Jira Server and Data Center reject a worklog that has this field with HTTP 400.
 
         Returns:
             Worklog
@@ -3336,6 +3340,12 @@ class JIRA:
 
         if visibility is not None:
             data["visibility"] = visibility
+        if properties is not None:
+            # Cloud's worklog has properties. The Server and DC worklog schema for
+            # addWorklog does not, up to the 11.x reference:
+            # https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-issue-worklogs/#api-rest-api-2-issue-issueidorkey-worklog-post
+            # https://developer.atlassian.com/server/jira/platform/rest/v11000/api-group-issue/
+            data["properties"] = properties
         if started is not None:
             # based on REST Browser it needs: "2014-06-03T08:21:01.273+0000"
             if started.tzinfo is None:
