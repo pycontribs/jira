@@ -101,6 +101,7 @@ jobs:
         with:
           name: logs-${{ matrix.name }}.zip
           if-no-files-found: error
+          include-hidden-files: true
           path: |
             .tox/**/log/
             .tox/**/coverage.xml
