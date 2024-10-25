@@ -36,7 +36,7 @@ jobs:
     - name: Publish to test.pypi.org
       if: >-  # "create" workflows run separately from "push" & "pull_request"
         github.event_name == 'release'
-      uses: pypa/gh-action-pypi-publish@v1
+      uses: pypa/gh-action-pypi-publish@release/v1
       with:
         password: ${{ secrets.testpypi_password }}
         repository_url: https://test.pypi.org/legacy/
@@ -44,6 +44,6 @@ jobs:
     - name: Publish to pypi.org
       if: >-  # "create" workflows run separately from "push" & "pull_request"
         github.event_name == 'release'
-      uses: pypa/gh-action-pypi-publish@v1
+      uses: pypa/gh-action-pypi-publish@release/v1
       with:
         password: ${{ secrets.pypi_password }}
