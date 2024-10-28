@@ -2754,15 +2754,19 @@ class JIRA:
         return result
 
     @translate_resource_args
-    def worklogs(self, issue: str | int) -> list[Worklog]:
+    def worklogs(self, issue: str | int, expand: str | None = None) -> list[Worklog]:
         """Get a list of worklog Resources from the server for an issue.
 
         Args:
             issue (Union[str, int]): ID or key of the issue to get worklogs from
+            expand (Optional[str]): extra information to fetch inside each resource
         Returns:
             List[Worklog]
         """
-        r_json = self._get_json("issue/" + str(issue) + "/worklog")
+        params = {}
+        if expand:
+            params["expand"] = expand
+        r_json = self._get_json("issue/" + str(issue) + "/worklog", params=params)
         worklogs = [
             Worklog(self._options, self._session, raw_worklog_json)
             for raw_worklog_json in r_json["worklogs"]
