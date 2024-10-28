@@ -2770,7 +2770,7 @@ class JIRA:
         return worklogs
 
     @translate_resource_args
-    def worklog(self, issue: str | int, id: str, expand: str | None=None) -> Worklog:
+    def worklog(self, issue: str | int, id: str, expand: str | None = None) -> Worklog:
         """Get a specific worklog Resource from the server.
 
         Args:
