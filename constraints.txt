@@ -207,7 +207,7 @@ stack-data==0.6.3
     # via ipython
 tenacity==9.0.0
     # via jira (pyproject.toml)
-termcolor==2.4.0
+termcolor==2.5.0
     # via pytest-sugar
 tomli==2.0.1
     # via
