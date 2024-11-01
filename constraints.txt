@@ -138,7 +138,7 @@ pytest==8.3.2
     #   pytest-xdist
 pytest-cache==1.0
     # via jira (pyproject.toml)
-pytest-cov==5.0.0
+pytest-cov==6.0.0
     # via jira (pyproject.toml)
 pytest-instafail==0.5.0
     # via jira (pyproject.toml)
