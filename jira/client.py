@@ -5382,7 +5382,7 @@ class JIRA:
         Returns:
             Dict[str, Any]
         """
-        payload : dict[str, Any] = {}
+        payload: dict[str, Any] = {}
         if name:
             payload["name"] = name
         if startDate:
