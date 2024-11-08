@@ -69,6 +69,7 @@ rolesdict
 rsyncdirs
 rsyncignore
 runbackup
+securitylevels
 serialised
 sprintreport
 ssbarnea
