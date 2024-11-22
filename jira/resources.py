@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING, Any, cast
 
 from requests import Response
 from requests.structures import CaseInsensitiveDict
+from urllib.parse import urlparse, urlunparse, ParseResult  
 
 from jira.resilientsession import ResilientSession, parse_errors
 from jira.utils import json_loads, remove_empty_attributes, threaded_requests
@@ -292,6 +293,32 @@ class Resource:
         options.update({"path": path})
         return self._base_url.format(**options)
 
+    def _validate_self_self_url(self):
+        """In the case of a proxy, use the configured base URL
+            and not the one returned from JIRA.
+        
+        Args:
+            self (Resource): self
+
+        Returns:
+            None
+        
+        """
+
+        self_parsed = urlparse(self.self)
+        server_parsed = urlparse(self._options['server'])
+        if self_parsed.netloc != server_parsed.netloc:
+            self.self = urlunparse(
+                ParseResult(
+                    scheme=self_parsed.scheme,
+                    netloc=server_parsed.netloc,
+                    path=self_parsed.path,
+                    params=self_parsed.params,
+                    query=self_parsed.query, 
+                    fragment= self_parsed.fragment
+                )
+            )
+
     def update(
         self,
         fields: dict[str, Any] | None = None,
@@ -326,6 +353,7 @@ class Resource:
         else:
             querystring = ""
 
+        self._validate_self_self_url()
         r = self._session.put(self.self + querystring, data=json.dumps(data))
         if "autofix" in self._options and r.status_code == 400:
             user = None
@@ -420,6 +448,8 @@ class Resource:
         Returns:
             Optional[Response]: Returns None if async
         """
+
+        self._validate_self_self_url()
         if self._options["async"]:
             # FIXME: mypy doesn't think this should work
             if not hasattr(self._session, "_async_jobs"):
