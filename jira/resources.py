@@ -295,19 +295,21 @@ class Resource:
 
     def _validate_self_self_url(self) -> None:
         """In the case of a proxy, use the configured option server URL."""
-        self_parsed = urlparse(self.self)
-        server_parsed = urlparse(self._options["server"])
-        if self_parsed.netloc != server_parsed.netloc:
-            self.self = urlunparse(
-                ParseResult(
-                    scheme=server_parsed.scheme,
-                    netloc=server_parsed.netloc,
-                    path=self_parsed.path,
-                    params=self_parsed.params,
-                    query=self_parsed.query,
-                    fragment=self_parsed.fragment,
+        if getattr(self, "self", None):
+            self.self: str
+            self_parsed = urlparse(self.self)
+            server_parsed = urlparse(self._options["server"])
+            if self_parsed.netloc != server_parsed.netloc:
+                self.self = urlunparse(
+                    ParseResult(
+                        scheme=server_parsed.scheme,
+                        netloc=server_parsed.netloc,
+                        path=self_parsed.path,
+                        params=self_parsed.params,
+                        query=self_parsed.query,
+                        fragment=self_parsed.fragment,
+                    )
                 )
-            )
 
     def update(
         self,
@@ -1523,7 +1525,7 @@ class AgileResource(Resource):
         session: ResilientSession,
         raw: dict[str, Any] | None = None,
     ):
-        self.self = None
+        self.self = ""
 
         Resource.__init__(self, path, options, session, self.AGILE_BASE_URL)
         if raw:
