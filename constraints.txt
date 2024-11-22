@@ -16,7 +16,7 @@ beautifulsoup4==4.12.3
     # via furo
 certifi==2024.8.30
     # via requests
-cffi==1.17.0
+cffi==1.17.1
     # via cryptography
 charset-normalizer==3.3.2
     # via requests
