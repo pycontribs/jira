@@ -293,17 +293,8 @@ class Resource:
         options.update({"path": path})
         return self._base_url.format(**options)
 
-    def _validate_self_self_url(self):
-        """In the case of a proxy, use the configured base URL
-            and not the one returned from JIRA.
-
-        Args:
-            self (Resource): self
-
-        Returns:
-            None
-
-        """
+    def _validate_self_self_url(self) -> None:
+        """In the case of a proxy, use the configured option server URL."""
         self_parsed = urlparse(self.self)
         server_parsed = urlparse(self._options["server"])
         if self_parsed.netloc != server_parsed.netloc:
