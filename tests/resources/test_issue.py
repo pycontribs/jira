@@ -337,6 +337,20 @@ class IssueTests(JiraTestCase):
         issue.update(fields=fields)
         self.assertEqual(issue.fields.labels, ["testLabel"])
 
+    def test_update_label_with_proxy(self):
+        issue = self.jira.create_issue(
+            summary="Test issue for updating labels",
+            project=self.project_b,
+            description="Label testing",
+            issuetype=self.test_manager.CI_JIRA_ISSUE,
+        )
+
+        labelarray = ["testLabel"]
+        fields = {"labels": labelarray}
+        issue.self = f"http://foo.bar/jira/rest/api/2/issue/{issue.id}"
+        issue.update(fields=fields)
+        self.assertEqual(issue.fields.labels, ["testLabel"])
+
     def test_update_with_bad_label(self):
         issue = self.jira.create_issue(
             summary="Test issue for updating bad labels",
@@ -370,6 +384,18 @@ class IssueTests(JiraTestCase):
             issuetype=self.test_manager.CI_JIRA_ISSUE,
         )
         key = issue.key
+        issue.delete()
+        self.assertRaises(JIRAError, self.jira.issue, key)
+
+    def test_delete_with_proxy(self):
+        issue = self.jira.create_issue(
+            summary="Test issue created",
+            project=self.project_b,
+            description="Not long for this world",
+            issuetype=self.test_manager.CI_JIRA_ISSUE,
+        )
+        key = issue.key
+        issue.self = f"http://foo.bar/jira/rest/api/2/issue/{issue.id}"
         issue.delete()
         self.assertRaises(JIRAError, self.jira.issue, key)
 
