@@ -11,10 +11,10 @@ import logging
 import re
 import time
 from typing import TYPE_CHECKING, Any, cast
+from urllib.parse import ParseResult, urlparse, urlunparse
 
 from requests import Response
 from requests.structures import CaseInsensitiveDict
-from urllib.parse import urlparse, urlunparse, ParseResult  
 
 from jira.resilientsession import ResilientSession, parse_errors
 from jira.utils import json_loads, remove_empty_attributes, threaded_requests
@@ -296,17 +296,16 @@ class Resource:
     def _validate_self_self_url(self):
         """In the case of a proxy, use the configured base URL
             and not the one returned from JIRA.
-        
+
         Args:
             self (Resource): self
 
         Returns:
             None
-        
-        """
 
+        """
         self_parsed = urlparse(self.self)
-        server_parsed = urlparse(self._options['server'])
+        server_parsed = urlparse(self._options["server"])
         if self_parsed.netloc != server_parsed.netloc:
             self.self = urlunparse(
                 ParseResult(
@@ -314,8 +313,8 @@ class Resource:
                     netloc=server_parsed.netloc,
                     path=self_parsed.path,
                     params=self_parsed.params,
-                    query=self_parsed.query, 
-                    fragment= self_parsed.fragment
+                    query=self_parsed.query,
+                    fragment=self_parsed.fragment,
                 )
             )
 
@@ -448,7 +447,6 @@ class Resource:
         Returns:
             Optional[Response]: Returns None if async
         """
-
         self._validate_self_self_url()
         if self._options["async"]:
             # FIXME: mypy doesn't think this should work
