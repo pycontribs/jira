@@ -309,7 +309,7 @@ class Resource:
         if self_parsed.netloc != server_parsed.netloc:
             self.self = urlunparse(
                 ParseResult(
-                    scheme=self_parsed.scheme,
+                    scheme=server_parsed.scheme,
                     netloc=server_parsed.netloc,
                     path=self_parsed.path,
                     params=self_parsed.params,
