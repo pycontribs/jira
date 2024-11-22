@@ -21,6 +21,12 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: 3.9
+    
+    - name: Install system dependencies
+      run: |
+          sudo apt remove -y docker-compose
+          sudo apt-get update -y
+          sudo apt-get --assume-yes --no-install-recommends install -y apt-transport-https curl libkrb5-dev
 
     - name: Install build dependencies
       run: python3 -m pip install --user tox
