@@ -347,8 +347,8 @@ class IssueTests(JiraTestCase):
 
         labelarray = ["testLabel"]
         fields = {"labels": labelarray}
-        #This simulates when your Jira server is behind a proxy
-        #The self address returned will be different from the configured server
+        # This simulates when your Jira server is behind a proxy
+        # The self address returned will be different from the configured server
         issue.self = f"https://foo.bar/jira/rest/api/2/issue/{issue.id}"
         issue.update(fields=fields)
         self.assertEqual(issue.fields.labels, ["testLabel"])
@@ -397,8 +397,8 @@ class IssueTests(JiraTestCase):
             issuetype=self.test_manager.CI_JIRA_ISSUE,
         )
         key = issue.key
-        #This simulates when your Jira server is behind a proxy
-        #The self address returned will be different from the configured server
+        # This simulates when your Jira server is behind a proxy
+        # The self address returned will be different from the configured server
         issue.self = f"https://foo.bar/jira/rest/api/2/issue/{issue.id}"
         issue.delete()
         self.assertRaises(JIRAError, self.jira.issue, key)
