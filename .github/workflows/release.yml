@@ -46,7 +46,7 @@ jobs:
       with:
         verbose: true
         password: ${{ secrets.testpypi_password }}
-        repository_url: https://test.pypi.org/legacy/
+        repository-url: https://test.pypi.org/legacy/
 
     - name: Publish to pypi.org
       if: >-  # "create" workflows run separately from "push" & "pull_request"
