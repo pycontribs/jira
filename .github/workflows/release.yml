@@ -44,6 +44,7 @@ jobs:
         github.event_name == 'release'
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
+        verbose: true
         password: ${{ secrets.testpypi_password }}
         repository_url: https://test.pypi.org/legacy/
 
