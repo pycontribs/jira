@@ -2287,7 +2287,7 @@ class JIRA:
         """
         url = self._get_latest_url(f"issue/{issue}/assignee")
         if isinstance(assignee, User):
-            user_id = self._get_user_identifier(assignee)
+            user_id: str | None = self._get_user_identifier(assignee)
         else:
             user_id = assignee
         if self.with_lookup:
@@ -2749,7 +2749,7 @@ class JIRA:
         """
         url = self._get_url("issue/" + str(issue) + "/watchers")
         if isinstance(watcher, User):
-            watcher_id = self._get_user_identifier(watcher)
+            watcher_id: str | None = self._get_user_identifier(watcher)
         else:
             watcher_id = watcher
         if self.with_lookup:
@@ -2770,7 +2770,7 @@ class JIRA:
         url = self._get_url("issue/" + str(issue) + "/watchers")
         # https://docs.atlassian.com/software/jira/docs/api/REST/8.13.6/#api/2/issue-removeWatcher
         if isinstance(watcher, User):
-            watcher_id = self._get_user_identifier(watcher)
+            watcher_id: str | None = self._get_user_identifier(watcher)
         else:
             watcher_id = watcher
         if self.with_lookup:
