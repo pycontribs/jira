@@ -745,6 +745,27 @@ class JIRA:
             self._update_fields_cache()
         return self._fields_cache_value
 
+    def _translate_field_names(self, fields: list[str]) -> dict[str, str]:
+        """Replace JQL field names in ``fields`` with field ids, in place.
+
+        ``*all``, ``*navigable`` and ``-field`` exclusions need no lookup, so a
+        list made only of those skips the ``/field`` request behind the cache.
+
+        Returns:
+            Dict[str, str]: field id to the name the caller asked for, used to
+            add that name as an alias on the returned issues.
+        """
+        untranslate: dict[str, str] = {}
+        if all(field.startswith(("*", "-")) for field in fields):
+            return untranslate
+        # An empty cache requests /field again on every access, so read it once.
+        cache = self._fields_cache
+        for i, field in enumerate(fields):
+            if field in cache:
+                untranslate[cache[field]] = field
+                fields[i] = cache[field]
+        return untranslate
+
     def _update_fields_cache(self) -> None:
         """Update the cache used for `self._fields_cache`."""
         self._fields_cache_value = {}
@@ -3809,14 +3830,7 @@ class JIRA:
                     "The `search` API is deprecated in Jira Cloud. Use `enhanced_search_issues` method instead."
                 )
 
-        # this will translate JQL field names to REST API Name
-        # most people do know the JQL names so this will help them use the API easier
-        untranslate = {}  # use to add friendly aliases when we get the results back
-        if self._fields_cache:
-            for i, field in enumerate(fields):
-                if field in self._fields_cache:
-                    untranslate[self._fields_cache[field]] = fields[i]
-                    fields[i] = self._fields_cache[field]
+        untranslate = self._translate_field_names(fields)
 
         search_params = {
             "jql": jql_str,
@@ -3902,15 +3916,7 @@ class JIRA:
         elif fields is None:
             fields = ["*all"]
 
-        untranslate = {}  # use to add friendly aliases when we get the results back
-        if fields:
-            # this will translate JQL field names to REST API Name
-            # most people do know the JQL names so this will help them use the API easier
-            if self._fields_cache:
-                for i, field in enumerate(fields):
-                    if field in self._fields_cache:
-                        untranslate[self._fields_cache[field]] = fields[i]
-                        fields[i] = self._fields_cache[field]
+        untranslate = self._translate_field_names(fields)
 
         search_params: dict[str, Any] = {
             "jql": jql_str,
