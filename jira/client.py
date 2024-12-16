@@ -3366,6 +3366,23 @@ class JIRA:
         return components
 
     @translate_resource_args
+    def project_securitylevels(self, project: str | int) -> list[SecurityLevel]:
+        """Get a list of securitylevel Resources for the current user on a project.
+
+        Args:
+            project (Union[str, int]): ID or key of the project to get securitylevels of
+
+        Returns:
+            List[SecurityLevel]
+        """
+        r_json = self._get_json("project/" + str(project) + "/securitylevel")
+        security_levels = [
+            SecurityLevel(self._options, self._session, raw_securitylevel_json)
+            for raw_securitylevel_json in r_json["levels"]
+        ]
+        return security_levels
+
+    @translate_resource_args
     def project_versions(self, project: str) -> list[Version]:
         """Get a list of version Resources present on a project.
 
