@@ -3547,11 +3547,10 @@ class JIRA:
         elif fields and isinstance(fields, str):
             fields = fields.split(",")
 
-
+        untranslate = {}  # use to add friendly aliases when we get the results back
         if fields:
             # this will translate JQL field names to REST API Name
             # most people do know the JQL names so this will help them use the API easier
-            untranslate = {}  # use to add friendly aliases when we get the results back
             if self._fields_cache:
                 for i, field in enumerate(fields):
                     if field in self._fields_cache:
@@ -3592,7 +3591,7 @@ class JIRA:
             use_post=use_post,
         )
 
-        if fields and untranslate:
+        if untranslate:
             iss: Issue
             for iss in issues:
                 for k, v in untranslate.items():
