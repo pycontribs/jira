@@ -3547,7 +3547,6 @@ class JIRA:
         elif fields and isinstance(fields, str):
             fields = fields.split(",")
 
-
         if fields:
             # this will translate JQL field names to REST API Name
             # most people do know the JQL names so this will help them use the API easier
