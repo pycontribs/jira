@@ -3546,6 +3546,9 @@ class JIRA:
             fields = ["*all"]
         elif fields and isinstance(fields, str):
             fields = fields.split(",")
+        else:
+            # this is required only for mypy validation
+            fields = []
 
         untranslate = {}  # use to add friendly aliases when we get the results back
         if fields:
