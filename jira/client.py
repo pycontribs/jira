@@ -3533,7 +3533,7 @@ class JIRA:
               If maxResults evaluates to False, it will try to get all issues in batches. (Default: ``50``)
             validate_query (bool): True to validate the query. (Default: ``True``)
             fields (Optional[Union[str, List[str]]]): comma-separated string or list of issue fields to include in the results.
-              Default is to include all fields.
+              Default is to include all fields. If you don't require fields, set it to empty string ``''``.
             expand (Optional[str]): extra information to fetch inside each resource
             properties (Optional[str]): extra properties to fetch inside each result
             json_result (bool): True to return a JSON response. When set to False a :class:`ResultList` will be returned. (Default: ``False``)
@@ -3542,19 +3542,21 @@ class JIRA:
         Returns:
             Union[Dict,ResultList]: Dict if ``json_result=True``
         """
-        if isinstance(fields, str):
-            fields = fields.split(",")
-        elif fields is None:
+        if fields is None:
             fields = ["*all"]
+        elif fields and isinstance(fields, str):
+            fields = fields.split(",")
 
-        # this will translate JQL field names to REST API Name
-        # most people do know the JQL names so this will help them use the API easier
-        untranslate = {}  # use to add friendly aliases when we get the results back
-        if self._fields_cache:
-            for i, field in enumerate(fields):
-                if field in self._fields_cache:
-                    untranslate[self._fields_cache[field]] = fields[i]
-                    fields[i] = self._fields_cache[field]
+
+        if fields:
+            # this will translate JQL field names to REST API Name
+            # most people do know the JQL names so this will help them use the API easier
+            untranslate = {}  # use to add friendly aliases when we get the results back
+            if self._fields_cache:
+                for i, field in enumerate(fields):
+                    if field in self._fields_cache:
+                        untranslate[self._fields_cache[field]] = fields[i]
+                        fields[i] = self._fields_cache[field]
 
         search_params = {
             "jql": jql_str,
@@ -3590,7 +3592,7 @@ class JIRA:
             use_post=use_post,
         )
 
-        if untranslate:
+        if fields and untranslate:
             iss: Issue
             for iss in issues:
                 for k, v in untranslate.items():
