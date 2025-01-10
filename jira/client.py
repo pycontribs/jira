@@ -330,6 +330,10 @@ class RetryingJiraAuth(AuthBase):
         )  # handle_401 should've caught this before attempting retry
         return self._session.cookies
 
+    def __call__(self, request: requests.PreparedRequest):
+        request.register_hook("response", self.handle_401)
+        return request
+
     def _increment_401_retry_counter(self):
         self._retry_counter_401 += 1
 
@@ -394,10 +398,6 @@ class JiraCookieAuth(RetryingJiraAuth):
         super().__init__(session)
         self._session_api_url = session_api_url  # e.g ."/rest/auth/1/session"
         self.__auth = auth
-
-    def __call__(self, request: requests.PreparedRequest):
-        request.register_hook("response", self.handle_401)
-        return request
 
     def init_session(self):
         """Initialise the Session object's cookies, so we can use the session cookie.
