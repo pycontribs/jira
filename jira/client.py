@@ -1800,12 +1800,15 @@ class JIRA:
 
         params = {}
         if fields is not None:
-            params["fields"] = fields
+            fields_list = self._translate_fields_name_to_id(fields)
+            params["fields"] = ",".join(fields_list)
         if expand is not None:
             params["expand"] = expand
         if properties is not None:
             params["properties"] = properties
+
         issue.find(id, params=params)
+        self._untranslate_issues_fields_id_to_fields_name([issue])
         return issue
 
     def create_issue(
@@ -3547,14 +3550,7 @@ class JIRA:
         elif fields is None:
             fields = ["*all"]
 
-        # this will translate JQL field names to REST API Name
-        # most people do know the JQL names so this will help them use the API easier
-        untranslate = {}  # use to add friendly aliases when we get the results back
-        if self._fields_cache:
-            for i, field in enumerate(fields):
-                if field in self._fields_cache:
-                    untranslate[self._fields_cache[field]] = fields[i]
-                    fields[i] = self._fields_cache[field]
+        fields = self._translate_fields_name_to_id(fields)
 
         search_params = {
             "jql": jql_str,
@@ -3590,15 +3586,50 @@ class JIRA:
             use_post=use_post,
         )
 
-        if untranslate:
-            iss: Issue
-            for iss in issues:
-                for k, v in untranslate.items():
-                    if iss.raw:
-                        if k in iss.raw.get("fields", {}):
-                            iss.raw["fields"][v] = iss.raw["fields"][k]
-
+        self._untranslate_issues_fields_id_to_fields_name(issues)
         return issues
+
+    def _translate_fields_name_to_id(self, fields: list[str] | str) -> list[str]:
+        """Translate fields names to JIRA's REST API field id.
+
+        Args:
+            fields (list[str] | str): comma-separated string or list of issue fields to be translated
+
+        Returns:
+            tuple[list[str], dict[str, str]]: Returns translated fields and dictionary {field_id: field_name}
+            with translation needed to decode ids into names.
+            Translated fields variable is always List type
+        """
+        translated_fields: list[str]
+        if isinstance(fields, str):
+            translated_fields = fields.split(",")
+        elif isinstance(fields, list):
+            translated_fields = fields.copy()
+        else:
+            raise NotImplementedError(
+                "Translating fields for <%s> type is unsupported", type(fields)
+            )
+
+        if self._fields_cache:
+            for i, field_name in enumerate(translated_fields):
+                if field_name in self._fields_cache:
+                    translated_fields[i] = self._fields_cache[field_name]
+
+        return translated_fields
+
+    def _untranslate_issues_fields_id_to_fields_name(self, issues: list[Issue]) -> None:
+        """Untranslate issues fields names from JIRA's REST API field id.
+
+        Args:
+            issues (list[Issue]): list of issues to be untranslated
+        """
+        for issue in issues:
+            if not issue.raw:
+                return
+            for field_name, field_id in self._fields_cache.items():
+                if field_id in issue.raw.get("fields", {}):
+                    issue.raw["fields"][field_name] = issue.raw["fields"][field_id]
+                    setattr(issue.fields, field_name, issue.raw["fields"][field_id])
 
     # Security levels
     def security_level(self, id: str) -> SecurityLevel:
