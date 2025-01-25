@@ -2387,7 +2387,7 @@ class JIRA:
         """Add or update a specific comment property Resource.
 
         Args:
-            issue (str): ID of the comment to set the property to
+            comment (str): ID of the comment to set the property to
             key (str): Key of the property to set
             data: The data to set for the property
         Returns:
