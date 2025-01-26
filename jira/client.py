@@ -2337,12 +2337,22 @@ class JIRA:
         return True
 
     @translate_resource_args
-    def comments(self, issue: int | str, expand: str | None = None) -> list[Comment]:
+    def comments(
+        self,
+        issue: int | str,
+        expand: str | None = None,
+        start_at: int | None = None,
+        max_results: int | None = None,
+        order_by: str | None = None,
+    ) -> list[Comment]:
         """Get a list of comment Resources of the issue provided.
 
         Args:
             issue (Union[int, str]): the issue ID or key to get the comments from
             expand (Optional[str]): extra information to fetch for each comment such as renderedBody and properties.
+            start_at (Optional[int]): index of the first comment to return (page offset)
+            max_results (Optional[int]): maximum number of comments to return
+            order_by (Optional[str]): order of the comments to return; should be 'created', '+created' or '-created'.
 
         Returns:
             List[Comment]
@@ -2350,6 +2360,12 @@ class JIRA:
         params = {}
         if expand is not None:
             params["expand"] = expand
+        if start_at is not None:
+            params["startAt"] = str(start_at)
+        if max_results is not None:
+            params["maxResults"] = str(max_results)
+        if order_by is not None:
+            params["orderBy"] = order_by
         r_json = self._get_json(f"issue/{issue}/comment", params=params)
 
         comments = [
