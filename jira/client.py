@@ -432,7 +432,7 @@ class TokenAuth(RetryingJiraAuth):
     def __call__(self, r: requests.PreparedRequest):
         # modify and return the request
         r.headers["authorization"] = f"Bearer {self._token}"
-        return r
+        return super().__call__(r)
 
     def init_session(self):
         pass  # token should still work, only thing needed is to clear session cookies which happens next
