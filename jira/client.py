@@ -4253,6 +4253,45 @@ class JIRA:
 
         return response_json.get("count", 0)
 
+    # Archive Issues
+    @cloud_api
+    def archive_issues(self, issues: Iterable[str | int | Issue]) -> dict[str, Any]:
+        """Archive issues. Jira Cloud Premium and Enterprise only.
+
+        Args:
+            issues (Iterable[str | int | Issue]): Issues to archive, as keys, ids or
+              :class:`~jira.resources.Issue` objects. Jira accepts up to 1000 per call.
+
+        Returns:
+            dict[str, Any]: ``numberOfIssuesUpdated`` and ``errors``. ``errors`` maps
+            each failure reason (e.g. ``issuesNotFound``) to a dict with ``count``,
+            ``issueIdsOrKeys`` and ``message``.
+        """
+        return self._put_archive_state("issue/archive", issues)
+
+    @cloud_api
+    def unarchive_issues(self, issues: Iterable[str | int | Issue]) -> dict[str, Any]:
+        """Unarchive issues. Jira Cloud Premium and Enterprise only.
+
+        Args:
+            issues (Iterable[str | int | Issue]): Issues to unarchive, as keys, ids or
+              :class:`~jira.resources.Issue` objects. Jira accepts up to 1000 per call.
+
+        Returns:
+            dict[str, Any]: Same shape as :py:meth:`archive_issues`.
+        """
+        return self._put_archive_state("issue/unarchive", issues)
+
+    def _put_archive_state(
+        self, path: str, issues: Iterable[str | int | Issue]
+    ) -> dict[str, Any]:
+        keys = [
+            issue.key if isinstance(issue, Issue) else str(issue) for issue in issues
+        ]
+        url = self._get_url(path)
+        response = self._session.put(url, data=json.dumps({"issueIdsOrKeys": keys}))
+        return json_loads(response)
+
     # Security levels
     def security_level(self, id: str | int) -> SecurityLevel:
         """Get a security level Resource.
