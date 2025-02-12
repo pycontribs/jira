@@ -3604,13 +3604,13 @@ class JIRA:
     def archive_issues(self, issues: ResultList[Issue]) -> dict[str, Any]:
         """Archive a list of Issues.
 
-            Args:
-                issues (ResultsList[Issue]): List of issues to archive
+        Args:
+            issues (ResultsList[Issue]): List of issues to archive
 
-            Returns:
-                Dict[str, Any]: Response from the server indicating success or failure for each issue in the list
+        Returns:
+            Dict[str, Any]: Response from the server indicating success or failure for each issue in the list
         """
-        url = self._get_url('issue/archive')
+        url = self._get_url("issue/archive")
         issue_keys_to_archive = [issue.key for issue in issues]
         payload = {"issueIdsOrKeys": issue_keys_to_archive}
         response = self._session.put(url, data=json.dumps(payload))
@@ -3619,13 +3619,13 @@ class JIRA:
     def unarchive_issues(self, issues: ResultList[Issue]) -> dict[str, Any]:
         """Unarchive a list of Issues.
 
-            Args:
-                issues (ResultsList[Issue]): List of issues to unarchive
+        Args:
+            issues (ResultsList[Issue]): List of issues to unarchive
 
-            Returns:
-                Dict[str, Any]: Response from the server indicating success or failure for each issue in the list
+        Returns:
+            Dict[str, Any]: Response from the server indicating success or failure for each issue in the list
         """
-        url = self._get_url('issue/unarchive')
+        url = self._get_url("issue/unarchive")
         issue_keys_to_archive = [issue.key for issue in issues]
         payload = {"issueIdsOrKeys": issue_keys_to_archive}
         response = self._session.put(url, data=json.dumps(payload))
