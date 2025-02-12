@@ -3600,6 +3600,37 @@ class JIRA:
 
         return issues
 
+    # Archive Issues
+    def archive_issues(self, issues: ResultList[Issue]) -> dict[str, Any]:
+        """Archive a list of Issues.
+
+            Args:
+                issues (ResultsList[Issue]): List of issues to archive
+
+            Returns:
+                Dict[str, Any]: Response from the server indicating success or failure for each issue in the list
+        """
+        url = self._get_url('issue/archive')
+        issue_keys_to_archive = [issue.key for issue in issues]
+        payload = {"issueIdsOrKeys": issue_keys_to_archive}
+        response = self._session.put(url, data=json.dumps(payload))
+        return response.json()
+
+    def unarchive_issues(self, issues: ResultList[Issue]) -> dict[str, Any]:
+        """Unarchive a list of Issues.
+
+            Args:
+                issues (ResultsList[Issue]): List of issues to unarchive
+
+            Returns:
+                Dict[str, Any]: Response from the server indicating success or failure for each issue in the list
+        """
+        url = self._get_url('issue/unarchive')
+        issue_keys_to_archive = [issue.key for issue in issues]
+        payload = {"issueIdsOrKeys": issue_keys_to_archive}
+        response = self._session.put(url, data=json.dumps(payload))
+        return response.json()
+
     # Security levels
     def security_level(self, id: str) -> SecurityLevel:
         """Get a security level Resource.
