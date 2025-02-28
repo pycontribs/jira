@@ -180,7 +180,7 @@ class ResilientSession(Session):
         prepared_kwargs["headers"] = request_headers
 
         data = original_kwargs.get("data", None)
-        if isinstance(data, dict):
+        if isinstance(data, dict) and data:
             # mypy ensures we don't do this,
             # but for people subclassing we should preserve old behaviour
             prepared_kwargs["data"] = json.dumps(data)
