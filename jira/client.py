@@ -937,6 +937,7 @@ class JIRA:
         Returns:
             ResultList: List of fetched items.
         """
+
         def json_params() -> dict[str, Any]:
             return json.loads(json.dumps(params.copy())) if params else {}
 
@@ -951,7 +952,9 @@ class JIRA:
 
         # Initialize the page parameters for the first request.
         page_params = json_params()
-        page_params["maxResults"] = DEFAULT_BATCH if unlimited else min(limit_total, DEFAULT_BATCH)
+        page_params["maxResults"] = (
+            DEFAULT_BATCH if unlimited else min(limit_total, DEFAULT_BATCH)
+        )
         items = []
         nextPageToken = None
 
@@ -967,7 +970,9 @@ class JIRA:
                 page_params["maxResults"] = min(remaining, DEFAULT_BATCH)
             else:
                 page_params["maxResults"] = DEFAULT_BATCH
-            resource = self._get_json(request_path, params=page_params, base=base, use_post=use_post)
+            resource = self._get_json(
+                request_path, params=page_params, base=base, use_post=use_post
+            )
             next_items_page = self._get_items_from_page(item_type, items_key, resource)
             items.extend(next_items_page)
             nextPageToken = resource.get("nextPageToken")
@@ -3627,7 +3632,9 @@ class JIRA:
                     use_post=use_post,
                 )
             else:
-                raise JIRAError("The `search` API is deprecated in Jira Cloud. Use `enhanced_search_issues` instead.")
+                raise JIRAError(
+                    "The `search` API is deprecated in Jira Cloud. Use `enhanced_search_issues` instead."
+                )
 
         # this will translate JQL field names to REST API Name
         # most people do know the JQL names so this will help them use the API easier
@@ -3791,7 +3798,9 @@ class JIRA:
         """
         print(self.deploymentType)
         if not self._is_cloud:
-            raise ValueError("The 'approximate-count' API is only available for Jira Cloud.")
+            raise ValueError(
+                "The 'approximate-count' API is only available for Jira Cloud."
+            )
 
         search_params = {"jql": jql_str}
 
