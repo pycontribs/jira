@@ -3615,7 +3615,6 @@ class JIRA:
         elif fields is None:
             fields = ["*all"]
 
-
         if self._is_cloud:
             if startAt == 0:
                 return self.enhanced_search_issues(
@@ -3682,7 +3681,6 @@ class JIRA:
                             iss.raw["fields"][v] = iss.raw["fields"][k]
 
         return issues
-
 
     @cloud_api
     def enhanced_search_issues(
