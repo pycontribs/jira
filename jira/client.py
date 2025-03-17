@@ -543,7 +543,7 @@ class JIRA:
             get_server_info (bool): True fetches server version info first to determine if some API calls are available. (Default: ``True``).
             async_ (bool): True enables async requests for those actions where we implemented it, like issue update() or delete(). (Default: ``False``).
             async_workers (int): Set the number of worker threads for async operations.
-            timeout (Optional[Union[Union[float, int], Tuple[float, float]]]): Set a read/connect timeout for the underlying calls to Jira.
+            timeout (Optional[Union[Union[float, int], Tuple[float, float]]]): Set a connect/read timeout for the underlying calls to Jira.
               Obviously this means that you cannot rely on the return code when this is enabled.
             max_retries (int): Sets the amount Retries for the HTTP sessions initiated by the client. (Default: ``3``)
             proxies (Optional[Any]): Sets the proxies for the HTTP session.
