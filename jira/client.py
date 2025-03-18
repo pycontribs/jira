@@ -3777,7 +3777,6 @@ class JIRA:
         Returns:
             int | dict[str, Any]: The issue count if json_result is False, else the raw JSON response.
         """
-        print(self.deploymentType)
         if not self._is_cloud:
             raise ValueError(
                 "The 'approximate-count' API is only available for Jira Cloud."
