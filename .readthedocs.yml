@@ -10,6 +10,9 @@ build:
   apt_packages:
     - libkrb5-dev
 
+sphinx:
+  configuration: docs/conf.py
+
 python:
   install:
     - requirements: constraints.txt
