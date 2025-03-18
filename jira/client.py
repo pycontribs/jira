@@ -3616,7 +3616,7 @@ class JIRA:
                 )
             else:
                 raise JIRAError(
-                    "The `search` API is deprecated in Jira Cloud. Use `enhanced_search_issues` instead."
+                    "The `search` API is deprecated in Jira Cloud. Use `enhanced_search_issues` method instead."
                 )
 
         # this will translate JQL field names to REST API Name
