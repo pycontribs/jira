@@ -56,11 +56,9 @@ class JiraTestCase(unittest.TestCase):
     jira_normal: JIRA  # non-admin authenticated
 
     def setUp(self) -> None:
-        """
-        This is called before each test. If you want to add more for your tests,
+        """This is called before each test. If you want to add more for your tests,
         Run `super().setUp() in your custom setUp() to obtain these.
         """
-
         initialized = False
         try:
             self.test_manager = JiraTestManager()
@@ -91,7 +89,7 @@ class JiraTestCase(unittest.TestCase):
 
     @property
     def is_jira_cloud_ci(self) -> bool:
-        """is running on Jira Cloud"""
+        """Is running on Jira Cloud"""
         return self.test_manager._cloud_ci
 
     def _cleanup(self, test_manager: JiraTestManager, projects: list[str]) -> None:
@@ -236,7 +234,6 @@ class JiraTestManager:
 
     def _remove_project(self, project_key):
         """Ensure if the project exists we delete it first"""
-
         wait_between_checks_secs = 2
         time_to_wait_for_delete_secs = 40
         wait_attempts = int(time_to_wait_for_delete_secs / wait_between_checks_secs)
@@ -266,7 +263,6 @@ class JiraTestManager:
         self, project_key: str, project_name: str, force_recreate: bool = False
     ) -> int:
         """Create a project and return the id"""
-
         if not force_recreate and self._project_exists(project_key):
             pass
         else:
@@ -284,7 +280,6 @@ class JiraTestManager:
 
     def create_some_data(self):
         """Create some data for the tests"""
-
         # jira project key is max 10 chars, no letter.
         # [0] always "Z"
         # [1-6] username running the tests (hope we will not collide)
