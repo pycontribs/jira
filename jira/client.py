@@ -225,7 +225,7 @@ class ResultList(list, Generic[ResourceType]):
         _maxResults: int = 0,
         _total: int | None = None,
         _isLast: bool | None = None,
-        _nextPageToken: bool | None = None,
+        _nextPageToken: str | None = None,
     ) -> None:
         """Results List.
 
@@ -937,48 +937,31 @@ class JIRA:
         Returns:
             ResultList: List of fetched items.
         """
+        DEFAULT_BATCH = 100  # Max batch size per request
+        fetch_all = maxResults in (0, False)  # If False/0, fetch everything
 
-        def json_params() -> dict[str, Any]:
-            return json.loads(json.dumps(params.copy())) if params else {}
+        page_params = (params or {}).copy()  # Ensure params isn't modified
+        page_params["maxResults"] = DEFAULT_BATCH if fetch_all else maxResults
 
-        DEFAULT_BATCH = 100  # default page size for each request
-        # Decide if we should fetch unlimited results:
-        unlimited = False
-        if not maxResults:
-            unlimited = True
-
-        # When a limit is specified, record it for later use.
-        limit_total = None if unlimited else maxResults
-
-        # Initialize the page parameters for the first request.
-        page_params = json_params()
-        page_params["maxResults"] = (
-            DEFAULT_BATCH if unlimited else min(limit_total, DEFAULT_BATCH)
-        )
-        items = []
-        nextPageToken = None
+        # Use caller-provided nextPageToken if present
+        nextPageToken: str | None = page_params.get("nextPageToken")
+        items: list[ResourceType] = []
 
         while True:
+            # Ensure nextPageToken is set in params if it exists
             if nextPageToken:
                 page_params["nextPageToken"] = nextPageToken
-
-            # For limited fetches, adjust the page size to not exceed the remaining limit.
-            if not unlimited:
-                remaining = limit_total - len(items)
-                if remaining <= 0:
-                    break
-                page_params["maxResults"] = min(remaining, DEFAULT_BATCH)
             else:
-                page_params["maxResults"] = DEFAULT_BATCH
-            resource = self._get_json(
+                page_params.pop("nextPageToken", None)
+
+            response = self._get_json(
                 request_path, params=page_params, base=base, use_post=use_post
             )
-            next_items_page = self._get_items_from_page(item_type, items_key, resource)
-            items.extend(next_items_page)
-            nextPageToken = resource.get("nextPageToken")
-            # Stop if there are no more pages.
-            if nextPageToken is None:
+            items.extend(self._get_items_from_page(item_type, items_key, response))
+            nextPageToken = response.get("nextPageToken")
+            if not fetch_all or not nextPageToken:
                 break
+
         return ResultList(items, _nextPageToken=nextPageToken)
 
     def _get_items_from_page(
@@ -3727,9 +3710,6 @@ class JIRA:
         elif fields is None:
             fields = ["*all"]
 
-        if reconcileIssues is None:
-            reconcileIssues = []
-
         # this will translate JQL field names to REST API Name
         # most people do know the JQL names so this will help them use the API easier
         untranslate = {}  # use to add friendly aliases when we get the results back
@@ -3739,23 +3719,24 @@ class JIRA:
                     untranslate[self._fields_cache[field]] = fields[i]
                     fields[i] = self._fields_cache[field]
 
-        search_params = {
+        search_params: dict[str, Any] = {
             "jql": jql_str,
             "fields": fields,
             "expand": expand,
             "properties": properties,
-            "reconcileIssues": reconcileIssues,
+            "reconcileIssues": reconcileIssues or [],
         }
         if nextPageToken:
             search_params["nextPageToken"] = nextPageToken
 
         if json_result:
-            search_params["maxResults"] = maxResults
             if not maxResults:
                 warnings.warn(
                     "All issues cannot be fetched at once, when json_result parameter is set",
                     Warning,
                 )
+            else:
+                search_params["maxResults"] = maxResults
             r_json: dict[str, Any] = self._get_json(
                 "search/jql", params=search_params, use_post=use_post
             )
