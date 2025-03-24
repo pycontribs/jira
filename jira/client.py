@@ -1095,9 +1095,9 @@ class JIRA:
         if not fname and isinstance(attachment_io, BufferedReader):
             fname = os.path.basename(attachment_io.name)
 
-        def generate_multipartencoded_request_args() -> (
-            tuple[MultipartEncoder, CaseInsensitiveDict]
-        ):
+        def generate_multipartencoded_request_args() -> tuple[
+            MultipartEncoder, CaseInsensitiveDict
+        ]:
             """Returns MultipartEncoder stream of attachment, and the header."""
             attachment_io.seek(0)
             encoded_data = MultipartEncoder(
@@ -4483,7 +4483,7 @@ class JIRA:
             self._session.put(url, params=params, data=json.dumps(payload))
         else:
             raise NotImplementedError(
-                "Support for renaming users in Jira " "< 6.0.0 has been removed."
+                "Support for renaming users in Jira < 6.0.0 has been removed."
             )
 
     def delete_user(self, username: str) -> bool:
