@@ -887,7 +887,7 @@ class Issue(Resource):
         """Delete this issue from the server.
 
         Args:
-            deleteSubtasks (bool): True to also delete subtasks. If any are present the Issue won't be deleted (Default: ``True``)
+            deleteSubtasks (bool): True to also delete subtasks. If any are present the Issue won't be deleted (Default: ``False``)
         """
         super().delete(params={"deleteSubtasks": deleteSubtasks})
 
