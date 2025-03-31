@@ -20,7 +20,7 @@ Run it from the command line
 
     In [1]:
 
-This is a specialized Python interpreter (built on IPython) that lets you explore Jira as a service. Any legal
+This is a specialized Python interpreter (built on IPython) that let's you explore Jira as a service. Any legal
 Python code is acceptable input. The shell builds a ``JIRA`` client object for you (based on the launch parameters) and
 stores it in the ``jira`` object.
 
