@@ -1,7 +1,7 @@
 ---
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v5.0.0
     hooks:
       - id: end-of-file-fixer
       - id: trailing-whitespace
@@ -15,7 +15,7 @@ repos:
       - id: check-yaml
         files: .*\.(yaml|yml)$
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.3.0
+    rev: v2.4.1
     hooks:
       - id: codespell
         name: codespell
@@ -28,19 +28,19 @@ repos:
         additional_dependencies:
           - tomli; python_version<'3.11'
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.6.3"
+    rev: "v0.11.2"
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
       # Run the formatter.
       - id: ruff-format
   - repo: https://github.com/adrienverge/yamllint
-    rev: v1.35.1
+    rev: v1.37.0
     hooks:
       - id: yamllint
         files: \.(yaml|yml)$
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.11.2
+    rev: v1.15.0
     hooks:
       - id: mypy
         additional_dependencies:
