@@ -22,6 +22,12 @@ jobs:
       with:
         python-version: 3.9
 
+    - name: Install system dependencies
+      run: |
+          sudo apt remove -y docker-compose
+          sudo apt-get update -y
+          sudo apt-get --assume-yes --no-install-recommends install -y apt-transport-https curl libkrb5-dev
+
     - name: Install build dependencies
       run: python3 -m pip install --user tox
 
@@ -38,8 +44,9 @@ jobs:
         github.event_name == 'release'
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
+        verbose: true
         password: ${{ secrets.testpypi_password }}
-        repository_url: https://test.pypi.org/legacy/
+        repository-url: https://test.pypi.org/legacy/
 
     - name: Publish to pypi.org
       if: >-  # "create" workflows run separately from "push" & "pull_request"
