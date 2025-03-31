@@ -2,9 +2,14 @@
 name: tox
 on:
   push:
-    branches: ["main"]
+    branches:
+      - "main"
   pull_request:
-    branches: ["main"]
+    branches:
+      - "main"
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_call:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
@@ -32,11 +37,11 @@ jobs:
             lint
             docs
             pkg
-            py310:tox -e py310 --notest
-            py311:tox -e py311 --notest
-            py312:tox -e py312 --notest
-            py310-macos:tox -e py312 --notest
-            py312-macos:tox -e py312 --notest
+            py310:tox -e py310 -- -k test_unit
+            py311:tox -e py311 -- -k test_unit
+            py312:tox -e py312 -- -k test_unit
+            py310-macos:tox -e py310 -- -k test_unit
+            py312-macos:tox -e py312 -- -k test_unit
           # ^ macos is also used to validate arm64 building
           platforms: linux,macos
           skip_explode: "1"
@@ -79,7 +84,8 @@ jobs:
 
       - name: Install tox
         run: |
-          python3 -m pip install --upgrade pip wheel tox
+          python3 -m pip install --upgrade pip
+          python3 -m pip install --upgrade "tox>=4.0.0" "tox-uv>=1.25.0" "uv>=0.6.6"
 
       - run: ${{ matrix.command }}
 
@@ -99,10 +105,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: logs-${{ matrix.name }}.zip
-          if-no-files-found: error
           include-hidden-files: true
           path: |
             .tox/**/log/
+            .tox/**/.coverage*
             .tox/**/coverage.xml
 
       - name: Report failure if git reports dirty status
@@ -141,19 +147,21 @@ jobs:
         uses: actions/upload-artifact/merge@v4
         with:
           name: logs.zip
+          include-hidden-files: true
           pattern: logs-*.zip
           # artifacts like py312.zip and py312-macos do have overlapping files
           separate-directories: true
 
       - name: Download artifacts
         uses: actions/download-artifact@v4
+        continue-on-error: true # to allow rerunning this job
         with:
           name: logs.zip
           path: .
 
       - name: Check for expected number of coverage.xml reports
         run: |
-          JOBS_PRODUCING_COVERAGE=0
+          JOBS_PRODUCING_COVERAGE=5
           if [ "$(find . -name coverage.xml | wc -l | bc)" -ne "${JOBS_PRODUCING_COVERAGE}" ]; then
             echo "::error::Number of coverage.xml files was not the expected one (${JOBS_PRODUCING_COVERAGE}): $(find . -name coverage.xml |xargs echo)"
             exit 1
@@ -178,13 +186,8 @@ jobs:
         with:
           name: ${{ matrix.name }}
           # verbose: true # optional (default = false)
-          fail_ci_if_error: false
-          use_oidc: true # cspell:ignore oidc
-          files: "*/tests/output/reports/coverage.xml"
-
-      # - name: Check codecov.io status
-      #   if: github.event_name == 'pull_request'
-      #   uses: coactions/codecov-status@main
+          fail_ci_if_error: true
+          use_oidc: ${{ !(github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork) }} # cspell:ignore oidc
 
       - name: Decide whether the needed jobs succeeded or failed
         uses: re-actors/alls-green@release/v1
@@ -194,4 +197,6 @@ jobs:
       - name: Delete Merged Artifacts
         uses: actions/upload-artifact/merge@v4
         with:
+          include-hidden-files: true
           delete-merged: true
+          pattern: logs-*.zip
