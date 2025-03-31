@@ -3,7 +3,7 @@ name = "jira"
 authors = [{name = "Ben Speakmon", email = "ben.speakmon@gmail.com"}]
 maintainers = [{name = "Sorin Sbarnea", email = "sorin.sbarnea@gmail.com"}]
 description = "Python library for interacting with JIRA via REST APIs."
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = {text = "BSD-2-Clause"}
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -15,7 +15,6 @@ classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -163,7 +162,7 @@ filterwarnings = ["ignore::pytest.PytestWarning"]
 markers = ["allow_on_cloud: opt in for the test to run on Jira Cloud"]
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.10"
 warn_unused_configs = true
 namespace_packages = true
 check_untyped_defs = true
@@ -177,8 +176,8 @@ disable_error_code = "annotation-unchecked"
 # Same as Black.
 line-length = 88
 
-# Assume Python 3.9 (minimum supported)
-target-version = "py39"
+# Assume Python 3.10 (minimum supported)
+target-version = "py310"
 
 # The source code paths to consider, e.g., when resolving first- vs. third-party imports
 src = ["jira", "tests"]

@@ -11,11 +11,17 @@ on:
 jobs:
   server:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    uses: pycontribs/jira/.github/workflows/jira_server_ci.yml@main
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/workflows/jira_server_ci.yml
 
   cloud:
     needs: server
-    uses: pycontribs/jira/.github/workflows/jira_cloud_ci.yml@main
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/workflows/jira_cloud_ci.yml
     secrets:
       CLOUD_ADMIN: ${{ secrets.CI_JIRA_CLOUD_ADMIN }}
       CLOUD_ADMIN_TOKEN: ${{ secrets.CI_JIRA_CLOUD_ADMIN_TOKEN }}
