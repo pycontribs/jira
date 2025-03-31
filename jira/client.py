@@ -194,7 +194,7 @@ def translate_resource_args(func: Callable):
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         arg_list = []
         for arg in args:
-            if isinstance(arg, (Issue, Project)):
+            if isinstance(arg, Issue | Project):
                 arg_list.append(arg.key)
             elif isinstance(arg, IssueLinkType):
                 arg_list.append(arg.name)
@@ -1894,7 +1894,7 @@ class JIRA:
         p = data["fields"]["project"]
 
         project_id = None
-        if isinstance(p, (str, int)):
+        if isinstance(p, str | int):
             project_id = self.project(str(p)).id
             data["fields"]["project"] = {"id": project_id}
 
@@ -1941,7 +1941,7 @@ class JIRA:
             p = issue_data["fields"]["project"]
 
             project_id = None
-            if isinstance(p, (str, int)):
+            if isinstance(p, str | int):
                 project_id = self.project(str(p)).id
                 issue_data["fields"]["project"] = {"id": project_id}
 
@@ -2093,7 +2093,7 @@ class JIRA:
         p = data["serviceDeskId"]
         service_desk = None
 
-        if isinstance(p, (str, int)):
+        if isinstance(p, str | int):
             service_desk = self.service_desk(p)
         elif isinstance(p, ServiceDesk):
             service_desk = p
@@ -4853,7 +4853,7 @@ class JIRA:
         """
         epoch_time = int(time.time() * 1000)
         if self._is_cloud:
-            url = self.server_url + "/rest/obm/1.0/getprogress?_=%i" % epoch_time
+            url = self.server_url + f"/rest/obm/1.0/getprogress?_={epoch_time:i}"
         else:
             self.log.warning("This functionality is not available in Server version")
             return None

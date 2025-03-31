@@ -25,18 +25,17 @@ jobs:
         id: generate_matrix
         uses: coactions/dynamic-matrix@v4
         with:
-          min_python: "3.9"
+          min_python: "3.10"
           max_python: "3.12"
-          default_python: "3.9"
+          default_python: "3.10"
           other_names: |
             lint
             docs
             pkg
-            py39:tox -e py39 --notest
             py310:tox -e py310 --notest
             py311:tox -e py311 --notest
             py312:tox -e py312 --notest
-            py39-macos:tox -e py312 --notest
+            py310-macos:tox -e py312 --notest
             py312-macos:tox -e py312 --notest
           # ^ macos is also used to validate arm64 building
           platforms: linux,macos
