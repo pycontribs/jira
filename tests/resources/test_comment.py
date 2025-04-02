@@ -28,6 +28,51 @@ class CommentTests(JiraTestCase):
             comments = self.jira.comments(issue)
             assert len(comments) == 0
 
+    def test_comments_start_at(self):
+        comments_created = []
+        for i in range(10):
+            comments_created.append(
+                self.jira.add_comment(self.issue_1_key, f"Comment #{i+1}")
+            )
+        comments = self.jira.comments(self.issue_1_key, start_at=5)
+        self.assertEqual(len(comments), 5)
+        self.assertEqual(comments[0].body, "Comment #6")
+        for comment in comments_created:
+            comment.delete()
+        comments = self.jira.comments(self.issue_1_key)
+        assert len(comments) == 0
+
+    def test_comments_max_results(self):
+        comments_created = []
+        for i in range(10):
+            comments_created.append(
+                self.jira.add_comment(self.issue_1_key, f"Comment #{i+1}")
+            )
+        comments = self.jira.comments(self.issue_1_key, max_results=4)
+        self.assertEqual(len(comments), 4)
+        self.assertEqual(comments[0].body, "Comment #1")
+        for comment in comments_created:
+            comment.delete()
+        comments = self.jira.comments(self.issue_1_key)
+        assert len(comments) == 0
+
+    def test_comments_order_by(self):
+        comments_created = []
+        for i in range(10):
+            comments_created.append(
+                self.jira.add_comment(self.issue_1_key, f"Comment #{i+1}")
+            )
+        comments = self.jira.comments(self.issue_1_key, order_by="created")
+        self.assertEqual(comments[0].body, "Comment #1")
+        comments = self.jira.comments(self.issue_1_key, order_by="+created")
+        self.assertEqual(comments[0].body, "Comment #1")
+        comments = self.jira.comments(self.issue_1_key, order_by="-created")
+        self.assertEqual(comments[0].body, "Comment #10")
+        for comment in comments_created:
+            comment.delete()
+        comments = self.jira.comments(self.issue_1_key)
+        assert len(comments) == 0
+
     def test_expanded_comments(self):
         comment1 = self.jira.add_comment(self.issue_1_key, "First comment")
         comment2 = self.jira.add_comment(self.issue_1_key, "Second comment")
