@@ -3825,7 +3825,7 @@ class JIRA:
         return j
 
     def myself(self) -> dict[str, Any]:
-        """Get a dict of server information for this Jira instance.
+        """Get a dict of client information for this Jira instance.
 
         Returns:
             Dict[str, Any]
