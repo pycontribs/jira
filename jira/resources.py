@@ -34,6 +34,7 @@ __all__ = (
     "Resource",
     "Issue",
     "Comment",
+    "CommentProperty",
     "Project",
     "Attachment",
     "Component",
@@ -971,6 +972,30 @@ class PinnedComment(Resource):
         self.raw: dict[str, Any] = cast(dict[str, Any], self.raw)
 
 
+class CommentProperty(Resource):
+    """Custom data against an comment."""
+
+    def __init__(
+        self,
+        options: dict[str, str],
+        session: ResilientSession,
+        raw: dict[str, Any] | None = None,
+    ):
+        Resource.__init__(self, "comment/{0}/properties/{1}", options, session)
+        if raw:
+            self._parse_raw(raw)
+        self.raw: dict[str, Any] = cast(dict[str, Any], self.raw)
+
+    def _find_by_url(
+        self,
+        url: str,
+        params: dict[str, str] | None = None,
+    ):
+        super()._find_by_url(url, params)
+        # An CommentProperty never returns "self" identifier, set it
+        self.self = url
+
+
 class RemoteLink(Resource):
     """A link to a remote application from an issue."""
 
@@ -1675,6 +1700,7 @@ resource_class_map: dict[str, type[Resource]] = {
     r"filter/[^/]$": Filter,
     r"issue/[^/]+$": Issue,
     r"issue/[^/]+/comment/[^/]+$": Comment,
+    r"comment/[^/]+/properties/[^/]+$": CommentProperty,
     r"issue/[^/]+/pinned-comments$": PinnedComment,
     r"issue/[^/]+/votes$": Votes,
     r"issue/[^/]+/watchers$": Watchers,
