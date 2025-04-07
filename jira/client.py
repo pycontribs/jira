@@ -4396,7 +4396,7 @@ class JIRA:
             from oauthlib.oauth1 import SIGNATURE_RSA as FALLBACK_SHA
         except ImportError:
             FALLBACK_SHA = DEFAULT_SHA
-            _logging.debug("Fallback SHA 'SIGNATURE_RSA_SHA1' could not be imported.")
+            self.log.debug("Fallback SHA 'SIGNATURE_RSA_SHA1' could not be imported.")
 
         for sha_type in (oauth.get("signature_method"), DEFAULT_SHA, FALLBACK_SHA):
             if sha_type is None:
@@ -4411,10 +4411,10 @@ class JIRA:
             self._session.auth = oauth_instance
             try:
                 self.myself()
-                _logging.debug(f"OAuth1 succeeded with signature_method={sha_type}")
+                self.log.debug(f"OAuth1 succeeded with signature_method={sha_type}")
                 return  # successful response, return with happy session
             except JIRAError:
-                _logging.exception(
+                self.log.exception(
                     f"Failed to create OAuth session with signature_method={sha_type}.\n"
                     + "Attempting fallback method(s)."
                     + "Consider specifying the signature via oauth['signature_method']."
