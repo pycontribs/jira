@@ -3695,7 +3695,7 @@ class JIRA:
               Total number of results is available in the ``total`` attribute of the returned :class:`ResultList`.
               If maxResults evaluates to False, it will try to get all issues in batches. (Default: ``50``)
             fields (Optional[Union[str, List[str]]]): comma-separated string or list of issue fields to include in the results.
-              Default is to include all fields.
+              Default is to include all fields If you don't require fields, set it to empty string ``''``.
             expand (Optional[str]): extra information to fetch inside each resource.
             reconcileIssues (Optional[List[int]]): List of issue IDs to reconcile.
             properties (Optional[str]): extra properties to fetch inside each result
@@ -3705,19 +3705,23 @@ class JIRA:
         Returns:
             Union[Dict, ResultList]: JSON Dict if ``json_result=True``, otherwise a `ResultList`.
         """
-        if isinstance(fields, str):
-            fields = fields.split(",")
-        elif fields is None:
+        if fields is None:
             fields = ["*all"]
+        elif fields and isinstance(fields, str):
+            fields = fields.split(",")
+        else:
+            # this is required only for mypy validation
+            fields = []
 
-        # this will translate JQL field names to REST API Name
-        # most people do know the JQL names so this will help them use the API easier
         untranslate = {}  # use to add friendly aliases when we get the results back
-        if self._fields_cache:
-            for i, field in enumerate(fields):
-                if field in self._fields_cache:
-                    untranslate[self._fields_cache[field]] = fields[i]
-                    fields[i] = self._fields_cache[field]
+        if fields:
+            # this will translate JQL field names to REST API Name
+            # most people do know the JQL names so this will help them use the API easier
+            if self._fields_cache:
+                for i, field in enumerate(fields):
+                    if field in self._fields_cache:
+                        untranslate[self._fields_cache[field]] = fields[i]
+                        fields[i] = self._fields_cache[field]
 
         search_params: dict[str, Any] = {
             "jql": jql_str,
