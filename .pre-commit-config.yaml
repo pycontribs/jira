@@ -1,21 +1,29 @@
 ---
+ci:
+  skip:
+    - pip-compile
 repos:
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+  - repo: meta
     hooks:
+      - id: check-useless-excludes
+  - repo: https://github.com/pre-commit/pre-commit-hooks.git
+    rev: v5.0.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: debug-statements
       - id: end-of-file-fixer
       - id: trailing-whitespace
       - id: mixed-line-ending
       - id: fix-byte-order-marker
       - id: check-executables-have-shebangs
       - id: check-merge-conflict
-      - id: check-symlinks
-      - id: check-vcs-permalinks
       - id: debug-statements
       - id: check-yaml
         files: .*\.(yaml|yml)$
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.3.0
+    rev: v2.4.1
     hooks:
       - id: codespell
         name: codespell
@@ -27,21 +35,57 @@ repos:
         require_serial: false
         additional_dependencies:
           - tomli; python_version<'3.11'
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.6.3"
-    hooks:
-      - id: ruff
-        args: [--fix, --exit-non-zero-on-fix]
-      # Run the formatter.
-      - id: ruff-format
-  - repo: https://github.com/adrienverge/yamllint
-    rev: v1.35.1
+  - repo: https://github.com/adrienverge/yamllint.git
+    rev: v1.37.0
     hooks:
       - id: yamllint
         files: \.(yaml|yml)$
+  - repo: https://github.com/pappasam/toml-sort
+    rev: v0.24.2
+    hooks:
+      - id: toml-sort-fix
+        alias: toml
+
+  - repo: https://github.com/tox-dev/tox-ini-fmt
+    rev: 1.5.0
+    hooks:
+      - id: tox-ini-fmt
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.2
+    hooks:
+      - id: ruff
+        args:
+          - --fix
+          - --exit-non-zero-on-fix
+        types_or: [python, pyi]
+      # - id: ruff-format # must be after ruff
+      #   types_or: [python, pyi]
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.11.2
+    rev: v1.15.0
     hooks:
       - id: mypy
         additional_dependencies:
           - types-requests
+  - # keep at bottom as these are slower
+    repo: local
+    hooks:
+      - id: deps
+        name: Upgrade constraints files and requirements
+        files: ^(pyproject\.toml|.config/.*)$
+        always_run: true
+        language: python
+        entry: python3 -m uv pip compile -q --universal --all-extras --python-version=3.10 --output-file=.config/constraints.txt pyproject.toml --upgrade
+        pass_filenames: false
+        stages:
+          - manual
+        additional_dependencies:
+          - uv>=0.6.6
+      - id: pip-compile
+        name: Check constraints files and requirements
+        files: ^(pyproject\.toml|\.config/.*)$
+        language: python
+        entry: uv pip compile -q --universal --all-extras --python-version=3.10 --output-file=.config/constraints.txt pyproject.toml
+        pass_filenames: false
+        additional_dependencies:
+          - uv>=0.6.6

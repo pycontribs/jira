@@ -50,7 +50,7 @@ body:
   attributes:
     label: Python Interpreter version
     description: The version(s) of Python used.
-    placeholder: "3.9"
+    placeholder: "3.10"
   validations:
     required: true
 - type: checkboxes

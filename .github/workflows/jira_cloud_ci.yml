@@ -23,7 +23,7 @@ jobs:
         os: [ubuntu-latest]
         # We only test a single version to prevent concurrent
         # running of tests influencing one another
-        python-version: ["3.9"]
+        python-version: ["3.10"]
 
     steps:
       - uses: actions/checkout@v4
@@ -41,7 +41,7 @@ jobs:
           python -m pip install --upgrade tox tox-gh-actions
 
       - name: Test with tox
-        run: tox -e py39 -- -m allow_on_cloud
+        run: tox -e py310 -- -m allow_on_cloud
         env:
           CI_JIRA_TYPE: CLOUD
           CI_JIRA_CLOUD_ADMIN: ${{ secrets.CLOUD_ADMIN }}
@@ -50,7 +50,7 @@ jobs:
           CI_JIRA_CLOUD_USER_TOKEN: ${{ secrets.CLOUD_USER_TOKEN }}
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4.1.0
+        uses: codecov/codecov-action@v5
         with:
           file: ./coverage.xml
           name: ${{ runner.os }}-${{ matrix.python-version }}-Cloud

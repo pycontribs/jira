@@ -3,54 +3,46 @@ name: release
 on:
   release:
     types: [published]
+  workflow_dispatch:
 
 jobs:
   pypi:
     name: Publish to PyPI registry
     environment: release
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
+    permissions:
+      id-token: write
 
     env:
       FORCE_COLOR: 1
       PY_COLORS: 1
       TOXENV: pkg
-      TOX_PARALLEL_NO_SPINNER: 1
 
     steps:
-    - name: Switch to using Python 3.9 by default
-      uses: actions/setup-python@v5
-      with:
-        python-version: 3.9
+      - name: Switch to using Python 3.10 by default
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
 
-    - name: Install system dependencies
-      run: |
-          sudo apt remove -y docker-compose
-          sudo apt-get update -y
-          sudo apt-get --assume-yes --no-install-recommends install -y apt-transport-https curl libkrb5-dev
+      - name: Install system dependencies
+        run: |
+            sudo apt remove -y docker-compose
+            sudo apt-get update -y
+            sudo apt-get --assume-yes --no-install-recommends install -y apt-transport-https curl libkrb5-dev
 
-    - name: Install build dependencies
-      run: python3 -m pip install --user tox
+      - name: Install tox
+        run: python3 -m pip install --user "tox>=4.0.0"
 
-    - name: Check out src from Git
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0  # needed by setuptools-scm
+      - name: Check out src from Git
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # needed by setuptools-scm
+          submodules: true
 
-    - name: Build dists
-      run: python -m tox
+      - name: Build dists
+        run: python3 -m tox
 
-    - name: Publish to test.pypi.org
-      if: >-  # "create" workflows run separately from "push" & "pull_request"
-        github.event_name == 'release'
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        verbose: true
-        password: ${{ secrets.testpypi_password }}
-        repository-url: https://test.pypi.org/legacy/
-
-    - name: Publish to pypi.org
-      if: >-  # "create" workflows run separately from "push" & "pull_request"
-        github.event_name == 'release'
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        password: ${{ secrets.pypi_password }}
+      - name: Publish to pypi.org
+        if: >-  # "create" workflows run separately from "push" & "pull_request"
+          github.event_name == 'release'
+        uses: pypa/gh-action-pypi-publish@release/v1

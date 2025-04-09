@@ -11,7 +11,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        python-version: ["3.9", "3.10", "3.11"]
+        python-version: ["3.10", "3.11", "3.12"]
         jira-version: [8.17.1]
 
     steps:
@@ -39,7 +39,7 @@ jobs:
         run: tox
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4.1.0
+        uses: codecov/codecov-action@v5
         with:
           file: ./coverage.xml
           name: ${{ runner.os }}-${{ matrix.python-version }}
