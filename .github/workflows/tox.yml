@@ -1,6 +1,9 @@
 ---
 name: tox
 on:
+  merge_group:
+    branches:
+      - "main"
   push:
     branches:
       - "main"
@@ -37,6 +40,7 @@ jobs:
             lint
             docs
             pkg
+            devel:tox -e devel -- -k test_unit
             py310:tox -e py310 -- -k test_unit
             py311:tox -e py311 -- -k test_unit
             py312:tox -e py312 -- -k test_unit
