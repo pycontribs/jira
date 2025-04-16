@@ -2,8 +2,19 @@ name: server
 
 on:
   workflow_call:
+    inputs:
+      ref:
+        type: string
+        description: 'Ref (SHA/branch) to run the workflow on'
+        required: true
+        default: 'main'
   workflow_dispatch:
-
+    inputs:
+      ref:
+        type: string
+        description: 'Ref (SHA/branch) to run the workflow on'
+        required: true
+        default: 'main'
 jobs:
   test:
     name: py${{ matrix.python-version }}-jira${{ matrix.jira-version }}
@@ -16,6 +27,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref }}
+
       - name: Start Jira docker instance
         run: docker run -dit -p 2990:2990 --name jira addono/jira-software-standalone --version ${{ matrix.jira-version }}
 
