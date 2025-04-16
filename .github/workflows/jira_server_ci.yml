@@ -37,6 +37,8 @@ jobs:
 
       - name: Test with tox
         run: tox
+        env:
+          CI_JIRA_TYPE: SERVER
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
