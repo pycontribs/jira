@@ -2,6 +2,7 @@ name: ci
 
 # runs only after tox workflow finished successfully
 on:
+  workflow_dispatch:
   workflow_run:
     workflows: [tox]
     branches: [main]
@@ -10,23 +11,17 @@ on:
 
 jobs:
   server:
+    uses: ./.github/workflows/jira_server_ci.yml
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/workflows/jira_server_ci.yml
 
   cloud:
     needs: server
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/workflows/jira_cloud_ci.yml
-        with:
-          CLOUD_ADMIN: ${{ secrets.CI_JIRA_CLOUD_ADMIN }}
-          CLOUD_ADMIN_TOKEN: ${{ secrets.CI_JIRA_CLOUD_ADMIN_TOKEN }}
-          CLOUD_USER: ${{ secrets.CI_JIRA_CLOUD_USER }}
-          CLOUD_USER_TOKEN: ${{ secrets.CI_JIRA_CLOUD_USER_TOKEN }}
+    uses: ./.github/workflows/jira_cloud_ci.yml
+    secrets:
+      CLOUD_ADMIN: ${{ secrets.CI_JIRA_CLOUD_ADMIN }}
+      CLOUD_ADMIN_TOKEN: ${{ secrets.CI_JIRA_CLOUD_ADMIN_TOKEN }}
+      CLOUD_USER: ${{ secrets.CI_JIRA_CLOUD_USER }}
+      CLOUD_USER_TOKEN: ${{ secrets.CI_JIRA_CLOUD_USER_TOKEN }}
 
   # 'check' the only job that should be marked as required in
   # repository config, so we do not need to change required jobs
