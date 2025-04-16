@@ -37,6 +37,7 @@ jobs:
             lint
             docs
             pkg
+            devel
             py310:tox -e py310 -- -k test_unit
             py311:tox -e py311 -- -k test_unit
             py312:tox -e py312 -- -k test_unit
