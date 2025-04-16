@@ -5604,7 +5604,7 @@ class JIRA:
             payload["goal"] = goal
 
         url = self._get_url(f"sprint/{id}", base=self.AGILE_BASE_URL)
-        r = self._session.put(url, data=json.dumps(payload))
+        r = self._session.post(url, data=json.dumps(payload))
 
         return json_loads(r)
 
