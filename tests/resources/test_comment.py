@@ -9,9 +9,10 @@ class CommentTests(JiraTestCase):
         self.issue_1_key = self.test_manager.project_b_issue1
         self.issue_2_key = self.test_manager.project_b_issue2
         self.issue_3_key = self.test_manager.project_b_issue3
+        self.issue_4_key = self.test_manager.project_b_issue4
 
     def tearDown(self) -> None:
-        for issue in [self.issue_1_key, self.issue_2_key, self.issue_3_key]:
+        for issue in [self.issue_1_key, self.issue_2_key, self.issue_3_key, self.issue_4_key]:
             for comment in self.jira.comments(issue):
                 comment.delete()
 
@@ -79,4 +80,13 @@ class CommentTests(JiraTestCase):
         comment = self.jira.add_comment(self.issue_3_key, "updating soon!")
         comment.update(body="updated! without notification", notify=False)
         assert comment.body == "updated! without notification"
+        comment.delete()
+
+    def test_comment_property(self):
+        comment = self.jira.add_comment(self.issue_4_key, "comment for property test")
+        comment_prop_data = {'internal': 'true'}
+        self.jira.add_comment_property(comment, 'sd.public.comment', comment_prop_data)
+        commentproperty = self.jira.comment_property(comment, 'sd.public.comment')
+        assert isinstance(commentproperty, CommentProperty)
+        assert commentproperty.value.internal.lower() == 'true'
         comment.delete()
