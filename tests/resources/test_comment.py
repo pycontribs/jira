@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from jira.resources import CommentProperty
 from tests.conftest import JiraTestCase
 
 
