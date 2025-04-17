@@ -317,7 +317,10 @@ class JiraCookieAuth(AuthBase):
     """
 
     def __init__(
-        self, session: ResilientSession, session_api_url: str, auth: tuple[str, str]
+        self,
+        session: ResilientSession,
+        session_api_url: str,
+        auth: tuple[str, str],
     ):
         """Cookie Based Authentication.
 
@@ -891,7 +894,10 @@ class JIRA:
                     page_params["maxResults"] = page_size
 
                     resource = self._get_json(
-                        request_path, params=page_params, base=base, use_post=use_post
+                        request_path,
+                        params=page_params,
+                        base=base,
+                        use_post=use_post,
                     )
                     if resource:
                         next_items_page = self._get_items_from_page(
@@ -904,12 +910,20 @@ class JIRA:
                         break
 
             return ResultList(
-                items, start_at_from_response, max_results_from_response, total, is_last
+                items,
+                start_at_from_response,
+                max_results_from_response,
+                total,
+                is_last,
             )
         else:  # TODO: unreachable
             # it seems that search_users can return a list() containing a single user!
             return ResultList(
-                [item_type(self._options, self._session, resource)], 0, 1, 1, True
+                [item_type(self._options, self._session, resource)],
+                0,
+                1,
+                1,
+                True,
             )
 
     @cloud_api
@@ -1478,7 +1492,11 @@ class JIRA:
         return dashboard_item_property
 
     def set_dashboard_item_property(
-        self, dashboard_id: str, item_id: str, property_key: str, value: dict[str, Any]
+        self,
+        dashboard_id: str,
+        item_id: str,
+        property_key: str,
+        value: dict[str, Any],
     ) -> DashboardItemProperty:
         """Set a dashboard item property.
 
@@ -1683,7 +1701,9 @@ class JIRA:
 
         url = self._get_url(f"filter/{filter_id}")
         r = self._session.put(
-            url, headers={"content-type": "application/json"}, data=json.dumps(data)
+            url,
+            headers={"content-type": "application/json"},
+            data=json.dumps(data),
         )
 
         raw_filter_json = json.loads(r.text)
@@ -1743,29 +1763,54 @@ class JIRA:
         Args:
             group (str): Name of the group.
         """
+        users = {}
+
         if self._version < (6, 0, 0):
             raise NotImplementedError(
                 "Group members is not implemented in Jira before version 6.0, upgrade the instance, if possible."
             )
 
-        params = {"groupname": group, "expand": "users"}
-        r = self._get_json("group", params=params)
-        size = r["users"]["size"]
-        end_index = r["users"]["end-index"]
-
-        while end_index < size - 1:
-            params = {
-                "groupname": group,
-                "expand": f"users[{end_index + 1}:{end_index + 50}]",
-            }
-            r2 = self._get_json("group", params=params)
-            for user in r2["users"]["items"]:
-                r["users"]["items"].append(user)
-            end_index = r2["users"]["end-index"]
+        elif self._version < (10, 0, 0):
+            params = {"groupname": group, "expand": "users"}
+            r = self._get_json("group", params=params)
             size = r["users"]["size"]
+            end_index = r["users"]["end-index"]
+
+            while end_index < size - 1:
+                params = {
+                    "groupname": group,
+                    "expand": f"users[{end_index + 1}:{end_index + 50}]",
+                }
+                r2 = self._get_json("group", params=params)
+                for user in r2["users"]["items"]:
+                    r["users"]["items"].append(user)
+                end_index = r2["users"]["end-index"]
+                size = r["users"]["size"]
+
+            users = r["users"]["items"]
+
+        else:
+            params = {"groupname": group}
+            group_member_api_endpoint = "group/member"
+            r = self._get_json(group_member_api_endpoint, params=params)
+            end_index = r["maxResults"]
+            isLast = r["isLast"]
+
+            while isLast is False:
+                params = {
+                    "groupname": group,
+                    "startAt": f"{end_index}",
+                }
+                r2 = self._get_json(group_member_api_endpoint, params=params)
+                isLast = r2["isLast"]
+                for user in r2["values"]:
+                    r["values"].append(user)
+                end_index += r2["maxResults"]
+
+            users = r["values"]
 
         result = {}
-        for user in r["users"]["items"]:
+        for user in users:
             # 'id' is likely available only in older JIRA Server,
             # it's not available on newer JIRA Server.
             # 'name' is not available in JIRA Cloud.
@@ -1914,7 +1959,10 @@ class JIRA:
         raw_issue_json = json_loads(r)
         if "key" not in raw_issue_json:
             raise JIRAError(
-                status_code=r.status_code, response=r, url=url, text=json.dumps(data)
+                status_code=r.status_code,
+                response=r,
+                url=url,
+                text=json.dumps(data),
             )
         if prefetch:
             return self.issue(raw_issue_json["key"])
@@ -2511,7 +2559,10 @@ class JIRA:
 
         data: dict[str, Any] = {}
         if isinstance(destination, Issue) and destination.raw:
-            data["object"] = {"title": str(destination), "url": destination.permalink()}
+            data["object"] = {
+                "title": str(destination),
+                "url": destination.permalink(),
+            }
             for x in applicationlinks:
                 if x["application"]["displayUrl"] == destination._options["server"]:
                     data["globalId"] = "appId={}&issueId={}".format(
@@ -4418,7 +4469,11 @@ class JIRA:
             FALLBACK_SHA = DEFAULT_SHA
             self.log.debug("Fallback SHA 'SIGNATURE_RSA_SHA1' could not be imported.")
 
-        for sha_type in (oauth.get("signature_method"), DEFAULT_SHA, FALLBACK_SHA):
+        for sha_type in (
+            oauth.get("signature_method"),
+            DEFAULT_SHA,
+            FALLBACK_SHA,
+        ):
             if sha_type is None:
                 continue
             oauth_instance = OAuth1(
@@ -4539,7 +4594,11 @@ class JIRA:
         """
         options = self._options.copy()
         options.update(
-            {"path": path, "rest_api_version": "latest", "rest_path": "internal"}
+            {
+                "path": path,
+                "rest_api_version": "latest",
+                "rest_path": "internal",
+            }
         )
         return base.format(**options)
 
@@ -4825,7 +4884,10 @@ class JIRA:
             r = self._session.post(
                 url,
                 headers=self._options["headers"],
-                params={"indexingStrategy": indexingStrategy, "reindex": "Re-Index"},
+                params={
+                    "indexingStrategy": indexingStrategy,
+                    "reindex": "Re-Index",
+                },
             )
             if r.text.find("All issues are being re-indexed") != -1:
                 return True
