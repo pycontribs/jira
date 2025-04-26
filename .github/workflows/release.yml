@@ -48,12 +48,12 @@ jobs:
 
   pypi:
     needs: [build]
-    name:
-      Publish to PyPI registry
     runs-on: ubuntu-latest
     permissions:
       id-token: write
-    environment: release
+    environment:
+      name: pypi-publishing
+      url: https://pypi.org/project/jira/
     steps:
       - name: Download artifact
         uses: actions/download-artifact@v4
