@@ -30,7 +30,7 @@ WARNING PYPI RELEASE BROKEN -  TEMPORARY FIX
 
     pip install git+https://github.com/pycontribs/jira.git@3.10.1
 
-if you dont have git installed on your system or you prefer whl files you can install the 3.10.1 like below.
+if you don't have git installed on your system or you prefer whl files you can install the 3.10.1 like below.
 
 .. code-block:: bash
 
