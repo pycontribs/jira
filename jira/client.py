@@ -1933,27 +1933,39 @@ class JIRA:
         """
         if self._version < (6, 0, 0):
             raise NotImplementedError(
-                "Group members is not implemented in Jira before version 6.0, upgrade the instance, if possible."
+                "Group members is not implemented in Jira before version 6.0,"
+                " upgrade the instance, if possible."
             )
 
-        params = {"groupname": group, "expand": "users"}
-        r = self._get_json("group", params=params)
-        size = r["users"]["size"]
-        end_index = r["users"]["end-index"]
-
-        while end_index < size - 1:
-            params = {
-                "groupname": group,
-                "expand": f"users[{end_index + 1}:{end_index + 50}]",
-            }
-            r2 = self._get_json("group", params=params)
-            for user in r2["users"]["items"]:
-                r["users"]["items"].append(user)
-            end_index = r2["users"]["end-index"]
+        elif self._version < (10, 0, 0):
+            params = {"groupname": group, "expand": "users"}
+            r = self._get_json("group", params=params)
             size = r["users"]["size"]
+            end_index = r["users"]["end-index"]
+
+            while end_index < size - 1:
+                params = {
+                    "groupname": group,
+                    "expand": f"users[{end_index + 1}:{end_index + 50}]",
+                }
+                r2 = self._get_json("group", params=params)
+                for user in r2["users"]["items"]:
+                    r["users"]["items"].append(user)
+                end_index = r2["users"]["end-index"]
+                size = r["users"]["size"]
+            users = r["users"]["items"]
+        else:
+            users = []
+            member_params: dict[str, Any] = {"groupname": group}
+            while True:
+                r = self._get_json("group/member", params=member_params)
+                users.extend(r["values"])
+                if r.get("isLast", True) or not r["values"]:
+                    break
+                member_params["startAt"] = r["startAt"] + len(r["values"])
 
         result = {}
-        for user in r["users"]["items"]:
+        for user in users:
             # 'id' is likely available only in older JIRA Server,
             # it's not available on newer JIRA Server.
             # 'name' is not available in JIRA Cloud.
