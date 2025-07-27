@@ -3721,13 +3721,10 @@ class JIRA:
         Returns:
             Union[Dict, ResultList]: JSON Dict if ``json_result=True``, otherwise a `ResultList`.
         """
-        if fields is None:
-            fields = ["*all"]
-        elif fields and isinstance(fields, str):
+        if isinstance(fields, str):
             fields = fields.split(",")
-        else:
-            # this is required only for mypy validation
-            fields = []
+        elif fields is None:
+            fields = ["*all"]
 
         untranslate = {}  # use to add friendly aliases when we get the results back
         if fields:

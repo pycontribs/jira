@@ -239,7 +239,7 @@ git_describe_command = [
   "--long",
   "--tags",
   "--match",
-  "v*.*"
+  "*.*.*"
 ]
 local_scheme = "no-local-version"
 tag_regex = "^(?P<prefix>v)?(?P<version>\\d+[^\\+]*)(?P<suffix>.*)?$"
