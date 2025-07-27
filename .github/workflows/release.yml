@@ -52,18 +52,15 @@ jobs:
     permissions:
       id-token: write
     environment:
-      name: pypi-publishing
-      url: https://pypi.org/project/jira/
+      name: release
     steps:
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
           name: package
           path: dist
-
       - name: Show tree
         run: tree
-
       - name: Publish to pypi.org
         if: >-  # "create" workflows run separately from "push" & "pull_request"
           github.event_name == 'release'
