@@ -459,8 +459,16 @@ class IssueTests(JiraTestCase):
         )
         self.assertTrue("fields" in meta["projects"][0]["issuetypes"][0])
 
-    def test_assign_issue(self):
+    def test_assign_issue_username(self):
+        # Assign issue via username
         self.assertTrue(self.jira.assign_issue(self.issue_1, self.user_normal.name))
+        self.assertEqual(
+            self.jira.issue(self.issue_1).fields.assignee.name, self.user_normal.name
+        )
+
+    def test_assign_issue_user_obj(self):
+        # Assign issue via User object
+        self.assertTrue(self.jira.assign_issue(self.issue_1, self.user_normal))
         self.assertEqual(
             self.jira.issue(self.issue_1).fields.assignee.name, self.user_normal.name
         )
