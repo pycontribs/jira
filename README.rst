@@ -18,36 +18,6 @@ Jira Python Library
     :target: https://codecov.io/gh/pycontribs/jira
 
 
-WARNING PYPI RELEASE BROKEN -  TEMPORARY FIX
---------------------------------------------
-
-| Dear users, currently we have an issue releasing to pypi which we are trying to solve as soon as possible.
-| Do know this project is fully funded by volunteer work, we're doing as much as we can with our limited time.
-| Version 3.10.1 fixes a deprecation in the search api of atlassian jira
-| A temporary work around shown below can be used to install the 3.10.1 version of the jira package.
-
-.. code-block:: bash
-
-    pip install git+https://github.com/pycontribs/jira.git@3.10.1
-
-if you don't have git installed on your system or you prefer whl files you can install the 3.10.1 like below.
-
-.. code-block:: bash
-
-    pip install https://github.com/pycontribs/jira/releases/download/3.10.1/jira-3.10.1-py3-none-any.whl
-
-in your requirements.txt or pyproject.toml you can temporarily add this release like so.
-
-.. code-block:: bash
-
-    requests # or any other package in your project
-    https://github.com/pycontribs/jira/releases/download/3.10.1/jira-3.10.1-py3-none-any.whl # please check if pypi releases are ok again here https://pypi.org/project/jira/
-
-sorry for the inconvenience, this message will disappear once the issues are solved.
-
-______
-
-
 This library eases the use of the Jira REST API from Python and it has been used in production for years.
 
 As this is an open-source project that is community maintained, do not be surprised if some bugs or features are not implemented quickly enough.
