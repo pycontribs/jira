@@ -1743,29 +1743,53 @@ class JIRA:
         Args:
             group (str): Name of the group.
         """
+        users = {}
+
         if self._version < (6, 0, 0):
             raise NotImplementedError(
-                "Group members is not implemented in Jira before version 6.0, upgrade the instance, if possible."
+                "Group members is not implemented in Jira before version 6.0,"
+                " upgrade the instance, if possible."
             )
 
-        params = {"groupname": group, "expand": "users"}
-        r = self._get_json("group", params=params)
-        size = r["users"]["size"]
-        end_index = r["users"]["end-index"]
-
-        while end_index < size - 1:
-            params = {
-                "groupname": group,
-                "expand": f"users[{end_index + 1}:{end_index + 50}]",
-            }
-            r2 = self._get_json("group", params=params)
-            for user in r2["users"]["items"]:
-                r["users"]["items"].append(user)
-            end_index = r2["users"]["end-index"]
+        elif self._version < (10, 0, 0):
+            params = {"groupname": group, "expand": "users"}
+            r = self._get_json("group", params=params)
             size = r["users"]["size"]
+            end_index = r["users"]["end-index"]
+
+            while end_index < size - 1:
+                params = {
+                    "groupname": group,
+                    "expand": f"users[{end_index + 1}:{end_index + 50}]",
+                }
+                r2 = self._get_json("group", params=params)
+                for user in r2["users"]["items"]:
+                    r["users"]["items"].append(user)
+                end_index = r2["users"]["end-index"]
+                size = r["users"]["size"]
+            users = r["users"]["items"]
+        else:
+            params = {"groupname": group}
+            group_member_api_endpoint = "group/member"
+            r = self._get_json(group_member_api_endpoint, params=params)
+            end_index = r["maxResults"]
+            is_last = r["isLast"]
+
+            while is_last is False:
+                params = {
+                    "groupname": group,
+                    "startAt": f"{end_index}",
+                }
+                r2 = self._get_json(group_member_api_endpoint, params=params)
+                is_last = r2["isLast"]
+                for user in r2["values"]:
+                    r["values"].append(user)
+                end_index += r2["maxResults"]
+
+            users = r["values"]
 
         result = {}
-        for user in r["users"]["items"]:
+        for user in users:
             # 'id' is likely available only in older JIRA Server,
             # it's not available on newer JIRA Server.
             # 'name' is not available in JIRA Cloud.
