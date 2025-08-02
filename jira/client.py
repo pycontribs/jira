@@ -55,6 +55,7 @@ from jira.resources import (
     Attachment,
     Board,
     Comment,
+    CommentProperty,
     Component,
     Customer,
     CustomFieldOption,
@@ -2424,6 +2425,48 @@ class JIRA:
         r = self._session.post(url, data=json.dumps(data))
 
         return Comment(self._options, self._session, raw=json_loads(r))
+
+    # Comment properties
+
+    @translate_resource_args
+    def comment_properties(self, comment: str) -> list[CommentProperty]:
+        """Get a list of comment property Resource from the server for an issue.
+
+        Args:
+            comment (str): ID of the comment to get properties from
+
+        Returns:
+            List[CommentProperty]
+        """
+        r_json = self._get_json(f"comment/{comment}/properties")
+        properties = [self.comment_property(comment, key["key"]) for key in r_json["keys"]]
+        return properties
+
+    @translate_resource_args
+    def comment_property(self, comment: str, key: str) -> CommentProperty:
+        """Get a specific comment property Resource from the server.
+
+        Args:
+            comment (str): ID of the comment to get the property from
+            key (str): Key of the property to get
+        Returns:
+            CommentProperty
+        """
+        return self._find_for_resource(CommentProperty, (comment, key))
+
+    @translate_resource_args
+    def add_comment_property(self, comment: str, key: str, data) -> Response:
+        """Add or update a specific comment property Resource.
+
+        Args:
+            comment (str): ID of the comment to set the property to
+            key (str): Key of the property to set
+            data: The data to set for the property
+        Returns:
+            Response
+        """
+        url = self._get_url(f"comment/{comment}/properties/{key}")
+        return self._session.put(url, data=json.dumps(data))
 
     # non-resource
     @translate_resource_args
