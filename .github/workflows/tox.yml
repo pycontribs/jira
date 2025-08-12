@@ -66,7 +66,7 @@ jobs:
           sudo apt-get update -y
           sudo apt-get --assume-yes --no-install-recommends install -y apt-transport-https curl libkrb5-dev
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0 # needed by setuptools-scm
           submodules: true
@@ -138,7 +138,7 @@ jobs:
 
     steps:
       # checkout needed for codecov action which needs codecov.yml file
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up Python # likely needed for coverage
         uses: actions/setup-python@v5
