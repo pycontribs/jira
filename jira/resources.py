@@ -1620,6 +1620,37 @@ class RequestType(Resource):
         self.raw: dict[str, Any] = cast(dict[str, Any], self.raw)
 
 
+# AtlassianConnect
+
+
+class AtlassianConnectResource(Resource):
+    """A generic AtlassianConnect resource."""
+
+    ACE_BASE_URL = "{server}/rest/atlassian-connect/{ace_rest_api_version}/{path}"
+
+    def __init__(self, path, options, session, raw):
+        self.self = None
+
+        Resource.__init__(self, path, options, session, self.ACE_BASE_URL)
+        if raw:
+            self._parse_raw(raw)
+
+
+class AppProperty(AtlassianConnectResource):
+    """An AtlassianConnect app property."""
+
+    PATH = "addons/{0}/properties/{1}"
+
+    def __init__(self, options, session, raw=None):
+        AtlassianConnectResource.__init__(self, self.PATH, options, session, raw)
+        if raw:
+            self._parse_raw(raw)
+
+    def find(self, id, params=None):
+        Resource.find(self, id, params)
+        self.self = self._get_url(self.PATH.format(*id))
+
+
 # Utilities
 
 
