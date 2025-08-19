@@ -836,12 +836,6 @@ wheels = [
 ]
 
 [[package]]
-name = "filemagic"
-version = "1.6"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/8f/67/a1aedccc143597eea90e79134d14c7364e90174d31443e14674919716d87/filemagic-1.6.tar.gz", hash = "sha256:e684359ef40820fe406f0ebc5bf8a78f89717bdb7fed688af68082d991d6dbf3", size = 16754, upload-time = "2013-05-29T11:52:55.652Z" }
-
-[[package]]
 name = "flaky"
 version = "3.8.1"
 source = { registry = "https://pypi.org/simple" }
@@ -930,7 +924,7 @@ resolution-markers = [
     "python_full_version >= '3.11' and python_full_version < '3.11.5'",
 ]
 dependencies = [
-    { name = "zipp", marker = "python_full_version >= '3.11'" },
+    { name = "zipp", marker = "python_full_version == '3.11.*'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/98/f6/4eda8458eb00ec03e715c376c6b23b3def69687924c68d36d1c4003d3bc4/importlib_metadata-10.1.0.tar.gz", hash = "sha256:82b04047fa09792c1a8cfeddfe08bec79e4b13c29c8469b0d3949860f61017e8", size = 67761, upload-time = "2026-10-24T00:01:44.856Z" }
 wheels = [
@@ -1113,7 +1107,6 @@ docs = [
     { name = "sphinx-copybutton" },
 ]
 opt = [
-    { name = "filemagic" },
     { name = "pyjwt" },
     { name = "requests-jwt" },
     { name = "requests-kerberos", marker = "sys_platform != 'win32'" },
@@ -1162,7 +1155,6 @@ lint = [
 requires-dist = [
     { name = "defusedxml" },
     { name = "docutils", marker = "extra == 'test'", specifier = ">=0.21.2" },
-    { name = "filemagic", marker = "extra == 'opt'", specifier = ">=1.6" },
     { name = "flaky", marker = "extra == 'test'" },
     { name = "furo", marker = "extra == 'docs'" },
     { name = "ipython", marker = "extra == 'cli'", specifier = ">=4.0.0" },
