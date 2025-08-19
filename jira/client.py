@@ -14,11 +14,9 @@ import datetime
 import hashlib
 import json
 import logging as _logging
-import mimetypes
 import os
 import re
 import sys
-import tempfile
 import time
 import urllib
 import warnings
@@ -468,6 +466,31 @@ class TokenAuth(AuthBase):
         return r
 
 
+def _is_wbmp(buff: bytes) -> bool:
+    """Check for a type 0 WBMP: two zero header bytes, then width and height.
+
+    WBMP has no magic number, so the declared dimensions must account for
+    exactly the remaining bytes (one bit per pixel, rows padded to a byte).
+    """
+    if buff[:2] != b"\0\0":
+        return False
+    pos = 2
+    dims = []
+    for _ in range(2):
+        value = 0
+        while True:
+            if pos >= len(buff):
+                return False
+            byte = buff[pos]
+            pos += 1
+            value = (value << 7) | (byte & 0x7F)
+            if not byte & 0x80:
+                break
+        dims.append(value)
+    width, height = dims
+    return width > 0 and height > 0 and len(buff) - pos == (width + 7) // 8 * height
+
+
 class JIRA:
     """User interface to Jira.
 
@@ -669,8 +692,6 @@ class JIRA:
         context_path = urlparse(self.server_url).path
         if len(context_path) > 0:
             self._options["context_path"] = context_path
-
-        self._try_magic()
 
         assert isinstance(self._options["headers"], dict)  # for mypy benefit
 
@@ -3489,9 +3510,7 @@ class JIRA:
 
         The avatar created is temporary and must be confirmed before it can be used.
 
-        Avatar images are specified by a filename, size, and file object. By default, the client will attempt to autodetect the picture's content type
-        this mechanism relies on libmagic and will not work out of the box on Windows systems
-        (see `Their Documentation <https://filemagic.readthedocs.io/en/latest/guide.html>`_ for details on how to install support).
+        Avatar images are specified by a filename, size, and file object. By default, the client will attempt to autodetect the picture's content type.
 
         The ``contentType`` argument can be used to explicitly set the value (note that Jira will reject any type other than the well-known ones for images, e.g. ``image/jpg``, ``image/png``, etc.)
 
@@ -4239,9 +4258,7 @@ class JIRA:
 
         The avatar created is temporary and must be confirmed before it can be used.
 
-        Avatar images are specified by a filename, size, and file object. By default, the client will attempt to autodetect the picture's content type:
-        this mechanism relies on ``libmagic`` and will not work out of the box on Windows systems
-        (see `Their Documentation <https://filemagic.readthedocs.io/en/latest/guide.html>`_ for details on how to install support).
+        Avatar images are specified by a filename, size, and file object. By default, the client will attempt to autodetect the picture's content type.
         The ``contentType`` argument can be used to explicitly set the value
         (note that Jira will reject any type other than the well-known ones for images, e.g. ``image/jpg``, ``image/png``, etc.)
 
@@ -4827,29 +4844,8 @@ class JIRA:
             raise JIRAError("Unable to find resource %s(%s)", resource_cls, str(ids))
         return resource
 
-    def _try_magic(self) -> None:
-        try:
-            import weakref
-
-            import magic
-        except ImportError:
-            self._magic = None
-        else:
-            try:
-                _magic = magic.Magic(flags=magic.MAGIC_MIME_TYPE)
-
-                def cleanup(x: weakref.ref[JIRA]) -> None:
-                    _magic.close()
-
-                self._magic_weakref = weakref.ref(self, cleanup)
-                self._magic = _magic
-            except TypeError:
-                self._magic = None
-            except AttributeError:
-                self._magic = None
-
     def _get_mime_type(self, buff: bytes) -> str | None:
-        """Get the MIME type for a given stream of bytes.
+        """Get the MIME type for a given stream of bytes of an avatar.
 
         Args:
             buff (bytes): Stream of bytes
@@ -4857,37 +4853,25 @@ class JIRA:
         Returns:
             Optional[str]: the MIME type
         """
-        if self._magic is not None:
-            return self._magic.id_buffer(buff)
-        # The post-pillow fallback (#1891) wrote bytes to a TemporaryFile
-        # and called mimetypes.guess_type(f.name) - but tempfiles have a
-        # `.tmp` extension, so guess_type always returned None and avatar
-        # uploads broke. Pick a real extension from the magic bytes,
-        # write to a NamedTemporaryFile with that suffix, and let
-        # mimetypes do its job.
-        suffix_for_magic = (
-            (b"\x89PNG\r\n\x1a\n", ".png"),
-            (b"\xff\xd8\xff", ".jpg"),
-            (b"GIF87a", ".gif"),
-            (b"GIF89a", ".gif"),
-            (b"BM", ".bmp"),
+        # We assume the image is one of supported formats
+        # https://docs.atlassian.com/software/jira/docs/api/REST/9.14.0/#api/2/project-storeTemporaryAvatar
+        if buff[:3] == b"\xff\xd8\xff":
+            return "image/jpeg"
+        if buff[:8] == b"\x89PNG\r\n\x1a\n":
+            return "image/png"
+        if buff[:6] in (b"GIF87a", b"GIF89a"):
+            return "image/gif"
+        if buff[:2] == b"BM":
+            return "image/bmp"
+        if buff[:4] == b"RIFF" and buff[8:12] == b"WEBP":
+            return "image/webp"
+        if _is_wbmp(buff):
+            return "image/vnd.wap.wbmp"
+        self.log.warning(
+            "Couldn't detect content type of avatar image"
+            ". Specify the 'contentType' parameter explicitly."
         )
-        suffix = next((s for m, s in suffix_for_magic if buff.startswith(m)), None)
-        if suffix is None and buff[:4] == b"RIFF" and buff[8:12] == b"WEBP":
-            suffix = ".webp"
-        if suffix is None:
-            self.log.warning(
-                "Couldn't detect content type of avatar image"
-                ". Specify the 'contentType' parameter explicitly."
-            )
-            return None
-        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as f:
-            f.write(buff)
-            name = f.name
-        try:
-            return mimetypes.guess_type(name)[0]
-        finally:
-            os.unlink(name)
+        return None
 
     def rename_user(self, old_user: str, new_user: str) -> None:
         """Rename a Jira user.

@@ -8,6 +8,7 @@ PYJIRA
 Sbarnea
 Sorin
 Speakmon
+WBMP
 actornames
 addono
 addopts
@@ -42,7 +43,6 @@ jspa
 kall
 labelarray
 libkrb
-libmagic
 loggedin
 minversion
 multipartencoded
@@ -81,6 +81,7 @@ toolbelt
 transitionid
 unclobbered
 viewissue
+wbmp
 webdav
 woopsydoodle
 workflowschemes

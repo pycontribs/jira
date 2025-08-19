@@ -63,7 +63,6 @@ docs = [
   "furo"
 ]
 opt = [
-  "filemagic>=1.6",
   "PyJWT",
   "requests_jwt",
   # gssapi (pulled transitively) needs MIT/Heimdal headers at install
