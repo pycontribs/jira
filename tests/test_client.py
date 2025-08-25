@@ -204,9 +204,9 @@ def test_headers_unclobbered_update(options_arg, no_fields):
 
     # We arbitrarily chose a header to check it remains unchanged/unclobbered
     # so should not be overwritten by a test case
-    assert (
-        invariant_header_name not in options_arg["headers"]
-    ), f"{invariant_header_name} is checked as not being overwritten in this test"
+    assert invariant_header_name not in options_arg["headers"], (
+        f"{invariant_header_name} is checked as not being overwritten in this test"
+    )
 
     # WHEN: we initialise the JIRA class and get the headers
     jira_client = jira.client.JIRA(

@@ -1,214 +1,206 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = ["setuptools >= 60.0.0", "setuptools_scm[toml] >= 7.0.0"]
+
 [project]
-name = "jira"
-authors = [{name = "Ben Speakmon", email = "ben.speakmon@gmail.com"}]
-maintainers = [{name = "Sorin Sbarnea", email = "sorin.sbarnea@gmail.com"}]
-description = "Python library for interacting with JIRA via REST APIs."
-requires-python = ">=3.9"
-license = {text = "BSD-2-Clause"}
+authors = [{email = "ben.speakmon@gmail.com", name = "Ben Speakmon"}]
 classifiers = [
-    "Development Status :: 5 - Production/Stable",
-    "Environment :: Other Environment",
-    "Intended Audience :: Developers",
-    "Intended Audience :: Information Technology",
-    "License :: OSI Approved :: BSD License",
-    "Operating System :: OS Independent",
-    "Programming Language :: Python",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Topic :: Software Development :: Libraries :: Python Modules",
-    "Topic :: Internet :: WWW/HTTP",
+  "Development Status :: 5 - Production/Stable",
+  "Environment :: Other Environment",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Information Technology",
+  "License :: OSI Approved :: BSD License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Topic :: Internet :: WWW/HTTP"
 ]
-keywords = ["api", "atlassian", "jira", "rest", "web"]
 dependencies = [
-    "defusedxml",
-    "packaging",
-    "requests-oauthlib>=1.1.0",
-    "requests>=2.10.0",
-    "requests_toolbelt",
-    "typing_extensions>=3.7.4.2",
+  "defusedxml",
+  "packaging",
+  "requests-oauthlib>=1.1.0",
+  "requests>=2.10.0",
+  "requests_toolbelt",
+  "typing_extensions>=3.7.4.2"
 ]
+description = "Python library for interacting with JIRA via REST APIs."
 dynamic = ["version"]
-
-[project.readme]
-file = "README.rst"
-content-type = "text/x-rst; charset=UTF-8"
-# Do not include ChangeLog in description-file due to multiple reasons:
-# - Unicode chars, see https://github.com/pycontribs/jira/issues/512
-# - Breaks ability to perform `python setup.py install`
-
-[project.urls]
-Homepage = "https://github.com/pycontribs/jira"
-"Bug Tracker" = "https://github.com/pycontribs/jira/issues"
-"Release Management" = "https://github.com/pycontribs/jira/projects"
-"CI: GitHub Actions" = "https://github.com/pycontribs/jira/actions"
-"Source Code" = "https://github.com/pycontribs/jira.git"
-Documentation = "https://jira.readthedocs.io"
-Forum = "https://community.atlassian.com/t5/tag/jira-python/tg-p?sort=recent"
+keywords = ["api", "atlassian", "jira", "rest", "web"]
+maintainers = [{email = "sorin.sbarnea@gmail.com", name = "Sorin Sbarnea"}]
+name = "jira"
+requires-python = ">=3.10"
 
 [project.optional-dependencies]
+async = ["requests-futures>=0.9.7"]
 cli = [
-    "ipython>=4.0.0",
-    "keyring",
+  "ipython>=4.0.0",
+  "keyring"
 ]
 docs = [
-    "sphinx>=5.0.0",
-    "sphinx-copybutton",
-    # HTML Theme
-    "furo",
+  "sphinx>=5.0.0",
+  "sphinx-copybutton",
+  # HTML Theme
+  "furo"
 ]
 opt = [
-    "filemagic>=1.6",
-    "PyJWT",
-    "requests_jwt",
-    "requests_kerberos",
+  "filemagic>=1.6",
+  "PyJWT",
+  "requests_jwt",
+  "requests_kerberos"
 ]
-async = ["requests-futures>=0.9.7"]
 test = [
-    "docutils>=0.21.2",
-    "flaky",
-    "MarkupSafe>=0.23",
-    "oauthlib",
-    "pytest-cache",
-    "pytest-cov",
-    "pytest-instafail",
-    "pytest-sugar",
-    "pytest-timeout>=1.3.1",
-    "pytest-xdist>=2.2",
-    "pytest>=6.0.0", # MIT
-    "PyYAML>=5.1", # MIT
-    "requests_mock", # Apache-2
-    "requires.io", # UNKNOWN!!!
-    "tenacity", # Apache-2
-    "wheel>=0.24.0", # MIT
-    "yanc>=0.3.3", # GPL
-    "parameterized>=0.8.1", # BSD-3-Clause
+  "MarkupSafe>=0.23",
+  "PyYAML>=5.1", # MIT
+  "docutils>=0.21.2",
+  "flaky",
+  "oauthlib",
+  "parameterized>=0.8.1", # BSD-3-Clause
+  "pip",
+  "pytest-cache",
+  "pytest-cov",
+  "pytest-instafail",
+  "pytest-sugar",
+  "pytest-timeout>=1.3.1",
+  "pytest-xdist>=2.2",
+  "pytest>=6.0.0", # MIT
+  "requests_mock", # Apache-2
+  "requires.io", # UNKNOWN!!!
+  "tenacity", # Apache-2
+  "wheel>=0.24.0", # MIT
+  "yanc>=0.3.3", # GPL
+  "parameterized>=0.8.1" # BSD-3-Clause
 ]
+
+[project.readme]
+content-type = "text/x-rst; charset=UTF-8"
+file = "README.rst"
 
 [project.scripts]
 jirashell = "jira.jirashell:main"
 
+[project.urls]
+"Bug Tracker" = "https://github.com/pycontribs/jira/issues"
+"CI: GitHub Actions" = "https://github.com/pycontribs/jira/actions"
+Documentation = "https://jira.readthedocs.io"
+Forum = "https://community.atlassian.com/t5/tag/jira-python/tg-p?sort=recent"
+Homepage = "https://github.com/pycontribs/jira"
+"Release Management" = "https://github.com/pycontribs/jira/projects"
+"Source Code" = "https://github.com/pycontribs/jira.git"
+
 [tool.codespell]
+builtin = ["clear", "rare", "usage", "names", "code"]
 check-filenames = true
 check-hidden = true
-quiet-level = 0
-write-changes = true
 enable-colors = true
-skip = [
-    "./.eggs",
-    "./.git",
-    "./.mypy_cache",
-    "./.tox",
-    "./build",
-    "./docs/build",
-    "./node_modules",
-    "./pip-wheel-metadata",
-    "./tests/icon.png",
-    ".DS_Store",
-    ".ruff_cache",
-    "AUTHORS",
-    "ChangeLog",
-    "__pycache__",
-    "coverage.xml",
-    "dist",
-]
-builtin = ["clear", "rare", "usage", "names", "code"]
 ignore-words = [".config/dictionary.txt"]
+quiet-level = 0
+skip = [
+  "./.eggs",
+  "./.git",
+  "./.mypy_cache",
+  "./.tox",
+  "./build",
+  "./docs/build",
+  "./node_modules",
+  "./pip-wheel-metadata",
+  "./tests/icon.png",
+  ".DS_Store",
+  ".ruff_cache",
+  "AUTHORS",
+  "ChangeLog",
+  "__pycache__",
+  "coverage.xml",
+  "dist"
+]
+write-changes = true
+
+[tool.coverage.report]
+exclude_also = ["pragma: no cover", "if TYPE_CHECKING:"]
+# Increase it just so it would pass on any single-python run
+fail_under = 92
+# During development we might remove code (files) with coverage data, and we don't want to fail:
+ignore_errors = true
+omit = ["test/*"]
+show_missing = true
+skip_covered = true
+skip_empty = true
+
+[tool.coverage.run]
+concurrency = ["multiprocessing", "thread"]
+# Do not use branch until bug is fixes:
+# https://github.com/nedbat/coveragepy/issues/605
+# branch = true
+parallel = true
+source = ["src"]
 
 [tool.files]
 packages = """
 jira"""
 
-[tool.setuptools]
-include-package-data = true
-zip-safe = false
-platforms = ["any"]
+[tool.mypy]
+check_untyped_defs = true
+namespace_packages = true
+python_version = "3.10"
+warn_unused_configs = true
 
-[tool.setuptools.packages]
-find = {namespaces = false}
-
-[tool.setuptools.package-data]
-jira = ["jira/py.typed"]
-
-[build-system]
-requires = ["setuptools >= 60.0.0", "setuptools_scm[toml] >= 7.0.0"]
-build-backend = "setuptools.build_meta"
-
-# Setuptools config
-# Equivalent to use_scm_version=True
-[tool.setuptools_scm]
+[[tool.mypy.overrides]]
+check_untyped_defs = false
+disable_error_code = "annotation-unchecked"
+module = "tests.*"
 
 [tool.pytest.ini_options]
+addopts = '''-p no:xdist --durations=10 --tb=long -rxX -v --color=yes'''
+# avoid useless warnings related to coverage skips
+filterwarnings = ["ignore::pytest.PytestWarning"]
+markers = ["allow_on_cloud: opt in for the test to run on Jira Cloud"]
 minversion = "6.0"
-testpaths = ["tests"]
 python_files = ["test_*.py", "tests.py"]
-addopts = '''-p no:xdist --durations=10 --tb=long -rxX -v --color=yes
-             --junitxml=build/results.xml
-             --cov-report=xml --cov jira'''
-
 # these are important for distributed testing, to speed up their execution we minimize what we sync
 rsyncdirs = ". jira demo docs"
 rsyncignore = ".git"
-
+testpaths = ["tests"]
 # pytest-timeout, delete_project on jira cloud takes >70s
 timeout = 80
-
-# avoid useless warnings related to coverage skips
-filterwarnings = ["ignore::pytest.PytestWarning"]
-
-markers = ["allow_on_cloud: opt in for the test to run on Jira Cloud"]
-
-[tool.mypy]
-python_version = "3.9"
-warn_unused_configs = true
-namespace_packages = true
-check_untyped_defs = true
-
-[[tool.mypy.overrides]]
-module = "tests.*"
-check_untyped_defs = false
-disable_error_code = "annotation-unchecked"
 
 [tool.ruff]
 # Same as Black.
 line-length = 88
-
-# Assume Python 3.9 (minimum supported)
-target-version = "py39"
-
 # The source code paths to consider, e.g., when resolving first- vs. third-party imports
 src = ["jira", "tests"]
+# Assume Python 3.10 (minimum supported)
+target-version = "py310"
 
 [tool.ruff.lint]
-select = [
-    "E",  # pydocstyle
-    "W",  # pydocstyle
-    "F",  # pyflakes
-    "I",  # isort
-    "UP", # pyupgrade
-    "D",  # docstrings
-]
-ignore = [
-    "E501", # We have way too many "line too long" errors at the moment
-    # TODO: Address these with time
-    "D100",
-    "D101",
-    "D102",
-    "D103",
-    "D105",
-    "D107",
-    "D401",
-    "D402",
-    "D417",
-    "UP006",
-    "UP035",
-]
-
 # Allow unused variables when underscore-prefixed.
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+ignore = [
+  "E501", # We have way too many "line too long" errors at the moment
+  # TODO: Address these with time
+  "D100",
+  "D101",
+  "D102",
+  "D103",
+  "D105",
+  "D107",
+  "D401",
+  "D402",
+  "D417",
+  "UP006",
+  "UP035"
+]
+select = [
+  "E", # pydocstyle
+  "W", # pydocstyle
+  "F", # pyflakes
+  "I", # isort
+  "UP", # pyupgrade
+  "D" # docstrings
+]
 
 [tool.ruff.lint.isort]
 known-first-party = ["jira", "tests"]
@@ -216,9 +208,56 @@ required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.lint.per-file-ignores]
 "jira/__init__.py" = [
-    "E402", # ignore import order in this file
+  "E402" # ignore import order in this file
+]
+"tests/*.*" = [
+  "E501", # We have way too many "line too long" errors at the moment
+  "D" # Too many undocumented functions at the moment
 ]
 
 [tool.ruff.lint.pydocstyle]
 # Use Google-style docstrings.
 convention = "google"
+
+[tool.setuptools]
+include-package-data = true
+platforms = ["any"]
+zip-safe = false
+
+[tool.setuptools.package-data]
+jira = ["jira/py.typed"]
+
+[tool.setuptools.packages]
+find = {namespaces = false}
+
+[tool.setuptools_scm]
+# To prevent accidental pick of mobile version tags such 'v6'
+git_describe_command = [
+  "git",
+  "describe",
+  "--dirty",
+  "--long",
+  "--tags",
+  "--match",
+  "*.*.*"
+]
+local_scheme = "no-local-version"
+tag_regex = "^(?P<prefix>v)?(?P<version>\\d+[^\\+]*)(?P<suffix>.*)?$"
+
+[tool.tomlsort]
+in_place = true
+sort_inline_tables = true
+sort_table_keys = true
+
+[tool.uv]
+
+[tool.uv.pip]
+custom-compile-command = "tox run -e deps"
+no-annotate = true # divergent results when run between different platforms
+no-emit-package = [
+  "secretstorage", # linux specific dependency of keyring
+  "jeepney", # linux specific dependency of keyring
+  "pip",
+  "typing-extensions",
+  "uv"
+]

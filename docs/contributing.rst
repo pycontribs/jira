@@ -77,8 +77,8 @@ Using tox
 * Run tests for one env only
     - ``tox -e py``
 * Specify what tests to run with pytest_
-    - ``tox -e py39 -- tests/resources/test_attachment.py``
-    - ``tox -e py310 -- -m allow_on_cloud`` (Run only the cloud tests)
+    - ``tox -e py -- tests/resources/test_attachment.py``
+    - ``tox -e py -- -m allow_on_cloud`` (Run only the cloud tests)
 * Debug tests with breakpoints by disabling the coverage plugin, with the ``--no-cov`` argument.
     - Example for VSCode on Windows :
 
@@ -88,7 +88,7 @@ Using tox
             "name": "Pytest",
             "type": "python",
             "request": "launch",
-            "python": ".tox\\py39\\Scripts\\python.exe",
+            "python": ".tox\\py\\Scripts\\python.exe",
             "module": "pytest",
             "env": {
                 "CI_JIRA_URL": "http://localhost:2990/jira",

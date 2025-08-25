@@ -3,47 +3,88 @@ name: release
 on:
   release:
     types: [published]
+  workflow_dispatch:
 
 jobs:
-  pypi:
-    name: Publish to PyPI registry
+  build:
+    runs-on: ubuntu-latest
     environment: release
-    runs-on: ubuntu-20.04
-
     env:
       FORCE_COLOR: 1
       PY_COLORS: 1
-      TOXENV: packaging
-      TOX_PARALLEL_NO_SPINNER: 1
+      TOXENV: pkg
 
     steps:
-    - name: Switch to using Python 3.9 by default
-      uses: actions/setup-python@v5
-      with:
-        python-version: 3.9
+      - name: Switch to using Python 3.10 by default
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
 
-    - name: Install build dependencies
-      run: python3 -m pip install --user tox
+      - name: Install system dependencies
+        run: |
+            sudo apt remove -y docker-compose
+            sudo apt-get update -y
+            sudo apt-get --assume-yes --no-install-recommends install -y apt-transport-https curl libkrb5-dev
 
-    - name: Check out src from Git
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0  # needed by setuptools-scm
+      - name: Install tox
+        run: python3 -m pip install --user "tox>=4.0.0"
 
-    - name: Build dists
-      run: python -m tox
+      - name: Check out src from Git
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # needed by setuptools-scm
+          submodules: true
 
-    - name: Publish to test.pypi.org
-      if: >-  # "create" workflows run separately from "push" & "pull_request"
-        github.event_name == 'release'
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        password: ${{ secrets.testpypi_password }}
-        repository_url: https://test.pypi.org/legacy/
+      - name: Build dists
+        run: python3 -m tox
 
-    - name: Publish to pypi.org
-      if: >-  # "create" workflows run separately from "push" & "pull_request"
-        github.event_name == 'release'
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        password: ${{ secrets.pypi_password }}
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: package
+          path: dist/
+          retention-days: 7
+          if-no-files-found: error
+
+  pypi:
+    needs: [build]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+    environment: release
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: package
+          path: dist
+      - name: Show tree
+        run: tree
+      - name: Publish to pypi.org
+        if: >-  # "create" workflows run separately from "push" & "pull_request"
+          github.event_name == 'release'
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+  asset:
+    needs: [build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: package
+          path: dist
+
+      - name: Show tree
+        run: tree
+
+      - name: Add release asset
+        uses: softprops/action-gh-release@c95fe1489396fe8a9eb87c0abf8aa5b2ef267fda
+        with:
+          tag_name: ${{ github.event.release.tag_name }}
+          fail_on_unmatched_files: true
+          files: |
+            dist/*

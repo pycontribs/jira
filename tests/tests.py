@@ -637,7 +637,7 @@ class UserAdministrationTests(JiraTestCase):
         self.assertEqual(
             self.test_groupname,
             x[0],
-            "Did not find expected group after trying to add" " it. Test Fails.",
+            "Did not find expected group after trying to add it. Test Fails.",
         )
         self.jira.remove_group(self.test_groupname)
 
@@ -722,7 +722,7 @@ class UserAdministrationTests(JiraTestCase):
         self.assertNotIn(
             self.test_username,
             x.keys(),
-            "Username found in group when it should have been removed. " "Test Fails.",
+            "Username found in group when it should have been removed. Test Fails.",
         )
 
         self.jira.remove_group(self.test_groupname)

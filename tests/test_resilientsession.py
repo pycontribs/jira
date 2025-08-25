@@ -242,3 +242,13 @@ def test_verify_is_forwarded(mocked_request_method: Mock):
     session.get(url="mocked_url", data={"some": "fake-data"})
     kwargs = mocked_request_method.call_args.kwargs
     assert kwargs["verify"] == session.verify is False
+
+
+@patch("requests.Session.request")
+def test_empty_dict_body_not_forwarded(mocked_request_method: Mock):
+    # Disable retries for this test.
+    session = jira.resilientsession.ResilientSession(max_retries=0)
+    # Empty dictionary should not be converted to JSON
+    session.get(url="mocked_url", data={})
+    kwargs = mocked_request_method.call_args.kwargs
+    assert "data" not in kwargs
