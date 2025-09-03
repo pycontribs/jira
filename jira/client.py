@@ -493,6 +493,7 @@ class JIRA:
         timeout: None | float | tuple[float, float] | tuple[float, None] | None = None,
         auth: tuple[str, str] | None = None,
         default_batch_sizes: dict[type[Resource], int | None] | None = None,
+        max_retry_delay: int = 60,
     ):
         """Construct a Jira client instance.
 
@@ -567,6 +568,7 @@ class JIRA:
               default batch-size. By default all Resources will be queried in batches of 100. E.g., setting this to
               ``{Issue: 500, Resource: None}`` will make :py:meth:`search_issues` query Issues in batches of 500, while
               every other item type's batch-size will be controlled by the backend. (Default: None)
+            max_retry_delay (int): Sets the maximum delay in seconds allowed between retries. (Default: ``60``)
         """
         # force a copy of the tuple to be used in __del__() because
         # sys.version_info could have already been deleted in __del__()
@@ -620,7 +622,9 @@ class JIRA:
         assert isinstance(self._options["headers"], dict)  # for mypy benefit
 
         # Create Session object and update with config options first
-        self._session = ResilientSession(timeout=timeout)
+        self._session = ResilientSession(
+            timeout=timeout, max_retries=max_retries, max_retry_delay=max_retry_delay
+        )
         # Add the client authentication certificate to the request if configured
         self._add_client_cert_to_session()
         # Add the SSL Cert to the request if configured
@@ -630,8 +634,6 @@ class JIRA:
 
         if "cookies" in self._options:
             self._session.cookies.update(self._options["cookies"])
-
-        self._session.max_retries = max_retries
 
         if proxies:
             self._session.proxies = proxies

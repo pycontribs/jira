@@ -856,3 +856,16 @@ def test_project_securitylevels(requests_mock):
 
     assert [level.name for level in levels] == ["Internal", "Public"]
     assert all(isinstance(level, SecurityLevel) for level in levels)
+
+
+def test_client_retry_config():
+    client = jira.client.JIRA(
+        server="https://jira.example.com",
+        get_server_info=False,
+        validate=False,
+        max_retries=81,
+        max_retry_delay=111,
+    )
+
+    assert client._session.max_retries == 81
+    assert client._session.max_retry_delay == 111
