@@ -1681,7 +1681,43 @@ def dict2resource(
             setattr(top, i, seq_list)
         else:
             setattr(top, i, j)
+
+    if session and hasattr(session, 'fields_cache') and session.fields_cache:
+        _add_display_name_fields(top, session)
+
     return top
+
+def convert_display_name_to_python_name(display_name: str) -> str:
+    """Convert JIRA field display name to Python attribute name.
+
+    Args:
+        display_name: JIRA field display name (e.g., "Epic Link", "Story Points")
+
+    Returns:
+        Python-compatible attribute name (e.g., "epic_link", "story_points")
+    """
+    python_name = re.sub(r'[^a-zA-Z0-9_]', '_', display_name.lower())
+    python_name = re.sub(r'_+', '_', python_name).strip('_')
+    if python_name and python_name[0].isdigit():
+        python_name = 'field_' + python_name
+    return python_name
+
+def _add_display_name_fields(obj: PropertyHolder, session) -> None:
+    """Create readable field name aliases for JIRA custom fields.
+
+    Adds attributes like 'epic_link' alongside 'customfield_10001'
+    """
+    custom_fields = [attr for attr in dir(obj) if attr.startswith('customfield_')]
+    if not custom_fields:
+        return
+
+    for display_name, field_id in session.fields_cache.items():
+        if field_id in set(custom_fields):
+            python_name = convert_display_name_to_python_name(display_name)
+
+            if not hasattr(obj, python_name):
+                field_value = getattr(obj, field_id)
+                setattr(obj, python_name, field_value)
 
 
 resource_class_map: dict[str, type[Resource]] = {
