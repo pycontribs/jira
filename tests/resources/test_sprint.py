@@ -118,7 +118,7 @@ class SprintTests(JiraTestCase):
             serialised_sprint = updated_issue_1.get_field(self._sprint_customfield())[0]
 
             # THEN: We find this sprint in the Sprint field of the Issue
-            assert f"[id={sprint.id}," in str(serialised_sprint)
+            assert sprint.name == serialised_sprint.name
 
     def test_move_issue_to_backlog(self):
         with self._create_sprint() as sprint:
