@@ -57,10 +57,10 @@ jobs:
         run: tox run -e py310 -- -m allow_on_cloud
         env:
           CI_JIRA_TYPE: CLOUD
-          CI_JIRA_CLOUD_ADMIN: ${{ secrets.CLOUD_ADMIN }}
-          CI_JIRA_CLOUD_ADMIN_TOKEN: ${{ secrets.CLOUD_ADMIN_TOKEN }}
-          CI_JIRA_CLOUD_USER: ${{ secrets.CLOUD_USER }}
-          CI_JIRA_CLOUD_USER_TOKEN: ${{ secrets.CLOUD_USER_TOKEN }}
+          CI_JIRA_CLOUD_ADMIN: ${{ secrets.CI_JIRA_CLOUD_ADMIN }}
+          CI_JIRA_CLOUD_ADMIN_TOKEN: ${{ secrets.CI_JIRA_CLOUD_ADMIN_TOKEN }}
+          CI_JIRA_CLOUD_USER: ${{ secrets.CI_JIRA_CLOUD_USER }}
+          CI_JIRA_CLOUD_USER_TOKEN: ${{ secrets.CI_JIRA_CLOUD_USER_TOKEN }}
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
