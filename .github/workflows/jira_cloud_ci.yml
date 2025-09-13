@@ -1,6 +1,11 @@
 name: cloud
 
 on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - "*"
   workflow_call:
     inputs:
       ref:
@@ -39,7 +44,8 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: ${{ github.event.inputs.ref }}
+          # Use correct ref for PRs and pushes
+          ref: ${{ github.head_ref || github.ref_name || github.event.inputs.ref }}
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v6
