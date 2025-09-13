@@ -209,7 +209,7 @@ class Resource:
         """Pickling the resource."""
         return vars(self)
 
-    def __setstate__(self, raw_pickled: dict[str, Any]):
+    def __setstate__(self, raw_pickled: dict[str, Any]) -> None:
         """Unpickling of the resource."""
         # https://stackoverflow.com/a/50888571/7724187
         vars(self).update(raw_pickled)
@@ -247,7 +247,7 @@ class Resource:
         self,
         id: tuple[str, ...] | int | str,
         params: dict[str, str] | None = None,
-    ):
+    ) -> None:
         """Finds a resource based on the input parameters.
 
         Args:
@@ -268,7 +268,7 @@ class Resource:
         self,
         url: str,
         params: dict[str, str] | None = None,
-    ):
+    ) -> None:
         """Finds a resource on the specified url.
 
         The resource is loaded with the JSON data returned by doing a
@@ -318,7 +318,7 @@ class Resource:
         jira: JIRA | None = None,
         notify: bool = True,
         **kwargs: Any,
-    ):
+    ) -> None:
         """Update this resource on the server.
 
         Keyword arguments are marshalled into a dict before being sent. If this resource doesn't support ``PUT``, a :py:exc:`.JIRAError`
@@ -458,7 +458,7 @@ class Resource:
         headers=CaseInsensitiveDict(),
         params: dict[str, str] | None = None,
         path: str | None = None,
-    ):
+    ) -> None:
         """Load a resource.
 
         Args:
@@ -480,7 +480,7 @@ class Resource:
             j = j[path]
         self._parse_raw(j)
 
-    def _parse_raw(self, raw: dict[str, Any]):
+    def _parse_raw(self, raw: dict[str, Any]) -> None:
         """Parse a raw dictionary to create a resource.
 
         Args:
@@ -513,7 +513,7 @@ class Attachment(Resource):
             self._parse_raw(raw)
         self.raw: dict[str, Any] = cast(dict[str, Any], self.raw)
 
-    def get(self):
+    def get(self) -> bytes | None:
         """Return the file content as a string."""
         r = self._session.get(self.content, headers={"Accept": "*/*"})
         return r.content
@@ -538,7 +538,7 @@ class Component(Resource):
             self._parse_raw(raw)
         self.raw: dict[str, Any] = cast(dict[str, Any], self.raw)
 
-    def delete(self, moveIssuesTo: str | None = None):  # type: ignore[override]
+    def delete(self, moveIssuesTo: str | None = None) -> None:  # type: ignore[override]
         """Delete this component from the server.
 
         Args:
@@ -775,7 +775,7 @@ class Issue(Resource):
             def __init__(self) -> None:
                 self.worklogs: list[Worklog] = []
 
-        def __init__(self):
+        def __init__(self) -> None:
             self.assignee: UnknownResource | None = None
             self.attachment: list[Attachment] = []
             self.comment = self._Comment()
@@ -822,7 +822,7 @@ class Issue(Resource):
         jira: JIRA | None = None,
         notify: bool = True,
         **fieldargs,
-    ):
+    ) -> None:
         """Update this issue on the server.
 
         Each keyword argument (other than the predefined ones) is treated as a field name and the argument's value is treated as
@@ -893,7 +893,7 @@ class Issue(Resource):
         else:
             return getattr(self.fields, field_name)
 
-    def add_field_value(self, field: str, value: str):
+    def add_field_value(self, field: str, value: str) -> None:
         """Add a value to a field that supports multiple values, without resetting the existing values.
 
         This should work with: labels, multiple checkbox lists, multiple select
@@ -904,7 +904,7 @@ class Issue(Resource):
         """
         super().update(fields={"update": {field: [{"add": value}]}})
 
-    def delete(self, deleteSubtasks=False):
+    def delete(self, deleteSubtasks=False) -> None:
         """Delete this issue from the server.
 
         Args:
@@ -912,7 +912,7 @@ class Issue(Resource):
         """
         super().delete(params={"deleteSubtasks": deleteSubtasks})
 
-    def permalink(self):
+    def permalink(self) -> str:
         """Get the URL of the issue, the browsable one not the REST one.
 
         Returns:
@@ -947,7 +947,7 @@ class Comment(Resource):
         visibility: dict[str, str] | None = None,
         is_internal: bool = False,
         notify: bool = True,
-    ):
+    ) -> None:
         """Update a comment.
 
         Keyword arguments are marshalled into a dict before being sent.
@@ -1012,7 +1012,7 @@ class RemoteLink(Resource):
         globalId=None,
         application=None,
         relationship=None,
-    ):
+    ) -> None:
         """Update a RemoteLink. 'object' is required.
 
         For definitions of the allowable fields for 'object' and the keyword arguments 'globalId', 'application' and 'relationship',
@@ -1170,7 +1170,7 @@ class Worklog(Resource):
 
     def delete(  # type: ignore[override]
         self, adjustEstimate: str | None = None, newEstimate=None, increaseBy=None
-    ):
+    ) -> None:
         """Delete this worklog entry from its associated issue.
 
         Args:
@@ -1209,7 +1209,7 @@ class IssueProperty(Resource):
         self,
         url: str,
         params: dict[str, str] | None = None,
-    ):
+    ) -> None:
         super()._find_by_url(url, params)
         # An IssueProperty never returns "self" identifier, set it
         self.self = url
@@ -1308,7 +1308,7 @@ class Role(Resource):
         self,
         users: str | list | tuple | None = None,
         groups: str | list | tuple | None = None,
-    ):
+    ) -> None:
         """Add the specified users or groups to this project role. One of ``users`` or ``groups`` must be specified.
 
         Args:
@@ -1334,7 +1334,7 @@ class Role(Resource):
         self,
         users: str | list | tuple | None = None,
         groups: str | list | tuple | None = None,
-    ):
+    ) -> None:
         """Add the specified users or groups to this project role. One of ``users`` or ``groups`` must be specified.
 
         Args:
