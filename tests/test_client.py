@@ -136,7 +136,6 @@ def test_delete_inexistent_project(cl_admin):
     ) or f'Parameter pid="{slug}" is not a Project, projectID or slug' in str(ex.value)
 
 
-@allow_on_cloud
 def test_templates(cl_admin):
     templates = set(cl_admin.templates())
     expected_templates = set(
