@@ -1,24 +1,29 @@
 from __future__ import annotations
 
 from jira import JIRAError
-from tests.conftest import JiraTestCase, find_by_id, rndstr
+from tests.conftest import JiraTestCase, allow_on_cloud, find_by_id, rndstr
 
 
 class ProjectTests(JiraTestCase):
+
+    @allow_on_cloud
     def test_projects(self):
         projects = self.jira.projects()
         self.assertGreaterEqual(len(projects), 2)
 
+    @allow_on_cloud
     def test_project(self):
         project = self.jira.project(self.project_b)
         self.assertEqual(project.key, self.project_b)
 
+    @allow_on_cloud
     def test_project_expand(self):
         project = self.jira.project(self.project_b)
         self.assertFalse(hasattr(project, "projectKeys"))
         project = self.jira.project(self.project_b, expand="projectKeys")
         self.assertTrue(hasattr(project, "projectKeys"))
 
+    @allow_on_cloud
     def test_projects_expand(self):
         projects = self.jira.projects()
         for project in projects:
@@ -91,6 +96,7 @@ class ProjectTests(JiraTestCase):
     #     avatars = self.jira.project_avatars(project)
     #     self.assertEqual(find_selected_avatar(avatars)['id'], '10208')
 
+    @allow_on_cloud
     def test_project_components(self):
         proj = self.jira.project(self.project_b)
         name = f"component-{proj} from project {rndstr()}"
@@ -108,6 +114,7 @@ class ProjectTests(JiraTestCase):
         self.assertEqual(sample.name, name)
         component.delete()
 
+    @allow_on_cloud
     def test_project_versions(self):
         name = f"version-{rndstr()}"
         version = self.jira.create_version(name, self.project_b, "will be deleted soon")
@@ -121,6 +128,7 @@ class ProjectTests(JiraTestCase):
         i.update(fields={"fixVersions": [{"id": version.id}]})
         version.delete()
 
+    @allow_on_cloud
     def test_update_project_version(self):
         # given
         name = f"version-{rndstr()}"
@@ -132,6 +140,7 @@ class ProjectTests(JiraTestCase):
         self.assertEqual(updated_name, version.name)
         version.delete()
 
+    @allow_on_cloud
     def test_get_project_version_by_name(self):
         name = f"version-{rndstr()}"
         version = self.jira.create_version(name, self.project_b, "will be deleted soon")
@@ -149,6 +158,7 @@ class ProjectTests(JiraTestCase):
         i.update(fields={"fixVersions": [{"id": version.id}]})
         version.delete()
 
+    @allow_on_cloud
     def test_rename_version(self):
         old_name = f"version-{rndstr()}"
         version = self.jira.create_version(
@@ -171,6 +181,7 @@ class ProjectTests(JiraTestCase):
         i.update(fields={"fixVersions": [{"id": version.id}]})
         version.delete()
 
+    @allow_on_cloud
     def test_project_versions_with_project_obj(self):
         name = f"version-{rndstr()}"
         version = self.jira.create_version(name, self.project_b, "will be deleted soon")
@@ -204,6 +215,7 @@ class ProjectTests(JiraTestCase):
         self.assertIn(user.name, [a.name for a in role.actors])
         self.assertIn(actor_admin, [a.name for a in role.actors])
 
+    @allow_on_cloud
     def test_project_permission_scheme(self):
         permissionscheme = self.jira.project_permissionscheme(self.project_b)
         self.assertEqual(permissionscheme.name, "Default Permission Scheme")
@@ -212,6 +224,7 @@ class ProjectTests(JiraTestCase):
         priorityscheme = self.jira.project_priority_scheme(self.project_b)
         self.assertEqual(priorityscheme.name, "Default priority scheme")
 
+    @allow_on_cloud
     def test_project_notification_scheme(self):
         notificationscheme = self.jira.project_notification_scheme(self.project_b)
         self.assertEqual(notificationscheme.name, "Default Notification Scheme")
