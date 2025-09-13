@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import time
 
 from jira.exceptions import JIRAError
 from tests.conftest import JiraTestCase, allow_on_cloud, find_by_key, find_by_key_value
@@ -593,13 +594,16 @@ class IssueTests(JiraTestCase):
             )
 
         self.jira.rank(self.issue_1, next_issue=self.issue_2)
+        time.sleep(1)
         issues = get_issues_ordered_by_rank()
         assert (issues[0].key, issues[1].key) == (self.issue_1, self.issue_2)
 
         self.jira.rank(self.issue_2, next_issue=self.issue_1)
+        time.sleep(1)
         issues = get_issues_ordered_by_rank()
         assert (issues[0].key, issues[1].key) == (self.issue_2, self.issue_1)
 
         self.jira.rank(self.issue_2, prev_issue=self.issue_1)
+        time.sleep(1)
         issues = get_issues_ordered_by_rank()
         assert (issues[0].key, issues[1].key) == (self.issue_1, self.issue_2)
