@@ -310,7 +310,76 @@ class QshGenerator:
         return [quote(value, safe="~") for value in ordered_values]
 
 
-class JiraCookieAuth(AuthBase):
+class RetryingJiraAuth(AuthBase):
+    """Base class for Jira authentication handlers that need to retry requests on 401 responses."""
+
+    def __init__(self, session: ResilientSession | None = None):
+        self._session = session
+        self._retry_counter_401 = 0
+        self._max_allowed_401_retries = 1  # 401 aren't recoverable with retries really
+
+    def init_session(self):
+        """Auth mechanism specific code to re-initialize the Jira session."""
+        raise NotImplementedError()
+
+    @property
+    def cookies(self):
+        """Return the cookies from the session."""
+        assert (
+            self._session is not None
+        )  # handle_401 should've caught this before attempting retry
+        return self._session.cookies
+
+    def __call__(self, request: requests.PreparedRequest):
+        request.register_hook("response", self.handle_401)
+        return request
+
+    def _increment_401_retry_counter(self):
+        self._retry_counter_401 += 1
+
+    def _reset_401_retry_counter(self):
+        self._retry_counter_401 = 0
+
+    def handle_401(self, response: requests.Response, **kwargs) -> requests.Response:
+        """Refresh cookies if the session cookie has expired. Then retry the request.
+
+        Args:
+            response (requests.Response): the response with the possible 401 to handle
+
+        Returns:
+            requests.Response
+        """
+        is_retryable_401 = (
+            response.status_code == 401
+            and self._retry_counter_401 < self._max_allowed_401_retries
+        )
+
+        if is_retryable_401 and self._session is not None:
+            LOG.info("Trying to refresh the cookie auth session...")
+            self._increment_401_retry_counter()
+            self.init_session()
+            response = self.process_original_request(response.request.copy())
+        elif is_retryable_401 and self._session is None:
+            LOG.warning("No session was passed to constructor, can't refresh cookies.")
+
+        self._reset_401_retry_counter()
+        return response
+
+    def process_original_request(self, original_request: requests.PreparedRequest):
+        self.update_cookies(original_request)
+        return self.send_request(original_request)
+
+    def update_cookies(self, original_request: requests.PreparedRequest):
+        """Auth mechanism specific cookie handling prior to retrying."""
+        raise NotImplementedError()
+
+    def send_request(self, request: requests.PreparedRequest):
+        if self._session is not None:
+            request.prepare_cookies(self.cookies)  # post-update re-prepare
+            return self._session.send(request)
+
+
+class JiraCookieAuth(RetryingJiraAuth):
     """Jira Cookie Authentication.
 
     Allows using cookie authentication as described by `jira api docs <https://developer.atlassian.com/server/jira/platform/cookie-based-authentication/>`_
@@ -326,31 +395,18 @@ class JiraCookieAuth(AuthBase):
             session_api_url (str): The session api url to use.
             auth (Tuple[str, str]): The username, password tuple.
         """
-        self._session = session
+        super().__init__(session)
         self._session_api_url = session_api_url  # e.g ."/rest/auth/1/session"
         self.__auth = auth
-        self._retry_counter_401 = 0
-        self._max_allowed_401_retries = 1  # 401 aren't recoverable with retries really
-
-    @property
-    def cookies(self):
-        return self._session.cookies
-
-    def _increment_401_retry_counter(self):
-        self._retry_counter_401 += 1
-
-    def _reset_401_retry_counter(self):
-        self._retry_counter_401 = 0
-
-    def __call__(self, request: requests.PreparedRequest):
-        request.register_hook("response", self.handle_401)
-        return request
 
     def init_session(self):
         """Initialise the Session object's cookies, so we can use the session cookie.
 
         Raises HTTPError if the post returns an erroring http response
         """
+        assert (
+            self._session is not None
+        )  # Constructor for this subclass always takes a session
         username, password = self.__auth
         authentication_data = {"username": username, "password": password}
         r = self._session.post(  # this also goes through the handle_401() hook
@@ -358,52 +414,34 @@ class JiraCookieAuth(AuthBase):
         )
         r.raise_for_status()
 
-    def handle_401(self, response: requests.Response, **kwargs) -> requests.Response:
-        """Refresh cookies if the session cookie has expired. Then retry the request.
-
-        Args:
-            response (requests.Response): the response with the possible 401 to handle
-
-        Returns:
-            requests.Response
-        """
-        if (
-            response.status_code == 401
-            and self._retry_counter_401 < self._max_allowed_401_retries
-        ):
-            LOG.info("Trying to refresh the cookie auth session...")
-            self._increment_401_retry_counter()
-            self.init_session()
-            response = self.process_original_request(response.request.copy())
-        self._reset_401_retry_counter()
-        return response
-
-    def process_original_request(self, original_request: requests.PreparedRequest):
-        self.update_cookies(original_request)
-        return self.send_request(original_request)
-
     def update_cookies(self, original_request: requests.PreparedRequest):
         # Cookie header needs first to be deleted for the header to be updated using the
         # prepare_cookies method. See request.PrepareRequest.prepare_cookies
         if "Cookie" in original_request.headers:
             del original_request.headers["Cookie"]
-        original_request.prepare_cookies(self.cookies)
-
-    def send_request(self, request: requests.PreparedRequest):
-        return self._session.send(request)
 
 
-class TokenAuth(AuthBase):
+class TokenAuth(RetryingJiraAuth):
     """Bearer Token Authentication."""
 
-    def __init__(self, token: str):
+    def __init__(self, token: str, session: ResilientSession | None = None):
+        super().__init__(session)
         # setup any auth-related data here
         self._token = token
 
     def __call__(self, r: requests.PreparedRequest):
         # modify and return the request
         r.headers["authorization"] = f"Bearer {self._token}"
-        return r
+        return super().__call__(r)
+
+    def init_session(self):
+        pass  # token should still work, only thing needed is to clear session cookies which happens next
+
+    def update_cookies(self, _):
+        assert (
+            self._session is not None
+        )  # handle_401 on the superclass should've caught this before attempting retry
+        self._session.cookies.clear_session_cookies()
 
 
 class JIRA:
@@ -4516,7 +4554,7 @@ class JIRA:
 
         Header structure: "authorization": "Bearer <token_auth>".
         """
-        self._session.auth = TokenAuth(token_auth)
+        self._session.auth = TokenAuth(token_auth, session=self._session)
 
     def _set_avatar(self, params, url, avatar):
         data = {"id": avatar}
