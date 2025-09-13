@@ -275,6 +275,7 @@ class IssueTests(JiraTestCase):
         assert "fields" not in issues[1]["issue"].raw
         for issue in issues:
             issue["issue"].delete()
+            time.sleep(1)
 
     def test_create_issue_with_integer_issuetype(self):
         # take first existing issuetype to avoid problems due to hardcoded name/id later
