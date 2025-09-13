@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from tests.conftest import JiraTestCase
+from tests.conftest import JiraTestCase, allow_on_cloud
 
 
+@allow_on_cloud
 class VoteTests(JiraTestCase):
     def setUp(self):
         JiraTestCase.setUp(self)

@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from jira.exceptions import JIRAError
-from tests.conftest import JiraTestCase
+from tests.conftest import JiraTestCase, allow_on_cloud
 
 DEFAULT_NEW_REMOTE_LINK_OBJECT = {"url": "http://google.com", "title": "googlicious!"}
 
-
+@allow_on_cloud
 class RemoteLinkTests(JiraTestCase):
     def setUp(self):
         JiraTestCase.setUp(self)

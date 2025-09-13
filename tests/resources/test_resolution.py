@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from tests.conftest import JiraTestCase
+from tests.conftest import JiraTestCase, allow_on_cloud
 
 
+@allow_on_cloud
 class ResolutionTests(JiraTestCase):
     def test_resolutions(self):
         resolutions = self.jira.resolutions()

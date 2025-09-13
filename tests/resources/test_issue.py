@@ -1,16 +1,20 @@
 from __future__ import annotations
 
 import logging
+import time
 
 from jira.exceptions import JIRAError
-from tests.conftest import JiraTestCase, find_by_key, find_by_key_value
+from tests.conftest import JiraTestCase, allow_on_cloud, find_by_key, find_by_key_value
 
 LOGGER = logging.getLogger(__name__)
 
 
 class IssueTests(JiraTestCase):
+    sleeptime = 0
     def setUp(self):
         JiraTestCase.setUp(self)
+        if self.jira._is_cloud:
+            self.sleeptime = 2
         self.issue_1 = self.test_manager.project_b_issue1
         self.issue_2 = self.test_manager.project_b_issue2
         self.issue_3 = self.test_manager.project_b_issue3
@@ -20,16 +24,19 @@ class IssueTests(JiraTestCase):
         self.assertEqual(issue.key, self.issue_1)
         self.assertEqual(issue.fields.summary, f"issue 1 from {self.project_b}")
 
+    @allow_on_cloud
     def test_issue_search_finds_issue(self):
         issues = self.jira.search_issues(f"key={self.issue_1}")
         self.assertEqual(self.issue_1, issues[0].key)
 
+    @allow_on_cloud
     def test_issue_search_return_type(self):
         issues = self.jira.search_issues(f"key={self.issue_1}")
         self.assertIsInstance(issues, list)
         issues = self.jira.search_issues(f"key={self.issue_1}", json_result=True)
         self.assertIsInstance(issues, dict)
 
+    @allow_on_cloud
     def test_issue_search_only_includes_provided_fields(self):
         issues = self.jira.search_issues(
             f"key={self.issue_1}", fields="comment,assignee"
@@ -38,11 +45,12 @@ class IssueTests(JiraTestCase):
         self.assertTrue(hasattr(issues[0].fields, "assignee"))
         self.assertFalse(hasattr(issues[0].fields, "reporter"))
 
+    @allow_on_cloud
     def test_issue_search_default_behaviour_included_fields(self):
         search_str = f"key={self.issue_1}"
         issues = self.jira.search_issues(search_str)
-        self.assertTrue(hasattr(issues[0].fields, "reporter"))
-        self.assertTrue(hasattr(issues[0].fields, "comment"))
+        self.assertTrue(hasattr(issues[0].fields, "summary"))
+        self.assertTrue(hasattr(issues[0].fields, "description"))
 
         # fields=None should be valid and return all fields (ie. default behavior)
         self.assertEqual(
@@ -50,6 +58,7 @@ class IssueTests(JiraTestCase):
             self.jira.search_issues(search_str, fields=None),
         )
 
+    @allow_on_cloud
     def test_issue_get_field(self):
         issue = self.jira.issue(self.issue_1)
         self.assertEqual(
@@ -62,6 +71,7 @@ class IssueTests(JiraTestCase):
         with self.assertRaisesRegex(AttributeError, "customfield_1234"):
             issue.get_field("customfield_1234")
 
+    @allow_on_cloud
     def test_issue_field_limiting(self):
         issue = self.jira.issue(self.issue_2, fields="summary,comment")
         self.assertEqual(issue.fields.summary, f"issue 2 from {self.project_b}")
@@ -76,14 +86,17 @@ class IssueTests(JiraTestCase):
         comment2.delete()
         comment3.delete()
 
+    @allow_on_cloud
     def test_issue_equal(self):
         issue1 = self.jira.issue(self.issue_1)
         issue2 = self.jira.issue(self.issue_2)
+        time.sleep(self.sleeptime)
         issues = self.jira.search_issues(f"key={self.issue_1}")
         self.assertTrue(issue1 is not None)
         self.assertTrue(issue1 == issues[0])
         self.assertFalse(issue2 == issues[0])
 
+    @allow_on_cloud
     def test_issue_expand(self):
         issue = self.jira.issue(self.issue_1, expand="editmeta,schema")
         self.assertTrue(hasattr(issue, "editmeta"))
@@ -91,6 +104,7 @@ class IssueTests(JiraTestCase):
         # testing for changelog is not reliable because it may exist or not based on test order
         # self.assertFalse(hasattr(issue, 'changelog'))
 
+    @allow_on_cloud
     def test_create_issue_with_fieldargs(self):
         issue = self.jira.create_issue(
             summary="Test issue created",
@@ -105,6 +119,7 @@ class IssueTests(JiraTestCase):
         # self.assertEqual(issue.fields.customfield_10022, 'XSS')
         issue.delete()
 
+    @allow_on_cloud
     def test_create_issue_with_fielddict(self):
         fields = {
             "summary": "Issue created from field dict",
@@ -123,6 +138,7 @@ class IssueTests(JiraTestCase):
         self.assertEqual(issue.fields.priority.name, "High")
         issue.delete()
 
+    @allow_on_cloud
     def test_create_issue_without_prefetch(self):
         issue = self.jira.create_issue(
             summary="Test issue created",
@@ -137,6 +153,7 @@ class IssueTests(JiraTestCase):
         assert "fields" not in issue.raw
         issue.delete()
 
+    @allow_on_cloud
     def test_create_issues(self):
         field_list = [
             {
@@ -232,6 +249,7 @@ class IssueTests(JiraTestCase):
             if issue["issue"] is not None:
                 issue["issue"].delete()
 
+    @allow_on_cloud
     def test_create_issues_without_prefetch(self):
         field_list = [
             dict(
@@ -257,6 +275,7 @@ class IssueTests(JiraTestCase):
         assert "fields" not in issues[1]["issue"].raw
         for issue in issues:
             issue["issue"].delete()
+            time.sleep(1)
 
     def test_create_issue_with_integer_issuetype(self):
         # take first existing issuetype to avoid problems due to hardcoded name/id later
@@ -281,6 +300,7 @@ class IssueTests(JiraTestCase):
         )
         self.assertEqual(issue.get_field("issuetype").name, dyn_it.name)
 
+    @allow_on_cloud
     def test_update_with_fieldargs(self):
         issue = self.jira.create_issue(
             summary="Test issue for updating with fieldargs",
@@ -301,6 +321,7 @@ class IssueTests(JiraTestCase):
         self.assertEqual(issue.fields.project.key, self.project_b)
         issue.delete()
 
+    @allow_on_cloud
     def test_update_with_fielddict(self):
         issue = self.jira.create_issue(
             summary="Test issue for updating with fielddict",
@@ -323,6 +344,7 @@ class IssueTests(JiraTestCase):
         self.assertEqual(issue.fields.priority.name, "High")
         issue.delete()
 
+    @allow_on_cloud
     def test_update_with_label(self):
         issue = self.jira.create_issue(
             summary="Test issue for updating labels",
@@ -353,6 +375,7 @@ class IssueTests(JiraTestCase):
         issue.update(fields=fields)
         self.assertEqual(issue.fields.labels, ["testLabel"])
 
+    @allow_on_cloud
     def test_update_with_bad_label(self):
         issue = self.jira.create_issue(
             summary="Test issue for updating bad labels",
@@ -367,6 +390,7 @@ class IssueTests(JiraTestCase):
 
         self.assertRaises(JIRAError, issue.update, fields=fields)
 
+    @allow_on_cloud
     def test_update_with_notify_false(self):
         issue = self.jira.create_issue(
             summary="Test issue for updating wiith notify false",
@@ -378,6 +402,7 @@ class IssueTests(JiraTestCase):
         self.assertEqual(issue.fields.description, "Now updated, but silently")
         issue.delete()
 
+    @allow_on_cloud
     def test_delete(self):
         issue = self.jira.create_issue(
             summary="Test issue created",
@@ -403,17 +428,20 @@ class IssueTests(JiraTestCase):
         issue.delete()
         self.assertRaises(JIRAError, self.jira.issue, key)
 
+    @allow_on_cloud
     def test_createmeta(self):
         meta = self.jira.createmeta()
         proj = find_by_key(meta["projects"], self.project_b)
         # we assume that this project should allow at least one issue type
         self.assertGreaterEqual(len(proj["issuetypes"]), 1)
 
+    @allow_on_cloud
     def test_createmeta_filter_by_projectkey_and_name(self):
         meta = self.jira.createmeta(projectKeys=self.project_b, issuetypeNames="Bug")
         self.assertEqual(len(meta["projects"]), 1)
         self.assertEqual(len(meta["projects"][0]["issuetypes"]), 1)
 
+    @allow_on_cloud
     def test_createmeta_filter_by_projectkeys_and_name(self):
         meta = self.jira.createmeta(
             projectKeys=(self.project_a, self.project_b), issuetypeNames="Task"
@@ -422,6 +450,7 @@ class IssueTests(JiraTestCase):
         for project in meta["projects"]:
             self.assertEqual(len(project["issuetypes"]), 1)
 
+    @allow_on_cloud
     def test_createmeta_filter_by_id(self):
         projects = self.jira.projects()
         proja = find_by_key_value(projects, self.project_a)
@@ -452,6 +481,7 @@ class IssueTests(JiraTestCase):
                 len(project["issuetypes"]), len(for_lookup_common_issue_ids)
             )
 
+    @allow_on_cloud
     def test_createmeta_expand(self):
         # limit to SCR project so the call returns promptly
         meta = self.jira.createmeta(
@@ -473,6 +503,7 @@ class IssueTests(JiraTestCase):
             self.jira.issue(self.issue_1).fields.assignee.name, self.user_normal.name
         )
 
+    @allow_on_cloud
     def test_assign_to_bad_issue_raises(self):
         self.assertRaises(JIRAError, self.jira.assign_issue, "NOPE-1", "notauser")
 
@@ -498,6 +529,7 @@ class IssueTests(JiraTestCase):
         # Then: the issue has the default assignee (the admin user)
         self.assertEqual(self.jira.issue(self.issue_1).fields.assignee, self.user_admin)
 
+    @allow_on_cloud
     def test_editmeta(self):
         expected_fields = {
             "assignee",
@@ -517,6 +549,7 @@ class IssueTests(JiraTestCase):
                 meta_field_set.intersection(expected_fields), expected_fields
             )
 
+    @allow_on_cloud
     def test_transitioning(self):
         # we check with both issue-as-string or issue-as-object
         transitions = []
@@ -557,6 +590,7 @@ class IssueTests(JiraTestCase):
         # self.assertEqual(issue.fields.assignee.name, self.test_manager.CI_JIRA_USER)
         # self.assertEqual(issue.fields.status.id, transition_id)
 
+    @allow_on_cloud
     def test_rank(self):
         def get_issues_ordered_by_rank():
             """Search for the issues, returned in the order determined by their rank."""
@@ -565,13 +599,16 @@ class IssueTests(JiraTestCase):
             )
 
         self.jira.rank(self.issue_1, next_issue=self.issue_2)
+        time.sleep(self.sleeptime)
         issues = get_issues_ordered_by_rank()
         assert (issues[0].key, issues[1].key) == (self.issue_1, self.issue_2)
 
         self.jira.rank(self.issue_2, next_issue=self.issue_1)
+        time.sleep(self.sleeptime)
         issues = get_issues_ordered_by_rank()
         assert (issues[0].key, issues[1].key) == (self.issue_2, self.issue_1)
 
         self.jira.rank(self.issue_2, prev_issue=self.issue_1)
+        time.sleep(self.sleeptime)
         issues = get_issues_ordered_by_rank()
         assert (issues[0].key, issues[1].key) == (self.issue_1, self.issue_2)

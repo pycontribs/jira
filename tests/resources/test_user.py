@@ -178,6 +178,7 @@ class UserTests(JiraTestCase):
         users = self.jira.search_users(self.test_manager.CI_JIRA_USER, maxResults=1)
         self.assertGreaterEqual(1, len(users))
 
+    @allow_on_cloud
     def test_search_allowed_users_for_issue_by_project(self):
         users = self.jira.search_allowed_users_for_issue(
             self.test_manager.CI_JIRA_USER, projectKey=self.project_a
@@ -190,6 +191,7 @@ class UserTests(JiraTestCase):
         self.assertGreaterEqual(len(users), 1)
         self.assertIsInstance(users[0], User)
 
+    @allow_on_cloud
     def test_search_allowed_users_for_issue_maxresults(self):
         users = self.jira.search_allowed_users_for_issue(
             "a", projectKey=self.project_b, maxResults=2
@@ -202,6 +204,7 @@ class UserTests(JiraTestCase):
         )
         self.assertGreaterEqual(len(users), 0)
 
+    @allow_on_cloud
     def test_add_users_to_set(self):
         users_set = {self.test_manager.user_admin, self.test_manager.user_admin}
         self.assertEqual(len(users_set), 1)

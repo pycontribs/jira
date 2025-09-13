@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from jira.exceptions import JIRAError
-from tests.conftest import JiraTestCase
+from tests.conftest import JiraTestCase, allow_on_cloud
 
 
+@allow_on_cloud
 class VersionTests(JiraTestCase):
     def test_create_version(self):
         name = "new version " + self.project_b
