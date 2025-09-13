@@ -4,7 +4,7 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 
 from jira.resources import Board
-from tests.conftest import JiraTestCase, rndstr, allow_on_cloud
+from tests.conftest import JiraTestCase, allow_on_cloud, rndstr
 
 
 class BoardTests(JiraTestCase):
