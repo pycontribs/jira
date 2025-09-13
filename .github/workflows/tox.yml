@@ -34,6 +34,7 @@ jobs:
           - { os: ubuntu-24.04, python-version: "3.10", tox_env: py310 }
           - { os: ubuntu-24.04, python-version: "3.11", tox_env: py311 }
           - { os: ubuntu-24.04, python-version: "3.12", tox_env: py312 }
+          - { os: ubuntu-24.04, python-version: "3.13", tox_env: py313 }
           - { os: macos-14,     python-version: "3.10", tox_env: py310 }
           - { os: macos-14,     python-version: "3.12", tox_env: py312 }
     steps:
