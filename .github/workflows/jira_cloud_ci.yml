@@ -34,7 +34,7 @@ jobs:
         os: [ubuntu-latest]
         # We only test a single version to prevent concurrent
         # running of tests influencing one another
-        python-version: ["3.10"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
 
     steps:
       - uses: actions/checkout@v5

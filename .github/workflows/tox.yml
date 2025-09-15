@@ -34,7 +34,7 @@ jobs:
         uses: coactions/dynamic-matrix@v4
         with:
           min_python: "3.10"
-          max_python: "3.12"
+          max_python: "3.13"
           default_python: "3.10"
           other_names: |
             lint
@@ -44,6 +44,7 @@ jobs:
             py310:tox -e py310 -- -k test_unit
             py311:tox -e py311 -- -k test_unit
             py312:tox -e py312 -- -k test_unit
+            py313:tox -e py313 -- -k test_unit
             py310-macos:tox -e py310 -- -k test_unit
             py312-macos:tox -e py312 -- -k test_unit
           # ^ macos is also used to validate arm64 building
@@ -165,7 +166,7 @@ jobs:
 
       - name: Check for expected number of coverage.xml reports
         run: |
-          JOBS_PRODUCING_COVERAGE=5
+          JOBS_PRODUCING_COVERAGE=6
           if [ "$(find . -name coverage.xml | wc -l | bc)" -ne "${JOBS_PRODUCING_COVERAGE}" ]; then
             echo "::error::Number of coverage.xml files was not the expected one (${JOBS_PRODUCING_COVERAGE}): $(find . -name coverage.xml |xargs echo)"
             exit 1
