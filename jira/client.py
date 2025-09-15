@@ -1037,7 +1037,7 @@ class JIRA:
         item_type: type[ResourceType],
         items_key: str | None,
         request_path: str,
-        maxResults: int = 50,
+        maxResults: int | Literal[False] = 50,
         params: dict[str, Any] | None = None,
         base: str = JIRA_BASE_URL,
         use_post: bool = False,
@@ -1058,11 +1058,13 @@ class JIRA:
         """
         query = dict(params or {})
         token: str | None = query.pop("nextPageToken", None)
-        page_size = maxResults or 100
+        page_size = maxResults or self._get_batch_size(item_type)
         items: list[ResourceType] = []
 
         while True:
-            page_params = {**query, "maxResults": page_size}
+            page_params = dict(query)
+            if page_size is not None:
+                page_params["maxResults"] = page_size
             if token:
                 page_params["nextPageToken"] = token
             response = self._get_json(
@@ -2306,7 +2308,7 @@ class JIRA:
         projectIdOrKey: str | int,
         issueTypeId: str | int,
         startAt: int = 0,
-        maxResults: int = 50,
+        maxResults: int | Literal[False] = 50,
     ) -> dict[str, Any]:
         """Get the field metadata for a given project and issue type, required to create issues.
 
@@ -3244,7 +3246,7 @@ class JIRA:
         self,
         project: str,
         startAt: int = 0,
-        maxResults: int = 50,
+        maxResults: int | Literal[False] = 50,
     ) -> ResultList[IssueType]:
         """Get a list of issue type Resources available in a given project from the server.
 
@@ -3274,7 +3276,7 @@ class JIRA:
         project: str,
         issue_type: str,
         startAt: int = 0,
-        maxResults: int = 50,
+        maxResults: int | Literal[False] = 50,
     ) -> ResultList[Field]:
         """Get a list of field type Resources available for a project and issue type from the server.
 
@@ -3729,7 +3731,7 @@ class JIRA:
         self,
         jql_str: str,
         startAt: int = 0,
-        maxResults: int = 50,
+        maxResults: int | Literal[False] = 50,
         validate_query: bool = True,
         fields: str | list[str] | None = "*all",
         expand: str | None = None,
@@ -3744,7 +3746,7 @@ class JIRA:
         self,
         jql_str: str,
         startAt: int = 0,
-        maxResults: int = 50,
+        maxResults: int | Literal[False] = 50,
         validate_query: bool = True,
         fields: str | list[str] | None = "*all",
         expand: str | None = None,
@@ -3758,7 +3760,7 @@ class JIRA:
         self,
         jql_str: str,
         startAt: int = 0,
-        maxResults: int = 50,
+        maxResults: int | Literal[False] = 50,
         validate_query: bool = True,
         fields: str | list[str] | None = "*all",
         expand: str | None = None,
@@ -3867,7 +3869,7 @@ class JIRA:
         self,
         jql_str: str,
         nextPageToken: str | None = None,
-        maxResults: int = 50,
+        maxResults: int | Literal[False] = 50,
         fields: str | list[str] | None = "*all",
         expand: str | None = None,
         reconcileIssues: list[int] | None = None,
