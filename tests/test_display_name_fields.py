@@ -13,15 +13,15 @@ from tests.conftest import JiraTestCase
 
 class DisplayNameFieldConversionTest(unittest.TestCase):
     def test_basic_field_name_conversion(self):
-        self.assertEqual(convert_display_name_to_python_name("Epic Link"), "epic_link")
         self.assertEqual(convert_display_name_to_python_name("Story Points"), "story_points")
         self.assertEqual(convert_display_name_to_python_name("Internal Target Milestone"), "internal_target_milestone")
+        self.assertEqual(convert_display_name_to_python_name("Epic Link"), "epic_link")
 
     def test_special_character_handling(self):
-        self.assertEqual(convert_display_name_to_python_name("Epic-Link"), "epic_link")
-        self.assertEqual(convert_display_name_to_python_name("Epic   Link---Test"), "epic_link_test")
+        self.assertEqual(convert_display_name_to_python_name("Story-Points"), "story_points")
+        self.assertEqual(convert_display_name_to_python_name("Business   Value---Score"), "business_value_score")
         self.assertEqual(convert_display_name_to_python_name("Field!!Name@@Here"), "field_name_here")
-        self.assertEqual(convert_display_name_to_python_name("-Epic Link-"), "epic_link")
+        self.assertEqual(convert_display_name_to_python_name("-Story Points-"), "story_points")
         self.assertEqual(convert_display_name_to_python_name("__Field Name__"), "field_name")
 
     def test_numeric_field_names(self):
@@ -32,7 +32,7 @@ class DisplayNameFieldConversionTest(unittest.TestCase):
     def test_edge_cases(self):
         self.assertEqual(convert_display_name_to_python_name("A"), "a")
         self.assertEqual(convert_display_name_to_python_name("1"), "field_1")
-        self.assertEqual(convert_display_name_to_python_name("epic_link"), "epic_link")
+        self.assertEqual(convert_display_name_to_python_name("story_points"), "story_points")
         self.assertEqual(convert_display_name_to_python_name("STORY_POINTS"), "story_points")
         self.assertEqual(convert_display_name_to_python_name("CamelCaseField"), "camelcasefield")
 
@@ -103,15 +103,15 @@ class DisplayNameFieldMockTest(unittest.TestCase):
 
     def test_display_name_creation_with_mock_data(self):
         mock_fields = {
-            'customfield_10001': 'EPIC-123',
+            'customfield_10001': 5,
             'customfield_10002': 42,
             'customfield_10003': ['label1', 'label2'],
             'summary': 'Test Issue'
         }
 
         mock_cache = {
-            'Epic Link': 'customfield_10001',
-            'Story Points': 'customfield_10002',
+            'Story Points': 'customfield_10001',
+            'Sprint': 'customfield_10002',
             'Labels': 'customfield_10003'
         }
 
@@ -120,15 +120,15 @@ class DisplayNameFieldMockTest(unittest.TestCase):
 
         _add_display_name_fields(obj, session)
 
-        self.assertTrue(hasattr(obj, 'epic_link'))
         self.assertTrue(hasattr(obj, 'story_points'))
+        self.assertTrue(hasattr(obj, 'sprint'))
         self.assertTrue(hasattr(obj, 'labels'))
 
-        self.assertEqual(obj.epic_link, 'EPIC-123')
-        self.assertEqual(obj.story_points, 42)
+        self.assertEqual(obj.story_points, 5)
+        self.assertEqual(obj.sprint, 42)
         self.assertEqual(obj.labels, ['label1', 'label2'])
 
-        self.assertEqual(obj.customfield_10001, 'EPIC-123')
+        self.assertEqual(obj.customfield_10001, 5)
         self.assertEqual(obj.customfield_10002, 42)
         self.assertEqual(obj.customfield_10003, ['label1', 'label2'])
 
@@ -138,7 +138,7 @@ class DisplayNameFieldMockTest(unittest.TestCase):
             'status': 'Open',
             'priority': 'High'
         })
-        session = self._create_mock_session({'Epic Link': 'customfield_10001'})
+        session = self._create_mock_session({'Story Points': 'customfield_10001'})
 
         initial_attrs = set(dir(obj))
         _add_display_name_fields(obj, session)
@@ -168,18 +168,18 @@ class DisplayNameFieldMockTest(unittest.TestCase):
             'customfield_10003': []
         })
         session = self._create_mock_session({
-            'Epic Link': 'customfield_10001',
+            'Story Points': 'customfield_10001',
             'Summary': 'customfield_10002',
             'Labels': 'customfield_10003'
         })
 
         _add_display_name_fields(obj, session)
 
-        self.assertTrue(hasattr(obj, 'epic_link'))
+        self.assertTrue(hasattr(obj, 'story_points'))
         self.assertTrue(hasattr(obj, 'summary'))
         self.assertTrue(hasattr(obj, 'labels'))
 
-        self.assertIsNone(obj.epic_link)
+        self.assertIsNone(obj.story_points)
         self.assertEqual(obj.summary, '')
         self.assertEqual(obj.labels, [])
 

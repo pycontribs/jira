@@ -1691,10 +1691,10 @@ def convert_display_name_to_python_name(display_name: str) -> str:
     """Convert JIRA field display name to Python attribute name.
 
     Args:
-        display_name: JIRA field display name (e.g., "Epic Link", "Story Points")
+        display_name: JIRA field display name (e.g., "Story Points", "Sprint")
 
     Returns:
-        Python-compatible attribute name (e.g., "epic_link", "story_points")
+        Python-compatible attribute name (e.g., "story_points", "sprint")
     """
     python_name = re.sub(r'[^a-zA-Z0-9_]', '_', display_name.lower())
     python_name = re.sub(r'_+', '_', python_name).strip('_')
@@ -1705,7 +1705,7 @@ def convert_display_name_to_python_name(display_name: str) -> str:
 def _add_display_name_fields(obj: PropertyHolder, session) -> None:
     """Create readable field name aliases for JIRA custom fields.
 
-    Adds attributes like 'epic_link' alongside 'customfield_10001'
+    Adds attributes like 'story_points' alongside 'customfield_10001'
     """
     custom_fields = [attr for attr in dir(obj) if attr.startswith('customfield_')]
     if not custom_fields:
