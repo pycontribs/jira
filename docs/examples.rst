@@ -291,6 +291,28 @@ content needs to be formatted using the Atlassian Document Format (ADF)::
 Fields
 ------
 
+Custom Field Display Name Mapping
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Access custom fields using display names instead of ``customfield_XXXX`` IDs::
+
+    # Both return the same value
+    issue.fields.customfield_10001  # traditional
+    issue.fields.story_points       # display name
+
+    # Example usage
+    if hasattr(issue.fields, 'story_points'):
+        print(f"Points: {issue.fields.story_points}")
+
+Field names are converted to Python identifiers::
+
+    # "Story Points" -> story_points
+    # "Epic Link" -> epic_link
+    # "3rd Party" -> field_3rd_party
+
+.. note::
+    Display name fields won't overwrite existing attributes.
+
 Example for accessing the worklogs::
 
     issue.fields.worklog.worklogs                                 # list of Worklog objects
