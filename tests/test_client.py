@@ -407,3 +407,16 @@ def test_experimental_non_200_not_404_405(
 
     assert ex.value.status_code == status_code
     assert isinstance(ex.value, JIRAError)
+
+
+def test_client_retry_config():
+    client = jira.client.JIRA(
+        server="https://jira.example.com",
+        get_server_info=False,
+        validate=False,
+        max_retries=81,
+        max_retry_delay=111,
+    )
+
+    assert client._session.max_retries == 81
+    assert client._session.max_retry_delay == 111
