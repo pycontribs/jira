@@ -2996,7 +2996,7 @@ class JIRA:
             Response
         """
         # let's see if we have the right issue link 'type' and fix it if needed
-        issue_link_types = self.issue_link_types()
+        issue_link_types = list(map(lambda x: x.name, self.issue_link_types()))
 
         if type not in issue_link_types:
             self.log.warning(
