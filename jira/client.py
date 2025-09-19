@@ -5134,6 +5134,26 @@ class JIRA:
         self.permissionschemes.cache_clear()
         return data
 
+    def get_form(self, issue: str, formid: str) -> list[dict]:
+        """For the specified issue, returns the form data as key/value list. (Admin required).
+
+        Args:
+            issue (str): The issue id.
+            formid (str): the ID of the form, default is 1
+
+        Returns:
+            List[dict]: A dictionary containing the "answers" as value and the label as key.
+        """
+        response = self._session.get(
+            self.server_url
+            + "/rest/proforma/1/issue/"
+            + issue
+            + "/form/"
+            + formid
+            + "/answers"
+        )
+        return json_loads(response)
+
     def get_issue_type_scheme_associations(self, id: str) -> list[Project]:
         """For the specified issue type scheme, returns all of the associated projects. (Admin required).
 
