@@ -1,6 +1,7 @@
 #!/bin/bash
 # This file is run from the .vscode folder
 WORKSPACE_FOLDER=/workspaces/jira
+git config --global --add safe.directory /workspaces/jira
 
 # Start the Jira Server docker instance first so can be running while we initialise everything else
 # Need to ensure this --version matches what is in CI

@@ -73,6 +73,7 @@ from jira.resources import (
     IssueType,
     IssueTypeScheme,
     NotificationScheme,
+    Organization,
     PermissionScheme,
     PinnedComment,
     Priority,
@@ -88,6 +89,7 @@ from jira.resources import (
     Sprint,
     Status,
     StatusCategory,
+    Team,
     User,
     Version,
     Votes,
@@ -1689,6 +1691,243 @@ class JIRA:
         raw_filter_json = json.loads(r.text)
         return Filter(self._options, self._session, raw=raw_filter_json)
 
+    # Organisations
+    def _get_service_desk_url(self) -> str:
+        """Returns the service desk root url.
+
+        Returns:
+            str: service desk api url
+        """
+        return f"{self.server_url}/rest/servicedeskapi"
+
+    def create_org(self, org_name: str) -> Organization:
+        url = f"{self._get_service_desk_url()}/organization"
+        payload = {"name": org_name}
+        r = self._session.post(url, data=json.dumps(payload))
+        raw_org_json: dict[str, Any] = json_loads(r)
+        return Organization(self._options, self._session, raw=raw_org_json)
+
+    def remove_org(self, org_id: str) -> bool:
+        url = f"{self._get_service_desk_url()}/organization/{org_id}"
+        r = self._session.delete(url)
+        return r.ok
+
+    def org(self, org_id: str) -> Organization:
+        url = f"{self._get_service_desk_url()}/organization/{org_id}"
+        r = self._session.get(url)
+        raw_org_json: dict[str, Any] = json_loads(r)
+        if r.status_code == 200:
+            return Organization(self._options, self._session, raw=raw_org_json)
+        return None
+
+    def orgs(self, start=0, limit=50) -> ResultList[Organization]:
+        url = f"{self._get_service_desk_url()}/organization"
+        return self._fetch_pages(
+            Organization, "values", url, start, limit, base=self.server_url
+        )
+
+    def org_users(self, org_id, start=0, limit=50) -> ResultList[User]:
+        url = f"{self._get_service_desk_url()}/organization/{org_id}/user"
+        return self._fetch_pages(User, None, url, start, limit, base=self.server_url)
+
+    def add_users_to_org(self, org_id: str, users: list[str]) -> bool:
+        url = f"{self._get_service_desk_url()}/organization/{org_id}/user"
+        payload = {"usernames": users}
+        r = self._session.post(url, data=json.dumps(payload))
+        return r.ok
+
+    def remove_users_from_org(self, org_id: str, users: list[str]) -> bool:
+        url = f"{self._get_service_desk_url()}/organization/{org_id}/user"
+        payload = {"usernames": users}
+        r = self._session.delete(url, data=json.dumps(payload))
+        return r.ok
+
+    # Teams
+
+    def create_team(
+        self,
+        org_id: str,
+        description: str,
+        display_name: str,
+        team_type: str,
+        site_id: str = None,
+    ) -> Team:
+        """Creates a team, and adds the requesting user as the initial member.
+
+        Args:
+            org_id (str): organization identifier
+            description (str): description field of the team to be created
+            display_name (str): name of the team to be created
+            team_type (str): either 'OPEN' or 'MEMBER_INVITE'
+            site_id (Optional[str])
+
+        Returns:
+            Team
+        """
+        url = f"gateway/api/public/teams/v1/org/{org_id}/teams/"
+        payload = {
+            "description": description,
+            "displayName": display_name,
+            "teamType": team_type,
+        }
+        if site_id is not None:
+            payload["siteId"] = site_id
+        r = self._session.post(url, data=json.dumps(payload))
+        raw_team_json: dict[str, Any] = json_loads(r)
+        return Team(self._options, self._session, raw=raw_team_json)
+
+    def get_team(self, org_id: str, team_id: str, site_id: str = None) -> Team:
+        """Get the specified team.
+
+        Args:
+            org_id (str): organization identifier
+            team_id (str): team identifier
+            site_id (Optional[str])
+
+        Returns:
+            Team
+        """
+        url = f"gateway/api/public/teams/v1/org/{org_id}/teams/{team_id}"
+        params = {}
+        if site_id is not None:
+            params = {"siteId": site_id}
+        r = self._session.get(url, params=params)
+        raw_team_json: dict[str, Any] = json_loads(r)
+        return Team(self._options, self._session, raw=raw_team_json)
+
+    def remove_team(
+        self,
+        org_id: str,
+        team_id: str,
+    ):
+        """Delete the specified team.
+
+        Args:
+            org_id (str): organization identifier
+            team_id (str): team identifier
+
+        Returns:
+            bool
+        """
+        url = f"gateway/api/public/teams/v1/org/{org_id}/teams/{team_id}"
+        r = self._session.delete(url)
+        return r.ok
+
+    def update_team(
+        self,
+        org_id: str,
+        team_id: str,
+        description: str,
+        displayName: str,
+    ) -> Team:
+        """Modifies the specified team with new values.
+
+        Args:
+            org_id (str): organization identifier
+            team_id (str): team identifier
+
+        Returns:
+            Team
+        """
+        url = f"gateway/api/public/teams/v1/org/{org_id}/teams/{team_id}"
+
+        headers = {"Accept": "application/json", "Content-Type": "application/json"}
+
+        payload = {}
+        if description != "":
+            payload["description"] = description
+        if displayName != "":
+            payload["displayName"] = displayName
+
+        response = self._session.request(
+            "PATCH", url, data=json.dumps(payload), headers=headers
+        )
+        raw_team_json: dict[str, Any] = json_loads(response)
+        return Team(self._options, self._session, raw=raw_team_json)
+
+    def _fetch_paginated(self, url, payload):
+        result_response = self._session.get(url, data=json.dumps(payload)).json()
+        has_next_page = result_response["pageInfo"]["hasNextPage"]
+        end_index = result_response["pageInfo"]["endCursor"]
+
+        while has_next_page:
+            payload["after"] = end_index
+            r2 = self._session.get(url, data=json.dumps(payload)).json()
+            for res in r2["results"]:
+                result_response["results"].append(res)
+            end_index = r2["pageInfo"]["endCursor"]
+            has_next_page = r2["pageInfo"]["hasNextPage"]
+        return result_response
+
+    def team_members(
+        self,
+        org_id: str,
+        team_id: str,
+    ) -> list[str]:
+        """Return the list of account Ids corresponding to the team members.
+
+        Args:
+            org_id (str): Id of the org.
+            team_id (str): Id of the team.
+
+        Returns:
+            list[str]
+        """
+        url = f"/gateway/api/public/teams/v1/org/{org_id}/teams/{team_id}/members"
+        payload = {"first": 50}
+        r = self._fetch_paginated(url, payload)
+        result = []
+        for accounts in r["results"]:
+            result.append(accounts.get("accountId"))
+        return result
+
+    def add_team_members(
+        self,
+        org_id: str,
+        team_id: str,
+        members: list[str],
+    ) -> tuple[list[str], list[str]]:
+        """Adds a list of members (accountIds) to the team members.
+
+        Args:
+            org_id (str): Id of the org.
+            team_id (str): Id of the team.
+            members (list[str]): Account Ids of the new members.
+
+        Returns:
+            (list[str], list[str]): (list of successful addition, list of failure)
+        """
+        url = f"/gateway/api/public/teams/v1/org/{org_id}/teams/{team_id}/members/add"
+        payload_members_list = [{"accountId": accountId} for accountId in members]
+        payload = {"members": payload_members_list}
+        r = self._session.post(url, data=json.dumps(payload))
+        response_json = r.json()
+        return response_json["members"], response_json["errors"]
+
+    def remove_team_members(
+        self,
+        org_id: str,
+        team_id: str,
+        members: list[str],
+    ) -> bool:
+        """Removes the specified members from the team.
+
+        Args:
+            team_id (str): Id of the team.
+            org_id (str): Id of the org.
+            members (list[str]): Account Ids of the new members.
+
+        Returns:
+            bool
+        """
+        url = (
+            f"/gateway/api/public/teams/v1/org/{org_id}/teams/{team_id}/members/remove"
+        )
+        payload_members_list = [{"accountId": accountId} for accountId in members]
+        payload = {"members": payload_members_list}
+        r = self._session.post(url, data=json.dumps(payload))
+        return r.ok
+
     # Groups
 
     def group(self, id: str, expand: Any | None = None) -> Group:
@@ -2004,7 +2243,7 @@ class JIRA:
         Returns:
             bool
         """
-        url = self.server_url + "/rest/servicedeskapi/info"
+        url = f"{self._get_service_desk_url()}/info"
         headers = {"X-ExperimentalApi": "opt-in"}
         try:
             r = self._session.get(url, headers=headers)
@@ -2022,7 +2261,7 @@ class JIRA:
         Returns:
             Customer
         """
-        url = self.server_url + "/rest/servicedeskapi/customer"
+        url = f"{self._get_service_desk_url()}/customer"
         headers = {"X-ExperimentalApi": "opt-in"}
         r = self._session.post(
             url,
@@ -2042,7 +2281,7 @@ class JIRA:
         Returns:
             List[ServiceDesk]
         """
-        url = self.server_url + "/rest/servicedeskapi/servicedesk"
+        url = f"{self._get_service_desk_url()}/servicedesk"
         headers = {"X-ExperimentalApi": "opt-in"}
         r_json = json_loads(self._session.get(url, headers=headers))
         projects = [
@@ -2106,7 +2345,7 @@ class JIRA:
         elif isinstance(p, str):
             data["requestTypeId"] = self.request_type_by_name(service_desk, p).id
 
-        url = self.server_url + "/rest/servicedeskapi/request"
+        url = f"{self._get_service_desk_url()}/request"
         headers = {"X-ExperimentalApi": "opt-in"}
         r = self._session.post(url, headers=headers, data=json.dumps(data))
 
@@ -3192,10 +3431,7 @@ class JIRA:
         """
         if hasattr(service_desk, "id"):
             service_desk = service_desk.id
-        url = (
-            self.server_url
-            + f"/rest/servicedeskapi/servicedesk/{service_desk}/requesttype"
-        )
+        url = f"{self._get_service_desk_url()}/servicedesk/{service_desk}/requesttype"
         headers = {"X-ExperimentalApi": "opt-in"}
         r_json = json_loads(self._session.get(url, headers=headers))
         request_types = [
