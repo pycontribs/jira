@@ -41,7 +41,7 @@ repos:
       - id: yamllint
         files: \.(yaml|yml)$
   - repo: https://github.com/pappasam/toml-sort
-    rev: v0.24.2
+    rev: v0.24.3
     hooks:
       - id: toml-sort-fix
         alias: toml
@@ -52,7 +52,7 @@ repos:
       - id: tox-ini-fmt
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.12.12
+    rev: v0.13.1
     hooks:
       - id: ruff
         args:
@@ -62,7 +62,7 @@ repos:
       # - id: ruff-format # must be after ruff
       #   types_or: [python, pyi]
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.17.1
+    rev: v1.18.2
     hooks:
       - id: mypy
         additional_dependencies:
