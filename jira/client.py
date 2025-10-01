@@ -2886,10 +2886,10 @@ class JIRA:
                 Example of visibility options when creating or updating a worklog.
                 ``{ "type": "group", "value": "<string>", "identifier": "<string>"}``
             notify (bool): Whether or not to send a notification to the new user. (Default: True)
+
         Returns:
             Worklog
         """
-
         params = {}
         if adjustEstimate is not None:
             params["adjustEstimate"] = adjustEstimate
