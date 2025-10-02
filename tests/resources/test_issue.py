@@ -369,7 +369,7 @@ class IssueTests(JiraTestCase):
 
     def test_update_with_notify_false(self):
         issue = self.jira.create_issue(
-            summary="Test issue for updating wiith notify false",
+            summary="Test issue for updating with notify false",
             project=self.project_b,
             description="Will be updated shortly",
             issuetype={"name": "Bug"},

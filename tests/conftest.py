@@ -72,9 +72,7 @@ def min_jira_version(
         def _wrapper(self: JiraTestCase, *args: Any, **kwargs: Any) -> Any:
             if self.jira._version < version:
                 actual = ".".join(map(str, self.jira._version))
-                pytest.skip(
-                    f"not compatible with Jira < {required} (live is {actual})"
-                )
+                pytest.skip(f"not compatible with Jira < {required} (live is {actual})")
             return test(self, *args, **kwargs)
 
         return _wrapper

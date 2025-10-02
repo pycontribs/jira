@@ -24,6 +24,7 @@ def test_unicode(requests_mock, capsys, testargs):
     requests_mock.register_uri(
         "GET",
         "http://localhost/rest/api/2/serverInfo",
+        # cspell:ignore Δεν βρέθηκε
         text="Δεν βρέθηκε",
         status_code=404,
     )

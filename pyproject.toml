@@ -2,6 +2,21 @@
 build-backend = "setuptools.build_meta"
 requires = ["setuptools >= 60.0.0", "setuptools_scm[toml] >= 7.0.0"]
 
+[dependency-groups]
+lint = [
+  "codespell>=2.4.2",
+  "ipython",
+  "mypy>=1.19.1",
+  "prek",
+  "requests_jwt",
+  "ruff>=0.15.6",
+  "tomli>=2.4.0",
+  "types-defusedxml",
+  "types-oauthlib",
+  "types-requests",
+  "types-requests-oauthlib"
+]
+
 [project]
 authors = [{email = "ben.speakmon@gmail.com", name = "Ben Speakmon"}]
 classifiers = [
@@ -102,8 +117,10 @@ check-filenames = true
 check-hidden = true
 enable-colors = true
 ignore-words = [".config/dictionary.txt"]
+ignore-words-list = ["CAs", "assertIn", "master"]
 quiet-level = 0
 skip = [
+  "./.cache",
   "./.eggs",
   "./.git",
   "./.mypy_cache",
@@ -115,9 +132,11 @@ skip = [
   "./tests/icon.png",
   ".DS_Store",
   ".ruff_cache",
+  ".venv",
   "AUTHORS",
   "ChangeLog",
   "__pycache__",
+  "amps-standalone-jira-LATEST",
   "coverage.xml",
   "dist",
   "uv.lock"
@@ -148,10 +167,18 @@ packages = """
 jira"""
 
 [tool.mypy]
+cache_dir = "./.cache/.mypy"
 check_untyped_defs = true
+exclude = ["build", ".tox"]
+files = ["jira", "tests"]
+follow_untyped_imports = true
 namespace_packages = true
 python_version = "3.10"
 warn_unused_configs = true
+
+[[tool.mypy.overrides]]
+ignore_missing_imports = true
+module = "requests_kerberos"
 
 [[tool.mypy.overrides]]
 check_untyped_defs = false
@@ -255,6 +282,8 @@ sort_inline_tables = true
 sort_table_keys = true
 
 [tool.uv]
+default-groups = "all"
+package = true
 
 [tool.uv.pip]
 custom-compile-command = "tox run -e deps"
