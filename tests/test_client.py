@@ -126,6 +126,7 @@ def test_delete_project(cl_admin, cl_normal, slug):
 
 
 def test_delete_inexistent_project(cl_admin):
+    # cspell:ignore abogus123
     slug = "abogus123"
     with pytest.raises(JIRAError) as ex:
         assert cl_admin.delete_project(slug)

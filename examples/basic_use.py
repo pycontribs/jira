@@ -18,7 +18,7 @@ keys = sorted(project.key for project in projects)[2:5]
 
 # Get an issue.
 issue = jira.issue("JRA-1330")
-# Find all comments made by Atlassians on this issue.
+# Find all comments made by Atlassian on this issue.
 atl_comments = [
     comment
     for comment in issue.fields.comment.comments

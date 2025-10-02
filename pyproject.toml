@@ -1,9 +1,31 @@
 [build-system]
+requires = ["setuptools_scm[toml] >= 7.0.0", "setuptools >= 60.0.0"]
 build-backend = "setuptools.build_meta"
-requires = ["setuptools >= 60.0.0", "setuptools_scm[toml] >= 7.0.0"]
+
+[dependency-groups]
+lint = [
+  "codespell>=2.4.2",
+  "ipython",
+  "mypy>=1.19.1",
+  "prek",
+  "pylint>=4.0.5",
+  "requests_jwt",
+  "ruff>=0.15.6",
+  "tombi>=0.7.25",
+  "tomli>=2.4.0",
+  "types-defusedxml",
+  "types-oauthlib",
+  "types-requests",
+  "types-requests-oauthlib",
+]
 
 [project]
-authors = [{email = "ben.speakmon@gmail.com", name = "Ben Speakmon"}]
+name = "jira"
+description = "Python library for interacting with JIRA via REST APIs."
+requires-python = ">=3.10"
+authors = [{ name = "Ben Speakmon", email = "ben.speakmon@gmail.com" }]
+maintainers = [{ name = "Sorin Sbarnea", email = "sorin.sbarnea@gmail.com" }]
+keywords = ["api", "atlassian", "jira", "rest", "web"]
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Environment :: Other Environment",
@@ -17,49 +39,36 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
-  "Topic :: Software Development :: Libraries :: Python Modules",
-  "Topic :: Internet :: WWW/HTTP"
+  "Topic :: Internet :: WWW/HTTP",
+  "Topic :: Software Development :: Libraries :: Python Modules"
 ]
 dependencies = [
   "defusedxml",
   "packaging",
-  "requests-oauthlib>=1.1.0",
   "requests>=2.10.0",
+  "requests-oauthlib>=1.1.0",
   "requests_toolbelt",
   "typing_extensions>=3.7.4.2"
 ]
-description = "Python library for interacting with JIRA via REST APIs."
 dynamic = ["version"]
-keywords = ["api", "atlassian", "jira", "rest", "web"]
-maintainers = [{email = "sorin.sbarnea@gmail.com", name = "Sorin Sbarnea"}]
-name = "jira"
-requires-python = ">=3.10"
 
 [project.optional-dependencies]
 async = ["requests-futures>=0.9.7"]
-cli = [
-  "ipython>=4.0.0",
-  "keyring"
-]
+cli = ["ipython>=4.0.0", "keyring"]
 docs = [
   "sphinx>=5.0.0",
   "sphinx-copybutton",
   # HTML Theme
   "furo"
 ]
-opt = [
-  "filemagic>=1.6",
-  "PyJWT",
-  "requests_jwt",
-  "requests_kerberos"
-]
+opt = ["filemagic>=1.6", "PyJWT", "requests_jwt", "requests_kerberos"]
 test = [
   "MarkupSafe>=0.23",
-  "PyYAML>=5.1", # MIT
+  "PyYAML>=5.1",  # MIT
   "docutils>=0.21.2",
   "flaky",
   "oauthlib",
-  "parameterized>=0.8.1", # BSD-3-Clause
+  "parameterized>=0.8.1",  # BSD-3-Clause
   "pip",
   "pytest-cache",
   "pytest-cov",
@@ -67,18 +76,18 @@ test = [
   "pytest-sugar",
   "pytest-timeout>=1.3.1",
   "pytest-xdist>=2.2",
-  "pytest>=6.0.0", # MIT
-  "requests_mock", # Apache-2
-  "requires.io", # UNKNOWN!!!
-  "tenacity", # Apache-2
-  "wheel>=0.24.0", # MIT
-  "yanc>=0.3.3", # GPL
-  "parameterized>=0.8.1" # BSD-3-Clause
+  "pytest>=6.0.0",  # MIT
+  "requests_mock",  # Apache-2
+  "requires.io",  # UNKNOWN!!!
+  "tenacity",  # Apache-2
+  "wheel>=0.24.0",  # MIT
+  "yanc>=0.3.3",  # GPL
+  "parameterized>=0.8.1",  # BSD-3-Clause
 ]
 
 [project.readme]
-content-type = "text/x-rst; charset=UTF-8"
 file = "README.rst"
+content-type = "text/x-rst; charset=UTF-8"
 
 [project.scripts]
 jirashell = "jira.jirashell:main"
@@ -98,8 +107,10 @@ check-filenames = true
 check-hidden = true
 enable-colors = true
 ignore-words = [".config/dictionary.txt"]
+ignore-words-list = ["CAs", "assertIn", "master"]
 quiet-level = 0
 skip = [
+  "./.cache",
   "./.eggs",
   "./.git",
   "./.mypy_cache",
@@ -111,11 +122,14 @@ skip = [
   "./tests/icon.png",
   ".DS_Store",
   ".ruff_cache",
+  ".venv",
   "AUTHORS",
   "ChangeLog",
   "__pycache__",
+  "amps-standalone-jira-LATEST",
   "coverage.xml",
-  "dist"
+  "dist",
+  "uv.lock",
 ]
 write-changes = true
 
@@ -143,15 +157,35 @@ packages = """
 jira"""
 
 [tool.mypy]
+cache_dir = "./.cache/.mypy"
 check_untyped_defs = true
+exclude = ["collections", "context/_build", "build", ".tox"]
+files = ["jira", "test", "src"]
 namespace_packages = true
 python_version = "3.10"
 warn_unused_configs = true
+follow_untyped_imports = true
 
 [[tool.mypy.overrides]]
 check_untyped_defs = false
 disable_error_code = "annotation-unchecked"
 module = "tests.*"
+
+[tool.pylint]
+[tool.pylint.master]
+ignore-paths = [
+  ".cache/",
+  ".tox/",
+  ".venv/",
+  "_readthedocs/",
+  "build/",
+  "packages/",
+  "site",
+  "amps-standalone-jira-LATEST",
+  ".eggs/",
+  ".mypy_cache/",
+  "node_modules/",
+]
 
 [tool.pytest.ini_options]
 addopts = '''-p no:xdist --durations=10 --tb=long -rxX -v --color=yes'''
@@ -179,7 +213,7 @@ target-version = "py310"
 # Allow unused variables when underscore-prefixed.
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 ignore = [
-  "E501", # We have way too many "line too long" errors at the moment
+  "E501",  # We have way too many "line too long" errors at the moment
   # TODO: Address these with time
   "D100",
   "D101",
@@ -194,12 +228,12 @@ ignore = [
   "UP035"
 ]
 select = [
-  "E", # pydocstyle
-  "W", # pydocstyle
-  "F", # pyflakes
-  "I", # isort
-  "UP", # pyupgrade
-  "D" # docstrings
+  "E",  # pydocstyle
+  "W",  # pydocstyle
+  "F",  # pyflakes
+  "I",  # isort
+  "UP",  # pyupgrade
+  "D",  # docstrings
 ]
 
 [tool.ruff.lint.isort]
@@ -208,11 +242,11 @@ required-imports = ["from __future__ import annotations"]
 
 [tool.ruff.lint.per-file-ignores]
 "jira/__init__.py" = [
-  "E402" # ignore import order in this file
+  "E402",  # ignore import order in this file
 ]
 "tests/*.*" = [
-  "E501", # We have way too many "line too long" errors at the moment
-  "D" # Too many undocumented functions at the moment
+  "E501",  # We have way too many "line too long" errors at the moment
+  "D",  # Too many undocumented functions at the moment
 ]
 
 [tool.ruff.lint.pydocstyle]
@@ -228,7 +262,7 @@ zip-safe = false
 jira = ["jira/py.typed"]
 
 [tool.setuptools.packages]
-find = {namespaces = false}
+find = { namespaces = false }
 
 [tool.setuptools_scm]
 # To prevent accidental pick of mobile version tags such 'v6'
@@ -250,13 +284,15 @@ sort_inline_tables = true
 sort_table_keys = true
 
 [tool.uv]
+default-groups = "all"
+package = true
 
 [tool.uv.pip]
 custom-compile-command = "tox run -e deps"
-no-annotate = true # divergent results when run between different platforms
+no-annotate = true  # divergent results when run between different platforms
 no-emit-package = [
-  "secretstorage", # linux specific dependency of keyring
-  "jeepney", # linux specific dependency of keyring
+  "secretstorage",  # linux specific dependency of keyring
+  "jeepney",  # linux specific dependency of keyring
   "pip",
   "typing-extensions",
   "uv"

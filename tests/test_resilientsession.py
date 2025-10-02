@@ -36,6 +36,7 @@ class ResilientSessionLoggingConfidentialityTests(JiraTestCase):
 
     def test_logging_with_connection_error(self):
         """No sensitive data shall be written to the log in case of a connection error."""
+        # cspell:ignore etwhpxbhfniqnbbjoqvw
         witness = "etwhpxbhfniqnbbjoqvw"  # random string; hopefully unique
         for max_retries in (0, 1):
             for verb in ("get", "post", "put", "delete", "head", "patch", "options"):
