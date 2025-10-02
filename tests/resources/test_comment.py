@@ -32,7 +32,7 @@ class CommentTests(JiraTestCase):
         comments_created = []
         for i in range(10):
             comments_created.append(
-                self.jira.add_comment(self.issue_1_key, f"Comment #{i+1}")
+                self.jira.add_comment(self.issue_1_key, f"Comment #{i + 1}")
             )
         comments = self.jira.comments(self.issue_1_key, start_at=5)
         self.assertEqual(len(comments), 5)
@@ -46,7 +46,7 @@ class CommentTests(JiraTestCase):
         comments_created = []
         for i in range(10):
             comments_created.append(
-                self.jira.add_comment(self.issue_1_key, f"Comment #{i+1}")
+                self.jira.add_comment(self.issue_1_key, f"Comment #{i + 1}")
             )
         comments = self.jira.comments(self.issue_1_key, max_results=4)
         self.assertEqual(len(comments), 4)
@@ -60,7 +60,7 @@ class CommentTests(JiraTestCase):
         comments_created = []
         for i in range(10):
             comments_created.append(
-                self.jira.add_comment(self.issue_1_key, f"Comment #{i+1}")
+                self.jira.add_comment(self.issue_1_key, f"Comment #{i + 1}")
             )
         comments = self.jira.comments(self.issue_1_key, order_by="created")
         self.assertEqual(comments[0].body, "Comment #1")

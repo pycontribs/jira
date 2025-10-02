@@ -1,17 +1,48 @@
 ---
+ci:
+  # Dependabot owns version bumps; pre-commit.ci cannot switch autoupdate off.
+  # https://github.com/pre-commit-ci/issues/issues/83
+  autoupdate_schedule: quarterly
+  # pre-commit.ci has no uv, npm or network for these.
+  skip:
+    - codecov
+    - codespell
+    - cspell
+    - mypy
+    - ruff
 repos:
   - repo: meta
     hooks:
       - id: check-useless-excludes
+        priority: 0
+  - repo: https://github.com/ansible/actions
+    rev: v1.0.1
+    hooks:
+      - id: mypy
+        priority: 2
+      - id: ruff
+        priority: 1
+      - id: cspell
+        priority: 0
+      - id: codecov
+        priority: 0
+      - id: codespell
+        priority: 0
   - repo: https://github.com/pre-commit/pre-commit-hooks.git
     rev: v6.0.0
     hooks:
       - id: check-added-large-files
+        priority: 0
       - id: check-merge-conflict
+        priority: 0
       - id: check-symlinks
+        priority: 0
       - id: debug-statements
+        priority: 0
       - id: end-of-file-fixer
+        priority: 1
       - id: trailing-whitespace
+        priority: 1
       - id: mixed-line-ending
       - id: fix-byte-order-marker
       - id: check-executables-have-shebangs
@@ -19,19 +50,6 @@ repos:
       - id: debug-statements
       - id: check-yaml
         files: .*\.(yaml|yml)$
-  - repo: https://github.com/codespell-project/codespell
-    rev: v2.4.1
-    hooks:
-      - id: codespell
-        name: codespell
-        description: Checks for common misspellings in text files.
-        entry: codespell
-        language: python
-        types: [text]
-        args: []
-        require_serial: false
-        additional_dependencies:
-          - tomli; python_version<'3.11'
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.37.1
     hooks:
@@ -44,28 +62,10 @@ repos:
         alias: toml
         # uv.lock has its own canonical ordering; resorting churns it.
         exclude: ^uv\.lock$
-
   - repo: https://github.com/tox-dev/tox-ini-fmt
     rev: 1.6.0
     hooks:
       - id: tox-ini-fmt
-
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.12.12
-    hooks:
-      - id: ruff
-        args:
-          - --fix
-          - --exit-non-zero-on-fix
-        types_or: [python, pyi]
-      # - id: ruff-format # must be after ruff
-      #   types_or: [python, pyi]
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.17.1
-    hooks:
-      - id: mypy
-        additional_dependencies:
-          - types-requests
   # uv-lock fails if pyproject.toml has drifted from uv.lock.
   - repo: https://github.com/astral-sh/uv-pre-commit
     rev: 0.11.8

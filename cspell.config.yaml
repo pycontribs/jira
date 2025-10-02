@@ -1,0 +1,22 @@
+dictionaryDefinitions:
+  - name: words
+    path: .config/dictionary.txt
+    addWords: true
+dictionaries:
+  - bash
+  - software-terms
+  - networking-terms
+  - makefile
+  - python
+  - words
+enabled: true
+useGitignore: true
+ignorePaths:
+  - tox.ini
+  - docs/conf.py
+  - docs/ # temporary
+  - .venv
+
+languageSettings:
+  - languageId: python
+    allowCompoundWords: false
