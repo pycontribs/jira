@@ -5574,6 +5574,8 @@ class JIRA:
         endDate: Any | None = None,
         state: str | None = None,
         goal: str | None = None,
+        autoStartStop: bool | None = None,
+        incompleteIssuesDestinationId: int | None = None,
     ) -> dict[str, Any]:
         """Updates the sprint with the given values.
 
@@ -5584,11 +5586,13 @@ class JIRA:
             endDate (Optional[Any]): The start date for the sprint
             state: (Optional[str]): The state of the sprint
             goal: (Optional[str]): The goal of the sprint
+            autoStartStop: (Optional[bool]): Start and complete sprint automatically
+            incompleteIssuesDestinationId: (Optional[int]): After sprint completes, move open issues to this sprint id, -1 for backlog
 
         Returns:
             Dict[str, Any]
         """
-        payload = {}
+        payload: dict[str, Any] = {}
         if name:
             payload["name"] = name
         if startDate:
@@ -5599,6 +5603,10 @@ class JIRA:
             payload["state"] = state
         if goal:
             payload["goal"] = goal
+        if autoStartStop:
+            payload["autoStartStop"] = autoStartStop
+        if incompleteIssuesDestinationId:
+            payload["incompleteIssuesDestinationId"] = incompleteIssuesDestinationId
 
         url = self._get_url(f"sprint/{id}", base=self.AGILE_BASE_URL)
         r = self._session.put(url, data=json.dumps(payload))
@@ -5729,6 +5737,8 @@ class JIRA:
         startDate: Any | None = None,
         endDate: Any | None = None,
         goal: str | None = None,
+        autoStartStop: bool | None = None,
+        incompleteIssuesDestinationId: int | None = None,
     ) -> Sprint:
         """Create a new sprint for the ``board_id``.
 
@@ -5738,6 +5748,8 @@ class JIRA:
             startDate (Optional[Any]): Start date for the sprint.
             endDate (Optional[Any]): End date for the sprint.
             goal (Optional[str]): Goal for the sprint.
+            autoStartStop: (Optional[bool]): Start and complete sprint automatically
+            incompleteIssuesDestinationId: (Optional[int]): After sprint completes, move open issues to this sprint id, -1 for backlog
 
         Returns:
             Sprint: The newly created Sprint
@@ -5749,6 +5761,10 @@ class JIRA:
             payload["endDate"] = endDate
         if goal:
             payload["goal"] = goal
+        if autoStartStop:
+            payload["autoStartStop"] = autoStartStop
+        if incompleteIssuesDestinationId:
+            payload["incompleteIssuesDestinationId"] = incompleteIssuesDestinationId
 
         raw_sprint_json: dict[str, Any]
         url = self._get_url("sprint", base=self.AGILE_BASE_URL)
