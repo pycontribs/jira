@@ -48,7 +48,6 @@ docs = [
   "furo"
 ]
 opt = [
-  "filemagic>=1.6",
   "PyJWT",
   "requests_jwt",
   "requests_kerberos"

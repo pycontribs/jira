@@ -17,7 +17,6 @@ docutils==0.21.2
 exceptiongroup==1.2.2 ; python_full_version < '3.11'
 execnet==2.1.1
 executing==2.2.0
-filemagic==1.6
 flaky==3.8.1
 furo==2024.8.6
 gssapi==1.9.0 ; sys_platform != 'win32'
