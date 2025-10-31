@@ -897,7 +897,7 @@ class Issue(Resource):
         else:
             return getattr(self.fields, field_name)
 
-    def add_field_value(self, field: str, value: str):
+    def add_field_value(self, field: str, value: str) -> None:
         """Add a value to a field that supports multiple values, without resetting the existing values.
 
         This should work with: labels, multiple checkbox lists, multiple select
@@ -908,7 +908,7 @@ class Issue(Resource):
         """
         super().update(fields={"update": {field: [{"add": value}]}})
 
-    def delete(self, deleteSubtasks=False):
+    def delete(self, deleteSubtasks=False) -> None:
         """Delete this issue from the server.
 
         Args:
@@ -916,7 +916,7 @@ class Issue(Resource):
         """
         super().delete(params={"deleteSubtasks": deleteSubtasks})
 
-    def permalink(self):
+    def permalink(self) -> str:
         """Get the URL of the issue, the browser aimed one not the REST one.
 
         Returns:
