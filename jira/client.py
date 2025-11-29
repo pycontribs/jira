@@ -480,6 +480,7 @@ class JIRA:
         async_workers: int = 5,
         logging: bool = True,
         max_retries: int = 3,
+        max_retry_delay: int = 60,
         proxies: Any | None = None,
         timeout: None | float | tuple[float, float] | tuple[float, None] | None = None,
         auth: tuple[str, str] | None = None,
@@ -549,6 +550,7 @@ class JIRA:
             timeout (Optional[Union[Union[float, int], Tuple[float, float]]]): Set a connect/read timeout for the underlying calls to Jira.
               Obviously this means that you cannot rely on the return code when this is enabled.
             max_retries (int): Sets the amount Retries for the HTTP sessions initiated by the client. (Default: ``3``)
+            max_retry_delay (int): Sets the maximum delay in seconds allowed between retries. (Default: ``60``)
             proxies (Optional[Any]): Sets the proxies for the HTTP session.
             auth (Optional[Tuple[str,str]]): Set a cookie auth token if this is required.
             logging (bool): True enables loglevel to info => else critical. (Default: ``True``)
@@ -611,7 +613,9 @@ class JIRA:
         assert isinstance(self._options["headers"], dict)  # for mypy benefit
 
         # Create Session object and update with config options first
-        self._session = ResilientSession(timeout=timeout)
+        self._session = ResilientSession(
+            timeout=timeout, max_retries=max_retries, max_retry_delay=max_retry_delay
+        )
         # Add the client authentication certificate to the request if configured
         self._add_client_cert_to_session()
         # Add the SSL Cert to the request if configured
@@ -621,8 +625,6 @@ class JIRA:
 
         if "cookies" in self._options:
             self._session.cookies.update(self._options["cookies"])
-
-        self._session.max_retries = max_retries
 
         if proxies:
             self._session.proxies = proxies
