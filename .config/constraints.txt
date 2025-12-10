@@ -83,7 +83,7 @@ tenacity==9.0.0
 termcolor==3.0.0
 tomli==2.2.1 ; python_full_version <= '3.11'
 traitlets==5.14.3
-urllib3==2.3.0
+urllib3==2.6.0
 wcwidth==0.2.13
 wheel==0.45.1
 yanc==0.3.3
