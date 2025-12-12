@@ -432,7 +432,7 @@ class JIRA:
         "auth_url": "/rest/auth/1/session",
         "context_path": "/",
         "rest_path": "api",
-        "rest_api_version": "2",
+        "rest_api_version": "3",
         "agile_rest_path": AgileResource.AGILE_BASE_REST_PATH,
         "agile_rest_api_version": "1.0",
         "verify": True,
@@ -505,7 +505,7 @@ class JIRA:
 
                 * server -- the server address and context path to use. Defaults to ``http://localhost:2990/jira``.
                 * rest_path -- the root REST path to use. Defaults to ``api``, where the Jira REST resources live.
-                * rest_api_version -- the version of the REST resources under rest_path to use. Defaults to ``2``.
+                * rest_api_version -- the version of the REST resources under rest_path to use. Defaults to ``3``.
                 * agile_rest_path - the REST path to use for Jira Agile requests. Defaults to ``agile``.
                 * verify (Union[bool, str]) -- Verify SSL certs. (Default: ``True``).
                   Or path to a CA_BUNDLE file or directory with certificates of trusted CAs, for the `requests` library to use.
