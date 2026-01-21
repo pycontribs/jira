@@ -55,4 +55,4 @@ class BoardTests(JiraTestCase):
             # WHEN: we find the board
             self.jira._find_for_resource(Board, board.id)
             # THEN: no error is raised
-        # THEN: the board.
+        # THEN: the board.delete() method is called successfully
