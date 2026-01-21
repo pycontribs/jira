@@ -1554,7 +1554,7 @@ class Board(AgileResource):
         session: ResilientSession,
         raw: dict[str, Any] | None = None,
     ):
-        AgileResource.__init__(self, "board/{id}", options, session, raw)
+        AgileResource.__init__(self, "board/{0}", options, session, raw)
 
 
 # Service Desk
