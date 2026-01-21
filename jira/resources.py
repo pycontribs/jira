@@ -1542,7 +1542,7 @@ class Sprint(AgileResource):
         session: ResilientSession,
         raw: dict[str, Any] | None = None,
     ):
-        AgileResource.__init__(self, "sprint/{id}", options, session, raw)
+        AgileResource.__init__(self, "sprint/{0}", options, session, raw)
 
 
 class Board(AgileResource):
