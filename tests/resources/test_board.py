@@ -48,7 +48,7 @@ class BoardTests(JiraTestCase):
             # THEN: We get a reasonable looking board
             assert isinstance(board.id, int)
         # THEN: the board.delete() method is called successfully
-    
+
     def test_find(self):
         # WHEN: we create a board
         with self._create_board() as board:
