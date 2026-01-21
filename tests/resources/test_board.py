@@ -41,13 +41,13 @@ class BoardTests(JiraTestCase):
             if board is not None:
                 board.delete()
 
-    # def test_create_and_delete(self):
-    #     # GIVEN: The filter
-    #     # WHEN: we create a board
-    #     with self._create_board() as board:
-    #         # THEN: We get a reasonable looking board
-    #         assert isinstance(board.id, int)
-    #     # THEN: the board.delete() method is called successfully
+    def test_create_and_delete(self):
+        # GIVEN: The filter
+        # WHEN: we create a board
+        with self._create_board() as board:
+            # THEN: We get a reasonable looking board
+            assert isinstance(board.id, int)
+        # THEN: the board.delete() method is called successfully
     
     def test_find(self):
         # WHEN: we create a board
