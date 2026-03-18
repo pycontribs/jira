@@ -66,9 +66,9 @@ class ExceptionsTests(unittest.TestCase):
 
     def test_jira_error_malformed_response(self):
         # GIVEN: a malformed Response object, without headers or text set
-        bad_repsonse = self.MalformedMockResponse()
+        bad_response = self.MalformedMockResponse()
         # WHEN: The JiraError's __str__ method is called
-        err = JIRAError(response=bad_repsonse)
+        err = JIRAError(response=bad_response)
         err_str = str(err)
         # THEN: there are no errors and neither headers nor text are in the result
         assert "headers = " not in err_str
@@ -85,9 +85,9 @@ class ExceptionsTests(unittest.TestCase):
 
     def test_jira_error_malformed_request(self):
         # GIVEN: a malformed Response object, without headers or text set
-        bad_repsonse = self.MalformedMockResponse()
+        bad_response = self.MalformedMockResponse()
         # WHEN: The JiraError's __str__ method is called
-        err = JIRAError(request=bad_repsonse)
+        err = JIRAError(request=bad_response)
         err_str = str(err)
         # THEN: there are no errors and neither headers nor text are in the result
         assert "headers = " not in err_str

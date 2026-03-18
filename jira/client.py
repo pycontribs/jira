@@ -150,7 +150,7 @@ def experimental_atlassian_api(client_method: Callable) -> Callable:
 
     Indicates the path covered by the client method is experimental. If the path
     disappears or the method becomes disallowed, this logs an error and returns
-    None. If another kind of exception is raised, this reraises.
+    None. If another kind of exception is raised, this re-raises.
 
     Raises:
       JIRAError: In the case the error is not an HTTP error with a status code.
@@ -615,7 +615,7 @@ class JIRA:
         # Add the client authentication certificate to the request if configured
         self._add_client_cert_to_session()
         # Add the SSL Cert to the request if configured
-        self._add_ssl_cert_verif_strategy_to_session()
+        self._add_ssl_cert_verify_strategy_to_session()
 
         self._session.headers.update(self._options["headers"])
 
@@ -1610,7 +1610,7 @@ class JIRA:
         return self._find_for_resource(Filter, id)
 
     def favourite_filters(self) -> list[Filter]:
-        """Get a list of filter Resources which are the favourites of the currently authenticated user.
+        """Get a list of filter Resources which are the favorites of the currently authenticated user.
 
         Returns:
             List[Filter]
@@ -4412,7 +4412,7 @@ class JIRA:
         try:
             from oauthlib.oauth1 import SIGNATURE_RSA as FALLBACK_SHA
         except ImportError:
-            FALLBACK_SHA = DEFAULT_SHA
+            FALLBACK_SHA = DEFAULT_SHA  # type: ignore
             self.log.debug("Fallback SHA 'SIGNATURE_RSA_SHA1' could not be imported.")
 
         for sha_type in (oauth.get("signature_method"), DEFAULT_SHA, FALLBACK_SHA):
@@ -4475,7 +4475,7 @@ class JIRA:
         client_cert: str | tuple[str, str] = self._options["client_cert"]
         self._session.cert = client_cert
 
-    def _add_ssl_cert_verif_strategy_to_session(self):
+    def _add_ssl_cert_verify_strategy_to_session(self):
         """Adds verification strategy for host SSL certificates.
 
         If configured through the constructor.
@@ -4536,7 +4536,11 @@ class JIRA:
         """
         options = self._options.copy()
         options.update(
-            {"path": path, "rest_api_version": "latest", "rest_path": "internal"}
+            {
+                "path": path,
+                "rest_api_version": "latest",
+                "rest_path": "internal",
+            }
         )
         return base.format(**options)
 
@@ -5445,6 +5449,7 @@ class JIRA:
         data: list[dict[str, Any]] = json_loads(r)
         return data
 
+    # cspell:ignore idalko
     # Experimental support for iDalko Grid, expect API to change as it's using private
     # APIs currently https://support.idalko.com/browse/IGRID-1017
     def get_igrid(self, issueid: str, customfield: str, schemeid: str):
@@ -5841,6 +5846,7 @@ class JIRA:
             other_issue = prev_issue
 
         if not self._rank:
+            # cspell:ignore lexo
             for field in self.fields():
                 if field["name"] == "Rank":
                     if (

@@ -699,7 +699,11 @@ class DashboardGadget(Resource):
           ``DashboardGadget``
         """
         data = remove_empty_attributes(
-            {"color": color, "position": position, "title": title}
+            {
+                "color": color,
+                "position": position,
+                "title": title,
+            }
         )
         options = self._options.copy()
         options["path"] = f"dashboard/{dashboard_id}/gadget/{self.id}"
@@ -913,7 +917,7 @@ class Issue(Resource):
         super().delete(params={"deleteSubtasks": deleteSubtasks})
 
     def permalink(self):
-        """Get the URL of the issue, the browsable one not the REST one.
+        """Get the URL of the issue, the browser aimed one not the REST one.
 
         Returns:
             str: URL of the issue
@@ -1322,6 +1326,7 @@ class Role(Resource):
 
         data = {
             "id": self.id,
+            # cspell:ignore categorisedactors
             "categorisedActors": {
                 "atlassian-user-role-actor": users,
                 "atlassian-group-role-actor": groups,

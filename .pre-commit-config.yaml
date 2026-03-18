@@ -1,20 +1,54 @@
 ---
 ci:
+  # We rely on renovate to update it but there is no way to fully disable it
+  # https://github.com/pre-commit-ci/issues/issues/83
+  autoupdate_schedule: quarterly
   skip:
-    - pip-compile
+    - cspell # missing uv
+    - codecov # missing uv
+    - shellcheck # no docker support on pre-commit.ci
+    # uv not present on pre-commit.ci
+    - mypy
+    - pylint
+    - ruff
+    - toml
 repos:
   - repo: meta
     hooks:
       - id: check-useless-excludes
+        priority: 0
+  - repo: https://github.com/ansible/actions
+    rev: v1.0.1
+    hooks:
+      - id: toml
+        priority: 0
+      - id: mypy
+        priority: 2
+      - id: ruff
+        priority: 1
+      - id: cspell
+        priority: 0
+      # - id: pylint
+      #   priority: 5
+      - id: codecov
+        priority: 0
+      - id: codespell
+        priority: 0
   - repo: https://github.com/pre-commit/pre-commit-hooks.git
     rev: v6.0.0
     hooks:
       - id: check-added-large-files
+        priority: 0
       - id: check-merge-conflict
+        priority: 0
       - id: check-symlinks
+        priority: 0
       - id: debug-statements
+        priority: 0
       - id: end-of-file-fixer
+        priority: 1
       - id: trailing-whitespace
+        priority: 1
       - id: mixed-line-ending
       - id: fix-byte-order-marker
       - id: check-executables-have-shebangs
@@ -22,70 +56,12 @@ repos:
       - id: debug-statements
       - id: check-yaml
         files: .*\.(yaml|yml)$
-  - repo: https://github.com/codespell-project/codespell
-    rev: v2.4.1
-    hooks:
-      - id: codespell
-        name: codespell
-        description: Checks for common misspellings in text files.
-        entry: codespell
-        language: python
-        types: [text]
-        args: []
-        require_serial: false
-        additional_dependencies:
-          - tomli; python_version<'3.11'
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.37.1
     hooks:
       - id: yamllint
         files: \.(yaml|yml)$
-  - repo: https://github.com/pappasam/toml-sort
-    rev: v0.24.2
-    hooks:
-      - id: toml-sort-fix
-        alias: toml
-
   - repo: https://github.com/tox-dev/tox-ini-fmt
     rev: 1.6.0
     hooks:
       - id: tox-ini-fmt
-
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.12.12
-    hooks:
-      - id: ruff
-        args:
-          - --fix
-          - --exit-non-zero-on-fix
-        types_or: [python, pyi]
-      # - id: ruff-format # must be after ruff
-      #   types_or: [python, pyi]
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.17.1
-    hooks:
-      - id: mypy
-        additional_dependencies:
-          - types-requests
-  - # keep at bottom as these are slower
-    repo: local
-    hooks:
-      - id: deps
-        name: Upgrade constraints files and requirements
-        files: ^(pyproject\.toml|.config/.*)$
-        always_run: true
-        language: python
-        entry: python3 -m uv pip compile -q --universal --all-extras --python-version=3.10 --output-file=.config/constraints.txt pyproject.toml --upgrade
-        pass_filenames: false
-        stages:
-          - manual
-        additional_dependencies:
-          - uv>=0.6.6
-      - id: pip-compile
-        name: Check constraints files and requirements
-        files: ^(pyproject\.toml|\.config/.*)$
-        language: python
-        entry: uv pip compile -q --universal --all-extras --python-version=3.10 --output-file=.config/constraints.txt pyproject.toml
-        pass_filenames: false
-        additional_dependencies:
-          - uv>=0.6.6
