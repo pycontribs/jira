@@ -165,6 +165,8 @@ errors_parsing_test_data = [
         '{"errorMessages": [], "errors": {"code1": "err1", "code2": "err2"}}',
         ["err1", "err2"],
     ),
+    (500, {}, '{"errorMessages": [null], "errors": {}}', []),
+    (500, {}, '{"errorMessages": [null, "err1", null], "errors": {}}', ["err1"]),
 ]
 
 
