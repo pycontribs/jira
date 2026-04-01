@@ -40,7 +40,7 @@ if __name__ == "__main__":
         sys.exit()
 
     start_time = time.time()
-    timeout_mins = 15
+    timeout_mins = 30
     print(
         "waiting for instance of jira to be running, to add a user for CI system:\n"
         f" timeout = {timeout_mins} mins"
