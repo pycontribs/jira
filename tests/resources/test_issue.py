@@ -14,7 +14,7 @@ class IssueTests(JiraTestCase):
     def setUp(self):
         JiraTestCase.setUp(self)
         if self.jira._is_cloud:
-            self.sleeptime = 2
+            self.sleeptime = 10
         self.issue_1 = self.test_manager.project_b_issue1
         self.issue_2 = self.test_manager.project_b_issue2
         self.issue_3 = self.test_manager.project_b_issue3
