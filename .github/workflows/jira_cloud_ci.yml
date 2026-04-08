@@ -27,7 +27,7 @@ on:
 jobs:
   test:
     environment: cloud
-    name: py${{ matrix.python-version }}
+    name: cloud-py${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}
     strategy:
       # Single python version - concurrent runs would fight over
