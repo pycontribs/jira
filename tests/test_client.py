@@ -261,7 +261,7 @@ def test_token_auth(cl_admin: jira.client.JIRA):
     new_token = pat_token_response["rawToken"]
 
     # WHEN: A new client is authenticated with this token
-    new_jira_client = jira.client.JIRA(token_auth=new_token)
+    new_jira_client = jira.client.JIRA(server=base_url, token_auth=new_token)
 
     # THEN: The reported authenticated user of the token
     # matches the original token creator user.
