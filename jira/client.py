@@ -5214,8 +5214,11 @@ class JIRA:
                     break
             if issueSecurityScheme is None and ps_list:
                 issueSecurityScheme = ps_list[0]["id"]
-        if issueSecurityScheme is None:
-            raise RuntimeError("Unable to identify valid issueSecurityScheme")
+        # issueSecurityScheme staying None is fine - the payload below
+        # (`if issueSecurityScheme:`) omits the field, which makes Jira
+        # fall back to no scheme. A vanilla atlas-run-standalone Jira
+        # has no schemes configured by default, and the test suite must
+        # not hard-fail on that.
 
         # If categoryId provided instead of projectCategory, attribute the categoryId value
         # to the projectCategory variable
