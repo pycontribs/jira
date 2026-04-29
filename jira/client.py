@@ -4663,17 +4663,35 @@ class JIRA:
         """
         if self._magic is not None:
             return self._magic.id_buffer(buff)
-        try:
-            with tempfile.TemporaryFile() as f:
-                f.write(buff)
-                return mimetypes.guess_type(f.name)[0]
-            return mimetypes.guess_type(f.name)[0]
-        except (OSError, TypeError):
+        # The post-pillow fallback (#1891) wrote bytes to a TemporaryFile
+        # and called mimetypes.guess_type(f.name) - but tempfiles have a
+        # `.tmp` extension, so guess_type always returned None and avatar
+        # uploads broke. Pick a real extension from the magic bytes,
+        # write to a NamedTemporaryFile with that suffix, and let
+        # mimetypes do its job.
+        suffix_for_magic = (
+            (b"\x89PNG\r\n\x1a\n", ".png"),
+            (b"\xff\xd8\xff", ".jpg"),
+            (b"GIF87a", ".gif"),
+            (b"GIF89a", ".gif"),
+            (b"BM", ".bmp"),
+        )
+        suffix = next((s for m, s in suffix_for_magic if buff.startswith(m)), None)
+        if suffix is None and buff[:4] == b"RIFF" and buff[8:12] == b"WEBP":
+            suffix = ".webp"
+        if suffix is None:
             self.log.warning(
                 "Couldn't detect content type of avatar image"
                 ". Specify the 'contentType' parameter explicitly."
             )
             return None
+        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as f:
+            f.write(buff)
+            name = f.name
+        try:
+            return mimetypes.guess_type(name)[0]
+        finally:
+            os.unlink(name)
 
     def rename_user(self, old_user: str, new_user: str):
         """Rename a Jira user.
