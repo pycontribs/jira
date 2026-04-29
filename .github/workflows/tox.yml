@@ -32,6 +32,14 @@ jobs:
       - name: Determine matrix
         id: generate_matrix
         uses: coactions/dynamic-matrix@v4
+        env:
+          # Pin uv inside the action's container to a Python with cffi
+          # wheels available. The action's base image (uv:trixie-slim)
+          # picks the newest CPython, currently 3.14, and cffi has no
+          # wheel there yet so uv falls back to a source build that
+          # needs cc - which the slim image doesn't ship. Drop this
+          # once cffi 3.14 wheels land or the upstream action pins.
+          UV_PYTHON: "3.13"
         with:
           min_python: "3.10"
           max_python: "3.12"
