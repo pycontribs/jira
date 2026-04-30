@@ -12,9 +12,10 @@ import time
 import unittest
 import weakref
 from time import sleep
-from typing import Any
+from typing import Any, Callable
 
 import pytest
+from flaky import flaky
 
 from jira import JIRA
 from jira.exceptions import JIRAError
@@ -32,6 +33,31 @@ only_run_on_cloud = pytest.mark.skipif(
     reason="Functionality only available on Jira Cloud",
 )
 broken_test = pytest.mark.xfail
+
+
+def flaky_with_backoff(
+    max_runs: int = 3, initial_delay: float = 2.0
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    """flaky decorator with exponential backoff between retries.
+
+    flaky has no built-in backoff; rerun_filter is the documented
+    escape hatch (invoked between attempts; return True to retry).
+    The delay counter lives in a closure so each decorated test
+    gets its own schedule and parallel runs don't trample each other.
+    """
+
+    def _build_filter() -> Callable[..., bool]:
+        delay = initial_delay
+
+        def _filter(*_args: object) -> bool:
+            nonlocal delay
+            time.sleep(delay)
+            delay *= 2
+            return True
+
+        return _filter
+
+    return flaky(max_runs=max_runs, rerun_filter=_build_filter())
 
 
 class JiraTestCase(unittest.TestCase):
