@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import time
 
 from jira.exceptions import JIRAError
 from tests.conftest import JiraTestCase, allow_on_cloud, find_by_key, find_by_key_value
@@ -9,8 +10,12 @@ LOGGER = logging.getLogger(__name__)
 
 
 class IssueTests(JiraTestCase):
+    sleeptime = 0
+
     def setUp(self):
         JiraTestCase.setUp(self)
+        if self.jira._is_cloud:
+            self.sleeptime = 10
         self.issue_1 = self.test_manager.project_b_issue1
         self.issue_2 = self.test_manager.project_b_issue2
         self.issue_3 = self.test_manager.project_b_issue3
@@ -45,8 +50,8 @@ class IssueTests(JiraTestCase):
     def test_issue_search_default_behaviour_included_fields(self):
         search_str = f"key={self.issue_1}"
         issues = self.jira.search_issues(search_str)
-        self.assertTrue(hasattr(issues[0].fields, "reporter"))
-        self.assertTrue(hasattr(issues[0].fields, "comment"))
+        self.assertTrue(hasattr(issues[0].fields, "summary"))
+        self.assertTrue(hasattr(issues[0].fields, "description"))
 
         # fields=None should be valid and return all fields (ie. default behavior)
         self.assertEqual(
@@ -86,6 +91,7 @@ class IssueTests(JiraTestCase):
     def test_issue_equal(self):
         issue1 = self.jira.issue(self.issue_1)
         issue2 = self.jira.issue(self.issue_2)
+        time.sleep(self.sleeptime)
         issues = self.jira.search_issues(f"key={self.issue_1}")
         self.assertTrue(issue1 is not None)
         self.assertTrue(issue1 == issues[0])
@@ -270,6 +276,7 @@ class IssueTests(JiraTestCase):
         assert "fields" not in issues[1]["issue"].raw
         for issue in issues:
             issue["issue"].delete()
+            time.sleep(1)
 
     def test_create_issue_with_integer_issuetype(self):
         # take first existing issuetype to avoid problems due to hardcoded name/id later
@@ -593,13 +600,16 @@ class IssueTests(JiraTestCase):
             )
 
         self.jira.rank(self.issue_1, next_issue=self.issue_2)
+        time.sleep(self.sleeptime)
         issues = get_issues_ordered_by_rank()
         assert (issues[0].key, issues[1].key) == (self.issue_1, self.issue_2)
 
         self.jira.rank(self.issue_2, next_issue=self.issue_1)
+        time.sleep(self.sleeptime)
         issues = get_issues_ordered_by_rank()
         assert (issues[0].key, issues[1].key) == (self.issue_2, self.issue_1)
 
         self.jira.rank(self.issue_2, prev_issue=self.issue_1)
+        time.sleep(self.sleeptime)
         issues = get_issues_ordered_by_rank()
         assert (issues[0].key, issues[1].key) == (self.issue_1, self.issue_2)

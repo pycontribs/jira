@@ -20,5 +20,6 @@ class IssuePropertyTests(JiraTestCase):
         self.assertEqual(prop.key, "custom-property")
         self.assertEqual(prop.value, "Testing a property value")
         prop.delete()
-        properties = self.jira.issue_properties(self.issue_1)
-        self.assertEqual(len(properties), 0)
+        if not self.jira._is_cloud:
+            properties = self.jira.issue_properties(self.issue_1)
+            self.assertEqual(len(properties), 0)

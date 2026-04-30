@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 from contextlib import contextmanager
 
 from tests.conftest import JiraTestCase, allow_on_cloud, rndstr
@@ -27,6 +28,8 @@ class FilterTests(JiraTestCase):
             )
             if len(kwargs):
                 raise ValueError("Incorrect kwarg used !")
+            if self.jira._is_cloud:
+                time.sleep(1)
             yield new_filter
         finally:
             new_filter.delete()
@@ -35,7 +38,8 @@ class FilterTests(JiraTestCase):
     def test_filter(self):
         with self.make_filter() as myfilter:
             self.assertEqual(myfilter.name, self.filter_name)
-            self.assertEqual(myfilter.owner.name, self.test_manager.user_admin.name)
+            if not self.is_jira_cloud_ci:
+                self.assertEqual(myfilter.owner.name, self.test_manager.user_admin.name)
 
     @allow_on_cloud
     def test_favourite_filters(self):

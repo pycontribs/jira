@@ -33,13 +33,16 @@ class EpicTests(JiraTestCase):
     def make_epic(self, **kwargs) -> Iterator[Issue]:
         try:
             # TODO: create_epic() method should exist!
+            new_epic_fields = {
+                "issuetype": {"name": "Epic"},
+                "project": self.project_b,
+                "summary": f"Epic summary for '{self.epic_name}'",
+            }
+            if not self.is_jira_cloud_ci:
+                new_epic_fields[self.epic_field_name] = self.epic_name
+            new_epic_fields.update(kwargs)
             new_epic = self.jira.create_issue(
-                fields={
-                    "issuetype": {"name": "Epic"},
-                    "project": self.project_b,
-                    self.epic_field_name: self.epic_name,
-                    "summary": f"Epic summary for '{self.epic_name}'",
-                },
+                fields=new_epic_fields,
             )
             if len(kwargs):
                 raise ValueError("Incorrect kwarg used !")
