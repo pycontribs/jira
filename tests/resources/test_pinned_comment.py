@@ -1,19 +1,11 @@
 from __future__ import annotations
 
-import pytest
-
-from tests.conftest import JiraTestCase
+from tests.conftest import JiraTestCase, min_jira_version
 
 
 class PinnedCommentTests(JiraTestCase):
     def setUp(self):
         JiraTestCase.setUp(self)
-        # Pin/unpin comment REST endpoints are Jira 9.0+ only (Server/DC).
-        # Skip on older Jira versions so we don't flag a 404 as a regression.
-        if self.jira._version < (9, 0, 0):
-            pytest.skip(
-                f"pin_comment requires Jira 9.0+, got {self.jira._version}"
-            )
         self.issue_1_key = self.test_manager.project_b_issue1
         self.issue_2_key = self.test_manager.project_b_issue2
         self.issue_3_key = self.test_manager.project_b_issue3
@@ -23,6 +15,7 @@ class PinnedCommentTests(JiraTestCase):
             for comment in self.jira.comments(issue):
                 comment.delete()
 
+    @min_jira_version((9, 0, 0))
     def test_pincomments(self):
         for issue in [self.issue_1_key, self.jira.issue(self.issue_2_key)]:
             self.jira.issue(issue)

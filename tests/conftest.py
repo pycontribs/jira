@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import functools
 import getpass
 import hashlib
 import logging
@@ -58,6 +59,27 @@ def flaky_with_backoff(
         return _filter
 
     return flaky(max_runs=max_runs, rerun_filter=_build_filter())
+
+
+def min_jira_version(
+    version: tuple[int, ...],
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    """Skip the decorated test if the live Jira is older than `version`."""
+    required = ".".join(map(str, version))
+
+    def _decorate(test: Callable[..., Any]) -> Callable[..., Any]:
+        @functools.wraps(test)
+        def _wrapper(self: JiraTestCase, *args: Any, **kwargs: Any) -> Any:
+            if self.jira._version < version:
+                actual = ".".join(map(str, self.jira._version))
+                pytest.skip(
+                    f"not compatible with Jira < {required} (live is {actual})"
+                )
+            return test(self, *args, **kwargs)
+
+        return _wrapper
+
+    return _decorate
 
 
 class JiraTestCase(unittest.TestCase):
