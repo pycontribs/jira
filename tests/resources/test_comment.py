@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from tests.conftest import JiraTestCase
+from tests.conftest import JiraTestCase, allow_on_cloud
 
 
 class CommentTests(JiraTestCase):
@@ -15,6 +15,7 @@ class CommentTests(JiraTestCase):
             for comment in self.jira.comments(issue):
                 comment.delete()
 
+    @allow_on_cloud
     def test_comments(self):
         for issue in [self.issue_1_key, self.jira.issue(self.issue_2_key)]:
             self.jira.issue(issue)
@@ -28,6 +29,7 @@ class CommentTests(JiraTestCase):
             comments = self.jira.comments(issue)
             assert len(comments) == 0
 
+    @allow_on_cloud
     def test_comments_start_at(self):
         comments_created = []
         for i in range(10):
@@ -42,6 +44,7 @@ class CommentTests(JiraTestCase):
         comments = self.jira.comments(self.issue_1_key)
         assert len(comments) == 0
 
+    @allow_on_cloud
     def test_comments_max_results(self):
         comments_created = []
         for i in range(10):
@@ -56,6 +59,7 @@ class CommentTests(JiraTestCase):
         comments = self.jira.comments(self.issue_1_key)
         assert len(comments) == 0
 
+    @allow_on_cloud
     def test_comments_order_by(self):
         comments_created = []
         for i in range(10):
@@ -73,6 +77,7 @@ class CommentTests(JiraTestCase):
         comments = self.jira.comments(self.issue_1_key)
         assert len(comments) == 0
 
+    @allow_on_cloud
     def test_expanded_comments(self):
         comment1 = self.jira.add_comment(self.issue_1_key, "First comment")
         comment2 = self.jira.add_comment(self.issue_1_key, "Second comment")
@@ -89,6 +94,7 @@ class CommentTests(JiraTestCase):
         comments = self.jira.comments(self.issue_1_key)
         assert len(comments) == 0
 
+    @allow_on_cloud
     def test_add_comment(self):
         comment = self.jira.add_comment(
             self.issue_3_key,
@@ -100,6 +106,7 @@ class CommentTests(JiraTestCase):
         self.assertEqual(comment.visibility.value, "Administrators")
         comment.delete()
 
+    @allow_on_cloud
     def test_add_comment_with_issue_obj(self):
         issue = self.jira.issue(self.issue_3_key)
         comment = self.jira.add_comment(
@@ -112,6 +119,7 @@ class CommentTests(JiraTestCase):
         self.assertEqual(comment.visibility.value, "Administrators")
         comment.delete()
 
+    @allow_on_cloud
     def test_update_comment(self):
         comment = self.jira.add_comment(self.issue_3_key, "updating soon!")
         comment.update(body="updated!")
@@ -120,6 +128,7 @@ class CommentTests(JiraTestCase):
         # self.assertEqual(comment.visibility.value, 'Administrators')
         comment.delete()
 
+    @allow_on_cloud
     def test_update_comment_with_notify(self):
         comment = self.jira.add_comment(self.issue_3_key, "updating soon!")
         comment.update(body="updated! without notification", notify=False)

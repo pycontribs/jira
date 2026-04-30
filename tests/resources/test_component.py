@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from jira.exceptions import JIRAError
-from tests.conftest import JiraTestCase, rndstr
+from tests.conftest import JiraTestCase, allow_on_cloud, rndstr
 
 
 class ComponentTests(JiraTestCase):
@@ -10,6 +10,7 @@ class ComponentTests(JiraTestCase):
         self.issue_1 = self.test_manager.project_b_issue1
         self.issue_2 = self.test_manager.project_b_issue2
 
+    @allow_on_cloud
     def test_2_create_component(self):
         proj = self.jira.project(self.project_b)
         name = f"project-{proj}-component-{rndstr()}"
@@ -67,6 +68,7 @@ class ComponentTests(JiraTestCase):
         self.assertEqual(component.lead.name, self.jira.current_user())
         component.delete()
 
+    @allow_on_cloud
     def test_4_delete(self):
         component = self.jira.create_component(
             "To be deleted", self.project_b, description="not long for this world"
@@ -75,6 +77,7 @@ class ComponentTests(JiraTestCase):
         component.delete()
         self.assertRaises(JIRAError, self.jira.component, myid)
 
+    @allow_on_cloud
     def test_delete_component_by_id(self):
         component = self.jira.create_component(
             "To be deleted", self.project_b, description="not long for this world"

@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 
 import jira.resources
+from tests.conftest import allow_on_cloud
 
 MOCK_URL = "http://customized-jira.com/rest/"
 
@@ -43,6 +44,7 @@ class TestResource:
         ],
     )
     # fmt: on
+    @allow_on_cloud
     def test_cls_for_resource(self, example_url, expected_class):
         """Test the regex recognizes the right class for a given URL."""
         assert jira.resources.cls_for_resource(example_url) == expected_class

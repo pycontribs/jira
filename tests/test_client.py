@@ -10,7 +10,7 @@ import requests_mock as rm
 
 import jira.client
 from jira.exceptions import JIRAError, NotJIRAInstanceError
-from tests.conftest import JiraTestManager, get_unique_project_name
+from tests.conftest import JiraTestManager, allow_on_cloud, get_unique_project_name
 
 
 @pytest.fixture()
@@ -122,10 +122,12 @@ def mock_response():
     return MockResponse
 
 
+@allow_on_cloud
 def test_delete_project(cl_admin, cl_normal, slug):
     assert cl_admin.delete_project(slug)
 
 
+@allow_on_cloud
 def test_delete_inexistent_project(cl_admin):
     slug = "abogus123"
     with pytest.raises(JIRAError) as ex:
@@ -155,6 +157,7 @@ Task management
     assert templates == expected_templates
 
 
+@allow_on_cloud
 def test_result_list():
     iterable = [2, 3]
     startAt = 0
@@ -173,6 +176,7 @@ def test_result_list():
         next(results)
 
 
+@allow_on_cloud
 def test_result_list_if_empty():
     results = jira.client.ResultList()
 
@@ -183,6 +187,7 @@ def test_result_list_if_empty():
         next(results)
 
 
+@allow_on_cloud
 @pytest.mark.parametrize(
     "options_arg",
     [
@@ -224,6 +229,7 @@ def test_headers_unclobbered_update(options_arg, no_fields):
     assert session_headers[invariant_header_name] == invariant_header_value
 
 
+@allow_on_cloud
 def test_headers_unclobbered_update_with_no_provided_headers(no_fields):
     options_arg = {}  # a dict with "headers" not set
 

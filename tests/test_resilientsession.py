@@ -10,7 +10,7 @@ from requests import Response
 import jira.resilientsession
 from jira.exceptions import JIRAError
 from jira.resilientsession import parse_error_msg, parse_errors
-from tests.conftest import JiraTestCase
+from tests.conftest import JiraTestCase, allow_on_cloud
 
 
 class ListLoggingHandler(logging.Handler):
@@ -34,6 +34,7 @@ class ResilientSessionLoggingConfidentialityTests(JiraTestCase):
         self.loggingHandler = ListLoggingHandler()
         jira.resilientsession.logging.getLogger().addHandler(self.loggingHandler)
 
+    @allow_on_cloud
     def test_logging_with_connection_error(self):
         """No sensitive data shall be written to the log in case of a connection error."""
         witness = "etwhpxbhfniqnbbjoqvw"  # random string; hopefully unique
