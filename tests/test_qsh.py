@@ -43,7 +43,7 @@ class MockRequest:
         "repeated parameters with whitespace",
     ],
 )
-def test_qsh(method, url, expected):
+def test_unit_qsh(method, url, expected):
     gen = QshGenerator("http://example.com")
     req = MockRequest(method, url)
     assert gen._generate_qsh(req) == expected

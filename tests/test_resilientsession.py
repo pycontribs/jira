@@ -104,7 +104,7 @@ status_codes_retries_test_data = [
     "status_code,with_rate_limit_header,with_retry_after_header,retry_expected",
     status_codes_retries_test_data,
 )
-def test_status_codes_retries(
+def test_unit_status_codes_retries(
     mocked_sleep_method: Mock,
     mocked_request_method: Mock,
     status_code: int,
@@ -176,7 +176,7 @@ errors_parsing_test_data = [
     "status_code,headers,content,expected_errors",
     errors_parsing_test_data,
 )
-def test_error_parsing(status_code, headers, content, expected_errors):
+def test_unit_error_parsing(status_code, headers, content, expected_errors):
     mocked_response: Response = Response()
     mocked_response.status_code = status_code
     mocked_response.headers.update(headers)
@@ -187,7 +187,7 @@ def test_error_parsing(status_code, headers, content, expected_errors):
     assert error_msg == ", ".join(expected_errors)
 
 
-def test_passthrough_class():
+def test_unit_passthrough_class():
     # GIVEN: The passthrough class and a dict of request args
     passthrough_class = jira.resilientsession.PassthroughRetryPrepare()
     my_kwargs = {"nice": "arguments"}
@@ -197,7 +197,7 @@ def test_passthrough_class():
 
 
 @patch("requests.Session.request")
-def test_unspecified_body_remains_unspecified(mocked_request_method: Mock):
+def test_unit_unspecified_body_remains_unspecified(mocked_request_method: Mock):
     # Disable retries for this test.
     session = jira.resilientsession.ResilientSession(max_retries=0)
     # Data is not specified here.
@@ -207,7 +207,7 @@ def test_unspecified_body_remains_unspecified(mocked_request_method: Mock):
 
 
 @patch("requests.Session.request")
-def test_nonempty_body_is_forwarded(mocked_request_method: Mock):
+def test_unit_nonempty_body_is_forwarded(mocked_request_method: Mock):
     # Disable retries for this test.
     session = jira.resilientsession.ResilientSession(max_retries=0)
     session.get(url="mocked_url", data={"some": "fake-data"})
@@ -216,7 +216,7 @@ def test_nonempty_body_is_forwarded(mocked_request_method: Mock):
 
 
 @patch("requests.Session.request")
-def test_with_requests_simple_timeout(mocked_request_method: Mock):
+def test_unit_with_requests_simple_timeout(mocked_request_method: Mock):
     # Disable retries for this test.
     session = jira.resilientsession.ResilientSession(max_retries=0, timeout=1)
     session.get(url="mocked_url", data={"some": "fake-data"})
@@ -225,7 +225,7 @@ def test_with_requests_simple_timeout(mocked_request_method: Mock):
 
 
 @patch("requests.Session.request")
-def test_with_requests_tuple_timeout(mocked_request_method: Mock):
+def test_unit_with_requests_tuple_timeout(mocked_request_method: Mock):
     # Disable retries for this test.
     session = jira.resilientsession.ResilientSession(max_retries=0, timeout=(1, 3.5))
     session.get(url="mocked_url", data={"some": "fake-data"})
@@ -234,7 +234,7 @@ def test_with_requests_tuple_timeout(mocked_request_method: Mock):
 
 
 @patch("requests.Session.request")
-def test_verify_is_forwarded(mocked_request_method: Mock):
+def test_unit_verify_is_forwarded(mocked_request_method: Mock):
     # Disable retries for this test.
     session = jira.resilientsession.ResilientSession(max_retries=0)
 
@@ -249,7 +249,7 @@ def test_verify_is_forwarded(mocked_request_method: Mock):
 
 
 @patch("requests.Session.request")
-def test_empty_dict_body_not_forwarded(mocked_request_method: Mock):
+def test_unit_empty_dict_body_not_forwarded(mocked_request_method: Mock):
     # Disable retries for this test.
     session = jira.resilientsession.ResilientSession(max_retries=0)
     # An empty dict must not be JSON-encoded into the request body.
