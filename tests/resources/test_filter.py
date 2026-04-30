@@ -35,7 +35,12 @@ class FilterTests(JiraTestCase):
     def test_filter(self):
         with self.make_filter() as myfilter:
             self.assertEqual(myfilter.name, self.filter_name)
-            self.assertEqual(myfilter.owner.name, self.test_manager.user_admin.name)
+            if self.is_jira_cloud_ci:
+                self.assertEqual(
+                    myfilter.owner.accountId, self.jira.myself()["accountId"]
+                )
+            else:
+                self.assertEqual(myfilter.owner.name, self.test_manager.user_admin.name)
 
     @allow_on_cloud
     def test_favourite_filters(self):

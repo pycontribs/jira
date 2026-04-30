@@ -70,7 +70,6 @@ rsyncdirs
 rsyncignore
 runbackup
 securitylevels
-serialised
 sprintreport
 ssbarnea
 statuscategorychangedate

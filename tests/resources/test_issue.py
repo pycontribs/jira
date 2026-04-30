@@ -3,7 +3,12 @@ from __future__ import annotations
 import logging
 
 from jira.exceptions import JIRAError
-from tests.conftest import JiraTestCase, allow_on_cloud, find_by_key, find_by_key_value
+from tests.conftest import (
+    JiraTestCase,
+    allow_on_cloud,
+    find_by_key,
+    find_by_key_value,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -608,20 +613,25 @@ class IssueTests(JiraTestCase):
 
     @allow_on_cloud
     def test_rank(self):
-        def get_issues_ordered_by_rank():
-            """Search for the issues, returned in the order determined by their rank."""
-            return self.jira.search_issues(
-                f"key in ({self.issue_1},{self.issue_2}) ORDER BY Rank ASC"
-            )
+        jql = f"key in ({self.issue_1},{self.issue_2}) ORDER BY Rank ASC"
+        issue_ids = [
+            int(self.jira.issue(key).id) for key in (self.issue_1, self.issue_2)
+        ]
+
+        def assert_ranked(expected):
+            if self.is_jira_cloud_ci:
+                issues = self.jira.enhanced_search_issues(
+                    jql, reconcileIssues=issue_ids
+                )
+            else:
+                issues = self.jira.search_issues(jql)
+            assert tuple(issue.key for issue in issues) == expected
 
         self.jira.rank(self.issue_1, next_issue=self.issue_2)
-        issues = get_issues_ordered_by_rank()
-        assert (issues[0].key, issues[1].key) == (self.issue_1, self.issue_2)
+        assert_ranked((self.issue_1, self.issue_2))
 
         self.jira.rank(self.issue_2, next_issue=self.issue_1)
-        issues = get_issues_ordered_by_rank()
-        assert (issues[0].key, issues[1].key) == (self.issue_2, self.issue_1)
+        assert_ranked((self.issue_2, self.issue_1))
 
         self.jira.rank(self.issue_2, prev_issue=self.issue_1)
-        issues = get_issues_ordered_by_rank()
-        assert (issues[0].key, issues[1].key) == (self.issue_1, self.issue_2)
+        assert_ranked((self.issue_1, self.issue_2))

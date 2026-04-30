@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import suppress
 from unittest import mock
 
 import pytest
@@ -36,7 +37,8 @@ class DashboardTests(JiraTestCase):
 
     def tearDown(self):
         for dashboard in self.dashboards_to_delete:
-            dashboard.delete()
+            with suppress(JIRAError):
+                dashboard.delete()
         super().tearDown()
 
     def _filter_results_gadget(self) -> DashboardGadget:
@@ -273,7 +275,6 @@ class DashboardTests(JiraTestCase):
             ignore_uri_and_module_key_validation=True,
             uri=filter_gadget.uri,
         )
-
         gadget = gadget.update(dashboard.id, color=new_color)
         self.assertEqual(gadget.color, new_color)
         self.assertEqual(gadget.raw["color"], new_color)

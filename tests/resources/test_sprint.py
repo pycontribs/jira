@@ -115,10 +115,14 @@ class SprintTests(JiraTestCase):
             self.jira.add_issues_to_sprint(sprint.id, [self.issue_1])
 
             updated_issue_1 = self.jira.issue(self.issue_1)
-            serialised_sprint = updated_issue_1.get_field(self._sprint_customfield())[0]
+            issue_sprint = updated_issue_1.get_field(self._sprint_customfield())[0]
 
             # THEN: We find this sprint in the Sprint field of the Issue
-            assert f"[id={sprint.id}," in serialised_sprint
+            # Jira Server returns the sprint as a string, Jira Cloud as an object.
+            if isinstance(issue_sprint, str):
+                assert f"[id={sprint.id}," in issue_sprint
+            else:
+                assert issue_sprint.id == sprint.id
 
     def test_move_issue_to_backlog(self):
         with self._create_sprint() as sprint:
