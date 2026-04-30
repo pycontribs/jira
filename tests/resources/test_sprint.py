@@ -8,9 +8,10 @@ import pytest as pytest
 
 from jira.exceptions import JIRAError
 from jira.resources import Board, Filter, Sprint
-from tests.conftest import JiraTestCase, rndstr
+from tests.conftest import JiraTestCase, allow_on_cloud, rndstr
 
 
+@allow_on_cloud
 class SprintTests(JiraTestCase):
     def setUp(self):
         super().setUp()

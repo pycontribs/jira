@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from tests.conftest import JiraTestCase
+from tests.conftest import JiraTestCase, allow_on_cloud
 
 
+@allow_on_cloud
 class ProjectStatusesByIssueTypeTests(JiraTestCase):
     def test_issue_types_for_project(self):
         issue_types = self.jira.issue_types_for_project(self.project_a)
