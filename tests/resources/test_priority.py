@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from tests.conftest import JiraTestCase
+from tests.conftest import JiraTestCase, allow_on_cloud
 
 
+@allow_on_cloud
 class PrioritiesTests(JiraTestCase):
     def test_priorities(self):
         priorities = self.jira.priorities()

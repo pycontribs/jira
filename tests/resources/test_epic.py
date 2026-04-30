@@ -7,7 +7,7 @@ from functools import cached_property
 from parameterized import parameterized
 
 from jira.resources import Issue
-from tests.conftest import JiraTestCase, rndstr
+from tests.conftest import JiraTestCase, allow_on_cloud, rndstr
 
 
 class EpicTests(JiraTestCase):
@@ -47,10 +47,12 @@ class EpicTests(JiraTestCase):
         finally:
             new_epic.delete()
 
+    @allow_on_cloud
     def test_epic_create_delete(self):
         with self.make_epic():
             pass
 
+    @allow_on_cloud
     @parameterized.expand(
         [("str", str), ("list", list)],
     )
