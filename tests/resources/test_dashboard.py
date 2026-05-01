@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import time
+from contextlib import suppress
 from unittest import mock
 
 import pytest
@@ -35,7 +37,8 @@ class DashboardTests(JiraTestCase):
 
     def tearDown(self):
         for dashboard in self.dashboards_to_delete:
-            dashboard.delete()
+            with suppress(JIRAError):
+                dashboard.delete()
         super().tearDown()
 
     def test_dashboards(self):
@@ -261,6 +264,7 @@ class DashboardTests(JiraTestCase):
             name=rndstr(), share_permissions=[{"type": "authenticated"}]
         )
         self.dashboards_to_delete.append(dashboard)
+        time.sleep(1)
         available_gadgets = self.jira.all_dashboard_gadgets()
         filter_gadget = next(
             gadget for gadget in available_gadgets if gadget.title == self.gadget_title
@@ -271,7 +275,7 @@ class DashboardTests(JiraTestCase):
             ignore_uri_and_module_key_validation=True,
             uri=filter_gadget.uri,
         )
-
+        time.sleep(1)
         gadget = gadget.update(dashboard.id, color=new_color)
         self.assertEqual(gadget.color, new_color)
         self.assertEqual(gadget.raw["color"], new_color)

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from tests.conftest import JiraTestCase, broken_test, flaky_with_backoff
+from tests.conftest import JiraTestCase, allow_on_cloud, broken_test, flaky_with_backoff
 
 
 class CustomFieldOptionTests(JiraTestCase):
@@ -13,6 +13,7 @@ class CustomFieldOptionTests(JiraTestCase):
     @broken_test(
         reason="standalone jira docker has option 10000 only after async startup completes"
     )
+    @allow_on_cloud
     @flaky_with_backoff()
     def test_custom_field_option(self):
         option = self.jira.custom_field_option("10000")

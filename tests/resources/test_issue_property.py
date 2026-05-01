@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from tests.conftest import JiraTestCase
+from tests.conftest import JiraTestCase, allow_on_cloud
 
 
+@allow_on_cloud
 class IssuePropertyTests(JiraTestCase):
     def setUp(self):
         JiraTestCase.setUp(self)
@@ -19,5 +20,6 @@ class IssuePropertyTests(JiraTestCase):
         self.assertEqual(prop.key, "custom-property")
         self.assertEqual(prop.value, "Testing a property value")
         prop.delete()
-        properties = self.jira.issue_properties(self.issue_1)
-        self.assertEqual(len(properties), 0)
+        if not self.jira._is_cloud:
+            properties = self.jira.issue_properties(self.issue_1)
+            self.assertEqual(len(properties), 0)
