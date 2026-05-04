@@ -28,7 +28,8 @@ repos:
         entry: codespell
         language: python
         types: [text]
-        args: []
+        # false flag of spelling errors for package names.
+        exclude: ^docker/jira-test-image/plugin/pom\.xml\.template$
         require_serial: false
         additional_dependencies:
           - tomli; python_version<'3.11'
