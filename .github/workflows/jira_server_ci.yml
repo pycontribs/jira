@@ -33,7 +33,7 @@ jobs:
         python-version: ["3.12"]
         jira-version: ["8.17.1"]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           ref: ${{ inputs.ref }}
 

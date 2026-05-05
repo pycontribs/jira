@@ -37,7 +37,7 @@ jobs:
           - { os: macos-14,     python-version: "3.10", tox_env: py310 }
           - { os: macos-14,     python-version: "3.12", tox_env: py312 }
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0 # needed by setuptools-scm
           submodules: true
@@ -95,7 +95,7 @@ jobs:
       matrix:
         tox_env: [pkg, py310-devel]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
           submodules: true
@@ -144,7 +144,7 @@ jobs:
     if: false
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
@@ -157,7 +157,7 @@ jobs:
     if: false
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
@@ -180,7 +180,7 @@ jobs:
 
     steps:
       # checkout needed for codecov action which needs codecov.yml file
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Merge logs into a single archive
         uses: actions/upload-artifact/merge@v4
