@@ -3137,10 +3137,14 @@ class JIRA:
         Returns:
             ResultList[Field]
         """
-        self._check_createmeta_issuetypes()
+        if not self._is_cloud:
+            self._check_createmeta_issuetypes()
+            field_delim = "values"
+        else:
+            field_delim = "fields"
         fields = self._fetch_pages(
             Field,
-            "values",
+            field_delim,
             f"issue/createmeta/{project}/issuetypes/{issue_type}",
             startAt=startAt,
             maxResults=maxResults,
