@@ -674,6 +674,9 @@ class JIRA:
 
         self._fields_cache_value: dict[str, str] = {}  # access via self._fields_cache
 
+        # Store fields cache reference on session for display name field injection
+        self._session.fields_cache = self._fields_cache
+
     @property
     def _fields_cache(self) -> dict[str, str]:
         """Cached dictionary of {Field Name: Field ID}. Lazy loaded."""

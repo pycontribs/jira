@@ -160,6 +160,7 @@ class ResilientSession(Session):
         self.timeout = timeout
         self.max_retries = max_retries
         self.max_retry_delay = max_retry_delay
+        self.fields_cache: dict[str, str] = {}
         super().__init__()
 
         # Indicate our preference for JSON to avoid https://bitbucket.org/bspeakmon/jira-python/issue/46 and https://jira.atlassian.com/browse/JRA-38551
