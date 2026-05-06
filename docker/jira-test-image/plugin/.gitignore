@@ -1,0 +1,6 @@
+target/
+
+# Rendered from pom.xml.template by scripts/render-pom.sh during
+# `docker build`. Treat the template as source of truth; the rendered
+# pom is a build artefact.
+pom.xml

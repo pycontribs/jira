@@ -1,0 +1,9 @@
+<atlassian-plugin key="${atlassian.plugin.key}" name="${project.name}" plugins-version="2">
+    <plugin-info>
+        <description>Stub plugin for the pycontribs/jira test image. Ships no
+            functionality - exists only so atlas-run has an artifactId to
+            launch Jira against.</description>
+        <version>${project.version}</version>
+        <vendor name="${project.organization.name}" url="${project.organization.url}" />
+    </plugin-info>
+</atlassian-plugin>

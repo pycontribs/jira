@@ -20,6 +20,10 @@ on:
 # Concurrency is set on the calling ci.yml; defining it here too
 # would self-cancel since github.workflow returns the caller's name.
 
+permissions:
+  contents: read
+  packages: read
+
 jobs:
   test:
     name: py${{ matrix.python-version }}-jira${{ matrix.jira-version }}
@@ -27,21 +31,41 @@ jobs:
     strategy:
       fail-fast: false
       # One python is enough against a real Jira; tox.yml covers
-      # the full python matrix without booting one.
+      # the full python matrix without booting one. Each Jira version
+      # below must already exist as a warmed image on GHCR; the
+      # `.github/workflows/ghcr-publish.yml` workflow_dispatch publishes
+      # them. See docker/jira-test-image/README.md for the validated
+      # version matrix.
       matrix:
-        os: [ubuntu-latest]
-        python-version: ["3.12"]
-        jira-version: ["8.17.1"]
+        include:
+          - { os: ubuntu-latest, python-version: "3.12", jira-version: "8.17.1"  }
+          - { os: ubuntu-latest, python-version: "3.12", jira-version: "8.20.30" }
+          - { os: ubuntu-latest, python-version: "3.12", jira-version: "9.12.34" }
+          - { os: ubuntu-latest, python-version: "3.12", jira-version: "11.3.4"  }
     steps:
       - uses: actions/checkout@v5
         with:
           ref: ${{ inputs.ref }}
 
-      - name: Build Jira test image
-        run: docker build -t pycontribs/jira-test-image:${{ matrix.jira-version }} docker/jira-test-image
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Start Jira docker instance
-        run: docker run -dit -p 2990:2990 -e JIRA_VERSION=${{ matrix.jira-version }} --name jira pycontribs/jira-test-image:${{ matrix.jira-version }}
+        # Pulls the warmed variant published by ghcr-publish.yml.
+        # Warmed images bake the Maven cache + atlas-run-unpacked webapp
+        # so cold-boot is ~1-2 min instead of ~10-20 min, and the
+        # entrypoint runs offline (-o). Do not pass -e JIRA_VERSION:
+        # the warmed target/ directory is anchored to the version baked
+        # at publish time, and overriding it would force atlas-run to
+        # reach out for a different artifact under -o.
+        run: |
+          IMAGE='ghcr.io/${{ github.repository_owner }}/jira-test-image:${{ matrix.jira-version }}-warm'
+          docker pull "$IMAGE"
+          docker run -dit -p 2990:2990 --name jira "$IMAGE"
 
       - name: Install uv and pin python ${{ matrix.python-version }}
         uses: astral-sh/setup-uv@v6

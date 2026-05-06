@@ -1,0 +1,146 @@
+name: ghcr-publish
+
+# Publishes the jira-test-image for any Jira major. Every input below
+# maps 1:1 onto a Dockerfile ARG; defaults match the Dockerfile defaults
+# (Jira 8.17.1, the version pycontribs/jira's server CI runs against).
+# Always builds AND publishes both the unwarmed and the warmed variant
+# in a single dispatch; the `tag_latest` boolean controls only whether
+# the floating `:<major>[-warm]-latest` tags are pushed alongside the
+# version-pinned ones.
+#
+# Tag composition:
+#
+#   tag_latest=false (default):
+#     :<jira_version>          (unwarmed)
+#     :<jira_version>-warm     (warmed)
+#
+#   tag_latest=true:
+#     :<jira_version>          (unwarmed)
+#     :<jira_version>-warm     (warmed)
+#     :<jira_major>-latest     (unwarmed)
+#     :<jira_major>-warm-latest (warmed)
+#
+# Different majors do not collide on `:<major>[-warm]-latest`, so this
+# is safe to enable per release. Build context is `docker/jira-test-image/`.
+
+on:
+  workflow_dispatch:
+    inputs:
+      jira_major:
+        description: "Jira major version (e.g. 8)"
+        required: true
+        type: string
+        default: "8"
+      jira_minor_patch:
+        description: "Jira minor.patch (e.g. 17.1)"
+        required: true
+        type: string
+        default: "17.1"
+      java_image:
+        description: "Java base image"
+        required: true
+        type: string
+        default: "eclipse-temurin:8-jdk-jammy"
+      amps_version:
+        description: "AMPS / jira-maven-plugin version (must resolve on both maven-external paths)"
+        required: true
+        type: string
+        default: "8.2.3"
+      spring_scanner_version:
+        description: "atlassian-spring-scanner version (2.1.x for Jira 8, 2.2.x for 9-10, 6.x for 11)"
+        required: true
+        type: string
+        default: "2.1.17"
+      testrunner_version:
+        description: "atlassian-plugins-osgi-testrunner version"
+        required: true
+        type: string
+        default: "2.0.16"
+      compile_floor:
+        description: "Java source/target compile floor (1.8 / 11 / 17)"
+        required: true
+        type: string
+        default: "1.8"
+      tag_latest:
+        description: "Also push :<major>[-warm]-latest floating tags"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE: ghcr.io/${{ github.repository_owner }}/jira-test-image
+  JIRA_VERSION: ${{ inputs.jira_major }}.${{ inputs.jira_minor_patch }}
+  CONTEXT: docker/jira-test-image
+
+jobs:
+  build-push:
+    runs-on: ubuntu-latest
+    # Per-variant rough budget on a clean cache:
+    #   unwarmed build + push  ~10min
+    #   warmer-stage boot      ~15-25min
+    #   warmed export + push   ~5min
+    # Total ~50min; 90min ceiling absorbs slow GHCR / Maven days.
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build unwarmed
+        run: |
+          docker build \
+            --target unwarmed \
+            --build-arg JAVA_IMAGE='${{ inputs.java_image }}' \
+            --build-arg AMPS_VERSION='${{ inputs.amps_version }}' \
+            --build-arg JIRA_VERSION='${{ env.JIRA_VERSION }}' \
+            --build-arg SPRING_SCANNER_VERSION='${{ inputs.spring_scanner_version }}' \
+            --build-arg TESTRUNNER_VERSION='${{ inputs.testrunner_version }}' \
+            --build-arg COMPILE_FLOOR='${{ inputs.compile_floor }}' \
+            -t '${{ env.IMAGE }}:${{ env.JIRA_VERSION }}' \
+            '${{ env.CONTEXT }}'
+
+      - name: Push unwarmed
+        run: docker push '${{ env.IMAGE }}:${{ env.JIRA_VERSION }}'
+
+      - name: Build warmed
+        # Reuses the warmed stage's underlying base layers from the
+        # previous step's local cache; only the warmer-stage atlas-run
+        # boot is genuinely new work here.
+        run: |
+          docker build \
+            --target warmed \
+            --build-arg JAVA_IMAGE='${{ inputs.java_image }}' \
+            --build-arg AMPS_VERSION='${{ inputs.amps_version }}' \
+            --build-arg JIRA_VERSION='${{ env.JIRA_VERSION }}' \
+            --build-arg SPRING_SCANNER_VERSION='${{ inputs.spring_scanner_version }}' \
+            --build-arg TESTRUNNER_VERSION='${{ inputs.testrunner_version }}' \
+            --build-arg COMPILE_FLOOR='${{ inputs.compile_floor }}' \
+            -t '${{ env.IMAGE }}:${{ env.JIRA_VERSION }}-warm' \
+            '${{ env.CONTEXT }}'
+
+      - name: Push warmed
+        run: docker push '${{ env.IMAGE }}:${{ env.JIRA_VERSION }}-warm'
+
+      - name: Push :<major>-latest tags
+        if: inputs.tag_latest
+        run: |
+          UNWARMED_SRC='${{ env.IMAGE }}:${{ env.JIRA_VERSION }}'
+          WARMED_SRC='${{ env.IMAGE }}:${{ env.JIRA_VERSION }}-warm'
+          UNWARMED_DST='${{ env.IMAGE }}:${{ inputs.jira_major }}-latest'
+          WARMED_DST='${{ env.IMAGE }}:${{ inputs.jira_major }}-warm-latest'
+          docker tag "$UNWARMED_SRC" "$UNWARMED_DST"
+          docker tag "$WARMED_SRC" "$WARMED_DST"
+          docker push "$UNWARMED_DST"
+          docker push "$WARMED_DST"
