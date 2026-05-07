@@ -2127,10 +2127,10 @@ class JIRA:
         Returns:
             None
         """
-        if self._is_cloud or self._version < (8, 4, 0):
+        if not self._is_cloud and self._version < (8, 4, 0):
             raise JIRAError(
-                f"Unsupported JIRA deployment type: {self.deploymentType} or version: {self._version}. "
-                "Use 'createmeta' instead."
+                f"Unsupported JIRA Server version: {self._version}. "
+                "Requires Server/DC 8.4+. Use 'createmeta' instead."
             )
 
     def createmeta_issuetypes(
