@@ -1,6 +1,7 @@
 version: 2
 updates:
-  - package-ecosystem: pip
+  # `uv` ecosystem bumps both pyproject.toml and uv.lock together.
+  - package-ecosystem: uv
     directory: "/"
     schedule:
       day: sunday

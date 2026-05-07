@@ -2,10 +2,11 @@
 # This file is run from the .vscode folder
 WORKSPACE_FOLDER=/workspaces/jira
 
-# Start the Jira Server docker instance first so can be running while we initialise everything else
-# Need to ensure this --version matches what is in CI
+# Start the Jira Server docker instance first so it can be running while we
+# initialise everything else.
 echo "Initiating jira server instance, use the docker extension to inspect the logs (takes around 10/15mins to startup)"
-docker run -dit -p 2990:2990 --name jira addono/jira-software-standalone --version 8.17.1
+docker build -t pycontribs/jira-test-image:8.17.1 "${WORKSPACE_FOLDER}/docker/jira-test-image"
+docker run -dit -p 2990:2990 --name jira pycontribs/jira-test-image:8.17.1
 echo "Once started up, Jira host port is forwarded and can be found on: localhost:2990/jira/"
 
 # For Windows uses that have cloned into Windows' partition, we do this so that
