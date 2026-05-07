@@ -115,7 +115,7 @@ def parse_errors(resp: Response) -> list[str]:
         error_messages = resp_data["errorMessages"]
         if len(error_messages) > 0:
             if isinstance(error_messages, list | tuple):
-                parsed_errors = list(error_messages)
+                parsed_errors = [str(e) for e in error_messages if e is not None]
             else:
                 parsed_errors = [error_messages]
     if "errors" in resp_data:
