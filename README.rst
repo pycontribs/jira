@@ -88,7 +88,8 @@ Manual
 ``````
 * Install pyenv_ to install a suitable python version.
 * Launch docker jira server
-    - ``docker run -dit -p 2990:2990 --name jira addono/jira-software-standalone``
+    - ``docker build -t pycontribs/jira-test-image:8.17.1 docker/jira-test-image``
+    - ``docker run -dit -p 2990:2990 --name jira pycontribs/jira-test-image:8.17.1``
 
 tox envs
 ````````

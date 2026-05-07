@@ -6,63 +6,71 @@ on:
       ref:
         type: string
         description: 'Ref (SHA/branch) to run the workflow on'
-        required: true
-        default: 'main'
+        required: false
+        default: ''
+  # Manual trigger - so a maintainer can target any ref
   workflow_dispatch:
     inputs:
       ref:
         type: string
         description: 'Ref (SHA/branch) to run the workflow on'
-        required: true
-        default: 'main'
+        required: false
+        default: ''
+
+# Concurrency is set on the calling ci.yml; defining it here too
+# would self-cancel since github.workflow returns the caller's name.
+
 jobs:
   test:
     name: py${{ matrix.python-version }}-jira${{ matrix.jira-version }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
+      # One python is enough against a real Jira; tox.yml covers
+      # the full python matrix without booting one.
       matrix:
         os: [ubuntu-latest]
-        python-version: ["3.10", "3.11", "3.12"]
-        jira-version: [8.17.1]
-
+        python-version: ["3.12"]
+        jira-version: ["8.17.1"]
     steps:
       - uses: actions/checkout@v5
         with:
-          ref: ${{ github.event.inputs.ref }}
+          ref: ${{ inputs.ref }}
+
+      - name: Build Jira test image
+        run: docker build -t pycontribs/jira-test-image:${{ matrix.jira-version }} docker/jira-test-image
 
       - name: Start Jira docker instance
-        run: docker run -dit -p 2990:2990 --name jira addono/jira-software-standalone --version ${{ matrix.jira-version }}
+        run: docker run -dit -p 2990:2990 -e JIRA_VERSION=${{ matrix.jira-version }} --name jira pycontribs/jira-test-image:${{ matrix.jira-version }}
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v6
+      - name: Install uv and pin python ${{ matrix.python-version }}
+        uses: astral-sh/setup-uv@v6
         with:
+          enable-cache: true
           python-version: ${{ matrix.python-version }}
-          cache: pip
 
-      - name: Install Dependencies
+      - name: Install bindep system packages (apt)
         run: |
-          sudo apt-get update; sudo apt-get install gcc libkrb5-dev
-          python -m pip install --upgrade pip
-          python -m pip install --upgrade tox tox-gh-actions
+          sudo apt-get update -y
+          mapfile -t apt_packages < <(uvx bindep -b -f bindep.txt || true)
+          if [ ${#apt_packages[@]} -gt 0 ]; then
+            sudo apt-get install -y --no-install-recommends "${apt_packages[@]}"
+          fi
 
-      - name: Lint with tox
-        if: ${{ 'Skipped as pre-commit GHA also running'== 'true' }}
-        run: tox -e lint
+      - name: Install tox
+        run: uv tool install tox --with tox-uv --with "setuptools>=65.3"
 
       - name: Test with tox
-        run: tox
+        # `tr -d .` collapses 3.12 -> 312 since GHA expressions have no string-replace.
+        run: tox -e "py$(echo '${{ matrix.python-version }}' | tr -d .)"
         env:
           CI_JIRA_TYPE: SERVER
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
-          files: ./coverage.xml
-          name: ${{ runner.os }}-${{ matrix.python-version }}
-
-      - name: Run tox packaging
-        run: tox -e packaging
-
-      - name: Make docs
-        if: ${{ 'Skipped as readthedocs GHA also running'== 'true' }}
-        run: tox -e docs
+          # tox writes coverage.xml under .tox/<env>/; codecov's
+          # auto-search picks it up from there.
+          directory: .tox
+          name: ${{ runner.os }}-${{ matrix.python-version }}-Server
+          fail_ci_if_error: true

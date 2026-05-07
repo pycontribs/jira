@@ -6,6 +6,7 @@ from unittest import mock
 
 import pytest
 import requests.sessions
+import requests_mock as rm
 
 import jira.client
 from jira.exceptions import JIRAError, NotJIRAInstanceError
@@ -260,7 +261,7 @@ def test_token_auth(cl_admin: jira.client.JIRA):
     new_token = pat_token_response["rawToken"]
 
     # WHEN: A new client is authenticated with this token
-    new_jira_client = jira.client.JIRA(token_auth=new_token)
+    new_jira_client = jira.client.JIRA(server=base_url, token_auth=new_token)
 
     # THEN: The reported authenticated user of the token
     # matches the original token creator user.
@@ -299,18 +300,23 @@ def test_cookie_auth(test_manager: JiraTestManager):
     assert test_manager.jira_admin.myself() == cookie_auth_jira.myself()
 
 
-def test_cookie_auth_retry():
+def test_cookie_auth_retry(requests_mock):
     """Test Cookie based authentication retry logic works."""
-    # GIVEN: arguments that will cause a 401 error
+    # GIVEN: a mocked Jira that always returns 401 on the auth URL
     auth_class = jira.client.JiraCookieAuth
     reset_func = jira.client.JiraCookieAuth._reset_401_retry_counter
     new_options = jira.client.JIRA.DEFAULT_OPTIONS.copy()
     new_options["auth_url"] = "/401"
+    requests_mock.register_uri(
+        rm.ANY,
+        "https://mocked.jira.invalid/401",
+        status_code=401,
+    )
     with pytest.raises(JIRAError):
         with mock.patch.object(auth_class, reset_func.__name__) as mock_reset_func:
             # WHEN: We create a session with cookie auth
             jira.client.JIRA(
-                server="https://httpstat.us",
+                server="https://mocked.jira.invalid",
                 options=new_options,
                 auth=("user", "pass"),
             )

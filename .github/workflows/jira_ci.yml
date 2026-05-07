@@ -1,7 +1,15 @@
 name: ci
 
-# runs only after tox workflow finished successfully
+# Cloud secrets aren't shared to fork PRs, so cloud is skipped
+# (not failed) there; check uses alls-green's allowed-skips so a
+# fork PR still goes green on server alone.
 on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       ref:
@@ -9,21 +17,20 @@ on:
         description: 'Ref (SHA/branch) to run the workflow on'
         required: true
         default: 'main'
-  workflow_run:
-    workflows: [tox]
-    branches: [main]
-    types:
-      - completed
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
 
 jobs:
   server:
     uses: ./.github/workflows/jira_server_ci.yml
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     with:
-      ref: ${{ github.event.inputs.ref || 'main' }}
+      ref: ${{ github.event.inputs.ref || github.sha }}
 
   cloud:
     needs: server
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
     uses: ./.github/workflows/jira_cloud_ci.yml
     secrets:
       CLOUD_ADMIN: ${{ secrets.CI_JIRA_CLOUD_ADMIN }}
@@ -31,18 +38,17 @@ jobs:
       CLOUD_USER: ${{ secrets.CI_JIRA_CLOUD_USER }}
       CLOUD_USER_TOKEN: ${{ secrets.CI_JIRA_CLOUD_USER_TOKEN }}
     with:
-      ref: ${{ github.event.inputs.ref || 'main' }}
+      ref: ${{ github.event.inputs.ref || github.sha }}
 
-  # 'check' the only job that should be marked as required in
-  # repository config, so we do not need to change required jobs
-  # when we add new/remove/rename jobs.
+  # The only required status in repo config; flip-jobs-safely.
   check:
+    if: always()
     needs:
+      - server
       - cloud
     runs-on: ubuntu-latest
-
     steps:
-      - name: Report success of the test matrix
-        run: >-
-          print("All's good")
-        shell: python
+      - uses: re-actors/alls-green@release/v1
+        with:
+          jobs: ${{ toJSON(needs) }}
+          allowed-skips: cloud

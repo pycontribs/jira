@@ -51,7 +51,11 @@ opt = [
   "filemagic>=1.6",
   "PyJWT",
   "requests_jwt",
-  "requests_kerberos"
+  # gssapi (pulled transitively) needs MIT/Heimdal headers at install
+  # time and ships no Windows wheels. The kerberos auth path is opt-in
+  # at runtime anyway, so skipping it on Windows costs nothing for the
+  # default user and keeps `pip install jira[opt]` working there.
+  'requests_kerberos; platform_system != "Windows"'
 ]
 test = [
   "MarkupSafe>=0.23",
@@ -115,7 +119,8 @@ skip = [
   "ChangeLog",
   "__pycache__",
   "coverage.xml",
-  "dist"
+  "dist",
+  "uv.lock"
 ]
 write-changes = true
 
@@ -136,7 +141,7 @@ concurrency = ["multiprocessing", "thread"]
 # https://github.com/nedbat/coveragepy/issues/605
 # branch = true
 parallel = true
-source = ["src"]
+source = ["jira"]
 
 [tool.files]
 packages = """

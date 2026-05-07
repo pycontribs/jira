@@ -1,7 +1,4 @@
 ---
-ci:
-  skip:
-    - pip-compile
 repos:
   - repo: meta
     hooks:
@@ -45,6 +42,8 @@ repos:
     hooks:
       - id: toml-sort-fix
         alias: toml
+        # uv.lock has its own canonical ordering; resorting churns it.
+        exclude: ^uv\.lock$
 
   - repo: https://github.com/tox-dev/tox-ini-fmt
     rev: 1.6.0
@@ -67,25 +66,8 @@ repos:
       - id: mypy
         additional_dependencies:
           - types-requests
-  - # keep at bottom as these are slower
-    repo: local
+  # uv-lock fails if pyproject.toml has drifted from uv.lock.
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.11.8
     hooks:
-      - id: deps
-        name: Upgrade constraints files and requirements
-        files: ^(pyproject\.toml|.config/.*)$
-        always_run: true
-        language: python
-        entry: python3 -m uv pip compile -q --universal --all-extras --python-version=3.10 --output-file=.config/constraints.txt pyproject.toml --upgrade
-        pass_filenames: false
-        stages:
-          - manual
-        additional_dependencies:
-          - uv>=0.6.6
-      - id: pip-compile
-        name: Check constraints files and requirements
-        files: ^(pyproject\.toml|\.config/.*)$
-        language: python
-        entry: uv pip compile -q --universal --all-extras --python-version=3.10 --output-file=.config/constraints.txt pyproject.toml
-        pass_filenames: false
-        additional_dependencies:
-          - uv>=0.6.6
+      - id: uv-lock

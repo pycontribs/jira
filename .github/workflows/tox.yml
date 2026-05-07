@@ -23,92 +23,51 @@ env:
   PY_COLORS: 1
 
 jobs:
-  prepare:
-    name: prepare
-    runs-on: ubuntu-24.04
-    outputs:
-      matrix: ${{ steps.generate_matrix.outputs.matrix }}
-    steps:
-      - name: Determine matrix
-        id: generate_matrix
-        uses: coactions/dynamic-matrix@v4
-        with:
-          min_python: "3.10"
-          max_python: "3.12"
-          default_python: "3.10"
-          other_names: |
-            lint
-            docs
-            pkg
-            devel:tox -e devel -- -k test_unit
-            py310:tox -e py310 -- -k test_unit
-            py311:tox -e py311 -- -k test_unit
-            py312:tox -e py312 -- -k test_unit
-            py310-macos:tox -e py310 -- -k test_unit
-            py312-macos:tox -e py312 -- -k test_unit
-          # ^ macos is also used to validate arm64 building
-          platforms: linux,macos
-          skip_explode: "1"
   build:
-    name: ${{ matrix.name }}
-    runs-on: ${{ matrix.os || 'ubuntu-24.04' }}
-    needs:
-      - prepare
+    name: py${{ matrix.python-version }}-${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
-      matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
+      # macOS rows validate arm64 wheels; only the bookend pythons.
+      matrix:
+        include:
+          - { os: ubuntu-24.04, python-version: "3.10", tox_env: py310 }
+          - { os: ubuntu-24.04, python-version: "3.11", tox_env: py311 }
+          - { os: ubuntu-24.04, python-version: "3.12", tox_env: py312 }
+          - { os: macos-14,     python-version: "3.10", tox_env: py310 }
+          - { os: macos-14,     python-version: "3.12", tox_env: py312 }
     steps:
-
-      - name: Install package dependencies (ubuntu)
-        if: ${{ contains(matrix.os, 'ubuntu') }}
-        run: |
-          sudo apt remove -y docker-compose
-          sudo apt-get update -y
-          sudo apt-get --assume-yes --no-install-recommends install -y apt-transport-https curl libkrb5-dev
-
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0 # needed by setuptools-scm
           submodules: true
 
-      - name: Set pre-commit cache
-        uses: actions/cache@v4
-        if: ${{ contains(matrix.name, 'lint') }}
+      - name: Install uv and pin python ${{ matrix.python-version }}
+        uses: astral-sh/setup-uv@v6
         with:
-          path: |
-            ~/.cache/pre-commit
-          key: pre-commit-${{ matrix.name }}-${{ hashFiles('.pre-commit-config.yaml') }}
+          enable-cache: true
+          python-version: ${{ matrix.python-version }}
 
-      - name: Set up Python ${{ matrix.python_version || '3.10' }}
-        uses: actions/setup-python@v6
-        with:
-          cache: pip
-          python-version: ${{ matrix.python_version || '3.10' }}
-          cache-dependency-path: "*requirements*.txt"
+      # bindep.txt -> apt; macOS ships these headers in its SDK,
+      # Windows skips the dep via a platform_system marker.
+      - name: Install bindep system packages (apt)
+        if: ${{ contains(matrix.os, 'ubuntu') }}
+        run: |
+          sudo apt-get update -y
+          mapfile -t apt_packages < <(uvx bindep -b -f bindep.txt || true)
+          if [ ${#apt_packages[@]} -gt 0 ]; then
+            sudo apt-get install -y --no-install-recommends "${apt_packages[@]}"
+          fi
 
       - name: Install tox
-        run: |
-          python3 -m pip install --upgrade pip
-          python3 -m pip install --upgrade "tox>=4.0.0" "tox-uv>=1.25.0" "uv>=0.6.6"
+        run: uv tool install tox --with tox-uv --with "setuptools>=65.3"
 
-      - run: ${{ matrix.command }}
-
-      - run: ${{ matrix.command2 }}
-        if: ${{ matrix.command2 }}
-
-      - run: ${{ matrix.command3 }}
-        if: ${{ matrix.command3 }}
-
-      - run: ${{ matrix.command4 }}
-        if: ${{ matrix.command4 }}
-
-      - run: ${{ matrix.command5 }}
-        if: ${{ matrix.command5 }}
+      - run: tox -e ${{ matrix.tox_env }} -- -k test_unit
 
       - name: Archive logs
         uses: actions/upload-artifact@v4
         with:
-          name: logs-${{ matrix.name }}.zip
+          name: logs-py${{ matrix.python-version }}-${{ matrix.os }}.zip
           include-hidden-files: true
           path: |
             .tox/**/log/
@@ -124,6 +83,88 @@ jobs:
             exit 99
           fi
         # https://github.com/actions/toolkit/issues/193
+
+  # Tooling envs that don't depend on python version.
+  # `py310-devel` (vs bare `devel`) gives tox-uv a pyXY factor to
+  # resolve, avoiding a sys.executable path that uv venv -p rejects.
+  extras:
+    name: ${{ matrix.tox_env }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        tox_env: [pkg, py310-devel]
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          submodules: true
+
+      - name: Install uv and pin python 3.10
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          python-version: "3.10"
+
+      - name: Install bindep system packages (apt)
+        run: |
+          sudo apt-get update -y
+          mapfile -t apt_packages < <(uvx bindep -b -f bindep.txt || true)
+          if [ ${#apt_packages[@]} -gt 0 ]; then
+            sudo apt-get install -y --no-install-recommends "${apt_packages[@]}"
+          fi
+
+      - name: Install tox
+        run: uv tool install tox --with tox-uv --with "setuptools>=65.3"
+
+      - run: tox -e ${{ matrix.tox_env }} ${{ contains(matrix.tox_env, 'devel') && '-- -k test_unit' || '' }}
+
+      - name: Archive logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: logs-${{ matrix.tox_env }}.zip
+          include-hidden-files: true
+          path: |
+            .tox/**/log/
+            .tox/**/.coverage*
+            .tox/**/coverage.xml
+
+      - name: Report failure if git reports dirty status
+        run: |
+          if [[ -n $(git status -s) ]]; then
+            # shellcheck disable=SC2016
+            echo -n '::error file=git-status::'
+            printf '### Failed as git reported modified and/or untracked files\n```\n%s\n```\n' "$(git status -s)" | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 99
+          fi
+        # https://github.com/actions/toolkit/issues/193
+
+  # Disabled - pre-commit.ci runs the same hooks on every PR.
+  lint:
+    if: false
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          python-version: "3.10"
+      - run: uv tool install tox --with tox-uv --with "setuptools>=65.3"
+      - run: tox -e lint
+
+  # Disabled - Read the Docs builds the docs on every push.
+  docs:
+    if: false
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          python-version: "3.10"
+      - run: uv tool install tox --with tox-uv --with "setuptools>=65.3"
+      - run: tox -e docs
+
   check:
     if: always()
     environment: check
@@ -133,19 +174,13 @@ jobs:
 
     needs:
       - build
+      - extras
 
     runs-on: ubuntu-24.04
 
     steps:
       # checkout needed for codecov action which needs codecov.yml file
       - uses: actions/checkout@v5
-
-      - name: Set up Python # likely needed for coverage
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.12"
-
-      - run: pip3 install 'coverage>=7.5.1'
 
       - name: Merge logs into a single archive
         uses: actions/upload-artifact/merge@v4
@@ -163,11 +198,20 @@ jobs:
           name: logs.zip
           path: .
 
-      - name: Check for expected number of coverage.xml reports
+      - name: Check each test stage produced at least one coverage artifact
         run: |
-          JOBS_PRODUCING_COVERAGE=5
-          if [ "$(find . -name coverage.xml | wc -l | bc)" -ne "${JOBS_PRODUCING_COVERAGE}" ]; then
-            echo "::error::Number of coverage.xml files was not the expected one (${JOBS_PRODUCING_COVERAGE}): $(find . -name coverage.xml |xargs echo)"
+          shopt -s nullglob
+          # Only `logs-py*` artifacts come from envs that run the
+          # test suite; `logs-pkg.zip` and friends never write
+          # coverage.xml so we don't expect any inside them.
+          missing=()
+          for artifact in logs-py*.zip; do
+            if ! find "$artifact" -name coverage.xml | grep -q .; then
+              missing+=("$artifact")
+            fi
+          done
+          if [ ${#missing[@]} -gt 0 ]; then
+            printf '::error::No coverage.xml in: %s\n' "${missing[*]}"
             exit 1
           fi
 
