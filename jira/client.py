@@ -32,8 +32,10 @@ from typing import (
     Callable,
     Generic,
     Literal,
+    ParamSpec,
     SupportsIndex,
     TypeVar,
+    cast,
     no_type_check,
     overload,
 )
@@ -100,7 +102,7 @@ from jira.utils import json_loads, remove_empty_attributes, threaded_requests
 try:
     from requests_jwt import JWTAuth
 except ImportError:
-    pass
+    JWTAuth = None
 
 
 LOG = _logging.getLogger("jira")
@@ -183,7 +185,11 @@ def experimental_atlassian_api(client_method: Callable) -> Callable:
     return is_experimental
 
 
-def translate_resource_args(func: Callable):
+P = ParamSpec("P")
+R = TypeVar("R")
+
+
+def translate_resource_args(func: Callable[P, R]) -> Callable[P, R]:
     """Decorator that converts Issue and Project resources to their keys when used as arguments.
 
     Args:
@@ -191,8 +197,8 @@ def translate_resource_args(func: Callable):
     """
 
     @wraps(func)
-    def wrapper(*args: Any, **kwargs: Any) -> Any:
-        arg_list = []
+    def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+        arg_list: list[Any] = []
         for arg in args:
             if isinstance(arg, Issue | Project):
                 arg_list.append(arg.key)
@@ -200,8 +206,7 @@ def translate_resource_args(func: Callable):
                 arg_list.append(arg.name)
             else:
                 arg_list.append(arg)
-        result = func(*arg_list, **kwargs)
-        return result
+        return cast(Callable[..., R], func)(*arg_list, **kwargs)
 
     return wrapper
 
@@ -214,13 +219,13 @@ def _field_worker(
     return {"fields": fieldargs}
 
 
-ResourceType = TypeVar("ResourceType", contravariant=True, bound=Resource)
+ResourceType = TypeVar("ResourceType", bound=Resource)
 
 
-class ResultList(list, Generic[ResourceType]):
+class ResultList(list[ResourceType], Generic[ResourceType]):
     def __init__(
         self,
-        iterable: Iterable | None = None,
+        iterable: Iterable[ResourceType] | None = None,
         _startAt: int = 0,
         _maxResults: int = 0,
         _total: int | None = None,
@@ -306,8 +311,7 @@ class QshGenerator:
         return qsh
 
     def _sort_and_quote_values(self, values):
-        ordered_values = sorted(values)
-        return [quote(value, safe="~") for value in ordered_values]
+        return [quote(value, safe="~") for value in sorted(values)]
 
 
 class JiraCookieAuth(AuthBase):
@@ -464,6 +468,8 @@ class JIRA:
     JIRA_BASE_URL = Resource.JIRA_BASE_URL
     AGILE_BASE_URL = AgileResource.AGILE_BASE_URL
 
+    _session_obj: ResilientSession | None
+
     def __init__(
         self,
         server: str | None = None,
@@ -611,21 +617,21 @@ class JIRA:
         assert isinstance(self._options["headers"], dict)  # for mypy benefit
 
         # Create Session object and update with config options first
-        self._session = ResilientSession(timeout=timeout)
+        self._session_obj = ResilientSession(timeout=timeout)
         # Add the client authentication certificate to the request if configured
         self._add_client_cert_to_session()
         # Add the SSL Cert to the request if configured
         self._add_ssl_cert_verif_strategy_to_session()
 
-        self._session.headers.update(self._options["headers"])
+        self._session_obj.headers.update(self._options["headers"])
 
         if "cookies" in self._options:
-            self._session.cookies.update(self._options["cookies"])
+            self._session_obj.cookies.update(self._options["cookies"])
 
-        self._session.max_retries = max_retries
+        self._session_obj.max_retries = max_retries
 
         if proxies:
-            self._session.proxies = proxies
+            self._session_obj.proxies = proxies
 
         # Setup the Auth last,
         # so that if any handlers take a copy of the session obj it will be ready
@@ -737,17 +743,15 @@ class JIRA:
         self.close()
 
     def close(self):
-        session = getattr(self, "_session", None)
-        if session is not None:
+        if self._session_obj:
             try:
-                session.close()
+                self._session_obj.close()
             except TypeError:
                 # TypeError: "'NoneType' object is not callable" could still happen here
                 # because other references are also in the process to be torn down,
                 # see warning section in https://docs.python.org/2/reference/datamodel.html#object.__del__
                 pass
-            # TODO: https://github.com/pycontribs/jira/issues/1881
-            self._session = None  # type: ignore[arg-type,assignment]
+            self._session_obj = None
 
     def _check_for_html_error(self, content: str):
         # Jira has the bad habit of returning errors in pages with 200 and embedding the
@@ -809,6 +813,7 @@ class JIRA:
 
         page_params = json_params()
 
+        batch_size = None
         if startAt:
             page_params["startAt"] = startAt
         if maxResults:
@@ -909,7 +914,7 @@ class JIRA:
         else:  # TODO: unreachable
             # it seems that search_users can return a list() containing a single user!
             return ResultList(
-                [item_type(self._options, self._session, resource)], 0, 1, 1, True
+                [item_type(self._options, self._session_obj, resource)], 0, 1, 1, True
             )
 
     @cloud_api
@@ -1059,6 +1064,12 @@ class JIRA:
         if key is not None:
             params["key"] = key
         return self._get_json("application-properties", params=params)
+
+    @property
+    def _session(self) -> ResilientSession:
+        if self._session_obj is None:
+            raise JIRAError("JIRA instance has been closed and can no longer be used.")
+        return self._session_obj
 
     def set_application_property(self, key: str, value: str):
         """Set the application property.
@@ -2552,8 +2563,7 @@ class JIRA:
         url = self._get_url("issue/" + str(issue) + "/remotelink")
         r = self._session.post(url, data=json.dumps(data))
 
-        remote_link = RemoteLink(self._options, self._session, raw=json_loads(r))
-        return remote_link
+        return RemoteLink(self._options, self._session, raw=json_loads(r))
 
     def add_simple_link(self, issue: str, object: dict[str, Any]):
         """Add a simple remote link from an issue to web resource.
@@ -2577,8 +2587,7 @@ class JIRA:
         url = self._get_url("issue/" + str(issue) + "/remotelink")
         r = self._session.post(url, data=json.dumps(data))
 
-        simple_link = RemoteLink(self._options, self._session, raw=json_loads(r))
-        return simple_link
+        return RemoteLink(self._options, self._session, raw=json_loads(r))
 
     # non-resource
     @translate_resource_args
@@ -4006,10 +4015,8 @@ class JIRA:
                 "Either 'username' or 'query' arguments must be specified."
             )
 
-        if username is not None:
-            params = {"username": username}
-        if query is not None:
-            params = {"query": query}
+        params: dict[str, Any] = {"query": query} if query else {"username": username}
+
         if project is not None:
             params["project"] = project
         if issueKey is not None:
@@ -4170,7 +4177,8 @@ class JIRA:
 
         if internal_id is not None:
             url = self._get_url(f"issue/{issue}/remotelink/{internal_id}")
-        elif global_id is not None:
+        else:
+            assert global_id is not None
             # stop "&" and other special characters in global_id from messing around with the query
             global_id = urllib.parse.quote(global_id, safe="")
             url = self._get_url(f"issue/{issue}/remotelink?globalId={global_id}")
@@ -4495,11 +4503,10 @@ class JIRA:
         return calendar.timegm(t.timetuple())
 
     def _create_jwt_session(self, jwt: dict[str, Any]):
-        try:
-            jwt_auth = JWTAuth(jwt["secret"], alg="HS256")
-        except NameError as e:
-            self.log.error("JWT authentication requires requests_jwt")
-            raise e
+        if JWTAuth is None:
+            raise JIRAError("JWT authentication requires requests_jwt")
+
+        jwt_auth = JWTAuth(jwt["secret"], alg="HS256")
         jwt_auth.set_header_format("JWT %s")
 
         jwt_auth.add_field("iat", lambda req: JIRA._timestamp())
@@ -5526,7 +5533,7 @@ class JIRA:
     @translate_resource_args
     def sprints(
         self,
-        board_id: int,
+        board_id: int | str,
         extended: bool | None = None,
         startAt: int = 0,
         maxResults: int = 50,
@@ -5564,7 +5571,7 @@ class JIRA:
 
     def sprints_by_name(
         self, id: str | int, extended: bool = False, state: str | None = None
-    ) -> dict[str, dict[str, Any]]:
+    ) -> dict[str, dict[str, Any] | None]:
         """Get a dictionary of sprint Resources where the name of the sprint is the key.
 
         Args:
@@ -5672,6 +5679,7 @@ class JIRA:
         """
         sprint = Sprint(self._options, self._session)
         sprint.find(sprint_id)
+        assert sprint.raw is not None, "sprint.raw is None but should be set by sprint.find()"
         return sprint.raw
 
     def sprint(self, id: int) -> Sprint:
@@ -5857,7 +5865,8 @@ class JIRA:
         if next_issue is not None:
             before_or_after = "Before"
             other_issue = next_issue
-        elif prev_issue is not None:
+        else:
+            assert prev_issue is not None
             before_or_after = "After"
             other_issue = prev_issue
 

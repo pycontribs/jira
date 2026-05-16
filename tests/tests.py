@@ -414,7 +414,7 @@ class AsyncTests(JiraTestCase):
         mock_session.request.return_value = responses
         mock_session.get.return_value = responses
         self.jira._session.close()
-        self.jira._session = mock_session
+        self.jira._session = mock_session  # type: ignore
         items = self.jira._fetch_pages(
             Issue, "issues", "search", start_at, max_results, params=params
         )
