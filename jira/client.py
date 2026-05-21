@@ -2998,23 +2998,31 @@ class JIRA:
         # let's see if we have the right issue link 'type' and fix it if needed
         issue_link_types = self.issue_link_types()
 
-        if type not in issue_link_types:
-            self.log.warning(
-                "Warning: Specified issue link type is not present in the list of link types"
-            )
+        if isinstance(type, str):
             for lt in issue_link_types:
-                if lt.outward == type:
+                if lt.outward == type or lt.name == type:
                     # we are smart to figure it out what he meant
-                    type = lt.name
+                    type = lt
                     break
                 elif lt.inward == type:
                     # so that's the reverse, so we fix the request
-                    type = lt.name
+                    type = lt
                     inwardIssue, outwardIssue = outwardIssue, inwardIssue
                     break
+            else:
+                self.log.warning(
+                    f"Warning: Specified issue link type {type} is not present in the list of link types"
+                )
+                type = IssueLinkType(self._options, self._session, {"name": type})
+        elif not isinstance(type, IssueLinkType):
+            raise TypeError("The specified issue link type is not valid")
+        elif type not in issue_link_types:
+            self.log.warning(
+                "Warning: Specified issue link type is not present in the list of link types"
+            )
 
         data = {
-            "type": {"name": type},
+            "type": type.raw,
             "inwardIssue": {"key": inwardIssue},
             "outwardIssue": {"key": outwardIssue},
             "comment": comment,
