@@ -374,13 +374,15 @@ class JiraCookieAuth(AuthBase):
             LOG.info("Trying to refresh the cookie auth session...")
             self._increment_401_retry_counter()
             self.init_session()
-            response = self.process_original_request(response.request.copy())
+            response = self.process_original_request(response.request.copy(), **kwargs)
         self._reset_401_retry_counter()
         return response
 
-    def process_original_request(self, original_request: requests.PreparedRequest):
+    def process_original_request(
+        self, original_request: requests.PreparedRequest, **kwargs
+    ):
         self.update_cookies(original_request)
-        return self.send_request(original_request)
+        return self.send_request(original_request, **kwargs)
 
     def update_cookies(self, original_request: requests.PreparedRequest):
         # Cookie header needs first to be deleted for the header to be updated using the
@@ -389,8 +391,8 @@ class JiraCookieAuth(AuthBase):
             del original_request.headers["Cookie"]
         original_request.prepare_cookies(self.cookies)
 
-    def send_request(self, request: requests.PreparedRequest):
-        return self._session.send(request)
+    def send_request(self, request: requests.PreparedRequest, **kwargs):
+        return self._session.send(request, **kwargs)
 
 
 class TokenAuth(AuthBase):
