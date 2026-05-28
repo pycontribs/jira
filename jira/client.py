@@ -102,6 +102,12 @@ try:
 except ImportError:
     pass
 
+try:
+    from requests_futures.sessions import FuturesSession
+except ImportError:
+    FuturesSession = None
+    pass
+
 
 LOG = _logging.getLogger("jira")
 LOG.addHandler(_logging.NullHandler())
@@ -574,7 +580,16 @@ class JIRA:
 
         if server:
             options["server"] = server
+
         if async_:
+            if FuturesSession is None:
+                msg = (
+                    "async option requires requests-futures to be installed. "
+                    "falling back to synchronous implementation.\n"
+                    "to enable async, install the 'async' extra, e.g. pip install jira[async]"
+                )
+                warnings.warn(msg)
+
             options["async"] = async_
             options["async_workers"] = async_workers
 
@@ -792,16 +807,6 @@ class JIRA:
         Returns:
             ResultList
         """
-        async_workers = None
-        async_class = None
-        if self._options["async"]:
-            try:
-                from requests_futures.sessions import FuturesSession
-
-                async_class = FuturesSession
-            except ImportError:
-                pass
-            async_workers = self._options.get("async_workers")
 
         def json_params() -> dict[str, Any]:
             # passing through json.dumps and json.loads ensures json
@@ -851,13 +856,15 @@ class JIRA:
                     )
                 page_start = (startAt or start_at_from_response or 0) + page_size
                 if (
-                    async_class is not None
+                    self._options["async"]
+                    and FuturesSession is not None
                     and not is_last
                     and (total is not None and len(items) < total)
                 ):
                     async_fetches = []
-                    future_session = async_class(
-                        session=self._session, max_workers=async_workers
+                    future_session = FuturesSession(
+                        session=self._session,
+                        max_workers=self._options["async_workers"],
                     )
                     for start_index in range(page_start, total, page_size):
                         page_params = json_params()
@@ -879,7 +886,7 @@ class JIRA:
                             )
                             items.extend(next_items_page)
                 while (
-                    async_class is None
+                    not self._options["async"]
                     and not is_last
                     and (total is None or page_start < total)
                     and len(next_items_page) == page_size
