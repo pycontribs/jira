@@ -3638,7 +3638,7 @@ class JIRA:
         # this will translate JQL field names to REST API Name
         # most people do know the JQL names so this will help them use the API easier
         untranslate = {}  # use to add friendly aliases when we get the results back
-        if self._fields_cache:
+        if fields != ["*all"] and self._fields_cache:
             for i, field in enumerate(fields):
                 if field in self._fields_cache:
                     untranslate[self._fields_cache[field]] = fields[i]
