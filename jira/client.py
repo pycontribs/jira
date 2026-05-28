@@ -732,11 +732,11 @@ class JIRA:
         except Exception as e:
             self.log.warning(e)
 
-    def __del__(self):
+    def __del__(self) -> None:
         """Destructor for JIRA instance."""
         self.close()
 
-    def close(self):
+    def close(self) -> None:
         session = getattr(self, "_session", None)
         if session is not None:
             try:
