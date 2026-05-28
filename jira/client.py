@@ -476,6 +476,7 @@ class JIRA:
         kerberos_options: dict[str, Any] | None = None,
         validate=False,
         get_server_info: bool = True,
+        with_lookup: bool = True,
         async_: bool = False,
         async_workers: int = 5,
         logging: bool = True,
@@ -667,6 +668,14 @@ class JIRA:
             self.deploymentType = si.get("deploymentType")
         else:
             self._version = (0, 0, 0)
+
+        self.with_lookup = with_lookup
+        if with_lookup:
+            warnings.warn(
+                "Auto-lookup (with_lookup) has been set to True, the library will look-up the provided user "
+                "for its 'add_watcher', 'remove_watcher' and 'assign_issue' methods; this functionality "
+                "will be deprecated in future releases"
+            )
 
         if self._options["check_update"] and not JIRA.checked_version:
             self._check_update_()
@@ -2320,18 +2329,25 @@ class JIRA:
 
     # non-resource
     @translate_resource_args
-    def assign_issue(self, issue: int | str, assignee: str | None) -> bool:
+    def assign_issue(self, issue: int | str, assignee: str | User | None) -> bool:
         """Assign an issue to a user.
 
         Args:
             issue (Union[int, str]): the issue ID or key to assign
-            assignee (str): the user to assign the issue to. None will set it to unassigned. -1 will set it to Automatic.
+            assignee (Union[str, User]): username (for hosted) or account ID (for cloud) of the user to add to the
+                watchers list. Alternatively, you can provide the User object itself.
+                None will set it to unassigned. -1 will set it to Automatic.
 
         Returns:
             bool
         """
         url = self._get_latest_url(f"issue/{issue}/assignee")
-        user_id = self._get_user_id(assignee)
+        if isinstance(assignee, User):
+            user_id: str | None = self._get_user_identifier(assignee)
+        else:
+            user_id = assignee
+        if self.with_lookup:
+            user_id = self._get_user_id(user_id)
         payload = {"accountId": user_id} if self._is_cloud else {"name": user_id}
         self._session.put(url, data=json.dumps(payload))
         return True
@@ -2792,23 +2808,28 @@ class JIRA:
         return self._find_for_resource(Watchers, issue)
 
     @translate_resource_args
-    def add_watcher(self, issue: str | int, watcher: str) -> Response:
+    def add_watcher(self, issue: str | int, watcher: str | User) -> Response:
         """Add a user to an issue's watchers list.
 
         Args:
             issue (Union[str, int]): ID or key of the issue affected
-            watcher (str): name of the user to add to the watchers list
+            watcher (str | User): username (for hosted) or account ID (for cloud) of the user to add to the watchers
+                list
 
         Returns:
             Response
         """
         url = self._get_url("issue/" + str(issue) + "/watchers")
-        # Use user_id when adding watcher
-        watcher_id = self._get_user_id(watcher)
+        if isinstance(watcher, User):
+            watcher_id: str | None = self._get_user_identifier(watcher)
+        else:
+            watcher_id = watcher
+        if self.with_lookup:
+            watcher_id = self._get_user_id(watcher_id)
         return self._session.post(url, data=json.dumps(watcher_id))
 
     @translate_resource_args
-    def remove_watcher(self, issue: str | int, watcher: str) -> Response:
+    def remove_watcher(self, issue: str | int, watcher: str | User) -> Response:
         """Remove a user from an issue's watch list.
 
         Args:
@@ -2820,8 +2841,15 @@ class JIRA:
         """
         url = self._get_url("issue/" + str(issue) + "/watchers")
         # https://docs.atlassian.com/software/jira/docs/api/REST/8.13.6/#api/2/issue-removeWatcher
-        user_id = self._get_user_id(watcher)
-        payload = {"accountId": user_id} if self._is_cloud else {"username": user_id}
+        if isinstance(watcher, User):
+            watcher_id: str | None = self._get_user_identifier(watcher)
+        else:
+            watcher_id = watcher
+        if self.with_lookup:
+            watcher_id = self._get_user_id(watcher_id)
+        payload = (
+            {"accountId": watcher_id} if self._is_cloud else {"username": watcher_id}
+        )
         result = self._session.delete(url, params=payload)
         return result
 

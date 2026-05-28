@@ -21,3 +21,12 @@ class WatchersTests(JiraTestCase):
         self.jira.remove_watcher(self.issue_1, self.test_manager.user_normal.name)
         new_watchers = self.jira.watchers(self.issue_1).watchCount
         self.assertEqual(init_watchers, new_watchers)
+
+        # verify passing the user object also words
+        self.jira.add_watcher(self.issue_1, self.test_manager.user_normal)
+        self.assertEqual(self.jira.watchers(self.issue_1).watchCount, init_watchers + 1)
+
+        # same, but for removing
+        self.jira.remove_watcher(self.issue_1, self.test_manager.user_normal)
+        new_watchers = self.jira.watchers(self.issue_1).watchCount
+        self.assertEqual(init_watchers, new_watchers)
