@@ -180,10 +180,14 @@ class ResilientSession(Session):
         prepared_kwargs["headers"] = request_headers
 
         data = original_kwargs.get("data", None)
-        if isinstance(data, dict) and data:
-            # mypy ensures we don't do this,
-            # but for people subclassing we should preserve old behaviour
-            prepared_kwargs["data"] = json.dumps(data)
+        if isinstance(data, dict):
+            if data:
+                # mypy ensures we don't do this,
+                # but for people subclassing we should preserve old behaviour
+                prepared_kwargs["data"] = json.dumps(data)
+            else:
+                # Don't forward an empty JSON body
+                prepared_kwargs.pop("data", None)
 
         if "verify" not in prepared_kwargs:
             prepared_kwargs["verify"] = self.verify
