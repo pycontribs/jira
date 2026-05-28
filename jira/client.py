@@ -52,6 +52,8 @@ from jira.exceptions import JIRAError, NotJIRAInstanceError
 from jira.resilientsession import PrepareRequestForRetry, ResilientSession
 from jira.resources import (
     AgileResource,
+    AppProperty,
+    AtlassianConnectResource,
     Attachment,
     Board,
     Comment,
@@ -435,6 +437,7 @@ class JIRA:
         "rest_api_version": "2",
         "agile_rest_path": AgileResource.AGILE_BASE_REST_PATH,
         "agile_rest_api_version": "1.0",
+        "ace_rest_api_version": "1",
         "verify": True,
         "resilient": True,
         "async": False,
@@ -507,6 +510,7 @@ class JIRA:
                 * rest_path -- the root REST path to use. Defaults to ``api``, where the Jira REST resources live.
                 * rest_api_version -- the version of the REST resources under rest_path to use. Defaults to ``2``.
                 * agile_rest_path - the REST path to use for Jira Agile requests. Defaults to ``agile``.
+                * ace_rest_api_version -- the version of the REST resource to use for Jira Atlassian Connect. Defaults to ``1``.
                 * verify (Union[bool, str]) -- Verify SSL certs. (Default: ``True``).
                   Or path to a CA_BUNDLE file or directory with certificates of trusted CAs, for the `requests` library to use.
                 * client_cert (Union[str, Tuple[str,str]]) -- Path to file with both cert and key or a tuple of (cert,key), for the `requests` library to use for client side SSL.
@@ -4377,6 +4381,62 @@ class JIRA:
         """
         url = self.server_url + "/rest/auth/latest/session"
         return self._session.delete(url)
+
+    # App properties
+
+    def app_properties(self, addon_key: str) -> list[AppProperty]:
+        """Get a list of app properties.
+
+        Args:
+            addon_key (str): The key of the app, as defined in its descriptor
+
+        Returns:
+            List[AppProperty]
+        """
+        r_json = self._get_json(
+            "addons/" + addon_key + "/properties",
+            base=AtlassianConnectResource.ACE_BASE_URL,
+        )
+        properties = [
+            AppProperty(
+                self._options,
+                self._session,
+                json_loads(self._session.get(raw_ap_json["self"])),
+            )
+            for raw_ap_json in r_json["keys"]
+        ]
+        return properties
+
+    def app_property(self, addon_key: str, property_key: str) -> AppProperty:
+        """Get an app property Resource from the server.
+
+        Args:
+            addon_key (str): The key of the app, as defined in its descriptor
+            property_key (str): The key of the property
+
+        Returns:
+            AppProperty
+        """
+        return self._find_for_resource(AppProperty, (addon_key, property_key))
+
+    def create_app_property(
+        self, addon_key: str, property_key: str, data: dict[str, Any]
+    ) -> Response:
+        """Create a new app property.
+
+        Args:
+            addon_key (str): The key of the app, as defined in its descriptor
+            property_key (str): The key of the property
+            data (Dict[str, Any]): The property value
+
+        Returns:
+            Response
+        """
+        url = self._get_url(
+            "addons/" + addon_key + "/properties/" + property_key,
+            base=AtlassianConnectResource.ACE_BASE_URL,
+        )
+        return self._session.put(url, data=json.dumps(data))
 
     # Websudo
     def kill_websudo(self) -> Response | None:
