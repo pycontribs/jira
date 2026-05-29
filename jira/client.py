@@ -918,7 +918,7 @@ class JIRA:
         item_type: type[ResourceType],
         items_key: str | None,
         request_path: str,
-        maxResults: int = 50,
+        maxResults: int | Literal[False] = 50,
         params: dict[str, Any] | None = None,
         base: str = JIRA_BASE_URL,
         use_post: bool = False,
@@ -929,7 +929,7 @@ class JIRA:
             item_type (Type[Resource]): Type of single item. Returns a `ResultList` of such items.
             items_key (Optional[str]): Path to the items in JSON returned from the server.
             request_path (str): Path in the request URL.
-            maxResults (int): Maximum number of items to return per page. (Default: 50)
+            maxResults (int): Maximum number of items to return. If maxResults evaluates as False, it will try to get all items in batches. (Default:50)
             params (Dict[str, Any]): Parameters to be sent with the request.
             base (str): Base URL for the requests.
             use_post (bool): Whether to use POST instead of GET.
@@ -937,11 +937,10 @@ class JIRA:
         Returns:
             ResultList: List of fetched items.
         """
-        DEFAULT_BATCH = 100  # Max batch size per request
         fetch_all = maxResults in (0, False)  # If False/0, fetch everything
 
         page_params = (params or {}).copy()  # Ensure params isn't modified
-        page_params["maxResults"] = DEFAULT_BATCH if fetch_all else maxResults
+        page_params["maxResults"] = self._get_batch_size(item_type) if fetch_all else maxResults
 
         # Use caller-provided nextPageToken if present
         nextPageToken: str | None = page_params.get("nextPageToken")
@@ -2177,7 +2176,7 @@ class JIRA:
         projectIdOrKey: str | int,
         issueTypeId: str | int,
         startAt: int = 0,
-        maxResults: int = 50,
+        maxResults: int | Literal[False] = 50,
     ) -> dict[str, Any]:
         """Get the field metadata for a given project and issue type, required to create issues.
 
@@ -3091,7 +3090,7 @@ class JIRA:
         self,
         project: str,
         startAt: int = 0,
-        maxResults: int = 50,
+        maxResults: int | Literal[False] = 50,
     ) -> ResultList[IssueType]:
         """Get a list of issue type Resources available in a given project from the server.
 
@@ -3121,7 +3120,7 @@ class JIRA:
         project: str,
         issue_type: str,
         startAt: int = 0,
-        maxResults: int = 50,
+        maxResults: int | Literal[False] = 50,
     ) -> ResultList[Field]:
         """Get a list of field type Resources available for a project and issue type from the server.
 
@@ -3557,7 +3556,7 @@ class JIRA:
         self,
         jql_str: str,
         startAt: int = 0,
-        maxResults: int = 50,
+        maxResults: int | Literal[False] = 50,
         validate_query: bool = True,
         fields: str | list[str] | None = "*all",
         expand: str | None = None,
@@ -3572,7 +3571,7 @@ class JIRA:
         self,
         jql_str: str,
         startAt: int = 0,
-        maxResults: int = 50,
+        maxResults: int | Literal[False] = 50,
         validate_query: bool = True,
         fields: str | list[str] | None = "*all",
         expand: str | None = None,
@@ -3586,7 +3585,7 @@ class JIRA:
         self,
         jql_str: str,
         startAt: int = 0,
-        maxResults: int = 50,
+        maxResults: int | Literal[False] = 50,
         validate_query: bool = True,
         fields: str | list[str] | None = "*all",
         expand: str | None = None,
@@ -3693,7 +3692,7 @@ class JIRA:
         self,
         jql_str: str,
         nextPageToken: str | None = None,
-        maxResults: int = 50,
+        maxResults: int | Literal[False] = 50,
         fields: str | list[str] | None = "*all",
         expand: str | None = None,
         reconcileIssues: list[int] | None = None,
