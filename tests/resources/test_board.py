@@ -4,7 +4,7 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 
 from jira.resources import Board
-from tests.conftest import JiraTestCase, rndstr
+from tests.conftest import JiraTestCase, allow_on_cloud, rndstr
 
 
 class BoardTests(JiraTestCase):
@@ -41,6 +41,7 @@ class BoardTests(JiraTestCase):
             if board is not None:
                 board.delete()
 
+    @allow_on_cloud
     def test_create_and_delete(self):
         # GIVEN: The filter
         # WHEN: we create a board

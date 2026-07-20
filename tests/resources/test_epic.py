@@ -7,7 +7,7 @@ from functools import cached_property
 from parameterized import parameterized
 
 from jira.resources import Issue
-from tests.conftest import JiraTestCase, rndstr
+from tests.conftest import JiraTestCase, allow_on_cloud, rndstr
 
 
 class EpicTests(JiraTestCase):
@@ -33,13 +33,16 @@ class EpicTests(JiraTestCase):
     def make_epic(self, **kwargs) -> Iterator[Issue]:
         try:
             # TODO: create_epic() method should exist!
-            new_epic = self.jira.create_issue(
-                fields={
+            new_epic_fields = {
                     "issuetype": {"name": "Epic"},
                     "project": self.project_b,
-                    self.epic_field_name: self.epic_name,
                     "summary": f"Epic summary for '{self.epic_name}'",
-                },
+                }
+            if not self.is_jira_cloud_ci:
+                new_epic_fields[self.epic_field_name] = self.epic_name
+            new_epic_fields.update(kwargs)
+            new_epic = self.jira.create_issue(
+                fields=new_epic_fields,
             )
             if len(kwargs):
                 raise ValueError("Incorrect kwarg used !")
@@ -47,10 +50,12 @@ class EpicTests(JiraTestCase):
         finally:
             new_epic.delete()
 
+    @allow_on_cloud
     def test_epic_create_delete(self):
         with self.make_epic():
             pass
 
+    @allow_on_cloud
     @parameterized.expand(
         [("str", str), ("list", list)],
     )

@@ -22,7 +22,7 @@ on:
 
 jobs:
   test:
-    name: py${{ matrix.python-version }}-jira${{ matrix.jira-version }}
+    name: server-py${{ matrix.python-version }}-jira${{ matrix.jira-version }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false

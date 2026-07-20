@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from tests.conftest import JiraTestCase
+from tests.conftest import JiraTestCase, allow_on_cloud
 
 
+@allow_on_cloud
 class StatusCategoryTests(JiraTestCase):
     def test_statuscategories(self):
         found = False

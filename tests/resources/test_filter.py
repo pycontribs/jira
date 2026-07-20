@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import time
 from contextlib import contextmanager
 
-from tests.conftest import JiraTestCase, rndstr
+from tests.conftest import JiraTestCase, allow_on_cloud, rndstr
 
 
 class FilterTests(JiraTestCase):
@@ -27,21 +28,27 @@ class FilterTests(JiraTestCase):
             )
             if len(kwargs):
                 raise ValueError("Incorrect kwarg used !")
+            if self.jira._is_cloud:
+                time.sleep(1)
             yield new_filter
         finally:
             new_filter.delete()
 
+    @allow_on_cloud
     def test_filter(self):
         with self.make_filter() as myfilter:
             self.assertEqual(myfilter.name, self.filter_name)
-            self.assertEqual(myfilter.owner.name, self.test_manager.user_admin.name)
+            if not self.is_jira_cloud_ci:
+                self.assertEqual(myfilter.owner.name, self.test_manager.user_admin.name)
 
+    @allow_on_cloud
     def test_favourite_filters(self):
         filter_name = f"filter-to-fav-{self.filter_name}"
         with self.make_filter(name=filter_name, favourite=True):
             new_filters = self.jira.favourite_filters()
             assert filter_name in [f.name for f in new_filters]
 
+    @allow_on_cloud
     def test_filter_update_empty_description(self):
         new_jql = f"{self.filter_jql} ORDER BY created ASC"
         new_name = f"new_{self.filter_name}"
@@ -58,6 +65,7 @@ class FilterTests(JiraTestCase):
             assert updated_filter.jql == new_jql
             assert not hasattr(updated_filter, "description")
 
+    @allow_on_cloud
     def test_filter_update_empty_description_with_new_description(self):
         new_desc = "new description"
         with self.make_filter(description=None) as myfilter:
