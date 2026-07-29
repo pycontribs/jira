@@ -25,7 +25,7 @@ import warnings
 from collections import OrderedDict
 from collections.abc import Iterable, Iterator
 from functools import cache, wraps
-from io import BufferedReader
+from io import BufferedReader, BytesIO
 from numbers import Number
 from typing import (
     Any,
@@ -1119,7 +1119,7 @@ class JIRA:
     def add_attachment(
         self,
         issue: str | int,
-        attachment: str | BufferedReader,
+        attachment: str | bytes | BufferedReader,
         filename: str | None = None,
     ) -> Attachment:
         """Attach an attachment to an issue and returns a Resource for it.
@@ -1139,6 +1139,9 @@ class JIRA:
         close_attachment = False
         if isinstance(attachment, str):
             attachment_io = open(attachment, "rb")  # type: ignore
+            close_attachment = True
+        elif isinstance(attachment, bytes):
+            attachment_io = BytesIO(attachment)
             close_attachment = True
         else:
             attachment_io = attachment
