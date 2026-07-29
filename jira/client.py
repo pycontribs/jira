@@ -25,7 +25,7 @@ import warnings
 from collections import OrderedDict
 from collections.abc import Iterable, Iterator
 from functools import cache, wraps
-from io import BufferedReader
+from io import BufferedReader, BytesIO
 from numbers import Number
 from typing import (
     Any,
@@ -1179,7 +1179,7 @@ class JIRA:
     def add_attachment(
         self,
         issue: str | int,
-        attachment: str | BufferedReader,
+        attachment: str | bytes | BufferedReader,
         filename: str | None = None,
     ) -> Attachment:
         """Attach an attachment to an issue and returns a Resource for it.
@@ -1189,16 +1189,23 @@ class JIRA:
 
         Args:
             issue (Union[str, int]): the issue to attach the attachment to
-            attachment (Union[str,BufferedReader]): file-like object to attach to the issue, also works if it is a string with the filename.
+            attachment (Union[str, bytes, BufferedReader]): file-like object to attach to the issue, also works if it is a string with the filename
+              or the raw ``bytes`` of the file.
             filename (str): optional name for the attached file. If omitted, the file object's ``name`` attribute is used.
-              If you acquired the file-like object by any other method than ``open()``, make sure that a name is specified in one way or the other.
+              If you acquired the file-like object by any other method than ``open()``, or pass ``bytes``, make sure that a name is specified.
 
         Returns:
             Attachment
         """
         close_attachment = False
+        attachment_io: BytesIO | BufferedReader
         if isinstance(attachment, str):
             attachment_io = open(attachment, "rb")
+            close_attachment = True
+        elif isinstance(attachment, bytes):
+            if not filename:
+                raise ValueError("filename is required when attachment is bytes")
+            attachment_io = BytesIO(attachment)
             close_attachment = True
         else:
             attachment_io = attachment
