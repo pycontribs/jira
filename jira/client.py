@@ -1137,8 +1137,9 @@ class JIRA:
             Attachment
         """
         close_attachment = False
+        attachment_io: BytesIO | BufferedReader
         if isinstance(attachment, str):
-            attachment_io = open(attachment, "rb")  # type: ignore
+            attachment_io = open(attachment, "rb")  # type: ignore[assignment]
             close_attachment = True
         elif isinstance(attachment, bytes):
             attachment_io = BytesIO(attachment)
