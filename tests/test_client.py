@@ -413,3 +413,31 @@ def test_experimental_non_200_not_404_405(
 
     assert ex.value.status_code == status_code
     assert isinstance(ex.value, JIRAError)
+
+
+class _BareAttachmentClient(jira.client.JIRA):
+    """A client without __init__ wiring, enough for add_attachment unit tests."""
+
+    def __init__(self, session):
+        self.log = logging.getLogger("test_add_attachment")
+        self._options = dict(jira.client.JIRA.DEFAULT_OPTIONS)
+        self._options["server"] = "https://mocked.jira.invalid"
+        self._session = session
+
+
+def test_add_attachment_accepts_bytes():
+    content = b"example content"
+    mock_session = mock.Mock()
+    mock_session.post.return_value.status_code = 200
+    mock_session.post.return_value.json.return_value = [
+        {"id": "10001", "filename": "example.txt", "size": len(content)}
+    ]
+    client = _BareAttachmentClient(mock_session)
+
+    attachment = client.add_attachment("QQ-1", content, "example.txt")
+
+    assert attachment.size == len(content)
+    posted_kwargs = mock_session.post.call_args.kwargs
+    body: bytes = posted_kwargs["data"].read()
+    assert content in body
+    assert posted_kwargs["headers"]["X-Atlassian-Token"] == "no-check"
