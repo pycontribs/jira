@@ -905,3 +905,37 @@ def test_worklogs_and_worklog_send_expand(requests_mock):
         {"expand": ["properties"]},
         {"expand": ["properties"]},
     ]
+
+
+def test_add_attachment_accepts_bytes(requests_mock):
+    client = jira.client.JIRA(
+        server="https://jira.example.com", get_server_info=False, validate=False
+    )
+    content = b"example content"
+    bodies: list[bytes] = []
+
+    def respond(request, context):
+        bodies.append(request.body.read())
+        return [{"id": "10001", "filename": "example.txt", "size": len(content)}]
+
+    requests_mock.post(
+        "https://jira.example.com/rest/api/2/issue/QQ-1/attachments", json=respond
+    )
+
+    attachment = client.add_attachment("QQ-1", content, "example.txt")
+
+    assert attachment.size == len(content)
+    assert b'filename="example.txt"' in bodies[0]
+    assert content in bodies[0]
+    assert requests_mock.last_request.headers["X-Atlassian-Token"] == "no-check"
+
+
+def test_add_attachment_bytes_without_filename_raises(requests_mock):
+    client = jira.client.JIRA(
+        server="https://jira.example.com", get_server_info=False, validate=False
+    )
+
+    with pytest.raises(ValueError, match="filename is required"):
+        client.add_attachment("QQ-1", b"example content")
+
+    assert not requests_mock.called
