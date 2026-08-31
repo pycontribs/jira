@@ -20,7 +20,7 @@ repos:
       - id: check-yaml
         files: .*\.(yaml|yml)$
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.4.1
+    rev: v2.4.3
     hooks:
       - id: codespell
         name: codespell
@@ -34,12 +34,12 @@ repos:
         additional_dependencies:
           - tomli; python_version<'3.11'
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.37.1
+    rev: v1.38.0
     hooks:
       - id: yamllint
         files: \.(yaml|yml)$
   - repo: https://github.com/pappasam/toml-sort
-    rev: v0.24.2
+    rev: v0.24.4
     hooks:
       - id: toml-sort-fix
         alias: toml
@@ -47,12 +47,12 @@ repos:
         exclude: ^uv\.lock$
 
   - repo: https://github.com/tox-dev/tox-ini-fmt
-    rev: 1.6.0
+    rev: 1.9.0
     hooks:
       - id: tox-ini-fmt
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.12.12
+    rev: v0.16.5
     hooks:
       - id: ruff
         args:
@@ -62,13 +62,13 @@ repos:
       # - id: ruff-format # must be after ruff
       #   types_or: [python, pyi]
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.17.1
+    rev: v2.3.1
     hooks:
       - id: mypy
         additional_dependencies:
           - types-requests
   # uv-lock fails if pyproject.toml has drifted from uv.lock.
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.11.8
+    rev: 0.12.7
     hooks:
       - id: uv-lock
