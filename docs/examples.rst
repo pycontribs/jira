@@ -83,6 +83,31 @@ Or pass a tuple of (email, api_token) to the ``basic_auth`` constructor argument
 
     auth_jira = JIRA(basic_auth=('email', 'API token'))
 
+By default, this connects to the URL for your Jira Cloud site. For example::
+
+    auth_jira = JIRA(
+        server='https://example.atlassian.net',
+        basic_auth=('email@example.com', 'API token'),
+    )
+
+API tokens created **with scopes** use Atlassian's API gateway instead of the
+site URL. Set ``server`` to the gateway URL containing your site's cloud ID::
+
+    auth_jira = JIRA(
+        server='https://api.atlassian.com/ex/jira/YOUR_CLOUD_ID',
+        basic_auth=('email@example.com', 'Scoped API token'),
+    )
+
+You can get the cloud ID from
+``https://example.atlassian.net/_edge/tenant_info``. See Atlassian's
+`API token documentation <https://support.atlassian.com/atlassian-account/docs/manage-api-tokens-for-your-atlassian-account/>`_
+for the gateway URL requirements.
+
+The gateway URL is an API base URL, not a browser-facing Jira site URL. Methods
+that construct browser links from ``server``, such as ``issue.permalink()``,
+therefore produce gateway URLs. Use ``jira.server_info()['baseUrl']`` when you
+need the browser-facing base URL for links.
+
 .. seealso::
     For Self Hosted Jira (Server, Data Center), refer to the `Token Auth`_ Section.
 
