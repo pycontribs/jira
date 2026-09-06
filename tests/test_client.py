@@ -194,6 +194,7 @@ def test_result_list_if_empty():
     ("response_fields", "expected_fields"),
     [
         (None, None),
+        ({}, {}),
         (
             {"customfield_10000": "value"},
             {"customfield_10000": "value", "friendly": "value"},
