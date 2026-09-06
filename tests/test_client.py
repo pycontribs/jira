@@ -324,6 +324,34 @@ def test_cookie_auth_retry(requests_mock):
     mock_reset_func.assert_called_once()
 
 
+def test_cookie_auth_retry_preserves_request_settings():
+    session = jira.resilientsession.ResilientSession()
+    auth = jira.client.JiraCookieAuth(session, "/rest/auth/1/session", ("user", "pass"))
+    original_request = requests.Request(
+        "GET", "https://mocked.jira.invalid/rest/api/2/myself"
+    ).prepare()
+    response = requests.Response()
+    response.status_code = 401
+    response.request = original_request
+    retried_response = requests.Response()
+    request_settings = {
+        "stream": True,
+        "timeout": 12,
+        "verify": "/path/to/ca-bundle.pem",
+        "cert": ("/path/to/client.pem", "/path/to/client.key"),
+        "proxies": {"https": "https://proxy.invalid"},
+    }
+
+    with (
+        mock.patch.object(auth, "init_session"),
+        mock.patch.object(session, "send", return_value=retried_response) as send,
+    ):
+        result = auth.handle_401(response, **request_settings)
+
+    assert result is retried_response
+    send.assert_called_once_with(mock.ANY, **request_settings)
+
+
 def test_createmeta_issuetypes_pagination(cl_normal, slug):
     """Test createmeta_issuetypes pagination kwargs"""
     issue_types_resp = cl_normal.createmeta_issuetypes(slug, startAt=50, maxResults=100)
