@@ -3552,6 +3552,19 @@ class JIRA:
 
     # Search
 
+    @staticmethod
+    def _untranslate_issue_fields(
+        issues: Iterable[Issue], untranslate: dict[str, str]
+    ) -> None:
+        """Add requested field aliases when an issue has a fields mapping."""
+        for issue in issues:
+            raw_fields = issue.raw.get("fields") if issue.raw else None
+            if not isinstance(raw_fields, dict):
+                continue
+            for field_id, requested_name in untranslate.items():
+                if field_id in raw_fields:
+                    raw_fields[requested_name] = raw_fields[field_id]
+
     @overload
     def search_issues(
         self,
@@ -3679,12 +3692,7 @@ class JIRA:
         )
 
         if untranslate:
-            iss: Issue
-            for iss in issues:
-                for k, v in untranslate.items():
-                    if iss.raw:
-                        if k in iss.raw.get("fields", {}):
-                            iss.raw["fields"][v] = iss.raw["fields"][k]
+            self._untranslate_issue_fields(issues, untranslate)
 
         return issues
 
@@ -3769,12 +3777,7 @@ class JIRA:
         )
 
         if untranslate:
-            iss: Issue
-            for iss in issues:
-                for k, v in untranslate.items():
-                    if iss.raw:
-                        if k in iss.raw.get("fields", {}):
-                            iss.raw["fields"][v] = iss.raw["fields"][k]
+            self._untranslate_issue_fields(issues, untranslate)
 
         return issues
 

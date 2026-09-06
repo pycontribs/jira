@@ -184,6 +184,50 @@ def test_result_list_if_empty():
 
 
 @pytest.mark.parametrize(
+    ("deployment_type", "method_name", "fetch_method"),
+    [
+        ("Server", "search_issues", "_fetch_pages"),
+        ("Cloud", "enhanced_search_issues", "_fetch_pages_searchToken"),
+    ],
+)
+@pytest.mark.parametrize(
+    ("response_fields", "expected_fields"),
+    [
+        (None, None),
+        (
+            {"customfield_10000": "value"},
+            {"customfield_10000": "value", "friendly": "value"},
+        ),
+    ],
+)
+def test_search_issues_handles_response_fields(
+    no_fields,
+    deployment_type,
+    method_name,
+    fetch_method,
+    response_fields,
+    expected_fields,
+):
+    jira_client = jira.client.JIRA(
+        server="https://jira.example.com",
+        get_server_info=False,
+        validate=False,
+    )
+    jira_client.deploymentType = deployment_type
+    jira_client._fields_cache_value = {"friendly": "customfield_10000"}
+    issue = mock.Mock(raw={"fields": response_fields})
+
+    with mock.patch.object(
+        jira_client,
+        fetch_method,
+        return_value=jira.client.ResultList([issue]),
+    ):
+        result = getattr(jira_client, method_name)("project = TEST", fields=["friendly"])
+
+    assert result[0].raw == {"fields": expected_fields}
+
+
+@pytest.mark.parametrize(
     "options_arg",
     [
         {"headers": {"Content-Type": "application/json;charset=UTF-8"}},
