@@ -254,3 +254,30 @@ def test_empty_dict_body_not_forwarded(mocked_request_method: Mock):
     session.get(url="mocked_url", data={})
     kwargs = mocked_request_method.call_args.kwargs
     assert kwargs.get("data") == {}
+
+
+@patch("requests.Session.request")
+def test_configured_proxies_are_forwarded(mocked_request_method: Mock):
+    # Disable retries for this test.
+    session = jira.resilientsession.ResilientSession(max_retries=0)
+    # A user-configured session proxy must be passed explicitly as the
+    # per-request "proxies" kwarg. Left unset, requests.Session.request()
+    # let's an env-derived http_proxy/https_proxy value (from
+    # merge_environment_settings()'s setdefault()) win over self.proxies
+    # for any matching key.
+    session.proxies = {
+        "http": "http://localhost:3128",
+        "https": "http://localhost:3128",
+    }
+    session.get(url="mocked_url")
+    kwargs = mocked_request_method.call_args.kwargs
+    assert kwargs.get("proxies") == session.proxies
+
+
+@patch("requests.Session.request")
+def test_no_proxies_kwarg_when_unconfigured(mocked_request_method: Mock):
+    # Disable retries for this test.
+    session = jira.resilientsession.ResilientSession(max_retries=0)
+    session.get(url="mocked_url")
+    kwargs = mocked_request_method.call_args.kwargs
+    assert "proxies" not in kwargs
