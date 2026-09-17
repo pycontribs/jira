@@ -262,7 +262,7 @@ def test_configured_proxies_are_forwarded(mocked_request_method: Mock):
     session = jira.resilientsession.ResilientSession(max_retries=0)
     # A user-configured session proxy must be passed explicitly as the
     # per-request "proxies" kwarg. Left unset, requests.Session.request()
-    # lets an env-derived http_proxy/https_proxy value (from
+    # let's an env-derived http_proxy/https_proxy value (from
     # merge_environment_settings()'s setdefault()) win over self.proxies
     # for any matching key.
     session.proxies = {

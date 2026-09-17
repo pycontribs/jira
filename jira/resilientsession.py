@@ -193,7 +193,7 @@ class ResilientSession(Session):
             # "proxies" kwarg is passed at all, but by then
             # merge_environment_settings() has already used setdefault() to
             # fill an empty request-level proxies dict from the http_proxy/
-            # https_proxy environment variables, and merge_setting() lets
+            # https_proxy environment variables, and merge_setting() let's
             # that request-level dict win over self.proxies for any matching
             # key. Passing self.proxies through explicitly here means it's
             # already populated before the environment fallback runs, so it
