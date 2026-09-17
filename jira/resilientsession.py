@@ -193,6 +193,13 @@ class ResilientSession(Session):
         if "verify" not in prepared_kwargs:
             prepared_kwargs["verify"] = self.verify
 
+        if "proxies" not in prepared_kwargs and self.proxies:
+            # merge_environment_settings() setdefault()s http_proxy/https_proxy
+            # into the request-level proxies dict, and that dict wins over
+            # self.proxies. Seeding it with self.proxies lets env vars only fill
+            # gaps. It must be a copy, as setdefault() mutates it in place.
+            prepared_kwargs["proxies"] = dict(self.proxies)
+
         return prepared_kwargs
 
     def request(  # type: ignore[override] # An intentionally different override
