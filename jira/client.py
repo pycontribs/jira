@@ -938,7 +938,7 @@ class JIRA:
             ResultList: List of fetched items.
         """
         DEFAULT_BATCH = 100  # Max batch size per request
-        fetch_all = maxResults in (0, False)  # If False/0, fetch everything
+        fetch_all = not maxResults # If False/0/None, fetch everything
 
         page_params = (params or {}).copy()  # Ensure params isn't modified
         page_params["maxResults"] = DEFAULT_BATCH if fetch_all else maxResults
