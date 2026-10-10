@@ -10,6 +10,7 @@ import requests_mock as rm
 
 import jira.client
 from jira.exceptions import JIRAError, NotJIRAInstanceError
+from jira.resources import Issue
 from tests.conftest import JiraTestManager, get_unique_project_name
 
 
@@ -413,3 +414,188 @@ def test_experimental_non_200_not_404_405(
 
     assert ex.value.status_code == status_code
     assert isinstance(ex.value, JIRAError)
+
+
+# --- Pagination when ``maxResults`` is larger than the server's page size ---
+# Jira Cloud caps the number of items per request (100 for issue search), see
+# https://github.com/pycontribs/jira/issues/1819
+
+
+class _PagedServer:
+    """Stand-in for ``JIRA._get_json`` that mimics a server capping page size."""
+
+    def __init__(self, total: int, cap: int = 100, token_based: bool = False):
+        self.total = total
+        self.cap = cap
+        self.token_based = token_based
+        self.calls: list[dict] = []
+
+    @staticmethod
+    def _issue(i: int) -> dict:
+        return {"id": str(i), "key": f"KEY-{i}", "self": f"http://example.com/{i}"}
+
+    def __call__(self, path, params=None, base=None, use_post=False):
+        params = dict(params or {})
+        self.calls.append(params)
+        if self.token_based:
+            token = params.get("nextPageToken")
+            start = int(token.split("-")[1]) if token else 0
+        else:
+            start = params.get("startAt", 0)
+        size = min(params.get("maxResults", self.cap), self.cap)
+        end = min(start + size, self.total)
+        page: dict = {"issues": [self._issue(i) for i in range(start, end)]}
+        if self.token_based:
+            if end < self.total:
+                page["nextPageToken"] = f"tok-{end}"
+            else:
+                page["isLast"] = True
+        else:
+            page.update({"startAt": start, "maxResults": size, "total": self.total})
+        return page
+
+
+@pytest.fixture()
+def offline_jira(no_fields) -> jira.client.JIRA:
+    return jira.client.JIRA(
+        server="https://jira.atlassian.com", get_server_info=False, validate=False
+    )
+
+
+@pytest.mark.parametrize(
+    "start_at, max_results, total, expected_calls",
+    [
+        (0, 50, 500, [{"maxResults": 50}]),
+        (0, 100, 500, [{"maxResults": 100}]),
+        (
+            0,
+            200,
+            500,
+            [{"maxResults": 200}, {"startAt": 100, "maxResults": 100}],
+        ),
+        (
+            0,
+            150,
+            500,
+            [{"maxResults": 150}, {"startAt": 100, "maxResults": 50}],
+        ),
+        (
+            10,
+            200,
+            500,
+            [{"startAt": 10, "maxResults": 200}, {"startAt": 110, "maxResults": 100}],
+        ),
+        (
+            0,
+            250,
+            120,
+            [{"maxResults": 250}, {"startAt": 100, "maxResults": 100}],
+        ),
+        (
+            0,
+            False,
+            250,
+            [
+                {"maxResults": 100},
+                {"startAt": 100, "maxResults": 100},
+                {"startAt": 200, "maxResults": 100},
+            ],
+        ),
+    ],
+    ids=[
+        "below cap: one request",
+        "equal to cap: one request",
+        "above cap: two full pages",
+        "above cap: truncated to maxResults",
+        "above cap: startAt offset is kept",
+        "fewer available than requested",
+        "maxResults=False fetches everything",
+    ],
+)
+def test_fetch_pages_server_caps_page_size(
+    offline_jira, start_at, max_results, total, expected_calls
+):
+    server = _PagedServer(total=total, cap=100)
+    with mock.patch.object(offline_jira, "_get_json", side_effect=server):
+        issues = offline_jira._fetch_pages(
+            Issue, "issues", "search", start_at, max_results, {}
+        )
+
+    expected_len = min(max_results or total, total - start_at)
+    assert [c for c in server.calls] == expected_calls
+    assert len(issues) == expected_len
+    assert [i.key for i in issues] == [
+        f"KEY-{i}" for i in range(start_at, start_at + expected_len)
+    ]
+    assert issues.total == total
+
+
+@pytest.mark.parametrize(
+    "max_results, total, expected_calls, expected_next_token",
+    [
+        (50, 500, [{"maxResults": 50}], "tok-50"),
+        (
+            200,
+            500,
+            [{"maxResults": 200}, {"maxResults": 100, "nextPageToken": "tok-100"}],
+            "tok-200",
+        ),
+        (
+            150,
+            500,
+            [{"maxResults": 150}, {"maxResults": 50, "nextPageToken": "tok-100"}],
+            "tok-150",
+        ),
+        (
+            250,
+            120,
+            [{"maxResults": 250}, {"maxResults": 100, "nextPageToken": "tok-100"}],
+            None,
+        ),
+        (
+            False,
+            250,
+            [
+                {"maxResults": 100},
+                {"maxResults": 100, "nextPageToken": "tok-100"},
+                {"maxResults": 100, "nextPageToken": "tok-200"},
+            ],
+            None,
+        ),
+    ],
+    ids=[
+        "below cap: one request",
+        "above cap: two full pages",
+        "above cap: truncated to maxResults",
+        "fewer available than requested",
+        "maxResults=False fetches everything",
+    ],
+)
+def test_fetch_pages_search_token_server_caps_page_size(
+    offline_jira, max_results, total, expected_calls, expected_next_token
+):
+    offline_jira.deploymentType = "Cloud"
+    server = _PagedServer(total=total, cap=100, token_based=True)
+    with mock.patch.object(offline_jira, "_get_json", side_effect=server):
+        issues = offline_jira._fetch_pages_searchToken(
+            Issue, "issues", "search/jql", max_results, {}
+        )
+
+    expected_len = min(max_results or total, total)
+    assert server.calls == expected_calls
+    assert len(issues) == expected_len
+    assert [i.key for i in issues] == [f"KEY-{i}" for i in range(expected_len)]
+    assert issues.nextPageToken == expected_next_token
+
+
+@pytest.mark.parametrize("is_cloud", [True, False], ids=["cloud", "server"])
+def test_search_issues_max_results_above_server_cap(offline_jira, is_cloud):
+    """Regression test for https://github.com/pycontribs/jira/issues/1819."""
+    if is_cloud:
+        offline_jira.deploymentType = "Cloud"
+    server = _PagedServer(total=500, cap=100, token_based=is_cloud)
+    with mock.patch.object(offline_jira, "_get_json", side_effect=server):
+        issues = offline_jira.search_issues("project = KEY", maxResults=200)
+
+    assert len(server.calls) == 2
+    assert len(issues) == 200
