@@ -106,6 +106,13 @@ except ImportError:
 LOG = _logging.getLogger("jira")
 LOG.addHandler(_logging.NullHandler())
 
+# Jira Cloud account ids are either a 24 character hex string or a "<prefix>:<uuid>"
+# pair, e.g. "5b10ac8d82e05b22cc7d4ef5" or "712020:c3eb69e6-897e-4578-a9f5-8d42fd5e948d".
+CLOUD_ACCOUNT_ID_RE = re.compile(
+    r"^(?:[0-9a-f]{24}|[0-9a-z]+:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$",
+    re.IGNORECASE,
+)
+
 
 def cloud_api(client_method: Callable) -> Callable:
     """A convenience decorator to check if the Jira instance is cloud.
@@ -2283,13 +2290,14 @@ class JIRA:
     def _get_user_id(self, user: str | None) -> str | None:
         """Internal method for translating a user search (str) to an id.
 
-        Return None and -1 unchanged.
+        Return None and -1 unchanged. On Cloud, a value that already is an account id is
+        also returned unchanged, so no user search is needed.
 
         This function uses :py:meth:`JIRA.search_users` to find the user and then using :py:meth:`JIRA._get_user_identifier` extracts
         the relevant identifier property depending on whether the instance is a Cloud or self-hosted Instance.
 
         Args:
-            user (Optional[str]): The search term used for finding a user. None, '-1' and -1 are equivalent to 'Unassigned'.
+            user (Optional[str]): The search term used for finding a user, or a Cloud account id. None, '-1' and -1 are equivalent to 'Unassigned'.
 
         Raises:
             JIRAError: If any error occurs.
@@ -2298,6 +2306,11 @@ class JIRA:
             Optional[str]: The Jira user's identifier. Or "-1" and None unchanged.
         """
         if user in (None, -1, "-1"):
+            return user
+        if self._is_cloud and isinstance(user, str) and CLOUD_ACCOUNT_ID_RE.match(user):
+            # The caller already has the identifier the Cloud API expects. Searching for
+            # it would need the "Browse users and groups" global permission, which app
+            # and bot accounts commonly do not have.
             return user
         try:
             user_obj: User
