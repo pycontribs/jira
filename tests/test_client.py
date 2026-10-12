@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import getpass
+import json
 import logging
 from unittest import mock
 
@@ -371,6 +372,61 @@ def test_cloud_api_not_cloud_server(mock_request, mock_jira_client, caplog):
     assert caplog.messages[0] == (
         "This functionality is not available on Jira Data Center (Server) version."
     )
+
+
+@pytest.mark.parametrize(
+    "account_id",
+    ["5b10ac8d82e05b22cc7d4ef5", "712020:c3eb69e6-897e-4578-a9f5-8d42fd5e948d"],
+)
+def test_get_user_id_keeps_cloud_account_id(mock_jira_client, account_id):
+    """An account id needs no user search, which requires the Browse users permission."""
+    client = mock_jira_client(is_cloud=True)
+    with mock.patch.object(jira.client.JIRA, "search_users") as mock_search_users:
+        assert client._get_user_id(account_id) == account_id
+
+    mock_search_users.assert_not_called()
+
+
+def test_get_user_id_searches_for_other_values(mock_jira_client):
+    client = mock_jira_client(is_cloud=True)
+    user = mock.Mock(accountId="5b10ac8d82e05b22cc7d4ef5")
+    with mock.patch.object(
+        jira.client.JIRA, "search_users", return_value=[user]
+    ) as mock_search_users:
+        assert client._get_user_id("user@example.com") == "5b10ac8d82e05b22cc7d4ef5"
+
+    mock_search_users.assert_called_once_with(query="user@example.com", maxResults=20)
+
+
+def test_get_user_id_searches_for_account_id_shaped_name_on_server(mock_jira_client):
+    """Self hosted instances identify users by name, so the search is kept."""
+    client = mock_jira_client()
+    user = mock.Mock(name_="username")
+    user.name = "username"
+    with mock.patch.object(
+        jira.client.JIRA, "search_users", return_value=[user]
+    ) as mock_search_users:
+        assert client._get_user_id("5b10ac8d82e05b22cc7d4ef5") == "username"
+
+    mock_search_users.assert_called_once_with(
+        user="5b10ac8d82e05b22cc7d4ef5", maxResults=20
+    )
+
+
+def test_add_watcher_posts_cloud_account_id_without_user_search(mock_jira_client):
+    """Adding a watcher by account id must not need the Browse users permission."""
+    account_id = "5b10ac8d82e05b22cc7d4ef5"
+    url = "https://example.atlassian.net/rest/api/2/issue/TEST-1/watchers"
+    client = mock_jira_client(is_cloud=True)
+    client._session = mock.Mock()
+    with (
+        mock.patch.object(jira.client.JIRA, "search_users") as mock_search_users,
+        mock.patch.object(jira.client.JIRA, "_get_url", return_value=url),
+    ):
+        client.add_watcher("TEST-1", account_id)
+
+    mock_search_users.assert_not_called()
+    client._session.post.assert_called_once_with(url, data=json.dumps(account_id))
 
 
 @mock.patch("requests.Session.request")
