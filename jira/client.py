@@ -3945,23 +3945,36 @@ class JIRA:
 
     def search_assignable_users_for_projects(
         self,
-        username: str,
-        projectKeys: str,
+        username: str | None = None,
+        projectKeys: str | None = None,
         startAt: int = 0,
         maxResults: int = 50,
+        *,
+        accountId: str | None = None,
     ) -> ResultList:
         """Get a list of user Resources that match the search string and can be assigned issues for projects.
 
         Args:
-            username (str): A string to match usernames against
+            username (Optional[str]): A username to search for (Jira Server/Data Center)
             projectKeys (str): Comma-separated list of project keys to check for issue assignment permissions
             startAt (int): Index of the first user to return (Default: ``0``)
             maxResults (int): Maximum number of users to return. If maxResults evaluates as False, it will try to get all users in batches. (Default: ``50``)
+            accountId (Optional[str]): Atlassian account ID to search for (Jira Cloud)
 
         Returns:
             ResultList
         """
-        params = {"username": username, "projectKeys": projectKeys}
+        if projectKeys is None:
+            raise TypeError("'projectKeys' is required")
+        if (username is None) == (accountId is None):
+            raise ValueError("Specify exactly one of 'username' or 'accountId'")
+
+        params = {"projectKeys": projectKeys}
+        if accountId is not None:
+            params["accountId"] = accountId
+        else:
+            assert username is not None
+            params["username"] = username
         return self._fetch_pages(
             User,
             None,

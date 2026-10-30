@@ -184,6 +184,68 @@ def test_result_list_if_empty():
 
 
 @pytest.mark.parametrize(
+    ("args", "kwargs", "expected_params"),
+    [
+        (
+            ("legacy-user", "PROJ,OPS"),
+            {},
+            {"username": "legacy-user", "projectKeys": "PROJ,OPS"},
+        ),
+        (
+            (),
+            {"accountId": "123:abc", "projectKeys": "PROJ,OPS"},
+            {"accountId": "123:abc", "projectKeys": "PROJ,OPS"},
+        ),
+    ],
+    ids=["legacy-positional-username", "cloud-account-id"],
+)
+def test_search_assignable_users_for_projects_parameters(args, kwargs, expected_params):
+    client = jira.client.JIRA(
+        server="https://example.atlassian.net",
+        get_server_info=False,
+        validate=False,
+    )
+    with mock.patch.object(client, "_fetch_pages", return_value=[]) as fetch_pages:
+        result = client.search_assignable_users_for_projects(
+            *args, startAt=2, maxResults=7, **kwargs
+        )
+
+    assert result == []
+    fetch_pages.assert_called_once_with(
+        jira.client.User,
+        None,
+        "user/assignable/multiProjectSearch",
+        2,
+        7,
+        expected_params,
+    )
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "error", "message"),
+    [
+        ({"accountId": "123:abc"}, TypeError, "projectKeys"),
+        ({"projectKeys": "PROJ"}, ValueError, "exactly one"),
+        (
+            {"username": "legacy-user", "accountId": "123:abc", "projectKeys": "PROJ"},
+            ValueError,
+            "exactly one",
+        ),
+    ],
+)
+def test_search_assignable_users_for_projects_invalid_arguments(kwargs, error, message):
+    client = jira.client.JIRA(
+        server="https://example.atlassian.net",
+        get_server_info=False,
+        validate=False,
+    )
+    with mock.patch.object(client, "_fetch_pages") as fetch_pages:
+        with pytest.raises(error, match=message):
+            client.search_assignable_users_for_projects(**kwargs)
+    fetch_pages.assert_not_called()
+
+
+@pytest.mark.parametrize(
     "options_arg",
     [
         {"headers": {"Content-Type": "application/json;charset=UTF-8"}},
