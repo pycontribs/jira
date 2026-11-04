@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import json
 import unittest
 from pathlib import Path
 from unittest.mock import mock_open, patch
 
+import pytest
 from requests import Response
 from requests.structures import CaseInsensitiveDict
 
@@ -149,3 +151,82 @@ class ExceptionsTests(unittest.TestCase):
 
         # THEN: no files are opened
         mocked_open.assert_not_called()
+
+
+SECRET = "s3cr3t-value"
+
+
+@pytest.mark.parametrize("header", ["Authorization", "Cookie", "Set-Cookie"])
+@pytest.mark.parametrize("side", ["request", "response"])
+def test_jira_error_redacts_sensitive_headers(header, side):
+    headers = {header: f"Bearer {SECRET}", "Content-Type": "application/json"}
+    mock = ExceptionsTests.MockResponse(headers=headers)
+
+    err_str = str(JIRAError(**{side: mock}))
+
+    assert SECRET not in err_str
+    assert "application/json" in err_str
+
+
+@pytest.mark.parametrize("key", ["password", "token"])
+@pytest.mark.parametrize("side", ["request", "response"])
+def test_jira_error_redacts_sensitive_json_body(key, side):
+    body = json.dumps({"user": {"name": "bob", key: SECRET}})
+    mock = ExceptionsTests.MockResponse(text=body)
+
+    err_str = str(JIRAError(**{side: mock}))
+
+    assert SECRET not in err_str
+    assert "bob" in err_str
+
+
+def test_jira_error_redacts_secrets_written_to_tempfile():
+    mocked_open = mock_open()
+    response = ExceptionsTests.MockResponse(
+        headers={"Set-Cookie": f"session={SECRET}"},
+        text=json.dumps({"password": SECRET}),
+    )
+    request = ExceptionsTests.MockResponse(
+        headers={"Authorization": f"Basic {SECRET}"},
+        text=json.dumps({"token": SECRET}),
+    )
+
+    with (
+        patch.dict("os.environ", {"PYJIRA_LOG_TO_TEMPFILE": "1"}),
+        patch(f"{PATCH_BASE}.tempfile.mkstemp", autospec=True) as mock_mkstemp,
+        patch(f"{PATCH_BASE}.open", mocked_open),
+    ):
+        mock_mkstemp.return_value = 0, "jiraerror-test.tmp"
+        str(JIRAError(request=request, response=response))
+
+    written = mocked_open().write.call_args[0][0]
+    assert "request headers" in written
+    assert "response text" in written
+    assert SECRET not in written
+
+
+def test_jira_error_keeps_non_ascii_body_text():
+    message = "課題の種類が無効です。"
+    body = json.dumps({"errorMessages": [message]}, ensure_ascii=False)
+    mock = ExceptionsTests.MockResponse(text=body)
+
+    assert message in str(JIRAError(response=mock))
+
+
+def test_jira_error_keeps_non_ascii_body_text_when_redacting():
+    message = "パスワードが違います"
+    body = json.dumps({"password": SECRET, "message": message})
+    mock = ExceptionsTests.MockResponse(text=body)
+
+    err_str = str(JIRAError(request=mock))
+
+    assert SECRET not in err_str
+    assert message in err_str
+
+
+def test_jira_error_str_survives_deeply_nested_body():
+    depth = 5000
+    body = '{"a": ' * depth + "1" + "}" * depth
+    mock = ExceptionsTests.MockResponse(text=body)
+
+    assert "JiraError HTTP 400" in str(JIRAError(status_code=400, response=mock))
