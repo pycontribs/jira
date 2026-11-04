@@ -12,12 +12,14 @@ import calendar
 import copy
 import datetime
 import hashlib
+import inspect
 import json
 import logging as _logging
 import os
 import re
 import sys
 import time
+import types
 import urllib
 import warnings
 from collections import OrderedDict
@@ -34,7 +36,11 @@ from typing import (
     ParamSpec,
     SupportsIndex,
     TypeVar,
+    Union,
     cast,
+    get_args,
+    get_origin,
+    get_type_hints,
     no_type_check,
     overload,
 )
@@ -197,26 +203,85 @@ def experimental_atlassian_api(client_method: Callable[P, R]) -> Callable[P, R]:
     return cast("Callable[P, R]", is_experimental)
 
 
+def _resource_classes(annotation: Any) -> tuple[type[Resource], ...]:
+    """Resource subclasses an annotation admits, looking inside unions and Optional."""
+    if get_origin(annotation) in (Union, types.UnionType):
+        return tuple(c for a in get_args(annotation) for c in _resource_classes(a))
+    if (
+        get_origin(annotation) is None
+        and isinstance(annotation, type)
+        and issubclass(annotation, Resource)
+    ):
+        return (annotation,)
+    return ()
+
+
+def _accepted_resource_classes(func: Callable) -> dict[str, tuple[type[Resource], ...]]:
+    try:
+        hints = get_type_hints(func)
+    except Exception:
+        return {}
+    return {name: _resource_classes(hint) for name, hint in hints.items()}
+
+
 def translate_resource_args(func: Callable[P, R]) -> Callable[P, R]:
-    """Decorator that converts Issue and Project resources to their keys when used as arguments.
+    """Decorator that converts Issue and Project arguments to their key, and IssueLinkType to its name.
+
+    An argument, positional or keyword, is passed through unchanged when the
+    annotation of the parameter it binds to accepts its class. Arguments that
+    land in ``**kwargs`` are never converted. If the annotations cannot be
+    resolved, every Issue, Project and IssueLinkType argument is converted.
 
     Args:
         func (Callable): the function to decorate
     """
-    # The converted positionals no longer match P.args.
+    parameters = inspect.signature(func).parameters.values()
+    positional_names = [
+        p.name
+        for p in parameters
+        if p.kind in (p.POSITIONAL_ONLY, p.POSITIONAL_OR_KEYWORD)
+    ]
+    var_positional_name = next(
+        (p.name for p in parameters if p.kind is p.VAR_POSITIONAL), None
+    )
+    keyword_names = {
+        p.name
+        for p in parameters
+        if p.kind in (p.POSITIONAL_OR_KEYWORD, p.KEYWORD_ONLY)
+    }
+    # Resolved on first call: while the class body runs, names defined later in
+    # the module, JIRA among them, are not bound yet.
+    accepted: dict[str, tuple[type[Resource], ...]] | None = None
+    # The converted arguments no longer match P.
     call_with_keys: Callable[..., R] = func
+
+    def translate(arg: Any, param: str | None) -> Any:
+        assert accepted is not None
+        if not isinstance(arg, Issue | Project | IssueLinkType):
+            return arg
+        if param is not None and isinstance(arg, accepted.get(param, ())):
+            return arg
+        return arg.name if isinstance(arg, IssueLinkType) else arg.key
 
     @wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
-        arg_list = []
-        for arg in args:
-            if isinstance(arg, Issue | Project):
-                arg_list.append(arg.key)
-            elif isinstance(arg, IssueLinkType):
-                arg_list.append(arg.name)
-            else:
-                arg_list.append(arg)
-        return call_with_keys(*arg_list, **kwargs)
+        nonlocal accepted
+        if accepted is None:
+            accepted = _accepted_resource_classes(func)
+        new_args = [
+            translate(
+                arg,
+                positional_names[i]
+                if i < len(positional_names)
+                else var_positional_name,
+            )
+            for i, arg in enumerate(args)
+        ]
+        new_kwargs = {
+            name: translate(value, name) if name in keyword_names else value
+            for name, value in kwargs.items()
+        }
+        return call_with_keys(*new_args, **new_kwargs)
 
     return cast("Callable[P, R]", wrapper)
 
@@ -1446,7 +1511,7 @@ class JIRA:
         """
         data = {
             "name": name,
-            "project": project,
+            "project": project.key if isinstance(project, Project) else project,
             "isAssigneeTypeValid": isAssigneeTypeValid,
         }
         if description is not None:
@@ -4649,7 +4714,7 @@ class JIRA:
         """
         data = {
             "name": name,
-            "project": project,
+            "project": project.key if isinstance(project, Project) else project,
             "archived": archived,
             "released": released,
         }
@@ -5003,7 +5068,7 @@ class JIRA:
         Returns:
             Any: A class of the same type as ``resource_cls``
         """
-        # Resources passed by keyword skip translate_resource_args; str() gives their key or name.
+        # str() of an Issue or Project is its key.
         find_ids: tuple[str | int, ...] | int | str
         if isinstance(ids, tuple):
             find_ids = tuple(str(i) if isinstance(i, Resource) else i for i in ids)
