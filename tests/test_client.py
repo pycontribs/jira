@@ -423,6 +423,60 @@ def test_createmeta_fieldtypes_pagination(cl_normal, slug):
     assert field_types_resp["maxResults"] == 100
 
 
+def _createmeta_client(deployment_type: str, version: tuple[int, ...]):
+    client = jira.client.JIRA(
+        server="https://jira.example.com", get_server_info=False, validate=False
+    )
+    client.deploymentType = deployment_type
+    client._version = version
+    return client
+
+
+@pytest.mark.parametrize(
+    "deployment_type,version,items_key",
+    [("Cloud", (1001, 0, 0), "issueTypes"), ("Server", (9, 12, 0), "values")],
+)
+def test_project_issue_types(requests_mock, deployment_type, version, items_key):
+    client = _createmeta_client(deployment_type, version)
+    requests_mock.get(
+        "https://jira.example.com/rest/api/2/issue/createmeta/ABC/issuetypes",
+        json={
+            "startAt": 0,
+            "maxResults": 50,
+            "total": 2,
+            items_key: [{"id": "1", "name": "Bug"}, {"id": "2", "name": "Task"}],
+        },
+    )
+
+    issue_types = client.project_issue_types("ABC")
+
+    assert [it.name for it in issue_types] == ["Bug", "Task"]
+
+
+@pytest.mark.parametrize(
+    "deployment_type,version,items_key",
+    [("Cloud", (1001, 0, 0), "fields"), ("Server", (9, 12, 0), "values")],
+)
+def test_project_issue_fields(requests_mock, deployment_type, version, items_key):
+    client = _createmeta_client(deployment_type, version)
+    requests_mock.get(
+        "https://jira.example.com/rest/api/2/issue/createmeta/ABC/issuetypes/1",
+        json={
+            "startAt": 0,
+            "maxResults": 50,
+            "total": 2,
+            items_key: [
+                {"fieldId": "summary", "name": "Summary", "required": True},
+                {"fieldId": "assignee", "name": "Assignee", "required": False},
+            ],
+        },
+    )
+
+    fields = client.project_issue_fields("ABC", "1")
+
+    assert [f.fieldId for f in fields] == ["summary", "assignee"]
+
+
 @pytest.mark.parametrize(
     "mock_client_method", ["mock_cloud_only_method", "mock_experimental_method"]
 )

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from jira.resources import Field
-from tests.conftest import JiraTestCase
+from tests.conftest import JiraTestCase, allow_on_cloud
 
 
 class FieldsTest(JiraTestCase):
@@ -10,12 +10,14 @@ class FieldsTest(JiraTestCase):
         self.issue_1 = self.test_manager.project_b_issue1
         self.issue_1_obj = self.test_manager.project_b_issue1_obj
 
+    @allow_on_cloud
     def test_field(self):
         issue_fields = self.test_manager.jira_admin.project_issue_fields(
             project=self.project_a, issue_type=self.issue_1_obj.fields.issuetype.id
         )
         assert isinstance(issue_fields[0], Field)
 
+    @allow_on_cloud
     def test_field_pagination(self):
         issue_fields = self.test_manager.jira_admin.project_issue_fields(
             project=self.project_a,
