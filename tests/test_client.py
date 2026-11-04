@@ -4,6 +4,7 @@ import copy
 import functools
 import getpass
 import inspect
+import io
 import json
 import logging
 import sys
@@ -1795,6 +1796,38 @@ def test_add_attachment_accepts_bytes(requests_mock):
     assert b'filename="example.txt"' in bodies[0]
     assert content in bodies[0]
     assert requests_mock.last_request.headers["X-Atlassian-Token"] == "no-check"
+
+
+def test_add_attachment_stream_uses_its_name(requests_mock):
+    client = jira.client.JIRA(
+        server="https://jira.example.com", get_server_info=False, validate=False
+    )
+    bodies: list[bytes] = []
+
+    def respond(request, context):
+        bodies.append(request.body.read())
+        return [{"id": "10001", "filename": "report.txt", "size": 7}]
+
+    requests_mock.post(
+        "https://jira.example.com/rest/api/2/issue/QQ-1/attachments", json=respond
+    )
+    stream = io.BytesIO(b"content")
+    stream.name = "reports/report.txt"
+
+    client.add_attachment("QQ-1", stream)
+
+    assert b'filename="report.txt"' in bodies[0]
+
+
+def test_add_attachment_stream_without_name_raises(requests_mock):
+    client = jira.client.JIRA(
+        server="https://jira.example.com", get_server_info=False, validate=False
+    )
+
+    with pytest.raises(ValueError, match="filename is required"):
+        client.add_attachment("QQ-1", io.BytesIO(b"content"))
+
+    assert not requests_mock.called
 
 
 def test_add_attachment_bytes_without_filename_raises(requests_mock):

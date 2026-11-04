@@ -1392,6 +1392,9 @@ class JIRA:
             filename (str): optional name for the attached file. If omitted, the file object's ``name`` attribute is used.
               If you acquired the file-like object by any other method than ``open()``, or pass ``bytes``, make sure that a name is specified.
 
+        Raises:
+            ValueError: if no ``filename`` is given and the attachment is ``bytes`` or a stream without a ``name``.
+
         Returns:
             Attachment
         """
@@ -1413,8 +1416,13 @@ class JIRA:
                 )
 
         fname = filename
-        if not fname and isinstance(attachment_io, BufferedReader):
-            fname = os.path.basename(attachment_io.name)
+        stream_name = getattr(attachment_io, "name", None)
+        if not fname and isinstance(stream_name, str):
+            fname = os.path.basename(stream_name)
+        if not fname:
+            raise ValueError(
+                "filename is required when attachment is a stream without a name"
+            )
 
         def generate_multipartencoded_request_args() -> tuple[
             MultipartEncoder, CaseInsensitiveDict
