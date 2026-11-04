@@ -53,6 +53,15 @@ class WorklogTests(JiraTestCase):
         self.assertEqual(len(self.jira.worklogs(issue)), worklog_count + 1)
         worklog.delete()
 
+    def test_add_worklog_with_properties_on_server(self):
+        properties = [{"key": "billable", "value": {"approved": True}}]
+
+        with self.assertWarnsRegex(UserWarning, "'properties' argument"):
+            worklog = self.jira.add_worklog(self.issue_2, "2h", properties=properties)
+        self.addCleanup(worklog.delete)
+
+        self.assertEqual(self.jira.worklog(self.issue_2, worklog.id).timeSpent, "2h")
+
     def test_update_and_delete_worklog(self):
         worklog = self.jira.add_worklog(self.issue_3, "3h")
         issue = self.jira.issue(self.issue_3, fields="worklog,timetracking")
