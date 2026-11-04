@@ -37,12 +37,12 @@ jobs:
         python-version: ["3.10"]
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.ref }}
 
       - name: Install uv and pin python ${{ matrix.python-version }}
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           enable-cache: true
           python-version: ${{ matrix.python-version }}
@@ -69,7 +69,7 @@ jobs:
           CI_JIRA_CLOUD_USER_TOKEN: ${{ secrets.CLOUD_USER_TOKEN }}
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           # tox writes coverage.xml under .tox/<env>/; codecov's
           # auto-search picks it up from there.

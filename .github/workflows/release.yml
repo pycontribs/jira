@@ -16,7 +16,7 @@ jobs:
 
     steps:
       - name: Switch to using Python 3.10 by default
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.10"
 
@@ -30,7 +30,7 @@ jobs:
         run: python3 -m pip install --user "tox>=4.0.0"
 
       - name: Check out src from Git
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0  # needed by setuptools-scm
           submodules: true
@@ -39,7 +39,7 @@ jobs:
         run: python3 -m tox
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: package
           path: dist/
@@ -55,7 +55,7 @@ jobs:
     environment: release
     steps:
       - name: Download artifact
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: package
           path: dist
@@ -73,7 +73,7 @@ jobs:
       contents: write
     steps:
       - name: Download artifact
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v8
         with:
           name: package
           path: dist
@@ -82,7 +82,7 @@ jobs:
         run: tree
 
       - name: Add release asset
-        uses: softprops/action-gh-release@72f2c25fcb47643c292f7107632f7a47c1df5cd8
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
           tag_name: ${{ github.event.release.tag_name }}
           fail_on_unmatched_files: true
