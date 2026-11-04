@@ -6,7 +6,7 @@ from pathlib import Path
 from unittest.mock import mock_open, patch
 
 import pytest
-from requests import Response
+from requests import Request, Response
 from requests.structures import CaseInsensitiveDict
 
 from jira.exceptions import JIRAError
@@ -230,3 +230,39 @@ def test_jira_error_str_survives_deeply_nested_body():
     mock = ExceptionsTests.MockResponse(text=body)
 
     assert "JiraError HTTP 400" in str(JIRAError(status_code=400, response=mock))
+
+
+def test_jira_error_redacts_prepared_request_json_body():
+    request = Request(
+        "POST",
+        "https://jira.example.com/rest/api/2/user",
+        json={"name": "bob", "password": SECRET},
+    ).prepare()
+    assert isinstance(request.body, bytes)
+
+    err_str = str(JIRAError(request=request))
+
+    assert "request body" in err_str
+    assert "bob" in err_str
+    assert SECRET not in err_str
+
+
+def test_jira_error_redacts_prepared_request_form_body():
+    request = Request(
+        "POST",
+        "https://jira.example.com/login",
+        data={"username": "bob", "password": SECRET},
+    ).prepare()
+
+    err_str = str(JIRAError(request=request))
+
+    assert "bob" in err_str
+    assert SECRET not in err_str
+
+
+def test_jira_error_handles_undecodable_prepared_request_body():
+    request = Request(
+        "POST", "https://jira.example.com/attachments", data=b"\xff\xfe\x00binary"
+    ).prepare()
+
+    assert "request body" in str(JIRAError(request=request))

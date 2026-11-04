@@ -6,7 +6,7 @@ import re
 import tempfile
 from typing import Any
 
-from requests import Response
+from requests import PreparedRequest, Response
 
 
 def _sanitize_headers(headers: dict[str, Any] | Any) -> dict[str, Any] | Any:
@@ -64,6 +64,15 @@ def _sanitize_body(body: str | Any) -> str | Any:
     return body
 
 
+def _decode_body(body: Any) -> str | None:
+    """Return a PreparedRequest body as text, or None for a streamed body."""
+    if isinstance(body, bytes):
+        return body.decode("utf-8", errors="replace")
+    if isinstance(body, str):
+        return body
+    return None
+
+
 class JIRAError(Exception):
     """General error raised for all problems in operation of the client."""
 
@@ -72,7 +81,7 @@ class JIRAError(Exception):
         text: str | None = None,
         status_code: int | None = None,
         url: str | None = None,
-        request: Response | None = None,
+        request: Response | PreparedRequest | None = None,
         response: Response | None = None,
         **kwargs: Any,
     ) -> None:
@@ -82,7 +91,7 @@ class JIRAError(Exception):
             text (Optional[str]): Message for the error.
             status_code (Optional[int]): Status code for the error.
             url (Optional[str]): Url related to the error.
-            request (Optional[requests.Response]): Request made related to the error.
+            request (Optional[requests.Response | requests.PreparedRequest]): Request made related to the error.
             response (Optional[requests.Response]): Response received related to the error.
             **kwargs: Will be used to get request headers.
         """
@@ -109,6 +118,9 @@ class JIRAError(Exception):
 
             if hasattr(self.request, "text"):
                 details += f"\n\trequest text = {_sanitize_body(self.request.text)}"
+            elif hasattr(self.request, "body"):
+                body = _decode_body(self.request.body)
+                details += f"\n\trequest body = {_sanitize_body(body)}"
         if self.response is not None:
             if hasattr(self.response, "headers"):
                 details += (
