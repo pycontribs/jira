@@ -1,16 +1,22 @@
 from __future__ import annotations
 
+import copy
+import functools
 import getpass
 import json
 import logging
+import sys
+import types
 from typing import Any
 from unittest import mock
 
 import pytest
+import requests
 import requests.sessions
 import requests_mock as rm
 
 import jira.client
+from jira.client import JIRA
 from jira.exceptions import JIRAError, NotJIRAInstanceError
 from jira.resources import Issue, Project, SecurityLevel
 from tests.conftest import JiraTestManager, get_unique_project_name
@@ -840,6 +846,415 @@ def test_fetch_pages_stops_on_is_last_for_full_final_page(offline_jira):
     assert issues.isLast is True
 
 
+class _ScriptedServer:
+    """Stand-in for ``JIRA._get_json`` that replays canned responses in order."""
+
+    def __init__(self, *responses: Any):
+        self.responses = list(responses)
+        self.calls: list[dict] = []
+        self.requests: list[tuple[str, str, bool]] = []
+
+    def __call__(self, path, params=None, base=JIRA.JIRA_BASE_URL, use_post=False):
+        self.calls.append(copy.deepcopy(params))
+        self.requests.append((path, base, use_post))
+        return self.responses.pop(0)
+
+
+def _offset_page(start: int, count: int, page_size: int = 100, **extra: Any) -> dict:
+    return {
+        "startAt": start,
+        "maxResults": page_size,
+        "issues": [_PagedServer._issue(i) for i in range(start, start + count)],
+        **extra,
+    }
+
+
+def _keys(start: int, stop: int) -> list[str]:
+    return [f"KEY-{i}" for i in range(start, stop)]
+
+
+@pytest.mark.parametrize(
+    "max_results, expected_calls",
+    [
+        (
+            False,
+            [
+                {"jql": "x", "fields": ["a"], "maxResults": 100},
+                {"jql": "x", "fields": ["a"], "startAt": 100, "maxResults": 100},
+            ],
+        ),
+        (
+            150,
+            [
+                {"jql": "x", "fields": ["a"], "maxResults": 150},
+                {"jql": "x", "fields": ["a"], "startAt": 100, "maxResults": 50},
+            ],
+        ),
+    ],
+    ids=["fetch all", "up to maxResults"],
+)
+def test_fetch_pages_forwards_request_arguments(
+    offline_jira, max_results, expected_calls
+):
+    server = _ScriptedServer(
+        _offset_page(0, 100, total=150), _offset_page(100, 50, total=150)
+    )
+    params = {"jql": "x", "fields": ("a",)}
+    with mock.patch.object(offline_jira, "_get_json", side_effect=server):
+        issues = offline_jira._fetch_pages(
+            Issue,
+            "issues",
+            "board/1/issue",
+            0,
+            max_results,
+            params,
+            base=JIRA.AGILE_BASE_URL,
+            use_post=True,
+        )
+
+    assert server.calls == expected_calls
+    assert server.requests == [("board/1/issue", JIRA.AGILE_BASE_URL, True)] * 2
+    assert params == {"jql": "x", "fields": ("a",)}
+    assert [i.key for i in issues] == _keys(0, 150)
+    assert (issues.startAt, issues.maxResults, issues.total, issues.isLast) == (
+        0,
+        100,
+        150,
+        False,
+    )
+
+
+@pytest.mark.parametrize(
+    "max_results, expected_calls",
+    [
+        (
+            False,
+            [
+                {"maxResults": 100},
+                {"startAt": 100, "maxResults": 100},
+                {"startAt": 200, "maxResults": 100},
+            ],
+        ),
+        (
+            250,
+            [
+                {"maxResults": 250},
+                {"startAt": 100, "maxResults": 100},
+                {"startAt": 200, "maxResults": 50},
+            ],
+        ),
+    ],
+    ids=["fetch all", "up to maxResults"],
+)
+def test_fetch_pages_without_total(offline_jira, max_results, expected_calls):
+    server = _ScriptedServer(
+        _offset_page(0, 100), _offset_page(100, 100), _offset_page(200, 30)
+    )
+    with mock.patch.object(offline_jira, "_get_json", side_effect=server):
+        issues = offline_jira._fetch_pages(
+            Issue, "issues", "search", 0, max_results, {}
+        )
+
+    assert server.calls == expected_calls
+    assert [i.key for i in issues] == _keys(0, 230)
+    assert issues.total == 230
+    assert issues.isLast is False
+
+
+@pytest.mark.parametrize("max_results", [False, 50], ids=["fetch all", "up to 50"])
+@pytest.mark.parametrize(
+    "first_page, expected_total",
+    [
+        (_offset_page(0, 0, total=0), 0),
+        (_offset_page(0, 0), 0),
+        ({"issues": []}, 0),
+    ],
+    ids=["with total", "without total", "without paging keys"],
+)
+def test_fetch_pages_empty_first_page(
+    offline_jira, max_results, first_page, expected_total
+):
+    server = _ScriptedServer(first_page)
+    with mock.patch.object(offline_jira, "_get_json", side_effect=server):
+        issues = offline_jira._fetch_pages(
+            Issue, "issues", "search", 0, max_results, {}
+        )
+
+    assert len(server.calls) == 1
+    assert list(issues) == []
+    assert issues.total == expected_total
+    assert issues.isLast is False
+
+
+@pytest.mark.parametrize("max_results", [False, 300], ids=["fetch all", "up to 300"])
+def test_fetch_pages_stops_on_empty_response(offline_jira, max_results):
+    server = _ScriptedServer(_offset_page(0, 100), {})
+    with mock.patch.object(offline_jira, "_get_json", side_effect=server):
+        issues = offline_jira._fetch_pages(
+            Issue, "issues", "search", 0, max_results, {}
+        )
+
+    assert len(server.calls) == 2
+    assert [i.key for i in issues] == _keys(0, 100)
+
+
+@pytest.mark.parametrize("max_results", [False, 50], ids=["fetch all", "up to 50"])
+def test_fetch_pages_list_response(offline_jira, max_results):
+    server = _ScriptedServer([_PagedServer._issue(0), _PagedServer._issue(1)])
+    with mock.patch.object(offline_jira, "_get_json", side_effect=server):
+        issues = offline_jira._fetch_pages(Issue, None, "list", 0, max_results)
+
+    assert len(server.calls) == 1
+    assert [i.key for i in issues] == _keys(0, 2)
+    assert (issues.startAt, issues.maxResults, issues.total, issues.isLast) == (
+        0,
+        1,
+        1,
+        True,
+    )
+
+
+@pytest.mark.parametrize(
+    "pages, expected_calls, expected_is_last",
+    [
+        ([_offset_page(0, 100, isLast=True)], 1, True),
+        (
+            [
+                _offset_page(0, 100, isLast=False),
+                _offset_page(100, 100, isLast=True),
+                _offset_page(200, 10),
+            ],
+            3,
+            False,
+        ),
+    ],
+    ids=["first page is last", "later isLast is not consulted"],
+)
+def test_fetch_pages_fetch_all_is_last(
+    offline_jira, pages, expected_calls, expected_is_last
+):
+    server = _ScriptedServer(*pages)
+    with mock.patch.object(offline_jira, "_get_json", side_effect=server):
+        issues = offline_jira._fetch_pages(Issue, "issues", "search", 0, False, {})
+
+    assert len(server.calls) == expected_calls
+    assert len(issues) == sum(len(p["issues"]) for p in pages)
+    assert issues.isLast is expected_is_last
+
+
+def test_fetch_pages_fetch_all_without_max_results_in_response(offline_jira):
+    def page(i: int, **extra: Any) -> dict:
+        return {"issues": [_PagedServer._issue(i)], **extra}
+
+    server = _ScriptedServer(page(0, total=3), page(1), page(2))
+    with mock.patch.object(offline_jira, "_get_json", side_effect=server):
+        issues = offline_jira._fetch_pages(Issue, "issues", "search", 0, False, {})
+
+    assert server.calls == [
+        {"maxResults": 100},
+        {"startAt": 1, "maxResults": 1},
+        {"startAt": 2, "maxResults": 1},
+    ]
+    assert [i.key for i in issues] == _keys(0, 3)
+    assert (issues.maxResults, issues.total) == (1, 3)
+
+
+def test_fetch_pages_warns_when_server_caps_batch_size(offline_jira, caplog):
+    offline_jira._options["default_batch_size"] = {Issue: 200}
+    server = _PagedServer(total=150, cap=100)
+    with mock.patch.object(offline_jira, "_get_json", side_effect=server):
+        with caplog.at_level(logging.WARNING):
+            issues = offline_jira._fetch_pages(Issue, "issues", "search", 0, False, {})
+
+    assert server.calls == [{"maxResults": 200}, {"startAt": 100, "maxResults": 100}]
+    assert len(issues) == 150
+    assert "'batch_size' set to 200, but only received 100 items" in caplog.text
+
+
+class _FakeFuturesSession:
+    """Records requests the way ``requests_futures.sessions.FuturesSession`` gets them."""
+
+    instances: list[_FakeFuturesSession] = []
+
+    def __init__(self, bodies: list[Any], session: Any, max_workers: Any):
+        self.bodies = bodies
+        self.session = session
+        self.max_workers = max_workers
+        self.requests: list[tuple[str, str, dict]] = []
+        _FakeFuturesSession.instances.append(self)
+
+    def _future(self) -> mock.Mock:
+        response = requests.Response()
+        response.status_code = 200
+        body = self.bodies.pop(0)
+        response._content = json.dumps(body).encode() if body is not None else b""
+        return mock.Mock(result=mock.Mock(return_value=response))
+
+    def get(self, url: str, **kwargs: Any) -> mock.Mock:
+        self.requests.append(("get", url, copy.deepcopy(kwargs)))
+        return self._future()
+
+    def post(self, url: str, **kwargs: Any) -> mock.Mock:
+        self.requests.append(("post", url, copy.deepcopy(kwargs)))
+        return self._future()
+
+
+@pytest.fixture()
+def async_jira(offline_jira):
+    """``offline_jira`` with the async option on and a fake ``requests_futures``."""
+    future_bodies: list[Any] = []
+    package = types.ModuleType("requests_futures")
+    sessions = types.ModuleType("requests_futures.sessions")
+    sessions.FuturesSession = functools.partial(_FakeFuturesSession, future_bodies)
+    package.sessions = sessions
+    offline_jira._options["async"] = True
+    offline_jira._options["async_workers"] = 7
+    _FakeFuturesSession.instances.clear()
+    with mock.patch.dict(
+        sys.modules,
+        {"requests_futures": package, "requests_futures.sessions": sessions},
+    ):
+        yield offline_jira, future_bodies
+
+
+@pytest.mark.parametrize("use_post", [False, True], ids=["get", "post"])
+@pytest.mark.parametrize(
+    "future_pages, expected_keys",
+    [
+        ([_offset_page(100, 100), _offset_page(200, 50)], _keys(0, 250)),
+        ([None, _offset_page(200, 50)], _keys(0, 100) + _keys(200, 250)),
+    ],
+    ids=["all pages", "empty body is skipped"],
+)
+def test_fetch_pages_async_fetches_remaining_pages(
+    async_jira, use_post, future_pages, expected_keys
+):
+    client, future_bodies = async_jira
+    future_bodies.extend(future_pages)
+    server = _ScriptedServer(_offset_page(0, 100, total=250))
+    with mock.patch.object(client, "_get_json", side_effect=server):
+        issues = client._fetch_pages(
+            Issue, "issues", "search", 0, False, {"jql": "x"}, use_post=use_post
+        )
+
+    assert server.calls == [{"jql": "x", "maxResults": 100}]
+    (session,) = _FakeFuturesSession.instances
+    assert session.session is client._session
+    assert session.max_workers == 7
+    url = client._get_url("search")
+    expected = [{"jql": "x", "startAt": s, "maxResults": 100} for s in (100, 200)]
+    if use_post:
+        assert [(m, u, json.loads(k["data"])) for m, u, k in session.requests] == [
+            ("post", url, p) for p in expected
+        ]
+    else:
+        assert session.requests == [("get", url, {"params": p}) for p in expected]
+    assert [i.key for i in issues] == expected_keys
+    assert (issues.startAt, issues.maxResults, issues.total, issues.isLast) == (
+        0,
+        100,
+        250,
+        False,
+    )
+
+
+@pytest.mark.parametrize(
+    "first_page",
+    [
+        _offset_page(0, 100),
+        _offset_page(0, 100, total=250, isLast=True),
+        _offset_page(0, 100, total=100),
+    ],
+    ids=["without total", "isLast", "everything in first page"],
+)
+def test_fetch_pages_async_single_request(async_jira, first_page):
+    client, _ = async_jira
+    server = _ScriptedServer(first_page)
+    with mock.patch.object(client, "_get_json", side_effect=server):
+        issues = client._fetch_pages(Issue, "issues", "search", 0, False, {})
+
+    assert len(server.calls) == 1
+    assert _FakeFuturesSession.instances == []
+    assert [i.key for i in issues] == _keys(0, 100)
+
+
+def test_fetch_pages_async_with_max_results_pages_synchronously(async_jira):
+    client, _ = async_jira
+    server = _PagedServer(total=500, cap=100)
+    with mock.patch.object(client, "_get_json", side_effect=server):
+        issues = client._fetch_pages(Issue, "issues", "search", 0, 150, {})
+
+    assert server.calls == [{"maxResults": 150}, {"startAt": 100, "maxResults": 50}]
+    assert _FakeFuturesSession.instances == []
+    assert [i.key for i in issues] == _keys(0, 150)
+
+
+@pytest.mark.parametrize("max_results", [False, 150], ids=["fetch all", "up to 150"])
+def test_fetch_pages_search_token_result_fields(offline_jira, max_results):
+    offline_jira.deploymentType = "Cloud"
+    server = _PagedServer(total=120, cap=100, token_based=True)
+    with mock.patch.object(offline_jira, "_get_json", side_effect=server):
+        issues = offline_jira._fetch_pages_searchToken(
+            Issue, "issues", "search/jql", max_results, {}
+        )
+
+    assert [i.key for i in issues] == _keys(0, 120)
+    assert (issues.startAt, issues.maxResults, issues.total, issues.isLast) == (
+        0,
+        0,
+        120,
+        None,
+    )
+    assert issues.nextPageToken is None
+
+
+@pytest.mark.parametrize("max_results", [False, 50], ids=["fetch all", "up to 50"])
+@pytest.mark.parametrize(
+    "first_page, expected_token",
+    [({"issues": []}, None), ({"issues": [], "nextPageToken": "tok-0"}, "tok-0")],
+    ids=["no token", "with token"],
+)
+def test_fetch_pages_search_token_empty_first_page(
+    offline_jira, max_results, first_page, expected_token
+):
+    offline_jira.deploymentType = "Cloud"
+    server = _ScriptedServer(first_page)
+    with mock.patch.object(offline_jira, "_get_json", side_effect=server):
+        issues = offline_jira._fetch_pages_searchToken(
+            Issue, "issues", "search/jql", max_results, {}
+        )
+
+    assert len(server.calls) == 1
+    assert list(issues) == []
+    assert issues.total == 0
+    assert issues.nextPageToken == expected_token
+
+
+def test_fetch_pages_search_token_forwards_request_arguments(offline_jira):
+    offline_jira.deploymentType = "Cloud"
+    server = _ScriptedServer(
+        {
+            "issues": [_PagedServer._issue(i) for i in range(100, 200)],
+            "nextPageToken": "t2",
+        },
+        {"issues": [_PagedServer._issue(i) for i in range(200, 230)], "isLast": True},
+    )
+    params = {"jql": "x", "nextPageToken": "t1"}
+    with mock.patch.object(offline_jira, "_get_json", side_effect=server):
+        issues = offline_jira._fetch_pages_searchToken(
+            Issue, "issues", "search/jql", False, params, use_post=True
+        )
+
+    assert server.calls == [
+        {"jql": "x", "nextPageToken": "t1", "maxResults": 100},
+        {"jql": "x", "nextPageToken": "t2", "maxResults": 100},
+    ]
+    assert server.requests == [("search/jql", JIRA.JIRA_BASE_URL, True)] * 2
+    assert params == {"jql": "x", "nextPageToken": "t1"}
+    assert [i.key for i in issues] == _keys(100, 230)
+    assert issues.isLast is None
+
+
 def test_project_securitylevels(requests_mock):
     client = jira.client.JIRA(
         server="https://jira.example.com", get_server_info=False, validate=False
@@ -939,3 +1354,44 @@ def test_add_attachment_bytes_without_filename_raises(requests_mock):
         client.add_attachment("QQ-1", b"example content")
 
     assert not requests_mock.called
+
+
+def test_fetch_pages_uses_caller_start_at_when_response_has_none(offline_jira):
+    def page(start: int) -> dict:
+        return {
+            "maxResults": 100,
+            "total": 250,
+            "issues": [_PagedServer._issue(i) for i in range(start, start + 100)],
+        }
+
+    server = _ScriptedServer(page(50), page(150))
+    with mock.patch.object(offline_jira, "_get_json", side_effect=server):
+        offline_jira._fetch_pages(Issue, "issues", "search", 50, False, {})
+
+    assert server.calls[1]["startAt"] == 150
+
+
+def test_fetch_pages_up_to_stops_when_start_reaches_total(offline_jira):
+    server = _PagedServer(total=200, cap=100)
+    with mock.patch.object(offline_jira, "_get_json", side_effect=server):
+        issues = offline_jira._fetch_pages(Issue, "issues", "search", 0, 300, {})
+
+    assert server.calls == [{"maxResults": 300}, {"startAt": 100, "maxResults": 100}]
+    assert len(issues) == 200
+
+
+def test_fetch_pages_search_token_truncates_to_max_results(offline_jira):
+    offline_jira.deploymentType = "Cloud"
+    server = _ScriptedServer(
+        {
+            "issues": [_PagedServer._issue(i) for i in range(100)],
+            "nextPageToken": "t1",
+        }
+    )
+    with mock.patch.object(offline_jira, "_get_json", side_effect=server):
+        issues = offline_jira._fetch_pages_searchToken(
+            Issue, "issues", "search/jql", 50, {}
+        )
+
+    assert len(server.calls) == 1
+    assert [i.key for i in issues] == _keys(0, 50)
