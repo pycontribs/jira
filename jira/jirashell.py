@@ -12,6 +12,7 @@ import os
 import sys
 import webbrowser
 from getpass import getpass
+from typing import Any
 from urllib.parse import parse_qsl
 
 import keyring
@@ -24,8 +25,17 @@ from jira import JIRA, __version__
 CONFIG_PATH = os.path.join(os.path.expanduser("~"), ".jira-python", "jirashell.ini")
 SENTINEL = object()
 
+# options, basic_auth, oauth and kerberos_auth settings; values mix str and bool.
+_ShellConfig = tuple[dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any]]
 
-def oauth_dance(server, consumer_key, key_cert_data, print_tokens=False, verify=None):
+
+def oauth_dance(
+    server: str,
+    consumer_key: str,
+    key_cert_data: str,
+    print_tokens: bool = False,
+    verify: bool | None = None,
+) -> dict[str, str]:
     if verify is None:
         verify = server.startswith("https")
 
@@ -97,7 +107,7 @@ def oauth_dance(server, consumer_key, key_cert_data, print_tokens=False, verify=
     }
 
 
-def process_config():
+def process_config() -> _ShellConfig:
     if not os.path.exists(CONFIG_PATH):
         return {}, {}, {}, {}
 
@@ -143,7 +153,7 @@ def process_config():
     return options, basic_auth, oauth, kerberos_auth
 
 
-def process_command_line():
+def process_command_line() -> _ShellConfig:
     parser = argparse.ArgumentParser(
         description="Start an interactive Jira shell with the REST API."
     )
@@ -285,7 +295,7 @@ def process_command_line():
     return options, basic_auth, oauth, kerberos_auth
 
 
-def get_config():
+def get_config() -> _ShellConfig:
     options, basic_auth, oauth, kerberos_auth = process_config()
 
     cmd_options, cmd_basic_auth, cmd_oauth, cmd_kerberos_auth = process_command_line()
@@ -298,7 +308,8 @@ def get_config():
     return options, basic_auth, oauth, kerberos_auth
 
 
-def handle_basic_auth(auth, server):
+def handle_basic_auth(auth: dict[str, str], server: str) -> tuple[str, str]:
+    password: str | None
     if auth.get("password"):
         password = auth["password"]
         if input("Would you like to remember password in OS keyring? (y/n)") == "y":
@@ -311,7 +322,7 @@ def handle_basic_auth(auth, server):
     return auth["username"], password
 
 
-def main():
+def main() -> int | None:
     try:
         try:
             get_ipython  # type: ignore[name-defined] # exists in ipython
@@ -320,25 +331,29 @@ def main():
         else:
             sys.exit("Running ipython inside ipython isn't supported. :(")
 
-        options, basic_auth, oauth, kerberos_auth = get_config()
+        options, basic_auth_config, oauth_config, kerberos_auth = get_config()
 
-        if basic_auth:
-            basic_auth = handle_basic_auth(auth=basic_auth, server=options["server"])
+        basic_auth = None
+        if basic_auth_config:
+            basic_auth = handle_basic_auth(
+                auth=basic_auth_config, server=options["server"]
+            )
 
-        if oauth.get("oauth_dance") is True:
+        oauth: dict[str, Any] | None = oauth_config
+        if oauth_config.get("oauth_dance") is True:
             oauth = oauth_dance(
                 options["server"],
-                oauth["consumer_key"],
-                oauth["key_cert"],
-                oauth["print_tokens"],
+                oauth_config["consumer_key"],
+                oauth_config["key_cert"],
+                oauth_config["print_tokens"],
                 options["verify"],
             )
         elif not all(
             (
-                oauth.get("access_token"),
-                oauth.get("access_token_secret"),
-                oauth.get("consumer_key"),
-                oauth.get("key_cert"),
+                oauth_config.get("access_token"),
+                oauth_config.get("access_token_secret"),
+                oauth_config.get("consumer_key"),
+                oauth_config.get("key_cert"),
             )
         ):
             oauth = None
@@ -363,6 +378,7 @@ def main():
     except Exception as e:
         print(e, file=sys.stderr)
         return 2
+    return None
 
 
 if __name__ == "__main__":

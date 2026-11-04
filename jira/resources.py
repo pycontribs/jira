@@ -10,6 +10,7 @@ import json
 import logging
 import re
 import time
+from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any, cast
 from urllib.parse import ParseResult, urlparse, urlunparse
 
@@ -209,7 +210,7 @@ class Resource:
         """Pickling the resource."""
         return vars(self)
 
-    def __setstate__(self, raw_pickled: dict[str, Any]):
+    def __setstate__(self, raw_pickled: dict[str, Any]) -> None:
         """Unpickling of the resource."""
         # https://stackoverflow.com/a/50888571/7724187
         vars(self).update(raw_pickled)
@@ -247,7 +248,7 @@ class Resource:
         self,
         id: tuple[str, ...] | int | str,
         params: dict[str, str] | None = None,
-    ):
+    ) -> None:
         """Finds a resource based on the input parameters.
 
         Args:
@@ -268,7 +269,7 @@ class Resource:
         self,
         url: str,
         params: dict[str, str] | None = None,
-    ):
+    ) -> None:
         """Finds a resource on the specified url.
 
         The resource is loaded with the JSON data returned by doing a
@@ -318,7 +319,7 @@ class Resource:
         jira: JIRA | None = None,
         notify: bool = True,
         **kwargs: Any,
-    ):
+    ) -> None:
         """Update this resource on the server.
 
         Keyword arguments are marshalled into a dict before being sent. If this resource doesn't support ``PUT``, a :py:exc:`.JIRAError`
@@ -455,10 +456,10 @@ class Resource:
     def _load(
         self,
         url: str,
-        headers=CaseInsensitiveDict(),
+        headers: CaseInsensitiveDict[str] = CaseInsensitiveDict(),
         params: dict[str, str] | None = None,
         path: str | None = None,
-    ):
+    ) -> None:
         """Load a resource.
 
         Args:
@@ -480,7 +481,7 @@ class Resource:
             j = j[path]
         self._parse_raw(j)
 
-    def _parse_raw(self, raw: dict[str, Any]):
+    def _parse_raw(self, raw: dict[str, Any]) -> None:
         """Parse a raw dictionary to create a resource.
 
         Args:
@@ -491,7 +492,9 @@ class Resource:
             raise NotImplementedError(f"We cannot instantiate empty resources: {raw}")
         dict2resource(raw, self, self._options, self._session)
 
-    def _default_headers(self, user_headers):
+    def _default_headers(
+        self, user_headers: dict[str, str]
+    ) -> CaseInsensitiveDict[str]:
         # result = dict(user_headers)
         # result['accept'] = 'application/json'
         return CaseInsensitiveDict(
@@ -513,12 +516,12 @@ class Attachment(Resource):
             self._parse_raw(raw)
         self.raw: dict[str, Any] = cast(dict[str, Any], self.raw)
 
-    def get(self):
-        """Return the file content as a string."""
+    def get(self) -> bytes:
+        """Return the file content as bytes."""
         r = self._session.get(self.content, headers={"Accept": "*/*"})
         return r.content
 
-    def iter_content(self, chunk_size=1024):
+    def iter_content(self, chunk_size: int = 1024) -> Iterator[bytes]:
         """Return the file content as an iterable stream."""
         r = self._session.get(self.content, stream=True)
         return r.iter_content(chunk_size)
@@ -538,7 +541,7 @@ class Component(Resource):
             self._parse_raw(raw)
         self.raw: dict[str, Any] = cast(dict[str, Any], self.raw)
 
-    def delete(self, moveIssuesTo: str | None = None):  # type: ignore[override]
+    def delete(self, moveIssuesTo: str | None = None) -> None:  # type: ignore[override]
         """Delete this component from the server.
 
         Args:
@@ -779,7 +782,7 @@ class Issue(Resource):
             def __init__(self) -> None:
                 self.worklogs: list[Worklog] = []
 
-        def __init__(self):
+        def __init__(self) -> None:
             self.assignee: UnknownResource | None = None
             self.attachment: list[Attachment] = []
             self.comment = self._Comment()
@@ -825,8 +828,8 @@ class Issue(Resource):
         async_: bool | None = None,
         jira: JIRA | None = None,
         notify: bool = True,
-        **fieldargs,
-    ):
+        **fieldargs: Any,
+    ) -> None:
         """Update this issue on the server.
 
         Each keyword argument (other than the predefined ones) is treated as a field name and the argument's value is treated as
@@ -919,7 +922,9 @@ class Issue(Resource):
         """
         super().update(fields={"update": {field: [{"remove": value}]}})
 
-    def delete(self, deleteSubtasks=False) -> None:
+    def delete(  # type: ignore[override] # named options, not a params dict
+        self, deleteSubtasks: bool = False
+    ) -> None:
         """Delete this issue from the server.
 
         Args:
@@ -962,7 +967,7 @@ class Comment(Resource):
         visibility: dict[str, str] | None = None,
         is_internal: bool = False,
         notify: bool = True,
-    ):
+    ) -> None:
         """Update a comment.
 
         Keyword arguments are marshalled into a dict before being sent.
@@ -1024,10 +1029,10 @@ class RemoteLink(Resource):
     def update(  # type: ignore[override]
         self,
         object: dict[str, Any] | None,
-        globalId=None,
-        application=None,
-        relationship=None,
-    ):
+        globalId: str | None = None,
+        application: dict[str, Any] | None = None,
+        relationship: str | None = None,
+    ) -> None:
         """Update a RemoteLink. 'object' is required.
 
         For definitions of the allowable fields for 'object' and the keyword arguments 'globalId', 'application' and 'relationship',
@@ -1039,7 +1044,7 @@ class RemoteLink(Resource):
             application: application information for the link (see the above link for details)
             relationship: relationship description for the link (see the above link for details)
         """
-        data = {"object": object}
+        data: dict[str, Any] = {"object": object}
         if globalId is not None:
             data["globalId"] = globalId
         if application is not None:
@@ -1048,7 +1053,7 @@ class RemoteLink(Resource):
             data["relationship"] = relationship
 
         # https://github.com/pycontribs/jira/issues/1881
-        super().update(**data)  # type: ignore[arg-type]
+        super().update(**data)
 
 
 class Votes(Resource):
@@ -1069,7 +1074,12 @@ class Votes(Resource):
 class IssueTypeScheme(Resource):
     """An issue type scheme."""
 
-    def __init__(self, options, session, raw=None):
+    def __init__(
+        self,
+        options: dict[str, str],
+        session: ResilientSession,
+        raw: dict[str, Any] | None = None,
+    ):
         Resource.__init__(self, "issuetypescheme", options, session)
         if raw:
             self._parse_raw(raw)
@@ -1079,7 +1089,12 @@ class IssueTypeScheme(Resource):
 class IssueSecurityLevelScheme(Resource):
     """IssueSecurityLevelScheme information on a project."""
 
-    def __init__(self, options, session, raw=None):
+    def __init__(
+        self,
+        options: dict[str, str],
+        session: ResilientSession,
+        raw: dict[str, Any] | None = None,
+    ):
         Resource.__init__(
             self, "project/{0}/issuesecuritylevelscheme?expand=user", options, session
         )
@@ -1091,7 +1106,12 @@ class IssueSecurityLevelScheme(Resource):
 class NotificationScheme(Resource):
     """NotificationScheme information on a project."""
 
-    def __init__(self, options, session, raw=None):
+    def __init__(
+        self,
+        options: dict[str, str],
+        session: ResilientSession,
+        raw: dict[str, Any] | None = None,
+    ):
         Resource.__init__(
             self, "project/{0}/notificationscheme?expand=user", options, session
         )
@@ -1103,7 +1123,12 @@ class NotificationScheme(Resource):
 class PermissionScheme(Resource):
     """Permissionscheme information on a project."""
 
-    def __init__(self, options, session, raw=None):
+    def __init__(
+        self,
+        options: dict[str, str],
+        session: ResilientSession,
+        raw: dict[str, Any] | None = None,
+    ):
         Resource.__init__(
             self, "project/{0}/permissionscheme?expand=user", options, session
         )
@@ -1115,7 +1140,12 @@ class PermissionScheme(Resource):
 class PriorityScheme(Resource):
     """PriorityScheme information on a project."""
 
-    def __init__(self, options, session, raw=None):
+    def __init__(
+        self,
+        options: dict[str, str],
+        session: ResilientSession,
+        raw: dict[str, Any] | None = None,
+    ):
         Resource.__init__(
             self, "project/{0}/priorityscheme?expand=user", options, session
         )
@@ -1127,7 +1157,12 @@ class PriorityScheme(Resource):
 class WorkflowScheme(Resource):
     """WorkflowScheme information on a project."""
 
-    def __init__(self, options, session, raw=None):
+    def __init__(
+        self,
+        options: dict[str, str],
+        session: ResilientSession,
+        raw: dict[str, Any] | None = None,
+    ):
         Resource.__init__(
             self, "project/{0}/workflowscheme?expand=user", options, session
         )
@@ -1150,7 +1185,7 @@ class Watchers(Resource):
             self._parse_raw(raw)
         self.raw: dict[str, Any] = cast(dict[str, Any], self.raw)
 
-    def delete(self, username):  # type: ignore[override]
+    def delete(self, username: str) -> None:  # type: ignore[override]
         """Remove the specified user from the watchers list."""
         super().delete(params={"username": username})
 
@@ -1184,8 +1219,11 @@ class Worklog(Resource):
         self.raw: dict[str, Any] = cast(dict[str, Any], self.raw)
 
     def delete(  # type: ignore[override]
-        self, adjustEstimate: str | None = None, newEstimate=None, increaseBy=None
-    ):
+        self,
+        adjustEstimate: str | None = None,
+        newEstimate: str | None = None,
+        increaseBy: str | None = None,
+    ) -> None:
         """Delete this worklog entry from its associated issue.
 
         Args:
@@ -1224,7 +1262,7 @@ class IssueProperty(Resource):
         self,
         url: str,
         params: dict[str, str] | None = None,
-    ):
+    ) -> None:
         super()._find_by_url(url, params)
         # An IssueProperty never returns "self" identifier, set it
         self.self = url
@@ -1323,7 +1361,7 @@ class Role(Resource):
         self,
         users: str | list | tuple | None = None,
         groups: str | list | tuple | None = None,
-    ):
+    ) -> None:
         """Add the specified users or groups to this project role. One of ``users`` or ``groups`` must be specified.
 
         Args:
@@ -1350,7 +1388,7 @@ class Role(Resource):
         self,
         users: str | list | tuple | None = None,
         groups: str | list | tuple | None = None,
-    ):
+    ) -> None:
         """Add the specified users or groups to this project role. One of ``users`` or ``groups`` must be specified.
 
         Args:
@@ -1476,7 +1514,11 @@ class Version(Resource):
             self._parse_raw(raw)
         self.raw: dict[str, Any] = cast(dict[str, Any], self.raw)
 
-    def delete(self, moveFixIssuesTo=None, moveAffectedIssuesTo=None):
+    def delete(  # type: ignore[override] # named options, not a params dict
+        self,
+        moveFixIssuesTo: str | None = None,
+        moveAffectedIssuesTo: str | None = None,
+    ) -> Response | None:
         """Delete this project version from the server.
 
         If neither of the arguments are specified, the version is removed from all issues it is attached to.
@@ -1494,7 +1536,7 @@ class Version(Resource):
         return super().delete(params)
 
     # TODO: https://github.com/pycontribs/jira/issues/1881
-    def update(self, **kwargs):  # type: ignore[override]
+    def update(self, **kwargs: Any) -> None:  # type: ignore[override]
         """Update this project version from the server. It is prior used to archive versions.
 
         Refer to Atlassian REST API `documentation`_.
@@ -1640,8 +1682,11 @@ class RequestType(Resource):
 
 
 def dict2resource(
-    raw: dict[str, Any], top=None, options=None, session=None
-) -> PropertyHolder | type[Resource]:
+    raw: dict[str, Any],
+    top: PropertyHolder | Resource | None = None,
+    options: dict[str, Any] | None = None,
+    session: ResilientSession | None = None,
+) -> PropertyHolder | Resource:
     """Convert a dictionary into a Jira Resource object.
 
     Recursively walks a dict structure, transforming the properties into attributes on a new ``Resource`` object of the appropriate type
@@ -1650,6 +1695,8 @@ def dict2resource(
     if top is None:
         top = PropertyHolder()
 
+    # The signature allows None for options and session, but every caller passes
+    # both and the resource constructors require them, hence the arg-type ignores.
     seqs = tuple, list, set, frozenset
     for i, j in raw.items():
         if isinstance(j, dict):
@@ -1659,14 +1706,15 @@ def dict2resource(
                 resource = cast(
                     type[Resource],
                     resource_class(  # type: ignore
-                        options=options,
-                        session=session,
-                        raw=j,  # type: ignore
+                        options=options,  # type: ignore[arg-type]
+                        session=session,  # type: ignore[arg-type]
+                        raw=j,
                     ),
                 )
                 setattr(top, i, resource)
             elif i == "timetracking":
-                setattr(top, "timetracking", TimeTracking(options, session, j))
+                timetracking = TimeTracking(options, session, j)  # type: ignore[arg-type]
+                setattr(top, "timetracking", timetracking)
             else:
                 setattr(top, i, dict2resource(j, options=options, session=session))
         elif isinstance(j, seqs):
@@ -1682,9 +1730,9 @@ def dict2resource(
                         resource = cast(
                             type[Resource],
                             resource_class(  # type: ignore
-                                options=options,
-                                session=session,
-                                raw=seq_elem,  # type: ignore
+                                options=options,  # type: ignore[arg-type]
+                                session=session,  # type: ignore[arg-type]
+                                raw=seq_elem,
                             ),
                         )
                         seq_list.append(resource)

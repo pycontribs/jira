@@ -175,6 +175,12 @@ follow_untyped_imports = true
 namespace_packages = true
 python_version = "3.10"
 warn_unused_configs = true
+warn_unused_ignores = true
+
+[[tool.mypy.overrides]]
+disallow_incomplete_defs = true
+disallow_untyped_defs = true
+module = ["jira", "jira.*"]
 
 [[tool.mypy.overrides]]
 ignore_missing_imports = true

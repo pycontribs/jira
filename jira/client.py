@@ -34,6 +34,7 @@ from typing import (
     Literal,
     SupportsIndex,
     TypeVar,
+    cast,
     no_type_check,
     overload,
 )
@@ -43,6 +44,7 @@ import requests
 from packaging.version import parse as parse_version
 from requests import Response
 from requests.auth import AuthBase
+from requests.cookies import RequestsCookieJar
 from requests.structures import CaseInsensitiveDict
 from requests.utils import get_netrc_auth
 from requests_toolbelt import MultipartEncoder
@@ -134,7 +136,7 @@ def cloud_api(client_method: Callable) -> Callable:
     """
     wraps(client_method)
 
-    def check_if_cloud(*args, **kwargs):
+    def check_if_cloud(*args: Any, **kwargs: Any) -> Any:
         # The first argument of any class instance is a `self`
         # reference. Avoiding magic numbers here.
         instance = next(arg for arg in args)
@@ -169,7 +171,7 @@ def experimental_atlassian_api(client_method: Callable) -> Callable:
     """
     wraps(client_method)
 
-    def is_experimental(*args, **kwargs):
+    def is_experimental(*args: Any, **kwargs: Any) -> Any:
         instance = next(arg for arg in args)
         if not isinstance(instance, JIRA):
             raise NotJIRAInstanceError(instance)
@@ -190,7 +192,7 @@ def experimental_atlassian_api(client_method: Callable) -> Callable:
     return is_experimental
 
 
-def translate_resource_args(func: Callable):
+def translate_resource_args(func: Callable[..., Any]) -> Callable[..., Any]:
     """Decorator that converts Issue and Project resources to their keys when used as arguments.
 
     Args:
@@ -278,22 +280,25 @@ class ResultList(list, Generic[ResourceType]):
     @overload
     def __getitem__(self, i: SupportsIndex) -> ResourceType: ...  # type:ignore[misc]  # noqa: E704
     @overload
-    def __getitem__(self, s: slice) -> list[ResourceType]: ...  # type:ignore[misc]  # noqa: E704
-    def __getitem__(self, slice_or_index): # noqa: E301,E261
+    def __getitem__(self, s: slice) -> list[ResourceType]: ...  # noqa: E704
+    def __getitem__(self, slice_or_index: SupportsIndex | slice) -> ResourceType | list[ResourceType]: # noqa: E301,E261
         return list.__getitem__(self, slice_or_index)
     # fmt: on
 
 
 class QshGenerator:
-    def __init__(self, context_path):
+    def __init__(self, context_path: str) -> None:
         self.context_path = context_path
 
-    def __call__(self, req):
+    def __call__(self, req: requests.PreparedRequest) -> str:
         qsh = self._generate_qsh(req)
         return hashlib.sha256(qsh.encode("utf-8")).hexdigest()
 
-    def _generate_qsh(self, req):
-        parse_result = urlparse(req.url)
+    def _generate_qsh(self, req: requests.PreparedRequest) -> str:
+        # requests_jwt calls this with a prepared request, so url and method are set.
+        url = cast(str, req.url)
+        method = cast(str, req.method)
+        parse_result = urlparse(url)
 
         path = (
             parse_result.path[len(self.context_path) :]
@@ -309,10 +314,10 @@ class QshGenerator:
         }
         query = "&".join(f"{key}={joined[key]}" for key in sorted(joined.keys()))
 
-        qsh = f"{req.method.upper()}&{path}&{query}"
+        qsh = f"{method.upper()}&{path}&{query}"
         return qsh
 
-    def _sort_and_quote_values(self, values):
+    def _sort_and_quote_values(self, values: list[str]) -> list[str]:
         ordered_values = sorted(values)
         return [quote(value, safe="~") for value in ordered_values]
 
@@ -340,20 +345,20 @@ class JiraCookieAuth(AuthBase):
         self._max_allowed_401_retries = 1  # 401 aren't recoverable with retries really
 
     @property
-    def cookies(self):
+    def cookies(self) -> RequestsCookieJar:
         return self._session.cookies
 
-    def _increment_401_retry_counter(self):
+    def _increment_401_retry_counter(self) -> None:
         self._retry_counter_401 += 1
 
-    def _reset_401_retry_counter(self):
+    def _reset_401_retry_counter(self) -> None:
         self._retry_counter_401 = 0
 
-    def __call__(self, request: requests.PreparedRequest):
+    def __call__(self, request: requests.PreparedRequest) -> requests.PreparedRequest:
         request.register_hook("response", self.handle_401)
         return request
 
-    def init_session(self):
+    def init_session(self) -> None:
         """Initialise the Session object's cookies, so we can use the session cookie.
 
         Raises HTTPError if the post returns an erroring http response
@@ -365,7 +370,9 @@ class JiraCookieAuth(AuthBase):
         )
         r.raise_for_status()
 
-    def handle_401(self, response: requests.Response, **kwargs) -> requests.Response:
+    def handle_401(
+        self, response: requests.Response, **kwargs: Any
+    ) -> requests.Response:
         """Refresh cookies if the session cookie has expired. Then retry the request.
 
         Args:
@@ -386,19 +393,21 @@ class JiraCookieAuth(AuthBase):
         return response
 
     def process_original_request(
-        self, original_request: requests.PreparedRequest, **kwargs
-    ):
+        self, original_request: requests.PreparedRequest, **kwargs: Any
+    ) -> requests.Response:
         self.update_cookies(original_request)
         return self.send_request(original_request, **kwargs)
 
-    def update_cookies(self, original_request: requests.PreparedRequest):
+    def update_cookies(self, original_request: requests.PreparedRequest) -> None:
         # Cookie header needs first to be deleted for the header to be updated using the
         # prepare_cookies method. See request.PrepareRequest.prepare_cookies
         if "Cookie" in original_request.headers:
             del original_request.headers["Cookie"]
         original_request.prepare_cookies(self.cookies)
 
-    def send_request(self, request: requests.PreparedRequest, **kwargs):
+    def send_request(
+        self, request: requests.PreparedRequest, **kwargs: Any
+    ) -> requests.Response:
         return self._session.send(request, **kwargs)
 
 
@@ -409,7 +418,7 @@ class TokenAuth(AuthBase):
         # setup any auth-related data here
         self._token = token
 
-    def __call__(self, r: requests.PreparedRequest):
+    def __call__(self, r: requests.PreparedRequest) -> requests.PreparedRequest:
         # modify and return the request
         r.headers["authorization"] = f"Bearer {self._token}"
         return r
@@ -481,9 +490,9 @@ class JIRA:
         token_auth: str | None = None,
         oauth: dict[str, Any] | None = None,
         jwt: dict[str, Any] | None = None,
-        kerberos=False,
+        kerberos: bool = False,
         kerberos_options: dict[str, Any] | None = None,
-        validate=False,
+        validate: bool = False,
         get_server_info: bool = True,
         async_: bool = False,
         async_workers: int = 5,
@@ -494,7 +503,7 @@ class JIRA:
         auth: tuple[str, str] | None = None,
         default_batch_sizes: dict[type[Resource], int | None] | None = None,
         max_retry_delay: int = 60,
-    ):
+    ) -> None:
         """Construct a Jira client instance.
 
         Without any arguments, this client will connect anonymously to the Jira instance started by the Atlassian Plugin SDK from one
@@ -692,7 +701,7 @@ class JIRA:
             self._update_fields_cache()
         return self._fields_cache_value
 
-    def _update_fields_cache(self):
+    def _update_fields_cache(self) -> None:
         """Update the cache used for `self._fields_cache`."""
         self._fields_cache_value = {}
         for f in self.fields():
@@ -714,7 +723,7 @@ class JIRA:
         """Return whether we are on a Cloud based Jira instance."""
         return self.deploymentType in ("Cloud",)
 
-    def _create_cookie_auth(self, auth: tuple[str, str]):
+    def _create_cookie_auth(self, auth: tuple[str, str]) -> None:
         warnings.warn(
             "Use OAuth or Token based authentication "
             + "instead of Cookie based Authentication.",
@@ -726,7 +735,7 @@ class JIRA:
             auth=auth,
         )
 
-    def _check_update_(self):
+    def _check_update_(self) -> None:
         """Check if the current version of the library is outdated."""
         try:
             data = requests.get(
@@ -758,9 +767,9 @@ class JIRA:
                 # see warning section in https://docs.python.org/2/reference/datamodel.html#object.__del__
                 pass
             # TODO: https://github.com/pycontribs/jira/issues/1881
-            self._session = None  # type: ignore[arg-type,assignment]
+            self._session = None  # type: ignore[assignment]
 
-    def _check_for_html_error(self, content: str):
+    def _check_for_html_error(self, content: str) -> bool:
         # Jira has the bad habit of returning errors in pages with 200 and embedding the
         # error in a huge webpage.
         if "<!-- SecurityTokenMissing -->" in content:
@@ -768,7 +777,7 @@ class JIRA:
             raise JIRAError(f"SecurityTokenMissing: {content}")
         return True
 
-    def _get_sprint_field_id(self):
+    def _get_sprint_field_id(self) -> int:
         sprint_field_name = "Sprint"
         sprint_field_id = [
             f["schema"]["customId"]
@@ -1111,7 +1120,7 @@ class JIRA:
             params["key"] = key
         return self._get_json("application-properties", params=params)
 
-    def set_application_property(self, key: str, value: str):
+    def set_application_property(self, key: str, value: str) -> Response:
         """Set the application property.
 
         Args:
@@ -1189,7 +1198,7 @@ class JIRA:
         """
         close_attachment = False
         if isinstance(attachment, str):
-            attachment_io = open(attachment, "rb")  # type: ignore
+            attachment_io = open(attachment, "rb")
             close_attachment = True
         else:
             attachment_io = attachment
@@ -1267,7 +1276,7 @@ class JIRA:
 
     # Components
 
-    def component(self, id: str):
+    def component(self, id: str) -> Component:
         """Get a component Resource from the server.
 
         Args:
@@ -1280,10 +1289,10 @@ class JIRA:
         self,
         name: str,
         project: str,
-        description=None,
-        leadUserName=None,
-        assigneeType=None,
-        isAssigneeTypeValid=False,
+        description: str | None = None,
+        leadUserName: str | None = None,
+        assigneeType: str | None = None,
+        isAssigneeTypeValid: bool = False,
     ) -> Component:
         """Create a component inside a project and return a Resource for it.
 
@@ -1316,7 +1325,7 @@ class JIRA:
         component = Component(self._options, self._session, raw=json_loads(r))
         return component
 
-    def component_count_related_issues(self, id: str):
+    def component_count_related_issues(self, id: str) -> int:
         """Get the count of related issues for a component.
 
         Args:
@@ -1355,7 +1364,7 @@ class JIRA:
     # Dashboards
 
     def dashboards(
-        self, filter=None, startAt=0, maxResults=20
+        self, filter: str | None = None, startAt: int = 0, maxResults: int = 20
     ) -> ResultList[Dashboard]:
         """Return a ResultList of Dashboard resources and a ``total`` count.
 
@@ -1708,12 +1717,12 @@ class JIRA:
 
     def update_filter(
         self,
-        filter_id,
+        filter_id: str,
         name: str | None = None,
         description: str | None = None,
         jql: str | None = None,
         favourite: bool | None = None,
-    ):
+    ) -> Filter:
         """Update a filter and return a filter Resource for it.
 
         Args:
@@ -1919,7 +1928,7 @@ class JIRA:
         self,
         fields: dict[str, Any] | None = None,
         prefetch: bool = True,
-        **fieldargs,
+        **fieldargs: Any,
     ) -> Issue:
         """Create a new issue and return an issue Resource for it.
 
@@ -2049,7 +2058,7 @@ class JIRA:
                 )
         return issue_list
 
-    def supports_service_desk(self):
+    def supports_service_desk(self) -> bool:
         """Returns if the Jira instance supports service desk.
 
         Returns:
@@ -2118,7 +2127,7 @@ class JIRA:
         self,
         fields: dict[str, Any] | None = None,
         prefetch: bool = True,
-        **fieldargs,
+        **fieldargs: Any,
     ) -> Issue:
         """Create a new customer request and return an issue Resource for it.
 
@@ -2484,7 +2493,7 @@ class JIRA:
 
     # non-resource
     @translate_resource_args
-    def editmeta(self, issue: str | int):
+    def editmeta(self, issue: str | int) -> dict[str, Any]:
         """Get the edit metadata for an issue.
 
         Args:
@@ -2612,7 +2621,7 @@ class JIRA:
         remote_link = RemoteLink(self._options, self._session, raw=json_loads(r))
         return remote_link
 
-    def add_simple_link(self, issue: str, object: dict[str, Any]):
+    def add_simple_link(self, issue: str, object: dict[str, Any]) -> RemoteLink:
         """Add a simple remote link from an issue to web resource.
 
         This avoids the admin access problems from add_remote_link by just using a simple object and presuming all fields are correct
@@ -2639,7 +2648,9 @@ class JIRA:
 
     # non-resource
     @translate_resource_args
-    def transitions(self, issue: str | int | Issue, id: str | None = None, expand=None):
+    def transitions(
+        self, issue: str | int | Issue, id: str | None = None, expand: str | None = None
+    ) -> list[dict[str, Any]]:
         """Get a list of the transitions available on the specified issue to the current user.
 
         Args:
@@ -2690,8 +2701,8 @@ class JIRA:
         fields: dict[str, Any] | None = None,
         comment: str | None = None,
         worklog: str | None = None,
-        **fieldargs,
-    ):
+        **fieldargs: Any,
+    ) -> dict[str, Any]:
         """Perform a transition on an issue.
 
         Each keyword argument (other than the predefined ones) is treated as a field name and the argument's value is treated as the intended value for that field -- if the fields argument is used,
@@ -2827,7 +2838,7 @@ class JIRA:
         return self._session.post(url)
 
     @translate_resource_args
-    def remove_vote(self, issue: str | int):
+    def remove_vote(self, issue: str | int) -> None:
         """Remove the current authenticated user's vote from an issue.
 
         Args:
@@ -3015,7 +3026,7 @@ class JIRA:
         return self._find_for_resource(IssueProperty, (issue, key))
 
     @translate_resource_args
-    def add_issue_property(self, issue: str, key: str, data) -> Response:
+    def add_issue_property(self, issue: str, key: str, data: Any) -> Response:
         """Add or update a specific issue property Resource.
 
         Args:
@@ -3079,7 +3090,7 @@ class JIRA:
         url = self._get_url("issueLink")
         return self._session.post(url, data=json.dumps(data))
 
-    def delete_issue_link(self, id: str):
+    def delete_issue_link(self, id: str) -> Response:
         """Delete a link between two issues.
 
         Args:
@@ -3261,7 +3272,7 @@ class JIRA:
         ]
         return request_types
 
-    def request_type_by_name(self, service_desk: ServiceDesk, name: str):
+    def request_type_by_name(self, service_desk: ServiceDesk, name: str) -> RequestType:
         request_types = self.request_types(service_desk)
         try:
             request_type = [rt for rt in request_types if rt.name == name][0]
@@ -3371,7 +3382,7 @@ class JIRA:
 
     # non-resource
     @translate_resource_args
-    def project_avatars(self, project: str):
+    def project_avatars(self, project: str) -> dict[str, Any]:
         """Get a dict of all avatars for a project visible to the current authenticated user.
 
         Args:
@@ -3388,7 +3399,7 @@ class JIRA:
         avatar_img: bytes,
         contentType: str | None = None,
         auto_confirm: bool = False,
-    ):
+    ) -> dict[str, Any]:
         """Register an image file as a project avatar.
 
         The avatar created is temporary and must be confirmed before it can be used.
@@ -3436,7 +3447,9 @@ class JIRA:
             return cropping_properties
 
     @translate_resource_args
-    def confirm_project_avatar(self, project: str, cropping_properties: dict[str, Any]):
+    def confirm_project_avatar(
+        self, project: str, cropping_properties: dict[str, Any]
+    ) -> dict[str, Any]:
         """Confirm the temporary avatar image previously uploaded with the specified cropping.
 
         After a successful registry with :py:meth:`create_temp_project_avatar`, use this method to confirm the avatar for use.
@@ -3454,7 +3467,7 @@ class JIRA:
         return json_loads(r)
 
     @translate_resource_args
-    def set_project_avatar(self, project: str, avatar: str):
+    def set_project_avatar(self, project: str, avatar: str) -> None:
         """Set a project's avatar.
 
         Args:
@@ -4070,7 +4083,7 @@ class JIRA:
         startAt: int = 0,
         maxResults: int = 50,
         query: str | None = None,
-    ):
+    ) -> ResultList[User]:
         """Get a list of user Resources that match the search string for assigning or creating issues.
 
         "username" query parameter is deprecated in Jira Cloud; the expected parameter now is "query", which can just be the full email again.
@@ -4136,7 +4149,7 @@ class JIRA:
         avatar_img: bytes,
         contentType: Any | None = None,
         auto_confirm: bool = False,
-    ):
+    ) -> dict[str, Any]:
         """Register an image file as a user avatar.
 
         The avatar created is temporary and must be confirmed before it can be used.
@@ -4192,7 +4205,9 @@ class JIRA:
         else:
             return cropping_properties
 
-    def confirm_user_avatar(self, user: str, cropping_properties: dict[str, Any]):
+    def confirm_user_avatar(
+        self, user: str, cropping_properties: dict[str, Any]
+    ) -> dict[str, Any]:
         """Confirm the temporary avatar image previously uploaded with the specified cropping.
 
         After a successful registry with :py:meth:`create_temp_user_avatar`, use this method to confirm the avatar for use.
@@ -4424,7 +4439,7 @@ class JIRA:
         version.find(id, params=params)
         return version
 
-    def version_count_related_issues(self, id: str):
+    def version_count_related_issues(self, id: str) -> dict[str, Any]:
         """Get a dict of the counts of issues fixed and affected by a version.
 
         Args:
@@ -4434,7 +4449,7 @@ class JIRA:
         del r_json["self"]  # this isn't really an addressable resource
         return r_json
 
-    def version_count_unresolved_issues(self, id: str):
+    def version_count_unresolved_issues(self, id: str) -> int:
         """Get the number of unresolved issues for a version.
 
         Args:
@@ -4483,7 +4498,7 @@ class JIRA:
         return None
 
     # Utilities
-    def _create_http_basic_session(self, username: str, password: str):
+    def _create_http_basic_session(self, username: str, password: str) -> None:
         """Creates a basic http session.
 
         Args:
@@ -4495,7 +4510,7 @@ class JIRA:
         """
         self._session.auth = (username, password)
 
-    def _create_oauth_session(self, oauth: dict[str, Any]):
+    def _create_oauth_session(self, oauth: dict[str, Any]) -> None:
         from oauthlib.oauth1 import SIGNATURE_HMAC_SHA1 as DEFAULT_SHA
         from requests_oauthlib import OAuth1
 
@@ -4532,7 +4547,7 @@ class JIRA:
     def _create_kerberos_session(
         self,
         kerberos_options: dict[str, Any] | None = None,
-    ):
+    ) -> None:
         if kerberos_options is None:
             kerberos_options = {}
 
@@ -4553,7 +4568,7 @@ class JIRA:
             mutual_authentication=mutual_authentication
         )
 
-    def _add_client_cert_to_session(self):
+    def _add_client_cert_to_session(self) -> None:
         """Adds the client certificate to the session.
 
         If configured through the constructor.
@@ -4565,7 +4580,7 @@ class JIRA:
         client_cert: str | tuple[str, str] = self._options["client_cert"]
         self._session.cert = client_cert
 
-    def _add_ssl_cert_verify_strategy_to_session(self):
+    def _add_ssl_cert_verify_strategy_to_session(self) -> None:
         """Adds verification strategy for host SSL certificates.
 
         If configured through the constructor.
@@ -4578,13 +4593,13 @@ class JIRA:
         self._session.verify = ssl_cert
 
     @staticmethod
-    def _timestamp(dt: datetime.timedelta | None = None):
+    def _timestamp(dt: datetime.timedelta | None = None) -> int:
         t = datetime.datetime.utcnow()
         if dt is not None:
             t += dt
         return calendar.timegm(t.timetuple())
 
-    def _create_jwt_session(self, jwt: dict[str, Any]):
+    def _create_jwt_session(self, jwt: dict[str, Any]) -> None:
         try:
             jwt_auth = JWTAuth(jwt["secret"], alg="HS256")
         except NameError as e:
@@ -4601,14 +4616,16 @@ class JIRA:
             jwt_auth.add_field(f[0], f[1])
         self._session.auth = jwt_auth
 
-    def _create_token_session(self, token_auth: str):
+    def _create_token_session(self, token_auth: str) -> None:
         """Creates token-based session.
 
         Header structure: "authorization": "Bearer <token_auth>".
         """
         self._session.auth = TokenAuth(token_auth)
 
-    def _set_avatar(self, params, url, avatar):
+    def _set_avatar(
+        self, params: dict[str, str] | None, url: str, avatar: str
+    ) -> Response:
         data = {"id": avatar}
         return self._session.put(url, params=params, data=json.dumps(data))
 
@@ -4672,7 +4689,7 @@ class JIRA:
         params: dict[str, Any] | None = None,
         base: str = JIRA_BASE_URL,
         use_post: bool = False,
-    ):
+    ) -> Any:
         """Get the json for a given path and params.
 
         Args:
@@ -4701,7 +4718,7 @@ class JIRA:
         self,
         resource_cls: Any,
         ids: tuple[str, ...] | tuple[str | int, str] | int | str,
-        expand=None,
+        expand: str | None = None,
     ) -> Any:
         """Uses the find method of the provided Resource class.
 
@@ -4725,7 +4742,7 @@ class JIRA:
             raise JIRAError("Unable to find resource %s(%s)", resource_cls, str(ids))
         return resource
 
-    def _try_magic(self):
+    def _try_magic(self) -> None:
         try:
             import weakref
 
@@ -4736,7 +4753,7 @@ class JIRA:
             try:
                 _magic = magic.Magic(flags=magic.MAGIC_MIME_TYPE)
 
-                def cleanup(x):
+                def cleanup(x: weakref.ref[JIRA]) -> None:
                     _magic.close()
 
                 self._magic_weakref = weakref.ref(self, cleanup)
@@ -4787,7 +4804,7 @@ class JIRA:
         finally:
             os.unlink(name)
 
-    def rename_user(self, old_user: str, new_user: str):
+    def rename_user(self, old_user: str, new_user: str) -> None:
         """Rename a Jira user.
 
         Args:
@@ -5020,7 +5037,7 @@ class JIRA:
         file_size = int(status["size"])
         return perc_complete >= 100 and file_size > 0
 
-    def backup_download(self, filename: str | None = None):
+    def backup_download(self, filename: str | None = None) -> None:
         """Download backup file from WebDAV (cloud only)."""
         if not self._is_cloud:
             self.log.warning("This functionality is not available in Server version")
@@ -5105,7 +5122,7 @@ class JIRA:
             raise JIRAError("Project not found in Jira")
         return r.ok
 
-    def _gain_sudo_session(self, options, destination):
+    def _gain_sudo_session(self, options: dict[str, str], destination: str) -> Response:
         url = self.server_url + "/secure/admin/WebSudoAuthenticate.jspa"
 
         if not self._session.auth:
@@ -5143,7 +5160,7 @@ class JIRA:
         return templates
 
     @cache
-    def permissionschemes(self):
+    def permissionschemes(self) -> list[dict[str, Any]]:
         url = self._get_url("permissionscheme")
 
         r = self._session.get(url)
@@ -5166,7 +5183,7 @@ class JIRA:
         return data["schemes"]
 
     @cache
-    def issuesecurityschemes(self):
+    def issuesecurityschemes(self) -> list[dict[str, Any]]:
         url = self._get_url("issuesecurityschemes")
 
         r = self._session.get(url)
@@ -5175,7 +5192,7 @@ class JIRA:
         return data["issueSecuritySchemes"]
 
     @cache
-    def projectcategories(self):
+    def projectcategories(self) -> list[dict[str, Any]]:
         url = self._get_url("projectCategory")
 
         r = self._session.get(url)
@@ -5184,7 +5201,7 @@ class JIRA:
         return data
 
     @cache
-    def avatars(self, entity="project"):
+    def avatars(self, entity: str = "project") -> list[dict[str, Any]]:
         url = self._get_url(f"avatar/{entity}/system")
 
         r = self._session.get(url)
@@ -5193,7 +5210,7 @@ class JIRA:
         return data["system"]
 
     @cache
-    def notificationschemes(self):
+    def notificationschemes(self) -> list[dict[str, Any]]:
         # TODO(ssbarnea): implement pagination support
         url = self._get_url("notificationscheme")
 
@@ -5202,7 +5219,7 @@ class JIRA:
         return data["values"]
 
     @cache
-    def screens(self):
+    def screens(self) -> list[dict[str, Any]]:
         # TODO(ssbarnea): implement pagination support
         url = self._get_url("screens")
 
@@ -5211,7 +5228,7 @@ class JIRA:
         return data["values"]
 
     @cache
-    def workflowscheme(self):
+    def workflowscheme(self) -> Any:
         # TODO(ssbarnea): implement pagination support
         url = self._get_url("workflowschemes")
 
@@ -5220,7 +5237,7 @@ class JIRA:
         return data  # ['values']
 
     @cache
-    def workflows(self):
+    def workflows(self) -> Any:
         # TODO(ssbarnea): implement pagination support
         url = self._get_url("workflow")
 
@@ -5228,7 +5245,7 @@ class JIRA:
         data = json_loads(r)
         return data  # ['values']
 
-    def delete_screen(self, id: str):
+    def delete_screen(self, id: str) -> dict[str, Any]:
         url = self._get_url(f"screens/{id}")
 
         r = self._session.delete(url)
@@ -5237,7 +5254,7 @@ class JIRA:
         self.screens.cache_clear()
         return data
 
-    def delete_permissionscheme(self, id: str):
+    def delete_permissionscheme(self, id: str) -> dict[str, Any]:
         url = self._get_url(f"permissionscheme/{id}")
 
         r = self._session.delete(url)
@@ -5274,7 +5291,7 @@ class JIRA:
         notificationScheme: int = 10000,
         categoryId: int | None = None,
         url: str = "",
-    ):
+    ) -> dict[str, Any]:
         """Create a project with the specified parameters.
 
         Args:
@@ -5296,7 +5313,7 @@ class JIRA:
             url (Optional[str]): A link to information about the project, such as documentation.
 
         Returns:
-            Union[bool,int]: Should evaluate to False if it fails otherwise it will be the new project id.
+            Dict[str, Any]: The ``id``, ``key`` and ``self`` URL of the new project.
         """
         template_key = None
 
@@ -5452,7 +5469,7 @@ class JIRA:
         active: bool = True,
         ignore_existing: bool = False,
         application_keys: list | None = None,
-    ):
+    ) -> bool:
         """Create a new Jira user.
 
         Args:
@@ -5563,7 +5580,7 @@ class JIRA:
     # cspell:ignore idalko
     # Experimental support for iDalko Grid, expect API to change as it's using private
     # APIs currently https://support.idalko.com/browse/IGRID-1017
-    def get_igrid(self, issueid: str, customfield: str, schemeid: str):
+    def get_igrid(self, issueid: str, customfield: str, schemeid: str) -> Any:
         url = self.server_url + "/rest/idalko-igrid/1.0/datagrid/data"
         if str(customfield).isdigit():
             customfield = f"customfield_{customfield}"
@@ -5586,7 +5603,7 @@ class JIRA:
         maxResults: int = 50,
         type: str | None = None,
         name: str | None = None,
-        projectKeyOrID=None,
+        projectKeyOrID: str | int | None = None,
     ) -> ResultList[Board]:
         """Get a list of board resources.
 
@@ -5600,7 +5617,7 @@ class JIRA:
         Returns:
             ResultList[Board]
         """
-        params = {}
+        params: dict[str, str | int] = {}
         if type:
             params["type"] = type
         if name:
@@ -5721,7 +5738,7 @@ class JIRA:
 
         return json_loads(r)
 
-    def incompletedIssuesEstimateSum(self, board_id: str, sprint_id: str):
+    def incompletedIssuesEstimateSum(self, board_id: str, sprint_id: str) -> float:
         """Return the total incompleted points this sprint."""
         data: dict[str, Any] = self._get_json(
             f"rapid/charts/sprintreport?rapidViewId={board_id}&sprintId={sprint_id}",
@@ -5729,7 +5746,7 @@ class JIRA:
         )
         return data["contents"]["incompletedIssuesEstimateSum"]["value"]
 
-    def removed_issues(self, board_id: str, sprint_id: str):
+    def removed_issues(self, board_id: str, sprint_id: str) -> list[Issue]:
         """Return the completed issues for the sprint.
 
         Returns:
@@ -5746,7 +5763,7 @@ class JIRA:
 
         return issues
 
-    def removedIssuesEstimateSum(self, board_id: str, sprint_id: str):
+    def removedIssuesEstimateSum(self, board_id: str, sprint_id: str) -> float:
         """Return the total incompleted points this sprint."""
         data: dict[str, Any] = self._get_json(
             f"rapid/charts/sprintreport?rapidViewId={board_id}&sprintId={sprint_id}",
@@ -5783,7 +5800,7 @@ class JIRA:
         return sprint
 
     # TODO(ssbarnea): remove this as we do have Board.delete()
-    def delete_board(self, id):
+    def delete_board(self, id: str | int) -> None:
         """Delete an agile board."""
         board = Board(self._options, self._session, raw={"id": id})
         board.delete()
