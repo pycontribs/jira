@@ -284,3 +284,19 @@ def test_no_proxies_kwarg_when_not_configured(mocked_request_method: Mock):
     session.get(url="mocked_url")
     kwargs = mocked_request_method.call_args.kwargs
     assert "proxies" not in kwargs
+
+
+def test_env_proxies_do_not_mutate_session_proxies(requests_mock, monkeypatch):
+    monkeypatch.setenv("HTTP_PROXY", "http://env-proxy:8080")
+    monkeypatch.setenv("HTTPS_PROXY", "http://env-proxy:8080")
+    monkeypatch.setenv("NO_PROXY", "")
+    monkeypatch.setenv("no_proxy", "")
+    requests_mock.get("https://jira.example.com/rest", text="ok")
+    session = jira.resilientsession.ResilientSession(max_retries=0)
+    session.proxies = {"https": "http://configured:3128"}
+
+    session.get("https://jira.example.com/rest")
+
+    assert requests_mock.last_request.proxies["https"] == "http://configured:3128"
+    assert requests_mock.last_request.proxies["http"] == "http://env-proxy:8080"
+    assert session.proxies == {"https": "http://configured:3128"}
