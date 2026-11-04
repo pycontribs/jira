@@ -3,7 +3,7 @@ ci:
   # Dependabot owns version bumps; pre-commit.ci cannot switch autoupdate off.
   # https://github.com/pre-commit-ci/issues/issues/83
   autoupdate_schedule: quarterly
-  # pre-commit.ci has no uv, npm or network for these.
+  # pre-commit.ci has no uv, npm or network; the lint job in tox.yml runs these.
   skip:
     - codecov
     - codespell
