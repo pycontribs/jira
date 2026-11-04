@@ -19,12 +19,13 @@ from tests.conftest import (
     rndstr,
 )
 
+FILTER_RESULTS_GADGET_KEY = "filter-results-gadget"
+
 
 class DashboardTests(JiraTestCase):
     def setUp(self):
         super().setUp()
         self.dashboards_to_delete = []
-        self.gadget_title = "Filter Results"
         self.dashboard_item_expected_key = "config"
         self.dashboard_item_column_names = "issuetype|issuekey|summary|priority|status"
         self.dashboard_item_num = 5
@@ -37,6 +38,22 @@ class DashboardTests(JiraTestCase):
         for dashboard in self.dashboards_to_delete:
             dashboard.delete()
         super().tearDown()
+
+    def _filter_results_gadget(self) -> DashboardGadget:
+        # Cloud renames gadget titles, so match the module key embedded in the uri.
+        gadgets = self.jira.all_dashboard_gadgets()
+        for gadget in gadgets:
+            ident = f"{getattr(gadget, 'uri', '')} {getattr(gadget, 'moduleKey', '')}"
+            if FILTER_RESULTS_GADGET_KEY in ident:
+                return gadget
+        available = "\n".join(
+            f"{getattr(g, 'title', None)!r} uri={getattr(g, 'uri', None)!r}"
+            f" moduleKey={getattr(g, 'moduleKey', None)!r}"
+            for g in gadgets
+        )
+        pytest.fail(
+            f"No gadget matching {FILTER_RESULTS_GADGET_KEY!r}. Available:\n{available}"
+        )
 
     def test_dashboards(self):
         dashboards = self.jira.dashboards()
@@ -127,10 +144,7 @@ class DashboardTests(JiraTestCase):
             name=rndstr(), share_permissions=[{"type": "authenticated"}]
         )
         self.dashboards_to_delete.append(original_dashboard)
-        available_gadgets = self.jira.all_dashboard_gadgets()
-        filter_gadget = next(
-            gadget for gadget in available_gadgets if gadget.title == self.gadget_title
-        )
+        filter_gadget = self._filter_results_gadget()
 
         original_gadget = self.jira.add_gadget_to_dashboard(
             original_dashboard.id,
@@ -171,10 +185,7 @@ class DashboardTests(JiraTestCase):
         )
         self.dashboards_to_delete.append(dashboard)
 
-        available_gadgets = self.jira.all_dashboard_gadgets()
-        filter_gadget = next(
-            gadget for gadget in available_gadgets if gadget.title == self.gadget_title
-        )
+        filter_gadget = self._filter_results_gadget()
         for _ in range(0, gadget_count):
             self.jira.add_gadget_to_dashboard(
                 dashboard.id,
@@ -211,10 +222,7 @@ class DashboardTests(JiraTestCase):
         )
         self.dashboards_to_delete.append(dashboard)
 
-        available_gadgets = self.jira.all_dashboard_gadgets()
-        filter_gadget = next(
-            gadget for gadget in available_gadgets if gadget.title == self.gadget_title
-        )
+        filter_gadget = self._filter_results_gadget()
         gadget = self.jira.add_gadget_to_dashboard(
             dashboard.id,
             color="blue",
@@ -234,10 +242,7 @@ class DashboardTests(JiraTestCase):
         )
         self.dashboards_to_delete.append(dashboard)
 
-        available_gadgets = self.jira.all_dashboard_gadgets()
-        filter_gadget = next(
-            gadget for gadget in available_gadgets if gadget.title == self.gadget_title
-        )
+        filter_gadget = self._filter_results_gadget()
         gadget = self.jira.add_gadget_to_dashboard(
             dashboard.id,
             color="blue",
@@ -261,10 +266,7 @@ class DashboardTests(JiraTestCase):
             name=rndstr(), share_permissions=[{"type": "authenticated"}]
         )
         self.dashboards_to_delete.append(dashboard)
-        available_gadgets = self.jira.all_dashboard_gadgets()
-        filter_gadget = next(
-            gadget for gadget in available_gadgets if gadget.title == self.gadget_title
-        )
+        filter_gadget = self._filter_results_gadget()
         gadget = self.jira.add_gadget_to_dashboard(
             dashboard.id,
             color="blue",
@@ -285,10 +287,7 @@ class DashboardTests(JiraTestCase):
         )
         self.dashboards_to_delete.append(dashboard)
 
-        available_gadgets = self.jira.all_dashboard_gadgets()
-        filter_gadget = next(
-            gadget for gadget in available_gadgets if gadget.title == self.gadget_title
-        )
+        filter_gadget = self._filter_results_gadget()
         gadget = self.jira.add_gadget_to_dashboard(
             dashboard.id,
             color="blue",
@@ -339,10 +338,7 @@ class DashboardTests(JiraTestCase):
         )
         self.dashboards_to_delete.append(dashboard)
 
-        available_gadgets = self.jira.all_dashboard_gadgets()
-        filter_gadget = next(
-            gadget for gadget in available_gadgets if gadget.title == self.gadget_title
-        )
+        filter_gadget = self._filter_results_gadget()
         gadget = self.jira.add_gadget_to_dashboard(
             dashboard.id,
             color="blue",
