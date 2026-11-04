@@ -1624,6 +1624,35 @@ def test_issue_remove_field_value_sends_remove_operation(requests_mock):
     assert put.json() == {"update": {"labels": [{"remove": "old-label"}]}}
 
 
+@pytest.mark.parametrize(
+    "method, path", [("archive", "archive"), ("unarchive", "unarchive")]
+)
+def test_archive_issues_accepts_keys_and_issues(
+    offline_jira, requests_mock, method, path
+):
+    offline_jira.deploymentType = "Cloud"
+    url = f"https://jira.atlassian.com/rest/api/2/issue/{path}"
+    response = {"numberOfIssuesUpdated": 2, "errors": {}}
+    requests_mock.put(url, json=response)
+    issue = Issue(
+        offline_jira._options,
+        offline_jira._session,
+        raw={"id": "10002", "key": "ABC-2", "self": "x", "fields": {}},
+    )
+
+    result = getattr(offline_jira, f"{method}_issues")(iter(["ABC-1", issue, 10003]))
+
+    assert result == response
+    assert requests_mock.last_request.json() == {
+        "issueIdsOrKeys": ["ABC-1", "ABC-2", "10003"]
+    }
+
+
+def test_archive_issues_is_cloud_only(offline_jira, requests_mock):
+    assert offline_jira.archive_issues(["ABC-1"]) is None
+    assert not requests_mock.called
+
+
 def test_comment_property_roundtrip(requests_mock):
     client = jira.client.JIRA(
         server="https://jira.example.com", get_server_info=False, validate=False
