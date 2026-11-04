@@ -1782,7 +1782,7 @@ resource_class_map: dict[str, type[Resource]] = {
     r"dashboard/[^/]+/items/[^/]+/properties+$": DashboardItemPropertyKey,
     r"dashboard/[^/]+/items/[^/]+/properties/[^/]+$": DashboardItemProperty,
     r"dashboard/[^/]+/gadget/[^/]+$": DashboardGadget,
-    r"filter/[^/]$": Filter,
+    r"filter/[^/]+$": Filter,
     r"issue/[^/]+$": Issue,
     r"issue/[^/]+/comment/[^/]+$": Comment,
     r"comment/[^/]+/properties/[^/]+$": CommentProperty,
