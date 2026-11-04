@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+import copy
+import pickle
+
 import pytest
 
+import jira.client
 import jira.resources
 from tests.conftest import allow_on_cloud
 
@@ -50,3 +54,28 @@ class TestResource:
     def test_cls_for_resource(self, example_url, expected_class):
         """Test the regex recognizes the right class for a given URL."""
         assert jira.resources.cls_for_resource(example_url) == expected_class
+
+
+def test_resource_without_raw_has_no_attributes():
+    resource = jira.resources.Resource("thing/{0}", {"server": "x"}, None)
+    del resource.raw
+
+    assert not hasattr(resource, "anything")
+    copy.copy(resource)
+    pickle.loads(pickle.dumps(resource))
+
+
+def test_validate_with_malformed_session_response_does_not_recurse(requests_mock):
+    requests_mock.get(
+        "https://jira.example.net/rest/auth/1/session", json={"something": "blah"}
+    )
+
+    with pytest.raises(KeyError, match="self") as raised:
+        jira.client.JIRA(
+            "https://jira.example.net",
+            token_auth="test-token",
+            validate=True,
+            get_server_info=False,
+        )
+    half_built_user = raised.traceback[-1].frame.f_locals["self"]
+    assert not hasattr(half_built_user, "accountId")
