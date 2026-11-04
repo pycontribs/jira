@@ -1929,6 +1929,7 @@ class JIRA:
 
         if share_permissions:
             self.add_filter_share_permission(raw_filter_json["id"], share_permissions)
+            return self.filter(raw_filter_json["id"])
 
         return Filter(self._options, self._session, raw=raw_filter_json)
 
