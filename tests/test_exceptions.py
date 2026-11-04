@@ -10,6 +10,7 @@ from requests import Request, Response
 from requests.structures import CaseInsensitiveDict
 
 from jira.exceptions import JIRAError
+from jira.resilientsession import raise_on_error
 
 DUMMY_HEADERS = {"h": "nice headers"}
 DUMMY_TEXT = "nice text"
@@ -315,3 +316,26 @@ def test_jira_error_redacts_secret_like_keys_in_non_json_body(body):
 
     assert SECRET not in err_str
     assert "bob" in err_str
+
+
+def test_jira_error_redacts_stored_request_headers():
+    headers = CaseInsensitiveDict(
+        {"Authorization": f"Bearer {SECRET}", "Accept": "application/json"}
+    )
+
+    err = JIRAError(status_code=401, headers=headers)
+
+    assert err.headers["authorization"] == "********"
+    assert err.headers["accept"] == "application/json"
+    assert headers["Authorization"] == f"Bearer {SECRET}"
+
+
+def test_raise_on_error_does_not_store_secret_headers():
+    response = Response()
+    response.status_code = 401
+    response._content = b'{"errorMessages": ["Unauthorized"]}'
+
+    with pytest.raises(JIRAError) as exc_info:
+        raise_on_error(response, headers={"Authorization": f"Basic {SECRET}"})
+
+    assert SECRET not in repr(exc_info.value.headers)

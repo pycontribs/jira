@@ -28,8 +28,8 @@ def _sanitize_headers(headers: dict[str, Any] | Any) -> dict[str, Any] | Any:
     if not isinstance(headers, dict) and not hasattr(headers, "items"):
         return headers
 
-    sanitized = dict(headers)
-    for key in sanitized:
+    sanitized = headers.copy() if hasattr(headers, "copy") else dict(headers)
+    for key in list(sanitized):
         if _is_sensitive(key):
             sanitized[key] = _MASK
     return sanitized
@@ -97,14 +97,14 @@ class JIRAError(Exception):
             url (Optional[str]): Url related to the error.
             request (Optional[requests.Response | requests.PreparedRequest]): Request made related to the error.
             response (Optional[requests.Response]): Response received related to the error.
-            **kwargs: Will be used to get request headers.
+            **kwargs: ``headers`` is stored as request headers, with secret-like values masked.
         """
         self.status_code = status_code
         self.text = text
         self.url = url
         self.request = request
         self.response = response
-        self.headers = kwargs.get("headers", None)
+        self.headers = _sanitize_headers(kwargs.get("headers", None))
         self.log_to_tempfile = "PYJIRA_LOG_TO_TEMPFILE" in os.environ
         self.ci_run = "GITHUB_ACTION" in os.environ
 
