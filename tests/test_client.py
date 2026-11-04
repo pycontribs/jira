@@ -1850,21 +1850,31 @@ def test_filter_share_permission_on_old_server_raises_before_sending(
     assert requests_mock.call_count == 0
 
 
-def test_create_filter_adds_share_permission(offline_jira, requests_mock):
+def test_create_filter_returns_filter_with_added_share_permissions(
+    offline_jira, requests_mock
+):
     offline_jira._version = (8, 20, 0)
+    base = "https://jira.atlassian.com/rest/api/2/filter"
+    requests_mock.post(base, json={"id": "10000", "self": f"{base}/10000"})
     requests_mock.post(
-        "https://jira.atlassian.com/rest/api/2/filter",
-        json={"id": "10000", "self": "x", "name": "f"},
+        "https://jira.atlassian.com/rest/api/latest/filter/10000/permission",
+        json=[{"id": 1, "type": "global"}],
     )
-    permission_url = (
-        "https://jira.atlassian.com/rest/api/latest/filter/10000/permission"
+    requests_mock.get(
+        f"{base}/10000",
+        json={
+            "id": "10000",
+            "self": f"{base}/10000",
+            "sharePermissions": [{"id": 1, "type": "global"}],
+        },
     )
-    requests_mock.post(permission_url, json=[{"id": 1, "type": "global"}])
 
-    offline_jira.create_filter(name="f", share_permissions={"type": "global"})
+    created = offline_jira.create_filter(name="f", share_permissions={"type": "global"})
 
-    assert requests_mock.last_request.url == permission_url
-    assert requests_mock.last_request.json() == {"type": "global"}
+    permission_post = requests_mock.request_history[1]
+    assert permission_post.url.endswith("/latest/filter/10000/permission")
+    assert permission_post.json() == {"type": "global"}
+    assert created.raw["sharePermissions"] == [{"id": 1, "type": "global"}]
 
 
 def test_worklogs_and_worklog_send_expand(requests_mock):
