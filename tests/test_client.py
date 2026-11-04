@@ -1890,6 +1890,43 @@ def test_resources_passed_by_keyword_send_their_key(requests_mock):
     }
 
 
+def test_translate_resource_args_passes_resource_when_annotation_accepts_it():
+    issue = Issue({}, mock.Mock(), raw={"id": "1", "key": "ABC-1"})
+
+    @jira.client.translate_resource_args
+    def accepts_issue(x: Issue | str) -> Any:
+        return x
+
+    @jira.client.translate_resource_args
+    def accepts_any_resource(x: Resource | None = None) -> Any:
+        return x
+
+    @jira.client.translate_resource_args
+    def wants_str(x: str) -> Any:
+        return x
+
+    @jira.client.translate_resource_args
+    def takes_fields(**fields: Any) -> Any:
+        return fields["x"]
+
+    assert accepts_issue(issue) is issue
+    assert accepts_issue(x=issue) is issue
+    assert accepts_any_resource(issue) is issue
+    assert wants_str(issue) == "ABC-1"
+    assert wants_str(x=issue) == "ABC-1"
+    assert takes_fields(x=issue) is issue
+
+
+def test_translate_resource_args_converts_when_hints_do_not_resolve():
+    issue = Issue({}, mock.Mock(), raw={"id": "1", "key": "ABC-1"})
+
+    @jira.client.translate_resource_args
+    def unresolvable(x: Issue | NotDefinedAnywhere) -> Any:  # type: ignore[name-defined] # noqa: F821
+        return x
+
+    assert unresolvable(issue) == "ABC-1"
+
+
 SPRINT_REPORT_URL = (
     "https://jira.example.com/rest/greenhopper/1.0/rapid/charts/sprintreport"
     "?rapidViewId=1&sprintId=2"
