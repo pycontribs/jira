@@ -1744,3 +1744,38 @@ def test_create_issue_link_warns_on_unknown_type(link_client, requests_mock, cap
 
     assert requests_mock.last_request.json()["type"] == {"name": "Clones"}
     assert "Clones" in caplog.text
+
+
+SPRINT_REPORT_URL = (
+    "https://jira.example.com/rest/greenhopper/1.0/rapid/charts/sprintreport"
+    "?rapidViewId=1&sprintId=2"
+)
+SPRINT_REPORT = {
+    "contents": {
+        "completedIssues": [{"id": "10", "key": "ABC-10"}],
+        "puntedIssues": [{"id": "20", "key": "ABC-20"}],
+        "incompletedIssuesEstimateSum": {"value": 3.0},
+        "puntedIssuesEstimateSum": {"value": 5.0},
+    }
+}
+
+
+@pytest.mark.parametrize(
+    ("method", "expected"),
+    [
+        ("incompletedIssuesEstimateSum", 3.0),
+        ("removedIssuesEstimateSum", 5.0),
+        ("removed_issues", ["ABC-20"]),
+    ],
+)
+def test_sprint_report_methods_use_greenhopper_api(requests_mock, method, expected):
+    client = jira.client.JIRA(
+        server="https://jira.example.com", get_server_info=False, validate=False
+    )
+    requests_mock.get(SPRINT_REPORT_URL, json=SPRINT_REPORT)
+
+    result = getattr(client, method)("1", "2")
+
+    if isinstance(result, list):
+        result = [issue.key for issue in result]
+    assert result == expected
