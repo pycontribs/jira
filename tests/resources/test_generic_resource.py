@@ -27,7 +27,8 @@ class TestResource:
             (url_test_case("api/latest/dashboard/12345"), jira.resources.Dashboard),
             (url_test_case("api/latest/dashboard/1/items/1/properties"), jira.resources.DashboardItemPropertyKey),
             (url_test_case("api/latest/dashboard/1/items/1/properties/property"), jira.resources.DashboardItemProperty),
-            (url_test_case("api/latest/dashboard/1/gadget/1"), jira.resources.DashboardGadget)
+            (url_test_case("api/latest/dashboard/1/gadget/1"), jira.resources.DashboardGadget),
+            (url_test_case("api/2/filter/10035"), jira.resources.Filter),
         ],
         ids=[
             "issue",
@@ -40,7 +41,8 @@ class TestResource:
             "dashboard",
             "dashboard_item_property_key",
             "dashboard_item_property",
-            "dashboard_gadget"
+            "dashboard_gadget",
+            "filter",
         ],
     )
     # fmt: on
