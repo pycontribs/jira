@@ -16,7 +16,7 @@ repos:
       - id: check-useless-excludes
         priority: 0
   - repo: https://github.com/ansible/actions
-    rev: v1.0.1
+    rev: v1.1.2
     hooks:
       - id: mypy
         priority: 2
@@ -51,23 +51,23 @@ repos:
       - id: check-yaml
         files: .*\.(yaml|yml)$
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.37.1
+    rev: v1.38.0
     hooks:
       - id: yamllint
         files: \.(yaml|yml)$
   - repo: https://github.com/pappasam/toml-sort
-    rev: v0.24.2
+    rev: v0.25.0
     hooks:
       - id: toml-sort-fix
         alias: toml
         # uv.lock has its own canonical ordering; resorting churns it.
         exclude: ^uv\.lock$
   - repo: https://github.com/tox-dev/tox-ini-fmt
-    rev: 1.6.0
+    rev: 1.10.2
     hooks:
       - id: tox-ini-fmt
   # uv-lock fails if pyproject.toml has drifted from uv.lock.
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.11.8
+    rev: 0.13.7
     hooks:
       - id: uv-lock

@@ -18,7 +18,7 @@ lint = [
 ]
 
 [project]
-authors = [{email = "ben.speakmon@gmail.com", name = "Ben Speakmon"}]
+authors = [{ email = "ben.speakmon@gmail.com", name = "Ben Speakmon" }]
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Environment :: Other Environment",
@@ -46,7 +46,7 @@ dependencies = [
 description = "Python library for interacting with JIRA via REST APIs."
 dynamic = ["version"]
 keywords = ["api", "atlassian", "jira", "rest", "web"]
-maintainers = [{email = "sorin.sbarnea@gmail.com", name = "Sorin Sbarnea"}]
+maintainers = [{ email = "sorin.sbarnea@gmail.com", name = "Sorin Sbarnea" }]
 name = "jira"
 requires-python = ">=3.10"
 
@@ -260,7 +260,7 @@ zip-safe = false
 jira = ["jira/py.typed"]
 
 [tool.setuptools.packages]
-find = {namespaces = false}
+find = { namespaces = false }
 
 [tool.setuptools_scm]
 # To prevent accidental pick of mobile version tags such 'v6'
