@@ -11,7 +11,7 @@ import requests_mock as rm
 
 import jira.client
 from jira.exceptions import JIRAError, NotJIRAInstanceError
-from jira.resources import Issue
+from jira.resources import Issue, SecurityLevel
 from tests.conftest import JiraTestManager, get_unique_project_name
 
 
@@ -774,3 +774,23 @@ def test_fetch_pages_stops_on_is_last_for_full_final_page(offline_jira):
     assert get_json.call_count == 2
     assert len(issues) == 200
     assert issues.isLast is True
+
+
+def test_project_securitylevels(requests_mock):
+    client = jira.client.JIRA(
+        server="https://jira.example.com", get_server_info=False, validate=False
+    )
+    requests_mock.get(
+        "https://jira.example.com/rest/api/2/project/ABC/securitylevel",
+        json={
+            "levels": [
+                {"id": "10000", "name": "Internal", "description": "Staff only"},
+                {"id": "10001", "name": "Public", "description": "Everyone"},
+            ]
+        },
+    )
+
+    levels = client.project_securitylevels("ABC")
+
+    assert [level.name for level in levels] == ["Internal", "Public"]
+    assert all(isinstance(level, SecurityLevel) for level in levels)
