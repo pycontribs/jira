@@ -1191,7 +1191,7 @@ class JIRA:
     # Universal resource loading
 
     def find(
-        self, resource_format: str, ids: tuple[str, str] | int | str = ""
+        self, resource_format: str, ids: tuple[str | int, ...] | int | str = ""
     ) -> Resource:
         """Find Resource object for any addressable resource on the server.
 
@@ -1205,7 +1205,7 @@ class JIRA:
 
         Args:
             resource_format (str): the subpath to the resource string
-            ids (Optional[Tuple]): values to substitute in the ``resource_format`` string
+            ids (tuple[str | int, ...] | int | str): values to substitute in the ``resource_format`` string
         Returns:
             Resource
         """
@@ -1279,11 +1279,11 @@ class JIRA:
         return self._applicationlinks
 
     # Attachments
-    def attachment(self, id: str) -> Attachment:
+    def attachment(self, id: str | int) -> Attachment:
         """Get an attachment Resource from the server for the specified ID.
 
         Args:
-            id (str): The Attachment ID
+            id (str | int): The Attachment ID
 
         Returns:
             Attachment
@@ -1302,7 +1302,7 @@ class JIRA:
     @translate_resource_args
     def add_attachment(
         self,
-        issue: str | int,
+        issue: str | int | Issue,
         attachment: str | bytes | BufferedReader,
         filename: str | None = None,
     ) -> Attachment:
@@ -1312,7 +1312,7 @@ class JIRA:
         The user is still responsible for tidying up (e.g., closing the file, killing the socket, etc.)
 
         Args:
-            issue (Union[str, int]): the issue to attach the attachment to
+            issue (str | int | Issue): the issue to attach the attachment to
             attachment (Union[str, bytes, BufferedReader]): file-like object to attach to the issue, also works if it is a string with the filename
               or the raw ``bytes`` of the file.
             filename (str): optional name for the attached file. If omitted, the file object's ``name`` attribute is used.
@@ -1393,11 +1393,11 @@ class JIRA:
             )
         return jira_attachment
 
-    def delete_attachment(self, id: str) -> Response:
+    def delete_attachment(self, id: str | int) -> Response:
         """Delete attachment by id.
 
         Args:
-            id (str): ID of the attachment to delete
+            id (str | int): ID of the attachment to delete
 
         Returns:
             Response
@@ -1407,11 +1407,11 @@ class JIRA:
 
     # Components
 
-    def component(self, id: str) -> Component:
+    def component(self, id: str | int) -> Component:
         """Get a component Resource from the server.
 
         Args:
-            id (str): ID of the component to get
+            id (str | int): ID of the component to get
         """
         return self._find_for_resource(Component, id)
 
@@ -1419,7 +1419,7 @@ class JIRA:
     def create_component(
         self,
         name: str,
-        project: str,
+        project: str | Project,
         description: str | None = None,
         leadUserName: str | None = None,
         assigneeType: str | None = None,
@@ -1429,7 +1429,7 @@ class JIRA:
 
         Args:
             name (str): name of the component
-            project (str): key of the project to create the component in
+            project (str | Project): key of the project to create the component in
             description (str): a description of the component
             leadUserName (Optional[str]): the username of the user responsible for this component
             assigneeType (Optional[str]): see the ComponentBean.AssigneeType class for valid values
@@ -1456,22 +1456,22 @@ class JIRA:
         component = Component(self._options, self._session, raw=json_loads(r))
         return component
 
-    def component_count_related_issues(self, id: str) -> int:
+    def component_count_related_issues(self, id: str | int) -> int:
         """Get the count of related issues for a component.
 
         Args:
-            id (str): ID of the component to use
+            id (str | int): ID of the component to use
         """
         data: dict[str, Any] = self._get_json(
             "component/" + str(id) + "/relatedIssueCounts"
         )
         return data["issueCount"]
 
-    def delete_component(self, id: str) -> Response:
+    def delete_component(self, id: str | int) -> Response:
         """Delete component by id.
 
         Args:
-            id (str): ID of the component to use
+            id (str | int): ID of the component to use
 
         Returns:
             Response
@@ -1481,11 +1481,11 @@ class JIRA:
 
     # Custom field options
 
-    def custom_field_option(self, id: str) -> CustomFieldOption:
+    def custom_field_option(self, id: str | int) -> CustomFieldOption:
         """Get a custom field option Resource from the server.
 
         Args:
-            id (str): ID of the custom field to use
+            id (str | int): ID of the custom field to use
 
         Returns:
             CustomFieldOption
@@ -1789,11 +1789,11 @@ class JIRA:
 
     # Filters
 
-    def filter(self, id: str) -> Filter:
+    def filter(self, id: int | str) -> Filter:
         """Get a filter Resource from the server.
 
         Args:
-            id (str): ID of the filter to get.
+            id (int | str): ID of the filter to get.
 
         Returns:
             Filter
@@ -1848,7 +1848,7 @@ class JIRA:
 
     def update_filter(
         self,
-        filter_id: str,
+        filter_id: int | str,
         name: str | None = None,
         description: str | None = None,
         jql: str | None = None,
@@ -2035,7 +2035,7 @@ class JIRA:
 
     def issue(
         self,
-        id: Issue | str,
+        id: Issue | str | int,
         fields: str | None = None,
         expand: str | None = None,
         properties: str | None = None,
@@ -2043,7 +2043,7 @@ class JIRA:
         """Get an issue Resource from the server.
 
         Args:
-            id (Union[Issue, str]): ID or key of the issue to get
+            id (Issue | str | int): ID or key of the issue to get
             fields (Optional[str]): comma-separated string of issue fields to include in the results
             expand (Optional[str]): extra information to fetch inside each resource
             properties (Optional[str]): extra properties to fetch inside each result
@@ -2529,11 +2529,11 @@ class JIRA:
 
     # non-resource
     @translate_resource_args
-    def assign_issue(self, issue: int | str, assignee: str | None) -> bool:
+    def assign_issue(self, issue: str | int | Issue, assignee: str | None) -> bool:
         """Assign an issue to a user.
 
         Args:
-            issue (Union[int, str]): the issue ID or key to assign
+            issue (str | int | Issue): the issue ID or key to assign
             assignee (str): the user to assign the issue to. None will set it to unassigned. -1 will set it to Automatic.
 
         Returns:
@@ -2548,7 +2548,7 @@ class JIRA:
     @translate_resource_args
     def comments(
         self,
-        issue: int | str,
+        issue: str | int | Issue,
         expand: str | None = None,
         start_at: int | None = None,
         max_results: int | None = None,
@@ -2557,7 +2557,7 @@ class JIRA:
         """Get a list of comment Resources of the issue provided.
 
         Args:
-            issue (Union[int, str]): the issue ID or key to get the comments from
+            issue (str | int | Issue): the issue ID or key to get the comments from
             expand (Optional[str]): extra information to fetch for each comment such as renderedBody and properties.
             start_at (Optional[int]): index of the first comment to return (page offset)
             max_results (Optional[int]): maximum number of comments to return
@@ -2585,13 +2585,13 @@ class JIRA:
 
     @translate_resource_args
     def comment(
-        self, issue: int | str, comment: str, expand: str | None = None
+        self, issue: str | int | Issue, comment: str | int, expand: str | None = None
     ) -> Comment:
         """Get a comment Resource from the server for the specified ID.
 
         Args:
-            issue (Union[int, str]): the issue ID or key to get the comment from
-            comment (str): ID of the comment to get
+            issue (str | int | Issue): the issue ID or key to get the comment from
+            comment (str | int): ID of the comment to get
             expand (Optional[str]): extra information to fetch for each comment such as renderedBody and properties.
 
         Returns:
@@ -2637,11 +2637,11 @@ class JIRA:
     # Comment properties
 
     @translate_resource_args
-    def comment_properties(self, comment: str) -> list[CommentProperty]:
+    def comment_properties(self, comment: str | int) -> list[CommentProperty]:
         """Get a list of comment property Resources from the server for a comment.
 
         Args:
-            comment (str): ID of the comment to get properties from
+            comment (str | int): ID of the comment to get properties from
 
         Returns:
             List[CommentProperty]
@@ -2653,11 +2653,11 @@ class JIRA:
         return properties
 
     @translate_resource_args
-    def comment_property(self, comment: str, key: str) -> CommentProperty:
+    def comment_property(self, comment: str | int, key: str) -> CommentProperty:
         """Get a specific comment property Resource from the server.
 
         Args:
-            comment (str): ID of the comment to get the property from
+            comment (str | int): ID of the comment to get the property from
             key (str): Key of the property to get
 
         Returns:
@@ -2666,11 +2666,11 @@ class JIRA:
         return self._find_for_resource(CommentProperty, (comment, key))
 
     @translate_resource_args
-    def add_comment_property(self, comment: str, key: str, data: Any) -> Response:
+    def add_comment_property(self, comment: str | int, key: str, data: Any) -> Response:
         """Add or update a specific comment property Resource.
 
         Args:
-            comment (str): ID of the comment to set the property to
+            comment (str | int): ID of the comment to set the property to
             key (str): Key of the property to set
             data: The data to set for the property
 
@@ -2682,11 +2682,11 @@ class JIRA:
 
     # non-resource
     @translate_resource_args
-    def editmeta(self, issue: str | int) -> dict[str, Any]:
+    def editmeta(self, issue: str | int | Issue) -> dict[str, Any]:
         """Get the edit metadata for an issue.
 
         Args:
-            issue (Union[str, int]): the issue to get metadata for
+            issue (str | int | Issue): the issue to get metadata for
 
         Returns:
             Dict[str, Dict[str, Dict[str, Any]]]
@@ -2694,11 +2694,11 @@ class JIRA:
         return self._get_json("issue/" + str(issue) + "/editmeta")
 
     @translate_resource_args
-    def remote_links(self, issue: str | int) -> list[RemoteLink]:
+    def remote_links(self, issue: str | int | Issue) -> list[RemoteLink]:
         """Get a list of remote link Resources from an issue.
 
         Args:
-            issue (Union[str, int]): the issue to get remote links from
+            issue (str | int | Issue): the issue to get remote links from
 
         Returns:
             List[RemoteLink]
@@ -2711,12 +2711,12 @@ class JIRA:
         return remote_links
 
     @translate_resource_args
-    def remote_link(self, issue: str | int, id: str) -> RemoteLink:
+    def remote_link(self, issue: str | int | Issue, id: str | int) -> RemoteLink:
         """Get a remote link Resource from the server.
 
         Args:
-            issue (Union[str, int]): the issue holding the remote link
-            id (str): ID of the remote link
+            issue (str | int | Issue): the issue holding the remote link
+            id (str | int): ID of the remote link
 
         Returns:
             RemoteLink
@@ -2838,13 +2838,16 @@ class JIRA:
     # non-resource
     @translate_resource_args
     def transitions(
-        self, issue: str | int | Issue, id: str | None = None, expand: str | None = None
+        self,
+        issue: str | int | Issue,
+        id: str | int | None = None,
+        expand: str | None = None,
     ) -> list[dict[str, Any]]:
         """Get a list of the transitions available on the specified issue to the current user.
 
         Args:
             issue (Union[str, int, jira.resources.Issue]): ID or key of the issue to get the transitions from
-            id (Optional[str]): if present, get only the transition matching this ID
+            id (str | int | None): if present, get only the transition matching this ID
             expand (Optional): extra information to fetch inside each transition
 
         Returns:
@@ -2886,7 +2889,7 @@ class JIRA:
     def transition_issue(
         self,
         issue: str | int | Issue,
-        transition: str,
+        transition: str | int,
         fields: dict[str, Any] | None = None,
         comment: str | None = None,
         worklog: str | None = None,
@@ -2899,7 +2902,7 @@ class JIRA:
 
         Args:
             issue (Union[str, int, jira.resources.Issue]): ID or key of the issue to perform the transition on
-            transition (str): ID or name of the transition to perform
+            transition (str | int): ID or name of the transition to perform
             fields (Optional[Dict[str,Any]]): a dict containing field names and the values to use.
             comment (Optional[str]): String to add as comment to the issue when performing the transition.
             worklog (Optional[str]): String to add as time spent on the issue when performing the transition.
@@ -2911,7 +2914,7 @@ class JIRA:
             transitionId = int(transition)
         except Exception:
             # cannot cast to int, so try to find transitionId by name
-            transitionId = self.find_transitionid_by_name(issue, transition)
+            transitionId = self.find_transitionid_by_name(issue, str(transition))
             if transitionId is None:
                 raise JIRAError(f"Invalid transition name. {transition}")
 
@@ -2941,11 +2944,11 @@ class JIRA:
         return r_json
 
     @translate_resource_args
-    def votes(self, issue: str | int) -> Votes:
+    def votes(self, issue: str | int | Issue) -> Votes:
         """Get a votes Resource from the server.
 
         Args:
-            issue (Union[str, int]): ID or key of the issue to get the votes for
+            issue (str | int | Issue): ID or key of the issue to get the votes for
         Returns:
             Votes
         """
@@ -2953,12 +2956,12 @@ class JIRA:
 
     @translate_resource_args
     def project_issue_security_level_scheme(
-        self, project: str
+        self, project: str | int | Project
     ) -> IssueSecurityLevelScheme:
         """Get a IssueSecurityLevelScheme Resource from the server.
 
         Args:
-            project (str): ID or key of the project to get the IssueSecurityLevelScheme for
+            project (str | int | Project): ID or key of the project to get the IssueSecurityLevelScheme for
 
         Returns:
             IssueSecurityLevelScheme: The issue security level scheme
@@ -2966,11 +2969,13 @@ class JIRA:
         return self._find_for_resource(IssueSecurityLevelScheme, project)
 
     @translate_resource_args
-    def project_notification_scheme(self, project: str) -> NotificationScheme:
+    def project_notification_scheme(
+        self, project: str | int | Project
+    ) -> NotificationScheme:
         """Get a NotificationScheme Resource from the server.
 
         Args:
-            project (str): ID or key of the project to get the NotificationScheme for
+            project (str | int | Project): ID or key of the project to get the NotificationScheme for
 
         Returns:
             NotificationScheme: The notification scheme
@@ -2978,11 +2983,13 @@ class JIRA:
         return self._find_for_resource(NotificationScheme, project)
 
     @translate_resource_args
-    def project_permissionscheme(self, project: str) -> PermissionScheme:
+    def project_permissionscheme(
+        self, project: str | int | Project
+    ) -> PermissionScheme:
         """Get a PermissionScheme Resource from the server.
 
         Args:
-            project (str): ID or key of the project to get the permissionscheme for
+            project (str | int | Project): ID or key of the project to get the permissionscheme for
 
         Returns:
             PermissionScheme: The permission scheme
@@ -2990,11 +2997,11 @@ class JIRA:
         return self._find_for_resource(PermissionScheme, project)
 
     @translate_resource_args
-    def project_priority_scheme(self, project: str) -> PriorityScheme:
+    def project_priority_scheme(self, project: str | int | Project) -> PriorityScheme:
         """Get a PriorityScheme Resource from the server.
 
         Args:
-            project (str): ID or key of the project to get the PriorityScheme for
+            project (str | int | Project): ID or key of the project to get the PriorityScheme for
 
         Returns:
             PriorityScheme: The priority scheme
@@ -3002,11 +3009,11 @@ class JIRA:
         return self._find_for_resource(PriorityScheme, project)
 
     @translate_resource_args
-    def project_workflow_scheme(self, project: str) -> WorkflowScheme:
+    def project_workflow_scheme(self, project: str | int | Project) -> WorkflowScheme:
         """Get a WorkflowScheme Resource from the server.
 
         Args:
-            project (str): ID or key of the project to get the WorkflowScheme for
+            project (str | int | Project): ID or key of the project to get the WorkflowScheme for
 
         Returns:
             WorkflowScheme: The workflow scheme
@@ -3014,11 +3021,11 @@ class JIRA:
         return self._find_for_resource(WorkflowScheme, project)
 
     @translate_resource_args
-    def add_vote(self, issue: str | int) -> Response:
+    def add_vote(self, issue: str | int | Issue) -> Response:
         """Register a vote for the current authenticated user on an issue.
 
         Args:
-            issue (Union[str, int]): ID or key of the issue to vote on
+            issue (str | int | Issue): ID or key of the issue to vote on
 
         Returns:
             Response
@@ -3027,21 +3034,21 @@ class JIRA:
         return self._session.post(url)
 
     @translate_resource_args
-    def remove_vote(self, issue: str | int) -> None:
+    def remove_vote(self, issue: str | int | Issue) -> None:
         """Remove the current authenticated user's vote from an issue.
 
         Args:
-            issue (Union[str, int]): ID or key of the issue to remove vote on
+            issue (str | int | Issue): ID or key of the issue to remove vote on
         """
         url = self._get_url("issue/" + str(issue) + "/votes")
         self._session.delete(url)
 
     @translate_resource_args
-    def watchers(self, issue: str | int) -> Watchers:
+    def watchers(self, issue: str | int | Issue) -> Watchers:
         """Get a watchers Resource from the server for an issue.
 
         Args:
-            issue (Union[str, int]): ID or key of the issue to get the watchers for
+            issue (str | int | Issue): ID or key of the issue to get the watchers for
 
         Returns:
             Watchers
@@ -3049,11 +3056,11 @@ class JIRA:
         return self._find_for_resource(Watchers, issue)
 
     @translate_resource_args
-    def add_watcher(self, issue: str | int, watcher: str) -> Response:
+    def add_watcher(self, issue: str | int | Issue, watcher: str) -> Response:
         """Add a user to an issue's watchers list.
 
         Args:
-            issue (Union[str, int]): ID or key of the issue affected
+            issue (str | int | Issue): ID or key of the issue affected
             watcher (str): name of the user to add to the watchers list
 
         Returns:
@@ -3065,11 +3072,11 @@ class JIRA:
         return self._session.post(url, data=json.dumps(watcher_id))
 
     @translate_resource_args
-    def remove_watcher(self, issue: str | int, watcher: str) -> Response:
+    def remove_watcher(self, issue: str | int | Issue, watcher: str) -> Response:
         """Remove a user from an issue's watch list.
 
         Args:
-            issue (Union[str, int]): ID or key of the issue affected
+            issue (str | int | Issue): ID or key of the issue affected
             watcher (str): name of the user to remove from the watchers list
 
         Returns:
@@ -3083,11 +3090,13 @@ class JIRA:
         return result
 
     @translate_resource_args
-    def worklogs(self, issue: str | int, expand: str | None = None) -> list[Worklog]:
+    def worklogs(
+        self, issue: str | int | Issue, expand: str | None = None
+    ) -> list[Worklog]:
         """Get a list of worklog Resources from the server for an issue.
 
         Args:
-            issue (Union[str, int]): ID or key of the issue to get worklogs from
+            issue (str | int | Issue): ID or key of the issue to get worklogs from
             expand (Optional[str]): extra information to fetch inside each resource
         Returns:
             List[Worklog]
@@ -3103,12 +3112,14 @@ class JIRA:
         return worklogs
 
     @translate_resource_args
-    def worklog(self, issue: str | int, id: str, expand: str | None = None) -> Worklog:
+    def worklog(
+        self, issue: str | int | Issue, id: str | int, expand: str | None = None
+    ) -> Worklog:
         """Get a specific worklog Resource from the server.
 
         Args:
-            issue (Union[str, int]): ID or key of the issue to get the worklog from
-            id (str): ID of the worklog to get
+            issue (str | int | Issue): ID or key of the issue to get the worklog from
+            id (str | int): ID of the worklog to get
             expand (Optional[str]): extra information to fetch inside each resource
 
         Returns:
@@ -3119,7 +3130,7 @@ class JIRA:
     @translate_resource_args
     def add_worklog(
         self,
-        issue: str | int,
+        issue: str | int | Issue,
         timeSpent: str | None = None,
         timeSpentSeconds: int | str | None = None,
         adjustEstimate: str | None = None,
@@ -3134,7 +3145,7 @@ class JIRA:
         """Add a new worklog entry on an issue and return a Resource for it.
 
         Args:
-            issue (Union[str, int]): the issue to add the worklog to
+            issue (str | int | Issue): the issue to add the worklog to
             timeSpent (Optional[str]): a worklog entry with this amount of time spent, e.g. "2d"
             timeSpentSeconds (int | str | None): a worklog entry with this amount of time spent in seconds
             adjustEstimate (Optional[str]):  allows the user to provide specific instructions to update the remaining time estimate of the issue.
@@ -3200,11 +3211,11 @@ class JIRA:
     # Issue properties
 
     @translate_resource_args
-    def issue_properties(self, issue: str) -> list[IssueProperty]:
+    def issue_properties(self, issue: str | int | Issue) -> list[IssueProperty]:
         """Get a list of issue property Resource from the server for an issue.
 
         Args:
-            issue (str): ID or key of the issue to get properties from
+            issue (str | int | Issue): ID or key of the issue to get properties from
 
         Returns:
             List[IssueProperty]
@@ -3214,11 +3225,11 @@ class JIRA:
         return properties
 
     @translate_resource_args
-    def issue_property(self, issue: str, key: str) -> IssueProperty:
+    def issue_property(self, issue: str | int | Issue, key: str) -> IssueProperty:
         """Get a specific issue property Resource from the server.
 
         Args:
-            issue (str): ID or key of the issue to get the property from
+            issue (str | int | Issue): ID or key of the issue to get the property from
             key (str): Key of the property to get
         Returns:
             IssueProperty
@@ -3226,11 +3237,13 @@ class JIRA:
         return self._find_for_resource(IssueProperty, (issue, key))
 
     @translate_resource_args
-    def add_issue_property(self, issue: str, key: str, data: Any) -> Response:
+    def add_issue_property(
+        self, issue: str | int | Issue, key: str, data: Any
+    ) -> Response:
         """Add or update a specific issue property Resource.
 
         Args:
-            issue (str): ID or key of the issue to set the property to
+            issue (str | int | Issue): ID or key of the issue to set the property to
             key (str): Key of the property to set
             data: The data to set for the property
         Returns:
@@ -3245,8 +3258,8 @@ class JIRA:
     def create_issue_link(
         self,
         type: str | IssueLinkType,
-        inwardIssue: str,
-        outwardIssue: str,
+        inwardIssue: str | Issue,
+        outwardIssue: str | Issue,
         comment: dict[str, Any] | None = None,
     ) -> Response:
         """Create a link between two issues.
@@ -3294,27 +3307,27 @@ class JIRA:
 
         data = {
             "type": type.raw,
-            "inwardIssue": {"key": inwardIssue},
-            "outwardIssue": {"key": outwardIssue},
+            "inwardIssue": {"key": str(inwardIssue)},
+            "outwardIssue": {"key": str(outwardIssue)},
             "comment": comment,
         }
         url = self._get_url("issueLink")
         return self._session.post(url, data=json.dumps(data))
 
-    def delete_issue_link(self, id: str) -> Response:
+    def delete_issue_link(self, id: str | int) -> Response:
         """Delete a link between two issues.
 
         Args:
-            id (str): ID of the issue link to delete
+            id (str | int): ID of the issue link to delete
         """
         url = self._get_url(f"issueLink/{id}")
         return self._session.delete(url)
 
-    def issue_link(self, id: str) -> IssueLink:
+    def issue_link(self, id: str | int) -> IssueLink:
         """Get an issue link Resource from the server.
 
         Args:
-            id (str): ID of the issue link to get
+            id (str | int): ID of the issue link to get
 
         Returns:
             IssueLink
@@ -3340,11 +3353,11 @@ class JIRA:
             ]
         return self._cached_issue_link_types
 
-    def issue_link_type(self, id: str) -> IssueLinkType:
+    def issue_link_type(self, id: str | int) -> IssueLinkType:
         """Get an issue link type Resource from the server.
 
         Args:
-            id (str): ID of the issue link type to get
+            id (str | int): ID of the issue link type to get
 
         Returns:
             IssueLinkType
@@ -3426,11 +3439,11 @@ class JIRA:
         )
         return fields
 
-    def issue_type(self, id: str) -> IssueType:
+    def issue_type(self, id: str | int) -> IssueType:
         """Get an issue type Resource from the server.
 
         Args:
-            id (str): ID of the issue type to get
+            id (str | int): ID of the issue type to get
 
         Returns:
             IssueType
@@ -3497,9 +3510,9 @@ class JIRA:
     def my_permissions(
         self,
         projectKey: str | None = None,
-        projectId: str | None = None,
+        projectId: str | int | None = None,
         issueKey: str | None = None,
-        issueId: str | None = None,
+        issueId: str | int | None = None,
         permissions: str | None = None,
     ) -> dict[str, dict[str, dict[str, Any]]]:
         """Get a dict of all available permissions on the server.
@@ -3510,15 +3523,15 @@ class JIRA:
 
         Args:
             projectKey (Optional[str]): limit returned permissions to the specified project
-            projectId (Optional[str]): limit returned permissions to the specified project
+            projectId (str | int | None): limit returned permissions to the specified project
             issueKey (Optional[str]): limit returned permissions to the specified issue
-            issueId (Optional[str]): limit returned permissions to the specified issue
+            issueId (str | int | None): limit returned permissions to the specified issue
             permissions (Optional[str]): limit returned permissions to the specified csv permission keys (cloud required field)
 
         Returns:
             Dict[str, Dict[str, Dict[str, str]]]
         """
-        params = {}
+        params: dict[str, str | int] = {}
         if projectKey is not None:
             params["projectKey"] = projectKey
         if projectId is not None:
@@ -3547,11 +3560,11 @@ class JIRA:
         ]
         return priorities
 
-    def priority(self, id: str) -> Priority:
+    def priority(self, id: str | int) -> Priority:
         """Get a priority Resource from the server.
 
         Args:
-            id (str): ID of the priority to get
+            id (str | int): ID of the priority to get
 
         Returns:
             Priority
@@ -3579,11 +3592,11 @@ class JIRA:
         ]
         return projects
 
-    def project(self, id: str, expand: str | None = None) -> Project:
+    def project(self, id: str | int, expand: str | None = None) -> Project:
         """Get a project Resource from the server.
 
         Args:
-            id (str): ID or key of the project to get
+            id (str | int): ID or key of the project to get
             expand (Optional[str]): extra information to fetch for the project such as projectKeys and description.
 
         Returns:
@@ -3593,18 +3606,18 @@ class JIRA:
 
     # non-resource
     @translate_resource_args
-    def project_avatars(self, project: str) -> dict[str, Any]:
+    def project_avatars(self, project: str | int | Project) -> dict[str, Any]:
         """Get a dict of all avatars for a project visible to the current authenticated user.
 
         Args:
-            project (str): ID or key of the project to get avatars for
+            project (str | int | Project): ID or key of the project to get avatars for
         """
         return self._get_json(f"project/{project}/avatars")
 
     @translate_resource_args
     def create_temp_project_avatar(
         self,
-        project: str,
+        project: str | int | Project,
         filename: str,
         size: int,
         avatar_img: bytes,
@@ -3625,7 +3638,7 @@ class JIRA:
         pass the 'auto_confirm' argument with a truthy value and :py:meth:`confirm_project_avatar` will be called for you before this method returns.
 
         Args:
-            project (str): ID or key of the project to create the avatar in
+            project (str | int | Project): ID or key of the project to create the avatar in
             filename (str): name of the avatar file
             size (int): size of the avatar file
             avatar_img (bytes): file-like object holding the avatar
@@ -3657,7 +3670,7 @@ class JIRA:
 
     @translate_resource_args
     def confirm_project_avatar(
-        self, project: str, cropping_properties: dict[str, Any]
+        self, project: str | int | Project, cropping_properties: dict[str, Any]
     ) -> dict[str, Any]:
         """Confirm the temporary avatar image previously uploaded with the specified cropping.
 
@@ -3666,7 +3679,7 @@ class JIRA:
         the return value of :py:meth:`create_temp_project_avatar` should be used for this argument.
 
         Args:
-            project (str): ID or key of the project to confirm the avatar in
+            project (str | int | Project): ID or key of the project to confirm the avatar in
             cropping_properties (Dict[str,Any]): a dict of cropping properties from :py:meth:`create_temp_project_avatar`
         """
         data = cropping_properties
@@ -3676,21 +3689,23 @@ class JIRA:
         return json_loads(r)
 
     @translate_resource_args
-    def set_project_avatar(self, project: str, avatar: str) -> None:
+    def set_project_avatar(self, project: str | int | Project, avatar: str) -> None:
         """Set a project's avatar.
 
         Args:
-            project (str): ID or key of the project to set the avatar on
+            project (str | int | Project): ID or key of the project to set the avatar on
             avatar (str): ID of the avatar to set
         """
         self._set_avatar(None, self._get_url(f"project/{project}/avatar"), avatar)
 
     @translate_resource_args
-    def delete_project_avatar(self, project: str, avatar: str) -> Response:
+    def delete_project_avatar(
+        self, project: str | int | Project, avatar: str
+    ) -> Response:
         """Delete a project's avatar.
 
         Args:
-            project (str): ID or key of the project to delete the avatar from
+            project (str | int | Project): ID or key of the project to delete the avatar from
             avatar (str): ID of the avatar to delete
 
         Returns:
@@ -3700,11 +3715,11 @@ class JIRA:
         return self._session.delete(url)
 
     @translate_resource_args
-    def project_components(self, project: str) -> list[Component]:
+    def project_components(self, project: str | int | Project) -> list[Component]:
         """Get a list of component Resources present on a project.
 
         Args:
-            project (str): ID or key of the project to get components from
+            project (str | int | Project): ID or key of the project to get components from
 
         Returns:
             List[Component]
@@ -3717,11 +3732,13 @@ class JIRA:
         return components
 
     @translate_resource_args
-    def project_securitylevels(self, project: str | int) -> list[SecurityLevel]:
+    def project_securitylevels(
+        self, project: str | int | Project
+    ) -> list[SecurityLevel]:
         """Get a list of securitylevel Resources for the current user on a project.
 
         Args:
-            project (Union[str, int]): ID or key of the project to get securitylevels of
+            project (str | int | Project): ID or key of the project to get securitylevels of
 
         Returns:
             List[SecurityLevel]
@@ -3734,11 +3751,11 @@ class JIRA:
         return security_levels
 
     @translate_resource_args
-    def project_versions(self, project: str) -> list[Version]:
+    def project_versions(self, project: str | int | Project) -> list[Version]:
         """Get a list of version Resources present on a project.
 
         Args:
-            project (str): ID or key of the project to get versions from
+            project (str | int | Project): ID or key of the project to get versions from
 
         Returns:
             List[Version]
@@ -3752,12 +3769,12 @@ class JIRA:
 
     @translate_resource_args
     def get_project_version_by_name(
-        self, project: str, version_name: str
+        self, project: str | int | Project, version_name: str
     ) -> Version | None:
         """Get a version Resource by its name present on a project.
 
         Args:
-            project (str): ID or key of the project to get versions from
+            project (str | int | Project): ID or key of the project to get versions from
             version_name (str): name of the version to search for
 
         Returns:
@@ -3770,11 +3787,13 @@ class JIRA:
         return None
 
     @translate_resource_args
-    def rename_version(self, project: str, old_name: str, new_name: str) -> None:
+    def rename_version(
+        self, project: str | int | Project, old_name: str, new_name: str
+    ) -> None:
         """Rename a version Resource on a project.
 
         Args:
-            project (str): ID or key of the project to get versions from
+            project (str | int | Project): ID or key of the project to get versions from
             old_name (str): old name of the version to rename
             new_name (str): new name of the version to rename
         """
@@ -3784,11 +3803,11 @@ class JIRA:
 
     # non-resource
     @translate_resource_args
-    def project_roles(self, project: str) -> dict[str, dict[str, str]]:
+    def project_roles(self, project: str | int | Project) -> dict[str, dict[str, str]]:
         """Get a dict of role names to resource locations for a project.
 
         Args:
-            project (str): ID or key of the project to get roles from
+            project (str | int | Project): ID or key of the project to get roles from
 
         Returns:
             Dict[str, Dict[str, str]]
@@ -3806,12 +3825,12 @@ class JIRA:
         # TODO(ssbarnea): return a list of Roles()
 
     @translate_resource_args
-    def project_role(self, project: str, id: str) -> Role:
+    def project_role(self, project: str | int | Project, id: int | str) -> Role:
         """Get a role Resource.
 
         Args:
-            project (str): ID or key of the project to get the role from
-            id (str): ID of the role to get
+            project (str | int | Project): ID or key of the project to get the role from
+            id (int | str): ID of the role to get
 
         Returns:
             Role
@@ -3835,11 +3854,11 @@ class JIRA:
         ]
         return resolutions
 
-    def resolution(self, id: str) -> Resolution:
+    def resolution(self, id: str | int) -> Resolution:
         """Get a resolution Resource from the server.
 
         Args:
-            id (str): ID of the resolution to get
+            id (str | int): ID of the resolution to get
 
         Returns:
             Resolution
@@ -4096,11 +4115,11 @@ class JIRA:
         return response_json.get("count", 0)
 
     # Security levels
-    def security_level(self, id: str) -> SecurityLevel:
+    def security_level(self, id: str | int) -> SecurityLevel:
         """Get a security level Resource.
 
         Args:
-            id (str): ID of the security level to get
+            id (str | int): ID of the security level to get
 
         Returns:
             SecurityLevel
@@ -4168,11 +4187,11 @@ class JIRA:
         ]
         return issue_types
 
-    def status(self, id: str) -> Status:
+    def status(self, id: str | int) -> Status:
         """Get a status Resource from the server.
 
         Args:
-            id (str): ID of the status resource to get
+            id (str | int): ID of the status resource to get
 
         Returns:
             Status
@@ -4194,11 +4213,11 @@ class JIRA:
         ]
         return statuscategories
 
-    def statuscategory(self, id: int) -> StatusCategory:
+    def statuscategory(self, id: int | str) -> StatusCategory:
         """Get a status category Resource from the server.
 
         Args:
-            id (int): ID of the status category resource to get
+            id (int | str): ID of the status category resource to get
 
         Returns:
             StatusCategory
@@ -4447,7 +4466,7 @@ class JIRA:
     @translate_resource_args
     def delete_remote_link(
         self,
-        issue: str | Issue,
+        issue: str | int | Issue,
         *,
         internal_id: str | None = None,
         global_id: str | None = None,
@@ -4455,7 +4474,7 @@ class JIRA:
         """Delete remote link from issue by internalId or globalId.
 
         Args:
-            issue (str): Key (or Issue) of Issue
+            issue (str | int | Issue): Key (or Issue) of Issue
             internal_id (Optional[str]): InternalID of the remote link to delete
             global_id (Optional[str]): GlobalID of the remote link to delete
 
@@ -4546,7 +4565,7 @@ class JIRA:
     def create_version(
         self,
         name: str,
-        project: str,
+        project: str | Project,
         description: str | None = None,
         releaseDate: Any | None = None,
         startDate: Any | None = None,
@@ -4557,7 +4576,7 @@ class JIRA:
 
         Args:
             name (str): name of the version to create
-            project (str): key of the project to create the version in
+            project (str | Project): key of the project to create the version in
             description (str): a description of the version
             releaseDate (Optional[Any]): the release date assigned to the version
             startDate (Optional[Any]): The start date for the version
@@ -4588,14 +4607,14 @@ class JIRA:
         return version
 
     def move_version(
-        self, id: str, after: str | None = None, position: str | None = None
+        self, id: str | int, after: str | None = None, position: str | None = None
     ) -> Version:
         """Move a version within a project's ordered version list and return a new version Resource for it.
 
         One, but not both, of ``after`` and ``position`` must be specified.
 
         Args:
-            id (str): ID of the version to move
+            id (str | int): ID of the version to move
             after (str): the self attribute of a version to place the specified version after (that is, higher in the list)
             position (Optional[str]): the absolute position to move this version to: must be one of ``First``, ``Last``, ``Earlier``, or ``Later``
 
@@ -4614,11 +4633,11 @@ class JIRA:
         version = Version(self._options, self._session, raw=json_loads(r))
         return version
 
-    def version(self, id: str, expand: Any | None = None) -> Version:
+    def version(self, id: str | int, expand: Any | None = None) -> Version:
         """Get a version Resource.
 
         Args:
-            id (str): ID of the version to get
+            id (str | int): ID of the version to get
             expand (Optional[Any]): extra information to fetch inside each resource
 
         Returns:
@@ -4631,21 +4650,21 @@ class JIRA:
         version.find(id, params=params)
         return version
 
-    def version_count_related_issues(self, id: str) -> dict[str, Any]:
+    def version_count_related_issues(self, id: str | int) -> dict[str, Any]:
         """Get a dict of the counts of issues fixed and affected by a version.
 
         Args:
-            id (str): the version to count issues for
+            id (str | int): the version to count issues for
         """
         r_json: dict[str, Any] = self._get_json(f"version/{id}/relatedIssueCounts")
         del r_json["self"]  # this isn't really an addressable resource
         return r_json
 
-    def version_count_unresolved_issues(self, id: str) -> int:
+    def version_count_unresolved_issues(self, id: str | int) -> int:
         """Get the number of unresolved issues for a version.
 
         Args:
-            id (str): ID of the version to count issues for
+            id (str | int): ID of the version to count issues for
         """
         r_json: dict[str, Any] = self._get_json(f"version/{id}/unresolvedIssueCount")
         return r_json["issuesUnresolvedCount"]
@@ -4907,14 +4926,14 @@ class JIRA:
     def _find_for_resource(
         self,
         resource_cls: Any,
-        ids: tuple[str, ...] | tuple[str | int, str] | int | str,
+        ids: tuple[str | int | Resource, ...] | int | str | Resource,
         expand: str | None = None,
     ) -> Any:
         """Uses the find method of the provided Resource class.
 
         Args:
             resource_cls (Any): Any instance of :py:class`Resource`
-            ids (Union[Tuple[str, str], int, str]): The arguments to the Resource's ``find()``
+            ids (tuple[str | int | Resource, ...] | int | str | Resource): The arguments to the Resource's ``find()``
             expand ([type], optional): The value for the expand property in the Resource's ``find()`` params. Defaults to None.
 
         Raises:
@@ -4923,11 +4942,17 @@ class JIRA:
         Returns:
             Any: A class of the same type as ``resource_cls``
         """
+        # Resources passed by keyword skip translate_resource_args; str() gives their key or name.
+        find_ids: tuple[str | int, ...] | int | str
+        if isinstance(ids, tuple):
+            find_ids = tuple(str(i) if isinstance(i, Resource) else i for i in ids)
+        else:
+            find_ids = str(ids) if isinstance(ids, Resource) else ids
         resource = resource_cls(self._options, self._session)
         params = {}
         if expand is not None:
             params["expand"] = expand
-        resource.find(id=ids, params=params)
+        resource.find(id=find_ids, params=params)
         if not resource:
             raise JIRAError("Unable to find resource %s(%s)", resource_cls, str(ids))
         return resource
@@ -5247,12 +5272,12 @@ class JIRA:
         return self._myself[field]
 
     def delete_project(
-        self, pid: str | Project, enable_undo: bool = True
+        self, pid: str | int | Project, enable_undo: bool = True
     ) -> bool | None:
         """Delete project from Jira.
 
         Args:
-            pid (Union[str, Project]): Jira projectID or Project or slug.
+            pid (str | int | Project): Jira projectID or Project or slug.
             enable_undo (bool): Jira Cloud only. True moves to 'Trash'. False permanently deletes.
 
         Raises:
@@ -5755,7 +5780,7 @@ class JIRA:
         maxResults: int = 50,
         type: str | None = None,
         name: str | None = None,
-        projectKeyOrID: str | int | None = None,
+        projectKeyOrID: str | int | Project | None = None,
     ) -> ResultList[Board]:
         """Get a list of board resources.
 
@@ -5775,7 +5800,7 @@ class JIRA:
         if name:
             params["name"] = name
         if projectKeyOrID:
-            params["projectKeyOrId"] = projectKeyOrID
+            params["projectKeyOrId"] = str(projectKeyOrID)
 
         return self._fetch_pages(
             Board,
@@ -5790,7 +5815,7 @@ class JIRA:
     @translate_resource_args
     def sprints(
         self,
-        board_id: int,
+        board_id: int | str,
         extended: bool | None = None,
         startAt: int = 0,
         maxResults: int = 50,
@@ -5799,7 +5824,7 @@ class JIRA:
         """Get a list of sprint Resources.
 
         Args:
-            board_id (int): the board to get sprints from
+            board_id (int | str): the board to get sprints from
             extended (bool): Deprecated.
             startAt (int): the index of the first sprint to return (0 based)
             maxResults (int): the maximum number of sprints to return
@@ -5891,7 +5916,7 @@ class JIRA:
         return json_loads(r)
 
     def incompletedIssuesEstimateSum(
-        self, board_id: str, sprint_id: str
+        self, board_id: int | str, sprint_id: int | str
     ) -> float | None:
         """Return the summed estimate of the issues not completed in the sprint.
 
@@ -5906,7 +5931,7 @@ class JIRA:
         )
         return data["contents"]["issuesNotCompletedEstimateSum"].get("value")
 
-    def removed_issues(self, board_id: str, sprint_id: str) -> list[Issue]:
+    def removed_issues(self, board_id: int | str, sprint_id: int | str) -> list[Issue]:
         """Return the removed issues for the sprint.
 
         Returns:
@@ -5923,7 +5948,9 @@ class JIRA:
 
         return issues
 
-    def completed_issues(self, board_id: str, sprint_id: str) -> list[Issue]:
+    def completed_issues(
+        self, board_id: int | str, sprint_id: int | str
+    ) -> list[Issue]:
         """Return the completed issues for the sprint.
 
         Returns:
@@ -5940,7 +5967,9 @@ class JIRA:
 
         return issues
 
-    def removedIssuesEstimateSum(self, board_id: str, sprint_id: str) -> float | None:
+    def removedIssuesEstimateSum(
+        self, board_id: int | str, sprint_id: int | str
+    ) -> float | None:
         """Return the summed estimate of the issues removed from the sprint.
 
         The sum is in the board's estimation unit, so seconds for time estimates.
@@ -5955,12 +5984,12 @@ class JIRA:
         return data["contents"]["puntedIssuesEstimateSum"].get("value")
 
     # TODO(ssbarnea): remove sprint_info() method, sprint() method suit the convention more
-    def sprint_info(self, board_id: str, sprint_id: str) -> dict[str, Any]:
+    def sprint_info(self, board_id: int | str, sprint_id: int | str) -> dict[str, Any]:
         """Return the information about a sprint.
 
         Args:
-            board_id (str): the board retrieving issues from. Deprecated and ignored.
-            sprint_id (str): the sprint retrieving issues from
+            board_id (int | str): the board retrieving issues from. Deprecated and ignored.
+            sprint_id (int | str): the sprint retrieving issues from
 
         Returns:
             Dict[str, Any]
@@ -5969,7 +5998,7 @@ class JIRA:
         sprint.find(sprint_id)
         return sprint.raw
 
-    def sprint(self, id: int) -> Sprint:
+    def sprint(self, id: int | str) -> Sprint:
         """Return the information about a sprint.
 
         Args:
@@ -6074,7 +6103,9 @@ class JIRA:
 
         return Sprint(self._options, self._session, raw=raw_sprint_json)
 
-    def add_issues_to_sprint(self, sprint_id: int, issue_keys: list[str]) -> Response:
+    def add_issues_to_sprint(
+        self, sprint_id: int | str, issue_keys: list[str]
+    ) -> Response:
         """Add the issues in ``issue_keys`` to the ``sprint_id``.
 
         The sprint must be started but not completed.
@@ -6085,7 +6116,7 @@ class JIRA:
         If a sprint was not started, then have to edit the marker and copy the rank of each issue too.
 
         Args:
-            sprint_id (int): the sprint to add issues to
+            sprint_id (int | str): the sprint to add issues to
             issue_keys (List[str]): the issues to add to the sprint
 
         Returns:
@@ -6198,11 +6229,11 @@ class JIRA:
         return self._session.post(url, data=json.dumps(payload))
 
     @translate_resource_args
-    def pinned_comments(self, issue: int | str) -> list[PinnedComment]:
+    def pinned_comments(self, issue: str | int | Issue) -> list[PinnedComment]:
         """Get a list of pinned comment Resources of the issue provided.
 
         Args:
-            issue (Union[int, str]): the issue ID or key to get the comments from
+            issue (str | int | Issue): the issue ID or key to get the comments from
 
         Returns:
             List[PinnedComment]
@@ -6216,11 +6247,13 @@ class JIRA:
         return pinned_comments
 
     @translate_resource_args
-    def pin_comment(self, issue: int | str, comment: int | str, pin: bool) -> Response:
+    def pin_comment(
+        self, issue: str | int | Issue, comment: int | str, pin: bool
+    ) -> Response:
         """Pin/Unpin a comment on the issue.
 
         Args:
-          issue (Union[int, str]): the issue ID or key to get the comments from
+          issue (str | int | Issue): the issue ID or key to get the comments from
           comment (Union[int, str]): the comment ID
           pin (bool): Pin (True) or Unpin (False)
 

@@ -1849,6 +1849,46 @@ def test_create_issue_link_warns_on_unknown_type(link_client, requests_mock, cap
     assert "Clones" in caplog.text
 
 
+def test_resources_passed_by_keyword_send_their_key(requests_mock):
+    client = jira.client.JIRA(
+        server="https://jira.example.com", get_server_info=False, validate=False
+    )
+    base = "https://jira.example.com/rest/api/2"
+    inward = Issue(client._options, client._session, raw={"id": "1", "key": "ABC-1"})
+    outward = Issue(client._options, client._session, raw={"id": "2", "key": "ABC-2"})
+    requests_mock.get(f"{base}/issue/ABC-1/comment/5", json={"id": "5"})
+    requests_mock.get(
+        f"{base}/issueLinkType",
+        json={
+            "issueLinkTypes": [
+                {
+                    "id": "1",
+                    "name": "Blocks",
+                    "inward": "is blocked by",
+                    "outward": "blocks",
+                }
+            ]
+        },
+    )
+    requests_mock.post(f"{base}/issueLink", status_code=201)
+
+    client.comment(issue=inward, comment=5)
+    client.create_issue_link(type="Blocks", inwardIssue=inward, outwardIssue=outward)
+
+    assert requests_mock.request_history[0].url == f"{base}/issue/ABC-1/comment/5"
+    assert requests_mock.last_request.json() == {
+        "type": {
+            "id": "1",
+            "name": "Blocks",
+            "inward": "is blocked by",
+            "outward": "blocks",
+        },
+        "inwardIssue": {"key": "ABC-1"},
+        "outwardIssue": {"key": "ABC-2"},
+        "comment": None,
+    }
+
+
 SPRINT_REPORT_URL = (
     "https://jira.example.com/rest/greenhopper/1.0/rapid/charts/sprintreport"
     "?rapidViewId=1&sprintId=2"
