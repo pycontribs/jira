@@ -1908,6 +1908,38 @@ def test_add_worklog_notify(requests_mock, notify, expected):
     assert ("notifyUsers=false" in requests_mock.last_request.url) is expected
 
 
+def test_add_worklog_sends_properties_on_cloud(requests_mock):
+    client = jira.client.JIRA(
+        server="https://jira.example.com", get_server_info=False, validate=False
+    )
+    client.deploymentType = "Cloud"
+    url = "https://jira.example.com/rest/api/2/issue/ABC-1/worklog"
+    requests_mock.post(url, json={"id": "100", "self": f"{url}/100"})
+    properties = [{"key": "billable", "value": {"approved": True}}]
+
+    client.add_worklog("ABC-1", timeSpent="1h", properties=properties)
+
+    assert requests_mock.last_request.json() == {
+        "timeSpent": "1h",
+        "properties": properties,
+    }
+
+
+def test_add_worklog_warns_and_leaves_out_properties_on_server(requests_mock):
+    client = jira.client.JIRA(
+        server="https://jira.example.com", get_server_info=False, validate=False
+    )
+    url = "https://jira.example.com/rest/api/2/issue/ABC-1/worklog"
+    requests_mock.post(url, json={"id": "100", "self": f"{url}/100"})
+    properties = [{"key": "billable", "value": {"approved": True}}]
+
+    with pytest.warns(UserWarning, match="'properties' argument") as warned:
+        client.add_worklog("ABC-1", timeSpent="1h", properties=properties)
+
+    assert warned[0].filename == __file__
+    assert requests_mock.last_request.json() == {"timeSpent": "1h"}
+
+
 def test_add_attachment_accepts_bytes(requests_mock):
     client = jira.client.JIRA(
         server="https://jira.example.com", get_server_info=False, validate=False
