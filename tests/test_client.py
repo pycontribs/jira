@@ -541,17 +541,47 @@ def test_get_user_id_keeps_cloud_account_id(mock_jira_client, account_id):
 
 
 def test_get_user_id_searches_for_other_values(mock_jira_client):
+    """Cloud hides emailAddress, so a lone account found for an email is the user."""
     client = mock_jira_client(is_cloud=True)
-    user = mock.Mock(accountId="5b10ac8d82e05b22cc7d4ef5")
+    user = mock.Mock(accountId="5b10ac8d82e05b22cc7d4ef5", emailAddress=None)
     with (
         mock.patch.object(
             jira.client.JIRA, "search_users", return_value=[user]
         ) as mock_search_users,
+        warnings.catch_warnings(),
+    ):
+        warnings.simplefilter("error")
+        assert client._get_user_id("user@example.com") == "5b10ac8d82e05b22cc7d4ef5"
+
+    mock_search_users.assert_called_once_with(query="user@example.com", maxResults=20)
+
+
+def test_get_user_id_warns_when_cloud_email_finds_several_accounts(mock_jira_client):
+    client = mock_jira_client(is_cloud=True)
+    users = [
+        mock.Mock(accountId="5b10ac8d82e05b22cc7d4ef5", emailAddress=None),
+        mock.Mock(accountId="5b10ac8d82e05b22cc7d4ef6", emailAddress=None),
+    ]
+    with (
+        mock.patch.object(jira.client.JIRA, "search_users", return_value=users),
         pytest.warns(UserWarning, match="No user with identifier"),
     ):
         assert client._get_user_id("user@example.com") == "5b10ac8d82e05b22cc7d4ef5"
 
-    mock_search_users.assert_called_once_with(query="user@example.com", maxResults=20)
+
+def test_get_user_id_matches_visible_email(mock_jira_client):
+    client = mock_jira_client()
+    users = [
+        mock.Mock(emailAddress="other@example.com"),
+        mock.Mock(emailAddress="User@Example.com"),
+    ]
+    users[0].name, users[1].name = "other", "user"
+    with (
+        mock.patch.object(jira.client.JIRA, "search_users", return_value=users),
+        warnings.catch_warnings(),
+    ):
+        warnings.simplefilter("error")
+        assert client._get_user_id("user@example.com") == "user"
 
 
 def test_get_user_id_searches_for_account_id_shaped_name_on_server(mock_jira_client):

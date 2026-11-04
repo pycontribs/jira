@@ -2631,13 +2631,20 @@ class JIRA:
         """
         return user.accountId if self._is_cloud else user.name
 
+    def _is_same_user(self, candidate: User, user: str) -> bool:
+        email = getattr(candidate, "emailAddress", None)
+        return self._get_user_identifier(candidate) == user or (
+            isinstance(email, str) and email.lower() == user.lower()
+        )
+
     def _get_user_id(self, user: str | User | None) -> str | None:
         """Internal method for translating a user search (str) to an id.
 
         Return None and -1 unchanged. A :class:`~jira.resources.User` gives its identifier
         directly. On Cloud, a value that already is an account id is also returned
-        unchanged. Anything else runs a user search. When no result's identifier equals
-        ``user``, the first result is used and a warning says so.
+        unchanged. Anything else runs a user search. A result matches when its identifier
+        or email address equals ``user``; on Cloud, an email that finds exactly one account
+        also matches. Without a match, the first result is used and a warning says so.
 
         This function uses :py:meth:`JIRA.search_users` to find the user and then using :py:meth:`JIRA._get_user_identifier` extracts
         the relevant identifier property depending on whether the instance is a Cloud or self-hosted Instance.
@@ -2670,7 +2677,13 @@ class JIRA:
             if len(users) < 1:
                 raise JIRAError(f"No matching user found for: '{user}'")
 
-            matches = [u for u in users if self._get_user_identifier(u) == user]
+            matches = [u for u in users if self._is_same_user(u, user)]
+            if not matches and self._is_cloud and len(users) == 1 and "@" in user:
+                # Cloud's user search matches the query against emailAddress, but
+                # usually hides that field in the response, so a single account
+                # found for an email cannot be checked and is the requested user.
+                # https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-user-search/#api-rest-api-2-user-search-get
+                matches = users
         except Exception as e:
             raise JIRAError(str(e))
         if not matches:
