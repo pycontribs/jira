@@ -73,4 +73,5 @@ jobs:
           # auto-search picks it up from there.
           directory: .tox
           name: ${{ runner.os }}-${{ matrix.python-version }}-Server
+          flags: server
           fail_ci_if_error: true
