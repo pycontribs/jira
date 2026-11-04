@@ -1648,9 +1648,77 @@ def test_archive_issues_accepts_keys_and_issues(
     }
 
 
-def test_archive_issues_is_cloud_only(offline_jira, requests_mock):
-    assert offline_jira.archive_issues(["ABC-1"]) is None
-    assert not requests_mock.called
+@pytest.mark.parametrize(
+    "method, path", [("archive", "archive"), ("unarchive", "restore")]
+)
+def test_archive_issues_on_server_puts_each_issue(
+    offline_jira, requests_mock, method, path
+):
+    offline_jira._version = (8, 20, 0)
+    base = "https://jira.atlassian.com/rest/api/2/issue"
+    for key in ("ABC-1", "ABC-2", "10003"):
+        requests_mock.put(f"{base}/{key}/{path}", status_code=204)
+    issue = Issue(
+        offline_jira._options,
+        offline_jira._session,
+        raw={"id": "10002", "key": "ABC-2", "self": "x", "fields": {}},
+    )
+
+    result = getattr(offline_jira, f"{method}_issues")(iter(["ABC-1", issue, 10003]))
+
+    assert [r.url for r in requests_mock.request_history] == [
+        f"{base}/ABC-1/{path}",
+        f"{base}/ABC-2/{path}",
+        f"{base}/10003/{path}",
+    ]
+    assert result == {"numberOfIssuesUpdated": 3, "errors": {}}
+
+
+@pytest.mark.parametrize(
+    "status, message",
+    [
+        (401, "Unauthorized"),
+        (403, "We couldn't archive an already archived issue."),
+        (404, "Issue Does Not Exist"),
+    ],
+)
+def test_archive_issues_on_server_raises_on_first_refusal(
+    offline_jira, requests_mock, status, message
+):
+    offline_jira._version = (8, 20, 0)
+    base = "https://jira.atlassian.com/rest/api/2/issue"
+    requests_mock.put(f"{base}/ABC-1/archive", status_code=204)
+    requests_mock.put(
+        f"{base}/ABC-2/archive",
+        status_code=status,
+        json={"errorMessages": [message], "errors": {}},
+    )
+    requests_mock.put(f"{base}/ABC-3/archive", status_code=204)
+
+    with pytest.raises(JIRAError) as raised:
+        offline_jira.archive_issues(["ABC-1", "ABC-2", "ABC-3"])
+
+    assert raised.value.status_code == status
+    assert raised.value.url == f"{base}/ABC-2/archive"
+    assert message in raised.value.text
+    assert [r.url for r in requests_mock.request_history] == [
+        f"{base}/ABC-1/archive",
+        f"{base}/ABC-2/archive",
+    ]
+
+
+@pytest.mark.parametrize(
+    "method, version, needed",
+    [("archive", (7, 13, 0), "8.0"), ("unarchive", (8, 0, 0), "8.1")],
+)
+def test_archive_issues_on_old_server_raises_before_sending(
+    offline_jira, requests_mock, method, version, needed
+):
+    offline_jira._version = version
+
+    with pytest.raises(NotImplementedError, match=f"needs Jira {needed} or later"):
+        getattr(offline_jira, f"{method}_issues")(["ABC-1"])
+    assert requests_mock.call_count == 0
 
 
 def test_comment_property_roundtrip(requests_mock):
