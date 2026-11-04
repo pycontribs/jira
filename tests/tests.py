@@ -415,9 +415,12 @@ class AsyncTests(JiraTestCase):
         mock_session.get.return_value = responses
         self.jira._session.close()
         self.jira._session = mock_session
-        items = self.jira._fetch_pages(
-            Issue, "issues", "search", start_at, max_results, params=params
-        )
+        # Asserts the plain session calls, so keep requests-futures out of the way
+        # even where it is installed.
+        with mock.patch.object(self.jira, "_futures_session_class", return_value=None):
+            items = self.jira._fetch_pages(
+                Issue, "issues", "search", start_at, max_results, params=params
+            )
 
         actual_calls = [[kall[1], kall[2]] for kall in self.jira._session.method_calls]
         self.assertEqual(actual_calls, expected_calls)
