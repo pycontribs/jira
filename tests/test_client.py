@@ -1915,3 +1915,15 @@ def test_sprint_report_estimate_sum_is_none_without_estimates(requests_mock, met
     )
 
     assert getattr(client, method)("1", "2") is None
+
+
+def test_find_transitionid_by_name_returns_string_id(requests_mock):
+    client = jira.client.JIRA(
+        server="https://jira.example.com", get_server_info=False, validate=False
+    )
+    requests_mock.get(
+        "https://jira.example.com/rest/api/2/issue/ABC-1/transitions",
+        json={"transitions": [{"id": "11", "name": "To Do"}]},
+    )
+
+    assert client.find_transitionid_by_name("ABC-1", "to do") == "11"
