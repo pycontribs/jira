@@ -1,7 +1,7 @@
 name: ci
 
 # Cloud secrets aren't shared to fork PRs, so cloud is skipped
-# (not failed) there; check uses alls-green's allowed-skips so a
+# (not failed) there; ci-check uses alls-green's allowed-skips so a
 # fork PR still goes green on server alone.
 on:
   push:
@@ -42,6 +42,7 @@ jobs:
 
   # The only required status in repo config; flip-jobs-safely.
   check:
+    name: ci-check
     if: always()
     needs:
       - server
