@@ -139,9 +139,9 @@ jobs:
           fi
         # https://github.com/actions/toolkit/issues/193
 
-  # Disabled - pre-commit.ci runs the same hooks on every PR.
+  # Runs only the hooks listed in pre-commit.ci's `ci.skip`; pre-commit.ci
+  # runs the rest.
   lint:
-    if: false
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v5
@@ -149,8 +149,15 @@ jobs:
         with:
           enable-cache: true
           python-version: "3.10"
+      - name: Install bindep system packages (apt)
+        run: |
+          sudo apt-get update -y
+          mapfile -t apt_packages < <(uvx bindep -b -f bindep.txt || true)
+          if [ ${#apt_packages[@]} -gt 0 ]; then
+            sudo apt-get install -y --no-install-recommends "${apt_packages[@]}"
+          fi
       - run: uv tool install tox --with tox-uv --with "setuptools>=65.3"
-      - run: tox -e lint
+      - run: tox -e lint -- $(yq '.ci.skip[]' .pre-commit-config.yaml)
 
   # Disabled - Read the Docs builds the docs on every push.
   docs:
@@ -175,6 +182,7 @@ jobs:
     needs:
       - build
       - extras
+      - lint
 
     runs-on: ubuntu-24.04
 
