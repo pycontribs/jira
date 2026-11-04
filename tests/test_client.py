@@ -477,6 +477,15 @@ def test_project_issue_fields(requests_mock, deployment_type, version, items_key
     assert [f.fieldId for f in fields] == ["summary", "assignee"]
 
 
+def test_project_issue_types_refused_before_server_8_4(requests_mock):
+    client = _createmeta_client("Server", (8, 3, 0))
+
+    with pytest.raises(JIRAError, match="Requires Server/DC 8.4"):
+        client.project_issue_types("ABC")
+
+    assert not requests_mock.called
+
+
 @pytest.mark.parametrize(
     "mock_client_method", ["mock_cloud_only_method", "mock_experimental_method"]
 )
