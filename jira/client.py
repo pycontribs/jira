@@ -127,7 +127,7 @@ P = ParamSpec("P")
 R = TypeVar("R")
 
 
-def cloud_api(client_method: Callable[P, R]) -> Callable[P, R]:
+def cloud_api(client_method: Callable[P, R]) -> Callable[P, R | None]:
     """A convenience decorator to check if the Jira instance is cloud.
 
     Checks if the client instance is talking to Cloud Jira. If it is, return
@@ -147,7 +147,7 @@ def cloud_api(client_method: Callable[P, R]) -> Callable[P, R]:
     """
 
     @wraps(client_method)
-    def check_if_cloud(*args: Any, **kwargs: Any) -> Any:
+    def check_if_cloud(*args: P.args, **kwargs: P.kwargs) -> R | None:
         # The first argument of any class instance is a `self`
         # reference. Avoiding magic numbers here.
         instance = next(arg for arg in args)
@@ -162,10 +162,12 @@ def cloud_api(client_method: Callable[P, R]) -> Callable[P, R]:
         )
         return None
 
-    return cast("Callable[P, R]", check_if_cloud)
+    return check_if_cloud
 
 
-def experimental_atlassian_api(client_method: Callable[P, R]) -> Callable[P, R]:
+def experimental_atlassian_api(
+    client_method: Callable[P, R],
+) -> Callable[P, R | None]:
     """A convenience decorator to inform if a client method is experimental.
 
     Indicates the path covered by the client method is experimental. If the path
@@ -182,7 +184,7 @@ def experimental_atlassian_api(client_method: Callable[P, R]) -> Callable[P, R]:
     """
 
     @wraps(client_method)
-    def is_experimental(*args: Any, **kwargs: Any) -> Any:
+    def is_experimental(*args: P.args, **kwargs: P.kwargs) -> R | None:
         instance = next(arg for arg in args)
         if not isinstance(instance, JIRA):
             raise NotJIRAInstanceError(instance)
@@ -200,7 +202,7 @@ def experimental_atlassian_api(client_method: Callable[P, R]) -> Callable[P, R]:
             else:
                 raise
 
-    return cast("Callable[P, R]", is_experimental)
+    return is_experimental
 
 
 def _resource_classes(annotation: Any) -> tuple[type[Resource], ...]:
@@ -1185,7 +1187,7 @@ class JIRA:
             use_post (bool): Whether to use POST instead of GET.
 
         Returns:
-            ResultList: List of fetched items.
+            Optional[ResultList]: List of fetched items, ``None`` off Jira Cloud.
         """
         query = dict(params or {})
         token: str | None = query.pop("nextPageToken", None)
@@ -1623,7 +1625,7 @@ class JIRA:
                 though can be an empty list.
 
         Returns:
-            Dashboard
+            Optional[Dashboard]: ``None`` off Jira Cloud or when Atlassian has removed the experimental endpoint.
         """
         data: dict[str, Any] = remove_empty_attributes(
             {
@@ -1661,7 +1663,7 @@ class JIRA:
             though can be an empty list.
 
         Returns:
-          Dashboard
+          Optional[Dashboard]: ``None`` off Jira Cloud or when Atlassian has removed the experimental endpoint.
         """
         data: dict[str, Any] = remove_empty_attributes(
             {
@@ -1690,7 +1692,7 @@ class JIRA:
           minutes (int): The frequency of the dashboard automatic refresh in minutes.
 
         Returns:
-          Response
+          Optional[Response]: ``None`` off Jira Cloud or when Atlassian has removed the experimental endpoint.
         """
         # The payload expects milliseconds, we are doing a conversion
         # here as a convenience. Additionally, if the value is `0` then we are setting
@@ -1771,7 +1773,7 @@ class JIRA:
           dashboard_id (str): the ``dashboard_id`` of the dashboard to get gadgets for
 
         Returns:
-          list[DashboardGadget]
+          Optional[list[DashboardGadget]]: ``None`` off Jira Cloud or when Atlassian has removed the experimental endpoint.
         """
         gadgets: list[DashboardGadget] = []
         gadgets = self._fetch_pages(
@@ -1795,7 +1797,7 @@ class JIRA:
         """Return a ResultList of available DashboardGadget resources and a ``total`` count.
 
         Returns:
-            ResultList[DashboardGadget]
+            Optional[ResultList[DashboardGadget]]: ``None`` off Jira Cloud or when Atlassian has removed the experimental endpoint.
         """
         return self._fetch_pages(DashboardGadget, "gadgets", "dashboard/gadgets")
 
@@ -1829,7 +1831,7 @@ class JIRA:
               with `module_key`.
 
         Returns:
-          DashboardGadget
+          Optional[DashboardGadget]: ``None`` off Jira Cloud or when Atlassian has removed the experimental endpoint.
         """
         data = remove_empty_attributes(
             {
@@ -4009,7 +4011,7 @@ class JIRA:
 
         if self._is_cloud:
             if startAt == 0:
-                return self.enhanced_search_issues(
+                results = self.enhanced_search_issues(
                     jql_str=jql_str,
                     maxResults=maxResults,
                     fields=fields,
@@ -4018,6 +4020,11 @@ class JIRA:
                     json_result=json_result,
                     use_post=use_post,
                 )
+                if results is None:
+                    raise JIRAError(
+                        "`enhanced_search_issues` is only available on Jira Cloud."
+                    )
+                return results
             else:
                 raise JIRAError(
                     "The `search` API is deprecated in Jira Cloud. Use `enhanced_search_issues` method instead."
@@ -4082,7 +4089,7 @@ class JIRA:
         *,
         json_result: Literal[False] = False,
         use_post: bool = False,
-    ) -> ResultList[Issue]: ...
+    ) -> ResultList[Issue] | None: ...
 
     @overload
     def enhanced_search_issues(
@@ -4097,7 +4104,7 @@ class JIRA:
         *,
         json_result: Literal[True],
         use_post: bool = False,
-    ) -> dict[str, Any]: ...
+    ) -> dict[str, Any] | None: ...
 
     @overload
     def enhanced_search_issues(
@@ -4112,7 +4119,7 @@ class JIRA:
         *,
         json_result: bool,
         use_post: bool = False,
-    ) -> dict[str, Any] | ResultList[Issue]: ...
+    ) -> dict[str, Any] | ResultList[Issue] | None: ...
 
     @cloud_api
     def enhanced_search_issues(
@@ -4147,7 +4154,8 @@ class JIRA:
             use_post (bool): True to use POST endpoint to fetch issues.
 
         Returns:
-            Union[Dict, ResultList]: JSON Dict if ``json_result=True``, otherwise a `ResultList`.
+            Union[Dict, ResultList, None]: JSON Dict if ``json_result=True``, otherwise a `ResultList`.
+              ``None`` off Jira Cloud.
         """
         if isinstance(fields, str):
             fields = fields.split(",")
@@ -4187,6 +4195,10 @@ class JIRA:
             params=search_params,
             use_post=use_post,
         )
+        if issues is None:
+            raise JIRAError(
+                "Token-paged search (`search/jql`) is only available on Jira Cloud."
+            )
 
         if untranslate:
             iss: Issue
@@ -4201,12 +4213,12 @@ class JIRA:
     @overload
     def approximate_issue_count(
         self, jql_str: str, *, json_result: Literal[False] = False
-    ) -> int: ...
+    ) -> int | None: ...
 
     @overload
     def approximate_issue_count(
         self, jql_str: str, *, json_result: Literal[True]
-    ) -> dict[str, Any]: ...
+    ) -> dict[str, Any] | None: ...
 
     @cloud_api
     def approximate_issue_count(
@@ -4222,7 +4234,8 @@ class JIRA:
             json_result (bool): If True, returns the full JSON response. Defaults to False.
 
         Returns:
-            int | dict[str, Any]: The issue count if json_result is False, else the raw JSON response.
+            int | dict[str, Any] | None: The issue count if json_result is False, else the raw JSON response.
+              ``None`` off Jira Cloud.
         """
         if not self._is_cloud:
             raise ValueError(
