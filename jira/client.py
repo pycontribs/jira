@@ -902,6 +902,38 @@ class JIRA:
                     else:
                         # if resource is an empty dictionary we assume no-results
                         break
+            else:
+                # The server may cap the page size below the requested maxResults
+                # (e.g. Jira Cloud caps searches at 100 items per request), so
+                # keep fetching pages until we have the number of items asked
+                # for, or the server runs out of items.
+                page_size = (
+                    resource.get("maxResults") if isinstance(resource, dict) else None
+                )
+                page_start = (startAt or start_at_from_response or 0) + len(items)
+                while (
+                    page_size
+                    and len(items) < maxResults
+                    and not is_last
+                    and len(next_items_page) == page_size
+                    and (total is None or page_start < total)
+                ):
+                    page_params = json_params()
+                    page_params["startAt"] = page_start
+                    page_params["maxResults"] = min(page_size, maxResults - len(items))
+
+                    resource = self._get_json(
+                        request_path, params=page_params, base=base, use_post=use_post
+                    )
+                    if not resource:
+                        # if resource is an empty dictionary we assume no-results
+                        break
+                    next_items_page = self._get_items_from_page(
+                        item_type, items_key, resource
+                    )
+                    items.extend(next_items_page)
+                    page_start += len(next_items_page)
+                del items[maxResults:]
 
             return ResultList(
                 items, start_at_from_response, max_results_from_response, total, is_last
@@ -929,7 +961,7 @@ class JIRA:
             item_type (Type[Resource]): Type of single item. Returns a `ResultList` of such items.
             items_key (Optional[str]): Path to the items in JSON returned from the server.
             request_path (str): Path in the request URL.
-            maxResults (int): Maximum number of items to return per page. (Default: 50)
+            maxResults (int): Maximum number of items to return. If maxResults evaluates as False, it will try to get all items in batches. (Default: 50)
             params (Dict[str, Any]): Parameters to be sent with the request.
             base (str): Base URL for the requests.
             use_post (bool): Whether to use POST instead of GET.
@@ -938,7 +970,7 @@ class JIRA:
             ResultList: List of fetched items.
         """
         DEFAULT_BATCH = 100  # Max batch size per request
-        fetch_all = maxResults in (0, False)  # If False/0, fetch everything
+        fetch_all = not maxResults  # If False/0, fetch everything
 
         page_params = (params or {}).copy()  # Ensure params isn't modified
         page_params["maxResults"] = DEFAULT_BATCH if fetch_all else maxResults
@@ -957,10 +989,23 @@ class JIRA:
             response = self._get_json(
                 request_path, params=page_params, base=base, use_post=use_post
             )
-            items.extend(self._get_items_from_page(item_type, items_key, response))
+            next_items_page = self._get_items_from_page(item_type, items_key, response)
+            items.extend(next_items_page)
             nextPageToken = response.get("nextPageToken")
-            if not fetch_all or not nextPageToken:
+            if not nextPageToken or not next_items_page:
                 break
+            if not fetch_all:
+                # The server may cap the page size below the requested maxResults
+                # (Jira Cloud caps ``search/jql`` at 100 items per request), so
+                # keep following nextPageToken until we have the number of items
+                # asked for, requesting at most the page size the server returned.
+                remaining = maxResults - len(items)
+                if remaining <= 0:
+                    break
+                page_params["maxResults"] = min(remaining, len(next_items_page))
+
+        if not fetch_all:
+            del items[maxResults:]
 
         return ResultList(items, _nextPageToken=nextPageToken)
 
@@ -3603,6 +3648,8 @@ class JIRA:
             maxResults (int): Maximum number of issues to return.
               Total number of results is available in the ``total`` attribute of the returned :class:`ResultList`.
               If maxResults evaluates to False, it will try to get all issues in batches. (Default: ``50``)
+              If maxResults is larger than the page size the server allows (100 on Jira Cloud),
+              the issues are fetched in multiple requests.
             validate_query (bool): True to validate the query. (Default: ``True``)
             fields (Optional[Union[str, List[str]]]): comma-separated string or list of issue fields to include in the results.
               Default is to include all fields.
@@ -3710,6 +3757,8 @@ class JIRA:
             maxResults (int): Maximum number of issues to return.
               Total number of results is available in the ``total`` attribute of the returned :class:`ResultList`.
               If maxResults evaluates to False, it will try to get all issues in batches. (Default: ``50``)
+              If maxResults is larger than the page size the server allows (100 on Jira Cloud),
+              the issues are fetched in multiple requests.
             fields (Optional[Union[str, List[str]]]): comma-separated string or list of issue fields to include in the results.
               Default is to include all fields If you don't require fields, set it to empty string ``''``.
             expand (Optional[str]): extra information to fetch inside each resource.
