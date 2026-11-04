@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import warnings
 from collections.abc import Iterator
 from contextlib import contextmanager
 from functools import lru_cache
@@ -7,7 +8,7 @@ from functools import lru_cache
 import pytest as pytest
 
 from jira.exceptions import JIRAError
-from jira.resources import Board, Filter, Sprint
+from jira.resources import Board, Filter, Issue, Sprint
 from tests.conftest import JiraTestCase, allow_on_cloud, rndstr
 
 
@@ -146,3 +147,77 @@ class SprintTests(JiraTestCase):
             with self._create_sprint():
                 with pytest.raises(JIRAError):
                     self.jira.sprints_by_name(self.board.id)
+
+    @allow_on_cloud
+    def test_sprint_report_endpoint(self):
+        # GIVEN: an active sprint holding two fresh issues, one of them done
+        issues = [
+            self.jira.create_issue(
+                project=self.project_b,
+                summary=f"sprint report issue {n} {self.sprint_name}",
+                issuetype={"name": self.test_manager.CI_JIRA_ISSUE},
+            )
+            for n in (1, 2)
+        ]
+        # Sprint updates are a full PUT, so every call repeats name and dates.
+        dates = {
+            "startDate": "2015-04-11T15:22:00.000+10:00",
+            "endDate": "2015-04-20T01:22:00.000+10:00",
+        }
+        sprint = None
+        try:
+            sprint = self.jira.create_sprint(self.sprint_name, self.board.id)
+            self.jira.update_sprint(
+                sprint.id, name=sprint.name, state="active", **dates
+            )
+            self.jira.add_issues_to_sprint(sprint.id, [i.key for i in issues])
+            done = [
+                t["id"]
+                for t in self.jira.transitions(issues[0])
+                if t["name"].lower() == "done"
+            ]
+            if done:
+                self.jira.transition_issue(issues[0], done[0])
+
+            # WHEN: we ask for the sprint report through the client
+            completed = self.jira.completed_issues(self.board.id, sprint.id)
+            removed = self.jira.removed_issues(self.board.id, sprint.id)
+
+            # THEN: both return lists of issues
+            assert all(isinstance(i, Issue) for i in completed)
+            assert all(isinstance(i, Issue) for i in removed)
+
+            # AND: the base the client picked is the one this deployment serves
+            path = (
+                "rapid/charts/sprintreport"
+                f"?rapidViewId={self.board.id}&sprintId={sprint.id}"
+            )
+            bases = {
+                "agile": self.jira.AGILE_BASE_URL,
+                "greenhopper": self.jira.GREENHOPPER_BASE_URL,
+            }
+            codes = {
+                name: self._status_code(self.jira._get_url(path, base=base))
+                for name, base in bases.items()
+            }
+            deployment = "cloud" if self.jira._is_cloud else "server"
+            report = f"sprintreport on {deployment}: {codes}"
+            # pytest prints warnings on a passing run, so the CI log
+            # records what each deployment serves.
+            warnings.warn(report, stacklevel=1)
+            assert codes["greenhopper"] == 200, report
+        finally:
+            if sprint is not None:
+                # Jira refuses to delete an active sprint.
+                self.jira.update_sprint(
+                    sprint.id, name=sprint.name, state="closed", **dates
+                )
+                sprint.delete()
+            for issue in issues:
+                issue.delete()
+
+    def _status_code(self, url: str) -> int | None:
+        try:
+            return self.jira._session.get(url).status_code
+        except JIRAError as e:
+            return e.status_code
