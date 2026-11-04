@@ -16,6 +16,7 @@ applinks
 backupmanager
 caplog
 capsys
+carryforward
 codespell
 docstrings
 duedate

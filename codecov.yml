@@ -8,4 +8,17 @@ coverage:
         target: auto
         threshold: 0.50
         base: auto
-    patch: off
+    patch:
+      default:
+        target: auto
+
+# Fork PRs never get the cloud secrets, so the cloud job skips and uploads
+# nothing. Carrying the cloud flag forward from the base commit keeps the
+# project total from dropping on every fork PR. Lines new in the PR still
+# need a unit or server test to count, since carried data cannot cover them.
+flag_management:
+  default_rules:
+    carryforward: false
+  individual_flags:
+    - name: cloud
+      carryforward: true
