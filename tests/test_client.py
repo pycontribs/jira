@@ -1433,11 +1433,10 @@ def test_fetch_pages_async_uses_base(async_jira, use_post):
 @pytest.mark.parametrize(
     "first_page",
     [
-        _offset_page(0, 100),
         _offset_page(0, 100, total=250, isLast=True),
         _offset_page(0, 100, total=100),
     ],
-    ids=["without total", "isLast", "everything in first page"],
+    ids=["isLast", "everything in first page"],
 )
 def test_fetch_pages_async_single_request(async_jira, first_page):
     client, _ = async_jira
@@ -1448,6 +1447,28 @@ def test_fetch_pages_async_single_request(async_jira, first_page):
     assert len(server.calls) == 1
     assert _FakeFuturesSession.instances == []
     assert [i.key for i in issues] == _keys(0, 100)
+
+
+def test_fetch_pages_async_without_total_pages_synchronously_until_is_last(
+    async_jira,
+):
+    client, _ = async_jira
+    server = _ScriptedServer(
+        _offset_page(0, 100, isLast=False),
+        _offset_page(100, 100, isLast=False),
+        _offset_page(200, 50, isLast=True),
+    )
+    with mock.patch.object(client, "_get_json", side_effect=server):
+        issues = client._fetch_pages(Issue, "issues", "search", 0, False, {})
+
+    assert server.calls == [
+        {"maxResults": 100},
+        {"startAt": 100, "maxResults": 100},
+        {"startAt": 200, "maxResults": 100},
+    ]
+    assert _FakeFuturesSession.instances == []
+    assert [i.key for i in issues] == _keys(0, 250)
+    assert issues.isLast is True
 
 
 def test_fetch_pages_async_with_max_results_pages_synchronously(async_jira):
