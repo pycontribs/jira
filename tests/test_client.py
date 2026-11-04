@@ -1351,6 +1351,19 @@ def test_worklogs_and_worklog_send_expand(requests_mock):
     ]
 
 
+@pytest.mark.parametrize("notify,expected", [(False, True), (True, False)])
+def test_add_worklog_notify(requests_mock, notify, expected):
+    client = jira.client.JIRA(
+        server="https://jira.example.com", get_server_info=False, validate=False
+    )
+    url = "https://jira.example.com/rest/api/2/issue/ABC-1/worklog"
+    requests_mock.post(url, json={"id": "100", "self": f"{url}/100"})
+
+    client.add_worklog("ABC-1", timeSpent="1h", notify=notify)
+
+    assert ("notifyUsers=false" in requests_mock.last_request.url) is expected
+
+
 def test_add_attachment_accepts_bytes(requests_mock):
     client = jira.client.JIRA(
         server="https://jira.example.com", get_server_info=False, validate=False
