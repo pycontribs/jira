@@ -4254,43 +4254,85 @@ class JIRA:
         return response_json.get("count", 0)
 
     # Archive Issues
-    @cloud_api
     def archive_issues(self, issues: Iterable[str | int | Issue]) -> dict[str, Any]:
-        """Archive issues. Jira Cloud Premium and Enterprise only.
+        """Archive issues.
+
+        Jira Cloud needs the Premium or Enterprise plan and takes up to 1000 issues per
+        call. It archives what it can and reports the issues it could not in ``errors``.
+
+        Server and Data Center have no batch call, so each issue is archived with its own
+        ``PUT issue/{key}/archive`` request. That endpoint needs Jira 8.0, and Atlassian
+        documents HTTP 403 from an instance without a Data Center license. The first
+        issue Jira refuses raises :class:`~jira.exceptions.JIRAError`, and the issues
+        archived before it stay archived.
 
         Args:
             issues (Iterable[str | int | Issue]): Issues to archive, as keys, ids or
-              :class:`~jira.resources.Issue` objects. Jira accepts up to 1000 per call.
+              :class:`~jira.resources.Issue` objects.
+
+        Raises:
+            JIRAError: On Server and Data Center, for the first issue Jira refuses.
+            NotImplementedError: On Server and Data Center older than Jira 8.0.
 
         Returns:
-            dict[str, Any]: ``numberOfIssuesUpdated`` and ``errors``. ``errors`` maps
-            each failure reason (e.g. ``issuesNotFound``) to a dict with ``count``,
-            ``issueIdsOrKeys`` and ``message``.
+            dict[str, Any]: ``numberOfIssuesUpdated`` and ``errors``. On Cloud, ``errors``
+            maps each failure reason (e.g. ``issuesNotFound``) to a dict with ``count``,
+            ``issueIdsOrKeys`` and ``message``. On Server and Data Center it is empty.
         """
-        return self._put_archive_state("issue/archive", issues)
+        return self._set_archived(issues, "archive", "archive", (8, 0, 0))
 
-    @cloud_api
     def unarchive_issues(self, issues: Iterable[str | int | Issue]) -> dict[str, Any]:
-        """Unarchive issues. Jira Cloud Premium and Enterprise only.
+        """Unarchive issues.
+
+        Server and Data Center restore each issue with its own
+        ``PUT issue/{key}/restore`` request, which needs Jira 8.1. Failures are handled
+        as in :py:meth:`archive_issues`.
 
         Args:
             issues (Iterable[str | int | Issue]): Issues to unarchive, as keys, ids or
-              :class:`~jira.resources.Issue` objects. Jira accepts up to 1000 per call.
+              :class:`~jira.resources.Issue` objects.
+
+        Raises:
+            JIRAError: On Server and Data Center, for the first issue Jira refuses.
+            NotImplementedError: On Server and Data Center older than Jira 8.1.
 
         Returns:
             dict[str, Any]: Same shape as :py:meth:`archive_issues`.
         """
-        return self._put_archive_state("issue/unarchive", issues)
+        return self._set_archived(issues, "unarchive", "restore", (8, 1, 0))
 
-    def _put_archive_state(
-        self, path: str, issues: Iterable[str | int | Issue]
+    def _set_archived(
+        self,
+        issues: Iterable[str | int | Issue],
+        cloud_action: str,
+        server_action: str,
+        server_since: tuple[int, int, int],
     ) -> dict[str, Any]:
         keys = [
             issue.key if isinstance(issue, Issue) else str(issue) for issue in issues
         ]
-        url = self._get_url(path)
-        response = self._session.put(url, data=json.dumps({"issueIdsOrKeys": keys}))
-        return json_loads(response)
+        if self._is_cloud:
+            # https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-issues/#api-rest-api-2-issue-archive-put
+            # https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-issues/#api-rest-api-2-issue-unarchive-put
+            url = self._get_url(f"issue/{cloud_action}")
+            response = self._session.put(url, data=json.dumps({"issueIdsOrKeys": keys}))
+            return json_loads(response)
+
+        # Older Jira answers 404 for the unknown endpoint, which would read as the
+        # first issue being missing. Archive first appears in the 8.0.0 reference
+        # and restore in 8.1.0:
+        # https://docs.atlassian.com/software/jira/docs/api/REST/8.0.0/#api/2/issue-archiveIssue
+        # https://docs.atlassian.com/software/jira/docs/api/REST/8.1.0/#api/2/issue-restoreIssue
+        if self._version < server_since:
+            raise NotImplementedError(
+                f"PUT issue/{{key}}/{server_action} needs Jira"
+                f" {'.'.join(map(str, server_since[:2]))} or later,"
+                f" this server is {'.'.join(map(str, self._version))}."
+            )
+
+        for key in keys:
+            self._session.put(self._get_url(f"issue/{key}/{server_action}"))
+        return {"numberOfIssuesUpdated": len(keys), "errors": {}}
 
     # Security levels
     def security_level(self, id: str | int) -> SecurityLevel:
