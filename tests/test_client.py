@@ -1439,7 +1439,7 @@ def test_add_attachment_bytes_without_filename_raises(requests_mock):
         (b"GIF87a\x01\x00\x01\x00", "image/gif"),
         (b"GIF89a\x01\x00\x01\x00", "image/gif"),
         (b"BM\x3a\x00\x00\x00", "image/bmp"),
-        (b"RIFF\x24\x00\x00\x00WEBP" + b"VP8 ", "image/webp"),
+        (b"RIFF\x24\x00\x00\x00WEBP" + b"VP8 ", None),
         # 9x2 pixels: 2 bytes per row, 2 rows
         (b"\x00\x00\x09\x02" + b"\xff\x80" * 2, "image/vnd.wap.wbmp"),
         # 200x1 pixels: width as the multi-byte integer 0x81 0x48
@@ -1455,7 +1455,7 @@ def test_add_attachment_bytes_without_filename_raises(requests_mock):
         "gif87a",
         "gif89a",
         "bmp",
-        "webp",
+        "webp is not documented",
         "wbmp",
         "wbmp multi-byte width",
         "zero-led bytes too short for wbmp",
@@ -1468,7 +1468,11 @@ def test_get_mime_type(buff, expected):
     client = jira.client.JIRA(
         server="https://jira.example.com", get_server_info=False, validate=False
     )
-    assert client._get_mime_type(buff) == expected
+    if expected is None:
+        with pytest.raises(ValueError, match="contentType"):
+            client._get_mime_type(buff)
+    else:
+        assert client._get_mime_type(buff) == expected
 
 
 def test_fetch_pages_uses_caller_start_at_when_response_has_none(offline_jira):
