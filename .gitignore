@@ -8,6 +8,7 @@
 .coverage.*
 .eggs/
 .tox/
+.venv
 amps-standalone*
 coverage.xml
 dist/
