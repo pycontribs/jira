@@ -18,7 +18,7 @@ import requests_mock as rm
 import jira.client
 from jira.client import JIRA
 from jira.exceptions import JIRAError, NotJIRAInstanceError
-from jira.resources import Issue, IssueLinkType, Project, SecurityLevel
+from jira.resources import Issue, IssueLinkType, Project, Resource, SecurityLevel
 from tests.conftest import JiraTestManager, allow_on_cloud, get_unique_project_name
 
 
@@ -817,6 +817,52 @@ def test_fetch_pages_search_token_server_caps_page_size(
     assert len(issues) == expected_len
     assert [i.key for i in issues] == [f"KEY-{i}" for i in range(expected_len)]
     assert issues.nextPageToken == expected_next_token
+
+
+def test_fetch_pages_search_token_uses_default_batch_size(no_fields):
+    """Regression test for https://github.com/pycontribs/jira/issues/2366."""
+    client = jira.client.JIRA(
+        server="https://jira.atlassian.com",
+        get_server_info=False,
+        validate=False,
+        default_batch_sizes={Issue: 40},
+    )
+    client.deploymentType = "Cloud"
+    server = _PagedServer(total=90, cap=100, token_based=True)
+    with mock.patch.object(client, "_get_json", side_effect=server):
+        issues = client._fetch_pages_searchToken(
+            Issue, "issues", "search/jql", False, {}
+        )
+
+    assert server.calls == [
+        {"maxResults": 40},
+        {"maxResults": 40, "nextPageToken": "tok-40"},
+        {"maxResults": 40, "nextPageToken": "tok-80"},
+    ]
+    assert len(issues) == 90
+
+
+def test_fetch_pages_search_token_lets_backend_pick_batch_size(
+    no_fields, requests_mock
+):
+    client = jira.client.JIRA(
+        server="https://jira.atlassian.com",
+        get_server_info=False,
+        validate=False,
+        default_batch_sizes={Resource: None},
+    )
+    client.deploymentType = "Cloud"
+    requests_mock.post(
+        "https://jira.atlassian.com/rest/api/2/search/jql",
+        json={"issues": [_PagedServer._issue(0)], "isLast": True},
+    )
+
+    issues = client._fetch_pages_searchToken(
+        Issue, "issues", "search/jql", False, {"jql": "project = KEY"}, use_post=True
+    )
+
+    assert requests_mock.last_request.json() == {"jql": "project = KEY"}
+    assert len(issues) == 1
 
 
 @pytest.mark.parametrize("is_cloud", [True, False], ids=["cloud", "server"])
