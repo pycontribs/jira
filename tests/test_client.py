@@ -1779,3 +1779,15 @@ def test_sprint_report_methods_use_greenhopper_api(requests_mock, method, expect
     if isinstance(result, list):
         result = [issue.key for issue in result]
     assert result == expected
+
+
+def test_completed_issues_reads_sprint_report(requests_mock):
+    client = jira.client.JIRA(
+        server="https://jira.example.com", get_server_info=False, validate=False
+    )
+    requests_mock.get(SPRINT_REPORT_URL, json=SPRINT_REPORT)
+
+    issues = client.completed_issues("1", "2")
+
+    assert [issue.key for issue in issues] == ["ABC-10"]
+    assert all(isinstance(issue, Issue) for issue in issues)
