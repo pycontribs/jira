@@ -65,6 +65,15 @@ def test_resource_without_raw_has_no_attributes():
     pickle.loads(pickle.dumps(resource))
 
 
+def test_resource_without_raw_has_str_and_repr():
+    resource = jira.resources.Resource("thing/{0}", {"server": "x"}, None)
+    del resource.raw
+
+    expected = f"<JIRA Resource at {id(resource)}>"
+    assert repr(resource) == expected
+    assert str(resource) == expected
+
+
 def test_validate_with_malformed_session_response_does_not_recurse(requests_mock):
     requests_mock.get(
         "https://jira.example.net/rest/auth/1/session", json={"something": "blah"}
