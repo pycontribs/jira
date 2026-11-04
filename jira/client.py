@@ -5826,13 +5826,21 @@ class JIRA:
 
         return json_loads(r)
 
-    def incompletedIssuesEstimateSum(self, board_id: str, sprint_id: str) -> float:
-        """Return the total incompleted points this sprint."""
+    def incompletedIssuesEstimateSum(
+        self, board_id: str, sprint_id: str
+    ) -> float | None:
+        """Return the summed estimate of the issues not completed in the sprint.
+
+        The sum is in the board's estimation unit, so seconds for time estimates.
+
+        Returns:
+            Optional[float]: ``None`` when none of the issues has an estimate.
+        """
         data: dict[str, Any] = self._get_json(
             f"rapid/charts/sprintreport?rapidViewId={board_id}&sprintId={sprint_id}",
             base=self.GREENHOPPER_BASE_URL,
         )
-        return data["contents"]["incompletedIssuesEstimateSum"]["value"]
+        return data["contents"]["issuesNotCompletedEstimateSum"].get("value")
 
     def removed_issues(self, board_id: str, sprint_id: str) -> list[Issue]:
         """Return the removed issues for the sprint.
@@ -5868,13 +5876,19 @@ class JIRA:
 
         return issues
 
-    def removedIssuesEstimateSum(self, board_id: str, sprint_id: str) -> float:
-        """Return the total incompleted points this sprint."""
+    def removedIssuesEstimateSum(self, board_id: str, sprint_id: str) -> float | None:
+        """Return the summed estimate of the issues removed from the sprint.
+
+        The sum is in the board's estimation unit, so seconds for time estimates.
+
+        Returns:
+            Optional[float]: ``None`` when none of the issues has an estimate.
+        """
         data: dict[str, Any] = self._get_json(
             f"rapid/charts/sprintreport?rapidViewId={board_id}&sprintId={sprint_id}",
             base=self.GREENHOPPER_BASE_URL,
         )
-        return data["contents"]["puntedIssuesEstimateSum"]["value"]
+        return data["contents"]["puntedIssuesEstimateSum"].get("value")
 
     # TODO(ssbarnea): remove sprint_info() method, sprint() method suit the convention more
     def sprint_info(self, board_id: str, sprint_id: str) -> dict[str, Any]:
