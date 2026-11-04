@@ -3311,8 +3311,9 @@ class JIRA:
               Jira Cloud honours this. Jira Server/DC does not document the parameter; it accepts
               and ignores it. (Default: ``True``)
             properties (list[dict[str, Any]] | None): Entity properties to store on the worklog,
-              each as ``{"key": "<string>", "value": <any JSON>}``. Jira Cloud only:
-              Jira Server and Data Center reject a worklog that has this field with HTTP 400.
+              each as ``{"key": "<string>", "value": <any JSON>}``. Jira Cloud only: Server and
+              Data Center worklogs have no properties field, so there the argument is left out
+              with a warning and the rest of the worklog is still added.
 
         Returns:
             Worklog
@@ -3340,12 +3341,18 @@ class JIRA:
 
         if visibility is not None:
             data["visibility"] = visibility
-        if properties is not None:
+        if properties is not None and self._is_cloud:
+            data["properties"] = properties
+        elif properties is not None:
             # Cloud's worklog has properties. The Server and DC worklog schema for
-            # addWorklog does not, up to the 11.x reference:
+            # addWorklog does not, up to the 11.x reference, and Jira answers HTTP 400:
             # https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-issue-worklogs/#api-rest-api-2-issue-issueidorkey-worklog-post
             # https://developer.atlassian.com/server/jira/platform/rest/v11000/api-group-issue/
-            data["properties"] = properties
+            warnings.warn(
+                "add_worklog() did not send the 'properties' argument: Jira Server and"
+                " Data Center worklogs have no properties field.",
+                stacklevel=3,
+            )
         if started is not None:
             # based on REST Browser it needs: "2014-06-03T08:21:01.273+0000"
             if started.tzinfo is None:
