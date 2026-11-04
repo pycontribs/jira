@@ -194,7 +194,10 @@ module = "tests.*"
 addopts = '''-p no:xdist --durations=10 --tb=long -rxX -v --color=yes'''
 # avoid useless warnings related to coverage skips
 filterwarnings = ["ignore::pytest.PytestWarning"]
-markers = ["allow_on_cloud: opt in for the test to run on Jira Cloud"]
+markers = [
+  "allow_on_cloud: opt in for the test to run on Jira Cloud",
+  "api_probe: dev-only checks of live response shapes, run with --run-api-probe or JIRA_API_PROBE=1"
+]
 minversion = "6.0"
 python_files = ["test_*.py", "tests.py"]
 # these are important for distributed testing, to speed up their execution we minimize what we sync

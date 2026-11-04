@@ -12,6 +12,7 @@ import sys
 import time
 import unittest
 import weakref
+from pathlib import Path
 from time import sleep
 from typing import Any, Callable
 
@@ -408,3 +409,25 @@ def no_fields(monkeypatch):
     We don't need the features of a MagicMock, hence we don't use it here.
     """
     monkeypatch.setattr(JIRA, "fields", lambda *args, **kwargs: [])
+
+
+def pytest_addoption(parser: pytest.Parser) -> None:
+    parser.addoption(
+        "--run-api-probe",
+        action="store_true",
+        default=False,
+        help="collect tests/api_probe, which create and delete data on CI_JIRA_URL "
+        "(JIRA_API_PROBE=1 does the same)",
+    )
+
+
+def api_probe_enabled(config: pytest.Config) -> bool:
+    return bool(config.getoption("--run-api-probe")) or (
+        os.environ.get("JIRA_API_PROBE") == "1"
+    )
+
+
+def pytest_ignore_collect(collection_path: Path, config: pytest.Config) -> bool | None:
+    if collection_path.name == "api_probe" and not api_probe_enabled(config):
+        return True
+    return None
