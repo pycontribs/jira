@@ -1461,6 +1461,37 @@ def test_fetch_pages_async_with_max_results_pages_synchronously(async_jira):
     assert [i.key for i in issues] == _keys(0, 150)
 
 
+def test_async_without_requests_futures_warns_and_fetches_all_pages(requests_mock):
+    url = "https://jira.example.com/rest/api/2/dashboard"
+
+    def page(start: int) -> dict:
+        ids = range(start, min(start + 2, 5))
+        return {
+            "startAt": start,
+            "maxResults": 2,
+            "total": 5,
+            "dashboards": [{"id": str(i), "self": f"{url}/{i}"} for i in ids],
+        }
+
+    requests_mock.get(url, [{"json": page(0)}, {"json": page(2)}, {"json": page(4)}])
+
+    options = {"async": True}
+
+    with mock.patch.object(JIRA, "_futures_session_class", return_value=None):
+        with pytest.warns(UserWarning, match="requests-futures"):
+            client = jira.client.JIRA(
+                server="https://jira.example.com",
+                options=options,
+                get_server_info=False,
+                validate=False,
+            )
+        dashboards = client.dashboards(maxResults=False)
+
+    assert client._options["async"] is False
+    assert options["async"] is True
+    assert [d.id for d in dashboards] == ["0", "1", "2", "3", "4"]
+
+
 @pytest.mark.parametrize("max_results", [False, 150], ids=["fetch all", "up to 150"])
 def test_fetch_pages_search_token_result_fields(offline_jira, max_results):
     offline_jira.deploymentType = "Cloud"
