@@ -247,13 +247,13 @@ class Resource:
 
     def find(
         self,
-        id: tuple[str, ...] | int | str,
+        id: tuple[str | int, ...] | int | str,
         params: dict[str, str] | None = None,
     ) -> None:
         """Finds a resource based on the input parameters.
 
         Args:
-            id (Union[Tuple[str, str], int, str]): id
+            id (tuple[str | int, ...] | int | str): id
             params (Optional[Dict[str, str]]): params
         """
         if params is None:
