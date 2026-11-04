@@ -26,6 +26,13 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: daily
+      day: sunday
+      interval: weekly
     labels:
       - chore
+    # Ungrouped, five unmerged bumps hit dependabot's open-PR limit and it
+    # stops proposing newer majors.
+    groups:
+      actions:
+        patterns:
+          - "*"
