@@ -3326,7 +3326,7 @@ class JIRA:
         self._check_createmeta_issuetypes()
         issue_types = self._fetch_pages(
             IssueType,
-            "values",
+            "issueTypes" if self._is_cloud else "values",
             f"issue/createmeta/{project}/issuetypes",
             startAt=startAt,
             maxResults=maxResults,
