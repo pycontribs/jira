@@ -21,7 +21,7 @@ import time
 import urllib
 import warnings
 from collections import OrderedDict
-from collections.abc import Iterable, Iterator
+from collections.abc import Iterable, Iterator, Sequence
 from functools import cache, wraps
 from io import BufferedReader, BytesIO
 from numbers import Number
@@ -1231,7 +1231,7 @@ class JIRA:
     # non-resource
     def application_properties(
         self, key: str | None = None
-    ) -> dict[str, str] | list[dict[str, str]]:
+    ) -> dict[str, Any] | list[dict[str, Any]]:
         """Return the mutable server application properties.
 
         Args:
@@ -1291,11 +1291,11 @@ class JIRA:
         return self._find_for_resource(Attachment, id)
 
     # non-resource
-    def attachment_meta(self) -> dict[str, int]:
+    def attachment_meta(self) -> dict[str, bool | int]:
         """Get the attachment metadata.
 
         Return:
-            Dict[str, int]
+            Dict[str, bool | int]: ``enabled`` (bool) and ``uploadLimit`` (int)
         """
         return self._get_json("attachment/meta")
 
@@ -2418,22 +2418,22 @@ class JIRA:
 
     def createmeta(
         self,
-        projectKeys: tuple[str, str] | str | None = None,
-        projectIds: list | tuple[str, str] = [],
-        issuetypeIds: list[str] | None = None,
-        issuetypeNames: str | None = None,
+        projectKeys: str | Sequence[str] | None = None,
+        projectIds: str | Sequence[str | int] = [],
+        issuetypeIds: str | Sequence[str | int] | None = None,
+        issuetypeNames: str | Sequence[str] | None = None,
         expand: str | None = None,
     ) -> dict[str, Any]:
         """Get the metadata required to create issues, optionally filtered by projects and issue types.
 
         Args:
-            projectKeys (Optional[Union[Tuple[str, str], str]]): keys of the projects to filter the results with.
+            projectKeys (str | Sequence[str] | None): keys of the projects to filter the results with.
               Can be a single value or a comma-delimited string. May be combined with projectIds.
-            projectIds (Union[List, Tuple[str, str]]): IDs of the projects to filter the results with.
+            projectIds (str | Sequence[str | int]): IDs of the projects to filter the results with.
               Can be a single value or a comma-delimited string. May be combined with projectKeys.
-            issuetypeIds (Optional[List[str]]): IDs of the issue types to filter the results with.
+            issuetypeIds (str | Sequence[str | int] | None): IDs of the issue types to filter the results with.
               Can be a single value or a comma-delimited string. May be combined with issuetypeNames.
-            issuetypeNames (Optional[str]): Names of the issue types to filter the results with.
+            issuetypeNames (str | Sequence[str] | None): Names of the issue types to filter the results with.
               Can be a single value or a comma-delimited string. May be combined with issuetypeIds.
             expand (Optional[str]): extra information to fetch inside each resource.
 
@@ -2861,7 +2861,7 @@ class JIRA:
 
     def find_transitionid_by_name(
         self, issue: str | int | Issue, transition_name: str
-    ) -> int | None:
+    ) -> str | None:
         """Get a transitionid available on the specified issue to the current user.
 
         Look at https://developer.atlassian.com/static/rest/jira/6.1.html#d2e1074 for json reference
@@ -2871,10 +2871,10 @@ class JIRA:
             transition_name (str): name of transition we are looking for
 
         Returns:
-            Optional[int]: returns the id is found None when it's not
+            Optional[str]: returns the id is found None when it's not
         """
         transitions_json = self.transitions(issue)
-        id: int | None = None
+        id: str | None = None
 
         for transition in transitions_json:
             if transition["name"].lower() == transition_name.lower():
@@ -2905,7 +2905,7 @@ class JIRA:
             worklog (Optional[str]): String to add as time spent on the issue when performing the transition.
             **fieldargs: If present, all other keyword arguments will be ignored
         """
-        transitionId: int | None = None
+        transitionId: int | str | None = None
 
         try:
             transitionId = int(transition)
@@ -3121,7 +3121,7 @@ class JIRA:
         self,
         issue: str | int,
         timeSpent: str | None = None,
-        timeSpentSeconds: str | None = None,
+        timeSpentSeconds: int | str | None = None,
         adjustEstimate: str | None = None,
         newEstimate: str | None = None,
         reduceBy: str | None = None,
@@ -3136,7 +3136,7 @@ class JIRA:
         Args:
             issue (Union[str, int]): the issue to add the worklog to
             timeSpent (Optional[str]): a worklog entry with this amount of time spent, e.g. "2d"
-            timeSpentSeconds (Optional[str]): a worklog entry with this amount of time spent in seconds
+            timeSpentSeconds (int | str | None): a worklog entry with this amount of time spent in seconds
             adjustEstimate (Optional[str]):  allows the user to provide specific instructions to update the remaining time estimate of the issue.
               The value can either be ``new``, ``leave``, ``manual`` or ``auto`` (default).
             newEstimate (Optional[str]): the new value for the remaining estimate field. e.g. "2d"
@@ -3501,7 +3501,7 @@ class JIRA:
         issueKey: str | None = None,
         issueId: str | None = None,
         permissions: str | None = None,
-    ) -> dict[str, dict[str, dict[str, str]]]:
+    ) -> dict[str, dict[str, dict[str, Any]]]:
         """Get a dict of all available permissions on the server.
 
         ``permissions`` is a comma-separated value list of permission keys that is
@@ -5991,7 +5991,7 @@ class JIRA:
     def create_board(
         self,
         name: str,
-        filter_id: str,
+        filter_id: int | str,
         project_ids: str | None = None,
         preset: str = "scrum",
         location_type: Literal["user", "project"] = "user",
@@ -6001,7 +6001,7 @@ class JIRA:
 
         Args:
             name (str): name of the Board (<255 characters).
-            filter_id (str): the Filter to use to create the Board.
+            filter_id (int | str): the Filter to use to create the Board.
               Note: if the user does not have the 'Create shared objects' permission and tries to create a shared board,
               a private board will be created instead (remember that board sharing depends on the filter sharing).
             project_ids (str): Deprecated. See location_id.
