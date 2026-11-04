@@ -253,6 +253,8 @@ jobs:
           jobs: ${{ toJSON(needs) }}
 
       - name: Delete Merged Artifacts
+        # Cleanup only; it intermittently 404s on an already-deleted artifact.
+        continue-on-error: true
         uses: actions/upload-artifact/merge@v7
         with:
           include-hidden-files: true
