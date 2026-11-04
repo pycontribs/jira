@@ -9,6 +9,7 @@ import json
 import logging
 import sys
 import types
+import warnings
 from typing import Any
 from unittest import mock
 from urllib.parse import parse_qs, urlsplit
@@ -27,6 +28,7 @@ from jira.resources import (
     Project,
     Resource,
     SecurityLevel,
+    User,
     Version,
 )
 from tests.conftest import JiraTestManager, allow_on_cloud, get_unique_project_name
@@ -541,9 +543,12 @@ def test_get_user_id_keeps_cloud_account_id(mock_jira_client, account_id):
 def test_get_user_id_searches_for_other_values(mock_jira_client):
     client = mock_jira_client(is_cloud=True)
     user = mock.Mock(accountId="5b10ac8d82e05b22cc7d4ef5")
-    with mock.patch.object(
-        jira.client.JIRA, "search_users", return_value=[user]
-    ) as mock_search_users:
+    with (
+        mock.patch.object(
+            jira.client.JIRA, "search_users", return_value=[user]
+        ) as mock_search_users,
+        pytest.warns(UserWarning, match="No user with identifier"),
+    ):
         assert client._get_user_id("user@example.com") == "5b10ac8d82e05b22cc7d4ef5"
 
     mock_search_users.assert_called_once_with(query="user@example.com", maxResults=20)
@@ -554,9 +559,12 @@ def test_get_user_id_searches_for_account_id_shaped_name_on_server(mock_jira_cli
     client = mock_jira_client()
     user = mock.Mock(name_="username")
     user.name = "username"
-    with mock.patch.object(
-        jira.client.JIRA, "search_users", return_value=[user]
-    ) as mock_search_users:
+    with (
+        mock.patch.object(
+            jira.client.JIRA, "search_users", return_value=[user]
+        ) as mock_search_users,
+        pytest.warns(UserWarning, match="No user with identifier"),
+    ):
         assert client._get_user_id("5b10ac8d82e05b22cc7d4ef5") == "username"
 
     mock_search_users.assert_called_once_with(
@@ -578,6 +586,97 @@ def test_add_watcher_posts_cloud_account_id_without_user_search(mock_jira_client
 
     mock_search_users.assert_not_called()
     client._session.post.assert_called_once_with(url, data=json.dumps(account_id))
+
+
+def _user(client: jira.client.JIRA, **raw) -> User:
+    return User(client._options, client._session, raw={"self": "x", **raw})
+
+
+@pytest.mark.parametrize(
+    "is_cloud, user_raw, payload",
+    [
+        (False, {"name": "fred"}, {"name": "fred"}),
+        (
+            True,
+            {"accountId": "5b10ac8d82e05b22cc7d4ef5"},
+            {"accountId": "5b10ac8d82e05b22cc7d4ef5"},
+        ),
+    ],
+    ids=["server", "cloud"],
+)
+def test_assign_issue_with_user_object_skips_search(
+    offline_jira, requests_mock, is_cloud, user_raw, payload
+):
+    if is_cloud:
+        offline_jira.deploymentType = "Cloud"
+    url = "https://jira.atlassian.com/rest/api/latest/issue/ABC-1/assignee"
+    requests_mock.put(url, status_code=204)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        offline_jira.assign_issue("ABC-1", _user(offline_jira, **user_raw))
+
+    assert [r.method for r in requests_mock.request_history] == ["PUT"]
+    assert requests_mock.last_request.json() == payload
+
+
+def test_watchers_with_user_object_skip_search(offline_jira, requests_mock):
+    url = "https://jira.atlassian.com/rest/api/2/issue/ABC-1/watchers"
+    requests_mock.post(url, status_code=204)
+    requests_mock.delete(url, status_code=204)
+    user = _user(offline_jira, name="fred")
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        offline_jira.add_watcher("ABC-1", user)
+        offline_jira.remove_watcher("ABC-1", user)
+
+    post, delete = requests_mock.request_history
+    assert post.json() == "fred"
+    assert delete.qs == {"username": ["fred"]}
+
+
+@pytest.mark.parametrize(
+    "search_results",
+    [[{"name": "fred2"}], [{"name": "fred2"}, {"name": "fred3"}]],
+    ids=["one result", "several results"],
+)
+def test_user_search_fallback_warns(offline_jira, requests_mock, search_results):
+    requests_mock.get(
+        "https://jira.atlassian.com/rest/api/2/user/search",
+        json=[{"self": "x", **u} for u in search_results],
+    )
+    requests_mock.post(
+        "https://jira.atlassian.com/rest/api/2/issue/ABC-1/watchers", status_code=204
+    )
+
+    with pytest.warns(UserWarning, match="No user with identifier 'fred'"):
+        offline_jira.add_watcher("ABC-1", "fred")
+
+    assert requests_mock.last_request.json() == "fred2"
+
+
+@pytest.mark.parametrize(
+    "search_results",
+    [[{"name": "fred"}], [{"name": "fred2"}, {"name": "fred"}]],
+    ids=["one result", "several results"],
+)
+def test_user_search_exact_match_does_not_warn(
+    offline_jira, requests_mock, search_results
+):
+    requests_mock.get(
+        "https://jira.atlassian.com/rest/api/2/user/search",
+        json=[{"self": "x", **u} for u in search_results],
+    )
+    requests_mock.post(
+        "https://jira.atlassian.com/rest/api/2/issue/ABC-1/watchers", status_code=204
+    )
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        offline_jira.add_watcher("ABC-1", "fred")
+
+    assert requests_mock.last_request.json() == "fred"
 
 
 def _group_user(name: str) -> dict:
