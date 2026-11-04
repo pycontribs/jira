@@ -635,3 +635,24 @@ class IssueTests(JiraTestCase):
 
         self.jira.rank(self.issue_2, prev_issue=self.issue_1)
         assert_ranked((self.issue_1, self.issue_2))
+
+    def test_archive_and_unarchive_issue(self):
+        issue = self.jira.create_issue(
+            summary="Issue to archive",
+            project=self.project_b,
+            issuetype={"name": self.test_manager.CI_JIRA_ISSUE},
+        )
+        self.addCleanup(issue.delete)
+        jql = f"key = {issue.key}"
+
+        archived = self.jira.archive_issues([issue])
+        # Restore even if an assertion fails: Jira answers 403 to deleting an
+        # archived issue, so the cleanup above would fail too.
+        try:
+            self.assertEqual(archived, {"numberOfIssuesUpdated": 1, "errors": {}})
+            self.assertEqual(self.jira.search_issues(jql), [])
+        finally:
+            restored = self.jira.unarchive_issues([issue.key])
+
+        self.assertEqual(restored, {"numberOfIssuesUpdated": 1, "errors": {}})
+        self.assertEqual([i.key for i in self.jira.search_issues(jql)], [issue.key])
