@@ -62,6 +62,7 @@ projectkey
 projectkeys
 pycontribs
 pyupgrade
+rapidviewconfig
 reindexing
 requesttype
 resilientsession
@@ -78,6 +79,8 @@ statuscategorychangedate
 statuscode
 stoptheworld
 testpaths
+timeestimate
+timeoriginalestimate
 tomlsort
 toolbelt
 transitionid

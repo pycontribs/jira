@@ -1754,8 +1754,8 @@ SPRINT_REPORT = {
     "contents": {
         "completedIssues": [{"id": "10", "key": "ABC-10"}],
         "puntedIssues": [{"id": "20", "key": "ABC-20"}],
-        "incompletedIssuesEstimateSum": {"value": 3.0},
-        "puntedIssuesEstimateSum": {"value": 5.0},
+        "issuesNotCompletedEstimateSum": {"value": 3.0, "text": "3.0"},
+        "puntedIssuesEstimateSum": {"value": 5.0, "text": "5.0"},
     }
 }
 
@@ -1791,3 +1791,24 @@ def test_completed_issues_reads_sprint_report(requests_mock):
 
     assert [issue.key for issue in issues] == ["ABC-10"]
     assert all(isinstance(issue, Issue) for issue in issues)
+
+
+@pytest.mark.parametrize(
+    "method", ["incompletedIssuesEstimateSum", "removedIssuesEstimateSum"]
+)
+def test_sprint_report_estimate_sum_is_none_without_estimates(requests_mock, method):
+    client = jira.client.JIRA(
+        server="https://jira.example.com", get_server_info=False, validate=False
+    )
+    no_estimate = {"text": "null"}
+    requests_mock.get(
+        SPRINT_REPORT_URL,
+        json={
+            "contents": {
+                "issuesNotCompletedEstimateSum": no_estimate,
+                "puntedIssuesEstimateSum": no_estimate,
+            }
+        },
+    )
+
+    assert getattr(client, method)("1", "2") is None

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import warnings
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -150,15 +151,17 @@ class SprintTests(JiraTestCase):
 
     @allow_on_cloud
     def test_sprint_report_endpoint(self):
-        # GIVEN: an active sprint holding two fresh issues, one of them done
+        # GIVEN: an active sprint holding three fresh issues with no estimate
         issues = [
             self.jira.create_issue(
                 project=self.project_b,
                 summary=f"sprint report issue {n} {self.sprint_name}",
                 issuetype={"name": self.test_manager.CI_JIRA_ISSUE},
             )
-            for n in (1, 2)
+            for n in (1, 2, 3)
         ]
+        # Story Points is the default but is missing from basic project screens.
+        self._estimate_by_original_estimate()
         # Sprint updates are a full PUT, so every call repeats name and dates.
         dates = {
             "startDate": "2015-04-11T15:22:00.000+10:00",
@@ -171,6 +174,19 @@ class SprintTests(JiraTestCase):
                 sprint.id, name=sprint.name, state="active", **dates
             )
             self.jira.add_issues_to_sprint(sprint.id, [i.key for i in issues])
+            deployment = "cloud" if self.jira._is_cloud else "server"
+
+            # WHEN: no issue has an estimate
+            # THEN: the estimate sums are None
+            self._record_estimate_sums(deployment, "no estimate", sprint)
+            assert (
+                self.jira.incompletedIssuesEstimateSum(self.board.id, sprint.id) is None
+            )
+            assert self.jira.removedIssuesEstimateSum(self.board.id, sprint.id) is None
+
+            # WHEN: each issue is estimated at an hour, one is done and one removed
+            for issue in issues:
+                issue.update(fields={"timetracking": {"originalEstimate": "1h"}})
             done = [
                 t["id"]
                 for t in self.jira.transitions(issues[0])
@@ -178,8 +194,19 @@ class SprintTests(JiraTestCase):
             ]
             if done:
                 self.jira.transition_issue(issues[0], done[0])
+            self.jira.move_to_backlog([issues[2].key])
 
-            # WHEN: we ask for the sprint report through the client
+            # THEN: the not-completed and removed sums each hold one hour
+            self._record_estimate_sums(deployment, "estimated", sprint)
+            assert (
+                self.jira.incompletedIssuesEstimateSum(self.board.id, sprint.id)
+                == 3600.0
+            )
+            assert (
+                self.jira.removedIssuesEstimateSum(self.board.id, sprint.id) == 3600.0
+            )
+
+            # WHEN: we ask for the sprint report issues through the client
             completed = self.jira.completed_issues(self.board.id, sprint.id)
             removed = self.jira.removed_issues(self.board.id, sprint.id)
 
@@ -200,7 +227,6 @@ class SprintTests(JiraTestCase):
                 name: self._status_code(self.jira._get_url(path, base=base))
                 for name, base in bases.items()
             }
-            deployment = "cloud" if self.jira._is_cloud else "server"
             report = f"sprintreport on {deployment}: {codes}"
             # pytest prints warnings on a passing run, so the CI log
             # records what each deployment serves.
@@ -215,6 +241,31 @@ class SprintTests(JiraTestCase):
                 sprint.delete()
             for issue in issues:
                 issue.delete()
+
+    def _estimate_by_original_estimate(self) -> None:
+        url = self.jira._get_url(
+            "rapidviewconfig/estimation", base=self.jira.GREENHOPPER_BASE_URL
+        )
+        payload = {
+            "rapidViewId": self.board.id,
+            "estimateStatisticId": "field_timeoriginalestimate",
+            "trackingStatisticId": "field_timeestimate",
+        }
+        self.jira._session.put(url, data=json.dumps(payload))
+
+    def _record_estimate_sums(
+        self, deployment: str, label: str, sprint: Sprint
+    ) -> None:
+        contents = self.jira._get_json(
+            "rapid/charts/sprintreport"
+            f"?rapidViewId={self.board.id}&sprintId={sprint.id}",
+            base=self.jira.GREENHOPPER_BASE_URL,
+        )["contents"]
+        sums = {k: v for k, v in contents.items() if k.endswith("EstimateSum")}
+        warnings.warn(
+            f"sprintreport {label} sums on {deployment}: {json.dumps(sums)}",
+            stacklevel=1,
+        )
 
     def _status_code(self, url: str) -> int | None:
         try:
