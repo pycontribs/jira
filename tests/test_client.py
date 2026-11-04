@@ -869,3 +869,19 @@ def test_client_retry_config():
 
     assert client._session.max_retries == 81
     assert client._session.max_retry_delay == 111
+
+
+def test_issue_remove_field_value_sends_remove_operation(requests_mock):
+    client = jira.client.JIRA(
+        server="https://jira.example.com", get_server_info=False, validate=False
+    )
+    url = "https://jira.example.com/rest/api/2/issue/10001"
+    raw = {"id": "10001", "key": "ABC-1", "self": url, "fields": {}}
+    requests_mock.put(url, status_code=204)
+    requests_mock.get(url, json=raw)
+    issue = Issue(client._options, client._session, raw=raw)
+
+    issue.remove_field_value("labels", "old-label")
+
+    put = next(r for r in requests_mock.request_history if r.method == "PUT")
+    assert put.json() == {"update": {"labels": [{"remove": "old-label"}]}}
