@@ -158,10 +158,11 @@ class Resource:
         Returns:
             str
         """
-        if self.raw:
+        raw = getattr(self, "raw", None)
+        if raw:
             for name in self._READABLE_IDS:
-                if name in self.raw:
-                    pretty_name = str(self.raw[name])
+                if name in raw:
+                    pretty_name = str(raw[name])
                     # Include any child to support nested select fields.
                     if hasattr(self, "child"):
                         pretty_name += " - " + str(self.child)
@@ -177,10 +178,11 @@ class Resource:
             str
         """
         names: list[str] = []
-        if self.raw:
+        raw = getattr(self, "raw", None)
+        if raw:
             for name in self._READABLE_IDS:
-                if name in self.raw:
-                    names.append(name + "=" + repr(self.raw[name]))
+                if name in raw:
+                    names.append(name + "=" + repr(raw[name]))
         if not names:
             return f"<JIRA {self.__class__.__name__} at {id(self)}>"
         return f"<JIRA {self.__class__.__name__}: {', '.join(names)}>"
