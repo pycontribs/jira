@@ -466,6 +466,20 @@ class TokenAuth(AuthBase):
         return r
 
 
+# Avatar formats Jira documents for upload. Cloud lists JPEG, GIF and PNG:
+# https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-avatars/#api-rest-api-2-universal-avatar-type-type-owner-entityid-post
+# Data Center adds BMP and WBMP:
+# https://docs.atlassian.com/software/jira/docs/api/REST/9.17.5/#api/2/project-storeTemporaryAvatar
+# WBMP has no magic number, so _is_wbmp checks for it separately.
+_AVATAR_SIGNATURES = (
+    (b"\xff\xd8\xff", "image/jpeg"),
+    (b"\x89PNG\r\n\x1a\n", "image/png"),
+    (b"GIF87a", "image/gif"),
+    (b"GIF89a", "image/gif"),
+    (b"BM", "image/bmp"),
+)
+
+
 def _is_wbmp(buff: bytes) -> bool:
     """Check for a type 0 WBMP: two zero header bytes, then width and height.
 
@@ -3510,7 +3524,7 @@ class JIRA:
 
         The avatar created is temporary and must be confirmed before it can be used.
 
-        Avatar images are specified by a filename, size, and file object. By default, the client will attempt to autodetect the picture's content type.
+        Avatar images are specified by a filename, size, and file object. By default, the client will attempt to autodetect the picture's content type and raises ValueError if it is not BMP, GIF, JPEG, PNG or WBMP.
 
         The ``contentType`` argument can be used to explicitly set the value (note that Jira will reject any type other than the well-known ones for images, e.g. ``image/jpg``, ``image/png``, etc.)
 
@@ -4258,7 +4272,7 @@ class JIRA:
 
         The avatar created is temporary and must be confirmed before it can be used.
 
-        Avatar images are specified by a filename, size, and file object. By default, the client will attempt to autodetect the picture's content type.
+        Avatar images are specified by a filename, size, and file object. By default, the client will attempt to autodetect the picture's content type and raises ValueError if it is not BMP, GIF, JPEG, PNG or WBMP.
         The ``contentType`` argument can be used to explicitly set the value
         (note that Jira will reject any type other than the well-known ones for images, e.g. ``image/jpg``, ``image/png``, etc.)
 
@@ -4844,34 +4858,29 @@ class JIRA:
             raise JIRAError("Unable to find resource %s(%s)", resource_cls, str(ids))
         return resource
 
-    def _get_mime_type(self, buff: bytes) -> str | None:
+    def _get_mime_type(self, buff: bytes) -> str:
         """Get the MIME type for a given stream of bytes of an avatar.
 
         Args:
             buff (bytes): Stream of bytes
 
         Returns:
-            Optional[str]: the MIME type
+            str: the MIME type
+
+        Raises:
+            ValueError: if the bytes are not one of the formats Jira documents.
+                Jira rejects an avatar upload without a content type, so the
+                request would fail anyway.
         """
-        # We assume the image is one of supported formats
-        # https://docs.atlassian.com/software/jira/docs/api/REST/9.14.0/#api/2/project-storeTemporaryAvatar
-        if buff[:3] == b"\xff\xd8\xff":
-            return "image/jpeg"
-        if buff[:8] == b"\x89PNG\r\n\x1a\n":
-            return "image/png"
-        if buff[:6] in (b"GIF87a", b"GIF89a"):
-            return "image/gif"
-        if buff[:2] == b"BM":
-            return "image/bmp"
-        if buff[:4] == b"RIFF" and buff[8:12] == b"WEBP":
-            return "image/webp"
+        for signature, mime_type in _AVATAR_SIGNATURES:
+            if buff.startswith(signature):
+                return mime_type
         if _is_wbmp(buff):
             return "image/vnd.wap.wbmp"
-        self.log.warning(
-            "Couldn't detect content type of avatar image"
-            ". Specify the 'contentType' parameter explicitly."
+        raise ValueError(
+            "Couldn't detect the avatar image format. Jira accepts BMP, GIF,"
+            " JPEG, PNG and WBMP. Specify the 'contentType' parameter explicitly."
         )
-        return None
 
     def rename_user(self, old_user: str, new_user: str) -> None:
         """Rename a Jira user.
