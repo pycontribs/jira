@@ -1431,6 +1431,46 @@ def test_add_attachment_bytes_without_filename_raises(requests_mock):
     assert not requests_mock.called
 
 
+@pytest.mark.parametrize(
+    "buff, expected",
+    [
+        (b"\xff\xd8\xff\xe0\x00\x10JFIF", "image/jpeg"),
+        (b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR", "image/png"),
+        (b"GIF87a\x01\x00\x01\x00", "image/gif"),
+        (b"GIF89a\x01\x00\x01\x00", "image/gif"),
+        (b"BM\x3a\x00\x00\x00", "image/bmp"),
+        (b"RIFF\x24\x00\x00\x00WEBP" + b"VP8 ", "image/webp"),
+        # 9x2 pixels: 2 bytes per row, 2 rows
+        (b"\x00\x00\x09\x02" + b"\xff\x80" * 2, "image/vnd.wap.wbmp"),
+        # 200x1 pixels: width as the multi-byte integer 0x81 0x48
+        (b"\x00\x00\x81\x48\x01" + b"\x00" * 25, "image/vnd.wap.wbmp"),
+        (b"\x00\x00\x09\x02\xff", None),
+        (b"\x00\x00\x00\x00", None),
+        (b"%PDF-1.7", None),
+        (b"", None),
+    ],
+    ids=[
+        "jpeg",
+        "png",
+        "gif87a",
+        "gif89a",
+        "bmp",
+        "webp",
+        "wbmp",
+        "wbmp multi-byte width",
+        "zero-led bytes too short for wbmp",
+        "wbmp with zero size",
+        "unsupported",
+        "empty",
+    ],
+)
+def test_get_mime_type(buff, expected):
+    client = jira.client.JIRA(
+        server="https://jira.example.com", get_server_info=False, validate=False
+    )
+    assert client._get_mime_type(buff) == expected
+
+
 def test_fetch_pages_uses_caller_start_at_when_response_has_none(offline_jira):
     def page(start: int) -> dict:
         return {

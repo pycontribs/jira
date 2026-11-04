@@ -2,6 +2,8 @@ Contribs
 Dskip
 Greenhopper
 Heimdal
+IHDR
+JFIF
 Jiras
 Navicat
 PYJIRA
