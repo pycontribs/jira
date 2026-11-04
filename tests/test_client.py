@@ -20,7 +20,14 @@ import requests_mock as rm
 import jira.client
 from jira.client import JIRA
 from jira.exceptions import JIRAError, NotJIRAInstanceError
-from jira.resources import Issue, IssueLinkType, Project, Resource, SecurityLevel
+from jira.resources import (
+    Issue,
+    IssueLinkType,
+    Project,
+    Resource,
+    SecurityLevel,
+    Version,
+)
 from tests.conftest import JiraTestManager, allow_on_cloud, get_unique_project_name
 
 
@@ -2015,3 +2022,22 @@ def test_decorated_methods_keep_name_and_docstring(name):
     assert method.__name__ == name
     assert method.__doc__
     assert method.__doc__ == inspect.unwrap(method).__doc__
+
+
+def test_create_version_returns_without_sleeping(requests_mock, monkeypatch):
+    client = jira.client.JIRA(
+        server="https://jira.example.com", get_server_info=False, validate=False
+    )
+    monkeypatch.setattr(
+        jira.client.time, "sleep", mock.Mock(side_effect=AssertionError)
+    )
+    requests_mock.post(
+        "https://jira.example.com/rest/api/2/version",
+        json={"id": "10000", "name": "1.0", "projectId": 10000},
+    )
+
+    version = client.create_version("1.0", "PROJ")
+
+    assert isinstance(version, Version)
+    assert version.id == "10000"
+    assert requests_mock.last_request.json()["project"] == "PROJ"
