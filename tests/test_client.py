@@ -1022,13 +1022,12 @@ def test_fetch_pages_list_response(offline_jira, max_results):
             [
                 _offset_page(0, 100, isLast=False),
                 _offset_page(100, 100, isLast=True),
-                _offset_page(200, 10),
             ],
-            3,
-            False,
+            2,
+            True,
         ),
     ],
-    ids=["first page is last", "later isLast is not consulted"],
+    ids=["first page is last", "full later page is last"],
 )
 def test_fetch_pages_fetch_all_is_last(
     offline_jira, pages, expected_calls, expected_is_last
