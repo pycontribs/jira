@@ -832,6 +832,47 @@ def test_search_issues_max_results_above_server_cap(offline_jira, is_cloud):
     assert len(issues) == 200
 
 
+@pytest.mark.parametrize("is_cloud", [True, False], ids=["cloud", "server"])
+@pytest.mark.parametrize(
+    "fields", [None, "*all", "*navigable,-comment"], ids=["default", "all", "mixed"]
+)
+def test_search_issues_skips_field_lookup_for_wildcards(
+    requests_mock, is_cloud, fields
+):
+    client = jira.client.JIRA(
+        server="https://jira.example.com", get_server_info=False, validate=False
+    )
+    if is_cloud:
+        client.deploymentType = "Cloud"
+    base = "https://jira.example.com/rest/api/2"
+    requests_mock.get(f"{base}/field", json=[])
+    requests_mock.get(f"{base}/search/jql", json={"issues": [], "isLast": True})
+    requests_mock.get(f"{base}/search", json={"issues": [], "startAt": 0, "total": 0})
+
+    client.search_issues("project = KEY", fields=fields)
+
+    paths = [r.path for r in requests_mock.request_history]
+    assert "/rest/api/2/field" not in paths
+    assert len(paths) == 1
+
+
+def test_search_issues_translates_named_fields(requests_mock):
+    client = jira.client.JIRA(
+        server="https://jira.example.com", get_server_info=False, validate=False
+    )
+    base = "https://jira.example.com/rest/api/2"
+    requests_mock.get(
+        f"{base}/field",
+        json=[{"id": "customfield_10001", "clauseNames": ["Story Points"]}],
+    )
+    requests_mock.get(f"{base}/search", json={"issues": [], "startAt": 0, "total": 0})
+
+    client.search_issues("project = KEY", fields="summary,Story Points")
+
+    search = requests_mock.request_history[-1]
+    assert search.qs["fields"] == ["summary", "customfield_10001"]
+
+
 def test_fetch_pages_stops_on_is_last_for_full_final_page(offline_jira):
     def page(start: int, is_last: bool) -> dict:
         return {
