@@ -1796,6 +1796,77 @@ def test_comment_property_roundtrip(requests_mock):
     assert [p.key for p in listed] == ["sd.public.comment"]
 
 
+def test_add_filter_share_permission_posts_one_permission_per_request(
+    offline_jira, requests_mock
+):
+    offline_jira._version = (8, 20, 0)
+    url = "https://jira.atlassian.com/rest/api/latest/filter/10000/permission"
+    group = {"type": "group", "groupname": "jira-users"}
+    project = {"type": "project", "projectId": "10100"}
+    requests_mock.post(
+        url,
+        [
+            {"json": [{"id": 1, **group}]},
+            {"json": [{"id": 1, **group}, {"id": 2, **project}]},
+        ],
+    )
+
+    result = offline_jira.add_filter_share_permission("10000", [group, project])
+
+    assert [r.json() for r in requests_mock.request_history] == [group, project]
+    assert result == [{"id": 1, **group}, {"id": 2, **project}]
+
+
+def test_add_filter_share_permission_wraps_a_single_permission(
+    offline_jira, requests_mock
+):
+    offline_jira._version = (8, 20, 0)
+    group = {"type": "group", "groupname": "jira-users"}
+    requests_mock.post(
+        "https://jira.atlassian.com/rest/api/latest/filter/10000/permission",
+        json={"id": 1, **group},
+    )
+
+    result = offline_jira.add_filter_share_permission(10000, group)
+
+    assert result == [{"id": 1, **group}]
+
+
+@pytest.mark.parametrize(
+    "call",
+    [
+        lambda j: j.add_filter_share_permission("10000", {"type": "global"}),
+        lambda j: j.create_filter(name="f", share_permissions={"type": "global"}),
+    ],
+    ids=["add_filter_share_permission", "create_filter"],
+)
+def test_filter_share_permission_on_old_server_raises_before_sending(
+    offline_jira, requests_mock, call
+):
+    offline_jira._version = (7, 0, 10)
+
+    with pytest.raises(NotImplementedError, match="needs Jira 7.1 or later"):
+        call(offline_jira)
+    assert requests_mock.call_count == 0
+
+
+def test_create_filter_adds_share_permission(offline_jira, requests_mock):
+    offline_jira._version = (8, 20, 0)
+    requests_mock.post(
+        "https://jira.atlassian.com/rest/api/2/filter",
+        json={"id": "10000", "self": "x", "name": "f"},
+    )
+    permission_url = (
+        "https://jira.atlassian.com/rest/api/latest/filter/10000/permission"
+    )
+    requests_mock.post(permission_url, json=[{"id": 1, "type": "global"}])
+
+    offline_jira.create_filter(name="f", share_permissions={"type": "global"})
+
+    assert requests_mock.last_request.url == permission_url
+    assert requests_mock.last_request.json() == {"type": "global"}
+
+
 def test_worklogs_and_worklog_send_expand(requests_mock):
     client = jira.client.JIRA(
         server="https://jira.example.com", get_server_info=False, validate=False
