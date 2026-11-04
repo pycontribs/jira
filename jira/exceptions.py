@@ -17,8 +17,8 @@ class JIRAError(Exception):
         url: str | None = None,
         request: Response | None = None,
         response: Response | None = None,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> None:
         """Creates a JIRAError.
 
         Args:

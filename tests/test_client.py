@@ -3,6 +3,7 @@ from __future__ import annotations
 import getpass
 import json
 import logging
+from typing import Any
 from unittest import mock
 
 import pytest
@@ -11,7 +12,7 @@ import requests_mock as rm
 
 import jira.client
 from jira.exceptions import JIRAError, NotJIRAInstanceError
-from jira.resources import Issue, SecurityLevel
+from jira.resources import Issue, Project, SecurityLevel
 from tests.conftest import JiraTestManager, get_unique_project_name
 
 
@@ -41,6 +42,7 @@ def slug(request: pytest.FixtureRequest, cl_admin: jira.client.JIRA):
     slug = get_unique_project_name()
     project_name = f"Test user={getpass.getuser()} key={slug} A"
 
+    proj: Project | dict[str, Any]
     try:
         proj = cl_admin.project(slug)
     except JIRAError:

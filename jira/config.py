@@ -21,10 +21,10 @@ def get_jira(
     url: str = "http://localhost:2990",
     username: str = "admin",
     password: str = "admin",
-    appid=None,
-    autofix=False,
+    appid: str | None = None,
+    autofix: bool | str = False,
     verify: bool | str = True,
-):
+) -> JIRA:
     """Return a JIRA object by loading the connection details from the `config.ini` file.
 
     Args:
@@ -63,7 +63,7 @@ def get_jira(
 
     """
 
-    def findfile(path):
+    def findfile(path: str) -> str | None:
         """Find the file named path in the sys.path.
 
         Returns the full path name if found, None if not found
@@ -86,7 +86,7 @@ def get_jira(
             "user": None,
             "pass": None,
             "appid": appid,
-            "autofix": autofix,
+            "autofix": str(autofix),
             "verify": verify,
         },
         allow_no_value=True,

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import threading
 import warnings
+from collections.abc import Callable, Iterable
 from typing import Any, cast
 
 from requests import Response
@@ -42,14 +43,16 @@ class CaseInsensitiveDict(_CaseInsensitiveDict):
 
     """
 
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         warnings.warn(
             "Use requests.structures.CaseInsensitiveDict directly", DeprecationWarning
         )
         super().__init__(*args, **kwargs)
 
 
-def threaded_requests(requests):
+def threaded_requests(
+    requests: Iterable[tuple[Callable[..., Any], str, dict[str, Any]]],
+) -> None:
     for fn, url, request_args in requests:
         th = threading.Thread(target=fn, args=(url,), kwargs=request_args, name=url)
         th.start()

@@ -48,7 +48,7 @@ class PassthroughRetryPrepare(PrepareRequestForRetry):
         return super().prepare(original_request_kwargs)
 
 
-def raise_on_error(resp: Response | None, **kwargs) -> TypeGuard[Response]:
+def raise_on_error(resp: Response | None, **kwargs: Any) -> TypeGuard[Response]:
     """Handle errors from a Jira Request.
 
     Args:
@@ -149,7 +149,12 @@ class ResilientSession(Session):
     :py:meth:`__recoverable` handles all retry-able errors.
     """
 
-    def __init__(self, timeout=None, max_retries: int = 3, max_retry_delay: int = 60):
+    def __init__(
+        self,
+        timeout: float | tuple[float, float] | tuple[float, None] | None = None,
+        max_retries: int = 3,
+        max_retry_delay: int = 60,
+    ) -> None:
         """A Session subclass catered for the Jira API with exponential delaying retry.
 
         Args:
@@ -171,7 +176,7 @@ class ResilientSession(Session):
             + f"Log level debug in '{__name__}' is not safe for production code!"
         )
 
-    def _jira_prepare(self, **original_kwargs) -> dict:
+    def _jira_prepare(self, **original_kwargs: Any) -> dict:
         """Do any pre-processing of our own and return the updated kwargs."""
         prepared_kwargs = original_kwargs.copy()
         self.headers: CaseInsensitiveDict
@@ -195,7 +200,7 @@ class ResilientSession(Session):
         method: str,
         url: str | bytes,
         _prepare_retry_class: PrepareRequestForRetry = PassthroughRetryPrepare(),
-        **kwargs,
+        **kwargs: Any,
     ) -> Response:
         """This is an intentional override of `Session.request()` to inject some error handling and retry logic.
 
@@ -251,7 +256,7 @@ class ResilientSession(Session):
             # Shouldn't reach here...(but added for mypy's benefit)
             raise RuntimeError("Expected a Response or Exception to raise!")
 
-    def __handle_known_ok_response_errors(self, response: Response):
+    def __handle_known_ok_response_errors(self, response: Response) -> None:
         """Responses that report ok may also have errors.
 
         We can either log the error or raise the error as appropriate here.
@@ -274,7 +279,7 @@ class ResilientSession(Session):
         url: str | bytes,
         request_method: str,
         counter: int = 1,
-    ):
+    ) -> bool:
         """Return whether the request is recoverable and hence should be retried.
 
         Exponentially delays if recoverable.
@@ -344,7 +349,7 @@ class ResilientSession(Session):
 
         return is_recoverable
 
-    def __log_http_429_response(self, response: Response):
+    def __log_http_429_response(self, response: Response) -> None:
         retry_after = response.headers.get("Retry-After")
         number_of_tokens_issued_per_interval = response.headers.get(
             "X-RateLimit-FillRate"
