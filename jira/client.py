@@ -1041,7 +1041,7 @@ class JIRA:
         is_last = first.is_last
         if not is_last:
             futures_session_cls = self._futures_session_class()
-            if futures_session_cls is None:
+            if futures_session_cls is None or first.total is None:
                 is_last = self._fetch_remaining_pages(
                     fetch,
                     items_in,
@@ -1050,7 +1050,7 @@ class JIRA:
                     page_size,
                     first.total,
                 )
-            elif first.total is not None and len(items) < first.total:
+            elif len(items) < first.total:
                 items.extend(
                     self._fetch_pages_async(
                         futures_session_cls,
