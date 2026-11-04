@@ -1692,6 +1692,10 @@ def dict2resource(
     # both and the resource constructors require them, hence the arg-type ignores.
     seqs = tuple, list, set, frozenset
     for i, j in raw.items():
+        # Jira field names can contain spaces (e.g. XRAY's "expected result").
+        # Used verbatim, such a key becomes an attribute that cannot be
+        # accessed with dot notation, so normalize it to a valid identifier.
+        attr = i.replace(" ", "_")
         if isinstance(j, dict):
             if "self" in j:
                 # to try and help mypy know that cls_for_resource can never be 'Resource'
@@ -1704,12 +1708,12 @@ def dict2resource(
                         raw=j,
                     ),
                 )
-                setattr(top, i, resource)
+                setattr(top, attr, resource)
             elif i == "timetracking":
                 timetracking = TimeTracking(options, session, j)  # type: ignore[arg-type]
                 setattr(top, "timetracking", timetracking)
             else:
-                setattr(top, i, dict2resource(j, options=options, session=session))
+                setattr(top, attr, dict2resource(j, options=options, session=session))
         elif isinstance(j, seqs):
             j = cast(list[dict[str, Any]], j)  # help mypy
             seq_list: list[Any] = []
@@ -1735,9 +1739,9 @@ def dict2resource(
                         )
                 else:
                     seq_list.append(seq_elem)
-            setattr(top, i, seq_list)
+            setattr(top, attr, seq_list)
         else:
-            setattr(top, i, j)
+            setattr(top, attr, j)
     return top
 
 
