@@ -4727,8 +4727,6 @@ class JIRA:
 
         url = self._get_url("version")
         r = self._session.post(url, data=json.dumps(data))
-
-        time.sleep(1)
         version = Version(self._options, self._session, raw=json_loads(r))
         return version
 
