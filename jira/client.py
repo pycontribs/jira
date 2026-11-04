@@ -525,6 +525,9 @@ class JIRA:
     # TODO(ssbarnea): remove these two variables and use the ones defined in resources
     JIRA_BASE_URL = Resource.JIRA_BASE_URL
     AGILE_BASE_URL = AgileResource.AGILE_BASE_URL
+    # The sprint report is only served by the private GreenHopper API, which
+    # ignores the agile_rest_path option.
+    GREENHOPPER_BASE_URL = "{server}/rest/greenhopper/1.0/{path}"
 
     def __init__(
         self,
@@ -5827,7 +5830,7 @@ class JIRA:
         """Return the total incompleted points this sprint."""
         data: dict[str, Any] = self._get_json(
             f"rapid/charts/sprintreport?rapidViewId={board_id}&sprintId={sprint_id}",
-            base=self.AGILE_BASE_URL,
+            base=self.GREENHOPPER_BASE_URL,
         )
         return data["contents"]["incompletedIssuesEstimateSum"]["value"]
 
@@ -5839,7 +5842,7 @@ class JIRA:
         """
         r_json: dict[str, Any] = self._get_json(
             f"rapid/charts/sprintreport?rapidViewId={board_id}&sprintId={sprint_id}",
-            base=self.AGILE_BASE_URL,
+            base=self.GREENHOPPER_BASE_URL,
         )
         issues = [
             Issue(self._options, self._session, raw_issues_json)
@@ -5856,7 +5859,7 @@ class JIRA:
         """
         r_json: dict[str, Any] = self._get_json(
             f"rapid/charts/sprintreport?rapidViewId={board_id}&sprintId={sprint_id}",
-            base=self.AGILE_BASE_URL,
+            base=self.GREENHOPPER_BASE_URL,
         )
         issues = [
             Issue(self._options, self._session, raw_issues_json)
@@ -5869,7 +5872,7 @@ class JIRA:
         """Return the total incompleted points this sprint."""
         data: dict[str, Any] = self._get_json(
             f"rapid/charts/sprintreport?rapidViewId={board_id}&sprintId={sprint_id}",
-            base=self.AGILE_BASE_URL,
+            base=self.GREENHOPPER_BASE_URL,
         )
         return data["contents"]["puntedIssuesEstimateSum"]["value"]
 
