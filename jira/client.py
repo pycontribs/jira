@@ -31,6 +31,7 @@ from typing import (
     Generic,
     Literal,
     NamedTuple,
+    ParamSpec,
     SupportsIndex,
     TypeVar,
     cast,
@@ -116,7 +117,11 @@ CLOUD_ACCOUNT_ID_RE = re.compile(
 )
 
 
-def cloud_api(client_method: Callable) -> Callable:
+P = ParamSpec("P")
+R = TypeVar("R")
+
+
+def cloud_api(client_method: Callable[P, R]) -> Callable[P, R]:
     """A convenience decorator to check if the Jira instance is cloud.
 
     Checks if the client instance is talking to Cloud Jira. If it is, return
@@ -134,8 +139,8 @@ def cloud_api(client_method: Callable) -> Callable:
       NotJIRAInstanceError: In the case that the first argument to this method
        is not a `client.JIRA` instance.
     """
-    wraps(client_method)
 
+    @wraps(client_method)
     def check_if_cloud(*args: Any, **kwargs: Any) -> Any:
         # The first argument of any class instance is a `self`
         # reference. Avoiding magic numbers here.
@@ -151,10 +156,10 @@ def cloud_api(client_method: Callable) -> Callable:
         )
         return None
 
-    return check_if_cloud
+    return cast("Callable[P, R]", check_if_cloud)
 
 
-def experimental_atlassian_api(client_method: Callable) -> Callable:
+def experimental_atlassian_api(client_method: Callable[P, R]) -> Callable[P, R]:
     """A convenience decorator to inform if a client method is experimental.
 
     Indicates the path covered by the client method is experimental. If the path
@@ -169,8 +174,8 @@ def experimental_atlassian_api(client_method: Callable) -> Callable:
     Returns:
       Either the result of the wrapped function or None.
     """
-    wraps(client_method)
 
+    @wraps(client_method)
     def is_experimental(*args: Any, **kwargs: Any) -> Any:
         instance = next(arg for arg in args)
         if not isinstance(instance, JIRA):
@@ -189,15 +194,17 @@ def experimental_atlassian_api(client_method: Callable) -> Callable:
             else:
                 raise
 
-    return is_experimental
+    return cast("Callable[P, R]", is_experimental)
 
 
-def translate_resource_args(func: Callable[..., Any]) -> Callable[..., Any]:
+def translate_resource_args(func: Callable[P, R]) -> Callable[P, R]:
     """Decorator that converts Issue and Project resources to their keys when used as arguments.
 
     Args:
         func (Callable): the function to decorate
     """
+    # The converted positionals no longer match P.args.
+    call_with_keys: Callable[..., R] = func
 
     @wraps(func)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -209,10 +216,9 @@ def translate_resource_args(func: Callable[..., Any]) -> Callable[..., Any]:
                 arg_list.append(arg.name)
             else:
                 arg_list.append(arg)
-        result = func(*arg_list, **kwargs)
-        return result
+        return call_with_keys(*arg_list, **kwargs)
 
-    return wrapper
+    return cast("Callable[P, R]", wrapper)
 
 
 def _field_worker(
@@ -3998,6 +4004,51 @@ class JIRA:
 
         return issues
 
+    @overload
+    def enhanced_search_issues(
+        self,
+        jql_str: str,
+        nextPageToken: str | None = None,
+        maxResults: int = 50,
+        fields: str | list[str] | None = "*all",
+        expand: str | None = None,
+        reconcileIssues: list[int] | None = None,
+        properties: str | None = None,
+        *,
+        json_result: Literal[False] = False,
+        use_post: bool = False,
+    ) -> ResultList[Issue]: ...
+
+    @overload
+    def enhanced_search_issues(
+        self,
+        jql_str: str,
+        nextPageToken: str | None = None,
+        maxResults: int = 50,
+        fields: str | list[str] | None = "*all",
+        expand: str | None = None,
+        reconcileIssues: list[int] | None = None,
+        properties: str | None = None,
+        *,
+        json_result: Literal[True],
+        use_post: bool = False,
+    ) -> dict[str, Any]: ...
+
+    @overload
+    def enhanced_search_issues(
+        self,
+        jql_str: str,
+        nextPageToken: str | None = None,
+        maxResults: int = 50,
+        fields: str | list[str] | None = "*all",
+        expand: str | None = None,
+        reconcileIssues: list[int] | None = None,
+        properties: str | None = None,
+        *,
+        json_result: bool,
+        use_post: bool = False,
+    ) -> dict[str, Any] | ResultList[Issue]: ...
+
     @cloud_api
     def enhanced_search_issues(
         self,
@@ -4081,6 +4132,16 @@ class JIRA:
                             iss.raw["fields"][v] = iss.raw["fields"][k]
 
         return issues
+
+    @overload
+    def approximate_issue_count(
+        self, jql_str: str, *, json_result: Literal[False] = False
+    ) -> int: ...
+
+    @overload
+    def approximate_issue_count(
+        self, jql_str: str, *, json_result: Literal[True]
+    ) -> dict[str, Any]: ...
 
     @cloud_api
     def approximate_issue_count(

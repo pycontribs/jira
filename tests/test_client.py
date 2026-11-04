@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import functools
 import getpass
+import inspect
 import json
 import logging
 import sys
@@ -1976,3 +1977,13 @@ def test_find_transitionid_by_name_returns_string_id(requests_mock):
     )
 
     assert client.find_transitionid_by_name("ABC-1", "to do") == "11"
+
+
+@pytest.mark.parametrize(
+    "name", ["comments", "enhanced_search_issues", "create_dashboard"]
+)
+def test_decorated_methods_keep_name_and_docstring(name):
+    method = getattr(jira.client.JIRA, name)
+    assert method.__name__ == name
+    assert method.__doc__
+    assert method.__doc__ == inspect.unwrap(method).__doc__
