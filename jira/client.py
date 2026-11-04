@@ -32,6 +32,7 @@ from typing import (
     Callable,
     Generic,
     Literal,
+    NamedTuple,
     SupportsIndex,
     TypeVar,
     cast,
@@ -284,6 +285,49 @@ class ResultList(list, Generic[ResourceType]):
     def __getitem__(self, slice_or_index: SupportsIndex | slice) -> ResourceType | list[ResourceType]: # noqa: E301,E261
         return list.__getitem__(self, slice_or_index)
     # fmt: on
+
+
+class _OffsetPaging(NamedTuple):
+    """Paging fields of a ``startAt`` response, defaulted the way ``ResultList`` reports them."""
+
+    start_at: int
+    max_results: int
+    total: int | None
+    is_last: bool
+    # The response's own ``maxResults``; None when it sent none.
+    server_page_size: int | None
+
+    @classmethod
+    def of(cls, resource: Any) -> _OffsetPaging:
+        if not isinstance(resource, dict):
+            return cls(
+                start_at=0, max_results=1, total=1, is_last=True, server_page_size=None
+            )
+        total = resource.get("total")
+        return cls(
+            start_at=resource.get("startAt", 0),
+            max_results=resource.get("maxResults", 1),
+            total=int(total) if total is not None else None,
+            # 'isLast' is an optional key added in Jira Agile 6.7.6; the core API omits it.
+            is_last=resource.get("isLast", False),
+            server_page_size=resource.get("maxResults"),
+        )
+
+
+def _page_params(
+    params: dict[str, Any] | None, start_at: int | None, max_results: int | None
+) -> dict[str, Any]:
+    """Build the params for one ``startAt`` request.
+
+    Every request gets a fresh JSON round-tripped copy of ``params``, so nothing
+    holding an earlier request's params (a mock recording calls, say) sees it change.
+    """
+    page_params: dict[str, Any] = json.loads(json.dumps(params)) if params else {}
+    if start_at is not None:
+        page_params["startAt"] = start_at
+    if max_results is not None:
+        page_params["maxResults"] = max_results
+    return page_params
 
 
 class QshGenerator:
@@ -812,152 +856,171 @@ class JIRA:
         Returns:
             ResultList
         """
-        async_workers = None
-        async_class = None
-        if self._options["async"]:
-            try:
-                from requests_futures.sessions import FuturesSession
 
-                async_class = FuturesSession
-            except ImportError:
-                pass
-            async_workers = self._options.get("async_workers")
-
-        def json_params() -> dict[str, Any]:
-            # passing through json.dumps and json.loads ensures json
-            return json.loads(json.dumps(params.copy())) if params else {}
-
-        page_params = json_params()
-
-        if startAt:
-            page_params["startAt"] = startAt
-        if maxResults:
-            page_params["maxResults"] = maxResults
-        elif batch_size := self._get_batch_size(item_type):
-            page_params["maxResults"] = batch_size
-
-        resource = self._get_json(
-            request_path, params=page_params, base=base, use_post=use_post
-        )
-
-        next_items_page = self._get_items_from_page(item_type, items_key, resource)
-        items = next_items_page
-
-        if isinstance(resource, dict):
-            total = resource.get("total")
-            total = int(total) if total is not None else total
-            # 'isLast' is the optional key added to responses in Jira Agile 6.7.6.
-            # So far not used in basic Jira API.
-            is_last = resource.get("isLast", False)
-            start_at_from_response = resource.get("startAt", 0)
-            max_results_from_response = resource.get("maxResults", 1)
-        else:
-            # if is a list
-            total = 1
-            is_last = True
-            start_at_from_response = 0
-            max_results_from_response = 1
-
-        # If maxResults evaluates as False, get all items in batches
-        if not maxResults:
-            page_size = max_results_from_response or len(items)
-            if batch_size is not None and page_size < batch_size:
-                self.log.warning(
-                    "'batch_size' set to %s, but only received %s items in batch. Falling back to %s.",
-                    batch_size,
-                    page_size,
-                    page_size,
-                )
-            page_start = (startAt or start_at_from_response or 0) + page_size
-            if (
-                async_class is not None
-                and not is_last
-                and (total is not None and len(items) < total)
-            ):
-                async_fetches = []
-                future_session = async_class(
-                    session=self._session, max_workers=async_workers
-                )
-                for start_index in range(page_start, total, page_size):
-                    page_params = json_params()
-                    page_params["startAt"] = start_index
-                    page_params["maxResults"] = page_size
-                    url = self._get_url(request_path)
-                    r = (
-                        future_session.post(url, data=json.dumps(page_params))
-                        if use_post
-                        else future_session.get(url, params=page_params)
-                    )
-                    async_fetches.append(r)
-                for future in async_fetches:
-                    response = future.result()
-                    resource = json_loads(response)
-                    if resource:
-                        next_items_page = self._get_items_from_page(
-                            item_type, items_key, resource
-                        )
-                        items.extend(next_items_page)
-            while (
-                async_class is None
-                and not is_last
-                and (total is None or page_start < total)
-                and len(next_items_page) == page_size
-            ):
-                page_params = (
-                    json_params()
-                )  # Hack necessary for mock-calls to not change
-                page_params["startAt"] = page_start
-                page_params["maxResults"] = page_size
-
-                resource = self._get_json(
-                    request_path, params=page_params, base=base, use_post=use_post
-                )
-                if resource:
-                    next_items_page = self._get_items_from_page(
-                        item_type, items_key, resource
-                    )
-                    items.extend(next_items_page)
-                    page_start += page_size
-                else:
-                    # if resource is an empty dictionary we assume no-results
-                    break
-        else:
-            # The server may cap the page size below the requested maxResults
-            # (e.g. Jira Cloud caps searches at 100 items per request), so
-            # keep fetching pages until we have the number of items asked
-            # for, or the server runs out of items.
-            page_size = (
-                resource.get("maxResults") if isinstance(resource, dict) else None
+        def fetch(start_at: int | None, max_results: int | None) -> Any:
+            return self._get_json(
+                request_path,
+                params=_page_params(params, start_at, max_results),
+                base=base,
+                use_post=use_post,
             )
-            page_start = (startAt or start_at_from_response or 0) + len(items)
-            while (
-                page_size
-                and len(items) < maxResults
-                and not is_last
-                and len(next_items_page) == page_size
-                and (total is None or page_start < total)
-            ):
-                page_params = json_params()
-                page_params["startAt"] = page_start
-                page_params["maxResults"] = min(page_size, maxResults - len(items))
 
-                resource = self._get_json(
-                    request_path, params=page_params, base=base, use_post=use_post
-                )
-                if not resource:
-                    # if resource is an empty dictionary we assume no-results
-                    break
-                next_items_page = self._get_items_from_page(
-                    item_type, items_key, resource
-                )
-                items.extend(next_items_page)
-                page_start += len(next_items_page)
-                is_last = resource.get("isLast", False)
-            del items[maxResults:]
+        def items_in(resource: Any) -> list[ResourceType]:
+            return self._get_items_from_page(item_type, items_key, resource)
 
+        batch_size = None if maxResults else self._get_batch_size(item_type)
+        resource = fetch(startAt or None, maxResults or batch_size or None)
+        items = items_in(resource)
+        first = _OffsetPaging.of(resource)
+        first_start = startAt or first.start_at or 0
+
+        if maxResults:
+            is_last = self._fetch_pages_up_to(
+                fetch,
+                items_in,
+                items,
+                start=first_start + len(items),
+                max_results=maxResults,
+                page_size=first.server_page_size,
+                total=first.total,
+                is_last=first.is_last,
+            )
+            return ResultList(
+                items, first.start_at, first.max_results, first.total, is_last
+            )
+
+        page_size = first.max_results or len(items)
+        if batch_size is not None and page_size < batch_size:
+            self.log.warning(
+                "'batch_size' set to %s, but only received %s items in batch. Falling back to %s.",
+                batch_size,
+                page_size,
+                page_size,
+            )
+        if not first.is_last:
+            futures_session_cls = self._futures_session_class()
+            if futures_session_cls is None:
+                self._fetch_remaining_pages(
+                    fetch,
+                    items_in,
+                    items,
+                    first_start + page_size,
+                    page_size,
+                    first.total,
+                )
+            elif first.total is not None and len(items) < first.total:
+                items.extend(
+                    self._fetch_pages_async(
+                        futures_session_cls,
+                        items_in,
+                        request_path,
+                        params,
+                        use_post,
+                        range(first_start + page_size, first.total, page_size),
+                        page_size,
+                    )
+                )
         return ResultList(
-            items, start_at_from_response, max_results_from_response, total, is_last
+            items, first.start_at, first.max_results, first.total, first.is_last
         )
+
+    def _fetch_remaining_pages(
+        self,
+        fetch: Callable[[int, int], Any],
+        items_in: Callable[[Any], list[ResourceType]],
+        items: list[ResourceType],
+        start: int,
+        page_size: int,
+        total: int | None,
+    ) -> None:
+        """Extend ``items`` with the pages after the first, ``page_size`` at a time.
+
+        Stops on a short page, on an empty response, or once ``start`` reaches ``total``.
+        """
+        page_len = len(items)
+        while page_len == page_size and (total is None or start < total):
+            resource = fetch(start, page_size)
+            if not resource:
+                break
+            page = items_in(resource)
+            items.extend(page)
+            page_len = len(page)
+            start += page_size
+
+    def _fetch_pages_up_to(
+        self,
+        fetch: Callable[[int, int], Any],
+        items_in: Callable[[Any], list[ResourceType]],
+        items: list[ResourceType],
+        *,
+        start: int,
+        max_results: int,
+        page_size: int | None,
+        total: int | None,
+        is_last: bool,
+    ) -> bool:
+        """Extend ``items`` to ``max_results`` items and return the last page's ``isLast``.
+
+        The server may cap the page size below the requested ``maxResults`` (Jira
+        Cloud caps searches at 100 items per request), so this keeps asking for
+        pages no bigger than the one the server answered with until it has enough
+        items, the server runs out, or a page comes back short.
+        """
+        page_len = len(items)
+        while page_size and not is_last and page_len == page_size:
+            remaining = max_results - len(items)
+            if remaining <= 0 or (total is not None and start >= total):
+                break
+            resource = fetch(start, min(page_size, remaining))
+            if not resource:
+                break
+            page = items_in(resource)
+            items.extend(page)
+            page_len = len(page)
+            start += page_len
+            is_last = resource.get("isLast", False)
+        del items[max_results:]
+        return is_last
+
+    def _futures_session_class(self) -> type[Any] | None:
+        """Return ``FuturesSession`` when async is on and ``requests_futures`` is installed."""
+        if not self._options["async"]:
+            return None
+        try:
+            from requests_futures.sessions import FuturesSession
+        except ImportError:
+            return None
+        return FuturesSession
+
+    def _fetch_pages_async(
+        self,
+        futures_session_cls: type[Any],
+        items_in: Callable[[Any], list[ResourceType]],
+        request_path: str,
+        params: dict[str, Any] | None,
+        use_post: bool,
+        starts: range,
+        page_size: int,
+    ) -> list[ResourceType]:
+        """Request the pages at ``starts`` concurrently and return their items in order."""
+        session = futures_session_cls(
+            session=self._session, max_workers=self._options.get("async_workers")
+        )
+        url = self._get_url(request_path)
+        futures = []
+        for start in starts:
+            page_params = _page_params(params, start, page_size)
+            futures.append(
+                session.post(url, data=json.dumps(page_params))
+                if use_post
+                else session.get(url, params=page_params)
+            )
+        items: list[ResourceType] = []
+        for future in futures:
+            resource = json_loads(future.result())
+            if resource:
+                items.extend(items_in(resource))
+        return items
 
     @cloud_api
     def _fetch_pages_searchToken(
@@ -984,45 +1047,35 @@ class JIRA:
         Returns:
             ResultList: List of fetched items.
         """
-        DEFAULT_BATCH = 100  # Max batch size per request
-        fetch_all = not maxResults  # If False/0, fetch everything
-
-        page_params = (params or {}).copy()  # Ensure params isn't modified
-        page_params["maxResults"] = DEFAULT_BATCH if fetch_all else maxResults
-
-        # Use caller-provided nextPageToken if present
-        nextPageToken: str | None = page_params.get("nextPageToken")
+        query = dict(params or {})
+        token: str | None = query.pop("nextPageToken", None)
+        page_size = maxResults or 100
         items: list[ResourceType] = []
 
         while True:
-            # Ensure nextPageToken is set in params if it exists
-            if nextPageToken:
-                page_params["nextPageToken"] = nextPageToken
-            else:
-                page_params.pop("nextPageToken", None)
-
+            page_params = {**query, "maxResults": page_size}
+            if token:
+                page_params["nextPageToken"] = token
             response = self._get_json(
                 request_path, params=page_params, base=base, use_post=use_post
             )
-            next_items_page = self._get_items_from_page(item_type, items_key, response)
-            items.extend(next_items_page)
-            nextPageToken = response.get("nextPageToken")
-            if not nextPageToken or not next_items_page:
+            page = self._get_items_from_page(item_type, items_key, response)
+            items.extend(page)
+            token = response.get("nextPageToken")
+            if not token or not page:
                 break
-            if not fetch_all:
-                # The server may cap the page size below the requested maxResults
-                # (Jira Cloud caps ``search/jql`` at 100 items per request), so
-                # keep following nextPageToken until we have the number of items
-                # asked for, requesting at most the page size the server returned.
+            if maxResults:
                 remaining = maxResults - len(items)
                 if remaining <= 0:
                     break
-                page_params["maxResults"] = min(remaining, len(next_items_page))
+                # The server may cap the page size below the requested maxResults
+                # (Jira Cloud caps ``search/jql`` at 100 items per request), so ask
+                # for no more than the page size it answered with.
+                page_size = min(remaining, len(page))
 
-        if not fetch_all:
+        if maxResults:
             del items[maxResults:]
-
-        return ResultList(items, _nextPageToken=nextPageToken)
+        return ResultList(items, _nextPageToken=token)
 
     def _get_items_from_page(
         self,
