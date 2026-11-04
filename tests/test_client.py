@@ -10,6 +10,7 @@ import requests_mock as rm
 
 import jira.client
 from jira.exceptions import JIRAError, NotJIRAInstanceError
+from jira.resources import SecurityLevel
 from tests.conftest import JiraTestManager, get_unique_project_name
 
 
@@ -414,3 +415,23 @@ def test_experimental_non_200_not_404_405(
 
     assert ex.value.status_code == status_code
     assert isinstance(ex.value, JIRAError)
+
+
+def test_project_securitylevels(requests_mock):
+    client = jira.client.JIRA(
+        server="https://jira.example.com", get_server_info=False, validate=False
+    )
+    requests_mock.get(
+        "https://jira.example.com/rest/api/2/project/ABC/securitylevel",
+        json={
+            "levels": [
+                {"id": "10000", "name": "Internal", "description": "Staff only"},
+                {"id": "10001", "name": "Public", "description": "Everyone"},
+            ]
+        },
+    )
+
+    levels = client.project_securitylevels("ABC")
+
+    assert [level.name for level in levels] == ["Internal", "Public"]
+    assert all(isinstance(level, SecurityLevel) for level in levels)
