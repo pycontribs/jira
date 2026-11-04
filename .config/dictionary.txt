@@ -13,10 +13,12 @@ Speakmon
 WBMP
 actornames
 addono
+addoption
 addopts
 applicationlink
 applinks
 backupmanager
+cacheprovider
 caplog
 capsys
 carryforward
@@ -47,8 +49,10 @@ labelarray
 libkrb
 loggedin
 minversion
+modifyitems
 multipartencoded
 mypermissions
+nosuchfield
 notauser
 notificationschemes
 outwardissue
@@ -78,6 +82,7 @@ ssbarnea
 statuscategorychangedate
 statuscode
 stoptheworld
+terminalreporter
 testpaths
 timeestimate
 timeoriginalestimate
