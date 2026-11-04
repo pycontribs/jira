@@ -266,3 +266,52 @@ def test_jira_error_handles_undecodable_prepared_request_body():
     ).prepare()
 
     assert "request body" in str(JIRAError(request=request))
+
+
+@pytest.mark.parametrize(
+    "key",
+    [
+        "accessToken",
+        "apiToken",
+        "refresh_token",
+        "api_key",
+        "apiKey",
+        "clientSecret",
+        "PASSWORD",
+        "newPassword",
+        "Authorization",
+        "sessionCookie",
+    ],
+)
+def test_jira_error_redacts_secret_like_json_keys(key):
+    mock = ExceptionsTests.MockResponse(text=json.dumps({"name": "bob", key: SECRET}))
+
+    err_str = str(JIRAError(request=mock))
+
+    assert SECRET not in err_str
+    assert "bob" in err_str
+
+
+@pytest.mark.parametrize("header", ["X-Api-Key", "X-Auth-Token", "Proxy-Authorization"])
+def test_jira_error_redacts_secret_like_headers(header):
+    mock = ExceptionsTests.MockResponse(headers={header: SECRET, "Accept": "x/y"})
+
+    err_str = str(JIRAError(request=mock))
+
+    assert SECRET not in err_str
+    assert "x/y" in err_str
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        f'{{"name": "bob", "accessToken": "{SECRET}"',
+        f"name=bob&api_token={SECRET}",
+    ],
+    ids=["truncated-json", "form"],
+)
+def test_jira_error_redacts_secret_like_keys_in_non_json_body(body):
+    err_str = str(JIRAError(request=ExceptionsTests.MockResponse(text=body)))
+
+    assert SECRET not in err_str
+    assert "bob" in err_str

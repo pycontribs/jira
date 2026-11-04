@@ -8,23 +8,30 @@ from typing import Any
 
 from requests import PreparedRequest, Response
 
+_SENSITIVE_WORDS = r"token|password|passwd|secret|authorization|cookie|api[_-]?key"
+_SENSITIVE_KEY = re.compile(_SENSITIVE_WORDS, re.IGNORECASE)
+_JSON_SECRET = re.compile(
+    rf'("[\w.-]*(?:{_SENSITIVE_WORDS})[\w.-]*"\s*:\s*")[^"]*(")', re.IGNORECASE
+)
+_FORM_SECRET = re.compile(
+    rf"\b([\w.-]*(?:{_SENSITIVE_WORDS})[\w.-]*=)[^&\s]+", re.IGNORECASE
+)
+_MASK = "********"
+
+
+def _is_sensitive(key: Any) -> bool:
+    return isinstance(key, str) and _SENSITIVE_KEY.search(key) is not None
+
 
 def _sanitize_headers(headers: dict[str, Any] | Any) -> dict[str, Any] | Any:
     """Mask sensitive headers."""
     if not isinstance(headers, dict) and not hasattr(headers, "items"):
         return headers
 
-    sensitive_headers = {
-        "authorization",
-        "cookie",
-        "set-cookie",
-        "x-atlassian-token",
-        "proxy-authorization",
-    }
     sanitized = dict(headers)
     for key in sanitized:
-        if key.lower() in sensitive_headers:
-            sanitized[key] = "********"
+        if _is_sensitive(key):
+            sanitized[key] = _MASK
     return sanitized
 
 
@@ -36,14 +43,13 @@ def _sanitize_body(body: str | Any) -> str | Any:
     try:
         data = json.loads(body)
         if isinstance(data, (dict, list)):
-            sensitive_keys = {"password", "token", "secret", "access_token"}
 
             def scrub(obj: Any) -> bool:
                 redacted = False
                 if isinstance(obj, dict):
                     for key, value in obj.items():
-                        if key.lower() in sensitive_keys:
-                            obj[key] = "********"
+                        if _is_sensitive(key):
+                            obj[key] = _MASK
                             redacted = True
                         else:
                             redacted |= scrub(value)
@@ -56,10 +62,8 @@ def _sanitize_body(body: str | Any) -> str | Any:
                 return body
             return json.dumps(data, ensure_ascii=False)
     except (json.JSONDecodeError, TypeError, RecursionError):
-        body = re.sub(
-            r'("password"\s*:\s*")[^"]+(")', r"\1********\2", body, flags=re.I
-        )
-        body = re.sub(r"(password=[^&\s]+)", r"password=********", body, flags=re.I)
+        body = _JSON_SECRET.sub(rf"\1{_MASK}\2", body)
+        body = _FORM_SECRET.sub(rf"\1{_MASK}", body)
 
     return body
 
