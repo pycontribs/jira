@@ -44,6 +44,7 @@ class DashboardTests(JiraTestCase):
     def _filter_results_gadget(self) -> DashboardGadget:
         # Cloud renames gadget titles, so match the module key embedded in the uri.
         gadgets = self.jira.all_dashboard_gadgets()
+        assert gadgets is not None
         for gadget in gadgets:
             ident = f"{getattr(gadget, 'uri', '')} {getattr(gadget, 'moduleKey', '')}"
             if FILTER_RESULTS_GADGET_KEY in ident:
