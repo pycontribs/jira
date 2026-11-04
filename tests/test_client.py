@@ -885,3 +885,21 @@ def test_issue_remove_field_value_sends_remove_operation(requests_mock):
 
     put = next(r for r in requests_mock.request_history if r.method == "PUT")
     assert put.json() == {"update": {"labels": [{"remove": "old-label"}]}}
+
+
+def test_worklogs_and_worklog_send_expand(requests_mock):
+    client = jira.client.JIRA(
+        server="https://jira.example.com", get_server_info=False, validate=False
+    )
+    base = "https://jira.example.com/rest/api/2/issue/ABC-1/worklog"
+    worklog = {"id": "100", "self": f"{base}/100"}
+    requests_mock.get(base, json={"worklogs": [worklog]})
+    requests_mock.get(f"{base}/100", json=worklog)
+
+    client.worklogs("ABC-1", expand="properties")
+    client.worklog("ABC-1", "100", expand="properties")
+
+    assert [r.qs for r in requests_mock.request_history] == [
+        {"expand": ["properties"]},
+        {"expand": ["properties"]},
+    ]
