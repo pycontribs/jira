@@ -2331,7 +2331,7 @@ class JIRA:
         .. deprecated:: 3.6.0
             Use :func:`project_issue_types` instead.
 
-        This API was introduced in JIRA Server / DC 8.4 as a replacement for the more general purpose API 'createmeta'.
+        Available on Jira Cloud and on Jira Server / DC 8.4+, where it replaced the more general purpose API 'createmeta'.
         For details see: https://confluence.atlassian.com/jiracore/createmeta-rest-endpoint-to-be-removed-975040986.html
 
         Args:
@@ -2371,7 +2371,7 @@ class JIRA:
         .. deprecated:: 3.6.0
             Use :func:`project_issue_fields` instead.
 
-        This API was introduced in JIRA Server / DC 8.4 as a replacement for the more general purpose API 'createmeta'.
+        Available on Jira Cloud and on Jira Server / DC 8.4+, where it replaced the more general purpose API 'createmeta'.
         For details see: https://confluence.atlassian.com/jiracore/createmeta-rest-endpoint-to-be-removed-975040986.html
 
         Args:
@@ -3312,7 +3312,7 @@ class JIRA:
     ) -> ResultList[IssueType]:
         """Get a list of issue type Resources available in a given project from the server.
 
-        This API was introduced in JIRA Server / DC 8.4 as a replacement for the more general purpose API 'createmeta'.
+        Available on Jira Cloud and on Jira Server / DC 8.4+, where it replaced the more general purpose API 'createmeta'.
         For details see: https://confluence.atlassian.com/jiracore/createmeta-rest-endpoint-to-be-removed-975040986.html
 
         Args:
@@ -3342,7 +3342,7 @@ class JIRA:
     ) -> ResultList[Field]:
         """Get a list of field type Resources available for a project and issue type from the server.
 
-        This API was introduced in JIRA Server / DC 8.4 as a replacement for the more general purpose API 'createmeta'.
+        Available on Jira Cloud and on Jira Server / DC 8.4+, where it replaced the more general purpose API 'createmeta'.
         For details see: https://confluence.atlassian.com/jiracore/createmeta-rest-endpoint-to-be-removed-975040986.html
 
         Args:
