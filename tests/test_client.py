@@ -1475,6 +1475,55 @@ def test_project_securitylevels(requests_mock):
     assert all(isinstance(level, SecurityLevel) for level in levels)
 
 
+@pytest.mark.parametrize(
+    ("method", "args", "kwargs", "http_method", "path", "response"),
+    [
+        ("project_roles", (10000,), {}, "GET", "project/10000/role", {}),
+        ("project_components", (10000,), {}, "GET", "project/10000/components", []),
+        ("project_versions", (10000,), {}, "GET", "project/10000/versions", []),
+        ("project_avatars", (10000,), {}, "GET", "project/10000/avatars", {}),
+        (
+            "move_version",
+            (10001,),
+            {"position": "First"},
+            "POST",
+            "version/10001/move",
+            {"id": "10001"},
+        ),
+        (
+            "version_count_related_issues",
+            (10001,),
+            {},
+            "GET",
+            "version/10001/relatedIssueCounts",
+            {"self": "x"},
+        ),
+        (
+            "version_count_unresolved_issues",
+            (10001,),
+            {},
+            "GET",
+            "version/10001/unresolvedIssueCount",
+            {"issuesUnresolvedCount": 0},
+        ),
+        ("delete_issue_link", (10002,), {}, "DELETE", "issueLink/10002", None),
+    ],
+)
+def test_int_ids_build_url(
+    requests_mock, method, args, kwargs, http_method, path, response
+):
+    client = jira.client.JIRA(
+        server="https://jira.example.com", get_server_info=False, validate=False
+    )
+    url = f"https://jira.example.com/rest/api/2/{path}"
+    requests_mock.register_uri(http_method, url, json=response)
+
+    getattr(client, method)(*args, **kwargs)
+
+    assert requests_mock.last_request.method == http_method
+    assert requests_mock.last_request.url == url
+
+
 def test_client_retry_config():
     client = jira.client.JIRA(
         server="https://jira.example.com",

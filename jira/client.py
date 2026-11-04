@@ -3307,7 +3307,7 @@ class JIRA:
         Args:
             id (str): ID of the issue link to delete
         """
-        url = self._get_url("issueLink") + "/" + id
+        url = self._get_url(f"issueLink/{id}")
         return self._session.delete(url)
 
     def issue_link(self, id: str) -> IssueLink:
@@ -3599,7 +3599,7 @@ class JIRA:
         Args:
             project (str): ID or key of the project to get avatars for
         """
-        return self._get_json("project/" + project + "/avatars")
+        return self._get_json(f"project/{project}/avatars")
 
     @translate_resource_args
     def create_temp_project_avatar(
@@ -3646,7 +3646,7 @@ class JIRA:
             # try to detect content-type, this may return None
             headers["content-type"] = self._get_mime_type(avatar_img)
 
-        url = self._get_url("project/" + project + "/avatar/temporary")
+        url = self._get_url(f"project/{project}/avatar/temporary")
         r = self._session.post(url, params=params, headers=headers, data=avatar_img)
 
         cropping_properties: dict[str, Any] = json_loads(r)
@@ -3670,7 +3670,7 @@ class JIRA:
             cropping_properties (Dict[str,Any]): a dict of cropping properties from :py:meth:`create_temp_project_avatar`
         """
         data = cropping_properties
-        url = self._get_url("project/" + project + "/avatar")
+        url = self._get_url(f"project/{project}/avatar")
         r = self._session.post(url, data=json.dumps(data))
 
         return json_loads(r)
@@ -3683,7 +3683,7 @@ class JIRA:
             project (str): ID or key of the project to set the avatar on
             avatar (str): ID of the avatar to set
         """
-        self._set_avatar(None, self._get_url("project/" + project + "/avatar"), avatar)
+        self._set_avatar(None, self._get_url(f"project/{project}/avatar"), avatar)
 
     @translate_resource_args
     def delete_project_avatar(self, project: str, avatar: str) -> Response:
@@ -3696,7 +3696,7 @@ class JIRA:
         Returns:
             Response
         """
-        url = self._get_url("project/" + project + "/avatar/" + avatar)
+        url = self._get_url(f"project/{project}/avatar/{avatar}")
         return self._session.delete(url)
 
     @translate_resource_args
@@ -3709,7 +3709,7 @@ class JIRA:
         Returns:
             List[Component]
         """
-        r_json = self._get_json("project/" + project + "/components")
+        r_json = self._get_json(f"project/{project}/components")
         components = [
             Component(self._options, self._session, raw_comp_json)
             for raw_comp_json in r_json
@@ -3743,7 +3743,7 @@ class JIRA:
         Returns:
             List[Version]
         """
-        r_json = self._get_json("project/" + project + "/versions")
+        r_json = self._get_json(f"project/{project}/versions")
         versions = [
             Version(self._options, self._session, raw_ver_json)
             for raw_ver_json in r_json
@@ -3793,7 +3793,7 @@ class JIRA:
         Returns:
             Dict[str, Dict[str, str]]
         """
-        path = "project/" + project + "/role"
+        path = f"project/{project}/role"
         _rolesdict: dict[str, str] = self._get_json(path)
         rolesdict: dict[str, dict[str, str]] = {}
 
@@ -4608,7 +4608,7 @@ class JIRA:
         elif position is not None:
             data["position"] = position
 
-        url = self._get_url("version/" + id + "/move")
+        url = self._get_url(f"version/{id}/move")
         r = self._session.post(url, data=json.dumps(data))
 
         version = Version(self._options, self._session, raw=json_loads(r))
@@ -4637,7 +4637,7 @@ class JIRA:
         Args:
             id (str): the version to count issues for
         """
-        r_json: dict[str, Any] = self._get_json("version/" + id + "/relatedIssueCounts")
+        r_json: dict[str, Any] = self._get_json(f"version/{id}/relatedIssueCounts")
         del r_json["self"]  # this isn't really an addressable resource
         return r_json
 
@@ -4647,9 +4647,7 @@ class JIRA:
         Args:
             id (str): ID of the version to count issues for
         """
-        r_json: dict[str, Any] = self._get_json(
-            "version/" + id + "/unresolvedIssueCount"
-        )
+        r_json: dict[str, Any] = self._get_json(f"version/{id}/unresolvedIssueCount")
         return r_json["issuesUnresolvedCount"]
 
     # Session authentication
