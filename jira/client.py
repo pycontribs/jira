@@ -897,10 +897,11 @@ class JIRA:
                 page_size,
                 page_size,
             )
-        if not first.is_last:
+        is_last = first.is_last
+        if not is_last:
             futures_session_cls = self._futures_session_class()
             if futures_session_cls is None:
-                self._fetch_remaining_pages(
+                is_last = self._fetch_remaining_pages(
                     fetch,
                     items_in,
                     items,
@@ -922,7 +923,7 @@ class JIRA:
                     )
                 )
         return ResultList(
-            items, first.start_at, first.max_results, first.total, first.is_last
+            items, first.start_at, first.max_results, first.total, is_last
         )
 
     def _fetch_remaining_pages(
@@ -933,13 +934,17 @@ class JIRA:
         start: int,
         page_size: int,
         total: int | None,
-    ) -> None:
+    ) -> bool:
         """Extend ``items`` with the pages after the first, ``page_size`` at a time.
 
-        Stops on a short page, on an empty response, or once ``start`` reaches ``total``.
+        Stops on a short page, on an empty response, on ``isLast``, or once
+        ``start`` reaches ``total``. Returns the last page's ``isLast``.
         """
         page_len = len(items)
-        while page_len == page_size and (total is None or start < total):
+        is_last = False
+        while (
+            not is_last and page_len == page_size and (total is None or start < total)
+        ):
             resource = fetch(start, page_size)
             if not resource:
                 break
@@ -947,6 +952,8 @@ class JIRA:
             items.extend(page)
             page_len = len(page)
             start += page_size
+            is_last = resource.get("isLast", False)
+        return is_last
 
     def _fetch_pages_up_to(
         self,
