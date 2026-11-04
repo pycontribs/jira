@@ -1158,6 +1158,30 @@ def test_fetch_pages_async_fetches_remaining_pages(
     )
 
 
+@pytest.mark.parametrize("use_post", [False, True], ids=["get", "post"])
+def test_fetch_pages_async_uses_base(async_jira, use_post):
+    client, future_bodies = async_jira
+    future_bodies.extend([_offset_page(100, 100), _offset_page(200, 50)])
+    server = _ScriptedServer(_offset_page(0, 100, total=250))
+    with mock.patch.object(client, "_get_json", side_effect=server):
+        issues = client._fetch_pages(
+            Issue,
+            "issues",
+            "board/1/issue",
+            0,
+            False,
+            base=JIRA.AGILE_BASE_URL,
+            use_post=use_post,
+        )
+
+    assert server.requests == [("board/1/issue", JIRA.AGILE_BASE_URL, use_post)]
+    (session,) = _FakeFuturesSession.instances
+    url = client._get_url("board/1/issue", base=JIRA.AGILE_BASE_URL)
+    assert "/rest/agile/1.0/board/1/issue" in url
+    assert [u for _, u, _ in session.requests] == [url, url]
+    assert [i.key for i in issues] == _keys(0, 250)
+
+
 @pytest.mark.parametrize(
     "first_page",
     [

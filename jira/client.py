@@ -915,6 +915,7 @@ class JIRA:
                         items_in,
                         request_path,
                         params,
+                        base,
                         use_post,
                         range(first_start + page_size, first.total, page_size),
                         page_size,
@@ -998,6 +999,7 @@ class JIRA:
         items_in: Callable[[Any], list[ResourceType]],
         request_path: str,
         params: dict[str, Any] | None,
+        base: str,
         use_post: bool,
         starts: range,
         page_size: int,
@@ -1006,7 +1008,7 @@ class JIRA:
         session = futures_session_cls(
             session=self._session, max_workers=self._options.get("async_workers")
         )
-        url = self._get_url(request_path)
+        url = self._get_url(request_path, base=base)
         futures = []
         for start in starts:
             page_params = _page_params(params, start, page_size)
