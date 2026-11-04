@@ -24,6 +24,7 @@ class FilterTests(JiraTestCase):
                 description=kwargs.pop("description", self.filter_desc),
                 jql=kwargs.pop("jql", self.filter_jql),
                 favourite=kwargs.pop("favourite", self.filter_favourite),
+                share_permissions=kwargs.pop("share_permissions", None),
             )
             if len(kwargs):
                 raise ValueError("Incorrect kwarg used !")
@@ -41,6 +42,23 @@ class FilterTests(JiraTestCase):
                 )
             else:
                 self.assertEqual(myfilter.owner.name, self.test_manager.user_admin.name)
+
+    def test_create_filter_with_share_permissions(self):
+        project_id = self.jira.project(self.project_b).id
+        shares = [
+            {"type": "group", "groupname": "jira-administrators"},
+            {"type": "project", "projectId": project_id},
+        ]
+
+        with self.make_filter(share_permissions=shares) as myfilter:
+            shared_with = {
+                (p["type"], p.get("group", {}).get("name") or p["project"]["id"])
+                for p in myfilter.raw["sharePermissions"]
+            }
+
+        self.assertEqual(
+            shared_with, {("group", "jira-administrators"), ("project", project_id)}
+        )
 
     @allow_on_cloud
     def test_favourite_filters(self):
