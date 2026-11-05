@@ -883,6 +883,24 @@ class JIRA:
                 fields[i] = cache[field]
         return untranslate
 
+    @staticmethod
+    def _add_field_aliases(
+        issues: Iterable[Issue], untranslate: dict[str, str]
+    ) -> None:
+        """Copy each translated field in ``raw["fields"]`` to the name the caller asked for.
+
+        Args:
+            issues (Iterable[Issue]): issues returned for the translated fields
+            untranslate (Dict[str, str]): field id to name, from :py:meth:`_translate_field_names`
+        """
+        for issue in issues:
+            if not issue.raw:
+                continue
+            raw_fields = issue.raw.get("fields", {})
+            for field_id, name in untranslate.items():
+                if field_id in raw_fields:
+                    raw_fields[name] = raw_fields[field_id]
+
     def _update_fields_cache(self) -> None:
         """Update the cache used for `self._fields_cache`."""
         self._fields_cache_value = {}
@@ -4178,13 +4196,7 @@ class JIRA:
             use_post=use_post,
         )
 
-        if untranslate:
-            iss: Issue
-            for iss in issues:
-                for k, v in untranslate.items():
-                    if iss.raw:
-                        if k in iss.raw.get("fields", {}):
-                            iss.raw["fields"][v] = iss.raw["fields"][k]
+        self._add_field_aliases(issues, untranslate)
 
         return issues
 
@@ -4312,13 +4324,7 @@ class JIRA:
                 "Token-paged search (`search/jql`) is only available on Jira Cloud."
             )
 
-        if untranslate:
-            iss: Issue
-            for iss in issues:
-                for k, v in untranslate.items():
-                    if iss.raw:
-                        if k in iss.raw.get("fields", {}):
-                            iss.raw["fields"][v] = iss.raw["fields"][k]
+        self._add_field_aliases(issues, untranslate)
 
         return issues
 
