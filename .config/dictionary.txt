@@ -4,6 +4,7 @@ Greenhopper
 Heimdal
 IHDR
 JFIF
+JSESSIONID
 Jiras
 Navicat
 PYJIRA
