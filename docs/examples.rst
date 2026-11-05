@@ -316,6 +316,90 @@ Example for accessing the worklogs::
     issue.fields.timetracking.timeSpent                   # may be NULL or string
     issue.fields.timetracking.timeSpentSeconds            # may be NULL or integer
 
+Custom and system fields by display name
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Jira keys every field by id, so the custom field "Story Points" might be
+``issue.fields.customfield_10016``. The same applies to system fields: "Due date" is ``duedate``.
+To read a field by the name shown in Jira, you need a ``{field id: display name}`` dict.
+Jira returns one with ``expand="names"``, and :py:meth:`jira.client.JIRA.fields` lists every field.
+The example below covers one issue and a search with each source, using the same helpers::
+
+    from typing import Any
+
+    from jira import JIRA, Issue
+
+
+    def find_field_id(field_names: dict[str, str], name: str) -> str:
+        """Return the id of the one field called ``name`` in a {field id: display name} dict."""
+        ids = [field_id for field_id, field_name in field_names.items() if field_name == name]
+        if len(ids) != 1:
+            raise KeyError(f"{len(ids)} fields named {name!r}: {ids}")
+        return ids[0]
+
+
+    def get_field_by_name(issue: Issue, field_names: dict[str, str], name: str) -> Any:
+        return issue.get_field(find_field_id(field_names, name))
+
+
+    def issue_field_names(issue: Issue) -> dict[str, str]:
+        """Return the names Jira sent with an issue fetched with ``expand="names"``."""
+        if issue.raw is None or "names" not in issue.raw:
+            raise ValueError(f"{issue} was not fetched with expand='names'")
+        field_names: dict[str, str] = issue.raw["names"]
+        return field_names
+
+
+    jira = JIRA(server="https://jira.example.com", token_auth="...")
+
+    # 1. One issue: ask Jira to return the names with it.
+    issue = jira.issue("PROJ-1", expand="names")
+    print(get_field_by_name(issue, issue_field_names(issue), "Story Points"))    # 5.0
+
+    # 2. A search, names from expand="names". Jira returns them once for the whole
+    #    response, and the ResultList drops them, so fetch them from a one-issue raw page.
+    jql = "project = PROJ"
+    field_names: dict[str, str] = jira.search_issues(
+        jql, maxResults=1, expand="names", json_result=True
+    )["names"]
+    for issue in jira.search_issues(jql, maxResults=False):
+        print(issue.key, get_field_by_name(issue, field_names, "Story Points"))
+
+    # 3. A search, names from every field Jira knows about (one request to /rest/api/2/field).
+    field_names = {field["id"]: field["name"] for field in jira.fields()}
+    story_points = find_field_id(field_names, "Story Points")
+    for issue in jira.search_issues(jql, maxResults=False):
+        print(issue.key, issue.get_field(story_points))
+
+Option 2 knows only the fields the search returns. That is every field by default, but fewer if you
+pass ``fields=``, and none if the query matches no issues. Option 3 knows every field on the
+instance and resolves the id once, at the cost of the ``/field`` request.
+
+Two fields can share a display name, such as two "Team" fields on Jira Cloud. That is why
+``find_field_id`` raises instead of picking one. To list the clashes::
+
+    from collections import Counter
+
+    counts = Counter(field_names.values())
+    {name: count for name, count in counts.items() if count > 1}    # {'Team': 2}
+
+``search_issues(fields=...)`` also accepts a field's JQL clause names and sends the matching id.
+Clause names are the ``clauseNames`` entries in ``jira.fields()``, such as ``due`` or ``cf[10016]``.
+For most custom fields the display name is one of them. The translation costs one ``/rest/api/2/field``
+request per client. If two fields share a clause name, the last one Jira lists wins and you get no
+warning. ``issue.fields`` and ``get_field`` still use the id. Only ``issue.raw["fields"]`` gets a copy
+under the name you passed.
+
+The library does not add display-name attributes to issues itself, for these reasons:
+
+* Resolving names needs either ``/rest/api/2/field`` or ``expand=names``. The client requests ``/field``
+  only when you ask for something that needs it, so creating a client sends no extra request and can't
+  fail on it.
+* Two fields can share a display name, and only the caller knows which one it means.
+* Turning display names into attribute names (``Story Points`` to ``story_points``) can make different
+  fields collide.
+* An alias can't be written back, because ``issue.update()`` takes field ids.
+* Copying every field under a second name on every issue slows down large searches.
 
 Searching
 ---------
