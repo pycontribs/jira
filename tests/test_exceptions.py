@@ -12,6 +12,8 @@ from requests.structures import CaseInsensitiveDict
 from jira.exceptions import JIRAError
 from jira.resilientsession import raise_on_error
 
+pytestmark = pytest.mark.unit
+
 DUMMY_HEADERS = {"h": "nice headers"}
 DUMMY_TEXT = "nice text"
 DUMMY_URL = "https://nice.jira.tests"
@@ -58,7 +60,7 @@ class ExceptionsTests(unittest.TestCase):
             self.url = url
             self.status_code = status_code
 
-    def test_unit_jira_error_response_added(self):
+    def test_jira_error_response_added(self):
         err = JIRAError(
             response=self.MockResponse(headers=DUMMY_HEADERS, text=DUMMY_TEXT)
         )
@@ -67,7 +69,7 @@ class ExceptionsTests(unittest.TestCase):
         assert f"headers = {DUMMY_HEADERS}" in err_str
         assert f"text = {DUMMY_TEXT}" in err_str
 
-    def test_unit_jira_error_malformed_response(self):
+    def test_jira_error_malformed_response(self):
         # GIVEN: a malformed Response object, without headers or text set
         bad_response = self.MalformedMockResponse()
         # WHEN: The JiraError's __str__ method is called
@@ -77,7 +79,7 @@ class ExceptionsTests(unittest.TestCase):
         assert "headers = " not in err_str
         assert "text = " not in err_str
 
-    def test_unit_jira_error_request_added(self):
+    def test_jira_error_request_added(self):
         err = JIRAError(
             request=self.MockResponse(headers=DUMMY_HEADERS, text=DUMMY_TEXT)
         )
@@ -86,7 +88,7 @@ class ExceptionsTests(unittest.TestCase):
         assert f"headers = {DUMMY_HEADERS}" in err_str
         assert f"text = {DUMMY_TEXT}" in err_str
 
-    def test_unit_jira_error_malformed_request(self):
+    def test_jira_error_malformed_request(self):
         # GIVEN: a malformed Response object, without headers or text set
         bad_response = self.MalformedMockResponse()
         # WHEN: The JiraError's __str__ method is called
@@ -96,19 +98,19 @@ class ExceptionsTests(unittest.TestCase):
         assert "headers = " not in err_str
         assert "text = " not in err_str
 
-    def test_unit_jira_error_url_added(self):
+    def test_jira_error_url_added(self):
         assert f"url: {DUMMY_URL}" in str(JIRAError(url=DUMMY_URL))
 
-    def test_unit_jira_error_status_code_added(self):
+    def test_jira_error_status_code_added(self):
         assert f"JiraError HTTP {DUMMY_STATUS_CODE}" in str(
             JIRAError(status_code=DUMMY_STATUS_CODE)
         )
 
-    def test_unit_jira_error_text_added(self):
+    def test_jira_error_text_added(self):
         dummy_text = "wow\tthis\nis\nso cool"
         assert f"text: {dummy_text}" in str(JIRAError(text=dummy_text))
 
-    def test_unit_jira_error_log_to_tempfile_if_env_var_set(self):
+    def test_jira_error_log_to_tempfile_if_env_var_set(self):
         # GIVEN: the right env vars are set and the tempfile's filename
         env_vars = {"PYJIRA_LOG_TO_TEMPFILE": "so true"}
         test_unit_jira_error_filename = (
@@ -132,7 +134,7 @@ class ExceptionsTests(unittest.TestCase):
         mock_file_stream = mocked_open()
         assert f"text = {DUMMY_TEXT}" in mock_file_stream.write.call_args[0][0]
 
-    def test_unit_jira_error_log_to_tempfile_not_used_if_env_var_not_set(self):
+    def test_jira_error_log_to_tempfile_not_used_if_env_var_not_set(self):
         # GIVEN: no env vars are set and the tempfile's filename
         env_vars = {}
         test_unit_jira_error_filename = (

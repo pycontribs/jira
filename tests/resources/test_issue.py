@@ -715,34 +715,6 @@ def client():
     )
 
 
-@pytest.mark.parametrize(
-    "fields",
-    ["summary, Story Points", "summary,Story Points,", ["summary", "Story Points"]],
-    ids=["spaces", "trailing-comma", "list"],
-)
-def test_unit_issue_translates_field_names(field_server, client, fields):
-    issue = client.issue("KEY-1", fields=fields)
-
-    assert field_server.last_request.qs["fields"] == ["summary,customfield_10001"]
-    assert issue.raw["fields"]["Story Points"] == 5
-    assert "Sprint" not in issue.raw["fields"]
-    assert "due" not in issue.raw["fields"]
-    if isinstance(fields, list):
-        assert fields == ["summary", "Story Points"]
-
-
-@pytest.mark.parametrize(
-    "fields",
-    [None, "", ",", "-comment", "*all", "*navigable,-comment", ["*all"]],
-    ids=["none", "empty", "comma", "exclusion", "all", "mixed", "list"],
-)
-def test_unit_issue_skips_field_lookup(field_server, client, fields):
-    client.issue("KEY-1", fields=fields)
-
-    paths = [r.path for r in field_server.request_history]
-    assert paths == ["/rest/api/2/issue/key-1"]
-
-
 def test_createmeta_issuetypes_pagination(cl_normal, slug):
     """Test createmeta_issuetypes pagination kwargs"""
     issue_types_resp = cl_normal.createmeta_issuetypes(slug, startAt=50, maxResults=100)
@@ -762,167 +734,196 @@ def test_createmeta_fieldtypes_pagination(cl_normal, slug):
     assert field_types_resp["maxResults"] == 100
 
 
-@pytest.mark.parametrize("is_cloud", [True, False], ids=["cloud", "server"])
-@pytest.mark.parametrize(
-    "fields", [None, "*all", "*navigable,-comment"], ids=["default", "all", "mixed"]
-)
-def test_search_issues_skips_field_lookup_for_wildcards(
-    requests_mock, is_cloud, fields
-):
-    client = jira.client.JIRA(
-        server="https://jira.example.com", get_server_info=False, validate=False
+@pytest.mark.unit
+class TestIssueOffline:
+    @pytest.mark.parametrize(
+        "fields",
+        ["summary, Story Points", "summary,Story Points,", ["summary", "Story Points"]],
+        ids=["spaces", "trailing-comma", "list"],
     )
-    if is_cloud:
-        client.deploymentType = "Cloud"
-    base = "https://jira.example.com/rest/api/2"
-    requests_mock.get(f"{base}/field", json=[])
-    requests_mock.get(f"{base}/search/jql", json={"issues": [], "isLast": True})
-    requests_mock.get(f"{base}/search", json={"issues": [], "startAt": 0, "total": 0})
+    def test_issue_translates_field_names(self, field_server, client, fields):
+        issue = client.issue("KEY-1", fields=fields)
 
-    client.search_issues("project = KEY", fields=fields)
+        assert field_server.last_request.qs["fields"] == ["summary,customfield_10001"]
+        assert issue.raw["fields"]["Story Points"] == 5
+        assert "Sprint" not in issue.raw["fields"]
+        assert "due" not in issue.raw["fields"]
+        if isinstance(fields, list):
+            assert fields == ["summary", "Story Points"]
 
-    paths = [r.path for r in requests_mock.request_history]
-    assert "/rest/api/2/field" not in paths
-    assert len(paths) == 1
-
-
-def test_search_issues_translates_named_fields(requests_mock):
-    client = jira.client.JIRA(
-        server="https://jira.example.com", get_server_info=False, validate=False
+    @pytest.mark.parametrize(
+        "fields",
+        [None, "", ",", "-comment", "*all", "*navigable,-comment", ["*all"]],
+        ids=["none", "empty", "comma", "exclusion", "all", "mixed", "list"],
     )
-    base = "https://jira.example.com/rest/api/2"
-    requests_mock.get(
-        f"{base}/field",
-        json=[{"id": "customfield_10001", "clauseNames": ["Story Points"]}],
+    def test_issue_skips_field_lookup(self, field_server, client, fields):
+        client.issue("KEY-1", fields=fields)
+
+        paths = [r.path for r in field_server.request_history]
+        assert paths == ["/rest/api/2/issue/key-1"]
+
+    @pytest.mark.parametrize("is_cloud", [True, False], ids=["cloud", "server"])
+    @pytest.mark.parametrize(
+        "fields", [None, "*all", "*navigable,-comment"], ids=["default", "all", "mixed"]
     )
-    requests_mock.get(f"{base}/search", json={"issues": [], "startAt": 0, "total": 0})
+    def test_search_issues_skips_field_lookup_for_wildcards(
+        self, requests_mock, is_cloud, fields
+    ):
+        client = jira.client.JIRA(
+            server="https://jira.example.com", get_server_info=False, validate=False
+        )
+        if is_cloud:
+            client.deploymentType = "Cloud"
+        base = "https://jira.example.com/rest/api/2"
+        requests_mock.get(f"{base}/field", json=[])
+        requests_mock.get(f"{base}/search/jql", json={"issues": [], "isLast": True})
+        requests_mock.get(
+            f"{base}/search", json={"issues": [], "startAt": 0, "total": 0}
+        )
 
-    client.search_issues("project = KEY", fields="summary,Story Points")
+        client.search_issues("project = KEY", fields=fields)
 
-    search = requests_mock.request_history[-1]
-    assert search.qs["fields"] == ["summary", "customfield_10001"]
+        paths = [r.path for r in requests_mock.request_history]
+        assert "/rest/api/2/field" not in paths
+        assert len(paths) == 1
 
+    def test_search_issues_translates_named_fields(self, requests_mock):
+        client = jira.client.JIRA(
+            server="https://jira.example.com", get_server_info=False, validate=False
+        )
+        base = "https://jira.example.com/rest/api/2"
+        requests_mock.get(
+            f"{base}/field",
+            json=[{"id": "customfield_10001", "clauseNames": ["Story Points"]}],
+        )
+        requests_mock.get(
+            f"{base}/search", json={"issues": [], "startAt": 0, "total": 0}
+        )
 
-def test_issue_remove_field_value_sends_remove_operation(requests_mock):
-    client = jira.client.JIRA(
-        server="https://jira.example.com", get_server_info=False, validate=False
+        client.search_issues("project = KEY", fields="summary,Story Points")
+
+        search = requests_mock.request_history[-1]
+        assert search.qs["fields"] == ["summary", "customfield_10001"]
+
+    def test_issue_remove_field_value_sends_remove_operation(self, requests_mock):
+        client = jira.client.JIRA(
+            server="https://jira.example.com", get_server_info=False, validate=False
+        )
+        url = "https://jira.example.com/rest/api/2/issue/10001"
+        raw = {"id": "10001", "key": "ABC-1", "self": url, "fields": {}}
+        requests_mock.put(url, status_code=204)
+        requests_mock.get(url, json=raw)
+        issue = Issue(client._options, client._session, raw=raw)
+
+        issue.remove_field_value("labels", "old-label")
+
+        put = next(r for r in requests_mock.request_history if r.method == "PUT")
+        assert put.json() == {"update": {"labels": [{"remove": "old-label"}]}}
+
+    @pytest.mark.parametrize(
+        "method, path", [("archive", "archive"), ("unarchive", "unarchive")]
     )
-    url = "https://jira.example.com/rest/api/2/issue/10001"
-    raw = {"id": "10001", "key": "ABC-1", "self": url, "fields": {}}
-    requests_mock.put(url, status_code=204)
-    requests_mock.get(url, json=raw)
-    issue = Issue(client._options, client._session, raw=raw)
+    def test_archive_issues_accepts_keys_and_issues(
+        self, offline_jira, requests_mock, method, path
+    ):
+        offline_jira.deploymentType = "Cloud"
+        url = f"https://jira.atlassian.com/rest/api/2/issue/{path}"
+        response = {"numberOfIssuesUpdated": 2, "errors": {}}
+        requests_mock.put(url, json=response)
+        issue = Issue(
+            offline_jira._options,
+            offline_jira._session,
+            raw={"id": "10002", "key": "ABC-2", "self": "x", "fields": {}},
+        )
 
-    issue.remove_field_value("labels", "old-label")
+        result = getattr(offline_jira, f"{method}_issues")(
+            iter(["ABC-1", issue, 10003])
+        )
 
-    put = next(r for r in requests_mock.request_history if r.method == "PUT")
-    assert put.json() == {"update": {"labels": [{"remove": "old-label"}]}}
+        assert result == response
+        assert requests_mock.last_request.json() == {
+            "issueIdsOrKeys": ["ABC-1", "ABC-2", "10003"]
+        }
 
-
-@pytest.mark.parametrize(
-    "method, path", [("archive", "archive"), ("unarchive", "unarchive")]
-)
-def test_archive_issues_accepts_keys_and_issues(
-    offline_jira, requests_mock, method, path
-):
-    offline_jira.deploymentType = "Cloud"
-    url = f"https://jira.atlassian.com/rest/api/2/issue/{path}"
-    response = {"numberOfIssuesUpdated": 2, "errors": {}}
-    requests_mock.put(url, json=response)
-    issue = Issue(
-        offline_jira._options,
-        offline_jira._session,
-        raw={"id": "10002", "key": "ABC-2", "self": "x", "fields": {}},
+    @pytest.mark.parametrize(
+        "method, path", [("archive", "archive"), ("unarchive", "restore")]
     )
+    def test_archive_issues_on_server_puts_each_issue(
+        self, offline_jira, requests_mock, method, path
+    ):
+        offline_jira._version = (8, 20, 0)
+        base = "https://jira.atlassian.com/rest/api/2/issue"
+        for key in ("ABC-1", "ABC-2", "10003"):
+            requests_mock.put(f"{base}/{key}/{path}", status_code=204)
+        issue = Issue(
+            offline_jira._options,
+            offline_jira._session,
+            raw={"id": "10002", "key": "ABC-2", "self": "x", "fields": {}},
+        )
 
-    result = getattr(offline_jira, f"{method}_issues")(iter(["ABC-1", issue, 10003]))
+        result = getattr(offline_jira, f"{method}_issues")(
+            iter(["ABC-1", issue, 10003])
+        )
 
-    assert result == response
-    assert requests_mock.last_request.json() == {
-        "issueIdsOrKeys": ["ABC-1", "ABC-2", "10003"]
-    }
+        assert [r.url for r in requests_mock.request_history] == [
+            f"{base}/ABC-1/{path}",
+            f"{base}/ABC-2/{path}",
+            f"{base}/10003/{path}",
+        ]
+        assert result == {"numberOfIssuesUpdated": 3, "errors": {}}
 
-
-@pytest.mark.parametrize(
-    "method, path", [("archive", "archive"), ("unarchive", "restore")]
-)
-def test_archive_issues_on_server_puts_each_issue(
-    offline_jira, requests_mock, method, path
-):
-    offline_jira._version = (8, 20, 0)
-    base = "https://jira.atlassian.com/rest/api/2/issue"
-    for key in ("ABC-1", "ABC-2", "10003"):
-        requests_mock.put(f"{base}/{key}/{path}", status_code=204)
-    issue = Issue(
-        offline_jira._options,
-        offline_jira._session,
-        raw={"id": "10002", "key": "ABC-2", "self": "x", "fields": {}},
+    @pytest.mark.parametrize(
+        "status, message",
+        [
+            (401, "Unauthorized"),
+            (403, "We couldn't archive an already archived issue."),
+            (404, "Issue Does Not Exist"),
+        ],
     )
+    def test_archive_issues_on_server_raises_on_first_refusal(
+        self, offline_jira, requests_mock, status, message
+    ):
+        offline_jira._version = (8, 20, 0)
+        base = "https://jira.atlassian.com/rest/api/2/issue"
+        requests_mock.put(f"{base}/ABC-1/archive", status_code=204)
+        requests_mock.put(
+            f"{base}/ABC-2/archive",
+            status_code=status,
+            json={"errorMessages": [message], "errors": {}},
+        )
+        requests_mock.put(f"{base}/ABC-3/archive", status_code=204)
 
-    result = getattr(offline_jira, f"{method}_issues")(iter(["ABC-1", issue, 10003]))
+        with pytest.raises(JIRAError) as raised:
+            offline_jira.archive_issues(["ABC-1", "ABC-2", "ABC-3"])
 
-    assert [r.url for r in requests_mock.request_history] == [
-        f"{base}/ABC-1/{path}",
-        f"{base}/ABC-2/{path}",
-        f"{base}/10003/{path}",
-    ]
-    assert result == {"numberOfIssuesUpdated": 3, "errors": {}}
+        assert raised.value.status_code == status
+        assert raised.value.url == f"{base}/ABC-2/archive"
+        assert message in raised.value.text
+        assert [r.url for r in requests_mock.request_history] == [
+            f"{base}/ABC-1/archive",
+            f"{base}/ABC-2/archive",
+        ]
 
-
-@pytest.mark.parametrize(
-    "status, message",
-    [
-        (401, "Unauthorized"),
-        (403, "We couldn't archive an already archived issue."),
-        (404, "Issue Does Not Exist"),
-    ],
-)
-def test_archive_issues_on_server_raises_on_first_refusal(
-    offline_jira, requests_mock, status, message
-):
-    offline_jira._version = (8, 20, 0)
-    base = "https://jira.atlassian.com/rest/api/2/issue"
-    requests_mock.put(f"{base}/ABC-1/archive", status_code=204)
-    requests_mock.put(
-        f"{base}/ABC-2/archive",
-        status_code=status,
-        json={"errorMessages": [message], "errors": {}},
+    @pytest.mark.parametrize(
+        "method, version, needed",
+        [("archive", (7, 13, 0), "8.0"), ("unarchive", (8, 0, 0), "8.1")],
     )
-    requests_mock.put(f"{base}/ABC-3/archive", status_code=204)
+    def test_archive_issues_on_old_server_raises_before_sending(
+        self, offline_jira, requests_mock, method, version, needed
+    ):
+        offline_jira._version = version
 
-    with pytest.raises(JIRAError) as raised:
-        offline_jira.archive_issues(["ABC-1", "ABC-2", "ABC-3"])
+        with pytest.raises(NotImplementedError, match=f"needs Jira {needed} or later"):
+            getattr(offline_jira, f"{method}_issues")(["ABC-1"])
+        assert requests_mock.call_count == 0
 
-    assert raised.value.status_code == status
-    assert raised.value.url == f"{base}/ABC-2/archive"
-    assert message in raised.value.text
-    assert [r.url for r in requests_mock.request_history] == [
-        f"{base}/ABC-1/archive",
-        f"{base}/ABC-2/archive",
-    ]
+    def test_find_transitionid_by_name_returns_string_id(self, requests_mock):
+        client = jira.client.JIRA(
+            server="https://jira.example.com", get_server_info=False, validate=False
+        )
+        requests_mock.get(
+            "https://jira.example.com/rest/api/2/issue/ABC-1/transitions",
+            json={"transitions": [{"id": "11", "name": "To Do"}]},
+        )
 
-
-@pytest.mark.parametrize(
-    "method, version, needed",
-    [("archive", (7, 13, 0), "8.0"), ("unarchive", (8, 0, 0), "8.1")],
-)
-def test_archive_issues_on_old_server_raises_before_sending(
-    offline_jira, requests_mock, method, version, needed
-):
-    offline_jira._version = version
-
-    with pytest.raises(NotImplementedError, match=f"needs Jira {needed} or later"):
-        getattr(offline_jira, f"{method}_issues")(["ABC-1"])
-    assert requests_mock.call_count == 0
-
-
-def test_find_transitionid_by_name_returns_string_id(requests_mock):
-    client = jira.client.JIRA(
-        server="https://jira.example.com", get_server_info=False, validate=False
-    )
-    requests_mock.get(
-        "https://jira.example.com/rest/api/2/issue/ABC-1/transitions",
-        json={"transitions": [{"id": "11", "name": "To Do"}]},
-    )
-
-    assert client.find_transitionid_by_name("ABC-1", "to do") == "11"
+        assert client.find_transitionid_by_name("ABC-1", "to do") == "11"

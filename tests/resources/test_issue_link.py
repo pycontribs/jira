@@ -76,52 +76,54 @@ def link_client(requests_mock):
         yield client, link_types
 
 
-@pytest.mark.parametrize(
-    "type_arg,expected_id,inward,outward",
-    [
-        ("Duplicate", "2", "A-1", "B-1"),
-        ("duplicates", "2", "A-1", "B-1"),
-        ("is duplicated by", "2", "B-1", "A-1"),
-        ("causes", "1", "A-1", "B-1"),
-    ],
-)
-def test_create_issue_link_resolves_type(
-    link_client, requests_mock, type_arg, expected_id, inward, outward
-):
-    client, _ = link_client
+@pytest.mark.unit
+class TestIssueLinkOffline:
+    @pytest.mark.parametrize(
+        "type_arg,expected_id,inward,outward",
+        [
+            ("Duplicate", "2", "A-1", "B-1"),
+            ("duplicates", "2", "A-1", "B-1"),
+            ("is duplicated by", "2", "B-1", "A-1"),
+            ("causes", "1", "A-1", "B-1"),
+        ],
+    )
+    def test_create_issue_link_resolves_type(
+        self, link_client, requests_mock, type_arg, expected_id, inward, outward
+    ):
+        client, _ = link_client
 
-    client.create_issue_link(type_arg, "A-1", "B-1")
+        client.create_issue_link(type_arg, "A-1", "B-1")
 
-    body = requests_mock.last_request.json()
-    assert body["type"]["id"] == expected_id
-    assert body["inwardIssue"] == {"key": inward}
-    assert body["outwardIssue"] == {"key": outward}
+        body = requests_mock.last_request.json()
+        assert body["type"]["id"] == expected_id
+        assert body["inwardIssue"] == {"key": inward}
+        assert body["outwardIssue"] == {"key": outward}
 
+    @pytest.mark.parametrize("as_keyword", [False, True])
+    def test_create_issue_link_accepts_issue_link_type(
+        self, link_client, requests_mock, caplog, as_keyword
+    ):
+        client, link_types = link_client
 
-@pytest.mark.parametrize("as_keyword", [False, True])
-def test_create_issue_link_accepts_issue_link_type(
-    link_client, requests_mock, caplog, as_keyword
-):
-    client, link_types = link_client
+        if as_keyword:
+            client.create_issue_link(
+                type=link_types[1], inwardIssue="A-1", outwardIssue="B-1"
+            )
+        else:
+            client.create_issue_link(link_types[1], "A-1", "B-1")
 
-    if as_keyword:
-        client.create_issue_link(
-            type=link_types[1], inwardIssue="A-1", outwardIssue="B-1"
-        )
-    else:
-        client.create_issue_link(link_types[1], "A-1", "B-1")
+        body = requests_mock.last_request.json()
+        assert body["type"]["name"] == "Duplicate"
+        assert body["inwardIssue"] == {"key": "A-1"}
+        assert "not present" not in caplog.text
 
-    body = requests_mock.last_request.json()
-    assert body["type"]["name"] == "Duplicate"
-    assert body["inwardIssue"] == {"key": "A-1"}
-    assert "not present" not in caplog.text
+    def test_create_issue_link_warns_on_unknown_type(
+        self, link_client, requests_mock, caplog
+    ):
+        client, _ = link_client
 
+        with caplog.at_level(logging.WARNING):
+            client.create_issue_link("Clones", "A-1", "B-1")
 
-def test_create_issue_link_warns_on_unknown_type(link_client, requests_mock, caplog):
-    client, _ = link_client
-
-    with caplog.at_level(logging.WARNING):
-        client.create_issue_link("Clones", "A-1", "B-1")
-
-    assert requests_mock.last_request.json()["type"] == {"name": "Clones"}
-    assert "Clones" in caplog.text
+        assert requests_mock.last_request.json()["type"] == {"name": "Clones"}
+        assert "Clones" in caplog.text

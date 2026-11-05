@@ -79,64 +79,63 @@ class WorklogTests(JiraTestCase):
         self.assertEqual(issue.fields.timetracking.remainingEstimate, "3h")
 
 
-def test_worklogs_and_worklog_send_expand(requests_mock):
-    client = jira.client.JIRA(
-        server="https://jira.example.com", get_server_info=False, validate=False
-    )
-    base = "https://jira.example.com/rest/api/2/issue/ABC-1/worklog"
-    worklog = {"id": "100", "self": f"{base}/100"}
-    requests_mock.get(base, json={"worklogs": [worklog]})
-    requests_mock.get(f"{base}/100", json=worklog)
+@pytest.mark.unit
+class TestWorklogOffline:
+    def test_worklogs_and_worklog_send_expand(self, requests_mock):
+        client = jira.client.JIRA(
+            server="https://jira.example.com", get_server_info=False, validate=False
+        )
+        base = "https://jira.example.com/rest/api/2/issue/ABC-1/worklog"
+        worklog = {"id": "100", "self": f"{base}/100"}
+        requests_mock.get(base, json={"worklogs": [worklog]})
+        requests_mock.get(f"{base}/100", json=worklog)
 
-    client.worklogs("ABC-1", expand="properties")
-    client.worklog("ABC-1", "100", expand="properties")
+        client.worklogs("ABC-1", expand="properties")
+        client.worklog("ABC-1", "100", expand="properties")
 
-    assert [r.qs for r in requests_mock.request_history] == [
-        {"expand": ["properties"]},
-        {"expand": ["properties"]},
-    ]
+        assert [r.qs for r in requests_mock.request_history] == [
+            {"expand": ["properties"]},
+            {"expand": ["properties"]},
+        ]
 
+    @pytest.mark.parametrize("notify,expected", [(False, True), (True, False)])
+    def test_add_worklog_notify(self, requests_mock, notify, expected):
+        client = jira.client.JIRA(
+            server="https://jira.example.com", get_server_info=False, validate=False
+        )
+        url = "https://jira.example.com/rest/api/2/issue/ABC-1/worklog"
+        requests_mock.post(url, json={"id": "100", "self": f"{url}/100"})
 
-@pytest.mark.parametrize("notify,expected", [(False, True), (True, False)])
-def test_add_worklog_notify(requests_mock, notify, expected):
-    client = jira.client.JIRA(
-        server="https://jira.example.com", get_server_info=False, validate=False
-    )
-    url = "https://jira.example.com/rest/api/2/issue/ABC-1/worklog"
-    requests_mock.post(url, json={"id": "100", "self": f"{url}/100"})
+        client.add_worklog("ABC-1", timeSpent="1h", notify=notify)
 
-    client.add_worklog("ABC-1", timeSpent="1h", notify=notify)
+        assert ("notifyUsers=false" in requests_mock.last_request.url) is expected
 
-    assert ("notifyUsers=false" in requests_mock.last_request.url) is expected
+    def test_add_worklog_sends_properties_on_cloud(self, requests_mock):
+        client = jira.client.JIRA(
+            server="https://jira.example.com", get_server_info=False, validate=False
+        )
+        client.deploymentType = "Cloud"
+        url = "https://jira.example.com/rest/api/2/issue/ABC-1/worklog"
+        requests_mock.post(url, json={"id": "100", "self": f"{url}/100"})
+        properties = [{"key": "billable", "value": {"approved": True}}]
 
-
-def test_add_worklog_sends_properties_on_cloud(requests_mock):
-    client = jira.client.JIRA(
-        server="https://jira.example.com", get_server_info=False, validate=False
-    )
-    client.deploymentType = "Cloud"
-    url = "https://jira.example.com/rest/api/2/issue/ABC-1/worklog"
-    requests_mock.post(url, json={"id": "100", "self": f"{url}/100"})
-    properties = [{"key": "billable", "value": {"approved": True}}]
-
-    client.add_worklog("ABC-1", timeSpent="1h", properties=properties)
-
-    assert requests_mock.last_request.json() == {
-        "timeSpent": "1h",
-        "properties": properties,
-    }
-
-
-def test_add_worklog_warns_and_leaves_out_properties_on_server(requests_mock):
-    client = jira.client.JIRA(
-        server="https://jira.example.com", get_server_info=False, validate=False
-    )
-    url = "https://jira.example.com/rest/api/2/issue/ABC-1/worklog"
-    requests_mock.post(url, json={"id": "100", "self": f"{url}/100"})
-    properties = [{"key": "billable", "value": {"approved": True}}]
-
-    with pytest.warns(UserWarning, match="'properties' argument") as warned:
         client.add_worklog("ABC-1", timeSpent="1h", properties=properties)
 
-    assert warned[0].filename == __file__
-    assert requests_mock.last_request.json() == {"timeSpent": "1h"}
+        assert requests_mock.last_request.json() == {
+            "timeSpent": "1h",
+            "properties": properties,
+        }
+
+    def test_add_worklog_warns_and_leaves_out_properties_on_server(self, requests_mock):
+        client = jira.client.JIRA(
+            server="https://jira.example.com", get_server_info=False, validate=False
+        )
+        url = "https://jira.example.com/rest/api/2/issue/ABC-1/worklog"
+        requests_mock.post(url, json={"id": "100", "self": f"{url}/100"})
+        properties = [{"key": "billable", "value": {"approved": True}}]
+
+        with pytest.warns(UserWarning, match="'properties' argument") as warned:
+            client.add_worklog("ABC-1", timeSpent="1h", properties=properties)
+
+        assert warned[0].filename == __file__
+        assert requests_mock.last_request.json() == {"timeSpent": "1h"}

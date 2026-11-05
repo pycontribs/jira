@@ -10,6 +10,8 @@ import jira.client
 import jira.resources
 from tests.conftest import allow_on_cloud
 
+pytestmark = pytest.mark.unit
+
 MOCK_URL = "http://customized-jira.com/rest/"
 
 
@@ -103,7 +105,7 @@ XRAY_STEPS_RAW = {
 }
 
 
-def test_unit_dict2resource_aliases_spaced_keys_with_underscores():
+def test_dict2resource_aliases_spaced_keys_with_underscores():
     """Keys with spaces stay reachable by name and gain a dot-accessible alias (#1865)."""
     obj = jira.resources.dict2resource(copy.deepcopy(XRAY_STEPS_RAW))
 
@@ -112,7 +114,7 @@ def test_unit_dict2resource_aliases_spaced_keys_with_underscores():
     assert [getattr(step.fields, "expected result") for step in steps] == ["R1", "R2"]
 
 
-def test_unit_dict2resource_alias_leaves_raw_unchanged():
+def test_dict2resource_alias_leaves_raw_unchanged():
     raw = copy.deepcopy(XRAY_STEPS_RAW)
     issue = jira.resources.Issue({"server": "x"}, None, raw)
 
@@ -121,14 +123,14 @@ def test_unit_dict2resource_alias_leaves_raw_unchanged():
     assert step.fields.expected_result == "R1"
 
 
-def test_unit_dict2resource_keeps_keys_without_spaces_unchanged():
+def test_dict2resource_keeps_keys_without_spaces_unchanged():
     obj = jira.resources.dict2resource({"action": "Step 1", "count": 3})
 
     assert vars(obj) == {"action": "Step 1", "count": 3}
 
 
 @pytest.mark.parametrize("order", ["alias_first", "spaced_first"])
-def test_unit_dict2resource_alias_clashing_with_raw_key_warns(order):
+def test_dict2resource_alias_clashing_with_raw_key_warns(order):
     pairs = [("a_b", "underscored"), ("a b", "spaced")]
     raw = dict(pairs if order == "alias_first" else reversed(pairs))
 
@@ -141,7 +143,7 @@ def test_unit_dict2resource_alias_clashing_with_raw_key_warns(order):
     assert getattr(obj, "a b") == "spaced"
 
 
-def test_unit_dict2resource_spaced_keys_sharing_an_alias_warn():
+def test_dict2resource_spaced_keys_sharing_an_alias_warn():
     raw = {"a b_c": 1, "a_b c": 2}
 
     with pytest.warns(UserWarning, match=r"'a_b_c'.*\['a b_c', 'a_b c'\]"):
@@ -152,7 +154,7 @@ def test_unit_dict2resource_spaced_keys_sharing_an_alias_warn():
     assert getattr(obj, "a_b c") == 2
 
 
-def test_unit_dict2resource_alias_does_not_shadow_class_attributes():
+def test_dict2resource_alias_does_not_shadow_class_attributes():
     raw = {"self": "http://x/rest/api/2/issue/1", "add field value": 1}
 
     with pytest.warns(UserWarning, match="'add_field_value': Issue already defines it"):
@@ -163,7 +165,7 @@ def test_unit_dict2resource_alias_does_not_shadow_class_attributes():
 
 
 @pytest.mark.parametrize("key", [" options", "1 st", "a-b c"])
-def test_unit_dict2resource_skips_alias_that_is_not_a_public_identifier(key):
+def test_dict2resource_skips_alias_that_is_not_a_public_identifier(key):
     options = {"server": "x"}
     raw = {"self": "http://x/rest/api/2/issue/1", key: 1}
 

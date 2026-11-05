@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from unittest import mock
 
+import pytest
+
 import jira.client
 from jira.exceptions import JIRAError
 from jira.resources import Version
@@ -64,20 +66,22 @@ class VersionTests(JiraTestCase):
         self.assertRaises(JIRAError, self.jira.version, version.id)
 
 
-def test_create_version_returns_without_sleeping(requests_mock, monkeypatch):
-    client = jira.client.JIRA(
-        server="https://jira.example.com", get_server_info=False, validate=False
-    )
-    monkeypatch.setattr(
-        jira.client.time, "sleep", mock.Mock(side_effect=AssertionError)
-    )
-    requests_mock.post(
-        "https://jira.example.com/rest/api/2/version",
-        json={"id": "10000", "name": "1.0", "projectId": 10000},
-    )
+@pytest.mark.unit
+class TestVersionOffline:
+    def test_create_version_returns_without_sleeping(self, requests_mock, monkeypatch):
+        client = jira.client.JIRA(
+            server="https://jira.example.com", get_server_info=False, validate=False
+        )
+        monkeypatch.setattr(
+            jira.client.time, "sleep", mock.Mock(side_effect=AssertionError)
+        )
+        requests_mock.post(
+            "https://jira.example.com/rest/api/2/version",
+            json={"id": "10000", "name": "1.0", "projectId": 10000},
+        )
 
-    version = client.create_version("1.0", "PROJ")
+        version = client.create_version("1.0", "PROJ")
 
-    assert isinstance(version, Version)
-    assert version.id == "10000"
-    assert requests_mock.last_request.json()["project"] == "PROJ"
+        assert isinstance(version, Version)
+        assert version.id == "10000"
+        assert requests_mock.last_request.json()["project"] == "PROJ"

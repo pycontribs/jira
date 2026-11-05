@@ -101,82 +101,83 @@ class FilterTests(JiraTestCase):
             assert updated_filter.description == new_desc
 
 
-def test_add_filter_share_permission_posts_one_permission_per_request(
-    offline_jira, requests_mock
-):
-    offline_jira._version = (8, 20, 0)
-    url = "https://jira.atlassian.com/rest/api/latest/filter/10000/permission"
-    group = {"type": "group", "groupname": "jira-users"}
-    project = {"type": "project", "projectId": "10100"}
-    requests_mock.post(
-        url,
+@pytest.mark.unit
+class TestFilterOffline:
+    def test_add_filter_share_permission_posts_one_permission_per_request(
+        self, offline_jira, requests_mock
+    ):
+        offline_jira._version = (8, 20, 0)
+        url = "https://jira.atlassian.com/rest/api/latest/filter/10000/permission"
+        group = {"type": "group", "groupname": "jira-users"}
+        project = {"type": "project", "projectId": "10100"}
+        requests_mock.post(
+            url,
+            [
+                {"json": [{"id": 1, **group}]},
+                {"json": [{"id": 1, **group}, {"id": 2, **project}]},
+            ],
+        )
+
+        result = offline_jira.add_filter_share_permission("10000", [group, project])
+
+        assert [r.json() for r in requests_mock.request_history] == [group, project]
+        assert result == [{"id": 1, **group}, {"id": 2, **project}]
+
+    def test_add_filter_share_permission_wraps_a_single_permission(
+        self, offline_jira, requests_mock
+    ):
+        offline_jira._version = (8, 20, 0)
+        group = {"type": "group", "groupname": "jira-users"}
+        requests_mock.post(
+            "https://jira.atlassian.com/rest/api/latest/filter/10000/permission",
+            json={"id": 1, **group},
+        )
+
+        result = offline_jira.add_filter_share_permission(10000, group)
+
+        assert result == [{"id": 1, **group}]
+
+    @pytest.mark.parametrize(
+        "call",
         [
-            {"json": [{"id": 1, **group}]},
-            {"json": [{"id": 1, **group}, {"id": 2, **project}]},
+            lambda j: j.add_filter_share_permission("10000", {"type": "global"}),
+            lambda j: j.create_filter(name="f", share_permissions={"type": "global"}),
         ],
+        ids=["add_filter_share_permission", "create_filter"],
     )
+    def test_filter_share_permission_on_old_server_raises_before_sending(
+        self, offline_jira, requests_mock, call
+    ):
+        offline_jira._version = (7, 0, 10)
 
-    result = offline_jira.add_filter_share_permission("10000", [group, project])
+        with pytest.raises(NotImplementedError, match="needs Jira 7.1 or later"):
+            call(offline_jira)
+        assert requests_mock.call_count == 0
 
-    assert [r.json() for r in requests_mock.request_history] == [group, project]
-    assert result == [{"id": 1, **group}, {"id": 2, **project}]
+    def test_create_filter_returns_filter_with_added_share_permissions(
+        self, offline_jira, requests_mock
+    ):
+        offline_jira._version = (8, 20, 0)
+        base = "https://jira.atlassian.com/rest/api/2/filter"
+        requests_mock.post(base, json={"id": "10000", "self": f"{base}/10000"})
+        requests_mock.post(
+            "https://jira.atlassian.com/rest/api/latest/filter/10000/permission",
+            json=[{"id": 1, "type": "global"}],
+        )
+        requests_mock.get(
+            f"{base}/10000",
+            json={
+                "id": "10000",
+                "self": f"{base}/10000",
+                "sharePermissions": [{"id": 1, "type": "global"}],
+            },
+        )
 
+        created = offline_jira.create_filter(
+            name="f", share_permissions={"type": "global"}
+        )
 
-def test_add_filter_share_permission_wraps_a_single_permission(
-    offline_jira, requests_mock
-):
-    offline_jira._version = (8, 20, 0)
-    group = {"type": "group", "groupname": "jira-users"}
-    requests_mock.post(
-        "https://jira.atlassian.com/rest/api/latest/filter/10000/permission",
-        json={"id": 1, **group},
-    )
-
-    result = offline_jira.add_filter_share_permission(10000, group)
-
-    assert result == [{"id": 1, **group}]
-
-
-@pytest.mark.parametrize(
-    "call",
-    [
-        lambda j: j.add_filter_share_permission("10000", {"type": "global"}),
-        lambda j: j.create_filter(name="f", share_permissions={"type": "global"}),
-    ],
-    ids=["add_filter_share_permission", "create_filter"],
-)
-def test_filter_share_permission_on_old_server_raises_before_sending(
-    offline_jira, requests_mock, call
-):
-    offline_jira._version = (7, 0, 10)
-
-    with pytest.raises(NotImplementedError, match="needs Jira 7.1 or later"):
-        call(offline_jira)
-    assert requests_mock.call_count == 0
-
-
-def test_create_filter_returns_filter_with_added_share_permissions(
-    offline_jira, requests_mock
-):
-    offline_jira._version = (8, 20, 0)
-    base = "https://jira.atlassian.com/rest/api/2/filter"
-    requests_mock.post(base, json={"id": "10000", "self": f"{base}/10000"})
-    requests_mock.post(
-        "https://jira.atlassian.com/rest/api/latest/filter/10000/permission",
-        json=[{"id": 1, "type": "global"}],
-    )
-    requests_mock.get(
-        f"{base}/10000",
-        json={
-            "id": "10000",
-            "self": f"{base}/10000",
-            "sharePermissions": [{"id": 1, "type": "global"}],
-        },
-    )
-
-    created = offline_jira.create_filter(name="f", share_permissions={"type": "global"})
-
-    permission_post = requests_mock.request_history[1]
-    assert permission_post.url.endswith("/latest/filter/10000/permission")
-    assert permission_post.json() == {"type": "global"}
-    assert created.raw["sharePermissions"] == [{"id": 1, "type": "global"}]
+        permission_post = requests_mock.request_history[1]
+        assert permission_post.url.endswith("/latest/filter/10000/permission")
+        assert permission_post.json() == {"type": "global"}
+        assert created.raw["sharePermissions"] == [{"id": 1, "type": "global"}]

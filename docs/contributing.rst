@@ -79,6 +79,7 @@ Using tox
 * Specify what tests to run with pytest_
     - ``tox -e py -- tests/resources/test_attachment.py``
     - ``tox -e py -- -m allow_on_cloud`` (Run only the cloud tests)
+    - ``tox -e py -- -m unit`` (Run only the tests that need no Jira instance)
 * Debug tests with breakpoints by disabling the coverage plugin, with the ``--no-cov`` argument.
     - Example for VSCode on Windows :
 

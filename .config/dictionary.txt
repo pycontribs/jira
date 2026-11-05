@@ -68,6 +68,7 @@ projectcategories
 projectkey
 projectkeys
 pycontribs
+pytestmark
 pyupgrade
 rapidviewconfig
 reindexing

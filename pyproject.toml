@@ -197,7 +197,8 @@ addopts = '''-p no:xdist --durations=10 --tb=long -rxX -v --color=yes'''
 filterwarnings = ["ignore::pytest.PytestWarning"]
 markers = [
   "allow_on_cloud: opt in for the test to run on Jira Cloud",
-  "api_probe: dev-only checks of live response shapes, run with --run-api-probe or JIRA_API_PROBE=1"
+  "api_probe: dev-only checks of live response shapes, run with --run-api-probe or JIRA_API_PROBE=1",
+  "unit: needs no Jira instance; the offline CI job runs only these (-m unit)"
 ]
 minversion = "6.0"
 python_files = ["test_*.py", "tests.py"]
