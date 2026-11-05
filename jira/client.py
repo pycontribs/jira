@@ -529,16 +529,67 @@ class JiraCookieAuth(AuthBase):
 
 
 class TokenAuth(AuthBase):
-    """Bearer Token Authentication."""
+    """Bearer Token Authentication.
 
-    def __init__(self, token: str):
-        # setup any auth-related data here
+    Passing the ``session`` that uses this auth enables the single retry in
+    :py:meth:`handle_401`.
+    """
+
+    def __init__(self, token: str, session: requests.Session | None = None):
         self._token = token
+        self._session = session
 
     def __call__(self, r: requests.PreparedRequest) -> requests.PreparedRequest:
-        # modify and return the request
         r.headers["authorization"] = f"Bearer {self._token}"
+        r.register_hook("response", self.handle_401)
         return r
+
+    def handle_401(
+        self, response: requests.Response, **kwargs: Any
+    ) -> requests.Response:
+        """Return the response, or for a 401 see :py:meth:`_handle_jraserver_76340`."""
+        if response.status_code != 401:
+            return response
+        return self._handle_jraserver_76340(response, **kwargs)
+
+    def _handle_jraserver_76340(
+        self, response: requests.Response, **kwargs: Any
+    ) -> requests.Response:
+        """Resend a 401 that carried cookies once, without them.
+
+        Jira Data Center can reject a valid token with 401 when the request also
+        sends a session cookie the server no longer recognizes, with the error
+        "os_authType was 'any' and an invalid cookie was sent". The same token
+        authenticates on its own. The suspected upstream bug is JRASERVER-76340,
+        fixed in 9.12.26, 10.1.2 and 10.2.0:
+        https://jira.atlassian.com/browse/JRASERVER-76340
+
+        Session cookies are cleared from the jar so later requests start a new
+        session. The resend carries no Cookie header at all, so it cannot reach
+        this path again, even if long-lived cookies remain in the jar.
+
+        Requests whose body is a stream are not resent, as it has been consumed.
+        Without a session there is nothing to resend through, so this warns and
+        returns the 401 unchanged.
+        """
+        request = response.request
+        if "Cookie" not in request.headers or not _can_replay(request):
+            return response
+        if self._session is None:
+            warnings.warn(
+                "Token auth got a 401 on a request that sent cookies. Jira Data"
+                " Center can reject a valid token when it no longer recognizes the"
+                " session cookie (suspected JRASERVER-76340). Pass the session to"
+                " TokenAuth to retry such requests once without cookies.",
+                UserWarning,
+                stacklevel=3,
+            )
+            return response
+        LOG.info("Retrying token auth 401 without cookies...")
+        self._session.cookies.clear_session_cookies()
+        retry = request.copy()
+        del retry.headers["Cookie"]
+        return self._session.send(retry, **kwargs)
 
 
 # Avatar formats Jira documents for upload. Cloud lists JPEG, GIF and PNG:
@@ -5178,7 +5229,7 @@ class JIRA:
 
         Header structure: "authorization": "Bearer <token_auth>".
         """
-        self._session.auth = TokenAuth(token_auth)
+        self._session.auth = TokenAuth(token_auth, session=self._session)
 
     def _set_avatar(
         self, params: dict[str, str] | None, url: str, avatar: str

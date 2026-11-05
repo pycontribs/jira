@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import threading
+import warnings
 from unittest import mock
 
 import pytest
@@ -10,7 +11,7 @@ import requests_mock as rm
 from requests_toolbelt import MultipartEncoder
 
 import jira.client
-from jira.client import JiraCookieAuth
+from jira.client import JiraCookieAuth, TokenAuth
 from jira.exceptions import JIRAError
 from jira.resilientsession import ResilientSession
 
@@ -25,7 +26,20 @@ def _cookie_session() -> ResilientSession:
     return session
 
 
-AUTH_SESSIONS = [_cookie_session]
+def _token_session() -> ResilientSession:
+    session = ResilientSession()
+    session.auth = TokenAuth("tok", session=session)
+    return session
+
+
+AUTH_SESSIONS = [_cookie_session, _token_session]
+
+
+def _reject_session_cookie(request, context):
+    if "JSESSIONID" in request.headers.get("Cookie", ""):
+        context.status_code = 401
+        return {}
+    return {"name": "user"}
 
 
 def test_unit_cookie_auth_retry(requests_mock):
@@ -171,6 +185,7 @@ def test_unit_auth_retries_401_once_per_async_request(make_session, recovers):
 @pytest.mark.parametrize("make_session", AUTH_SESSIONS)
 def test_unit_auth_retry_keeps_send_kwargs(requests_mock, make_session):
     session = make_session()
+    session.cookies.set("JSESSIONID", "stale")
     requests_mock.post(SESSION_API, json={})
     requests_mock.get(MYSELF, [{"status_code": 401}, {"json": {}}])
     send_kwargs = {"verify": "/ca.pem", "cert": "/client.pem", "stream": True}
@@ -182,3 +197,67 @@ def test_unit_auth_retry_keeps_send_kwargs(requests_mock, make_session):
     retry_call = send.call_args_list[-1]
     assert retry_call.args[0].url == MYSELF
     assert retry_call.kwargs.items() >= send_kwargs.items()
+
+
+def test_unit_token_auth_retries_401_without_cookies(requests_mock):
+    session = _token_session()
+    session.cookies.set("JSESSIONID", "stale")
+    session.cookies.set("persistent", "kept", expires=4102444800, discard=False)
+    requests_mock.get(MYSELF, json=_reject_session_cookie)
+
+    response = session.get(MYSELF)
+
+    assert response.status_code == 200
+    first, retry = requests_mock.request_history
+    assert "JSESSIONID=stale" in first.headers["Cookie"]
+    assert "Cookie" not in retry.headers
+    assert retry.headers["Authorization"] == "Bearer tok"
+    assert "JSESSIONID" not in session.cookies
+    assert session.cookies.get("persistent") == "kept"
+
+
+def test_unit_token_auth_does_not_retry_401_without_cookie(requests_mock):
+    session = _token_session()
+    requests_mock.get(MYSELF, status_code=401)
+
+    with pytest.raises(JIRAError):
+        session.get(MYSELF)
+
+    assert len(requests_mock.request_history) == 1
+
+
+def test_unit_token_auth_without_session_sends_bearer(requests_mock):
+    session = requests.Session()
+    session.auth = TokenAuth("tok")
+    requests_mock.get(MYSELF, json={})
+
+    session.get(MYSELF)
+
+    assert requests_mock.last_request.headers["Authorization"] == "Bearer tok"
+
+
+def test_unit_token_auth_without_session_warns_on_401_with_cookie(requests_mock):
+    session = requests.Session()
+    session.auth = TokenAuth("tok")
+    session.cookies.set("JSESSIONID", "stale")
+    requests_mock.get(MYSELF, status_code=401)
+
+    with pytest.warns(UserWarning, match="JRASERVER-76340"):
+        response = session.get(MYSELF)
+
+    assert response.status_code == 401
+    assert len(requests_mock.request_history) == 1
+
+
+def test_unit_token_auth_without_session_silent_on_401_without_cookie(
+    requests_mock,
+):
+    session = requests.Session()
+    session.auth = TokenAuth("tok")
+    requests_mock.get(MYSELF, status_code=401)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        response = session.get(MYSELF)
+
+    assert response.status_code == 401
