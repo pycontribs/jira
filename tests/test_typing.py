@@ -1,4 +1,4 @@
-"""Static checks of decorated client signatures, enforced by the mypy run over tests/.
+"""Static checks of public typing, enforced by the mypy run over tests/.
 
 Every ``type: ignore[...]`` below is an assertion: with ``warn_unused_ignores``
 mypy fails if that call stops being rejected.
@@ -13,7 +13,15 @@ from typing_extensions import assert_type
 
 from jira import JIRA
 from jira.client import ResultList
-from jira.resources import Comment, Dashboard, Issue, IssueLinkType, Project, Version
+from jira.resources import (
+    Comment,
+    Dashboard,
+    Issue,
+    IssueLinkType,
+    Project,
+    Resource,
+    Version,
+)
 
 
 def _translate_resource_args_keeps_signature(
@@ -51,3 +59,18 @@ def _cloud_and_experimental_keep_signature(j: JIRA, flag: bool) -> None:
 
     j.create_dashboard(42)  # type: ignore[arg-type]
     j.approximate_issue_count()  # type: ignore[call-overload]
+
+
+def _result_list_yields_its_resource_type(
+    issues: ResultList[Issue], resources: ResultList[Resource]
+) -> None:
+    for issue in issues:
+        assert_type(issue, Issue)
+    assert_type(issues[0], Issue)
+    assert_type(issues[0:2], list[Issue])
+    assert_type(issues.pop(), Issue)
+    assert_type([i.key for i in issues], list[str])
+
+    def wants_issues(items: ResultList[Issue]) -> None: ...
+
+    wants_issues(resources)  # type: ignore[arg-type]
