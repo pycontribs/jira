@@ -6195,8 +6195,10 @@ class JIRA:
         Returns:
             Dict[str, Dict[str, Any]]: dictionary of sprints with the sprint name as key
         """
-        sprints = {}
+        sprints: dict[str, dict[str, Any]] = {}
         for s in self.sprints(id, extended=extended, state=state):
+            if s.raw is None:
+                raise JIRAError(f"A sprint on board id {id} has no data")
             if s.name not in sprints:
                 sprints[s.name] = s.raw
             else:
@@ -6326,6 +6328,8 @@ class JIRA:
         """
         sprint = Sprint(self._options, self._session)
         sprint.find(sprint_id)
+        if sprint.raw is None:
+            raise JIRAError(f"Sprint {sprint_id} has no data")
         return sprint.raw
 
     def sprint(self, id: int | str) -> Sprint:
