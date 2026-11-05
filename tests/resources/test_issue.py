@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import logging
 
+import pytest
+
+import jira.client
 from jira.exceptions import JIRAError
 from tests.conftest import (
     JiraTestCase,
@@ -86,6 +89,14 @@ class IssueTests(JiraTestCase):
         comment1.delete()
         comment2.delete()
         comment3.delete()
+
+    @allow_on_cloud
+    def test_issue_fields_by_jql_name(self):
+        issue = self.jira.issue(self.issue_1, fields="due")
+        raw_fields = issue.raw["fields"]
+        self.assertIn("duedate", raw_fields)
+        self.assertNotIn("summary", raw_fields)
+        self.assertEqual(raw_fields["due"], raw_fields["duedate"])
 
     @allow_on_cloud
     def test_issue_equal(self):
@@ -664,3 +675,68 @@ class IssueTests(JiraTestCase):
 
         self.assertEqual(restored, {"numberOfIssuesUpdated": 1, "errors": {}})
         self.assertEqual([i.key for i in self.jira.search_issues(jql)], [issue.key])
+
+
+_BASE = "https://jira.example.com/rest/api/2"
+
+
+@pytest.fixture()
+def field_server(requests_mock):
+    requests_mock.get(
+        f"{_BASE}/field",
+        json=[
+            {"id": "customfield_10001", "clauseNames": ["Story Points"]},
+            {"id": "customfield_10002", "clauseNames": ["Sprint"]},
+            {"id": "duedate", "clauseNames": ["due", "duedate"]},
+            {"id": "summary", "clauseNames": ["summary"]},
+        ],
+    )
+    requests_mock.get(
+        f"{_BASE}/issue/KEY-1",
+        json={
+            "id": "10000",
+            "key": "KEY-1",
+            "fields": {
+                "summary": "a summary",
+                "customfield_10001": 5,
+                "customfield_10002": "sprint 1",
+                "duedate": "2024-01-01",
+            },
+        },
+    )
+    return requests_mock
+
+
+@pytest.fixture()
+def client():
+    return jira.client.JIRA(
+        server="https://jira.example.com", get_server_info=False, validate=False
+    )
+
+
+@pytest.mark.parametrize(
+    "fields",
+    ["summary, Story Points", "summary,Story Points,", ["summary", "Story Points"]],
+    ids=["spaces", "trailing-comma", "list"],
+)
+def test_unit_issue_translates_field_names(field_server, client, fields):
+    issue = client.issue("KEY-1", fields=fields)
+
+    assert field_server.last_request.qs["fields"] == ["summary,customfield_10001"]
+    assert issue.raw["fields"]["Story Points"] == 5
+    assert "Sprint" not in issue.raw["fields"]
+    assert "due" not in issue.raw["fields"]
+    if isinstance(fields, list):
+        assert fields == ["summary", "Story Points"]
+
+
+@pytest.mark.parametrize(
+    "fields",
+    [None, "", ",", "-comment", "*all", "*navigable,-comment", ["*all"]],
+    ids=["none", "empty", "comma", "exclusion", "all", "mixed", "list"],
+)
+def test_unit_issue_skips_field_lookup(field_server, client, fields):
+    client.issue("KEY-1", fields=fields)
+
+    paths = [r.path for r in field_server.request_history]
+    assert paths == ["/rest/api/2/issue/key-1"]

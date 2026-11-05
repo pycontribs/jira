@@ -2198,7 +2198,7 @@ class JIRA:
     def issue(
         self,
         id: Issue | str | int,
-        fields: str | None = None,
+        fields: str | list[str] | None = None,
         expand: str | None = None,
         properties: str | None = None,
     ) -> Issue:
@@ -2206,7 +2206,9 @@ class JIRA:
 
         Args:
             id (Issue | str | int): ID or key of the issue to get
-            fields (Optional[str]): comma-separated string of issue fields to include in the results
+            fields (Optional[Union[str, List[str]]]): comma-separated string or list of issue fields to include in the results.
+              JQL field names are sent as their field ids, and the returned ``raw["fields"]``
+              also holds each value under the name that was asked for.
             expand (Optional[str]): extra information to fetch inside each resource
             properties (Optional[str]): extra properties to fetch inside each result
 
@@ -2220,13 +2222,19 @@ class JIRA:
         issue = Issue(self._options, self._session)
 
         params = {}
+        untranslate: dict[str, str] = {}
         if fields is not None:
-            params["fields"] = fields
+            if isinstance(fields, str):
+                fields = fields.split(",")
+            field_list = [field.strip() for field in fields if field.strip()]
+            untranslate = self._translate_field_names(field_list)
+            params["fields"] = ",".join(field_list)
         if expand is not None:
             params["expand"] = expand
         if properties is not None:
             params["properties"] = properties
         issue.find(id, params=params)
+        self._add_field_aliases([issue], untranslate)
         return issue
 
     def create_issue(
