@@ -18,6 +18,7 @@ import logging as _logging
 import os
 import re
 import sys
+import threading
 import time
 import types
 import urllib
@@ -435,6 +436,11 @@ class QshGenerator:
         return [quote(value, safe="~") for value in ordered_values]
 
 
+def _can_replay(request: requests.PreparedRequest) -> bool:
+    """Whether the request can be sent again, i.e. its body is not a consumed stream."""
+    return request.body is None or isinstance(request.body, (bytes, str))
+
+
 class JiraCookieAuth(AuthBase):
     """Jira Cookie Authentication.
 
@@ -454,18 +460,12 @@ class JiraCookieAuth(AuthBase):
         self._session = session
         self._session_api_url = session_api_url  # e.g ."/rest/auth/1/session"
         self.__auth = auth
-        self._retry_counter_401 = 0
-        self._max_allowed_401_retries = 1  # 401 aren't recoverable with retries really
+        # Per thread, because FuturesSession (async_) sends from worker threads.
+        self._local = threading.local()
 
     @property
     def cookies(self) -> RequestsCookieJar:
         return self._session.cookies
-
-    def _increment_401_retry_counter(self) -> None:
-        self._retry_counter_401 += 1
-
-    def _reset_401_retry_counter(self) -> None:
-        self._retry_counter_401 = 0
 
     def __call__(self, request: requests.PreparedRequest) -> requests.PreparedRequest:
         request.register_hook("response", self.handle_401)
@@ -495,15 +495,19 @@ class JiraCookieAuth(AuthBase):
             requests.Response
         """
         if (
-            response.status_code == 401
-            and self._retry_counter_401 < self._max_allowed_401_retries
+            response.status_code != 401
+            or getattr(self._local, "retrying", False)
+            or not _can_replay(response.request)
         ):
-            LOG.info("Trying to refresh the cookie auth session...")
-            self._increment_401_retry_counter()
+            return response
+        LOG.info("Trying to refresh the cookie auth session...")
+        # init_session() and the retry both pass back through this hook.
+        self._local.retrying = True
+        try:
             self.init_session()
-            response = self.process_original_request(response.request.copy(), **kwargs)
-        self._reset_401_retry_counter()
-        return response
+            return self.process_original_request(response.request.copy(), **kwargs)
+        finally:
+            self._local.retrying = False
 
     def process_original_request(
         self, original_request: requests.PreparedRequest, **kwargs: Any
