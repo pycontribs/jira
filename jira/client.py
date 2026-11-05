@@ -5692,38 +5692,55 @@ class JIRA:
     @cache
     def issue_type_schemes(
         self, expand_projects: bool = False, expand_issue_types: bool = False
-    ) -> list[IssueTypeScheme]:
+    ) -> list[dict[str, Any]]:
         """Get all issue type schemes defined (Admin required).
 
         Args:
-            expand_issue_types: For each issue type schemes, returns information about the issueTypes the issue type scheme have.
-            expand_projects: For each issue type schemes, returns information about the projects the issue type scheme is assigned to
+            expand_projects (bool): Include the projects each scheme is assigned to.
+              Jira Cloud only: Server and Data Center warn and ignore it, use
+              :py:meth:`get_issue_type_scheme_associations` there instead.
+            expand_issue_types (bool): Include the issue types of each scheme.
 
         Returns:
-            List[IssueTypeScheme]: All the Issue Type Schemes available to the currently logged in user.
+            List[Dict[str, Any]]: The raw issue type schemes. Cloud wraps each expanded
+            field in a page object (``{"values": [...], "isLast": ...}``) that holds only
+            the first page, Server and Data Center give a plain list.
         """
-        expand = []
+        # Cloud pages the schemes under "values" and expands "projects" and "issueTypes":
+        # https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-issue-type-schemes/#api-rest-api-2-issuetypescheme-get
+        # Server and DC return every scheme under "schemes" in one response, and only
+        # expand issue types, as "schemes.issueTypes":
+        # https://developer.atlassian.com/server/jira/platform/rest/v11002/api-group-issuetypescheme/
+        if self._is_cloud:
+            expand = [
+                name
+                for name, wanted in (
+                    ("projects", expand_projects),
+                    ("issueTypes", expand_issue_types),
+                )
+                if wanted
+            ]
+            schemes = self._fetch_pages(
+                IssueTypeScheme,
+                "values",
+                "issuetypescheme",
+                maxResults=False,
+                params={"expand": ",".join(expand)} if expand else None,
+            )
+            return [scheme.raw for scheme in schemes]
+
         if expand_projects:
-            expand.append("projects")
-        if expand_issue_types:
-            expand.append("issueTypes")
-
-        params = {}
-        if expand:
-            params["expand"] = ",".join(expand)
-
-        url = self._get_url("issuetypescheme")
-
-        response = self._session.get(url, params=params)
-        data: dict[str, Any] = json_loads(response)
-        data = data.get("values")
-
-        issue_type_schemes = [
-            IssueTypeScheme(self._options, self._session, raw_type_json)
-            for raw_type_json in data
-        ]
-
-        return issue_type_schemes
+            warnings.warn(
+                "issue_type_schemes() ignored expand_projects: Jira Server and Data"
+                " Center cannot expand projects here. Use"
+                " get_issue_type_scheme_associations() instead.",
+                stacklevel=2,
+            )
+        data: dict[str, Any] = self._get_json(
+            "issuetypescheme",
+            params={"expand": "schemes.issueTypes"} if expand_issue_types else None,
+        )
+        return data["schemes"]
 
     @cache
     def issuesecurityschemes(self) -> list[dict[str, Any]]:
