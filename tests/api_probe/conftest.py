@@ -10,7 +10,7 @@ from typing import Any
 import pytest
 
 from jira import JIRA
-from jira.resources import Issue, Project
+from jira.resources import Issue, Project, Resource
 from tests.conftest import api_probe_enabled
 
 JSON_TYPES: dict[type, str] = {
@@ -33,6 +33,11 @@ class Observation:
 
 
 OBSERVATIONS: list[Observation] = []
+
+
+def raw(resource: Resource) -> dict[str, Any]:
+    assert resource.raw is not None, f"{resource!r} was not loaded"
+    return resource.raw
 
 
 def json_type(value: Any) -> str:
@@ -110,7 +115,7 @@ def probe_project(jira_admin: JIRA) -> Iterator[Project]:
 def issue_types(probe_project: Project) -> dict[bool, str]:
     """Maps ``subtask`` to the name of one issue type of that kind."""
     by_kind: dict[bool, str] = {}
-    for it in probe_project.raw["issueTypes"]:
+    for it in raw(probe_project)["issueTypes"]:
         by_kind.setdefault(it["subtask"], it["name"])
     return by_kind
 

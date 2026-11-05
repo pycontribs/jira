@@ -5,7 +5,7 @@ import pytest
 from jira import JIRA
 from jira.exceptions import JIRAError
 from jira.resources import Issue, Project
-from tests.api_probe.conftest import Shape, unique_key
+from tests.api_probe.conftest import Shape, raw, unique_key
 
 
 def test_transitions(jira_admin: JIRA, probe_issue: Issue, shape: Shape) -> None:
@@ -33,10 +33,10 @@ def test_transitions(jira_admin: JIRA, probe_issue: Issue, shape: Shape) -> None
 def test_issue_id_and_key(
     jira_admin: JIRA, probe_issue: Issue, probe_project: Project, shape: Shape
 ) -> None:
-    shape("issue.id", probe_issue.raw["id"], "string")
-    shape("issue.key", probe_issue.raw["key"], "string")
+    shape("issue.id", raw(probe_issue)["id"], "string")
+    shape("issue.key", raw(probe_issue)["key"], "string")
     shape(
-        "issue.fields.project.id", probe_issue.raw["fields"]["project"]["id"], "string"
+        "issue.fields.project.id", raw(probe_issue)["fields"]["project"]["id"], "string"
     )
 
     assert jira_admin.issue(int(probe_issue.id)).key == probe_issue.key
@@ -92,12 +92,12 @@ def test_query_booleans(
 def test_project_id_and_key(
     jira_admin: JIRA, probe_project: Project, shape: Shape
 ) -> None:
-    shape("project.id", probe_project.raw["id"], "string")
-    shape("project.key", probe_project.raw["key"], "string")
-    shape("project.issueTypes[]", probe_project.raw["issueTypes"], "array")
+    shape("project.id", raw(probe_project)["id"], "string")
+    shape("project.key", raw(probe_project)["key"], "string")
+    shape("project.issueTypes[]", raw(probe_project)["issueTypes"], "array")
     shape(
         "project.issueTypes[].subtask",
-        probe_project.raw["issueTypes"][0]["subtask"],
+        raw(probe_project)["issueTypes"][0]["subtask"],
         "boolean",
     )
 
@@ -106,16 +106,16 @@ def test_project_id_and_key(
     shape("project_roles()", roles, "object")
     role_id = next(iter(roles.values()))["id"]
     role = jira_admin.project_role(probe_project, int(role_id))
-    shape("role.id", role.raw["id"], "integer")
+    shape("role.id", raw(role)["id"], "integer")
 
 
 def test_version(jira_admin: JIRA, probe_project: Project, shape: Shape) -> None:
     version = jira_admin.create_version(unique_key("v"), probe_project.key)
     try:
-        shape("version.id", version.raw["id"], "string")
-        shape("version.projectId", version.raw["projectId"], "integer")
-        shape("version.archived", version.raw["archived"], "boolean")
-        shape("version.released", version.raw["released"], "boolean")
+        shape("version.id", raw(version)["id"], "string")
+        shape("version.projectId", raw(version)["projectId"], "integer")
+        shape("version.archived", raw(version)["archived"], "boolean")
+        shape("version.released", raw(version)["released"], "boolean")
 
         vid = int(version.id)
         assert jira_admin.version(vid).id == version.id
@@ -126,7 +126,7 @@ def test_version(jira_admin: JIRA, probe_project: Project, shape: Shape) -> None
         unresolved = jira_admin.version_count_unresolved_issues(vid)
         shape("unresolvedIssueCount.issuesUnresolvedCount", unresolved, "integer")
         moved = jira_admin.move_version(vid, position="First")
-        shape("move_version().id", moved.raw["id"], "string")
+        shape("move_version().id", raw(moved)["id"], "string")
         listed = jira_admin.project_versions(int(probe_project.id))
         assert version.id in [v.id for v in listed]
     finally:
@@ -136,12 +136,12 @@ def test_version(jira_admin: JIRA, probe_project: Project, shape: Shape) -> None
 def test_component(jira_admin: JIRA, probe_project: Project, shape: Shape) -> None:
     component = jira_admin.create_component(unique_key("c"), probe_project.key)
     try:
-        shape("component.id", component.raw["id"], "string")
-        shape("component.projectId", component.raw["projectId"], "integer")
-        shape("component.project", component.raw["project"], "string")
+        shape("component.id", raw(component)["id"], "string")
+        shape("component.projectId", raw(component)["projectId"], "integer")
+        shape("component.project", raw(component)["project"], "string")
         shape(
             "component.isAssigneeTypeValid",
-            component.raw["isAssigneeTypeValid"],
+            raw(component)["isAssigneeTypeValid"],
             "boolean",
         )
 
@@ -160,13 +160,13 @@ def test_filter(jira_admin: JIRA, probe_project: Project, shape: Shape) -> None:
         name=unique_key("f"), jql=f"project = {probe_project.key}", favourite=False
     )
     try:
-        shape("filter.id", created.raw["id"], "string")
-        shape("filter.favourite", created.raw["favourite"], "boolean")
+        shape("filter.id", raw(created)["id"], "string")
+        shape("filter.favourite", raw(created)["favourite"], "boolean")
 
         fid = int(created.id)
         assert jira_admin.filter(fid).id == created.id
         updated = jira_admin.update_filter(fid, name=unique_key("f"))
-        shape("update_filter().id", updated.raw["id"], "string")
+        shape("update_filter().id", raw(updated)["id"], "string")
     finally:
         created.delete()
 
@@ -185,7 +185,7 @@ def test_board_and_sprint(
             boards.append(board)
             shape(
                 f"board.id (filter_id {type(filter_id).__name__})",
-                board.raw["id"],
+                raw(board)["id"],
                 "integer",
             )
 
@@ -196,12 +196,12 @@ def test_board_and_sprint(
 
         sprint = jira_admin.create_sprint(unique_key("s"), boards[0].id)
         try:
-            shape("sprint.id", sprint.raw["id"], "integer")
-            shape("sprint.originBoardId", sprint.raw["originBoardId"], "integer")
-            shape("sprint.state", sprint.raw["state"], "string")
+            shape("sprint.id", raw(sprint)["id"], "integer")
+            shape("sprint.originBoardId", raw(sprint)["originBoardId"], "integer")
+            shape("sprint.state", raw(sprint)["state"], "string")
             assert jira_admin.sprint(str(sprint.id)).id == sprint.id
             sprints = jira_admin.sprints(str(boards[0].id))
-            shape("sprints[].id", sprints[0].raw["id"], "integer")
+            shape("sprints[].id", raw(sprints[0])["id"], "integer")
         finally:
             sprint.delete()
     finally:
@@ -214,11 +214,11 @@ def test_worklog(jira_admin: JIRA, probe_issue: Issue, shape: Shape) -> None:
     for seconds in (3600, "3600"):
         worklog = jira_admin.add_worklog(probe_issue, timeSpentSeconds=seconds)
         label = type(seconds).__name__
-        shape(f"worklog.id (sent {label})", worklog.raw["id"], "string")
-        shape(f"worklog.issueId (sent {label})", worklog.raw["issueId"], "string")
+        shape(f"worklog.id (sent {label})", raw(worklog)["id"], "string")
+        shape(f"worklog.issueId (sent {label})", raw(worklog)["issueId"], "string")
         shape(
             f"worklog.timeSpentSeconds (sent {label})",
-            worklog.raw["timeSpentSeconds"],
+            raw(worklog)["timeSpentSeconds"],
             "integer",
         )
     assert len(jira_admin.worklogs(probe_issue)) == 2

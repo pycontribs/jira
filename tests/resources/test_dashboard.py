@@ -392,3 +392,12 @@ class DashboardTests(JiraTestCase):
             )
 
         assert ex.value.status_code == 404
+
+
+def test_unit_update_of_unloaded_dashboard_item_property_raises():
+    session = mock.Mock()
+    prop = DashboardItemProperty({"server": "https://jira.example.net"}, session)
+
+    with pytest.raises(JIRAError, match="not loaded"):
+        prop.update("1", "2", {"this": "that"})
+    session.put.assert_not_called()
