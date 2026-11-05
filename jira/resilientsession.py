@@ -6,12 +6,11 @@ import logging
 import random
 import time
 from http import HTTPStatus
-from typing import Any
+from typing import Any, TypeGuard
 
 from requests import Response, Session
 from requests.exceptions import ConnectionError
 from requests.structures import CaseInsensitiveDict
-from typing_extensions import TypeGuard
 
 from jira.exceptions import JIRAError
 

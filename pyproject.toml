@@ -42,8 +42,7 @@ dependencies = [
   "packaging",
   "requests-oauthlib>=1.1.0",
   "requests>=2.10.0",
-  "requests_toolbelt",
-  "typing_extensions>=3.7.4.2"
+  "requests_toolbelt"
 ]
 description = "Python library for interacting with JIRA via REST APIs."
 dynamic = ["version"]
