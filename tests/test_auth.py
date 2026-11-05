@@ -14,6 +14,7 @@ import jira.client
 from jira.client import JiraCookieAuth, TokenAuth
 from jira.exceptions import JIRAError
 from jira.resilientsession import ResilientSession
+from tests.conftest import JiraTestManager
 
 SERVER = "https://mocked.jira.invalid"
 MYSELF = f"{SERVER}/rest/api/2/myself"
@@ -261,3 +262,56 @@ def test_unit_token_auth_without_session_silent_on_401_without_cookie(
         response = session.get(MYSELF)
 
     assert response.status_code == 401
+
+
+def test_token_auth(cl_admin: jira.client.JIRA):
+    """Tests the Personal Access Token authentication works."""
+    # GIVEN: We have a PAT token created by a user.
+    pat_token_request = {
+        "name": "my_new_token",
+        "expirationDuration": 1,
+    }
+    base_url = cl_admin.server_url
+    pat_token_response = cl_admin._session.post(
+        f"{base_url}/rest/pat/latest/tokens", json=pat_token_request
+    ).json()
+    new_token = pat_token_response["rawToken"]
+
+    # WHEN: A new client is authenticated with this token
+    new_jira_client = jira.client.JIRA(server=base_url, token_auth=new_token)
+
+    # THEN: The reported authenticated user of the token
+    # matches the original token creator user.
+    assert cl_admin.myself() == new_jira_client.myself()
+
+
+def test_bearer_token_auth():
+    my_token = "cool-token"
+    token_auth_jira = jira.client.JIRA(
+        server="https://what.ever",
+        token_auth=my_token,
+        get_server_info=False,
+        validate=False,
+    )
+    method_send = token_auth_jira._session.send
+    with mock.patch.object(token_auth_jira._session, method_send.__name__) as mock_send:
+        token_auth_jira._session.get(token_auth_jira.server_url)
+        prepared_req: requests.sessions.PreparedRequest = mock_send.call_args[0][0]
+        assert prepared_req.headers["Authorization"] == f"Bearer {my_token}"
+
+
+def test_cookie_auth(test_manager: JiraTestManager):
+    """Test Cookie based authentication works.
+
+    NOTE: this is deprecated in Cloud and is not recommended in Server.
+    https://developer.atlassian.com/cloud/jira/platform/jira-rest-api-cookie-based-authentication/
+    https://developer.atlassian.com/server/jira/platform/cookie-based-authentication/
+    """
+    # GIVEN: the username and password
+    # WHEN: We create a session with cookie auth for the same server
+    cookie_auth_jira = jira.client.JIRA(
+        server=test_manager.CI_JIRA_URL,
+        auth=(test_manager.CI_JIRA_ADMIN, test_manager.CI_JIRA_ADMIN_PASSWORD),
+    )
+    # THEN: We get the same result from the API
+    assert test_manager.jira_admin.myself() == cookie_auth_jira.myself()

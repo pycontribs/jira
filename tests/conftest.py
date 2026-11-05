@@ -19,8 +19,10 @@ from typing import Any, Callable
 import pytest
 from flaky import flaky
 
+import jira.client
 from jira import JIRA
 from jira.exceptions import JIRAError
+from jira.resources import Project
 
 TEST_ROOT = os.path.dirname(__file__)
 TEST_ICON_PATH = os.path.join(TEST_ROOT, "icon.png")
@@ -409,6 +411,82 @@ def no_fields(monkeypatch):
     We don't need the features of a MagicMock, hence we don't use it here.
     """
     monkeypatch.setattr(JIRA, "fields", lambda *args, **kwargs: [])
+
+
+@pytest.fixture(scope="module")
+def test_manager() -> JiraTestManager:
+    return JiraTestManager()
+
+
+@pytest.fixture()
+def cl_admin(test_manager: JiraTestManager) -> jira.client.JIRA:
+    return test_manager.jira_admin
+
+
+@pytest.fixture()
+def cl_normal(test_manager: JiraTestManager) -> jira.client.JIRA:
+    return test_manager.jira_normal
+
+
+@pytest.fixture(scope="function")
+def slug(request: pytest.FixtureRequest, cl_admin: jira.client.JIRA):
+    """Project slug."""
+    slug = get_unique_project_name()
+    project_name = f"Test user={getpass.getuser()} key={slug} A"
+
+    proj: Project | dict[str, Any]
+    try:
+        proj = cl_admin.project(slug)
+    except JIRAError:
+        proj = cl_admin.create_project(slug, project_name)
+    assert proj
+
+    yield slug
+    try:
+        cl_admin.delete_project(slug, enable_undo=False)
+    except (ValueError, JIRAError):
+        # Some tests have project already removed, so we stay silent
+        pass
+
+
+@pytest.fixture(scope="session")
+def stream_logger():
+    logger = logging.getLogger("test_logger")
+    logger.addHandler(logging.StreamHandler())
+    return logger
+
+
+@pytest.fixture(scope="session")
+def mock_jira_client(stream_logger):
+    class MockClient(jira.client.JIRA):
+        def __init__(self, is_cloud=False):
+            self.is_cloud = is_cloud
+            self.log = stream_logger
+
+        @property
+        def _is_cloud(self):
+            return self.is_cloud
+
+        @jira.client.cloud_api
+        def mock_cloud_only_method(self, *args, **kwargs):
+            return args, kwargs
+
+        @jira.client.experimental_atlassian_api
+        def mock_experimental_method(self, *args, **kwargs):
+            return args, kwargs
+
+        @jira.client.experimental_atlassian_api
+        def mock_method_raises_jira_error(self, *args, **kwargs):
+            raise JIRAError(**kwargs)
+
+    return MockClient
+
+
+@pytest.fixture()
+def offline_jira(no_fields) -> jira.client.JIRA:
+    return jira.client.JIRA(
+        server="https://jira.atlassian.com", get_server_info=False, validate=False
+    )
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
