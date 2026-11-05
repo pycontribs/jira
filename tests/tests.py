@@ -344,6 +344,7 @@ class SessionTests(JiraTestCase):
 MIMICKED_BACKEND_BATCH_SIZE = 10
 
 
+@pytest.mark.unit
 class AsyncTests(JiraTestCase):
     def setUp(self):
         self.jira = JIRA(
@@ -431,33 +432,35 @@ class AsyncTests(JiraTestCase):
         )
 
 
-@pytest.mark.parametrize(
-    "default_batch_sizes, item_type, expected",
-    [
-        ({Issue: 2}, Issue, 2),
-        ({Resource: 1}, Resource, 1),
-        (
-            {Resource: 1, Issue: None},
-            Issue,
-            None,
-        ),
-        ({Resource: 1}, Dashboard, 1),
-        ({}, Issue, 100),
-        ({}, Resource, 100),
-    ],
-    ids=[
-        "modify Issue default",
-        "modify Resource default",
-        "let backend decide for Issue",
-        "fallback",
-        "default for Issue",
-        "default value for everything else",
-    ],
-)
-def test_get_batch_size(default_batch_sizes, item_type, expected, no_fields):
-    jira = JIRA(default_batch_sizes=default_batch_sizes, get_server_info=False)
+@pytest.mark.unit
+class TestBatchSizeOffline:
+    @pytest.mark.parametrize(
+        "default_batch_sizes, item_type, expected",
+        [
+            ({Issue: 2}, Issue, 2),
+            ({Resource: 1}, Resource, 1),
+            (
+                {Resource: 1, Issue: None},
+                Issue,
+                None,
+            ),
+            ({Resource: 1}, Dashboard, 1),
+            ({}, Issue, 100),
+            ({}, Resource, 100),
+        ],
+        ids=[
+            "modify Issue default",
+            "modify Resource default",
+            "let backend decide for Issue",
+            "fallback",
+            "default for Issue",
+            "default value for everything else",
+        ],
+    )
+    def test_get_batch_size(self, default_batch_sizes, item_type, expected, no_fields):
+        jira = JIRA(default_batch_sizes=default_batch_sizes, get_server_info=False)
 
-    assert jira._get_batch_size(item_type) == expected
+        assert jira._get_batch_size(item_type) == expected
 
 
 def _create_issue_result_json(issue_id, summary, key, **kwargs):

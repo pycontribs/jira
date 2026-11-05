@@ -23,6 +23,8 @@ from jira.resources import (
 )
 from tests.conftest import allow_on_cloud
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture()
 def prep():

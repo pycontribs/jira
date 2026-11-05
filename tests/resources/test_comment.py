@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 import jira.client
 from jira.resources import CommentProperty
 from tests.conftest import JiraTestCase, allow_on_cloud
@@ -147,23 +149,25 @@ class CommentTests(JiraTestCase):
         comment.delete()
 
 
-def test_comment_property_roundtrip(requests_mock):
-    client = jira.client.JIRA(
-        server="https://jira.example.com", get_server_info=False, validate=False
-    )
-    url = "https://jira.example.com/rest/api/2/comment/10500/properties"
-    prop = {"key": "sd.public.comment", "value": {"internal": True}}
-    requests_mock.put(f"{url}/sd.public.comment", status_code=204)
-    requests_mock.get(f"{url}/sd.public.comment", json=prop)
-    requests_mock.get(url, json={"keys": [{"key": "sd.public.comment"}]})
+@pytest.mark.unit
+class TestCommentOffline:
+    def test_comment_property_roundtrip(self, requests_mock):
+        client = jira.client.JIRA(
+            server="https://jira.example.com", get_server_info=False, validate=False
+        )
+        url = "https://jira.example.com/rest/api/2/comment/10500/properties"
+        prop = {"key": "sd.public.comment", "value": {"internal": True}}
+        requests_mock.put(f"{url}/sd.public.comment", status_code=204)
+        requests_mock.get(f"{url}/sd.public.comment", json=prop)
+        requests_mock.get(url, json={"keys": [{"key": "sd.public.comment"}]})
 
-    client.add_comment_property("10500", "sd.public.comment", {"internal": True})
-    single = client.comment_property("10500", "sd.public.comment")
-    listed = client.comment_properties("10500")
+        client.add_comment_property("10500", "sd.public.comment", {"internal": True})
+        single = client.comment_property("10500", "sd.public.comment")
+        listed = client.comment_properties("10500")
 
-    put = next(r for r in requests_mock.request_history if r.method == "PUT")
-    assert put.json() == {"internal": True}
-    assert isinstance(single, jira.resources.CommentProperty)
-    assert single.value.internal is True
-    assert single.self == f"{url}/sd.public.comment"
-    assert [p.key for p in listed] == ["sd.public.comment"]
+        put = next(r for r in requests_mock.request_history if r.method == "PUT")
+        assert put.json() == {"internal": True}
+        assert isinstance(single, jira.resources.CommentProperty)
+        assert single.value.internal is True
+        assert single.self == f"{url}/sd.public.comment"
+        assert [p.key for p in listed] == ["sd.public.comment"]

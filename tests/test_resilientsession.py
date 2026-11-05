@@ -98,62 +98,6 @@ status_codes_retries_test_data = [
 ]
 
 
-@patch("requests.Session.request")
-@patch(f"{jira.resilientsession.__name__}.time.sleep")
-@pytest.mark.parametrize(
-    "status_code,with_rate_limit_header,with_retry_after_header,retry_expected",
-    status_codes_retries_test_data,
-)
-def test_unit_status_codes_retries(
-    mocked_sleep_method: Mock,
-    mocked_request_method: Mock,
-    status_code: int,
-    with_rate_limit_header: bool,
-    with_retry_after_header: int | None,
-    retry_expected: bool,
-):
-    RETRY_AFTER_SECONDS = with_retry_after_header or 0
-    RETRY_AFTER_HEADER = {"Retry-After": f"{RETRY_AFTER_SECONDS}"}
-    RATE_LIMIT_HEADERS = {
-        "X-RateLimit-FillRate": "1",
-        "X-RateLimit-Interval-Seconds": "1",
-        "X-RateLimit-Limit": "1",
-    }
-
-    max_retries = 2
-
-    if retry_expected:
-        expected_number_of_requests = 1 + max_retries
-        expected_number_of_sleep_invocations = max_retries
-    else:
-        expected_number_of_requests = 1
-        expected_number_of_sleep_invocations = 0
-
-    mocked_response: Response = Response()
-    mocked_response.status_code = status_code
-    if with_retry_after_header is not None:
-        mocked_response.headers.update(RETRY_AFTER_HEADER)
-    if with_rate_limit_header:
-        mocked_response.headers.update(RATE_LIMIT_HEADERS)
-
-    mocked_request_method.return_value = mocked_response
-
-    session: jira.resilientsession.ResilientSession = (
-        jira.resilientsession.ResilientSession(max_retries=max_retries)
-    )
-
-    with pytest.raises(JIRAError):
-        session.get("mocked_url")
-
-    assert mocked_request_method.call_count == expected_number_of_requests
-    assert mocked_sleep_method.call_count == expected_number_of_sleep_invocations
-
-    for actual_sleep in (
-        call_args.args[0] for call_args in mocked_sleep_method.call_args_list
-    ):
-        assert actual_sleep >= RETRY_AFTER_SECONDS
-
-
 errors_parsing_test_data = [
     (403, {"x-authentication-denied-reason": "err1"}, "", ["err1"]),
     (500, {}, "err1", ["err1"]),
@@ -172,132 +116,184 @@ errors_parsing_test_data = [
 ]
 
 
-@pytest.mark.parametrize(
-    "status_code,headers,content,expected_errors",
-    errors_parsing_test_data,
-)
-def test_unit_error_parsing(status_code, headers, content, expected_errors):
-    mocked_response: Response = Response()
-    mocked_response.status_code = status_code
-    mocked_response.headers.update(headers)
-    mocked_response._content = content.encode("utf-8")
-    errors = parse_errors(mocked_response)
-    assert errors == expected_errors
-    error_msg = parse_error_msg(mocked_response)
-    assert error_msg == ", ".join(expected_errors)
+@pytest.mark.unit
+class TestResilientSessionOffline:
+    @patch("requests.Session.request")
+    @patch(f"{jira.resilientsession.__name__}.time.sleep")
+    @pytest.mark.parametrize(
+        "status_code,with_rate_limit_header,with_retry_after_header,retry_expected",
+        status_codes_retries_test_data,
+    )
+    def test_status_codes_retries(
+        self,
+        mocked_sleep_method: Mock,
+        mocked_request_method: Mock,
+        status_code: int,
+        with_rate_limit_header: bool,
+        with_retry_after_header: int | None,
+        retry_expected: bool,
+    ):
+        RETRY_AFTER_SECONDS = with_retry_after_header or 0
+        RETRY_AFTER_HEADER = {"Retry-After": f"{RETRY_AFTER_SECONDS}"}
+        RATE_LIMIT_HEADERS = {
+            "X-RateLimit-FillRate": "1",
+            "X-RateLimit-Interval-Seconds": "1",
+            "X-RateLimit-Limit": "1",
+        }
 
+        max_retries = 2
 
-def test_unit_passthrough_class():
-    # GIVEN: The passthrough class and a dict of request args
-    passthrough_class = jira.resilientsession.PassthroughRetryPrepare()
-    my_kwargs = {"nice": "arguments"}
-    # WHEN: the dict of request args are prepared
-    # THEN: The exact same dict is returned
-    assert passthrough_class.prepare(my_kwargs) is my_kwargs
+        if retry_expected:
+            expected_number_of_requests = 1 + max_retries
+            expected_number_of_sleep_invocations = max_retries
+        else:
+            expected_number_of_requests = 1
+            expected_number_of_sleep_invocations = 0
 
+        mocked_response: Response = Response()
+        mocked_response.status_code = status_code
+        if with_retry_after_header is not None:
+            mocked_response.headers.update(RETRY_AFTER_HEADER)
+        if with_rate_limit_header:
+            mocked_response.headers.update(RATE_LIMIT_HEADERS)
 
-@patch("requests.Session.request")
-def test_unit_unspecified_body_remains_unspecified(mocked_request_method: Mock):
-    # Disable retries for this test.
-    session = jira.resilientsession.ResilientSession(max_retries=0)
-    # Data is not specified here.
-    session.get(url="mocked_url")
-    kwargs = mocked_request_method.call_args.kwargs
-    assert "data" not in kwargs
+        mocked_request_method.return_value = mocked_response
 
+        session: jira.resilientsession.ResilientSession = (
+            jira.resilientsession.ResilientSession(max_retries=max_retries)
+        )
 
-@patch("requests.Session.request")
-def test_unit_nonempty_body_is_forwarded(mocked_request_method: Mock):
-    # Disable retries for this test.
-    session = jira.resilientsession.ResilientSession(max_retries=0)
-    session.get(url="mocked_url", data={"some": "fake-data"})
-    kwargs = mocked_request_method.call_args.kwargs
-    assert kwargs["data"] == '{"some": "fake-data"}'
+        with pytest.raises(JIRAError):
+            session.get("mocked_url")
 
+        assert mocked_request_method.call_count == expected_number_of_requests
+        assert mocked_sleep_method.call_count == expected_number_of_sleep_invocations
 
-@patch("requests.Session.request")
-def test_unit_with_requests_simple_timeout(mocked_request_method: Mock):
-    # Disable retries for this test.
-    session = jira.resilientsession.ResilientSession(max_retries=0, timeout=1)
-    session.get(url="mocked_url", data={"some": "fake-data"})
-    kwargs = mocked_request_method.call_args.kwargs
-    assert kwargs["data"] == '{"some": "fake-data"}'
+        for actual_sleep in (
+            call_args.args[0] for call_args in mocked_sleep_method.call_args_list
+        ):
+            assert actual_sleep >= RETRY_AFTER_SECONDS
 
+    @pytest.mark.parametrize(
+        "status_code,headers,content,expected_errors",
+        errors_parsing_test_data,
+    )
+    def test_error_parsing(self, status_code, headers, content, expected_errors):
+        mocked_response: Response = Response()
+        mocked_response.status_code = status_code
+        mocked_response.headers.update(headers)
+        mocked_response._content = content.encode("utf-8")
+        errors = parse_errors(mocked_response)
+        assert errors == expected_errors
+        error_msg = parse_error_msg(mocked_response)
+        assert error_msg == ", ".join(expected_errors)
 
-@patch("requests.Session.request")
-def test_unit_with_requests_tuple_timeout(mocked_request_method: Mock):
-    # Disable retries for this test.
-    session = jira.resilientsession.ResilientSession(max_retries=0, timeout=(1, 3.5))
-    session.get(url="mocked_url", data={"some": "fake-data"})
-    kwargs = mocked_request_method.call_args.kwargs
-    assert kwargs["data"] == '{"some": "fake-data"}'
+    def test_passthrough_class(self):
+        # GIVEN: The passthrough class and a dict of request args
+        passthrough_class = jira.resilientsession.PassthroughRetryPrepare()
+        my_kwargs = {"nice": "arguments"}
+        # WHEN: the dict of request args are prepared
+        # THEN: The exact same dict is returned
+        assert passthrough_class.prepare(my_kwargs) is my_kwargs
 
+    @patch("requests.Session.request")
+    def test_unspecified_body_remains_unspecified(self, mocked_request_method: Mock):
+        # Disable retries for this test.
+        session = jira.resilientsession.ResilientSession(max_retries=0)
+        # Data is not specified here.
+        session.get(url="mocked_url")
+        kwargs = mocked_request_method.call_args.kwargs
+        assert "data" not in kwargs
 
-@patch("requests.Session.request")
-def test_unit_verify_is_forwarded(mocked_request_method: Mock):
-    # Disable retries for this test.
-    session = jira.resilientsession.ResilientSession(max_retries=0)
+    @patch("requests.Session.request")
+    def test_nonempty_body_is_forwarded(self, mocked_request_method: Mock):
+        # Disable retries for this test.
+        session = jira.resilientsession.ResilientSession(max_retries=0)
+        session.get(url="mocked_url", data={"some": "fake-data"})
+        kwargs = mocked_request_method.call_args.kwargs
+        assert kwargs["data"] == '{"some": "fake-data"}'
 
-    session.get(url="mocked_url", data={"some": "fake-data"})
-    kwargs = mocked_request_method.call_args.kwargs
-    assert kwargs["verify"] == session.verify is True
+    @patch("requests.Session.request")
+    def test_with_requests_simple_timeout(self, mocked_request_method: Mock):
+        # Disable retries for this test.
+        session = jira.resilientsession.ResilientSession(max_retries=0, timeout=1)
+        session.get(url="mocked_url", data={"some": "fake-data"})
+        kwargs = mocked_request_method.call_args.kwargs
+        assert kwargs["data"] == '{"some": "fake-data"}'
 
-    session.verify = False
-    session.get(url="mocked_url", data={"some": "fake-data"})
-    kwargs = mocked_request_method.call_args.kwargs
-    assert kwargs["verify"] == session.verify is False
+    @patch("requests.Session.request")
+    def test_with_requests_tuple_timeout(self, mocked_request_method: Mock):
+        # Disable retries for this test.
+        session = jira.resilientsession.ResilientSession(
+            max_retries=0, timeout=(1, 3.5)
+        )
+        session.get(url="mocked_url", data={"some": "fake-data"})
+        kwargs = mocked_request_method.call_args.kwargs
+        assert kwargs["data"] == '{"some": "fake-data"}'
 
+    @patch("requests.Session.request")
+    def test_verify_is_forwarded(self, mocked_request_method: Mock):
+        # Disable retries for this test.
+        session = jira.resilientsession.ResilientSession(max_retries=0)
 
-@patch("requests.Session.request")
-def test_unit_empty_dict_body_not_forwarded(mocked_request_method: Mock):
-    # Disable retries for this test.
-    session = jira.resilientsession.ResilientSession(max_retries=0)
-    # An empty dict must not be JSON-encoded into the request body.
-    # The production code only suppresses the JSON dump; the empty
-    # dict itself is still passed through to requests.Session.request.
-    session.get(url="mocked_url", data={})
-    kwargs = mocked_request_method.call_args.kwargs
-    assert kwargs.get("data") == {}
+        session.get(url="mocked_url", data={"some": "fake-data"})
+        kwargs = mocked_request_method.call_args.kwargs
+        assert kwargs["verify"] == session.verify is True
 
+        session.verify = False
+        session.get(url="mocked_url", data={"some": "fake-data"})
+        kwargs = mocked_request_method.call_args.kwargs
+        assert kwargs["verify"] == session.verify is False
 
-@patch("requests.Session.request")
-def test_configured_proxies_are_forwarded(mocked_request_method: Mock):
-    # Disable retries for this test.
-    session = jira.resilientsession.ResilientSession(max_retries=0)
-    # A user-configured session proxy must be passed explicitly as the
-    # per-request "proxies" kwarg. Left unset, requests.Session.request()
-    # lets an env-derived http_proxy/https_proxy value (from
-    # merge_environment_settings()'s setdefault()) win over self.proxies
-    # for any matching key.
-    session.proxies = {
-        "http": "http://localhost:3128",
-        "https": "http://localhost:3128",
-    }
-    session.get(url="mocked_url")
-    kwargs = mocked_request_method.call_args.kwargs
-    assert kwargs.get("proxies") == session.proxies
+    @patch("requests.Session.request")
+    def test_empty_dict_body_not_forwarded(self, mocked_request_method: Mock):
+        # Disable retries for this test.
+        session = jira.resilientsession.ResilientSession(max_retries=0)
+        # An empty dict must not be JSON-encoded into the request body.
+        # The production code only suppresses the JSON dump; the empty
+        # dict itself is still passed through to requests.Session.request.
+        session.get(url="mocked_url", data={})
+        kwargs = mocked_request_method.call_args.kwargs
+        assert kwargs.get("data") == {}
 
+    @patch("requests.Session.request")
+    def test_configured_proxies_are_forwarded(self, mocked_request_method: Mock):
+        # Disable retries for this test.
+        session = jira.resilientsession.ResilientSession(max_retries=0)
+        # A user-configured session proxy must be passed explicitly as the
+        # per-request "proxies" kwarg. Left unset, requests.Session.request()
+        # lets an env-derived http_proxy/https_proxy value (from
+        # merge_environment_settings()'s setdefault()) win over self.proxies
+        # for any matching key.
+        session.proxies = {
+            "http": "http://localhost:3128",
+            "https": "http://localhost:3128",
+        }
+        session.get(url="mocked_url")
+        kwargs = mocked_request_method.call_args.kwargs
+        assert kwargs.get("proxies") == session.proxies
 
-@patch("requests.Session.request")
-def test_no_proxies_kwarg_when_not_configured(mocked_request_method: Mock):
-    # Disable retries for this test.
-    session = jira.resilientsession.ResilientSession(max_retries=0)
-    session.get(url="mocked_url")
-    kwargs = mocked_request_method.call_args.kwargs
-    assert "proxies" not in kwargs
+    @patch("requests.Session.request")
+    def test_no_proxies_kwarg_when_not_configured(self, mocked_request_method: Mock):
+        # Disable retries for this test.
+        session = jira.resilientsession.ResilientSession(max_retries=0)
+        session.get(url="mocked_url")
+        kwargs = mocked_request_method.call_args.kwargs
+        assert "proxies" not in kwargs
 
+    def test_env_proxies_do_not_mutate_session_proxies(
+        self, requests_mock, monkeypatch
+    ):
+        monkeypatch.setenv("HTTP_PROXY", "http://env-proxy:8080")
+        monkeypatch.setenv("HTTPS_PROXY", "http://env-proxy:8080")
+        monkeypatch.setenv("NO_PROXY", "")
+        monkeypatch.setenv("no_proxy", "")
+        requests_mock.get("https://jira.example.com/rest", text="ok")
+        session = jira.resilientsession.ResilientSession(max_retries=0)
+        session.proxies = {"https": "http://configured:3128"}
 
-def test_env_proxies_do_not_mutate_session_proxies(requests_mock, monkeypatch):
-    monkeypatch.setenv("HTTP_PROXY", "http://env-proxy:8080")
-    monkeypatch.setenv("HTTPS_PROXY", "http://env-proxy:8080")
-    monkeypatch.setenv("NO_PROXY", "")
-    monkeypatch.setenv("no_proxy", "")
-    requests_mock.get("https://jira.example.com/rest", text="ok")
-    session = jira.resilientsession.ResilientSession(max_retries=0)
-    session.proxies = {"https": "http://configured:3128"}
+        session.get("https://jira.example.com/rest")
 
-    session.get("https://jira.example.com/rest")
-
-    assert requests_mock.last_request.proxies["https"] == "http://configured:3128"
-    assert requests_mock.last_request.proxies["http"] == "http://env-proxy:8080"
-    assert session.proxies == {"https": "http://configured:3128"}
+        assert requests_mock.last_request.proxies["https"] == "http://configured:3128"
+        assert requests_mock.last_request.proxies["http"] == "http://env-proxy:8080"
+        assert session.proxies == {"https": "http://configured:3128"}

@@ -10,6 +10,8 @@ import requests  # noqa
 import jira.jirashell as jirashell
 from jira import JIRA, Issue, JIRAError, Project, Role  # noqa
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def testargs():

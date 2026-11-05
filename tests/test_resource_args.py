@@ -20,6 +20,8 @@ import requests_mock as rm
 import jira.client
 from jira.resources import Issue, IssueLinkType, Project, Resource
 
+pytestmark = pytest.mark.unit
+
 SERVER = "https://jira.example.com"
 API = f"{SERVER}/rest/api/2"
 AGILE = f"{SERVER}/rest/agile/1.0"

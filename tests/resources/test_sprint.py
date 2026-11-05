@@ -291,55 +291,59 @@ SPRINT_REPORT = {
 }
 
 
-@pytest.mark.parametrize(
-    ("method", "expected"),
-    [
-        ("incompletedIssuesEstimateSum", 3.0),
-        ("removedIssuesEstimateSum", 5.0),
-        ("removed_issues", ["ABC-20"]),
-    ],
-)
-def test_sprint_report_methods_use_greenhopper_api(requests_mock, method, expected):
-    client = jira.client.JIRA(
-        server="https://jira.example.com", get_server_info=False, validate=False
+@pytest.mark.unit
+class TestSprintOffline:
+    @pytest.mark.parametrize(
+        ("method", "expected"),
+        [
+            ("incompletedIssuesEstimateSum", 3.0),
+            ("removedIssuesEstimateSum", 5.0),
+            ("removed_issues", ["ABC-20"]),
+        ],
     )
-    requests_mock.get(SPRINT_REPORT_URL, json=SPRINT_REPORT)
+    def test_sprint_report_methods_use_greenhopper_api(
+        self, requests_mock, method, expected
+    ):
+        client = jira.client.JIRA(
+            server="https://jira.example.com", get_server_info=False, validate=False
+        )
+        requests_mock.get(SPRINT_REPORT_URL, json=SPRINT_REPORT)
 
-    result = getattr(client, method)("1", "2")
+        result = getattr(client, method)("1", "2")
 
-    if isinstance(result, list):
-        result = [issue.key for issue in result]
-    assert result == expected
+        if isinstance(result, list):
+            result = [issue.key for issue in result]
+        assert result == expected
 
+    def test_completed_issues_reads_sprint_report(self, requests_mock):
+        client = jira.client.JIRA(
+            server="https://jira.example.com", get_server_info=False, validate=False
+        )
+        requests_mock.get(SPRINT_REPORT_URL, json=SPRINT_REPORT)
 
-def test_completed_issues_reads_sprint_report(requests_mock):
-    client = jira.client.JIRA(
-        server="https://jira.example.com", get_server_info=False, validate=False
+        issues = client.completed_issues("1", "2")
+
+        assert [issue.key for issue in issues] == ["ABC-10"]
+        assert all(isinstance(issue, Issue) for issue in issues)
+
+    @pytest.mark.parametrize(
+        "method", ["incompletedIssuesEstimateSum", "removedIssuesEstimateSum"]
     )
-    requests_mock.get(SPRINT_REPORT_URL, json=SPRINT_REPORT)
+    def test_sprint_report_estimate_sum_is_none_without_estimates(
+        self, requests_mock, method
+    ):
+        client = jira.client.JIRA(
+            server="https://jira.example.com", get_server_info=False, validate=False
+        )
+        no_estimate = {"text": "null"}
+        requests_mock.get(
+            SPRINT_REPORT_URL,
+            json={
+                "contents": {
+                    "issuesNotCompletedEstimateSum": no_estimate,
+                    "puntedIssuesEstimateSum": no_estimate,
+                }
+            },
+        )
 
-    issues = client.completed_issues("1", "2")
-
-    assert [issue.key for issue in issues] == ["ABC-10"]
-    assert all(isinstance(issue, Issue) for issue in issues)
-
-
-@pytest.mark.parametrize(
-    "method", ["incompletedIssuesEstimateSum", "removedIssuesEstimateSum"]
-)
-def test_sprint_report_estimate_sum_is_none_without_estimates(requests_mock, method):
-    client = jira.client.JIRA(
-        server="https://jira.example.com", get_server_info=False, validate=False
-    )
-    no_estimate = {"text": "null"}
-    requests_mock.get(
-        SPRINT_REPORT_URL,
-        json={
-            "contents": {
-                "issuesNotCompletedEstimateSum": no_estimate,
-                "puntedIssuesEstimateSum": no_estimate,
-            }
-        },
-    )
-
-    assert getattr(client, method)("1", "2") is None
+        assert getattr(client, method)("1", "2") is None
