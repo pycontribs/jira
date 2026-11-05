@@ -706,7 +706,7 @@ name = "importlib-metadata"
 version = "10.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "zipp" },
+    { name = "zipp", marker = "python_full_version < '3.12'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/98/f6/4eda8458eb00ec03e715c376c6b23b3def69687924c68d36d1c4003d3bc4/importlib_metadata-10.1.0.tar.gz", hash = "sha256:82b04047fa09792c1a8cfeddfe08bec79e4b13c29c8469b0d3949860f61017e8", size = 67761, upload-time = "2026-10-24T00:01:44.856Z" }
 wheels = [
@@ -834,7 +834,6 @@ dependencies = [
     { name = "requests" },
     { name = "requests-oauthlib" },
     { name = "requests-toolbelt" },
-    { name = "typing-extensions" },
 ]
 
 [package.optional-dependencies]
@@ -928,7 +927,6 @@ requires-dist = [
     { name = "sphinx", marker = "extra == 'docs'", specifier = ">=5.0.0" },
     { name = "sphinx-copybutton", marker = "extra == 'docs'" },
     { name = "tenacity", marker = "extra == 'test'" },
-    { name = "typing-extensions", specifier = ">=3.7.4.2" },
     { name = "wheel", marker = "extra == 'test'", specifier = ">=0.24.0" },
     { name = "yanc", marker = "extra == 'test'", specifier = ">=0.3.3" },
 ]

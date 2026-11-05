@@ -6,10 +6,9 @@ mypy fails if that call stops being rejected.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, assert_type
 
 from requests import Response
-from typing_extensions import assert_type
 
 from jira import JIRA
 from jira.client import ResultList
