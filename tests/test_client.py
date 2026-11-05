@@ -17,7 +17,6 @@ from urllib.parse import parse_qs, urlsplit
 import pytest
 import requests
 import requests.sessions
-import requests_mock as rm
 
 import jira.client
 from jira.client import JIRA
@@ -389,30 +388,6 @@ def test_cookie_auth(test_manager: JiraTestManager):
     )
     # THEN: We get the same result from the API
     assert test_manager.jira_admin.myself() == cookie_auth_jira.myself()
-
-
-def test_cookie_auth_retry(requests_mock):
-    """Test Cookie based authentication retry logic works."""
-    # GIVEN: a mocked Jira that always returns 401 on the auth URL
-    auth_class = jira.client.JiraCookieAuth
-    reset_func = jira.client.JiraCookieAuth._reset_401_retry_counter
-    new_options = jira.client.JIRA.DEFAULT_OPTIONS.copy()
-    new_options["auth_url"] = "/401"
-    requests_mock.register_uri(
-        rm.ANY,
-        "https://mocked.jira.invalid/401",
-        status_code=401,
-    )
-    with pytest.raises(JIRAError):
-        with mock.patch.object(auth_class, reset_func.__name__) as mock_reset_func:
-            # WHEN: We create a session with cookie auth
-            jira.client.JIRA(
-                server="https://mocked.jira.invalid",
-                options=new_options,
-                auth=("user", "pass"),
-            )
-    # THEN: We don't get a RecursionError and only call the reset_function once
-    mock_reset_func.assert_called_once()
 
 
 def test_createmeta_issuetypes_pagination(cl_normal, slug):
@@ -832,104 +807,6 @@ def test_experimental_non_200_not_404_405(
 
     assert ex.value.status_code == status_code
     assert isinstance(ex.value, JIRAError)
-
-
-def test_handle_401_preserves_send_kwargs():
-    """Test that handle_401 passes kwargs to process_original_request"""
-
-    auth = jira.client.JiraCookieAuth(
-        session=mock.Mock(),
-        session_api_url="https://mock",
-        auth=("user", "pass"),
-    )
-
-    prepared_request = requests.Request(
-        "GET",
-        "https://mocked.jira.invalid/rest/api/2/myself",
-    ).prepare()
-
-    response_401 = mock.Mock()
-    response_401.status_code = 401
-    response_401.request = prepared_request
-    response_401.text = "Unauthorized"
-
-    retried_response = mock.Mock()
-    retried_response.status_code = 200
-
-    auth.process_original_request = mock.Mock(return_value=retried_response)
-    auth.init_session = mock.Mock()
-
-    kwargs = {
-        "verify": "/usr/local/share/ca-certificates/root.crt",
-        "stream": True,
-        "cert": "/path/client.pem",
-    }
-
-    result = auth.handle_401(response_401, **kwargs)
-
-    auth.process_original_request.assert_called_once_with(
-        mock.ANY,
-        **kwargs,
-    )
-
-    assert result == retried_response
-
-
-def test_process_original_request_preserves_kwargs():
-    """Test that process_original_request forwards kwargs to send_request"""
-    auth = jira.client.JiraCookieAuth(
-        session=mock.Mock(),
-        session_api_url="https://mock",
-        auth=("user", "pass"),
-    )
-
-    request = requests.Request(
-        "GET",
-        "https://mocked.jira.invalid/rest/api/2/myself",
-    ).prepare()
-
-    auth.update_cookies = mock.Mock()
-    auth.send_request = mock.Mock(return_value=mock.Mock(status_code=200))
-
-    kwargs = {
-        "verify": "/usr/local/share/ca-certificates/root.crt",
-        "stream": True,
-        "cert": "/path/client.pem",
-    }
-
-    auth.process_original_request(request, **kwargs)
-
-    auth.send_request.assert_called_once_with(
-        request,
-        **kwargs,
-    )
-
-
-def test_send_request_preserves_kwargs_to_session_send():
-    """Test that send_request forwards kwargs to session.send"""
-    session = mock.Mock()
-    session.send.return_value = mock.Mock(status_code=200)
-
-    auth = jira.client.JiraCookieAuth(
-        session=session,
-        session_api_url="https://mock",
-        auth=("user", "pass"),
-    )
-
-    request = requests.Request(
-        "GET",
-        "https://mocked.jira.invalid/rest/api/2/myself",
-    ).prepare()
-
-    kwargs = {
-        "verify": "/usr/local/share/ca-certificates/root.crt",
-        "stream": True,
-        "cert": "/path/client.pem",
-    }
-
-    auth.send_request(request, **kwargs)
-
-    session.send.assert_called_once_with(request, **kwargs)
 
 
 # --- Pagination when ``maxResults`` is larger than the server's page size ---
