@@ -34,7 +34,7 @@ jobs:
       # the same Jira Cloud sandbox tenant.
       matrix:
         os: [ubuntu-latest]
-        python-version: ["3.10"]
+        python-version: ["3.11"]
 
     steps:
       - uses: actions/checkout@v7
@@ -59,7 +59,7 @@ jobs:
         run: uv tool install tox --with tox-uv --with "setuptools>=65.3"
 
       - name: Test with tox
-        # `tr -d .` collapses 3.10 -> 310 since GHA expressions have no string-replace.
+        # `tr -d .` collapses 3.11 -> 311 since GHA expressions have no string-replace.
         run: tox -e "py$(echo '${{ matrix.python-version }}' | tr -d .)" -- -m allow_on_cloud
         env:
           CI_JIRA_TYPE: CLOUD

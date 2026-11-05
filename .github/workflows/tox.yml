@@ -31,12 +31,13 @@ jobs:
       # macOS rows validate arm64 wheels; only the bookend pythons.
       matrix:
         include:
-          - { os: ubuntu-24.04, python-version: "3.10", tox_env: py310 }
           - { os: ubuntu-24.04, python-version: "3.11", tox_env: py311 }
           - { os: ubuntu-24.04, python-version: "3.12", tox_env: py312 }
           - { os: ubuntu-24.04, python-version: "3.13", tox_env: py313 }
-          - { os: macos-14,     python-version: "3.10", tox_env: py310 }
-          - { os: macos-14,     python-version: "3.12", tox_env: py312 }
+          - { os: ubuntu-24.04, python-version: "3.14", tox_env: py314 }
+          - { os: ubuntu-24.04, python-version: "3.15", tox_env: py315 }
+          - { os: macos-14,     python-version: "3.11", tox_env: py311 }
+          - { os: macos-14,     python-version: "3.15", tox_env: py315 }
     steps:
       - uses: actions/checkout@v7
         with:
@@ -86,7 +87,7 @@ jobs:
         # https://github.com/actions/toolkit/issues/193
 
   # Tooling envs that don't depend on python version.
-  # `py310-devel` (vs bare `devel`) gives tox-uv a pyXY factor to
+  # `py311-devel` (vs bare `devel`) gives tox-uv a pyXY factor to
   # resolve, avoiding a sys.executable path that uv venv -p rejects.
   extras:
     name: ${{ matrix.tox_env }}
@@ -94,18 +95,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        tox_env: [pkg, py310-devel]
+        tox_env: [pkg, py311-devel]
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           submodules: true
 
-      - name: Install uv and pin python 3.10
+      - name: Install uv and pin python 3.11
         uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           enable-cache: true
-          python-version: "3.10"
+          python-version: "3.11"
 
       - name: Install bindep system packages (apt)
         run: |
@@ -149,7 +150,7 @@ jobs:
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           enable-cache: true
-          python-version: "3.10"
+          python-version: "3.11"
       - name: Install bindep system packages (apt)
         run: |
           sudo apt-get update -y
@@ -169,7 +170,7 @@ jobs:
       - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           enable-cache: true
-          python-version: "3.10"
+          python-version: "3.11"
       - run: uv tool install tox --with tox-uv --with "setuptools>=65.3"
       - run: tox -e docs
 

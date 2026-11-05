@@ -34,7 +34,7 @@ extensions = [
 ]
 
 intersphinx_mapping = {
-    "python": ("https://docs.python.org/3.10", None),
+    "python": ("https://docs.python.org/3.11", None),
     "requests": ("https://requests.readthedocs.io/en/latest/", None),
     "requests-oauthlib": ("https://requests-oauthlib.readthedocs.io/en/latest/", None),
     "ipython": ("https://ipython.readthedocs.io/en/stable/", None),
