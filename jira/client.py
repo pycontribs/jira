@@ -5727,7 +5727,7 @@ class JIRA:
                 maxResults=False,
                 params={"expand": ",".join(expand)} if expand else None,
             )
-            return [scheme.raw for scheme in schemes]
+            return [scheme.raw for scheme in schemes if scheme.raw is not None]
 
         if expand_projects:
             warnings.warn(
