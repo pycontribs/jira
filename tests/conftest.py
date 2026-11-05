@@ -489,6 +489,37 @@ def offline_jira(no_fields) -> jira.client.JIRA:
     )
 
 
+# fixturenames includes indirect fixtures, so these cover cl_admin, slug and the probes.
+LIVE_FIXTURES = frozenset({"test_manager", "jira_admin"})
+
+
+@pytest.hookimpl(tryfirst=True)
+def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
+    """Keep ``-m unit`` (the offline CI job) equal to the tests that need no Jira."""
+    errors = []
+    for item in items:
+        if not isinstance(item, pytest.Function):
+            continue
+        unit = item.get_closest_marker("unit") is not None
+        live_only = item.get_closest_marker("live_only") is not None
+        needs_jira = bool(LIVE_FIXTURES.intersection(item.fixturenames)) or (
+            item.cls is not None and issubclass(item.cls, JiraTestCase)
+        )
+        if unit and (needs_jira or live_only):
+            errors.append(
+                f"{item.nodeid}: marked unit but needs Jira or is live_only; drop "
+                "the unit mark (or move the test out of the unit-marked class/module)."
+            )
+        elif not (unit or needs_jira or live_only):
+            errors.append(
+                f"{item.nodeid}: needs no Jira, so the offline job must run it; mark "
+                "it, its class or its module with pytest.mark.unit, or mark it "
+                "@pytest.mark.live_only(reason=...)."
+            )
+    if errors:
+        raise pytest.UsageError("\n".join(errors))
+
+
 def pytest_addoption(parser: pytest.Parser) -> None:
     parser.addoption(
         "--run-api-probe",

@@ -32,6 +32,7 @@ favourite
 fielddict
 fieldtypes
 findfile
+fixturenames
 getprogress
 googlicious
 hashify
@@ -55,6 +56,7 @@ minversion
 modifyitems
 multipartencoded
 mypermissions
+nodeid
 nosuchfield
 notauser
 notificationschemes
@@ -93,6 +95,7 @@ timeoriginalestimate
 tomlsort
 toolbelt
 transitionid
+tryfirst
 unclobbered
 viewissue
 wbmp

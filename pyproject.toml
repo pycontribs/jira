@@ -198,6 +198,7 @@ filterwarnings = ["ignore::pytest.PytestWarning"]
 markers = [
   "allow_on_cloud: opt in for the test to run on Jira Cloud",
   "api_probe: dev-only checks of live response shapes, run with --run-api-probe or JIRA_API_PROBE=1",
+  "live_only(reason): needs no Jira instance, but is kept out of the offline job (-m unit)",
   "unit: needs no Jira instance; the offline CI job runs only these (-m unit)"
 ]
 minversion = "6.0"
