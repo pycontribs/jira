@@ -29,10 +29,11 @@ classifiers = [
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: 3.15",
   "Topic :: Software Development :: Libraries :: Python Modules",
   "Topic :: Internet :: WWW/HTTP"
 ]
@@ -49,7 +50,7 @@ dynamic = ["version"]
 keywords = ["api", "atlassian", "jira", "rest", "web"]
 maintainers = [{ email = "sorin.sbarnea@gmail.com", name = "Sorin Sbarnea" }]
 name = "jira"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 
 [project.optional-dependencies]
 async = ["requests-futures>=0.9.7"]
@@ -173,7 +174,7 @@ exclude = ["build", ".tox"]
 files = ["jira", "tests"]
 follow_untyped_imports = true
 namespace_packages = true
-python_version = "3.10"
+python_version = "3.11"
 warn_unused_configs = true
 warn_unused_ignores = true
 
@@ -213,8 +214,8 @@ timeout = 80
 line-length = 88
 # The source code paths to consider, e.g., when resolving first- vs. third-party imports
 src = ["jira", "tests"]
-# Assume Python 3.10 (minimum supported)
-target-version = "py310"
+# Assume Python 3.11 (minimum supported)
+target-version = "py311"
 
 [tool.ruff.lint]
 # Allow unused variables when underscore-prefixed.

@@ -15,10 +15,10 @@ jobs:
       TOXENV: pkg
 
     steps:
-      - name: Switch to using Python 3.10 by default
+      - name: Switch to using Python 3.11 by default
         uses: actions/setup-python@v7
         with:
-          python-version: "3.10"
+          python-version: "3.11"
 
       - name: Install system dependencies
         run: |
