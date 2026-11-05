@@ -124,6 +124,10 @@ CLOUD_ACCOUNT_ID_RE = re.compile(
     re.IGNORECASE,
 )
 
+#: Maximum number of characters Jira accepts in a text field such as an
+#: issue description or a comment body.
+TEXT_FIELD_MAX_LENGTH = 32767
+
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -2310,6 +2314,8 @@ class JIRA:
         This information is available through the 'createmeta' set of methods.
         Further examples are available here: https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Create+Issue
 
+        The description can't be longer than :data:`TEXT_FIELD_MAX_LENGTH` characters.
+
         Args:
             fields (Optional[Dict[str, Any]]): a dict containing field names and the values to use. If present, all other keyword arguments will be ignored
             prefetch (bool): True reloads the created issue Resource so all of its data is present in the value returned (Default: ``True``)
@@ -2856,6 +2862,8 @@ class JIRA:
         is_internal: bool = False,
     ) -> Comment:
         """Add a comment from the current authenticated user on the specified issue and return a Resource for it.
+
+        The body can't be longer than :data:`TEXT_FIELD_MAX_LENGTH` characters.
 
         Args:
             issue (Union[str, int, jira.resources.Issue]): ID or key of the issue to add the comment to
