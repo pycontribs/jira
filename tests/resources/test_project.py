@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import pytest
+
+import jira.client
 from jira import JIRAError
 from tests.conftest import JiraTestCase, allow_on_cloud, find_by_id, rndstr
 
@@ -242,3 +245,102 @@ class ProjectTests(JiraTestCase):
             workflowscheme.name,
             f"{self.project_b}: Software Simplified Workflow Scheme",
         )
+
+
+@allow_on_cloud
+def test_delete_project(cl_admin, cl_normal, slug):
+    assert cl_admin.delete_project(slug)
+
+
+@allow_on_cloud
+def test_delete_inexistent_project(cl_admin):
+    # cspell:ignore abogus123
+    slug = "abogus123"
+    with pytest.raises(JIRAError) as ex:
+        assert cl_admin.delete_project(slug)
+
+    assert "No project could be found with key" in str(
+        ex.value
+    ) or f'Parameter pid="{slug}" is not a Project, projectID or slug' in str(ex.value)
+
+
+def test_templates(cl_admin):
+    templates = set(cl_admin.templates())
+    expected_templates = set(
+        filter(
+            None,
+            """
+Basic software development
+Kanban software development
+Process management
+Project management
+Scrum software development
+Task management
+""".split("\n"),
+        )
+    )
+
+    assert templates == expected_templates
+
+
+def _createmeta_client(deployment_type: str, version: tuple[int, ...]):
+    client = jira.client.JIRA(
+        server="https://jira.example.com", get_server_info=False, validate=False
+    )
+    client.deploymentType = deployment_type
+    client._version = version
+    return client
+
+
+@pytest.mark.parametrize(
+    "deployment_type,version,items_key",
+    [("Cloud", (1001, 0, 0), "issueTypes"), ("Server", (9, 12, 0), "values")],
+)
+def test_project_issue_types(requests_mock, deployment_type, version, items_key):
+    client = _createmeta_client(deployment_type, version)
+    requests_mock.get(
+        "https://jira.example.com/rest/api/2/issue/createmeta/ABC/issuetypes",
+        json={
+            "startAt": 0,
+            "maxResults": 50,
+            "total": 2,
+            items_key: [{"id": "1", "name": "Bug"}, {"id": "2", "name": "Task"}],
+        },
+    )
+
+    issue_types = client.project_issue_types("ABC")
+
+    assert [it.name for it in issue_types] == ["Bug", "Task"]
+
+
+@pytest.mark.parametrize(
+    "deployment_type,version,items_key",
+    [("Cloud", (1001, 0, 0), "fields"), ("Server", (9, 12, 0), "values")],
+)
+def test_project_issue_fields(requests_mock, deployment_type, version, items_key):
+    client = _createmeta_client(deployment_type, version)
+    requests_mock.get(
+        "https://jira.example.com/rest/api/2/issue/createmeta/ABC/issuetypes/1",
+        json={
+            "startAt": 0,
+            "maxResults": 50,
+            "total": 2,
+            items_key: [
+                {"fieldId": "summary", "name": "Summary", "required": True},
+                {"fieldId": "assignee", "name": "Assignee", "required": False},
+            ],
+        },
+    )
+
+    fields = client.project_issue_fields("ABC", "1")
+
+    assert [f.fieldId for f in fields] == ["summary", "assignee"]
+
+
+def test_project_issue_types_refused_before_server_8_4(requests_mock):
+    client = _createmeta_client("Server", (8, 3, 0))
+
+    with pytest.raises(JIRAError, match="Requires Server/DC 8.4"):
+        client.project_issue_types("ABC")
+
+    assert not requests_mock.called

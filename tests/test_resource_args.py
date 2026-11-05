@@ -12,6 +12,7 @@ import inspect
 import re
 from collections.abc import Callable
 from typing import Any, get_type_hints
+from unittest import mock
 
 import pytest
 import requests_mock as rm
@@ -289,3 +290,80 @@ def test_resource_and_its_key_send_the_same_request(
     assert by_key
     assert positional == by_key
     assert keyword == by_key
+
+
+def test_resources_passed_by_keyword_send_their_key(requests_mock):
+    client = jira.client.JIRA(
+        server="https://jira.example.com", get_server_info=False, validate=False
+    )
+    base = "https://jira.example.com/rest/api/2"
+    inward = Issue(client._options, client._session, raw={"id": "1", "key": "ABC-1"})
+    outward = Issue(client._options, client._session, raw={"id": "2", "key": "ABC-2"})
+    requests_mock.get(f"{base}/issue/ABC-1/comment/5", json={"id": "5"})
+    requests_mock.get(
+        f"{base}/issueLinkType",
+        json={
+            "issueLinkTypes": [
+                {
+                    "id": "1",
+                    "name": "Blocks",
+                    "inward": "is blocked by",
+                    "outward": "blocks",
+                }
+            ]
+        },
+    )
+    requests_mock.post(f"{base}/issueLink", status_code=201)
+
+    client.comment(issue=inward, comment=5)
+    client.create_issue_link(type="Blocks", inwardIssue=inward, outwardIssue=outward)
+
+    assert requests_mock.request_history[0].url == f"{base}/issue/ABC-1/comment/5"
+    assert requests_mock.last_request.json() == {
+        "type": {
+            "id": "1",
+            "name": "Blocks",
+            "inward": "is blocked by",
+            "outward": "blocks",
+        },
+        "inwardIssue": {"key": "ABC-1"},
+        "outwardIssue": {"key": "ABC-2"},
+        "comment": None,
+    }
+
+
+def test_translate_resource_args_passes_resource_when_annotation_accepts_it():
+    issue = Issue({}, mock.Mock(), raw={"id": "1", "key": "ABC-1"})
+
+    @jira.client.translate_resource_args
+    def accepts_issue(x: Issue | str) -> Any:
+        return x
+
+    @jira.client.translate_resource_args
+    def accepts_any_resource(x: Resource | None = None) -> Any:
+        return x
+
+    @jira.client.translate_resource_args
+    def wants_str(x: str) -> Any:
+        return x
+
+    @jira.client.translate_resource_args
+    def takes_fields(**fields: Any) -> Any:
+        return fields["x"]
+
+    assert accepts_issue(issue) is issue
+    assert accepts_issue(x=issue) is issue
+    assert accepts_any_resource(issue) is issue
+    assert wants_str(issue) == "ABC-1"
+    assert wants_str(x=issue) == "ABC-1"
+    assert takes_fields(x=issue) is issue
+
+
+def test_translate_resource_args_converts_when_hints_do_not_resolve():
+    issue = Issue({}, mock.Mock(), raw={"id": "1", "key": "ABC-1"})
+
+    @jira.client.translate_resource_args
+    def unresolvable(x: Issue | NotDefinedAnywhere) -> Any:  # type: ignore[name-defined] # noqa: F821
+        return x
+
+    assert unresolvable(issue) == "ABC-1"
