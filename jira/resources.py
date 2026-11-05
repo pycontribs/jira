@@ -10,6 +10,7 @@ import json
 import logging
 import re
 import time
+import warnings
 from collections.abc import Iterator
 from typing import TYPE_CHECKING, Any, cast
 from urllib.parse import ParseResult, urlparse, urlunparse
@@ -1711,6 +1712,47 @@ class RequestType(Resource):
 # Utilities
 
 
+def _underscore_aliases(
+    raw: dict[str, Any], top: PropertyHolder | Resource
+) -> dict[str, str]:
+    """Map keys containing spaces to underscore aliases, for dot notation access.
+
+    Some fields, such as the Xray test step's ``"expected result"``, have spaces in
+    their keys, so their attributes are only reachable through ``getattr``.
+
+    A key gets no alias when replacing its spaces does not give a public identifier
+    (for example a leading space, which would give a private ``_name``). An alias
+    that would hide another raw key, an attribute of ``top``'s class, or another
+    spaced key's alias is not added either, and a ``UserWarning`` names the keys.
+    """
+    claims: dict[str, list[str]] = {}
+    for key in raw:
+        if not isinstance(key, str) or " " not in key:
+            continue
+        alias = key.replace(" ", "_")
+        if alias.isidentifier() and not alias.startswith("_"):
+            claims.setdefault(alias, []).append(key)
+
+    aliases: dict[str, str] = {}
+    for alias, keys in claims.items():
+        if alias in raw:
+            clash = f"it clashes with the existing key {alias!r}"
+        elif len(keys) > 1:
+            clash = f"keys {sorted(keys)!r} all map to it"
+        elif hasattr(type(top), alias):
+            clash = f"{type(top).__name__} already defines it"
+        else:
+            aliases[keys[0]] = alias
+            continue
+        warnings.warn(
+            f"Not adding attribute alias {alias!r}: {clash}. "
+            f"Read {keys[0]!r} with getattr() instead.",
+            UserWarning,
+            stacklevel=2,
+        )
+    return aliases
+
+
 def dict2resource(
     raw: dict[str, Any],
     top: PropertyHolder | Resource | None = None,
@@ -1728,29 +1770,22 @@ def dict2resource(
     # The signature allows None for options and session, but every caller passes
     # both and the resource constructors require them, hence the arg-type ignores.
     seqs = tuple, list, set, frozenset
+    aliases = _underscore_aliases(raw, top)
     for i, j in raw.items():
-        # Jira field names can contain spaces (e.g. XRAY's "expected result").
-        # Used verbatim, such a key becomes an attribute that cannot be
-        # accessed with dot notation, so normalize it to a valid identifier.
-        attr = i.replace(" ", "_")
+        value: Any
         if isinstance(j, dict):
             if "self" in j:
                 # to try and help mypy know that cls_for_resource can never be 'Resource'
                 resource_class = cast(type[Resource], cls_for_resource(j["self"]))
-                resource = cast(
-                    type[Resource],
-                    resource_class(  # type: ignore
-                        options=options,  # type: ignore[arg-type]
-                        session=session,  # type: ignore[arg-type]
-                        raw=j,
-                    ),
+                value = resource_class(  # type: ignore
+                    options=options,  # type: ignore[arg-type]
+                    session=session,  # type: ignore[arg-type]
+                    raw=j,
                 )
-                setattr(top, attr, resource)
             elif i == "timetracking":
-                timetracking = TimeTracking(options, session, j)  # type: ignore[arg-type]
-                setattr(top, "timetracking", timetracking)
+                value = TimeTracking(options, session, j)  # type: ignore[arg-type]
             else:
-                setattr(top, attr, dict2resource(j, options=options, session=session))
+                value = dict2resource(j, options=options, session=session)
         elif isinstance(j, seqs):
             j = cast(list[dict[str, Any]], j)  # help mypy
             seq_list: list[Any] = []
@@ -1776,9 +1811,12 @@ def dict2resource(
                         )
                 else:
                     seq_list.append(seq_elem)
-            setattr(top, attr, seq_list)
+            value = seq_list
         else:
-            setattr(top, attr, j)
+            value = j
+        setattr(top, i, value)
+        if i in aliases:
+            setattr(top, aliases[i], value)
     return top
 
 

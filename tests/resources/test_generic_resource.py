@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import pickle
+import warnings
 
 import pytest
 
@@ -88,3 +89,90 @@ def test_validate_with_malformed_session_response_does_not_recurse(requests_mock
         )
     half_built_user = raised.traceback[-1].frame.f_locals["self"]
     assert not hasattr(half_built_user, "accountId")
+
+
+XRAY_STEPS_RAW = {
+    "fields": {
+        "customfield_10004": {
+            "steps": [
+                {"index": 1, "fields": {"action": "Step 1", "expected result": "R1"}},
+                {"index": 2, "fields": {"action": "Step 2", "expected result": "R2"}},
+            ]
+        }
+    }
+}
+
+
+def test_unit_dict2resource_aliases_spaced_keys_with_underscores():
+    """Keys with spaces stay reachable by name and gain a dot-accessible alias (#1865)."""
+    obj = jira.resources.dict2resource(copy.deepcopy(XRAY_STEPS_RAW))
+
+    steps = obj.fields.customfield_10004.steps
+    assert [step.fields.expected_result for step in steps] == ["R1", "R2"]
+    assert [getattr(step.fields, "expected result") for step in steps] == ["R1", "R2"]
+
+
+def test_unit_dict2resource_alias_leaves_raw_unchanged():
+    raw = copy.deepcopy(XRAY_STEPS_RAW)
+    issue = jira.resources.Issue({"server": "x"}, None, raw)
+
+    assert issue.raw == XRAY_STEPS_RAW
+    step = issue.fields.customfield_10004.steps[0]
+    assert step.fields.expected_result == "R1"
+
+
+def test_unit_dict2resource_keeps_keys_without_spaces_unchanged():
+    obj = jira.resources.dict2resource({"action": "Step 1", "count": 3})
+
+    assert vars(obj) == {"action": "Step 1", "count": 3}
+
+
+@pytest.mark.parametrize("order", ["alias_first", "spaced_first"])
+def test_unit_dict2resource_alias_clashing_with_raw_key_warns(order):
+    pairs = [("a_b", "underscored"), ("a b", "spaced")]
+    raw = dict(pairs if order == "alias_first" else reversed(pairs))
+
+    with pytest.warns(
+        UserWarning, match="'a_b': it clashes with the existing key 'a_b'. Read 'a b'"
+    ):
+        obj = jira.resources.dict2resource(raw)
+
+    assert obj.a_b == "underscored"
+    assert getattr(obj, "a b") == "spaced"
+
+
+def test_unit_dict2resource_spaced_keys_sharing_an_alias_warn():
+    raw = {"a b_c": 1, "a_b c": 2}
+
+    with pytest.warns(UserWarning, match=r"'a_b_c'.*\['a b_c', 'a_b c'\]"):
+        obj = jira.resources.dict2resource(raw)
+
+    assert not hasattr(obj, "a_b_c")
+    assert getattr(obj, "a b_c") == 1
+    assert getattr(obj, "a_b c") == 2
+
+
+def test_unit_dict2resource_alias_does_not_shadow_class_attributes():
+    raw = {"self": "http://x/rest/api/2/issue/1", "add field value": 1}
+
+    with pytest.warns(UserWarning, match="'add_field_value': Issue already defines it"):
+        issue = jira.resources.Issue({"server": "x"}, None, raw)
+
+    assert callable(issue.add_field_value)
+    assert getattr(issue, "add field value") == 1
+
+
+@pytest.mark.parametrize("key", [" options", "1 st", "a-b c"])
+def test_unit_dict2resource_skips_alias_that_is_not_a_public_identifier(key):
+    options = {"server": "x"}
+    raw = {"self": "http://x/rest/api/2/issue/1", key: 1}
+
+    without_key = jira.resources.Issue(options, None, {"self": raw["self"]})
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        issue = jira.resources.Issue(options, None, raw)
+
+    assert getattr(issue, key) == 1
+    assert issue._options is options
+    assert vars(issue).keys() == vars(without_key).keys() | {key}
