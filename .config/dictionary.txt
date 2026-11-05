@@ -4,6 +4,7 @@ Greenhopper
 Heimdal
 IHDR
 JFIF
+JRASERVER
 JSESSIONID
 Jiras
 Navicat
@@ -44,6 +45,7 @@ issuesecuritylevelscheme
 issuetype
 jiraerror
 jirashell
+jraserver
 jspa
 kall
 labelarray
