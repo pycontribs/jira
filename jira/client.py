@@ -297,13 +297,13 @@ def _field_worker(
     return {"fields": fieldargs}
 
 
-ResourceType = TypeVar("ResourceType", contravariant=True, bound=Resource)
+ResourceType = TypeVar("ResourceType", bound=Resource)
 
 
-class ResultList(list, Generic[ResourceType]):
+class ResultList(list[ResourceType], Generic[ResourceType]):
     def __init__(
         self,
-        iterable: Iterable | None = None,
+        iterable: Iterable[ResourceType] | None = None,
         _startAt: int = 0,
         _maxResults: int = 0,
         _total: int | None = None,
@@ -336,7 +336,7 @@ class ResultList(list, Generic[ResourceType]):
         self.current = self.startAt
         self.nextPageToken = _nextPageToken
 
-    def __next__(self) -> ResourceType:  # type:ignore[misc]
+    def __next__(self) -> ResourceType:
         self.current += 1
         if self.current > self.total:
             raise StopIteration
@@ -347,12 +347,8 @@ class ResultList(list, Generic[ResourceType]):
         return super().__iter__()
 
     # fmt: off
-    # The mypy error we ignore is about returning a contravariant type.
-    # As this class is a List of a generic 'Resource' class
-    # this is the right way to specify that the output is the same as which
-    # the class was initialized with.
     @overload
-    def __getitem__(self, i: SupportsIndex) -> ResourceType: ...  # type:ignore[misc]  # noqa: E704
+    def __getitem__(self, i: SupportsIndex) -> ResourceType: ...  # noqa: E704
     @overload
     def __getitem__(self, s: slice) -> list[ResourceType]: ...  # noqa: E704
     def __getitem__(self, slice_or_index: SupportsIndex | slice) -> ResourceType | list[ResourceType]: # noqa: E301,E261
