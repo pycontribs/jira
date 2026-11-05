@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import unittest
 from http import HTTPStatus
 from unittest.mock import Mock, patch
 
@@ -10,7 +11,7 @@ from requests import Response
 import jira.resilientsession
 from jira.exceptions import JIRAError
 from jira.resilientsession import parse_error_msg, parse_errors
-from tests.conftest import JiraTestCase, allow_on_cloud
+from tests.conftest import allow_on_cloud
 
 
 class ListLoggingHandler(logging.Handler):
@@ -27,7 +28,8 @@ class ListLoggingHandler(logging.Handler):
         self.records = []
 
 
-class ResilientSessionLoggingConfidentialityTests(JiraTestCase):
+@pytest.mark.live_only(reason="each refused connection takes seconds on Windows")
+class ResilientSessionLoggingConfidentialityTests(unittest.TestCase):
     """No sensitive data shall be written to the log."""
 
     def setUp(self):

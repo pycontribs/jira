@@ -14,6 +14,7 @@ from __future__ import annotations
 import logging
 import os
 import pickle
+import unittest
 from time import sleep
 from typing import cast
 from unittest import mock
@@ -296,10 +297,8 @@ class ServerInfoTests(JiraTestCase):
         self.assertIn("version", server_info)
 
 
-class OtherTests(JiraTestCase):
-    def setUp(self) -> None:
-        pass  # we don't need Jira instance here
-
+@pytest.mark.live_only(reason="calls jira.atlassian.com")
+class OtherTests(unittest.TestCase):
     def test_session_invalid_login(self):
         try:
             JIRA(
@@ -345,7 +344,7 @@ MIMICKED_BACKEND_BATCH_SIZE = 10
 
 
 @pytest.mark.unit
-class AsyncTests(JiraTestCase):
+class AsyncTests(unittest.TestCase):
     def setUp(self):
         self.jira = JIRA(
             "https://jira.atlassian.com",
@@ -735,10 +734,8 @@ class UserAdministrationTests(JiraTestCase):
         self.jira.delete_user(self.test_username)
 
 
-class JiraShellTests(JiraTestCase):
-    def setUp(self) -> None:
-        pass  # Jira Instance not required
-
+@pytest.mark.unit
+class JiraShellTests(unittest.TestCase):
     def test_jirashell_command_exists(self):
         result = os.system("jirashell --help")
         self.assertEqual(result, 0)
