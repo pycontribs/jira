@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 
 import jira.client
+from jira.client import TEXT_FIELD_MAX_LENGTH
 from jira.resources import CommentProperty
 from tests.conftest import JiraTestCase, allow_on_cloud
 
@@ -171,3 +172,22 @@ class TestCommentOffline:
         assert single.value.internal is True
         assert single.self == f"{url}/sd.public.comment"
         assert [p.key for p in listed] == ["sd.public.comment"]
+
+    def test_add_comment_rejects_body_over_limit(self, offline_jira, requests_mock):
+        body = "a" * (TEXT_FIELD_MAX_LENGTH + 1)
+
+        with pytest.raises(ValueError, match="body"):
+            offline_jira.add_comment("KEY-1", body)
+
+        assert requests_mock.request_history == []
+
+    def test_add_comment_accepts_body_at_limit(self, offline_jira, requests_mock):
+        body = "a" * TEXT_FIELD_MAX_LENGTH
+        requests_mock.post(
+            "https://jira.atlassian.com/rest/api/2/issue/KEY-1/comment",
+            json={"id": "1", "body": body},
+        )
+
+        comment = offline_jira.add_comment("KEY-1", body)
+
+        assert comment.body == body

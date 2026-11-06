@@ -5,6 +5,7 @@ import logging
 import pytest
 
 import jira.client
+from jira.client import TEXT_FIELD_MAX_LENGTH
 from jira.exceptions import JIRAError
 from jira.resources import Issue
 from tests.conftest import (
@@ -736,6 +737,38 @@ def test_createmeta_fieldtypes_pagination(cl_normal, slug):
 
 @pytest.mark.unit
 class TestIssueOffline:
+    def test_create_issue_rejects_description_over_limit(
+        self, offline_jira, requests_mock
+    ):
+        fields = {
+            "project": {"id": "10000"},
+            "issuetype": {"id": "1"},
+            "summary": "too long",
+            "description": "a" * (TEXT_FIELD_MAX_LENGTH + 1),
+        }
+
+        with pytest.raises(ValueError, match="description"):
+            offline_jira.create_issue(fields=fields)
+
+        assert requests_mock.request_history == []
+
+    def test_create_issue_accepts_description_at_limit(
+        self, offline_jira, requests_mock
+    ):
+        fields = {
+            "project": {"id": "10000"},
+            "issuetype": {"id": "1"},
+            "summary": "just right",
+            "description": "a" * TEXT_FIELD_MAX_LENGTH,
+        }
+        requests_mock.post(
+            "https://jira.atlassian.com/rest/api/2/issue", json={"key": "KEY-1"}
+        )
+
+        issue = offline_jira.create_issue(fields=fields, prefetch=False)
+
+        assert issue.key == "KEY-1"
+
     @pytest.mark.parametrize(
         "fields",
         ["summary, Story Points", "summary,Story Points,", ["summary", "Story Points"]],
