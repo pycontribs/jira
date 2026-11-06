@@ -11,7 +11,6 @@ except Exception:
 
 from jira.client import (
     JIRA,
-    TEXT_FIELD_MAX_LENGTH,
     Comment,
     Issue,
     Priority,
@@ -33,7 +32,6 @@ __all__ = (
     "Priority",
     "Project",
     "Role",
-    "TEXT_FIELD_MAX_LENGTH",
     "User",
     "Watchers",
     "Worklog",

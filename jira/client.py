@@ -124,9 +124,8 @@ CLOUD_ACCOUNT_ID_RE = re.compile(
     re.IGNORECASE,
 )
 
-#: Maximum number of characters Jira accepts in a text field such as an
-#: issue description or a comment body.
 TEXT_FIELD_MAX_LENGTH = 32767
+"""Maximum number of characters Jira accepts in a text field such as an issue description or a comment body."""
 
 
 P = ParamSpec("P")
@@ -2314,16 +2313,24 @@ class JIRA:
         This information is available through the 'createmeta' set of methods.
         Further examples are available here: https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Create+Issue
 
-        The description can't be longer than :data:`TEXT_FIELD_MAX_LENGTH` characters.
-
         Args:
             fields (Optional[Dict[str, Any]]): a dict containing field names and the values to use. If present, all other keyword arguments will be ignored
             prefetch (bool): True reloads the created issue Resource so all of its data is present in the value returned (Default: ``True``)
 
         Returns:
             Issue
+
+        Raises:
+            ValueError: if the description is longer than the maximum Jira accepts (32767 characters).
         """
         data: dict[str, Any] = _field_worker(fields, **fieldargs)
+
+        description = data["fields"].get("description")
+        if isinstance(description, str) and len(description) > TEXT_FIELD_MAX_LENGTH:
+            raise ValueError(
+                f"description is {len(description)} characters; "
+                f"the maximum is {TEXT_FIELD_MAX_LENGTH}"
+            )
 
         p = data["fields"]["project"]
 
@@ -2863,8 +2870,6 @@ class JIRA:
     ) -> Comment:
         """Add a comment from the current authenticated user on the specified issue and return a Resource for it.
 
-        The body can't be longer than :data:`TEXT_FIELD_MAX_LENGTH` characters.
-
         Args:
             issue (Union[str, int, jira.resources.Issue]): ID or key of the issue to add the comment to
             body (str): Text of the comment to add
@@ -2875,7 +2880,14 @@ class JIRA:
 
         Returns:
             Comment: the created comment
+
+        Raises:
+            ValueError: if the body is longer than the maximum Jira accepts (32767 characters).
         """
+        if len(body) > TEXT_FIELD_MAX_LENGTH:
+            raise ValueError(
+                f"body is {len(body)} characters; the maximum is {TEXT_FIELD_MAX_LENGTH}"
+            )
         data: dict[str, Any] = {"body": body}
 
         if is_internal:
