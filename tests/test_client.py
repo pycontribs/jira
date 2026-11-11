@@ -459,6 +459,34 @@ def test_search_issues_max_results_above_server_cap(offline_jira, is_cloud):
     assert len(issues) == 200
 
 
+@pytest.mark.parametrize("raw_fields", [None, {}], ids=["fields_null", "fields_empty"])
+def test_search_issues_fields_id_without_fields_in_response(offline_jira, raw_fields):
+    """Regression test for https://github.com/pycontribs/jira/issues/2355.
+
+    ``id`` is a clause name of the ``issuekey`` field, so ``fields=["id"]`` is
+    translated to ``issuekey`` and Jira can answer with ``"fields": null``.
+    """
+    offline_jira._fields_cache_value = {"id": "issuekey", "key": "issuekey"}
+    page = {
+        "startAt": 0,
+        "maxResults": 50,
+        "total": 1,
+        "issues": [
+            {
+                "id": "10001",
+                "key": "KEY-1",
+                "self": "http://example.com/10001",
+                "fields": raw_fields,
+            }
+        ],
+    }
+    with mock.patch.object(offline_jira, "_get_json", return_value=page) as get_json:
+        issues = offline_jira.search_issues("project = KEY", fields=["id"])
+
+    assert get_json.call_args.kwargs["params"]["fields"] == ["issuekey"]
+    assert [issue.key for issue in issues] == ["KEY-1"]
+
+
 def test_fetch_pages_stops_on_is_last_for_full_final_page(offline_jira):
     def page(start: int, is_last: bool) -> dict:
         return {

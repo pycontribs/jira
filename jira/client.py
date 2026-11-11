@@ -951,7 +951,8 @@ class JIRA:
         for issue in issues:
             if not issue.raw:
                 continue
-            raw_fields = issue.raw.get("fields", {})
+            # Jira can send "fields": null, e.g. when only the issue key was asked for.
+            raw_fields = issue.raw.get("fields") or {}
             for field_id, name in untranslate.items():
                 if field_id in raw_fields:
                     raw_fields[name] = raw_fields[field_id]
