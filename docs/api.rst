@@ -66,6 +66,16 @@ jira.resources module
    :undoc-members:
    :show-inheritance:
 
+.. autoclass:: jira.resources.TimeTracking
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. autoclass:: jira.resources.UnknownResource
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 .. autoclass:: jira.resources.Sprint
    :members:
    :undoc-members:
