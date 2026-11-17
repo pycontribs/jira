@@ -2296,6 +2296,7 @@ class JIRA:
         self,
         fields: dict[str, Any] | None = None,
         prefetch: bool = True,
+        properties: list[dict[str, Any]] | None = None,
         **fieldargs: Any,
     ) -> Issue:
         """Create a new issue and return an issue Resource for it.
@@ -2313,11 +2314,14 @@ class JIRA:
         Args:
             fields (Optional[Dict[str, Any]]): a dict containing field names and the values to use. If present, all other keyword arguments will be ignored
             prefetch (bool): True reloads the created issue Resource so all of its data is present in the value returned (Default: ``True``)
+            properties (Optional[List[Dict[str, Any]]]): Issue properties to set atomically, each containing ``key`` and ``value``. A field named ``properties`` must instead be supplied in ``fields``.
 
         Returns:
             Issue
         """
         data: dict[str, Any] = _field_worker(fields, **fieldargs)
+        if properties is not None:
+            data["properties"] = properties
 
         p = data["fields"]["project"]
 
