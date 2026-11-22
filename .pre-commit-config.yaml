@@ -56,18 +56,18 @@ repos:
       - id: yamllint
         files: \.(yaml|yml)$
   - repo: https://github.com/pappasam/toml-sort
-    rev: v0.25.0
+    rev: v0.26.0
     hooks:
       - id: toml-sort-fix
         alias: toml
         # uv.lock has its own canonical ordering; resorting churns it.
         exclude: ^uv\.lock$
   - repo: https://github.com/tox-dev/tox-ini-fmt
-    rev: 1.10.2
+    rev: 1.10.3
     hooks:
       - id: tox-ini-fmt
   # uv-lock fails if pyproject.toml has drifted from uv.lock.
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.13.7
+    rev: 0.13.9
     hooks:
       - id: uv-lock
