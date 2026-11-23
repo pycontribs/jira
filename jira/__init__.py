@@ -10,6 +10,7 @@ except Exception:
     __version__ = "unknown"
 
 from jira.client import (
+    DESCRIPTION_MAX_LENGTH,
     JIRA,
     Comment,
     Issue,
@@ -25,6 +26,7 @@ from jira.exceptions import JIRAError
 
 __all__ = (
     "Comment",
+    "DESCRIPTION_MAX_LENGTH",
     "__version__",
     "Issue",
     "JIRA",

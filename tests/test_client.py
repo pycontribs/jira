@@ -1118,3 +1118,9 @@ def test_decorated_methods_keep_name_and_docstring(name):
     assert method.__name__ == name
     assert method.__doc__
     assert method.__doc__ == inspect.unwrap(method).__doc__
+
+
+def test_description_max_length_constant():
+    # Jira Cloud limits issue descriptions to 32,767 characters.
+    assert jira.client.DESCRIPTION_MAX_LENGTH == 32767
+    assert jira.DESCRIPTION_MAX_LENGTH == jira.client.DESCRIPTION_MAX_LENGTH
