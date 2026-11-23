@@ -124,6 +124,10 @@ CLOUD_ACCOUNT_ID_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Jira Cloud limits issue descriptions to 32,767 characters.
+# https://jira.atlassian.com/browse/JRACLOUD-68949
+DESCRIPTION_MAX_LENGTH = 32767
+
 
 P = ParamSpec("P")
 R = TypeVar("R")
