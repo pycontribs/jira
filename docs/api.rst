@@ -50,6 +50,9 @@ jira.resources module
 .. autodata:: jira.client.ResourceType
    :annotation: = alias of TypeVar(‘ResourceType’, contravariant=True, bound=jira.resources.Resource)
 
+.. autodata:: jira.client.DESCRIPTION_MAX_LENGTH
+   :annotation: = 32767
+
 .. automodule:: jira.resources
    :members:
    :undoc-members:
